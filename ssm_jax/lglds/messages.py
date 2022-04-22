@@ -2,53 +2,7 @@ import jax.numpy as np
 import jax.random as jr
 from jax import lax
 
-from tensorflow_probability.substrates import jax as tfp
-MVN = tfp.distributions.MultivariateNormalFullCovariance
-
-
-def ancestral_sample_lds(rng, lds, num_steps, inputs):
-    """
-    Sample latent states and data from an LDS.
-
-    Args:
-
-    rng:        jax.random.PRNGKey
-    lds:        an LDS-like object (e.g. ssm_jax.lglds.models.LDS)
-    num_steps:  number of time steps to simulte
-    inputs:     array of inputs to the LDS
-
-    Returns:
-
-    xs:         (num_steps, latent_dim) array of latent states
-    ys:         (num_steps, data_dim) array of data
-    """
-    def _step(carry, rng_and_t):
-        xt = carry
-        rng, t = rng_and_t
-
-        # Get parameters and inputs for time index t
-        At = lds.dynamics_matrix(t)
-        Bt = lds.dynamics_input_weights(t)
-        Qt = lds.dynamics_covariance(t)
-        Ct = lds.emissions_matrix(t)
-        Dt = lds.emissions_input_weights(t)
-        Rt = lds.emissions_covariance(t)
-        ut = inputs[t]
-
-        # Sample data and next state
-        rng1, rng2 = jr.split(rng, 2)
-        yt = MVN(Ct @ xt + Dt @ ut, Rt).sample(seed=rng1)
-        xtp1 = MVN(At @ xt + Bt @ ut, Qt).sample(seed=rng2)
-        return xtp1, (xt, yt)
-
-    # Initialize
-    rng, this_rng = jr.split(rng, 2)
-    x0 = MVN(lds.m0, lds.Q0).sample(seed=this_rng)
-
-    # Run the sampler
-    rngs = jr.split(rng, num_steps)
-    _, (xs, ys) = lax.scan(_step, x0, (rngs, np.arange(num_steps), inputs))
-    return xs, ys
+from distrax import MultivariateNormalFullCovariance as MVN
 
 
 # Helper functions
@@ -70,10 +24,20 @@ def _condition_on(m, S, C, D, R, u, y):
 
     **Note! This can be done more efficiently when R is diagonal.**
     """
+    # Compute the Kalman gain
     K = np.linalg.solve(R + C @ S @ C.T, C @ S).T
-    Sigma_cond = S - K @ C @ S
-    mu_cond = Sigma_cond @ (np.linalg.solve(S, m) +
-                            C.T @ np.linalg.solve(R, y - D @ u))
+
+    # Sigma_cond = S - K @ C @ S
+    # mu_cond = Sigma_cond @ (np.linalg.solve(S, m) +
+    #                         C.T @ np.linalg.solve(R, y - D @ u))
+
+    # Follow equations 8.80 and 8.86 in PML2
+    # This should be more numerically stable than
+    # Sigma_cond = S - K @ C @ S
+    dim = m.shape[-1]
+    ImKC = np.eye(dim) - K @ C
+    Sigma_cond = ImKC @ S @ ImKC.T + K @ R @ K.T
+    mu_cond = m + K @ (y - D @ u - C @ m)
     return mu_cond, Sigma_cond
 
 
@@ -97,7 +61,7 @@ def lds_filter(lds, inputs, data):
     T = len(data)
 
     def _step(carry, t):
-        ll, mu_tm1t, Sigma_tm1t = carry
+        ll, mu_ttm1, Sigma_ttm1 = carry
 
         # Get parameters and inputs for time index t
         # Get parameters and inputs for time index t
@@ -112,19 +76,19 @@ def lds_filter(lds, inputs, data):
 
 
         # Update the log likelihood
-        ll += MVN(Ct @ mu_tm1t + Sigma_tm1t @ ut,
-                  Ct @ Sigma_tm1t @ Ct.T + Rt).log_prob(yt)
+        ll += MVN(Ct @ mu_ttm1 + Dt @ ut,
+                  Ct @ Sigma_ttm1 @ Ct.T + Rt).log_prob(yt)
 
         # Condition on this frame's observations
         # TODO: This can be more efficient when R is diagonal
         mu_tt, Sigma_tt = _condition_on(
-            mu_tm1t, Sigma_tm1t, Ct, Dt, Rt, ut, yt)
+            mu_ttm1, Sigma_ttm1, Ct, Dt, Rt, ut, yt)
 
         # Predict the next frame's latent state
-        mu_tm1t, Sigma_tm1t = _predict(
+        mu_ttm1, Sigma_ttm1 = _predict(
             mu_tt, Sigma_tt, At, Bt, Qt, ut)
 
-        return (ll, mu_tm1t, Sigma_tm1t), (mu_tt, Sigma_tt)
+        return (ll, mu_ttm1, Sigma_ttm1), (mu_tt, Sigma_tt)
 
     # Initialize
     carry = (0., lds.m0, lds.Q0)
