@@ -48,7 +48,7 @@ def lds_filter(lds, inputs, data):
 
     Args:
 
-    lds:        an LDS-like object (e.g. ssm_jax.lglds.models.LDS)
+    lds:        an LDS-like object (e.g. ssm_jax.lglds.models.LinearGaussianSSM)
     inputs:     array of inputs to the LDS
     data:       array of data
 
@@ -64,7 +64,6 @@ def lds_filter(lds, inputs, data):
         ll, mu_ttm1, Sigma_ttm1 = carry
 
         # Get parameters and inputs for time index t
-        # Get parameters and inputs for time index t
         At = lds.dynamics_matrix(t)
         Bt = lds.dynamics_input_weights(t)
         Qt = lds.dynamics_covariance(t)
@@ -73,7 +72,6 @@ def lds_filter(lds, inputs, data):
         Rt = lds.emissions_covariance(t)
         ut = inputs[t]
         yt = data[t]
-
 
         # Update the log likelihood
         ll += MVN(Ct @ mu_ttm1 + Dt @ ut,
@@ -85,10 +83,10 @@ def lds_filter(lds, inputs, data):
             mu_ttm1, Sigma_ttm1, Ct, Dt, Rt, ut, yt)
 
         # Predict the next frame's latent state
-        mu_ttm1, Sigma_ttm1 = _predict(
+        mu_tp1t, Sigma_tp1t = _predict(
             mu_tt, Sigma_tt, At, Bt, Qt, ut)
 
-        return (ll, mu_ttm1, Sigma_ttm1), (mu_tt, Sigma_tt)
+        return (ll, mu_tp1t, Sigma_tp1t), (mu_tt, Sigma_tt)
 
     # Initialize
     carry = (0., lds.m0, lds.Q0)
