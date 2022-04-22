@@ -157,18 +157,16 @@ def lds_smoother(lds, inputs, data):
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
 
-
     Args:
         lds (_type_): _description_
         inputs (_type_): _description_
         data (_type_): _description_
 
     Returns:
-
-    ll:             marginal log likelihood of the data
-    smoothed_means: smoothed mean of the latent states.
-    smoothed_covs:  smoothed marginal covariance of the latent states.
-    smoothed_cross: smoothed cross product E[x_t x_{t+1}^T | y_{1:T}].
+        ll: marginal log likelihood of the data
+        smoothed_means: smoothed mean of the latent states.
+        smoothed_covs: smoothed marginal covariance of the latent states.
+        smoothed_cross: smoothed cross product E[x_t x_{t+1}^T | y_{1:T}].
     """
     T = len(data)
 
