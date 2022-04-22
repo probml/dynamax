@@ -1,6 +1,5 @@
 
 import jax.numpy as np
-import jax.scipy.special as spsp
 from jax import lax
 
 def hmm_filter(hmm, inputs, data):

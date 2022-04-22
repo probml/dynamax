@@ -116,7 +116,7 @@ def lds_posterior_sample(rng, lds, inputs, data):
     T = len(data)
 
     # Run the Kalman Filter
-    ll, filtered_means, filterd_covs = lds_filter(lds, inputs, data)
+    ll, filtered_means, filtered_covs = lds_filter(lds, inputs, data)
 
     # Sample backward in time
     def _step(carry, args):
@@ -137,7 +137,7 @@ def lds_posterior_sample(rng, lds, inputs, data):
 
     # Initialize the last state
     rng, this_rng = jr.split(rng, 2)
-    xT = MVN(filtered_means[-1], filterd_covs[-1]).sample(seed=this_rng)
+    xT = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_rng)
 
     # TODO: Double check the indexing here! We should be ok since all the As,
     # Bs, us, etc are the same, but when those change its easy to get off-by-one
@@ -145,7 +145,7 @@ def lds_posterior_sample(rng, lds, inputs, data):
     # time steps.
     args = (jr.split(rng, T-1),
             filtered_means[:-1][::-1],
-            filterd_covs[:-1][::-1],
+            filtered_covs[:-1][::-1],
             np.arange(T-1, -1, -1))
     _, xs = lax.scan(_step, xT, args)
     xs = np.row_stack([xs[::-1], xT])
@@ -153,22 +153,64 @@ def lds_posterior_sample(rng, lds, inputs, data):
 
 
 def lds_smoother(lds, inputs, data):
-    """
-    Run forward-filtering, backward-smoother to compute expectations
-    under the posterior distribution on latent states.
+    """Run forward-filtering, backward-smoother to compute expectations
+    under the posterior distribution on latent states. Technically, this
+    implements the Rauch-Tung-Striebel (RTS) smoother.
+
 
     Args:
-
-    rng:        jax.random.PRNGKey
-    lds:        an LDS-like object (e.g. ssm_jax.lglds.models.LDS)
-    inputs:     array of inputs to the LDS
-    data:       array of data
+        lds (_type_): _description_
+        inputs (_type_): _description_
+        data (_type_): _description_
 
     Returns:
 
-    ll:         marginal log likelihood of the data
-    Exs:        smoothed mean of the latent states.
-    ExxTs:      smoothed second moments of the latent states.
-    ExxnTs:     smoothed second moments of the latent states.
+    ll:             marginal log likelihood of the data
+    smoothed_means: smoothed mean of the latent states.
+    smoothed_covs:  smoothed marginal covariance of the latent states.
+    smoothed_cross: smoothed cross product E[x_t x_{t+1}^T | y_{1:T}].
     """
-    raise NotImplementedError
+    T = len(data)
+
+    # Run the Kalman filter
+    ll, filtered_means, filtered_covs = lds_filter(lds, inputs, data)
+
+    # Run the smoother backward in time
+    def _step(carry, args):
+        # Unpack the inputs
+        mu_tp1T, Sigma_tp1T = carry
+        t, mu_tt, Sigma_tt = args
+
+        # Get parameters and inputs for time index t
+        At = lds.dynamics_matrix(t)
+        Bt = lds.dynamics_input_weights(t)
+        Qt = lds.dynamics_covariance(t)
+        ut = inputs[t]
+
+        # This is like the Kalman gain but in reverse
+        # See Eq 8.11 of Saarka's "Bayesian Filtering and Smoothing"
+        Gt = np.linalg.solve(Qt + At @ Sigma_tt @ At.T, At @ Sigma_tt).T
+
+        # Compute the smoothed mean and covariance
+        mu_tT = mu_tt + Gt @ (mu_tp1T - At @ mu_tt - Bt @ ut)
+        Sigma_tT = Sigma_tt + \
+            Gt @ (Sigma_tp1T - At @ Sigma_tt @ At.T - Qt) @ Gt.T
+
+        # Compute the smoothed expectation of x_t x_{t+1}^T
+        Extxtp1 = Gt @ Sigma_tp1T + np.outer(mu_tT, mu_tp1T)
+
+        return (mu_tT, Sigma_tT), (mu_tT, Sigma_tT, Extxtp1)
+
+    # The last time step is known from the Kalman filter
+    init_carry = (filtered_means[-1], filtered_covs[-1])
+    args = (np.arange(T-1, -1, -1),
+            filtered_means[:-1][::-1],
+            filtered_covs[:-1][::-1])
+    _, (smoothed_means, smoothed_covs, smoothed_cross) = \
+        lax.scan(_step, init_carry, args)
+
+    # Reverse the arrays and return
+    smoothed_means = np.row_stack([smoothed_means[::-1], filtered_means[-1]])
+    smoothed_covs = np.row_stack([smoothed_covs[::-1], filtered_covs[-1]])
+    smoothed_cross = smoothed_cross[::-1]
+    return ll, smoothed_means, smoothed_covs, smoothed_cross
