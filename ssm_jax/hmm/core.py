@@ -192,3 +192,35 @@ def hmm_smoother(initial_distribution,
     smoothed_probs = jnp.row_stack([rev_smoothed_probs[::-1], filtered_probs[-1]])
     smoothed_cross = rev_smoothed_cross[::-1]
     return log_normalizer, smoothed_probs, smoothed_cross
+
+
+def hmm_posterior_mode(initial_distribution,
+                       transition_matrix,
+                       log_likelihoods):
+
+    # Run the backward pass
+    def _backward_pass(best_next_score, t):
+        get = lambda x: x[t] if x.ndim == 3 else x
+        A = get(transition_matrix)
+
+        scores = jnp.log(A) + best_next_score + log_likelihoods[t + 1]
+        best_next_state = jnp.argmax(scores, axis=1)
+        best_next_score = jnp.max(scores, axis=1)
+        return best_next_score, best_next_state
+
+    num_timesteps, num_states = log_likelihoods.shape
+    best_second_score, best_next_states = \
+        lax.scan(_backward_pass,
+                 jnp.zeros(num_states),
+                 jnp.arange(num_timesteps - 2, -1, -1))
+
+    # Run the forward pass
+    def _forward_pass(state, best_next_state):
+        next_state = best_next_state[state]
+        return next_state, next_state
+
+    first_state = jnp.argmax(
+        jnp.log(initial_distribution) + log_likelihoods[0] + best_second_score)
+    _, states = lax.scan(_forward_pass, first_state, best_next_states)
+
+    return jnp.concatenate([jnp.array([first_state]), states])
