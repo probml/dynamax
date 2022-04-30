@@ -1,4 +1,4 @@
-import jax.numpy as np
+import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 
@@ -9,6 +9,7 @@ from distrax import MultivariateNormalFullCovariance as MVN
 
 @chex.dataclass
 class LGSSMParams:
+    """Lightweight container for LGSSM parameters."""
     initial_mean: chex.Array
     initial_covariance: chex.Array
     dynamics_matrix: chex.Array
@@ -37,27 +38,24 @@ def sample(self, rng, params, num_timesteps, inputs):
         num_timesteps (_type_): _description_
         inputs (_type_): _description_
     """
-
     def _step(carry, rng_and_t):
         state = carry
         rng, t = rng_and_t
 
         # Shorthand: get parameters and inputs for time index t
-        get = lambda name: lax.cond(params.is_stationary,
-                                    getattr(params, name),
-                                    getattr(params, name)[t])
-        At = get("dynamics_matrix")
-        Bt = get("dynamics_input_weights")
-        Qt = get("dynamics_covariance")
-        Ct = get("emissions_matrix")
-        Dt = get("emissions_input_weights")
-        Rt = get("emissions_covariance")
-        ut = inputs[t]
+        get = lambda x: x[t] if x.ndim == 3 else x
+        A = get(params.dynamics_matrix)
+        B = get(params.dynamics_input_weights)
+        Q = get(params.dynamics_covariance)
+        C = get(params.emissions_matrix)
+        D = get(params.emissions_input_weights)
+        R = get(params.emissions_covariance)
+        u = inputs[t]
 
         # Sample data and next state
         rng1, rng2 = jr.split(rng, 2)
-        emission = MVN(Ct @ state + Dt @ ut, Rt).sample(seed=rng1)
-        next_state = MVN(At @ state + Bt @ ut, Qt).sample(seed=rng2)
+        emission = MVN(C @ state + D @ u, R).sample(seed=rng1)
+        next_state = MVN(A @ state + B @ u, Q).sample(seed=rng2)
         return next_state, (state, emission)
 
     # Initialize
@@ -67,7 +65,7 @@ def sample(self, rng, params, num_timesteps, inputs):
     # Run the sampler
     rngs = jr.split(rng, num_timesteps)
     _, (states, emissions) = lax.scan(
-        _step, init_state, (rngs, np.arange(num_timesteps), inputs))
+        _step, init_state, (rngs, jnp.arange(num_timesteps), inputs))
     return states, emissions
 
 
@@ -91,13 +89,13 @@ def _condition_on(m, S, C, D, R, u, y):
     **Note! This can be done more efficiently when R is diagonal.**
     """
     # Compute the Kalman gain
-    K = np.linalg.solve(R + C @ S @ C.T, C @ S).T
+    K = jnp.linalg.solve(R + C @ S @ C.T, C @ S).T
 
     # Follow equations 8.80 and 8.86 in PML2
     # This should be more numerically stable than
     # Sigma_cond = S - K @ C @ S
     dim = m.shape[-1]
-    ImKC = np.eye(dim) - K @ C
+    ImKC = jnp.eye(dim) - K @ C
     Sigma_cond = ImKC @ S @ ImKC.T + K @ R @ K.T
     mu_cond = m + K @ (y - D @ u - C @ m)
     return mu_cond, Sigma_cond
@@ -120,43 +118,40 @@ def lgssm_filter(params, inputs, emissions):
     filtered_means: filtered means E[x_t | y_{1:t}, u_{1:t}]
     filtered_covs:  filtered covariances Cov[x_t | y_{1:t}, u_{1:t}]
     """
-    T = len(emissions)
 
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
 
         # Shorthand: get parameters and inputs for time index t
-        get = lambda name: lax.cond(params.is_stationary,
-                                    getattr(params, name),
-                                    getattr(params, name)[t])
-        At = get("dynamics_matrix")
-        Bt = get("dynamics_input_weights")
-        Qt = get("dynamics_covariance")
-        Ct = get("emissions_matrix")
-        Dt = get("emissions_input_weights")
-        Rt = get("emissions_covariance")
-        ut = inputs[t]
-        yt = emissions[t]
+        get = lambda x: x[t] if x.ndim == 3 else x
+        A = get(params.dynamics_matrix)
+        B = get(params.dynamics_input_weights)
+        Q = get(params.dynamics_covariance)
+        C = get(params.emissions_matrix)
+        D = get(params.emissions_input_weights)
+        R = get(params.emissions_covariance)
+        u = inputs[t]
+        y = emissions[t]
 
         # Update the log likelihood
-        ll += MVN(Ct @ pred_mean + Dt @ ut,
-                  Ct @ pred_cov @ Ct.T + Rt).log_prob(yt)
+        ll += MVN(C @ pred_mean + D @ u,
+                  C @ pred_cov @ C.T + R).log_prob(y)
 
-        # Condition on this frame's observations
-        # TODO: This can be more efficient when R is diagonal
+        # Condition on this emission
         filtered_mean, filtered_cov = _condition_on(
-            pred_mean, pred_cov, Ct, Dt, Rt, ut, yt)
+            pred_mean, pred_cov, C, D, R, u, y)
 
-        # Predict the next frame's latent state
+        # Predict the next state
         pred_mean, pred_cov = _predict(
-            filtered_mean, filtered_cov, At, Bt, Qt, ut)
+            filtered_mean, filtered_cov, A, B, Q, u)
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
-    # Initialize
+    # Run the Kalman filter
+    num_timesteps = len(emissions)
     carry = (0., params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(
-        _step, carry, np.arange(T))
+        _step, carry, jnp.arange(num_timesteps))
     return ll, filtered_means, filtered_covs
 
 
@@ -177,9 +172,7 @@ def lgssm_posterior_sample(rng, params, inputs, emissions):
     ll:         marginal log likelihood of the data
     xs:         samples from the posterior distribution on latent states.
     """
-    T = len(emissions)
-
-    # Run the Kalman Filter
+    # Run the Kalman filter
     ll, filtered_means, filtered_covs = lgssm_filter(params, inputs, emissions)
 
     # Sample backward in time
@@ -188,17 +181,15 @@ def lgssm_posterior_sample(rng, params, inputs, emissions):
         rng, filtered_mean, filtered_cov, t = args
 
         # Shorthand: get parameters and inputs for time index t
-        get = lambda name: lax.cond(params.is_stationary,
-                                    getattr(params, name),
-                                    getattr(params, name)[t])
-        At = get("dynamics_matrix")
-        Bt = get("dynamics_input_weights")
-        Qt = get("dynamics_covariance")
-        ut = inputs[t]
+        get = lambda x: x[t] if x.ndim == 3 else x
+        A = get(params.dynamics_matrix)
+        B = get(params.dynamics_input_weights)
+        Q = get(params.dynamics_covariance)
+        u = inputs[t]
 
-        # Condition on x[t+1]
+        # Condition on next state
         smoothed_mean, smoothed_cov = _condition_on(
-            filtered_mean, filtered_cov, At, Bt, Qt, ut, next_state)
+            filtered_mean, filtered_cov, A, B, Q, u, next_state)
         state = MVN(smoothed_mean, smoothed_cov).sample(seed=rng)
         return state, state
 
@@ -207,12 +198,13 @@ def lgssm_posterior_sample(rng, params, inputs, emissions):
     last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_rng)
 
     # TODO: Double check the indexing here!
-    args = (jr.split(rng, T-1),
+    num_timesteps = len(emissions)
+    args = (jr.split(rng, num_timesteps-1),
             filtered_means[:-1][::-1],
             filtered_covs[:-1][::-1],
-            np.arange(T-1, -1, -1))
+            jnp.arange(num_timesteps-1, -1, -1))
     _, reversed_states = lax.scan(_step, last_state, args)
-    states = np.row_stack([reversed_states[::-1], last_state])
+    states = jnp.row_stack([reversed_states[::-1], last_state])
     return ll, states
 
 
@@ -232,7 +224,6 @@ def lgssm_smoother(params, inputs, emissions):
         smoothed_covs: smoothed marginal covariance of the latent states.
         smoothed_cross: smoothed cross product E[x_t x_{t+1}^T | y_{1:T}].
     """
-    T = len(emissions)
 
     # Run the Kalman filter
     ll, filtered_means, filtered_covs = lgssm_filter(params, inputs, emissions)
@@ -244,41 +235,40 @@ def lgssm_smoother(params, inputs, emissions):
         t, filtered_mean, filtered_cov = args
 
         # Shorthand: get parameters and inputs for time index t
-        get = lambda name: lax.cond(params.is_stationary,
-                                    getattr(params, name),
-                                    getattr(params, name)[t])
-        At = get("dynamics_matrix")
-        Bt = get("dynamics_input_weights")
-        Qt = get("dynamics_covariance")
-        ut = inputs[t]
+        get = lambda x: x[t] if x.ndim == 3 else x
+        A = get(params.dynamics_matrix)
+        B = get(params.dynamics_input_weights)
+        Q = get(params.dynamics_covariance)
+        u = inputs[t]
 
         # This is like the Kalman gain but in reverse
         # See Eq 8.11 of Saarka's "Bayesian Filtering and Smoothing"
-        Gt = np.linalg.solve(Qt + At @ filtered_cov @ At.T, At @ filtered_cov).T
+        G = jnp.linalg.solve(Q + A @ filtered_cov @ A.T, A @ filtered_cov).T
 
         # Compute the smoothed mean and covariance
         smoothed_mean = filtered_mean + \
-            Gt @ (smoothed_mean_next - At @ filtered_mean - Bt @ ut)
+            G @ (smoothed_mean_next - A @ filtered_mean - B @ u)
         smoothed_cov = filtered_cov + \
-            Gt @ (smoothed_cov_next - At @ filtered_cov @ At.T - Qt) @ Gt.T
+            G @ (smoothed_cov_next - A @ filtered_cov @ A.T - Q) @ G.T
 
         # Compute the smoothed expectation of x_t x_{t+1}^T
-        smoothed_cross = Gt @ smoothed_cov_next + \
-            np.outer(smoothed_mean, smoothed_mean_next)
+        smoothed_cross = G @ smoothed_cov_next + \
+            jnp.outer(smoothed_mean, smoothed_mean_next)
 
         return (smoothed_mean, smoothed_cov), \
                (smoothed_mean, smoothed_cov, smoothed_cross)
 
     # Run the Kalman smoother
+    num_timesteps = len(emissions)
     init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (np.arange(T-1, -1, -1),
+    args = (jnp.arange(num_timesteps-1, -1, -1),
             filtered_means[:-1][::-1],
             filtered_covs[:-1][::-1])
     _, (smoothed_means, smoothed_covs, smoothed_cross) = \
         lax.scan(_step, init_carry, args)
 
     # Reverse the arrays and return
-    smoothed_means = np.row_stack([smoothed_means[::-1], filtered_means[-1]])
-    smoothed_covs = np.row_stack([smoothed_covs[::-1], filtered_covs[-1]])
+    smoothed_means = jnp.row_stack([smoothed_means[::-1], filtered_means[-1]])
+    smoothed_covs = jnp.row_stack([smoothed_covs[::-1], filtered_covs[-1]])
     smoothed_cross = smoothed_cross[::-1]
     return ll, smoothed_means, smoothed_covs, smoothed_cross

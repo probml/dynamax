@@ -18,8 +18,8 @@ class LinearGaussianSSM:
                  emissions_input_weights,
                  emissions_covariance) -> None:
         """
-        A simple implementation of a linear Gaussian dynamical system,
-        sometimes simply called a "linear dynamical system."
+        A simple implementation of a linear Gaussian state space model,
+        sometimes simply called a linear dynamical system or LDS.
 
         TODO: Args:
             initial_mean (_type_): _description_
