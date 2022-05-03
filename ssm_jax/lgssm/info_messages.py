@@ -3,6 +3,7 @@ from jax import lax, value_and_grad
 from jax.scipy.linalg import solve_triangular
 
 
+
 def block_tridiag_mvn_log_normalizer(precision_diag_blocks,
                                      precision_lower_diag_blocks,
                                      linear_potential):

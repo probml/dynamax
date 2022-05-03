@@ -16,16 +16,16 @@ def hmm_filter(initial_distribution,
         _type_: _description_
     """
     def _step(carry, t):
-        log_normalizer, pred_probs = carry
+        log_normalizer, predicted_probs = carry
 
         # Get parameters for time t
-        get = lambda x, ndim: x[t] if x.ndim == ndim + 1 else x
-        A = get(transition_matrix, 2)
+        get = lambda x: x[t] if x.ndim == 3 else x
+        A = get(transition_matrix)
         ll = log_likelihoods[t]
 
         # Condition on data at time t, being careful not to overflow.
         ll_max = ll.max()
-        filtered_probs = pred_probs * jnp.exp(ll - ll_max)
+        filtered_probs = predicted_probs * jnp.exp(ll - ll_max)
 
         # Renormalize to make filtered_probs a distribution
         norm = filtered_probs.sum()
@@ -35,15 +35,15 @@ def hmm_filter(initial_distribution,
         log_normalizer += jnp.log(norm) + ll_max
 
         # Predict the next state
-        pred_probs = A.T @ filtered_probs
+        predicted_probs = A.T @ filtered_probs
 
-        return (log_normalizer, pred_probs), filtered_probs
+        return (log_normalizer, predicted_probs), (filtered_probs, predicted_probs)
 
     num_timesteps = len(log_likelihoods)
     carry = (0.0, initial_distribution)
-    (log_normalizer, _), filtered_probs = lax.scan(
+    (log_normalizer, _), (filtered_probs, predicted_probs) = lax.scan(
         _step, carry, jnp.arange(num_timesteps))
-    return log_normalizer, filtered_probs
+    return log_normalizer, filtered_probs, predicted_probs
 
 
 def hmm_posterior_sample(rng,
@@ -51,9 +51,8 @@ def hmm_posterior_sample(rng,
                          transition_matrix,
                          log_likelihoods):
     # Run the HMM filter
-    log_normalizer, filtered_probs = hmm_filter(initial_distribution,
-                                                transition_matrix,
-                                                log_likelihoods)
+    log_normalizer, filtered_probs, _ = \
+        hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
 
     # Run the sampler backward in time
     def _step(carry, args):
@@ -129,10 +128,21 @@ def hmm_backward_filter(transition_matrix,
 def hmm_two_filter_smoother(initial_distribution,
                             transition_matrix,
                             log_likelihoods):
+    """Computed the smoothed state probabilities using the two-filter
+    smoother, a.k.a. the forward-backward algorithm.
+
+    Args:
+        initial_distribution (_type_): _description_
+        transition_matrix (_type_): _description_
+        log_likelihoods (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # Run the filters forward and backward
-    ll, filtered_probs = hmm_filter(initial_distribution,
-                                    transition_matrix,
-                                    log_likelihoods)
+    ll, filtered_probs, _ = hmm_filter(initial_distribution,
+                                       transition_matrix,
+                                       log_likelihoods)
 
     _, backward_pred_probs = hmm_backward_filter(transition_matrix,
                                                  log_likelihoods)
@@ -142,50 +152,59 @@ def hmm_two_filter_smoother(initial_distribution,
     norm = smoothed_probs.sum(axis=1)
     smoothed_probs /= norm
 
-    return smoothed_probs, ll
+    # TODO: Compute the smoothed_transition_probs
+
+    return ll, smoothed_probs
 
 
 def hmm_smoother(initial_distribution,
                  transition_matrix,
                  log_likelihoods):
-    """_summary_
+    """Computed the smoothed state probabilities using a general
+    Bayesian smoother.
+
+    Note: This is the discrete SSM analog of the RTS smoother for
+    linear Gaussian SSMs.
 
     Args:
-        hmm_params (_type_): _description_
+        initial_distribution (_type_): _description_
+        transition_matrix (_type_): _description_
         log_likelihoods (_type_): _description_
 
     Returns:
         _type_: _description_
     """
     # Run the HMM filter
-    log_normalizer, filtered_probs = hmm_filter(initial_distribution,
-                                                transition_matrix,
-                                                log_likelihoods)
+    log_normalizer, filtered_probs, predicted_probs = \
+        hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
 
     # Run the smoother backward in time
     def _step(carry, args):
         # Unpack the inputs
         smoothed_probs_next = carry
-        t, filtered_probs = args
+        t, filtered_probs, predicted_probs_next = args
 
         # Get parameters for time t
         get = lambda x: x[t] if x.ndim == 3 else x
         A = get(transition_matrix)
 
-        # Fold in the next state and renormalize
-        smoothed_probs = filtered_probs * (A @ smoothed_probs_next)
+        # Fold in the next state (Eq. 8.2 of Saarka, 2013)
+        relative_probs_next = smoothed_probs_next / predicted_probs_next
+        smoothed_probs = filtered_probs * (A @ relative_probs_next)
         smoothed_probs /= smoothed_probs.sum()
 
-        # Compute p(z_t=i, z_{t+1}=j)
-        p_cross = filtered_probs[:, None] * A * smoothed_probs_next[None, :]
-        p_cross /= p_cross.sum()
+        # Compute smoothed transition probabilities (Eq. 8.4 of Saarka, 2013)
+        smoothed_trans_probs = filtered_probs[:, None] * A * relative_probs_next[None, :]
+        smoothed_trans_probs /= smoothed_trans_probs.sum()
 
-        return smoothed_probs, (smoothed_probs, p_cross)
+        return smoothed_probs, (smoothed_probs, smoothed_trans_probs)
 
     # Run the HMM smoother
     num_timesteps = len(log_likelihoods)
     carry = filtered_probs[-1]
-    args = (jnp.arange(num_timesteps - 1, -1, -1), filtered_probs[:-1][::-1])
+    args = (jnp.arange(num_timesteps - 1, -1, -1),
+            filtered_probs[:-1][::-1],
+            predicted_probs[:-1][::-1])
     _, (rev_smoothed_probs, rev_smoothed_cross) = lax.scan(_step, carry, args)
 
     # Reverse the arrays and return
@@ -197,6 +216,16 @@ def hmm_smoother(initial_distribution,
 def hmm_posterior_mode(initial_distribution,
                        transition_matrix,
                        log_likelihoods):
+    """Compute the most likely state sequence. This is called the Viterbi algorithm.
+
+    Args:
+        initial_distribution (_type_): _description_
+        transition_matrix (_type_): _description_
+        log_likelihoods (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
 
     # Run the backward pass
     def _backward_pass(best_next_score, t):
