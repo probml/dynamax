@@ -11,7 +11,8 @@ setup(
         "jax",
         "jaxlib",
         "optax",
-        "chex"
+        "chex",
+        "distrax"
     ],
     packages=setuptools.find_packages(),
 )
