@@ -177,12 +177,18 @@ def hmm_two_filter_smoother(initial_distribution,
     norm = smoothed_probs.sum(axis=1, keepdims=True)
     smoothed_probs /= norm
 
-    # TODO: Compute smoothed_transition_probs
+    # Compute smoothed transition probabilities
+    ll_max = jnp.max(log_likelihoods, axis=1, keepdims=True)
+    smoothed_trans_probs = filtered_probs[:-1, :, None] * \
+                           transition_matrix * \
+                           jnp.exp(log_likelihoods[1:] - ll_max[1:])[:, None, :] * \
+                           backward_pred_probs[1:, None, :]
+    smoothed_trans_probs /= smoothed_trans_probs.sum(axis=(1, 2), keepdims=True)
 
     return HMMPosterior(marginal_log_lkhd=ll,
                         filtered_probs=filtered_probs,
                         smoothed_probs=smoothed_probs,
-                        smoothed_transition_probs=None)
+                        smoothed_transition_probs=smoothed_trans_probs)
 
 
 def hmm_smoother(initial_distribution,

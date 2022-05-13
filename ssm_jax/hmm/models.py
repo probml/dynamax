@@ -14,12 +14,13 @@ from .core import hmm_smoother
 #     Gamma,
 #     Poisson)
 from tensorflow_probability.substrates.jax.distributions import (
-    MultivariateNormalFullCovariance as MVN,
+    Bernoulli,
+    Beta,
     Categorical,
     Dirichlet,
     Gamma,
+    MultivariateNormalFullCovariance as MVN,
     Poisson)
-
 
 
 class BaseHMM(ABC):
@@ -144,6 +145,58 @@ class BaseHMM(ABC):
         return jnp.array(log_probs), posteriors
 
 
+class BernoulliHMM(BaseHMM):
+
+    def __init__(self,
+                 initial_probabilities,
+                 transition_matrix,
+                 emission_probs,
+                 initial_probs_concentration=1.0001,
+                 transition_matrix_concentration=1.0001,
+                 emission_probs_concentration1=1.0001,
+                 emission_probs_concentration0=1.0001):
+        """_summary_
+
+        Args:
+            initial_probabilities (_type_): _description_
+            transition_matrix (_type_): _description_
+            emission_probs (_type_): _description_
+        """
+        super().__init__(initial_probabilities,
+                         transition_matrix,
+                         initial_probs_concentration=initial_probs_concentration,
+                         transition_matrix_concentration=transition_matrix_concentration)
+
+        self.emission_dim = emission_probs.shape[-1]
+
+        # Check shapes
+        assert emission_probs.shape == \
+            (self.num_states, self.emission_dim)
+
+        # Construct the model from distrax distributions
+        self.emission_distribution = Bernoulli(emission_probs)
+        self.emission_prior = Beta(emission_probs_concentration1,
+                                   emission_probs_concentration0)
+
+    # Properties to get various parameters of the model
+    @property
+    def emission_probs(self):
+        return self.emission_distribution.probs_parameter()
+
+    def log_likelihoods(self, emissions):
+        # Sum over the last dimension since we're assuming a batch of
+        # conditionally independent Bernoullis
+        return self.emission_distribution.log_prob(emissions[...,None,:]).sum(-1)
+
+    def m_step_emission_distribution(self, emissions, posterior):
+        x1_sum = jnp.einsum('btk, bti->ki', posterior.smoothed_probs, emissions)
+        x0_sum = jnp.einsum('btk, bti->ki', posterior.smoothed_probs, 1 - emissions)
+
+        emission_probs = Beta(self.emission_prior.concentration1 + x1_sum,
+                              self.emission_prior.concentration0 + x0_sum).mode()
+        self.emission_distribution = Bernoulli(emission_probs)
+
+
 class CategoricalHMM(BaseHMM):
 
     def __init__(self,
@@ -178,7 +231,7 @@ class CategoricalHMM(BaseHMM):
     # Properties to get various parameters of the model
     @property
     def emission_probs(self):
-        return self.emission_distribution.probs
+        return self.emission_distribution.probs_parameter()
 
     def log_likelihoods(self, emissions):
         return self.emission_distribution.log_prob(emissions[...,None,:])
@@ -287,7 +340,9 @@ class PoissonHMM(BaseHMM):
         return self.emission_distribution.rate
 
     def log_likelihoods(self, emissions):
-        return self.emission_distribution.log_prob(emissions[...,None,:])
+        # Sum over the last dimension since we're assuming a batch of
+        # conditionally independent Poissons
+        return self.emission_distribution.log_prob(emissions[...,None,:]).sum(-1)
 
     def m_step_emission_distribution(self, emissions, posterior):
         # Gaussian emission distribution

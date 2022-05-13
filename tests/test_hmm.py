@@ -1,4 +1,3 @@
-from numpy import isin
 import pytest
 import itertools as it
 import jax.numpy as jnp
@@ -24,14 +23,14 @@ def big_log_joint(initial_probs,
     # Compute each entry in the exponentially large log joint table
     for states in it.product(*([jnp.arange(num_states)] * num_timesteps)):
         states = jnp.array(states)
-        flat_ind = jnp.ravel_multi_index(states, (num_states,) * num_timesteps)
-
         lp = jnp.log(initial_probs[states[0]])
         lp += jnp.log(transition_matrix)[states[:-1], states[1:]].sum()
         lp += log_likelihoods[jnp.arange(num_timesteps), states].sum()
-        flat_log_joint = flat_log_joint.at[flat_ind].set(lp)
+        flat_index = jnp.ravel_multi_index(states, (num_states,) * num_timesteps)
+        flat_log_joint = flat_log_joint.at[flat_index].set(lp)
 
     return flat_log_joint.reshape((num_states,) * num_timesteps)
+
 
 def random_hmm_args(key, num_timesteps, num_states):
     k1, k2, k3 = jr.split(key, 3)
@@ -97,6 +96,12 @@ def test_two_filter_smoother(key=0, num_timesteps=5, num_states=2):
                                               +tuple(jnp.arange(t+1, num_timesteps)))
         assert jnp.allclose(posterior.smoothed_probs[t], smoothed_probs_t)
 
+    # Compare the smooth transition probabilities to the manually computed ones
+    for t in range(num_timesteps - 1):
+        smoothed_trans_probs_t = jnp.sum(joint, axis=tuple(jnp.arange(t)) \
+                                                    +tuple(jnp.arange(t+2, num_timesteps)))
+        assert jnp.allclose(posterior.smoothed_transition_probs[t], smoothed_trans_probs_t)
+
 
 def test_hmm_smoother(key=0, num_timesteps=5, num_states=2):
     if isinstance(key, int):
@@ -117,6 +122,12 @@ def test_hmm_smoother(key=0, num_timesteps=5, num_states=2):
         smoothed_probs_t = jnp.sum(joint, axis=tuple(jnp.arange(t)) \
                                               +tuple(jnp.arange(t+1, num_timesteps)))
         assert jnp.allclose(posterior.smoothed_probs[t], smoothed_probs_t)
+
+    # Compare the smooth transition probabilities to the manually computed ones
+    for t in range(num_timesteps - 1):
+        smoothed_trans_probs_t = jnp.sum(joint, axis=tuple(jnp.arange(t)) \
+                                                    +tuple(jnp.arange(t+2, num_timesteps)))
+        assert jnp.allclose(posterior.smoothed_transition_probs[t], smoothed_trans_probs_t)
 
 
 def test_hmm_posterior_mode(key=0, num_timesteps=5, num_states=2):
