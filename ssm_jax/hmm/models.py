@@ -7,12 +7,19 @@ from abc import ABC, abstractmethod
 
 from .core import hmm_smoother
 
-from distrax import (
+# from distrax import (
+#     MultivariateNormalFullCovariance as MVN,
+#     Categorical,
+#     Dirichlet,
+#     Gamma,
+#     Poisson)
+from tensorflow_probability.substrates.jax.distributions import (
     MultivariateNormalFullCovariance as MVN,
     Categorical,
     Dirichlet,
     Gamma,
     Poisson)
+
 
 
 class BaseHMM(ABC):

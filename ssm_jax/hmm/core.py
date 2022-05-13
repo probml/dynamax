@@ -139,13 +139,14 @@ def hmm_backward_filter(transition_matrix,
         # Update the log normalizer.
         log_normalizer += log_norm
         # Predict the next state (going backward in time).
-        backward_pred_probs = _predict(backward_filt_probs, A.T)
-        return (log_normalizer, backward_pred_probs), backward_pred_probs
+        next_backward_pred_probs = _predict(backward_filt_probs, A.T)
+        return (log_normalizer, next_backward_pred_probs), backward_pred_probs
 
     num_timesteps, num_states = log_likelihoods.shape
     carry = (0.0, jnp.ones(num_states))
-    (log_normalizer, _), backward_pred_probs = lax.scan(
+    (log_normalizer, _), rev_backward_pred_probs = lax.scan(
         _step, carry, jnp.arange(num_timesteps)[::-1])
+    backward_pred_probs = rev_backward_pred_probs[::-1]
     return log_normalizer, backward_pred_probs
 
 
@@ -173,7 +174,7 @@ def hmm_two_filter_smoother(initial_distribution,
 
     # Compute smoothed probabilities
     smoothed_probs = filtered_probs * backward_pred_probs
-    norm = smoothed_probs.sum(axis=1)
+    norm = smoothed_probs.sum(axis=1, keepdims=True)
     smoothed_probs /= norm
 
     # TODO: Compute smoothed_transition_probs
@@ -229,7 +230,7 @@ def hmm_smoother(initial_distribution,
     # Run the HMM smoother
     num_timesteps = len(log_likelihoods)
     carry = filtered_probs[-1]
-    args = (jnp.arange(num_timesteps - 1, -1, -1),
+    args = (jnp.arange(num_timesteps - 2, -1, -1),
             filtered_probs[:-1][::-1],
             predicted_probs[:-1][::-1])
     _, (rev_smoothed_probs, rev_smoothed_trans_probs) = lax.scan(_step, carry, args)
@@ -269,10 +270,11 @@ def hmm_posterior_mode(initial_distribution,
         return best_next_score, best_next_state
 
     num_timesteps, num_states = log_likelihoods.shape
-    best_second_score, best_next_states = \
+    best_second_score, rev_best_next_states = \
         lax.scan(_backward_pass,
                  jnp.zeros(num_states),
                  jnp.arange(num_timesteps - 2, -1, -1))
+    best_next_states = rev_best_next_states[::-1]
 
     # Run the forward pass
     def _forward_pass(state, best_next_state):
