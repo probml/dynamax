@@ -12,7 +12,8 @@ setup(
         "jaxlib",
         "optax",
         "chex",
-        "distrax"
+        "distrax",
+        "tensorflow_probability"
     ],
     packages=setuptools.find_packages(),
 )
