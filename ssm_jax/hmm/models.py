@@ -7,13 +7,13 @@ from jax.nn import sigmoid, softmax
 
 from abc import ABC, abstractmethod, abstractclassmethod, abstractproperty
 
-from .core import hmm_filter, hmm_smoother
+from .core import hmm_filter, hmm_posterior_mode
 
 # TFP has the Poisson distribution but distrax doesn't?!
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
-PSDToUnconstrained = tfb.Chain([
+PSDToRealBijector = tfb.Chain([
     # step 3: flatten the lower triangular portion of the matrix
     tfb.Invert(tfb.FillTriangular()),
     # step 2: take the log of the diagonals
@@ -112,6 +112,12 @@ class BaseHMM(ABC):
                             self.transition_matrix,
                             log_likelihoods)[0]
 
+    def most_likely_states(self, emissions):
+        log_likelihoods = self.emission_distribution.log_prob(emissions[...,None,:])
+        return hmm_posterior_mode(self.initial_probabilities,
+                                  self.transition_matrix,
+                                  log_likelihoods)
+
     # Properties to allow unconstrained optimization and JAX jitting
     @abstractproperty
     def unconstrained_params(self):
@@ -163,6 +169,14 @@ class BernoulliHMM(BaseHMM):
             tfd.Bernoulli(probs=emission_probs),
             reinterpreted_batch_ndims=1)
 
+    @classmethod
+    def random_initialization(cls, key, num_states, emission_dim):
+        key1, key2, key3 = jr.split(key, 3)
+        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
+        emission_probs = jr.uniform(key3, (num_states, emission_dim))
+        return cls(initial_probs, transition_matrix, emission_probs)
+
     # Properties to get various parameters of the model
     @property
     def emission_distribution(self):
@@ -207,6 +221,14 @@ class CategoricalHMM(BaseHMM):
                          transition_matrix)
 
         self._emission_distribution = tfd.Categorical(probs=emission_probs)
+
+    @classmethod
+    def random_initialization(cls, key, num_states, emission_dim):
+        key1, key2, key3 = jr.split(key, 3)
+        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
+        emission_probs = jr.dirichlet(key1, jnp.ones(emission_dim), (num_states,))
+        return cls(initial_probs, transition_matrix, emission_probs)
 
     # Properties to get various parameters of the model
     @property
@@ -284,14 +306,14 @@ class GaussianHMM(BaseHMM):
         return tfb.SoftmaxCentered().inverse(self.initial_probabilities), \
                tfb.SoftmaxCentered().inverse(self.transition_matrix), \
                self.emission_means, \
-               PSDToUnconstrained.forward(self.emission_covariance_matrices)
+               PSDToRealBijector.forward(self.emission_covariance_matrices)
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
         initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
         transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
         emission_means = unconstrained_params[2]
-        emission_covs = PSDToUnconstrained.inverse(unconstrained_params[3])
+        emission_covs = PSDToRealBijector.inverse(unconstrained_params[3])
         return cls(initial_probabilities, transition_matrix, emission_means, emission_covs, *hypers)
 
 
@@ -314,6 +336,14 @@ class PoissonHMM(BaseHMM):
 
         self._emission_distribution = tfd.Independent(
             tfd.Poisson(emission_rates), reinterpreted_batch_ndims=1)
+
+    @classmethod
+    def random_initialization(cls, key, num_states, emission_dim):
+        key1, key2, key3 = jr.split(key, 3)
+        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
+        emission_rates = jr.exponential(key3, (num_states, emission_dim))
+        return cls(initial_probs, transition_matrix, emission_rates)
 
     # Properties to get various parameters of the model
     @property
