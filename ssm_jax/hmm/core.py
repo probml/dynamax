@@ -2,6 +2,41 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 
+import chex
+
+@chex.dataclass
+class HMMPosterior:
+    """Simple wrapper for properties of an HMM posterior distribution.
+    """
+    marginal_log_lkhd: chex.Scalar
+    filtered_probs: chex.Array
+    smoothed_probs: chex.Array
+    smoothed_transition_probs: chex.Array
+
+
+# Helper functions for the two key filtering steps
+def _condition_on(probs, ll):
+    """Condition on new emissions, given in the form of log likelihoods
+    for each discrete state.
+
+    Args:
+        probs (Array): current probabilities
+        ll (Array): log likelihoods of new emissions
+
+    Returns:
+
+    """
+    ll_max = ll.max()
+    new_probs = probs * jnp.exp(ll - ll_max)
+    norm = new_probs.sum()
+    new_probs /= norm
+    log_norm = jnp.log(norm) + ll_max
+    return new_probs, log_norm
+
+
+def _predict(probs, A):
+    return A.T @ probs
+
 
 def hmm_filter(initial_distribution,
                transition_matrix,
@@ -23,19 +58,12 @@ def hmm_filter(initial_distribution,
         A = get(transition_matrix)
         ll = log_likelihoods[t]
 
-        # Condition on data at time t, being careful not to overflow.
-        ll_max = ll.max()
-        filtered_probs = predicted_probs * jnp.exp(ll - ll_max)
-
-        # Renormalize to make filtered_probs a distribution
-        norm = filtered_probs.sum()
-        filtered_probs /= norm
-
+        # Condition on emissions at time t, being careful not to overflow
+        filtered_probs, log_norm = _condition_on(predicted_probs, ll)
         # Update the log normalizer
-        log_normalizer += jnp.log(norm) + ll_max
-
+        log_normalizer += log_norm
         # Predict the next state
-        predicted_probs = A.T @ filtered_probs
+        predicted_probs = _predict(filtered_probs, A)
 
         return (log_normalizer, predicted_probs), (filtered_probs, predicted_probs)
 
@@ -65,7 +93,7 @@ def hmm_posterior_sample(rng,
         A = get(transition_matrix)
 
         # Fold in the next state and renormalize
-        smoothed_probs = filtered_probs * (A @ next_state)
+        smoothed_probs = filtered_probs * A[:, next_state]
         smoothed_probs /= smoothed_probs.sum()
 
         # Sample current state
@@ -106,22 +134,19 @@ def hmm_backward_filter(transition_matrix,
         A = get(transition_matrix)
         ll = log_likelihoods[t]
 
-        ll_max = ll.max()
-        backward_pred_probs = A @ (backward_pred_probs * jnp.exp(ll - ll_max))
-
-        # Renormalize
-        norm = backward_pred_probs.sum()
-        backward_pred_probs /= norm
-
-        # Update the log log_normalizer
-        log_normalizer += jnp.log(norm) + ll_max
-
-        return (log_normalizer, backward_pred_probs), backward_pred_probs
+        # Condition on emission at time t, being careful not to overflow.
+        backward_filt_probs, log_norm = _condition_on(backward_pred_probs, ll)
+        # Update the log normalizer.
+        log_normalizer += log_norm
+        # Predict the next state (going backward in time).
+        next_backward_pred_probs = _predict(backward_filt_probs, A.T)
+        return (log_normalizer, next_backward_pred_probs), backward_pred_probs
 
     num_timesteps, num_states = log_likelihoods.shape
     carry = (0.0, jnp.ones(num_states))
-    (log_normalizer, _), backward_pred_probs = lax.scan(
+    (log_normalizer, _), rev_backward_pred_probs = lax.scan(
         _step, carry, jnp.arange(num_timesteps)[::-1])
+    backward_pred_probs = rev_backward_pred_probs[::-1]
     return log_normalizer, backward_pred_probs
 
 
@@ -149,12 +174,21 @@ def hmm_two_filter_smoother(initial_distribution,
 
     # Compute smoothed probabilities
     smoothed_probs = filtered_probs * backward_pred_probs
-    norm = smoothed_probs.sum(axis=1)
+    norm = smoothed_probs.sum(axis=1, keepdims=True)
     smoothed_probs /= norm
 
-    # TODO: Compute the smoothed_transition_probs
+    # Compute smoothed transition probabilities
+    ll_max = jnp.max(log_likelihoods, axis=1, keepdims=True)
+    smoothed_trans_probs = filtered_probs[:-1, :, None] * \
+                           transition_matrix * \
+                           jnp.exp(log_likelihoods[1:] - ll_max[1:])[:, None, :] * \
+                           backward_pred_probs[1:, None, :]
+    smoothed_trans_probs /= smoothed_trans_probs.sum(axis=(1, 2), keepdims=True)
 
-    return ll, smoothed_probs
+    return HMMPosterior(marginal_log_lkhd=ll,
+                        filtered_probs=filtered_probs,
+                        smoothed_probs=smoothed_probs,
+                        smoothed_transition_probs=smoothed_trans_probs)
 
 
 def hmm_smoother(initial_distribution,
@@ -175,7 +209,7 @@ def hmm_smoother(initial_distribution,
         _type_: _description_
     """
     # Run the HMM filter
-    log_normalizer, filtered_probs, predicted_probs = \
+    ll, filtered_probs, predicted_probs = \
         hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
 
     # Run the smoother backward in time
@@ -202,15 +236,19 @@ def hmm_smoother(initial_distribution,
     # Run the HMM smoother
     num_timesteps = len(log_likelihoods)
     carry = filtered_probs[-1]
-    args = (jnp.arange(num_timesteps - 1, -1, -1),
+    args = (jnp.arange(num_timesteps - 2, -1, -1),
             filtered_probs[:-1][::-1],
             predicted_probs[:-1][::-1])
-    _, (rev_smoothed_probs, rev_smoothed_cross) = lax.scan(_step, carry, args)
+    _, (rev_smoothed_probs, rev_smoothed_trans_probs) = lax.scan(_step, carry, args)
 
     # Reverse the arrays and return
     smoothed_probs = jnp.row_stack([rev_smoothed_probs[::-1], filtered_probs[-1]])
-    smoothed_cross = rev_smoothed_cross[::-1]
-    return log_normalizer, smoothed_probs, smoothed_cross
+    smoothed_trans_probs = rev_smoothed_trans_probs[::-1]
+
+    return HMMPosterior(marginal_log_lkhd=ll,
+                        filtered_probs=filtered_probs,
+                        smoothed_probs=smoothed_probs,
+                        smoothed_transition_probs=smoothed_trans_probs)
 
 
 def hmm_posterior_mode(initial_distribution,
@@ -238,10 +276,11 @@ def hmm_posterior_mode(initial_distribution,
         return best_next_score, best_next_state
 
     num_timesteps, num_states = log_likelihoods.shape
-    best_second_score, best_next_states = \
+    best_second_score, rev_best_next_states = \
         lax.scan(_backward_pass,
                  jnp.zeros(num_states),
                  jnp.arange(num_timesteps - 2, -1, -1))
+    best_next_states = rev_best_next_states[::-1]
 
     # Run the forward pass
     def _forward_pass(state, best_next_state):
