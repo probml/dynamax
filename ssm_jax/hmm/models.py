@@ -2,23 +2,21 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 from jax.tree_util import register_pytree_node_class
-import jax.scipy.special as jss
-from jax.nn import sigmoid, softmax
 
-from abc import ABC, abstractmethod, abstractclassmethod, abstractproperty
+from abc import ABC, abstractclassmethod, abstractproperty
 
 from .core import hmm_filter, hmm_posterior_mode
 
-# TFP has the Poisson distribution but distrax doesn't?!
+# Using TFP for now since it has all our distributions
+# (Distrax doesn't have Poisson, it seems.)
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
+# From https://www.tensorflow.org/probability/examples/
+# TensorFlow_Probability_Case_Study_Covariance_Estimation
 PSDToRealBijector = tfb.Chain([
-    # step 3: flatten the lower triangular portion of the matrix
     tfb.Invert(tfb.FillTriangular()),
-    # step 2: take the log of the diagonals
     tfb.TransformDiagonal(tfb.Invert(tfb.Exp())),
-    # step 1: decompose the precision matrix into its Cholesky factors
     tfb.Invert(tfb.CholeskyOuterProduct()),
 ])
 
@@ -150,7 +148,6 @@ class BaseHMM(ABC):
 
 @register_pytree_node_class
 class BernoulliHMM(BaseHMM):
-
     def __init__(self,
                  initial_probabilities,
                  transition_matrix,
@@ -204,7 +201,6 @@ class BernoulliHMM(BaseHMM):
 
 @register_pytree_node_class
 class CategoricalHMM(BaseHMM):
-
     def __init__(self,
                  initial_probabilities,
                  transition_matrix,
@@ -257,7 +253,6 @@ class CategoricalHMM(BaseHMM):
 
 @register_pytree_node_class
 class GaussianHMM(BaseHMM):
-
     def __init__(self,
                  initial_probabilities,
                  transition_matrix,
@@ -319,7 +314,6 @@ class GaussianHMM(BaseHMM):
 
 @register_pytree_node_class
 class PoissonHMM(BaseHMM):
-
     def __init__(self,
                  initial_probabilities,
                  transition_matrix,
