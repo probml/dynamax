@@ -1,35 +1,32 @@
 import jax.numpy as jnp
 import jax.random as jr
-from jax import vmap
-from jax.tree_util import tree_map
+from jax import lax
+from jax.tree_util import register_pytree_node_class
+import jax.scipy.special as jss
+from jax.nn import sigmoid, softmax
 
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractclassmethod, abstractproperty
 
-from .core import hmm_smoother
+from .core import hmm_filter, hmm_smoother
 
-# from distrax import (
-#     MultivariateNormalFullCovariance as MVN,
-#     Categorical,
-#     Dirichlet,
-#     Gamma,
-#     Poisson)
-from tensorflow_probability.substrates.jax.distributions import (
-    Bernoulli,
-    Beta,
-    Categorical,
-    Dirichlet,
-    Gamma,
-    MultivariateNormalFullCovariance as MVN,
-    Poisson)
+# TFP has the Poisson distribution but distrax doesn't?!
+import tensorflow_probability.substrates.jax.distributions as tfd
+import tensorflow_probability.substrates.jax.bijectors as tfb
 
+PSDToUnconstrained = tfb.Chain([
+    # step 3: flatten the lower triangular portion of the matrix
+    tfb.Invert(tfb.FillTriangular()),
+    # step 2: take the log of the diagonals
+    tfb.TransformDiagonal(tfb.Invert(tfb.Exp())),
+    # step 1: decompose the precision matrix into its Cholesky factors
+    tfb.Invert(tfb.CholeskyOuterProduct()),
+])
 
 class BaseHMM(ABC):
 
     def __init__(self,
                  initial_probabilities,
-                 transition_matrix,
-                 initial_probs_concentration=1.0001,
-                 transition_matrix_concentration=1.0001):
+                 transition_matrix):
         """Abstract base class for Hidden Markov Models.
 
         Args:
@@ -40,121 +37,118 @@ class BaseHMM(ABC):
             transition_matrix_concentration (float, optional): _description_.
                 Defaults to 1.0001.
         """
-        self.num_states = transition_matrix.shape[-1]
+        num_states = transition_matrix.shape[-1]
 
         # Check shapes
-        assert initial_probabilities.shape == (self.num_states,)
-        assert transition_matrix.shape == (self.num_states, self.num_states)
+        assert initial_probabilities.shape == (num_states,)
+        assert transition_matrix.shape == (num_states, num_states)
 
         # Construct the model from distrax distributions
-        self.initial_distribution = Categorical(probs=initial_probabilities)
-        self.transition_distribution = Categorical(probs=transition_matrix)
+        self._initial_distribution = tfd.Categorical(probs=initial_probabilities)
+        self._transition_distribution = tfd.Categorical(probs=transition_matrix)
 
-        # Construct the priors
-        self.initial_distribution_prior = Dirichlet(
-            concentration=initial_probs_concentration \
-                * jnp.ones(self.num_states))
-        self.transition_distribution_prior = Dirichlet(
-            concentration=transition_matrix_concentration \
-                * jnp.ones((self.num_states, self.num_states)))
+    # Properties to get various attributes of the model
+    @property
+    def num_states(self):
+        return self._initial_distribution.probs.shape[-1]
 
-    # Properties to get various parameters of the model
+    @property
+    def emission_shape(self):
+        return self.emission_distribution.event_shape
+
     @property
     def initial_probabilities(self):
-        return self.initial_distribution.probs
+        return self._initial_distribution.probs
 
     @property
     def transition_matrix(self):
-        return self.transition_distribution.probs
+        return self._transition_distribution.probs
 
-    @abstractmethod
-    def log_likelihoods(self, emissions):
-        """Compute the log likelihood of the emissions under each discrete state.
+    @property
+    def initial_distribution(self):
+        return self._initial_distribution
 
-        Args:
-            emissions (Array, (..., num_timesteps, emission_dim)): observed emissions.
+    @property
+    def transition_distribution(self):
+        return self._transition_distribution
 
-        Returns:
-            log_likes (Array, (..., num_timesteps, num_states)): log likelihood of the
-                emissions under each discrete latent state.
-        """
+    @abstractproperty
+    def emission_distribution(self):
         raise NotImplemented
 
-    def e_step(self, emissions):
-        return hmm_smoother(self.initial_probabilities,
+    def sample(self, key, num_timesteps):
+        """Sample a sequence of latent states and emissions.
+
+        Args:
+            key (_type_): _description_
+            num_timesteps (_type_): _description_
+        """
+        def _step(state, key):
+            key1, key2 = jr.split(key, 2)
+            emission = self.emission_distribution[state].sample(seed=key1)
+            next_state = self.transition_distribution[state].sample(seed=key2)
+            return next_state, (state, emission)
+
+        # Sample the initial state
+        key1, key = jr.split(key, 2)
+        initial_state = self.initial_distribution.sample(seed=key1)
+
+        # Sample the remaining emissions and states
+        keys = jr.split(key, num_timesteps)
+        _, (states, emissions) = lax.scan(_step, initial_state, keys)
+        return states, emissions
+
+    def log_prob(self, states, emissions):
+        """Compute the log probability of the states and data
+        """
+        lp = self.initial_distribution.log_prob(states[0])
+        lp += self.transition_distribution[states[:-1]].log_prob(states[1:]).sum()
+        lp += self.emission_distribution[states].log_prob(emissions).sum()
+        return lp
+
+    def marginal_log_prob(self, emissions):
+        log_likelihoods = self.emission_distribution.log_prob(emissions[...,None,:])
+        return hmm_filter(self.initial_probabilities,
                             self.transition_matrix,
-                            self.log_likelihoods(emissions))
+                            log_likelihoods)[0]
 
-    @abstractmethod
-    def m_step_emission_distribution(self, emissions, posterior):
-        """Perform an M-step on the parameters of the emission distribution.
-
-        Args:
-            emissions (_type_): _description_
-            posterior (_type_): _description_
+    # Properties to allow unconstrained optimization and JAX jitting
+    @abstractproperty
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters.
         """
         raise NotImplemented
 
-    def m_step(self, emissions, posterior):
-        # Initial distribution
-        initial_probs = Dirichlet(self.initial_distribution_prior.concentration
-                                  + jnp.einsum('bk->k', posterior.smoothed_probs[:,0,:])).mode()
-        self.initial_distribution = Categorical(probs=initial_probs)
+    @abstractclassmethod
+    def from_unconstrained_params(cls, unconstrained_params, hypers):
+        raise NotImplemented
 
-        # Transition distribution
-        transition_matrix = Dirichlet(self.transition_distribution_prior.concentration
-                                      + jnp.einsum('bij->ij', posterior.smoothed_transition_probs)).mode()
-        self.transition_distribution = Categorical(probs=transition_matrix)
-
-        # Emission distribution
-        self.m_step_emission_distribution(emissions, posterior)
-
-    def fit(self,
-            emissions,
-            num_iters=100):
-        """Fit a Hidden Markov Model with expectation-maximization (EM).
-
-        Args:
-            emissions (Array of shape (batch_size, num_timesteps, emission_dim)):
-                The observed emissions. If no batch dimension is given, it will
-                be created.
-            num_iters (int, optional): Number of EM emissions. Defaults to 100.
-
-        Returns:
-            log_probs: marginal log probability of the data over EM iterations
-            posteriors: HMMPosterior object with statistics for the batch of posteriors
+    @property
+    def hyperparams(self):
+        """Helper property to get a PyTree of model hyperparameters.
         """
-        # Add a batch dimension if not given
-        assert emissions.shape[-1] == self.emission_dim and emissions.ndim in (2, 3)
-        squeeze = False
-        if emissions.ndim == 2:
-            emissions = emissions[None, :, :]
-            squeeze = True
+        return tuple()
 
-        # Run the EM iterations
-        log_probs = []
-        for _ in range(num_iters):
-            posteriors = vmap(lambda x: self.e_step(x))(emissions)
-            log_probs.append(posteriors.marginal_log_lkhd.sum())
-            self.m_step(emissions, posteriors)
+    # Use the to/from unconstrained properties to implement JAX tree_flatten/unflatten
+    def tree_flatten(self):
+        children = self.unconstrained_params
+        aux_data = self.hyperparams
+        return children, aux_data
 
-        # Squeeze unwanted dimensions from the posteriors if batch size was 1.
-        if squeeze:
-            posteriors = tree_map(lambda x: x[0], posteriors)
-
-        return jnp.array(log_probs), posteriors
+    @classmethod
+    def tree_unflatten(cls, aux_data, children):
+        # We have to be a little fancy since this classmethod
+        # is inherited by subclasses with different constructors.
+        return cls.from_unconstrained_params(children, aux_data)
 
 
+@register_pytree_node_class
 class BernoulliHMM(BaseHMM):
 
     def __init__(self,
                  initial_probabilities,
                  transition_matrix,
-                 emission_probs,
-                 initial_probs_concentration=1.0001,
-                 transition_matrix_concentration=1.0001,
-                 emission_probs_concentration1=1.0001,
-                 emission_probs_concentration0=1.0001):
+                 emission_probs):
         """_summary_
 
         Args:
@@ -163,49 +157,44 @@ class BernoulliHMM(BaseHMM):
             emission_probs (_type_): _description_
         """
         super().__init__(initial_probabilities,
-                         transition_matrix,
-                         initial_probs_concentration=initial_probs_concentration,
-                         transition_matrix_concentration=transition_matrix_concentration)
+                         transition_matrix)
 
-        self.emission_dim = emission_probs.shape[-1]
-
-        # Check shapes
-        assert emission_probs.shape == \
-            (self.num_states, self.emission_dim)
-
-        # Construct the model from distrax distributions
-        self.emission_distribution = Bernoulli(emission_probs)
-        self.emission_prior = Beta(emission_probs_concentration1,
-                                   emission_probs_concentration0)
+        self._emissions_distribution = tfd.Independent(
+            tfd.Bernoulli(probs=emission_probs),
+            reinterpreted_batch_ndims=1)
 
     # Properties to get various parameters of the model
     @property
+    def emission_distribution(self):
+        return self._emission_distribution
+
+    @property
     def emission_probs(self):
-        return self.emission_distribution.probs_parameter()
+        return self.emission_distribution.distribution.probs_parameter()
 
-    def log_likelihoods(self, emissions):
-        # Sum over the last dimension since we're assuming a batch of
-        # conditionally independent Bernoullis
-        return self.emission_distribution.log_prob(emissions[...,None,:]).sum(-1)
+    @property
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters.
+        """
+        return tfb.SoftmaxCentered().inverse(self.initial_probabilities), \
+               tfb.SoftmaxCentered().inverse(self.transition_matrix), \
+               tfb.Sigmoid().inverse(self.emission_probs)
 
-    def m_step_emission_distribution(self, emissions, posterior):
-        x1_sum = jnp.einsum('btk, bti->ki', posterior.smoothed_probs, emissions)
-        x0_sum = jnp.einsum('btk, bti->ki', posterior.smoothed_probs, 1 - emissions)
+    @classmethod
+    def from_unconstrained_params(cls, unconstrained_params, hypers):
+        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        emission_probs = tfb.Sigmoid().forward(unconstrained_params[2])
+        return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
 
-        emission_probs = Beta(self.emission_prior.concentration1 + x1_sum,
-                              self.emission_prior.concentration0 + x0_sum).mode()
-        self.emission_distribution = Bernoulli(emission_probs)
 
-
+@register_pytree_node_class
 class CategoricalHMM(BaseHMM):
 
     def __init__(self,
                  initial_probabilities,
                  transition_matrix,
-                 emission_probs,
-                 initial_probs_concentration=1.0001,
-                 transition_matrix_concentration=1.0001,
-                 emission_probs_concentration=1.0001):
+                 emission_probs):
         """_summary_
 
         Args:
@@ -215,42 +204,43 @@ class CategoricalHMM(BaseHMM):
             emission_covariance_matrices (_type_): _description_
         """
         super().__init__(initial_probabilities,
-                         transition_matrix,
-                         initial_probs_concentration=initial_probs_concentration,
-                         transition_matrix_concentration=transition_matrix_concentration)
+                         transition_matrix)
 
-        self.emission_dim = emission_probs.shape[-1]
-
-        # Check shapes
-        assert emission_probs.shape == (self.num_states, self.emission_dim)
-
-        # Construct the model from distrax distributions
-        self.emission_distribution = Categorical(probs=emission_probs)
-        self.emission_prior = Dirichlet(emission_probs_concentration * jnp.ones(self.emission_dim))
+        self._emission_distribution = tfd.Categorical(probs=emission_probs)
 
     # Properties to get various parameters of the model
+    @property
+    def emission_distribution(self):
+        return self._emission_distribution
+
     @property
     def emission_probs(self):
         return self.emission_distribution.probs_parameter()
 
-    def log_likelihoods(self, emissions):
-        return self.emission_distribution.log_prob(emissions[...,None,:])
+    @property
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters.
+        """
+        return tfb.SoftmaxCentered().inverse(self.initial_probabilities), \
+               tfb.SoftmaxCentered().inverse(self.transition_matrix), \
+               tfb.SoftmaxCentered().inverse(self.emission_probs)
 
-    def m_step_emission_distribution(self, emissions, posterior):
-        x_sum = jnp.einsum('btk, bti->ki', posterior.smoothed_probs, emissions)
-        emission_probs = Dirichlet(self.emission_prior.concentration + x_sum).mode
-        self.emission_distribution = Categorical(probs=emission_probs)
+    @classmethod
+    def from_unconstrained_params(cls, unconstrained_params, hypers):
+        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        emission_probs = tfb.SoftmaxCentered().forward(unconstrained_params[2])
+        return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
 
 
+@register_pytree_node_class
 class GaussianHMM(BaseHMM):
 
     def __init__(self,
                  initial_probabilities,
                  transition_matrix,
                  emission_means,
-                 emission_covariance_matrices,
-                 initial_probs_concentration=1.0001,
-                 transition_matrix_concentration=1.0001):
+                 emission_covariance_matrices):
         """_summary_
 
         Args:
@@ -260,57 +250,58 @@ class GaussianHMM(BaseHMM):
             emission_covariance_matrices (_type_): _description_
         """
         super().__init__(initial_probabilities,
-                         transition_matrix,
-                         initial_probs_concentration=initial_probs_concentration,
-                         transition_matrix_concentration=transition_matrix_concentration)
+                         transition_matrix)
 
-        self.emission_dim = emission_means.shape[-1]
+        self._emission_distribution = tfd.MultivariateNormalFullCovariance(
+            emission_means, emission_covariance_matrices)
 
-        # Check shapes
-        assert emission_means.shape == \
-            (self.num_states, self.emission_dim)
-        assert emission_covariance_matrices.shape == \
-            (self.num_states, self.emission_dim, self.emission_dim)
-
-        # Construct the model from distrax distributions
-        self.emission_distribution = MVN(emission_means, emission_covariance_matrices)
+    @classmethod
+    def random_initialization(cls, key, num_states, emission_dim):
+        key1, key2, key3 = jr.split(key, 3)
+        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
+        emission_means = jr.normal(key3, (num_states, emission_dim))
+        emission_covs = jnp.tile(jnp.eye(emission_dim), (num_states, 1, 1))
+        return cls(initial_probs, transition_matrix, emission_means, emission_covs)
 
     # Properties to get various parameters of the model
     @property
+    def emission_distribution(self):
+        return self._emission_distribution
+
+    @property
     def emission_means(self):
-        return self.emission_distribution.loc
+        return self.emission_distribution.mean()
 
     @property
     def emission_covariance_matrices(self):
-        return self.emission_distribution.covariance_matrix
+        return self.emission_distribution.covariance()
 
-    def log_likelihoods(self, emissions):
-        return self.emission_distribution.log_prob(emissions[...,None,:])
+    @property
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters.
+        """
+        return tfb.SoftmaxCentered().inverse(self.initial_probabilities), \
+               tfb.SoftmaxCentered().inverse(self.transition_matrix), \
+               self.emission_means, \
+               PSDToUnconstrained.forward(self.emission_covariance_matrices)
 
-    def m_step_emission_distribution(self, emissions, posterior):
-        # Gaussian emission distribution
-        # TODO: Include NIW prior
-        w_sum = jnp.sum('btk->k', posterior.smoothed_probs)
-        x_sum = jnp.einsum('btk, bti->ki', posterior.smoothed_probs, emissions)
-        xxT_sum = jnp.einsum('btk, bti, btj->kij', posterior.smoothed_probs, emissions, emissions)
-
-        emission_means = x_sum / w_sum[:, None]
-        emission_covariance_matrices = xxT_sum / w_sum[:, None, None] \
-            - jnp.einsum('ki,kj->kij', emission_means, emission_means) \
-            + 1e-4 * jnp.eye(self.emission_dim)
-        self.emission_distribution = MVN(emission_means, emission_covariance_matrices)
+    @classmethod
+    def from_unconstrained_params(cls, unconstrained_params, hypers):
+        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        emission_means = unconstrained_params[2]
+        emission_covs = PSDToUnconstrained.inverse(unconstrained_params[3])
+        return cls(initial_probabilities, transition_matrix, emission_means, emission_covs, *hypers)
 
 
+@register_pytree_node_class
 class PoissonHMM(BaseHMM):
 
     def __init__(self,
                  initial_probabilities,
                  transition_matrix,
-                 emission_rates,
-                 initial_probs_concentration=1.0001,
-                 transition_matrix_concentration=1.0001,
-                 emission_rates_concentration=1.0001,
-                 emission_rates_rate=0.0001):
+                 emission_rates):
         """_summary_
 
         Args:
@@ -319,37 +310,31 @@ class PoissonHMM(BaseHMM):
             emission_rates (_type_): _description_
         """
         super().__init__(initial_probabilities,
-                         transition_matrix,
-                         initial_probs_concentration=initial_probs_concentration,
-                         transition_matrix_concentration=transition_matrix_concentration)
+                         transition_matrix)
 
-        self.emission_dim = emission_rates.shape[-1]
-
-        # Check shapes
-        assert emission_rates.shape == \
-            (self.num_states, self.emission_dim)
-
-        # Construct the model from distrax distributions
-        self.emission_distribution = Poisson(emission_rates)
-        self.emission_prior = Gamma(emission_rates_concentration,
-                                    emission_rates_rate)
+        self._emission_distribution = tfd.Independent(
+            tfd.Poisson(emission_rates), reinterpreted_batch_ndims=1)
 
     # Properties to get various parameters of the model
+    @property
+    def emission_distribution(self):
+        return self._emission_distribution
+
     @property
     def emission_rates(self):
         return self.emission_distribution.rate
 
-    def log_likelihoods(self, emissions):
-        # Sum over the last dimension since we're assuming a batch of
-        # conditionally independent Poissons
-        return self.emission_distribution.log_prob(emissions[...,None,:]).sum(-1)
+    @property
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters.
+        """
+        return tfb.SoftmaxCentered().inverse(self.initial_probabilities), \
+               tfb.SoftmaxCentered().inverse(self.transition_matrix), \
+               tfb.Softplus().inverse(self.emission_rates)
 
-    def m_step_emission_distribution(self, emissions, posterior):
-        # Gaussian emission distribution
-        # TODO: Include NIW prior
-        w_sum = jnp.sum('btk->k', posterior.smoothed_probs)
-        x_sum = jnp.einsum('btk, bti->ki', posterior.smoothed_probs, emissions)
-
-        emission_rates = Gamma(self.emission_prior.concentration + x_sum,
-                               self.emission_prior.rate + w_sum[:, None]).mode()
-        self.emission_distribution = Poisson(emission_rates)
+    @classmethod
+    def from_unconstrained_params(cls, unconstrained_params, hypers):
+        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        emission_rates = tfb.Softplus().forward(unconstrained_params[2])
+        return cls(initial_probabilities, transition_matrix, emission_rates, *hypers)
