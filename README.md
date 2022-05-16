@@ -21,3 +21,5 @@ Related libraries:
 - [linderman-lab/ssm-jax](https://github.com/lindermanlab/ssm-jax)
 - [linderman-lab/ssm](https://github.com/lindermanlab/ssm) (numpy)
 - [sarkka-lab/parallel nonlinear smoothers](https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers) 
+- [Zheng Zhao's chirpgp](https://github.com/spdes/chirpgp/blob/main/chirpgp/filters_smoothers.py)
+- 
