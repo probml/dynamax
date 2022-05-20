@@ -1,10 +1,11 @@
-from jax import random
+from jax import random as jr
 from jax import numpy as jnp
 import tensorflow as tf
 import tensorflow_probability as tfp
 
 tfd = tfp.distributions
-from ssm_jax.lgssm.inference import LGSSMParams, lgssm_sample, lgssm_filter
+from ssm_jax.lgssm.models import LGSSMParams, lgssm_joint_sample
+from ssm_jax.lgssm.inference import lgssm_filter
 
 def tfp_filter(timesteps, A, transition_noise_scale, C, observation_noise_scale, mu0, x_hist):
     """ Perform filtering using tensorflow probability """
@@ -56,11 +57,11 @@ def test_kalman_filter():
                         emission_input_weights = J,
                         emission_covariance = R)
 
-    key = random.PRNGKey(111)
+    key = jr.PRNGKey(111)
     num_timesteps = 15 
 
     inputs = jnp.zeros((num_timesteps,1))
-    x, y = lgssm_sample(key,lgssm,num_timesteps,inputs)
+    x, y = lgssm_joint_sample(key,lgssm,num_timesteps,inputs)
 
     ssm_ll_filt, ssm_filtered_means, ssm_filtered_covs = lgssm_filter(lgssm, inputs, y)
     tfp_filtered_means, tfp_filtered_covs = tfp_filter(
