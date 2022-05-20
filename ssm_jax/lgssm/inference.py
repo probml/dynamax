@@ -29,7 +29,7 @@ class LGSSMParams:
         return self.emission_matrix.shape[-2]
 
 
-def sample(self, rng, params, num_timesteps, inputs):
+def lgssm_sample(rng, params, num_timesteps, inputs):
     """_summary_
 
     Args:
@@ -47,9 +47,9 @@ def sample(self, rng, params, num_timesteps, inputs):
         A = get(params.dynamics_matrix)
         B = get(params.dynamics_input_weights)
         Q = get(params.dynamics_covariance)
-        C = get(params.emissions_matrix)
-        D = get(params.emissions_input_weights)
-        R = get(params.emissions_covariance)
+        C = get(params.emission_matrix)
+        D = get(params.emission_input_weights)
+        R = get(params.emission_covariance)
         u = inputs[t]
 
         # Sample data and next state
@@ -60,12 +60,12 @@ def sample(self, rng, params, num_timesteps, inputs):
 
     # Initialize
     rng, this_rng = jr.split(rng, 2)
-    init_state = MVN(self.m0, self.Q0).sample(seed=this_rng)
+    init_state = MVN(params.initial_mean, params.initial_covariance).sample(seed=this_rng)
 
     # Run the sampler
     rngs = jr.split(rng, num_timesteps)
     _, (states, emissions) = lax.scan(
-        _step, init_state, (rngs, jnp.arange(num_timesteps), inputs))
+        _step, init_state, (rngs, jnp.arange(num_timesteps)))
     return states, emissions
 
 
@@ -127,9 +127,9 @@ def lgssm_filter(params, inputs, emissions):
         A = get(params.dynamics_matrix)
         B = get(params.dynamics_input_weights)
         Q = get(params.dynamics_covariance)
-        C = get(params.emissions_matrix)
-        D = get(params.emissions_input_weights)
-        R = get(params.emissions_covariance)
+        C = get(params.emission_matrix)
+        D = get(params.emission_input_weights)
+        R = get(params.emission_covariance)
         u = inputs[t]
         y = emissions[t]
 
@@ -261,14 +261,14 @@ def lgssm_smoother(params, inputs, emissions):
     # Run the Kalman smoother
     num_timesteps = len(emissions)
     init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (jnp.arange(num_timesteps-1, -1, -1),
+    args = (jnp.arange(num_timesteps-2, -1, -1), 
             filtered_means[:-1][::-1],
             filtered_covs[:-1][::-1])
     _, (smoothed_means, smoothed_covs, smoothed_cross) = \
         lax.scan(_step, init_carry, args)
 
     # Reverse the arrays and return
-    smoothed_means = jnp.row_stack([smoothed_means[::-1], filtered_means[-1]])
-    smoothed_covs = jnp.row_stack([smoothed_covs[::-1], filtered_covs[-1]])
+    smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None,...]))
+    smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None,...]))
     smoothed_cross = smoothed_cross[::-1]
     return ll, smoothed_means, smoothed_covs, smoothed_cross
