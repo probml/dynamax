@@ -4,7 +4,8 @@ from jax import random as jr
 from matplotlib import pyplot as plt
 
 from ssm_jax.demos.plot_utils import plot_ellipse
-from ssm_jax.lgssm.inference import LGSSMParams, lgssm_sample, lgssm_filter, lgssm_smoother
+from ssm_jax.lgssm.models import LGSSMParams, lgssm_joint_sample
+from ssm_jax.lgssm.inference import lgssm_filter, lgssm_smoother
 
 def plot_tracking_values(observed, filtered, cov_hist, signal_label, ax):
     """
@@ -79,7 +80,7 @@ key = jr.PRNGKey(111)
 num_timesteps = 15
 inputs = jnp.zeros((num_timesteps,1))
 
-x, y = lgssm_sample(key,lgssm,num_timesteps,inputs)
+x, y = lgssm_joint_sample(key,lgssm,num_timesteps,inputs)
 
 ll_filt, filtered_means, filtered_covs = lgssm_filter(lgssm, inputs, y)
 ll_smooth, smoothed_means, smoothed_covs, _ = lgssm_smoother(lgssm, inputs, y)
