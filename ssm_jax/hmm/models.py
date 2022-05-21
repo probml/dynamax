@@ -5,12 +5,18 @@ from jax.tree_util import register_pytree_node_class
 
 from abc import ABC, abstractclassmethod, abstractproperty
 
-from .core import hmm_filter, hmm_posterior_mode
+from .inference import hmm_filter, hmm_smoother, hmm_posterior_mode
 
 # Using TFP for now since it has all our distributions
 # (Distrax doesn't have Poisson, it seems.)
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
+
+from tensorflow_probability.substrates.jax.distributions import (
+    Dirichlet, 
+    Categorical, 
+    MultivariateNormalFullCovariance as MVN
+)
 
 # From https://www.tensorflow.org/probability/examples/
 # TensorFlow_Probability_Case_Study_Covariance_Estimation
@@ -53,6 +59,10 @@ class BaseHMM(ABC):
     @property
     def emission_shape(self):
         return self.emission_distribution.event_shape
+
+    @property
+    def num_obs(self):
+        return self.emission_distribution.event_shape[0]
 
     @property
     def initial_probabilities(self):
@@ -116,6 +126,13 @@ class BaseHMM(ABC):
                                   self.transition_matrix,
                                   log_likelihoods)
 
+    def smoother(self, emissions):
+        # emissions is (T,D). Reshape to (T,1,D) so it broadcasts to (K,D)
+        log_likelihoods = self.emission_distribution.log_prob(emissions[...,None,:])
+        return hmm_smoother(self.initial_probabilities,
+                            self.transition_matrix,
+                            log_likelihoods)
+
     # Properties to allow unconstrained optimization and JAX jitting
     @abstractproperty
     def unconstrained_params(self):
@@ -144,6 +161,9 @@ class BaseHMM(ABC):
         # We have to be a little fancy since this classmethod
         # is inherited by subclasses with different constructors.
         return cls.from_unconstrained_params(children, aux_data)
+
+    def m_step(self, emissions, posterior):
+        raise NotImplemented
 
 
 @register_pytree_node_class
@@ -210,8 +230,7 @@ class CategoricalHMM(BaseHMM):
         Args:
             initial_probabilities (_type_): _description_
             transition_matrix (_type_): _description_
-            emission_means (_type_): _description_
-            emission_covariance_matrices (_type_): _description_
+            emission_probs (_type_): _description_
         """
         super().__init__(initial_probabilities,
                          transition_matrix)
@@ -310,6 +329,30 @@ class GaussianHMM(BaseHMM):
         emission_means = unconstrained_params[2]
         emission_covs = PSDToRealBijector.inverse(unconstrained_params[3])
         return cls(initial_probabilities, transition_matrix, emission_means, emission_covs, *hypers)
+
+    def m_step(self, emissions, posterior):
+      # Initial distribution
+      initial_probs = Dirichlet(1.0001 + posterior.smoothed_probs[0]).mode()
+
+      # Transition distribution
+      transition_matrix = Dirichlet(
+          1.0001 + jnp.einsum('tij->ij', posterior.smoothed_transition_probs)).mode()
+
+      # Gaussian emission distribution
+      w_sum = jnp.einsum('tk->k', posterior.smoothed_probs)
+      x_sum = jnp.einsum('tk, ti->ki', posterior.smoothed_probs, emissions)
+      xxT_sum = jnp.einsum('tk, ti, tj->kij', posterior.smoothed_probs, emissions, emissions)
+
+      emission_means = x_sum / w_sum[:, None]
+      emission_covs = xxT_sum / w_sum[:, None, None] \
+          - jnp.einsum('ki,kj->kij', emission_means, emission_means) \
+          + 1e-4 * jnp.eye(emissions.shape[1])
+      
+      # Pack the results into a new GaussianHMM
+      return GaussianHMM(initial_probs,
+                            transition_matrix,
+                            emission_means,
+                            emission_covs)
 
 
 @register_pytree_node_class

@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax.scipy.special import logsumexp
 
-import ssm_jax.hmm.core as core
+import ssm_jax.hmm.inference as core
 
 
 def big_log_joint(initial_probs,
