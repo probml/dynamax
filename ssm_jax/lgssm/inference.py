@@ -2,21 +2,54 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 from distrax import MultivariateNormalFullCovariance as MVN
+import chex
+
+@chex.dataclass
+class LGSSMParams:
+    """Lightweight container for LGSSM parameters.
+    The functions below can be called with an instance of this class.
+    However, they can also accept a ssm.lgssm.models.LinearGaussianSSM instance,
+    if you prefer a more object-oriented approach.
+    """
+    initial_mean: chex.Array
+    initial_covariance: chex.Array
+    dynamics_matrix: chex.Array
+    dynamics_input_weights: chex.Array
+    dynamics_bias: chex.Array
+    dynamics_covariance: chex.Array
+    emission_matrix: chex.Array
+    emission_input_weights: chex.Array
+    emission_bias: chex.Array
+    emission_covariance: chex.Array
+
+@chex.dataclass
+class LGSSMPosterior:
+    """Simple wrapper for properties of an HMM posterior distribution.
+    """
+    marginal_log_lkhd: chex.Scalar
+    filtered_means: chex.Array
+    filtered_covariances: chex.Array
+    smoothed_means: chex.Array
+    smoothed_covariances: chex.Array
+    smoothed_cross_covariances: chex.Array
+
 
 # Helper functions
-def _predict(m, S, A, B, Q, u):
+_get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
+
+def _predict(m, S, A, B, b, Q, u):
     """
         Predict next mean and covariance under a linear Gaussian model
 
-        p(x_{t+1}) = \int N(x_t | m, S) N(x_{t+1} | Ax_t + Bu, Q)
+        p(x_{t+1}) = \int N(x_t | m, S) N(x_{t+1} | Ax_t + Bu + b, Q)
                     = N(x_{t+1} | Am + Bu, A S A^T + Q)
     """
-    mu_pred = A @ m + B @ u
+    mu_pred = A @ m + B @ u + b
     Sigma_pred = A @ S @ A.T + Q
     return mu_pred, Sigma_pred
 
 
-def _condition_on(m, S, C, D, R, u, y):
+def _condition_on(m, S, C, D, d, R, u, y):
     """
     Condition a Gaussian potential on a new linear Gaussian observation
 
@@ -31,7 +64,7 @@ def _condition_on(m, S, C, D, R, u, y):
     dim = m.shape[-1]
     ImKC = jnp.eye(dim) - K @ C
     Sigma_cond = ImKC @ S @ ImKC.T + K @ R @ K.T
-    mu_cond = m + K @ (y - D @ u - C @ m)
+    mu_cond = m + K @ (y - D @ u - d - C @ m)
     return mu_cond, Sigma_cond
 
 
@@ -42,7 +75,7 @@ def lgssm_filter(params, inputs, emissions):
 
     Args:
 
-    lds_params: an LDSParams instance
+    lds_params: an LDSParams instance (or object with the same fields)
     inputs: array of inputs to the LDS
     observations: array of data
 
@@ -52,32 +85,32 @@ def lgssm_filter(params, inputs, emissions):
     filtered_means: filtered means E[x_t | y_{1:t}, u_{1:t}]
     filtered_covs:  filtered covariances Cov[x_t | y_{1:t}, u_{1:t}]
     """
-
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
 
         # Shorthand: get parameters and inputs for time index t
-        get = lambda x: x[t] if x.ndim == 3 else x
-        A = get(params.dynamics_matrix)
-        B = get(params.dynamics_input_weights)
-        Q = get(params.dynamics_covariance)
-        C = get(params.emission_matrix)
-        D = get(params.emission_input_weights)
-        R = get(params.emission_covariance)
+        A = _get_params(params.dynamics_matrix, 2, t)
+        B = _get_params(params.dynamics_input_weights, 2, t)
+        b = _get_params(params.dynamics_bias, 1, t)
+        Q = _get_params(params.dynamics_covariance, 2, t)
+        C = _get_params(params.emission_matrix, 2, t)
+        D = _get_params(params.emission_input_weights, 2, t)
+        d = _get_params(params.emission_bias, 1, t)
+        R = _get_params(params.emission_covariance, 2, t)
         u = inputs[t]
         y = emissions[t]
 
         # Update the log likelihood
-        ll += MVN(C @ pred_mean + D @ u,
+        ll += MVN(C @ pred_mean + D @ u + d,
                   C @ pred_cov @ C.T + R).log_prob(y)
 
         # Condition on this emission
         filtered_mean, filtered_cov = _condition_on(
-            pred_mean, pred_cov, C, D, R, u, y)
+            pred_mean, pred_cov, C, D, d, R, u, y)
 
         # Predict the next state
         pred_mean, pred_cov = _predict(
-            filtered_mean, filtered_cov, A, B, Q, u)
+            filtered_mean, filtered_cov, A, B, b, Q, u)
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
@@ -97,7 +130,7 @@ def lgssm_posterior_sample(rng, params, inputs, emissions):
     Args:
 
     rng:        jax.random.PRNGKey
-    lds:        an LDSParams instance
+    lds:        an LDSParams instance (or object with the same fields)
     inputs:     array of inputs to the LDS
     data:       array of data
 
@@ -115,15 +148,15 @@ def lgssm_posterior_sample(rng, params, inputs, emissions):
         rng, filtered_mean, filtered_cov, t = args
 
         # Shorthand: get parameters and inputs for time index t
-        get = lambda x: x[t] if x.ndim == 3 else x
-        A = get(params.dynamics_matrix)
-        B = get(params.dynamics_input_weights)
-        Q = get(params.dynamics_covariance)
+        A = _get_params(params.dynamics_matrix, 2, t)
+        B = _get_params(params.dynamics_input_weights, 2, t)
+        b = _get_params(params.dynamics_bias, 1, t)
+        Q = _get_params(params.dynamics_covariance, 2, t)
         u = inputs[t]
 
         # Condition on next state
         smoothed_mean, smoothed_cov = _condition_on(
-            filtered_mean, filtered_cov, A, B, Q, u, next_state)
+            filtered_mean, filtered_cov, A, B, b, Q, u, next_state)
         state = MVN(smoothed_mean, smoothed_cov).sample(seed=rng)
         return state, state
 
@@ -147,7 +180,7 @@ def lgssm_smoother(params, inputs, emissions):
     implements the Rauch-Tung-Striebel (RTS) smoother.
 
     Args:
-        lds (_type_): _description_
+        lds (_type_): an LDSParams instance (or object with the same fields)
         inputs (_type_): _description_
         data (_type_): _description_
 
@@ -157,7 +190,6 @@ def lgssm_smoother(params, inputs, emissions):
         smoothed_covs: smoothed marginal covariance of the latent states.
         smoothed_cross: smoothed cross product E[x_t x_{t+1}^T | y_{1:T}].
     """
-
     # Run the Kalman filter
     ll, filtered_means, filtered_covs = lgssm_filter(params, inputs, emissions)
 
@@ -168,10 +200,10 @@ def lgssm_smoother(params, inputs, emissions):
         t, filtered_mean, filtered_cov = args
 
         # Shorthand: get parameters and inputs for time index t
-        get = lambda x: x[t] if x.ndim == 3 else x
-        A = get(params.dynamics_matrix)
-        B = get(params.dynamics_input_weights)
-        Q = get(params.dynamics_covariance)
+        A = _get_params(params.dynamics_matrix, 2, t)
+        B = _get_params(params.dynamics_input_weights, 2, t)
+        b = _get_params(params.dynamics_bias, 1, t)
+        Q = _get_params(params.dynamics_covariance, 2, t)
         u = inputs[t]
 
         # This is like the Kalman gain but in reverse
@@ -180,7 +212,7 @@ def lgssm_smoother(params, inputs, emissions):
 
         # Compute the smoothed mean and covariance
         smoothed_mean = filtered_mean + \
-            G @ (smoothed_mean_next - A @ filtered_mean - B @ u)
+            G @ (smoothed_mean_next - A @ filtered_mean - B @ u - b)
         smoothed_cov = filtered_cov + \
             G @ (smoothed_cov_next - A @ filtered_cov @ A.T - Q) @ G.T
 
@@ -194,7 +226,7 @@ def lgssm_smoother(params, inputs, emissions):
     # Run the Kalman smoother
     num_timesteps = len(emissions)
     init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (jnp.arange(num_timesteps-2, -1, -1), 
+    args = (jnp.arange(num_timesteps-2, -1, -1),
             filtered_means[:-1][::-1],
             filtered_covs[:-1][::-1])
     _, (smoothed_means, smoothed_covs, smoothed_cross) = \
@@ -204,4 +236,9 @@ def lgssm_smoother(params, inputs, emissions):
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None,...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None,...]))
     smoothed_cross = smoothed_cross[::-1]
-    return ll, smoothed_means, smoothed_covs, smoothed_cross
+    return LGSSMPosterior(marginal_log_lkhd=ll,
+                          filtered_means=filtered_means,
+                          filtered_covariances=filtered_covs,
+                          smoothed_means=smoothed_means,
+                          smoothed_covariances=smoothed_covs,
+                          smoothed_cross_covariances=smoothed_cross)

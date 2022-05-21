@@ -1,30 +1,18 @@
+from abc import ABC, abstractclassmethod, abstractproperty
+
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 from jax.tree_util import register_pytree_node_class
-
-from abc import ABC, abstractclassmethod, abstractproperty
-
-from .inference import hmm_filter, hmm_smoother, hmm_posterior_mode
 
 # Using TFP for now since it has all our distributions
 # (Distrax doesn't have Poisson, it seems.)
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
-from tensorflow_probability.substrates.jax.distributions import (
-    Dirichlet, 
-    Categorical, 
-    MultivariateNormalFullCovariance as MVN
-)
+from ssm_jax.hmm.inference import hmm_filter, hmm_smoother, hmm_posterior_mode
+from ssm_jax.utils import PSDToRealBijector
 
-# From https://www.tensorflow.org/probability/examples/
-# TensorFlow_Probability_Case_Study_Covariance_Estimation
-PSDToRealBijector = tfb.Chain([
-    tfb.Invert(tfb.FillTriangular()),
-    tfb.TransformDiagonal(tfb.Invert(tfb.Exp())),
-    tfb.Invert(tfb.CholeskyOuterProduct()),
-])
 
 class BaseHMM(ABC):
 
@@ -158,8 +146,6 @@ class BaseHMM(ABC):
 
     @classmethod
     def tree_unflatten(cls, aux_data, children):
-        # We have to be a little fancy since this classmethod
-        # is inherited by subclasses with different constructors.
         return cls.from_unconstrained_params(children, aux_data)
 
     def m_step(self, emissions, posterior):
@@ -332,10 +318,10 @@ class GaussianHMM(BaseHMM):
 
     def m_step(self, emissions, posterior):
       # Initial distribution
-      initial_probs = Dirichlet(1.0001 + posterior.smoothed_probs[0]).mode()
+      initial_probs = tfd.Dirichlet(1.0001 + posterior.smoothed_probs[0]).mode()
 
       # Transition distribution
-      transition_matrix = Dirichlet(
+      transition_matrix = tfd.Dirichlet(
           1.0001 + jnp.einsum('tij->ij', posterior.smoothed_transition_probs)).mode()
 
       # Gaussian emission distribution
@@ -347,7 +333,7 @@ class GaussianHMM(BaseHMM):
       emission_covs = xxT_sum / w_sum[:, None, None] \
           - jnp.einsum('ki,kj->kij', emission_means, emission_means) \
           + 1e-4 * jnp.eye(emissions.shape[1])
-      
+
       # Pack the results into a new GaussianHMM
       return GaussianHMM(initial_probs,
                             transition_matrix,

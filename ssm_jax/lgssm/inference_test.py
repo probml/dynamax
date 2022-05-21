@@ -1,72 +1,66 @@
 from jax import random as jr
 from jax import numpy as jnp
-import tensorflow as tf
-import tensorflow_probability as tfp
 
-tfd = tfp.distributions
-from ssm_jax.lgssm.models import LGSSMParams, lgssm_joint_sample
+import tensorflow_probability.substrates.jax.distributions as tfd
+
 from ssm_jax.lgssm.inference import lgssm_filter
+from ssm_jax.lgssm.models import LinearGaussianSSM
 
-def tfp_filter(timesteps, A, transition_noise_scale, C, observation_noise_scale, mu0, x_hist):
+def tfp_filter(dynamics_matrix,
+               dynamics_noise_scale,
+               emission_matrix,
+               emission_noise_scale,
+               initial_mean,
+               emissions):
     """ Perform filtering using tensorflow probability """
-    state_size, _ = A.shape
-    observation_size, _ = C.shape
-    transition_noise = tfd.MultivariateNormalDiag(
-        scale_diag=jnp.ones(state_size) * transition_noise_scale
-    )
-    obs_noise = tfd.MultivariateNormalDiag(
-        scale_diag=jnp.ones(observation_size) * observation_noise_scale
-    )
-    prior = tfd.MultivariateNormalDiag(mu0, tf.ones([state_size]))
+    num_timesteps = len(emissions)
+    state_dim, _ = dynamics_matrix.shape
+    emission_dim, _ = emission_matrix.shape
+
+    # Make the initial and noise distributions
+    dynamics_noise_dist = tfd.MultivariateNormalDiag(
+        scale_diag=jnp.ones(state_dim) * dynamics_noise_scale)
+    emission_noise_dist = tfd.MultivariateNormalDiag(
+        scale_diag=jnp.ones(emission_dim) * emission_noise_scale)
+    initial_dist = tfd.MultivariateNormalDiag(initial_mean, jnp.ones([state_dim]))
 
     LGSSM = tfd.LinearGaussianStateSpaceModel(
-        timesteps, A, transition_noise, C, obs_noise, prior
-    )
+        num_timesteps,
+        dynamics_matrix, dynamics_noise_dist,
+        emission_matrix, emission_noise_dist,
+        initial_dist)
 
-    _, filtered_means, filtered_covs, _, _, _, _ = LGSSM.forward_filter(x_hist)
-    return filtered_means.numpy(), filtered_covs.numpy()
-
-
-def test_kalman_filter():
-    ### LDS Parameters ###
-    state_size = 2
-    observation_size  = 2
-    F = jnp.eye(state_size)
-    H = jnp.eye(observation_size)
-
-    G = jnp.zeros((state_size,1))
-    J = jnp.zeros((observation_size,1))
-
-    transition_noise_scale = 1.0
-    observation_noise_scale = 1.0
-    Q = jnp.eye(state_size) * transition_noise_scale
-    R = jnp.eye(observation_size) * observation_noise_scale
+    _, filtered_means, filtered_covs, _, _, _, _ = LGSSM.forward_filter(emissions)
+    return filtered_means, filtered_covs
 
 
-    ### Prior distribution params ###
-    mu0 = jnp.array([8, 10]).astype(float)
-    Sigma0 = jnp.eye(state_size) * 1.0
+def test_kalman_filter(state_dim=2, emission_dim=2,
+                       dynamics_noise_scale=1.0,
+                       emission_noise_scale=1.0,
+                       num_timesteps=15,
+                       seed=0):
+    lgssm = LinearGaussianSSM(
+        initial_mean=jnp.array([8, 10]).astype(float),
+        initial_covariance=jnp.eye(state_dim) * 1.0,
+        dynamics_matrix=jnp.eye(state_dim),
+        dynamics_bias=jnp.zeros((state_dim,)),
+        dynamics_covariance=jnp.eye(state_dim) * dynamics_noise_scale,
+        emission_matrix=jnp.eye(state_dim),  # assumes emission_dim == state_dim
+        emission_bias=jnp.zeros((emission_dim,)),
+        emission_covariance=jnp.eye(emission_dim) * emission_noise_scale)
 
     ### Sample data ###
-    lgssm = LGSSMParams(initial_mean = mu0,
-                        initial_covariance = Sigma0,
-                        dynamics_matrix = F,
-                        dynamics_input_weights = G,
-                        dynamics_covariance = Q,
-                        emission_matrix = H,
-                        emission_input_weights = J,
-                        emission_covariance = R)
+    key = jr.PRNGKey(seed)
+    states, emissions = lgssm.sample(key, num_timesteps)
 
-    key = jr.PRNGKey(111)
-    num_timesteps = 15 
-
-    inputs = jnp.zeros((num_timesteps,1))
-    x, y = lgssm_joint_sample(key,lgssm,num_timesteps,inputs)
-
-    ssm_ll_filt, ssm_filtered_means, ssm_filtered_covs = lgssm_filter(lgssm, inputs, y)
+    ssm_ll_filt, ssm_filtered_means, ssm_filtered_covs = lgssm.filter(emissions)
     tfp_filtered_means, tfp_filtered_covs = tfp_filter(
-        num_timesteps, F, transition_noise_scale, H, observation_noise_scale, mu0, y
-    )
+        lgssm.dynamics_matrix,
+        dynamics_noise_scale,
+        lgssm.emission_matrix,
+        emission_noise_scale,
+        lgssm.initial_mean,
+        emissions)
 
     assert jnp.allclose(ssm_filtered_means, tfp_filtered_means, rtol=1e-2)
     assert jnp.allclose(ssm_filtered_covs, tfp_filtered_covs, rtol=1e-2)
