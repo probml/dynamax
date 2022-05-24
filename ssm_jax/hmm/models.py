@@ -114,6 +114,12 @@ class BaseHMM(ABC):
                                   self.transition_matrix,
                                   log_likelihoods)
 
+    def filter(self, emissions):
+        log_likelihoods = self.emission_distribution.log_prob(emissions[...,None,:])
+        return hmm_filter(self.initial_probabilities,
+                            self.transition_matrix,
+                            log_likelihoods)
+
     def smoother(self, emissions):
         # emissions is (T,D). Reshape to (T,1,D) so it broadcasts to (K,D)
         log_likelihoods = self.emission_distribution.log_prob(emissions[...,None,:])
