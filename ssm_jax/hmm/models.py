@@ -99,30 +99,33 @@ class BaseHMM(ABC):
         """
         lp = self.initial_distribution.log_prob(states[0])
         lp += self.transition_distribution[states[:-1]].log_prob(states[1:]).sum()
-        lp += self.emission_distribution[states].log_prob(emissions).sum()
+        lp += self.emission_distribution[states].log_prob(emissions).sum(0)
         return lp
 
     def marginal_log_prob(self, emissions):
-        log_likelihoods = self.emission_distribution.log_prob(emissions[...,None,:])
+        # Add extra dimension to emissions for broadcasting.
+        log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
         return hmm_filter(self.initial_probabilities,
                             self.transition_matrix,
                             log_likelihoods)[0]
 
     def most_likely_states(self, emissions):
-        log_likelihoods = self.emission_distribution.log_prob(emissions[...,None,:])
+        # Add extra dimension to emissions for broadcasting.
+        log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
         return hmm_posterior_mode(self.initial_probabilities,
                                   self.transition_matrix,
                                   log_likelihoods)
 
     def filter(self, emissions):
-        log_likelihoods = self.emission_distribution.log_prob(emissions[...,None,:])
+        # Add extra dimension to emissions for broadcasting.
+        log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
         return hmm_filter(self.initial_probabilities,
                             self.transition_matrix,
                             log_likelihoods)
 
     def smoother(self, emissions):
-        # emissions is (T,D). Reshape to (T,1,D) so it broadcasts to (K,D)
-        log_likelihoods = self.emission_distribution.log_prob(emissions[...,None,:])
+        # Add extra dimension to emissions for broadcasting.
+        log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
         return hmm_smoother(self.initial_probabilities,
                             self.transition_matrix,
                             log_likelihoods)
