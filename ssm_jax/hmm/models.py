@@ -177,7 +177,7 @@ class BernoulliHMM(BaseHMM):
         super().__init__(initial_probabilities,
                          transition_matrix)
 
-        self._emissions_distribution = tfd.Independent(
+        self._emission_distribution = tfd.Independent(
             tfd.Bernoulli(probs=emission_probs),
             reinterpreted_batch_ndims=1)
 
