@@ -115,8 +115,8 @@ class LinearGaussianSSM:
     def marginal_log_prob(self, emissions, inputs=None):
         num_timesteps = len(emissions)
         inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-        ll, _, _ = lgssm_filter(self, inputs, emissions)
-        return ll
+        filtered_posterior = lgssm_filter(self, inputs, emissions)
+        return filtered_posterior.marginal_loglik
 
     def filter(self, emissions, inputs=None):
         num_timesteps = len(emissions)
