@@ -1,12 +1,12 @@
 # This demo provides a basic example of Kalman filtering and
 #  smoothing with ssm_jax.
- 
+
 import numpy as np
 from jax import numpy as jnp
 from jax import random as jr
 from matplotlib import pyplot as plt
 
-from ssm_jax.misc.plot_utils import plot_lgssm_posterior
+from ssm_jax.plotting import plot_lgssm_posterior
 from ssm_jax.lgssm.models import LinearGaussianSSM
 
 def kf_tracking():
@@ -70,7 +70,7 @@ def plot_kf_tracking(x,y,lgssm_posterior):
              label="emissions")
     ax.legend()
 
-    # Plot Filtering 
+    # Plot Filtering
     fig, ax = plt.subplots()
     ax.plot(*y.T, ls="",
              **observation_marker_kwargs,
@@ -85,7 +85,7 @@ def plot_kf_tracking(x,y,lgssm_posterior):
                          ellipse_kwargs={'edgecolor':'k',
                                          'linewidth':0.5});
 
-    # Plot Smoothing 
+    # Plot Smoothing
     fig, ax = plt.subplots()
     ax.plot(*y.T, ls="",
              **observation_marker_kwargs,

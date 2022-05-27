@@ -1,16 +1,11 @@
 # Code for parameter estimation (MLE, MAP) using EM and SGD
 
 import jax.numpy as jnp
-import jax.random as jr
-from jax import lax
 from jax import jit, value_and_grad
 
-import chex
 import optax
 
 from tqdm.auto import trange
-
-from ssm_jax.hmm.inference import hmm_smoother
 
 
 def hmm_fit_em(hmm, emissions, niter):
@@ -42,7 +37,7 @@ def hmm_fit_sgd(cls, hmm, emissions, optimizer, niter):
       updates, opt_state = optimizer.update(grads, opt_state)
       params = optax.apply_updates(params, updates)
       return val, params, opt_state
-      
+
   params = hmm.unconstrained_params
   opt_state = optimizer.init(params)
   losses = []
@@ -53,4 +48,4 @@ def hmm_fit_sgd(cls, hmm, emissions, optimizer, niter):
       pbar.set_description("Loss={:.1f}".format(loss_val))
 
   hmm = cls.from_unconstrained_params(params, ())
-  return hmm, losses
+  return hmm, jnp.stack(losses)

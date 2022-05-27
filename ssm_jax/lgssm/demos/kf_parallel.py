@@ -1,4 +1,4 @@
-# This example demonstrates the use of the functional inference interface in 
+# This example demonstrates the use of the functional inference interface in
 #  ssm_jax where `jax.vmap` is used to map smoothing over multiple samples.
 #
 #  Note the use of `lgssm_smoother()` rather than `LinearGaussianSSM.smoother()`
@@ -8,7 +8,7 @@ from jax import random as jr
 from jax import vmap
 from matplotlib import pyplot as plt
 
-from ssm_jax.misc.plot_utils import plot_lgssm_posterior
+from ssm_jax.plotting import plot_lgssm_posterior
 from ssm_jax.lgssm.models import LinearGaussianSSM
 from ssm_jax.lgssm.inference import lgssm_smoother
 
@@ -58,8 +58,8 @@ def kf_parallel():
 
 def plot_kf_parallel(xs, ys, lgssm_posteriors):
     num_samples = len(xs)
-    
-    # Plot Data 
+
+    # Plot Data
     fig,ax = plt.subplots()
     for n in range(num_samples):
         ax.plot(*xs[n,:,:2].T, ls="--", color=f"C{n}")
@@ -67,7 +67,7 @@ def plot_kf_parallel(xs, ys, lgssm_posteriors):
     ax.set_title("Data")
     ax.legend()
 
-    # Plot Filtering 
+    # Plot Filtering
     fig,ax = plt.subplots()
     for n in range(num_samples):
         ax.plot(*ys[n,...].T,'.')

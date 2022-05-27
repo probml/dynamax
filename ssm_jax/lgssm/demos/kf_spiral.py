@@ -1,11 +1,11 @@
-# This example demonstrates the use of the lgssm filtering and smoothing when 
+# This example demonstrates the use of the lgssm filtering and smoothing when
 #  the linear dynamical system induced by the matrix F has imaginary eigenvalues.
 
 from jax import numpy as jnp
 from jax import random as jr
 from matplotlib import pyplot as plt
 
-from ssm_jax.misc.plot_utils import plot_lgssm_posterior
+from ssm_jax.plotting import plot_lgssm_posterior
 from ssm_jax.lgssm.models import LinearGaussianSSM
 
 def kf_spiral():

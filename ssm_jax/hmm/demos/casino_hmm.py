@@ -3,9 +3,6 @@ Catching an "Occasionally dishonest Casino" HMM
 
 Based on https://github.com/probml/JSL/blob/main/jsl/demos/hmm_casino.py
 """
-
-
-
 import jax.numpy as jnp
 import jax.random as jr
 
@@ -75,8 +72,14 @@ def plot_inference(inference_values, states, ax, state=1, map_estimate=False):
 
 
 def demo(test_mode=False):
+    """Run the casino demo to simulate dice rolls that are occassionally dishonest,
+    then use a Categorical HMM to infer when the casino is cheating.
 
-    # Construct the Model
+    Args:
+        test_mode (bool, optional): running the script in test mode will
+        suppress plotting.
+    """
+    # Construct the model
     transition_matrix = jnp.array([
         [0.95, 0.05],
         [0.10, 0.90]
@@ -91,19 +94,16 @@ def demo(test_mode=False):
     # Simulate data
     n_timesteps = 300
     true_states, emissions = hmm.sample(jr.PRNGKey(0), n_timesteps)
-
     print("Printing sample observed/latent...")
     to_string = lambda x: "".join((np.array(x) + 1).astype(str))[:60]
     print("obs: ", to_string(true_states)[:60])
     print("hid: ", to_string(emissions)[:60])
 
-
-    # Perform Inference
+    # Perform inference
     posterior = hmm.smoother(emissions)
     most_likely_states = hmm.most_likely_states(emissions)
     print("Log likelihood: ", posterior.marginal_log_lkhd)
     print("most likely states:", to_string(most_likely_states)[:60])
-
 
     # Plot results
     if not test_mode:
@@ -122,6 +122,7 @@ def demo(test_mode=False):
         ax.set_ylabel("MAP state")
         ax.set_title("Viterbi")
         plt.show()
+
 
 # Run the demo
 if __name__ == "__main__":

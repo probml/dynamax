@@ -1,10 +1,78 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, transforms
+from matplotlib.colors import LinearSegmentedColormap
+import seaborn as sns
+
+
+_COLOR_NAMES = [
+    "windows blue",
+    "red",
+    "amber",
+    "faded green",
+    "dusty purple",
+    "orange",
+    "clay",
+    "pink",
+    "greyish",
+    "mint",
+    "light cyan",
+    "steel blue",
+    "forest green",
+    "pastel purple",
+    "salmon",
+    "dark brown"]
+COLORS = sns.xkcd_palette(_COLOR_NAMES)
+
+
+def white_to_color_cmap(color, nsteps=256):
+    """Return a cmap which ranges from white to the specified color.
+    Ported from HIPS-LIB plotting functions [https://github.com/HIPS/hips-lib]
+    """
+    # Get a red-white-black cmap
+    cdict = {'red': ((0.0, 1.0, 1.0),
+                       (1.0, color[0], color[0])),
+                'green': ((0.0, 1.0, 1.0),
+                          (1.0, color[1], color[0])),
+                'blue': ((0.0, 1.0, 1.0),
+                         (1.0, color[2], color[0]))}
+    cmap = LinearSegmentedColormap('white_color_colormap', cdict, nsteps)
+    return cmap
+
+
+def gradient_cmap(colors, nsteps=256, bounds=None):
+    """Return a colormap that interpolates between a set of colors.
+    Ported from HIPS-LIB plotting functions [https://github.com/HIPS/hips-lib]
+    """
+    ncolors = len(colors)
+    # assert colors.shape[1] == 3
+    if bounds is None:
+        bounds = np.linspace(0,1,ncolors)
+
+
+    reds = []
+    greens = []
+    blues = []
+    alphas = []
+    for b,c in zip(bounds, colors):
+        reds.append((b, c[0], c[0]))
+        greens.append((b, c[1], c[1]))
+        blues.append((b, c[2], c[2]))
+        alphas.append((b, c[3], c[3]) if len(c) == 4 else (b, 1., 1.))
+
+    cdict = {'red': tuple(reds),
+             'green': tuple(greens),
+             'blue': tuple(blues),
+             'alpha': tuple(alphas)}
+
+    cmap = LinearSegmentedColormap('grad_colormap', cdict, nsteps)
+    return cmap
+
+CMAP = gradient_cmap(COLORS)
 
 # https://matplotlib.org/devdocs/gallery/statistics/confidence_ellipse.html
 def plot_ellipse(Sigma, mu, ax, n_std=3.0,
-                 facecolor='none', edgecolor='k', 
+                 facecolor='none', edgecolor='k',
                  **kwargs):
     """ Plot an ellipse to with centre `mu` and axes defined by `Sigma`. """
     cov = Sigma
@@ -70,7 +138,7 @@ def plot_lgssm_posterior(post_means, post_covs, ax=None,
     post_means = post_means[:,:2]
     post_covs = post_covs[:,:2,:2]
 
-    # Plot the mean trajectory 
+    # Plot the mean trajectory
     ax.plot(post_means[:,0], post_means[:,1],**kwargs)
     # Plot covariance at each time point.
     plot_uncertainty_ellipses(post_means, post_covs, ax, **ellipse_kwargs)
