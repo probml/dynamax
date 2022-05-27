@@ -121,8 +121,9 @@ def demo(num_states=5,
     print("log marginal prob: ", true_hmm.marginal_log_prob(emissions))
 
     # Fit a GaussianHMM with twice number of true states using EM
+    batch_emissions = emissions[None, ...]
     test_hmm_em = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * num_states, emission_dim)
-    test_hmm_em, logprobs_em = learning.hmm_fit_em(test_hmm_em, emissions, niter=num_em_iters)
+    test_hmm_em, logprobs_em = learning.hmm_fit_em(test_hmm_em, batch_emissions, num_iters=num_em_iters)
 
     # Get the posterior
     print("true LL: ", true_hmm.marginal_log_prob(emissions))
@@ -142,8 +143,8 @@ def demo(num_states=5,
     # Fit a Gaussian HMM with twice number of true states using SGD
     test_hmm_sgd = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     optimizer = optax.adam(learning_rate=1e-2)
-    test_hmm_sgd, losses = learning.hmm_fit_sgd(GaussianHMM, test_hmm_sgd, emissions, optimizer,
-                                                niter=num_sgd_iters)
+    test_hmm_sgd, losses = learning.hmm_fit_sgd(test_hmm_sgd, batch_emissions, optimizer,
+                                                num_iters=num_sgd_iters)
 
     # Get the posterior
     print("true LL: ", true_hmm.marginal_log_prob(emissions))

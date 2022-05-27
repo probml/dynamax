@@ -69,10 +69,10 @@ def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
     for t in range(num_timesteps):
         log_joint_t = big_log_joint(
             initial_probs, transition_matrix,
-            jnp.row_stack([log_lkhds[:(t+1)], jnp.zeros(num_states)]))
+            jnp.row_stack([log_lkhds[:t], jnp.zeros(num_states)]))
 
         log_joint_t -= logsumexp(log_joint_t)
-        predicted_probs_t = jnp.exp(logsumexp(log_joint_t, axis=tuple(jnp.arange(t+1))))
+        predicted_probs_t = jnp.exp(logsumexp(log_joint_t, axis=tuple(jnp.arange(t))))
         assert jnp.allclose(predicted_probs[t], predicted_probs_t)
 
 
@@ -96,12 +96,6 @@ def test_two_filter_smoother(key=0, num_timesteps=5, num_states=2):
                                               +tuple(jnp.arange(t+1, num_timesteps)))
         assert jnp.allclose(posterior.smoothed_probs[t], smoothed_probs_t)
 
-    # Compare the smooth transition probabilities to the manually computed ones
-    for t in range(num_timesteps - 1):
-        smoothed_trans_probs_t = jnp.sum(joint, axis=tuple(jnp.arange(t)) \
-                                                    +tuple(jnp.arange(t+2, num_timesteps)))
-        assert jnp.allclose(posterior.smoothed_transition_probs[t], smoothed_trans_probs_t)
-
 
 def test_hmm_smoother(key=0, num_timesteps=5, num_states=2):
     if isinstance(key, int):
@@ -123,11 +117,49 @@ def test_hmm_smoother(key=0, num_timesteps=5, num_states=2):
                                               +tuple(jnp.arange(t+1, num_timesteps)))
         assert jnp.allclose(posterior.smoothed_probs[t], smoothed_probs_t)
 
+
+def test_compute_transition_probs(key=0, num_timesteps=5, num_states=2):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    args = random_hmm_args(key, num_timesteps, num_states)
+
+    # Run the HMM smoother
+    posterior = core.hmm_smoother(*args)
+    transition_probs = core.compute_transition_probs(args[1], posterior, reduce_sum=False)
+
+    # Compare log_normalizer to manually computed entries
+    log_joint = big_log_joint(*args)
+    joint = jnp.exp(log_joint - logsumexp(log_joint))
+
     # Compare the smooth transition probabilities to the manually computed ones
     for t in range(num_timesteps - 1):
-        smoothed_trans_probs_t = jnp.sum(joint, axis=tuple(jnp.arange(t)) \
-                                                    +tuple(jnp.arange(t+2, num_timesteps)))
-        assert jnp.allclose(posterior.smoothed_transition_probs[t], smoothed_trans_probs_t)
+        trans_probs_t = jnp.sum(joint, axis=tuple(jnp.arange(t)) \
+                                            +tuple(jnp.arange(t+2, num_timesteps)))
+        assert jnp.allclose(transition_probs[t], trans_probs_t)
+
+
+def test_compute_transition_probs_reduce(key=0, num_timesteps=5, num_states=2):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    args = random_hmm_args(key, num_timesteps, num_states)
+
+    # Run the HMM smoother
+    posterior = core.hmm_smoother(*args)
+    sum_trans_probs = core.compute_transition_probs(args[1], posterior, reduce_sum=True)
+
+    # Compare log_normalizer to manually computed entries
+    log_joint = big_log_joint(*args)
+    joint = jnp.exp(log_joint - logsumexp(log_joint))
+
+    # Compare the smooth transition probabilities to the manually computed ones
+    sum_trans_probs_t = 0
+    for t in range(num_timesteps - 1):
+        sum_trans_probs_t += jnp.sum(joint, axis=tuple(jnp.arange(t)) \
+                                                 +tuple(jnp.arange(t+2, num_timesteps)))
+
+    assert jnp.allclose(sum_trans_probs, sum_trans_probs_t)
 
 
 def test_hmm_posterior_mode(key=0, num_timesteps=5, num_states=2):

@@ -34,7 +34,7 @@ class LGSSMPosterior:
                 Cov[x_t | y_{1:t}, u_{1:t}].
             smoothed_means: (T,K) array,
                 E[x_t | y_{1:T}, u_{1:T}].
-            smoothed_covs: (T,K,K) array of smoothed marginal covariances, 
+            smoothed_covs: (T,K,K) array of smoothed marginal covariances,
                 Cov[x_t | y_{1:T}, u_{1:T}].
             smoothed_cross: (T-1, K, K) array of smoothed cross products,
                 E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
@@ -79,7 +79,7 @@ def _condition_on(m, S, C, D, d, R, u, y):
     return mu_cond, Sigma_cond
 
 
-def lgssm_filter(params, inputs, emissions):
+def lgssm_filter(params, inputs, emissions, num_timesteps=None):
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
 
@@ -91,9 +91,11 @@ def lgssm_filter(params, inputs, emissions):
     Returns:
         filtered_posterior: LGSSMPosterior instance containing,
             marginal_log_lik
-            filtered_means 
-            filtered_covariances 
+            filtered_means
+            filtered_covariances
     """
+    num_timesteps = len(emissions) if num_timesteps is None else num_timesteps
+
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
 
@@ -124,7 +126,6 @@ def lgssm_filter(params, inputs, emissions):
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
     # Run the Kalman filter
-    num_timesteps = len(emissions)
     carry = (0., params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(
         _step, carry, jnp.arange(num_timesteps))
@@ -133,7 +134,7 @@ def lgssm_filter(params, inputs, emissions):
                           filtered_covariances=filtered_covs)
 
 
-def lgssm_posterior_sample(rng, params, inputs, emissions):
+def lgssm_posterior_sample(rng, params, inputs, emissions, num_timesteps=None):
     """Run forward-filtering, backward-sampling to draw samples of
         x_{1:T} | y_{1:T}, u_{1:T}.
 
@@ -147,8 +148,10 @@ def lgssm_posterior_sample(rng, params, inputs, emissions):
         ll: marginal log likelihood of the data
         states: array (T,K) of samples from the posterior distribution on latent states.
     """
+    num_timesteps = len(emissions) if num_timesteps is None else num_timesteps
+
     # Run the Kalman filter
-    filtered_posterior = lgssm_filter(params, inputs, emissions)
+    filtered_posterior = lgssm_filter(params, inputs, emissions, num_timesteps)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Sample backward in time
@@ -173,7 +176,6 @@ def lgssm_posterior_sample(rng, params, inputs, emissions):
     rng, this_rng = jr.split(rng, 2)
     last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_rng)
 
-    num_timesteps = len(emissions)
     args = (jr.split(rng, num_timesteps-1),
             filtered_means[:-1][::-1],
             filtered_covs[:-1][::-1],
@@ -183,7 +185,7 @@ def lgssm_posterior_sample(rng, params, inputs, emissions):
     return ll, states
 
 
-def lgssm_smoother(params, inputs, emissions):
+def lgssm_smoother(params, inputs, emissions, num_timesteps=None):
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -197,8 +199,10 @@ def lgssm_smoother(params, inputs, emissions):
         lgssm_posterior: LGSSMPosterior instance containing properites of
             filtered and smoothed posterior distributions.
     """
+    num_timesteps = len(emissions) if num_timesteps is None else num_timesteps
+
     # Run the Kalman filter
-    filtered_posterior = lgssm_filter(params, inputs, emissions)
+    filtered_posterior = lgssm_filter(params, inputs, emissions, num_timesteps)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Run the smoother backward in time
@@ -232,7 +236,6 @@ def lgssm_smoother(params, inputs, emissions):
                (smoothed_mean, smoothed_cov, smoothed_cross)
 
     # Run the Kalman smoother
-    num_timesteps = len(emissions)
     init_carry = (filtered_means[-1], filtered_covs[-1])
     args = (jnp.arange(num_timesteps-2, -1, -1),
             filtered_means[:-1][::-1],
