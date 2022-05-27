@@ -14,43 +14,6 @@ import numpy as np
 
 from ssm_jax.hmm.models import CategoricalHMM
 
-# import logging
-# logger = logging.getLogger()
-
-# class CheckTypesFilter(logging.Filter):
-#     def filter(self, record):
-#         return "check_types" not in record.getMessage()
-# logger.addFilter(CheckTypesFilter())
-
-
-# Construct the Model
-transition_matrix = jnp.array([
-    [0.95, 0.05],
-    [0.10, 0.90]
-])
-emission_probs = jnp.array([
-    [1/6,  1/6,  1/6,  1/6,  1/6,  1/6],  # fair die
-    [1/10, 1/10, 1/10, 1/10, 1/10, 5/10]  # loaded die
-])
-init_state_probs = jnp.array([1/2, 1/2])
-hmm = CategoricalHMM(init_state_probs, transition_matrix, emission_probs)
-
-# Simulate data
-n_timesteps = 300
-true_states, emissions = hmm.sample(jr.PRNGKey(0), n_timesteps)
-
-print("Printing sample observed/latent...")
-to_string = lambda x: "".join((np.array(x) + 1).astype(str))[:60]
-print("obs: ", to_string(true_states)[:60])
-print("hid: ", to_string(emissions)[:60])
-
-
-# Perform Inference
-posterior = hmm.smoother(emissions)
-most_likely_states = hmm.most_likely_states(emissions)
-print("Log likelihood: ", posterior.marginal_log_lkhd)
-print("most likely states:", to_string(most_likely_states)[:60])
-
 
 # Helper functions for plotting
 def find_dishonest_intervals(states):
@@ -111,21 +74,55 @@ def plot_inference(inference_values, states, ax, state=1, map_estimate=False):
     ax.set_xlabel("Observation number")
 
 
-# Plot results
-fig, ax = plt.subplots()
-plot_inference(posterior.filtered_probs, true_states, ax)
-ax.set_ylabel("p(loaded)")
-ax.set_title("Filtered")
+def demo(test_mode=False):
 
-fig, ax = plt.subplots()
-plot_inference(posterior.smoothed_probs, true_states, ax)
-ax.set_ylabel("p(loaded)")
-ax.set_title("Smoothed")
+    # Construct the Model
+    transition_matrix = jnp.array([
+        [0.95, 0.05],
+        [0.10, 0.90]
+    ])
+    emission_probs = jnp.array([
+        [1/6,  1/6,  1/6,  1/6,  1/6,  1/6],  # fair die
+        [1/10, 1/10, 1/10, 1/10, 1/10, 5/10]  # loaded die
+    ])
+    init_state_probs = jnp.array([1/2, 1/2])
+    hmm = CategoricalHMM(init_state_probs, transition_matrix, emission_probs)
 
-fig, ax = plt.subplots()
-plot_inference(most_likely_states, true_states, ax, map_estimate=True)
-ax.set_ylabel("MAP state")
-ax.set_title("Viterbi")
-plt.show()
+    # Simulate data
+    n_timesteps = 300
+    true_states, emissions = hmm.sample(jr.PRNGKey(0), n_timesteps)
+
+    print("Printing sample observed/latent...")
+    to_string = lambda x: "".join((np.array(x) + 1).astype(str))[:60]
+    print("obs: ", to_string(true_states)[:60])
+    print("hid: ", to_string(emissions)[:60])
 
 
+    # Perform Inference
+    posterior = hmm.smoother(emissions)
+    most_likely_states = hmm.most_likely_states(emissions)
+    print("Log likelihood: ", posterior.marginal_log_lkhd)
+    print("most likely states:", to_string(most_likely_states)[:60])
+
+
+    # Plot results
+    if not test_mode:
+        fig, ax = plt.subplots()
+        plot_inference(posterior.filtered_probs, true_states, ax)
+        ax.set_ylabel("p(loaded)")
+        ax.set_title("Filtered")
+
+        fig, ax = plt.subplots()
+        plot_inference(posterior.smoothed_probs, true_states, ax)
+        ax.set_ylabel("p(loaded)")
+        ax.set_title("Smoothed")
+
+        fig, ax = plt.subplots()
+        plot_inference(most_likely_states, true_states, ax, map_estimate=True)
+        ax.set_ylabel("MAP state")
+        ax.set_title("Viterbi")
+        plt.show()
+
+# Run the demo
+if __name__ == "__main__":
+    demo()
