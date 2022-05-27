@@ -384,7 +384,7 @@ class PoissonHMM(BaseHMM):
 
     @property
     def emission_rates(self):
-        return self.emission_distribution.rate
+        return self.emission_distribution.distribution.rate
 
     @property
     def unconstrained_params(self):
