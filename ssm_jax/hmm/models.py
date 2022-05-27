@@ -167,7 +167,8 @@ class BaseHMM(ABC):
 
         return lax.map(_single_e_step, (batch_emissions, batch_num_timesteps))
 
-    def m_step(self, batch_emissions, batch_num_timesteps, batch_posteriors, batch_trans_probs):
+    @classmethod
+    def m_step(cls, batch_emissions, batch_num_timesteps, batch_posteriors, batch_trans_probs):
         """_summary_
 
         Args:
@@ -429,7 +430,8 @@ class GaussianHMM(BaseHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def m_step(self, batch_stats):
+    @classmethod
+    def m_step(cls, batch_stats):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
 
@@ -447,10 +449,10 @@ class GaussianHMM(BaseHMM):
             + 1e-4 * jnp.eye(emission_dim)
 
         # Pack the results into a new GaussianHMM
-        return GaussianHMM(initial_probs,
-                           transition_matrix,
-                           emission_means,
-                           emission_covs)
+        return cls(initial_probs,
+                   transition_matrix,
+                   emission_means,
+                   emission_covs)
 
 
 @register_pytree_node_class
