@@ -87,7 +87,7 @@ def test_two_filter_smoother(key=0, num_timesteps=5, num_states=2):
 
     # Compare log_normalizer to manually computed entries
     log_joint = big_log_joint(*args)
-    assert jnp.allclose(posterior.marginal_log_lkhd, logsumexp(log_joint))
+    assert jnp.allclose(posterior.marginal_loglik, logsumexp(log_joint))
 
     # Compare the smooth probabilities to the manually computed ones
     joint = jnp.exp(log_joint - logsumexp(log_joint))
@@ -108,7 +108,7 @@ def test_hmm_smoother(key=0, num_timesteps=5, num_states=2):
 
     # Compare log_normalizer to manually computed entries
     log_joint = big_log_joint(*args)
-    assert jnp.allclose(posterior.marginal_log_lkhd, logsumexp(log_joint))
+    assert jnp.allclose(posterior.marginal_loglik, logsumexp(log_joint))
 
     # Compare the smooth probabilities to the manually computed ones
     joint = jnp.exp(log_joint - logsumexp(log_joint))

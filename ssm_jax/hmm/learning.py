@@ -11,14 +11,14 @@ def hmm_fit_em(hmm, batch_emissions, num_iters=50):
 
     @jit
     def em_step(hmm):
-        posterior_stats, marginal_log_lkhd = hmm.e_step(batch_emissions)
+        posterior_stats, marginal_loglik = hmm.e_step(batch_emissions)
         hmm = hmm.m_step(posterior_stats)
-        return hmm, marginal_log_lkhd
+        return hmm, marginal_loglik
 
     log_probs = []
     for _ in trange(num_iters):
-        hmm, marginal_log_lkhd = em_step(hmm)
-        log_probs.append(marginal_log_lkhd)
+        hmm, marginal_loglik = em_step(hmm)
+        log_probs.append(marginal_loglik)
 
     return hmm, log_probs
 

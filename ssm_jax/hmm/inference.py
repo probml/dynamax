@@ -7,11 +7,16 @@ import chex
 @chex.dataclass
 class HMMPosterior:
     """Simple wrapper for properties of an HMM posterior distribution.
+
+    marginal_loglik: log sum_{hidden(1:t)} prob(hidden(1:t), obs(1:t) | params)
+    filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
+    predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
+    smoothed_probs(t,k) = p(hidden(t)=k | obs(1:T))
     """
-    marginal_log_lkhd: chex.Scalar
-    filtered_probs: chex.Array
-    predicted_probs: chex.Array
-    smoothed_probs: chex.Array
+    marginal_loglik: chex.Scalar = None
+    filtered_probs: chex.Array = None
+    predicted_probs: chex.Array = None
+    smoothed_probs: chex.Array = None
 
 
 # Helper function to access parameters
@@ -21,14 +26,14 @@ _get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
 # Helper functions for the two key filtering steps
 def _condition_on(probs, ll):
     """Condition on new emissions, given in the form of log likelihoods
-    for each discrete state.
+    for each discrete state, while avoiding numerical underflow.
 
     Args:
-        probs (Array): current probabilities
-        ll (Array): log likelihoods of new emissions
+        probs(k): prior for state k 
+        ll(k): log likelihood for state k
 
     Returns:
-
+        probs(k): posterior for state k 
     """
     ll_max = ll.max()
     new_probs = probs * jnp.exp(ll - ll_max)
@@ -48,11 +53,14 @@ def hmm_filter(initial_distribution,
     """_summary_
 
     Args:
-        hmm_params (_type_): _description_
-        log_likelihoods (_type_): _description_
+        initial_distribution(k): prob(hid(1)=k)
+        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
+        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
 
     Returns:
-        _type_: _description_
+        marginal_loglik: log sum_{hidden(1:t)} prob(hidden(1:t), obs(1:t) | params)
+        filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
+        predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -63,7 +71,6 @@ def hmm_filter(initial_distribution,
         A = _get_params(transition_matrix, 2, t)
         ll = log_likelihoods[t]
 
-        # Condition on emissions at time t, being careful not to overflow
         filtered_probs, log_norm = _condition_on(predicted_probs, ll)
         # Update the log normalizer
         log_normalizer += log_norm
@@ -75,6 +82,10 @@ def hmm_filter(initial_distribution,
     carry = (0.0, initial_distribution)
     (log_normalizer, _), (filtered_probs, predicted_probs) = lax.scan(
         _step, carry, jnp.arange(num_timesteps))
+        
+    post = HMMPosterior(marginal_loglik = log_normalizer,
+                        filtered_probs = filtered_probs,
+                        predicted_probs = predicted_probs)
     return log_normalizer, filtered_probs, predicted_probs
 
 
@@ -184,7 +195,7 @@ def hmm_two_filter_smoother(initial_distribution,
     norm = smoothed_probs.sum(axis=1, keepdims=True)
     smoothed_probs /= norm
 
-    return HMMPosterior(marginal_log_lkhd=ll,
+    return HMMPosterior(marginal_loglik=ll,
                         filtered_probs=filtered_probs,
                         predicted_probs=predicted_probs,
                         smoothed_probs=smoothed_probs)
@@ -240,7 +251,7 @@ def hmm_smoother(initial_distribution,
     # Reverse the arrays and return
     smoothed_probs = jnp.row_stack([rev_smoothed_probs[::-1], filtered_probs[-1]])
 
-    return HMMPosterior(marginal_log_lkhd=ll,
+    return HMMPosterior(marginal_loglik=ll,
                         filtered_probs=filtered_probs,
                         predicted_probs=predicted_probs,
                         smoothed_probs=smoothed_probs)
@@ -336,9 +347,9 @@ def _compute_all_transition_probs(transition_matrix, hmm_posterior):
 
 
 def compute_transition_probs(transition_matrix, hmm_posterior, reduce_sum=True):
-    """Computer the posterior marginal distributions over (z_t, z_{t+1}),
+    """Computer the posterior marginal distributions over (hid(t), hid(t+1)),
     ..math:
-        q_{tij} = Pr(z_t=i, z_{t+1}=j | x_{1:T})  for t=1,...,T-1
+        q_{tij} = Pr(z_t=i, z_{t+1}=j | obs_{1:T})  for t=1,...,T-1
 
     If `reduce_sum` is True, return :math:`\sum_t q_{tij}`.
 

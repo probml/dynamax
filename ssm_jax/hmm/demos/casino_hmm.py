@@ -102,7 +102,7 @@ def demo(test_mode=False):
     # Perform inference
     posterior = hmm.smoother(emissions)
     most_likely_states = hmm.most_likely_states(emissions)
-    print("Log likelihood: ", posterior.marginal_log_lkhd)
+    print("Log likelihood: ", posterior.marginal_loglik)
     print("most likely states:", to_string(most_likely_states)[:60])
 
     # Plot results

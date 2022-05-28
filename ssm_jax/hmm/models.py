@@ -158,7 +158,7 @@ class BaseHMM(ABC):
             # Pad the posterior expectations to be the same length
             pad = jnp.zeros((len(emissions) - num_timesteps, self.num_states))
             padded_posterior = HMMPosterior(
-                marginal_log_lkhd=posterior.marginal_log_lkhd,
+                marginal_log_lkhd=posterior.marginal_loglik,
                 filtered_probs=jnp.row_stack(posterior.filtered_probs, pad),
                 predicted_probs=jnp.row_stack(posterior.predicted_probs, pad),
                 smoothed_probs=jnp.row_stack(posterior.smoothed_probs, pad))
@@ -366,11 +366,11 @@ class GaussianHMM(BaseHMM):
 
     @property
     def emission_means(self):
-        return self.emission_distribution.mean()
+        return self._emission_distribution.mean()
 
     @property
     def emission_covariance_matrices(self):
-        return self.emission_distribution.covariance()
+        return self._emission_distribution.covariance()
 
     @property
     def unconstrained_params(self):
@@ -425,7 +425,7 @@ class GaussianHMM(BaseHMM):
                                          sum_w=sum_w,
                                          sum_x=sum_x,
                                          sum_xxT=sum_xxT)
-            return stats, posterior.marginal_log_lkhd
+            return stats, posterior.marginal_loglik
 
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
@@ -489,7 +489,8 @@ class PoissonHMM(BaseHMM):
 
     @property
     def emission_rates(self):
-        return self.emission_distribution.distribution.rate
+        # TODO: does this work for Independent product of Poisson?
+        return self._emission_distribution.distribution.rate
 
     @property
     def unconstrained_params(self):
