@@ -8,6 +8,19 @@ Note: this project is just getting started (May 2022).
 Authors: Peter Chang, Adrien Corenflos, Gerardo Duran-Martin,  Giles Harper-Donnelly, Scott Linderman,  Kevin Murphy, Colin Schlager, et al.
 MIT License. 2022
 
+To run a specific demo, do this
+```
+python ssm_jax/hmm/demos/gaussian_hmm.py 
+```
+
+To run the tests, do this
+```
+pytest ssm_jax/hmm/*_test.py 
+pytest ssm_jax/hmm/demos/demos_test.py 
+
+pytest ssm_jax/lgssm/*_test.py 
+```
+
 To install in colab, do this
 ```
 !git clone https://github.com/probml/ssm-jax.git
