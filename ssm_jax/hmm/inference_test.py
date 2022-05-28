@@ -32,13 +32,13 @@ def big_log_joint(initial_probs,
     return flat_log_joint.reshape((num_states,) * num_timesteps)
 
 
-def random_hmm_args(key, num_timesteps, num_states):
+def random_hmm_args(key, num_timesteps, num_states, scale=1.0):
     k1, k2, k3 = jr.split(key, 3)
     initial_probs = jr.uniform(k1, (num_states,))
     initial_probs /= initial_probs.sum()
     transition_matrix = jr.uniform(k2, (num_states, num_states))
     transition_matrix /= transition_matrix.sum(1, keepdims=True)
-    log_likelihoods = jr.normal(k3, (num_timesteps, num_states))
+    log_likelihoods = scale * jr.normal(k3, (num_timesteps, num_states))
     return initial_probs, transition_matrix, log_likelihoods
 
 
@@ -177,3 +177,15 @@ def test_hmm_posterior_mode(key=0, num_timesteps=5, num_states=2):
 
     # Compare the posterior modes
     assert jnp.all(mode == mode_t)
+
+def test_hmm_smoother_stability(key=0, num_timesteps=10000, num_states=100, scale=100.0):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    args = random_hmm_args(key, num_timesteps, num_states, scale)
+
+    # Run the HMM smoother
+    posterior = core.hmm_smoother(*args)
+
+    assert jnp.all(jnp.isfinite(posterior.smoothed_probs))
+    assert jnp.allclose(posterior.smoothed_probs.sum(1), 1.0)
