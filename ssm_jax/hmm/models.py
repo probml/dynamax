@@ -28,14 +28,11 @@ class BaseHMM(ABC):
                  initial_probabilities,
                  transition_matrix):
         """Abstract base class for Hidden Markov Models.
+        Child class specifies the emission distribution.
 
         Args:
-            initial_probabilities (_type_): _description_
-            transition_matrix (_type_): _description_
-            initial_probs_concentration (float, optional): _description_.
-                Defaults to 1.0001.
-            transition_matrix_concentration (float, optional): _description_.
-                Defaults to 1.0001.
+            initial_probabilities[k]: prob(hidden(1)=k)
+            transition_matrix[j,k]: prob(hidden(t) = k | hidden(t-1)j)
         """
         num_states = transition_matrix.shape[-1]
 
@@ -43,18 +40,14 @@ class BaseHMM(ABC):
         assert initial_probabilities.shape == (num_states,)
         assert transition_matrix.shape == (num_states, num_states)
 
-        # Construct the model from distrax distributions
+        # Construct the  distribution objects
         self._initial_distribution = tfd.Categorical(probs=initial_probabilities)
         self._transition_distribution = tfd.Categorical(probs=transition_matrix)
 
-    # Properties to get various attributes of the model
+    # Properties to get various attributes of the model from underyling distribution objects
     @property
     def num_states(self):
         return self._initial_distribution.probs.shape[-1]
-
-    @property
-    def emission_shape(self):
-        return self.emission_distribution.event_shape
 
     @property
     def num_obs(self):
@@ -89,7 +82,7 @@ class BaseHMM(ABC):
         """
         def _step(state, key):
             key1, key2 = jr.split(key, 2)
-            emission = self.emission_distribution[state].sample(seed=key1)
+            emission = self.emission_distribution[state].sample(seed=key1) # defined in child
             next_state = self.transition_distribution[state].sample(seed=key2)
             return next_state, (state, emission)
 
@@ -110,13 +103,18 @@ class BaseHMM(ABC):
         lp += self.emission_distribution[states].log_prob(emissions).sum(0)
         return lp
 
+    def conditional_logliks(self, emissions):
+        # Add extra dimension to emissions for broadcasting over states.
+        log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
+        return log_likelihoods
+
     ### Basic inference code
     def marginal_log_prob(self, emissions):
         # Add extra dimension to emissions for broadcasting over states.
         log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
-        return hmm_filter(self.initial_probabilities,
-                            self.transition_matrix,
-                            log_likelihoods)[0]
+        post = hmm_filter(self.initial_probabilities, self.transition_matrix, log_likelihoods)
+        ll = post.marginal_loglik
+        return ll
 
     def most_likely_states(self, emissions):
         # Add extra dimension to emissions for broadcasting over states.
@@ -128,9 +126,9 @@ class BaseHMM(ABC):
     def filter(self, emissions):
         # Add extra dimension to emissions for broadcasting over states.
         log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
-        return hmm_filter(self.initial_probabilities,
-                            self.transition_matrix,
-                            log_likelihoods)
+        post = hmm_filter(self.initial_probabilities, self.transition_matrix, log_likelihoods)
+        return post
+
 
     def smoother(self, emissions):
         # Add extra dimension to emissions for broadcasting over states.
@@ -177,8 +175,7 @@ class BaseHMM(ABC):
         """
         def _single_expected_log_joint(hmm, emissions, num_timesteps, posterior, trans_probs):
             # TODO: do we need to use dynamic slice?
-            log_likelihoods = hmm.emission_distribution.log_prob(
-                emissions[:num_timesteps, None,...])
+            log_likelihoods = hmm.emission_distribution.log_prob(emissions[:num_timesteps, None,...])
             expected_states = posterior.smoothed_probs[:num_timesteps]
 
             lp = jnp.sum(expected_states[0] * jnp.log(hmm.initial_probabilities))

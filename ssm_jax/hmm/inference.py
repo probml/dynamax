@@ -50,7 +50,7 @@ def _predict(probs, A):
 def hmm_filter(initial_distribution,
                transition_matrix,
                log_likelihoods):
-    """_summary_
+    """Forwards filtering.  
 
     Args:
         initial_distribution(k): prob(hid(1)=k)
@@ -82,17 +82,28 @@ def hmm_filter(initial_distribution,
     carry = (0.0, initial_distribution)
     (log_normalizer, _), (filtered_probs, predicted_probs) = lax.scan(
         _step, carry, jnp.arange(num_timesteps))
-        
+
     post = HMMPosterior(marginal_loglik = log_normalizer,
                         filtered_probs = filtered_probs,
                         predicted_probs = predicted_probs)
-    return log_normalizer, filtered_probs, predicted_probs
+    return post
 
 
 def hmm_posterior_sample(rng,
                          initial_distribution,
                          transition_matrix,
                          log_likelihoods):
+    """Sample a latent sequence from the posterior.  
+
+    Args:
+        initial_distribution(k): prob(hid(1)=k)
+        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
+        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
+
+    Returns:
+        log_prob
+        sampled_states(1:T)
+    """
     num_timesteps, num_states = log_likelihoods.shape
 
     # Run the HMM filter
@@ -140,7 +151,8 @@ def hmm_backward_filter(transition_matrix,
         log_likelihoods (_type_): _description_
 
     Returns:
-        _type_: _description_
+        log_marginal_lik
+        backwards_probs(t,k)
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -178,14 +190,14 @@ def hmm_two_filter_smoother(initial_distribution,
         log_likelihoods (_type_): _description_
 
     Returns:
-        _type_: _description_
+        HMMPosterior object
     """
     num_timesteps, num_states = log_likelihoods.shape
 
     # Run the filters forward and backward
-    ll, filtered_probs, predicted_probs = hmm_filter(initial_distribution,
-                                                     transition_matrix,
-                                                     log_likelihoods)
+    post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
+    ll = post.marginal_loglik
+    filtered_probs, predicted_probs = post.filtered_probs, post.predicted_probs
 
     _, backward_pred_probs = hmm_backward_filter(transition_matrix,
                                                  log_likelihoods)
@@ -216,14 +228,14 @@ def hmm_smoother(initial_distribution,
         log_likelihoods (_type_): _description_
 
     Returns:
-        _type_: _description_
+        HMMPosterior object
     """
     num_timesteps, num_states = log_likelihoods.shape
 
     # Run the HMM filter
-    ll, filtered_probs, predicted_probs = hmm_filter(initial_distribution,
-                                                     transition_matrix,
-                                                     log_likelihoods)
+    post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
+    ll = post.marginal_loglik
+    filtered_probs, predicted_probs = post.filtered_probs, post.predicted_probs
 
     # Run the smoother backward in time
     def _step(carry, args):
@@ -268,7 +280,7 @@ def hmm_posterior_mode(initial_distribution,
         log_likelihoods (_type_): _description_
 
     Returns:
-        _type_: _description_
+        map_state_seq(1:T)
     """
     num_timesteps, num_states = log_likelihoods.shape
 

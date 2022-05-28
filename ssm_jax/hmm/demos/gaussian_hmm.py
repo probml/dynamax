@@ -35,7 +35,7 @@ def plot_gaussian_hmm(hmm, emissions, states):
 
 def plot_gaussian_hmm_emissions(hmm, emissions, states, xlim=None):
     num_timesteps = len(emissions)
-    emission_dim = hmm.emission_shape[0]
+    emission_dim = hmm.num_obs
 
     # Plot the data and the smoothed data
     plt.figure()

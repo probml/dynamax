@@ -50,8 +50,9 @@ def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
         random_hmm_args(key, num_timesteps, num_states)
 
     # Run the HMM filter
-    log_normalizer, filtered_probs, predicted_probs = \
-        core.hmm_filter(initial_probs, transition_matrix, log_lkhds)
+    post = core.hmm_filter(initial_probs, transition_matrix, log_lkhds)
+    log_normalizer = post.marginal_loglik
+    filtered_probs, predicted_probs = post.filtered_probs, post.predicted_probs
 
     # Compare log_normalizer to manually computed entries
     log_joint = big_log_joint(initial_probs, transition_matrix, log_lkhds)
