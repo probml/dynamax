@@ -93,11 +93,9 @@ def make_model_and_data():
 def plot_results(true_states, emissions, posterior, most_likely_states):
     print("Printing sample observed/latent...")
     to_string = lambda x: "".join((np.array(x) + 1).astype(str))[:60]
-    print("obs: ", to_string(true_states)[:60])
-    print("hid: ", to_string(emissions)[:60])
-
+    print("hid: ", to_string(true_states)[:60])
+    print("obs: ", to_string(emissions)[:60])
     print("Log likelihood: ", posterior.marginal_loglik)
-    print("most likely states:", to_string(most_likely_states)[:60])
 
     dict_figures = {}
     fig, ax = plt.subplots()
