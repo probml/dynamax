@@ -14,7 +14,7 @@ from ssm_jax.hmm.demos.gaussian_hmm_2d import (
     plot_gaussian_hmm, plot_gaussian_hmm_emissions, plot_hmm_posterior, make_hmm 
 )
 
-def demo(num_timesteps=2000,
+def main(num_timesteps=2000,
         plot_timesteps=200,
          num_em_iters=50,
          num_sgd_iters=2000,
@@ -78,4 +78,4 @@ def demo(num_timesteps=2000,
         plt.show()
 
 if __name__ == "__main__":
-    demo()
+    main()

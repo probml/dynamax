@@ -101,7 +101,9 @@ def plot_kf_tracking(x,y,lgssm_posterior):
                                          'linewidth':0.5});
     plt.show()
 
-
-if __name__ == "__main__":
+def main():
     x, y, lgssm_posterior = kf_tracking()
     plot_kf_tracking(x, y, lgssm_posterior)
+
+if __name__ == "__main__":
+    main()

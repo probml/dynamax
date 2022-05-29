@@ -33,7 +33,7 @@ def plot_gaussian_hmm(hmm, emissions, states, ttl = "Emission Distributions"):
     plt.title(ttl)
 
 
-def plot_gaussian_hmm_emissions(hmm, emissions, states, xlim=None):
+def plot_gaussian_hmm_data(hmm, emissions, states, xlim=None):
     num_timesteps = len(emissions)
     emission_dim = hmm.num_obs
 
@@ -86,7 +86,7 @@ def plot_hmm_posterior(true_states, posterior, plot_timesteps=None):
     axs[1].set_ylabel("state")
     axs[1].set_xlabel("time")
     axs[1].set_title("expected states")
-    
+
     plt.xlim(0, plot_timesteps)
     plt.tight_layout()
 
@@ -107,7 +107,7 @@ def make_hmm(num_states = 5, emission_dim = 2):
                            emission_covs)
     return true_hmm
 
-def demo(num_timesteps=2000,
+def main(num_timesteps=2000,
         plot_timesteps=200,
          test_mode=False):
 
@@ -117,7 +117,7 @@ def demo(num_timesteps=2000,
     if not test_mode:
         plot_gaussian_hmm(true_hmm, emissions, true_states, "True HMM")
         #nsteps = np.minimum(200, num_timesteps)
-        plot_gaussian_hmm_emissions(true_hmm, emissions, true_states, xlim=(0, plot_timesteps))
+        plot_gaussian_hmm_data(true_hmm, emissions, true_states, xlim=(0, plot_timesteps))
         plt.show()
 
     print("log joint prob:    ", true_hmm.log_prob(true_states, emissions))
@@ -125,4 +125,4 @@ def demo(num_timesteps=2000,
 
 
 if __name__ == "__main__":
-    demo()
+    main()
