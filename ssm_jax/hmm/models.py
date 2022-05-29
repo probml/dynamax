@@ -17,7 +17,8 @@ from ssm_jax.hmm.inference import (
     HMMPosterior,
     hmm_filter,
     hmm_smoother,
-    hmm_posterior_mode,
+    hmm_posterior_mode)
+from ssm_jax.hmm.learning import (
     compute_transition_probs)
 from ssm_jax.utils import PSDToRealBijector
 
@@ -51,7 +52,7 @@ class BaseHMM(ABC):
 
     @property
     def num_obs(self):
-        return self.emission_distribution.event_shape[0]
+        return self._emission_distribution.event_shape[0]
 
     @property
     def initial_probabilities(self):
@@ -77,8 +78,8 @@ class BaseHMM(ABC):
         """Sample a sequence of latent states and emissions.
 
         Args:
-            key (_type_): _description_
-            num_timesteps (_type_): _description_
+            key: rng key
+            num_timesteps: length of sequence to generate
         """
         def _step(state, key):
             key1, key2 = jr.split(key, 2)
@@ -96,46 +97,39 @@ class BaseHMM(ABC):
         return states, emissions
 
     def log_prob(self, states, emissions):
-        """Compute the log probability of the states and data
+        """Compute the log joint probability of the states and observations
         """
         lp = self.initial_distribution.log_prob(states[0])
         lp += self.transition_distribution[states[:-1]].log_prob(states[1:]).sum()
         lp += self.emission_distribution[states].log_prob(emissions).sum(0)
         return lp
 
-    def conditional_logliks(self, emissions):
+    def _conditional_logliks(self, emissions):
+        # Input: emissions(T,) for scalar, or emissions(T,D) for vector
         # Add extra dimension to emissions for broadcasting over states.
+        # Becomes emissions(T,:) or emissions(T,:,D) which broadcasts with emissions distribution
+        # of shape (K,) or (K,D).
         log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
         return log_likelihoods
 
     ### Basic inference code
     def marginal_log_prob(self, emissions):
-        # Add extra dimension to emissions for broadcasting over states.
-        log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
-        post = hmm_filter(self.initial_probabilities, self.transition_matrix, log_likelihoods)
+        """Compute log marginal likelihood of observations."""
+        post = hmm_filter(self.initial_probabilities, self.transition_matrix,  self._conditional_logliks(emissions))
         ll = post.marginal_loglik
         return ll
 
     def most_likely_states(self, emissions):
-        # Add extra dimension to emissions for broadcasting over states.
-        log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
-        return hmm_posterior_mode(self.initial_probabilities,
-                                  self.transition_matrix,
-                                  log_likelihoods)
+        """Compute Viterbi path."""
+        return hmm_posterior_mode(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
 
     def filter(self, emissions):
-        # Add extra dimension to emissions for broadcasting over states.
-        log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
-        post = hmm_filter(self.initial_probabilities, self.transition_matrix, log_likelihoods)
-        return post
-
+        """Compute filtering distribution."""
+        return hmm_filter(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
 
     def smoother(self, emissions):
-        # Add extra dimension to emissions for broadcasting over states.
-        log_likelihoods = self.emission_distribution.log_prob(emissions[:,None,...])
-        return hmm_smoother(self.initial_probabilities,
-                            self.transition_matrix,
-                            log_likelihoods)
+        """Compute smoothing distribution."""
+        return hmm_smoother(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
 
     ### Expectation-maximization (EM) code
     def e_step(self, batch_emissions, batch_num_timesteps):
@@ -146,9 +140,7 @@ class BaseHMM(ABC):
             # TODO: do we need to use dynamic slice?
             emissions = lax.dynamic_slice_in_dim(emissions, 0, num_timesteps)
 
-            posterior = hmm_smoother(self.initial_probabilities,
-                                self.transition_matrix,
-                                self.emission_distribution.log_prob(emissions[:, None, ...]))
+            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
 
             # Compute the transition probabilities
             trans_probs = compute_transition_probs(self.transition_matrix, posterior)
@@ -403,9 +395,7 @@ class GaussianHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probabilities,
-                                     self.transition_matrix,
-                                     self.emission_distribution.log_prob(emissions[:, None, ...]))
+            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]

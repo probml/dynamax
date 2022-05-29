@@ -192,8 +192,8 @@ def lgssm_smoother(params, inputs, emissions, num_timesteps=None):
 
     Args:
         params: an LGSSMParams instance (or object with the same fields)
-        inputs: array of length T containing inputs.
-        emissions: array (T,D) of data.
+        inputs: array of (T,Din) containing inputs.
+        emissions: array (T,Dout) of data.
 
     Returns:
         lgssm_posterior: LGSSMPosterior instance containing properites of

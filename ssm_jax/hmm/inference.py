@@ -57,10 +57,7 @@ def hmm_filter(initial_distribution,
         transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
         log_likelihoods(t,k): p(obs(t) | hid(t)=k)
 
-    Returns:
-        marginal_loglik: log sum_{hidden(1:t)} prob(hidden(1:t), obs(1:t) | params)
-        filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
-        predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
+    Returns: HMMPosterior object (smoothed_probs=None)
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -311,72 +308,3 @@ def hmm_posterior_mode(initial_distribution,
 
     return jnp.concatenate([jnp.array([first_state]), states])
 
-
-def _compute_sum_transition_probs(transition_matrix, hmm_posterior):
-    """Compute the transition probabilities from the HMM posterior messages.
-
-    Args:
-        transition_matrix (_type_): _description_
-        hmm_posterior (_type_): _description_
-    """
-    def _step(carry, args):
-        filtered_probs, smoothed_probs_next, predicted_probs_next, t = args
-
-        # Get parameters for time t
-        A = _get_params(transition_matrix, 2, t)
-
-        # Compute smoothed transition probabilities (Eq. 8.4 of Saarka, 2013)
-        relative_probs_next = smoothed_probs_next / predicted_probs_next
-        smoothed_trans_probs = filtered_probs[:, None] * A * relative_probs_next[None, :]
-        smoothed_trans_probs /= smoothed_trans_probs.sum()
-        return carry + smoothed_trans_probs, None
-
-    # Initialize the recursion
-    num_states = transition_matrix.shape[-1]
-    num_timesteps = len(hmm_posterior.filtered_probs)
-    sum_transition_probs, _ = lax.scan(_step, jnp.zeros((num_states, num_states)),
-                                       (hmm_posterior.filtered_probs[:-1],
-                                        hmm_posterior.smoothed_probs[1:],
-                                        hmm_posterior.predicted_probs[1:],
-                                        jnp.arange(num_timesteps - 1)))
-    return sum_transition_probs
-
-
-def _compute_all_transition_probs(transition_matrix, hmm_posterior):
-    """Compute the transition probabilities from the HMM posterior messages.
-
-    Args:
-        transition_matrix (_type_): _description_
-        hmm_posterior (_type_): _description_
-    """
-    filtered_probs = hmm_posterior.filtered_probs[:-1]
-    smoothed_probs_next = hmm_posterior.smoothed_probs[1:]
-    predicted_probs_next = hmm_posterior.predicted_probs[1:]
-    relative_probs_next =  smoothed_probs_next / predicted_probs_next
-    transition_probs = filtered_probs[:, :, None] * \
-        transition_matrix * relative_probs_next[:, None, :]
-    return transition_probs
-
-
-def compute_transition_probs(transition_matrix, hmm_posterior, reduce_sum=True):
-    """Computer the posterior marginal distributions over (hid(t), hid(t+1)),
-    ..math:
-        q_{tij} = Pr(z_t=i, z_{t+1}=j | obs_{1:T})  for t=1,...,T-1
-
-    If `reduce_sum` is True, return :math:`\sum_t q_{tij}`.
-
-    Args:
-        transition_matrix (array): the transition matrix
-        hmm_posterior (HMMPosterior): Output of `hmm_smoother` or `hmm_two_filter_smoother`
-        reduce_sum (bool, optional): Whether or not to return the
-            sum of transition probabilities over time. Defaults to True, which is
-            more memory efficient.
-
-    Returns:
-        array of transition probabilities. The shape is (num_states, num_states) if
-            reduce_sum==True, otherwise (num_timesteps, num_states, num_states).
-    """
-    if reduce_sum:
-        return _compute_sum_transition_probs(transition_matrix, hmm_posterior)
-    else:
-        return _compute_all_transition_probs(transition_matrix, hmm_posterior)

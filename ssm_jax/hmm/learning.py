@@ -1,10 +1,83 @@
 # Code for parameter estimation (MLE, MAP) using EM and SGD
 
 import jax.numpy as jnp
-from jax import jit, value_and_grad, vmap
+from jax import jit, value_and_grad, vmap, lax
 import optax
 
 from tqdm.auto import trange
+
+# Helper function to access parameters
+_get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
+
+def _compute_sum_transition_probs(transition_matrix, hmm_posterior):
+    """Compute the transition probabilities from the HMM posterior messages.
+
+    Args:
+        transition_matrix (_type_): _description_
+        hmm_posterior (_type_): _description_
+    """
+    def _step(carry, args):
+        filtered_probs, smoothed_probs_next, predicted_probs_next, t = args
+
+        # Get parameters for time t
+        A = _get_params(transition_matrix, 2, t)
+
+        # Compute smoothed transition probabilities (Eq. 8.4 of Saarka, 2013)
+        relative_probs_next = smoothed_probs_next / predicted_probs_next
+        smoothed_trans_probs = filtered_probs[:, None] * A * relative_probs_next[None, :]
+        smoothed_trans_probs /= smoothed_trans_probs.sum()
+        return carry + smoothed_trans_probs, None
+
+    # Initialize the recursion
+    num_states = transition_matrix.shape[-1]
+    num_timesteps = len(hmm_posterior.filtered_probs)
+    sum_transition_probs, _ = lax.scan(_step, jnp.zeros((num_states, num_states)),
+                                       (hmm_posterior.filtered_probs[:-1],
+                                        hmm_posterior.smoothed_probs[1:],
+                                        hmm_posterior.predicted_probs[1:],
+                                        jnp.arange(num_timesteps - 1)))
+    return sum_transition_probs
+
+
+def _compute_all_transition_probs(transition_matrix, hmm_posterior):
+    """Compute the transition probabilities from the HMM posterior messages.
+
+    Args:
+        transition_matrix (_type_): _description_
+        hmm_posterior (_type_): _description_
+    """
+    filtered_probs = hmm_posterior.filtered_probs[:-1]
+    smoothed_probs_next = hmm_posterior.smoothed_probs[1:]
+    predicted_probs_next = hmm_posterior.predicted_probs[1:]
+    relative_probs_next =  smoothed_probs_next / predicted_probs_next
+    transition_probs = filtered_probs[:, :, None] * \
+        transition_matrix * relative_probs_next[:, None, :]
+    return transition_probs
+
+
+def compute_transition_probs(transition_matrix, hmm_posterior, reduce_sum=True):
+    """Computer the posterior marginal distributions over (hid(t), hid(t+1)),
+    ..math:
+        q_{tij} = Pr(z_t=i, z_{t+1}=j | obs_{1:T})  for t=1,...,T-1
+
+    If `reduce_sum` is True, return :math:`\sum_t q_{tij}`.
+
+    Args:
+        transition_matrix (array): the transition matrix
+        hmm_posterior (HMMPosterior): Output of `hmm_smoother` or `hmm_two_filter_smoother`
+        reduce_sum (bool, optional): Whether or not to return the
+            sum of transition probabilities over time. Defaults to True, which is
+            more memory efficient.
+
+    Returns:
+        array of transition probabilities. The shape is (num_states, num_states) if
+            reduce_sum==True, otherwise (num_timesteps, num_states, num_states).
+    """
+    if reduce_sum:
+        return _compute_sum_transition_probs(transition_matrix, hmm_posterior)
+    else:
+        return _compute_all_transition_probs(transition_matrix, hmm_posterior)
+
 
 
 def hmm_fit_em(hmm, batch_emissions, num_iters=50):

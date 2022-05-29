@@ -1,17 +1,17 @@
 """Demo of a simple Gaussian HMM with 2D emissions.
 """
+import numpy as np
 import jax.numpy as jnp
 import jax.random as jr
 import optax
 
 from ssm_jax.hmm.models import GaussianHMM
-import ssm_jax.hmm.learning as learning
 
 import matplotlib.pyplot as plt
 from ssm_jax.plotting import white_to_color_cmap, COLORS, CMAP
 
 
-def plot_gaussian_hmm(hmm, emissions, states):
+def plot_gaussian_hmm(hmm, emissions, states, ttl = "Emission Distributions"):
     lim = .85 * abs(emissions).max()
     XX, YY = jnp.meshgrid(jnp.linspace(-lim, lim, 100),
                           jnp.linspace(-lim, lim, 100))
@@ -30,14 +30,14 @@ def plot_gaussian_hmm(hmm, emissions, states):
     plt.plot(emissions[:,0], emissions[:,1], '-k', lw=1, alpha=.25)
     plt.xlabel("$x_1$")
     plt.ylabel("$x_2$")
-    plt.title("Emission Distributions")
+    plt.title(ttl)
 
 
 def plot_gaussian_hmm_emissions(hmm, emissions, states, xlim=None):
     num_timesteps = len(emissions)
     emission_dim = hmm.num_obs
 
-    # Plot the data and the smoothed data
+    # Plot the data superimposed on the generating state sequence
     plt.figure()
     lim = 1.05 * abs(emissions).max()
     plt.imshow(states[None,:],
@@ -66,7 +66,8 @@ def plot_gaussian_hmm_emissions(hmm, emissions, states, xlim=None):
     plt.tight_layout()
 
 
-def plot_hmm_posterior(true_states, posterior):
+def plot_hmm_posterior(true_states, posterior, plot_timesteps=None):
+    if plot_timesteps is None: plot_timesteps = len(true_states)
     fig, axs = plt.subplots(2, 1, sharex=True)
     axs[0].imshow(true_states[None,:],
                 aspect="auto",
@@ -85,17 +86,11 @@ def plot_hmm_posterior(true_states, posterior):
     axs[1].set_ylabel("state")
     axs[1].set_xlabel("time")
     axs[1].set_title("expected states")
-    plt.xlim(0, 200)
+    
+    plt.xlim(0, plot_timesteps)
     plt.tight_layout()
 
-
-def demo(num_states=5,
-         emission_dim=2,
-         num_timesteps=2000,
-         num_em_iters=50,
-         num_sgd_iters=2000,
-         test_mode=False):
-
+def make_hmm(num_states = 5, emission_dim = 2):
     # Specify parameters of the HMM
     initial_probs = jnp.ones(num_states) / num_states
     transition_matrix = 0.95 * jnp.eye(num_states) + 0.05 * jnp.roll(jnp.eye(num_states), 1, axis=1)
@@ -106,62 +101,28 @@ def demo(num_states=5,
     ])
     emission_covs = jnp.tile(0.1**2 * jnp.eye(emission_dim), (num_states, 1, 1))
 
-    # Make a true HMM and sample fromt it
     true_hmm = GaussianHMM(initial_probs,
                            transition_matrix,
                            emission_means,
                            emission_covs)
+    return true_hmm
+
+def demo(num_timesteps=2000,
+        plot_timesteps=200,
+         test_mode=False):
+
+    true_hmm = make_hmm()
     true_states, emissions = true_hmm.sample(jr.PRNGKey(0), num_timesteps)
 
     if not test_mode:
-        plot_gaussian_hmm(true_hmm, emissions, true_states)
-        plot_gaussian_hmm_emissions(true_hmm, emissions, true_states, xlim=(0, 500))
+        plot_gaussian_hmm(true_hmm, emissions, true_states, "True HMM")
+        #nsteps = np.minimum(200, num_timesteps)
+        plot_gaussian_hmm_emissions(true_hmm, emissions, true_states, xlim=(0, plot_timesteps))
+        plt.show()
 
     print("log joint prob:    ", true_hmm.log_prob(true_states, emissions))
     print("log marginal prob: ", true_hmm.marginal_log_prob(emissions))
 
-    # Fit a GaussianHMM with twice number of true states using EM
-    batch_emissions = emissions[None, ...]
-    test_hmm_em = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * num_states, emission_dim)
-    test_hmm_em, logprobs_em = learning.hmm_fit_em(test_hmm_em, batch_emissions, num_iters=num_em_iters)
-
-    # Get the posterior
-    print("true LL: ", true_hmm.marginal_log_prob(emissions))
-    print("EM LL:  ", test_hmm_em.marginal_log_prob(emissions))
-    posterior = test_hmm_em.smoother(emissions)
-    most_likely_states = test_hmm_em.most_likely_states(emissions)
-
-    if not test_mode:
-        plt.figure()
-        plt.plot(logprobs_em)
-        plt.xlabel("EM iteration")
-        plt.ylabel("Marginal log likelihood")
-
-        plot_gaussian_hmm(test_hmm_em, emissions, most_likely_states)
-        plot_hmm_posterior(true_states, posterior)
-
-    # Fit a Gaussian HMM with twice number of true states using SGD
-    test_hmm_sgd = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
-    optimizer = optax.adam(learning_rate=1e-2)
-    test_hmm_sgd, losses = learning.hmm_fit_sgd(test_hmm_sgd, batch_emissions, optimizer,
-                                                num_iters=num_sgd_iters)
-
-    # Get the posterior
-    print("true LL: ", true_hmm.marginal_log_prob(emissions))
-    print("SGD LL:  ", test_hmm_sgd.marginal_log_prob(emissions))
-    posterior = test_hmm_sgd.smoother(emissions)
-    most_likely_states = test_hmm_sgd.most_likely_states(emissions)
-
-    # Plot the training curve
-    if not test_mode:
-        plt.figure()
-        plt.plot(losses)
-        plt.xlabel("Iteration")
-        plt.ylabel("Loss")
-
-        plot_gaussian_hmm(test_hmm_sgd, emissions, most_likely_states)
-        plot_hmm_posterior(true_states, posterior)
-        plt.show()
 
 if __name__ == "__main__":
     demo()
