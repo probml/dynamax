@@ -71,14 +71,7 @@ def plot_inference(inference_values, states, ax, state=1, map_estimate=False):
     ax.set_xlabel("Observation number")
 
 
-def demo(test_mode=False):
-    """Run the casino demo to simulate dice rolls that are occassionally dishonest,
-    then use a Categorical HMM to infer when the casino is cheating.
-
-    Args:
-        test_mode (bool, optional): running the script in test mode will
-        suppress plotting.
-    """
+def make_model_and_data():
     # Construct the model
     transition_matrix = jnp.array([
         [0.95, 0.05],
@@ -94,36 +87,49 @@ def demo(test_mode=False):
     # Simulate data
     n_timesteps = 300
     true_states, emissions = hmm.sample(jr.PRNGKey(0), n_timesteps)
+ 
+    return hmm, true_states, emissions
+
+def plot_results(true_states, emissions, posterior, most_likely_states):
     print("Printing sample observed/latent...")
     to_string = lambda x: "".join((np.array(x) + 1).astype(str))[:60]
     print("obs: ", to_string(true_states)[:60])
     print("hid: ", to_string(emissions)[:60])
 
-    # Perform inference
-    posterior = hmm.smoother(emissions)
-    most_likely_states = hmm.most_likely_states(emissions)
     print("Log likelihood: ", posterior.marginal_loglik)
     print("most likely states:", to_string(most_likely_states)[:60])
 
-    # Plot results
+    dict_figures = {}
+    fig, ax = plt.subplots()
+    plot_inference(posterior.filtered_probs, true_states, ax)
+    ax.set_ylabel("p(loaded)")
+    ax.set_title("Filtered")
+    dict_figures["hmm_casino_filter"] = fig
+
+    fig, ax = plt.subplots()
+    plot_inference(posterior.smoothed_probs, true_states, ax)
+    ax.set_ylabel("p(loaded)")
+    ax.set_title("Smoothed")
+    dict_figures["hmm_casino_smooth"] = fig
+
+    fig, ax = plt.subplots()
+    plot_inference(most_likely_states, true_states, ax, map_estimate=True)
+    ax.set_ylabel("MAP state")
+    ax.set_title("Viterbi")
+    dict_figures["hmm_casino_map"] = fig
+
+    return dict_figures
+
+
+def main(test_mode = False):
+    hmm, true_states, emissions = make_model_and_data()
+    posterior = hmm.smoother(emissions)
+    most_likely_states = hmm.most_likely_states(emissions)
     if not test_mode:
-        fig, ax = plt.subplots()
-        plot_inference(posterior.filtered_probs, true_states, ax)
-        ax.set_ylabel("p(loaded)")
-        ax.set_title("Filtered")
-
-        fig, ax = plt.subplots()
-        plot_inference(posterior.smoothed_probs, true_states, ax)
-        ax.set_ylabel("p(loaded)")
-        ax.set_title("Smoothed")
-
-        fig, ax = plt.subplots()
-        plot_inference(most_likely_states, true_states, ax, map_estimate=True)
-        ax.set_ylabel("MAP state")
-        ax.set_title("Viterbi")
+        dict_figures = plot_results(true_states, emissions, posterior, most_likely_states)
         plt.show()
 
 
 # Run the demo
 if __name__ == "__main__":
-    demo()
+    main()

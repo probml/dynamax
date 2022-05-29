@@ -60,6 +60,7 @@ def plot_kf_tracking(x,y,lgssm_posterior):
         "markeredgewidth":2,
         "markersize":8
     }
+    dict_figures = {}
 
     # Plot Data
     fig, ax = plt.subplots()
@@ -69,6 +70,7 @@ def plot_kf_tracking(x,y,lgssm_posterior):
              color="tab:green",
              label="emissions")
     ax.legend()
+    dict_figures["kalman_tracking_truth"] = fig
 
     # Plot Filtering
     fig, ax = plt.subplots()
@@ -84,6 +86,7 @@ def plot_kf_tracking(x,y,lgssm_posterior):
                          color="tab:red", label="filtered means",
                          ellipse_kwargs={'edgecolor':'k',
                                          'linewidth':0.5});
+    dict_figures["kalman_tracking_filtered"] = fig
 
     # Plot Smoothing
     fig, ax = plt.subplots()
@@ -99,11 +102,15 @@ def plot_kf_tracking(x,y,lgssm_posterior):
                          color="tab:red", label="smoothed means",
                          ellipse_kwargs={'edgecolor':'k',
                                          'linewidth':0.5});
-    plt.show()
+    dict_figures["kalman_tracking_smoothed"] = fig
 
-def main():
+    return dict_figures
+
+def main(test_mode = False):
     x, y, lgssm_posterior = kf_tracking()
-    plot_kf_tracking(x, y, lgssm_posterior)
+    if not test_mode:
+        dict_figures = plot_kf_tracking(x, y, lgssm_posterior)
+        plt.show()
 
 if __name__ == "__main__":
     main()

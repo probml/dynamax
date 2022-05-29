@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from ssm_jax.plotting import white_to_color_cmap, COLORS, CMAP
 
 from ssm_jax.hmm.demos.gaussian_hmm_2d import (
-    plot_gaussian_hmm, plot_gaussian_hmm_emissions, plot_hmm_posterior, make_hmm 
+    plot_gaussian_hmm, plot_gaussian_hmm_data, plot_hmm_posterior, make_hmm 
 )
 
 def main(num_timesteps=2000,
@@ -25,7 +25,7 @@ def main(num_timesteps=2000,
 
     if not test_mode:
         plot_gaussian_hmm(true_hmm, emissions, true_states, "True HMM")
-        plot_gaussian_hmm_emissions(true_hmm, emissions, true_states, xlim=(0, plot_timesteps))
+        plot_gaussian_hmm_data(true_hmm, emissions, true_states, xlim=(0, plot_timesteps))
 
     print("log joint prob:    ", true_hmm.log_prob(true_states, emissions))
     print("log marginal prob: ", true_hmm.marginal_log_prob(emissions))
@@ -47,7 +47,6 @@ def main(num_timesteps=2000,
         plt.plot(logprobs_em)
         plt.xlabel("EM iteration")
         plt.ylabel("Marginal log likelihood")
-
         plot_gaussian_hmm(test_hmm_em, emissions, most_likely_states, "EM estimate")
         plot_hmm_posterior(true_states, posterior, plot_timesteps)
 
@@ -64,18 +63,19 @@ def main(num_timesteps=2000,
     posterior = test_hmm_sgd.smoother(emissions)
     most_likely_states = test_hmm_sgd.most_likely_states(emissions)
 
-    # Plot the training curve
     if not test_mode:
         plt.figure()
         plt.plot(losses)
         plt.xlabel("Iteration")
         plt.ylabel("Loss")
-
         plot_gaussian_hmm(test_hmm_sgd, emissions, most_likely_states, "SGD estimate")
         plot_hmm_posterior(true_states, posterior, plot_timesteps)
 
     if not test_mode:
+        # add plt.show at very end so the demo doesn't wait after each plot when run from command line
         plt.show()
+
+
 
 if __name__ == "__main__":
     main()

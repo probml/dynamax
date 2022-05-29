@@ -58,6 +58,7 @@ def kf_parallel():
 
 def plot_kf_parallel(xs, ys, lgssm_posteriors):
     num_samples = len(xs)
+    dict_figures = {}
 
     # Plot Data
     fig,ax = plt.subplots()
@@ -66,6 +67,7 @@ def plot_kf_parallel(xs, ys, lgssm_posteriors):
         ax.plot(*ys[n,...].T,'.', color=f"C{n}", label=f"Trajectory {n+1}")
     ax.set_title("Data")
     ax.legend()
+    dict_figures["missiles_latent"] = fig
 
     # Plot Filtering
     fig,ax = plt.subplots()
@@ -81,6 +83,7 @@ def plot_kf_parallel(xs, ys, lgssm_posteriors):
                              label=f"Trajectory {n+1}")
     ax.legend(fontsize=10);
     ax.set_title("Filtered Posterior")
+    dict_figures["missiles_filtered"] = fig
 
     # Plot Smoothing
     fig,ax = plt.subplots()
@@ -96,9 +99,15 @@ def plot_kf_parallel(xs, ys, lgssm_posteriors):
                              label=f"Trajectory {n+1}")
     ax.legend(fontsize=10);
     ax.set_title("Smoothed Posterior")
-    plt.show()
+    dict_figures["missiles_smoothed"] = fig
+    
+    return dict_figures
 
+def main(test_mode = False):
+    xs, ys, lgssm_posteriors = kf_parallel()
+    if not test_mode:
+        dict_figures = plot_kf_parallel(xs, ys, lgssm_posteriors)
+        plt.show()
 
 if __name__ == "__main__":
-    xs, ys, lgssm_posteriors = kf_parallel()
-    plot_kf_parallel(xs, ys, lgssm_posteriors)
+   main()

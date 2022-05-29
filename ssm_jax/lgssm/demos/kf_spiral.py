@@ -51,7 +51,13 @@ def kf_spiral():
     return x, y, lgssm_posterior
 
 def plot_kf_spiral(x, y, lgssm_posterior):
-    ### Plotting ###
+    dict_figures = {}
+    fig, ax = plt.subplots()
+    ax.plot(*x[:,:2].T,
+             ls="--", color="darkgrey",
+             marker="o", markersize=5, label="true state")
+    dict_figures["spiral_data"] = fig
+
     fig, ax = plt.subplots()
     ax.plot(*x[:,:2].T,
              ls="--", color="darkgrey",
@@ -60,6 +66,7 @@ def plot_kf_spiral(x, y, lgssm_posterior):
                          lgssm_posterior.filtered_covariances,
                          ax=ax, color="tab:red", label="filtered",
                          ellipse_kwargs={"linewidth":0.5})
+    dict_figures["spiral_filtered"] = fig
 
     fig, ax = plt.subplots()
     ax.plot(*x[:,:2].T,
@@ -70,9 +77,15 @@ def plot_kf_spiral(x, y, lgssm_posterior):
                          ax=ax,
                          color="tab:red", label="smoothed",
                          ellipse_kwargs={"linewidth":0.5})
-    plt.show()
+    dict_figures["spiral_smoothed"] = fig
+    return dict_figures
 
+
+def main(test_mode = False):
+    x, y, lgssm_posterior = kf_spiral()
+    if not test_mode:
+        dict_figures = plot_kf_spiral(x, y, lgssm_posterior)
+        plt.show()
 
 if __name__ == "__main__":
-    x, y, lgssm_posterior = kf_spiral()
-    plot_kf_spiral(x, y, lgssm_posterior)
+    main()
