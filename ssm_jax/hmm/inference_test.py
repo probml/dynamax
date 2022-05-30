@@ -102,7 +102,7 @@ def test_hmm_posterior_sample(key=0, num_timesteps=5, num_states=2,
         return jnp.array_equal(unique_seqs[counts.argmax()], mode_seq)
     
     keys = jr.split(key, num_iterations)
-    assert jnp.all(vmap(iterate_test, (0,))(keys))
+    assert jnp.all(vmap(iterate_test)(keys))
 
 
 def test_two_filter_smoother(key=0, num_timesteps=5, num_states=2):
