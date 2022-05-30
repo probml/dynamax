@@ -3,6 +3,7 @@ import itertools as it
 import jax.numpy as jnp
 import jax.random as jr
 from jax.scipy.special import logsumexp
+from jax import vmap
 
 import ssm_jax.hmm.inference as core
 
@@ -75,6 +76,33 @@ def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
         log_joint_t -= logsumexp(log_joint_t)
         predicted_probs_t = jnp.exp(logsumexp(log_joint_t, axis=tuple(jnp.arange(t))))
         assert jnp.allclose(predicted_probs[t], predicted_probs_t)
+
+
+def test_hmm_posterior_sample(key=0, num_timesteps=5, num_states=2, 
+                              num_samples=100000, num_iterations=20):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+    
+    max_unique_size = 1 << num_timesteps
+    
+    def iterate_test(key_iter):
+        keys_iter = jr.split(key_iter, num_samples)
+        args = random_hmm_args(key_iter, num_timesteps, num_states)
+
+        # Sample sequences from posterior
+        state_seqs = vmap(core.hmm_posterior_sample, 
+                          (0, None, None, None), (0, 0))(keys_iter, *args)[1]
+        unique_seqs, counts = jnp.unique(state_seqs, axis=0, size=max_unique_size,
+                                         return_counts=True)
+
+        # Run Viterbi algorithm to compute mode sequence
+        mode_seq = core.hmm_posterior_mode(*args)
+
+        # Compare the mode from samples to Viterbi mode
+        return jnp.array_equal(unique_seqs[counts.argmax()], mode_seq)
+    
+    keys = jr.split(key, num_iterations)
+    assert jnp.all(vmap(iterate_test, (0,))(keys))
 
 
 def test_two_filter_smoother(key=0, num_timesteps=5, num_states=2):
