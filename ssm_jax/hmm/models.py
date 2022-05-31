@@ -17,8 +17,7 @@ from ssm_jax.hmm.inference import (
     HMMPosterior,
     hmm_filter,
     hmm_smoother,
-    hmm_posterior_mode)
-from ssm_jax.hmm.learning import (
+    hmm_posterior_mode,
     compute_transition_probs)
 from ssm_jax.utils import PSDToRealBijector
 
