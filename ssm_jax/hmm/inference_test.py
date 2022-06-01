@@ -220,5 +220,3 @@ def test_hmm_smoother_stability(key=0, num_timesteps=10000, num_states=100, scal
 
     assert jnp.all(jnp.isfinite(posterior.smoothed_probs))
     assert jnp.allclose(posterior.smoothed_probs.sum(1), 1.0)
-
-test_hmm_posterior_sample()
