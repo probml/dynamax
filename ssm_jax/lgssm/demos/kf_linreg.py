@@ -1,14 +1,15 @@
 # Online Bayesian linear regression in 1d using Kalman Filter
-# Based on: https://github.com/probml/pmtk3/blob/master/demos/linregOnlineDemoKalman.m
+# Based on:
+# https://github.com/probml/pmtk3/blob/master/demos/linregOnlineDemoKalman.m
 
 # The latent state corresponds to the current estimate of the regression weights w.
 #
 # The observation model has the form:
-#     p(y(t) |  w(t), x(t)) = Gauss( C(t) * w(t), R(t)),
-# where C(t) = X[t,...]is the observation matrix for step t.
+#     p(y(t) |  w(t), x(t)) = N(y(t) | H(t) * w(t), R),
+# where H(t) = X[t,...]is the observation matrix for step t.
 #
 # The dynamics model has the form:
-#     p(w(t) | w(t-1)) = Gauss(A * w(t-1), Q),
+#     p(w(t) | w(t-1)) = N( w(t) | F * w(t-1), Q),
 # where Q>0 allows for parameter  drift.
 #
 # We show that the result is equivalent to batch (offline) Bayesian inference.
@@ -17,36 +18,55 @@ from matplotlib import pyplot as plt
 from ssm_jax.lgssm.inference import lgssm_filter, LGSSMParams
 
 
-def batch_bayesian_lreg(X, y, R, mu0, Sigma0):
-    """Compute mean and covariance matrix of a
-    Bayesian Linear regression
+def batch_bayesian_lreg(X, y, obs_var, mu0, Sigma0):
+    """Compute posterior mean and covariance matrix of weights in Bayesian 
+    linear regression.
+
+    The conditional probability of observations, y(t), given covariate x(t), and
+    weights, w=[w_0, w_1] is given by:
+         p(y(t) | x(t), w) = N(y(t) | w_0 + x(t) * w_1, obs_var),
+    with a Gaussian prior over the weights:
+        p(w) = N(w | mu0, Sigma0).
 
     Args:
         X: array(n_obs, dim) -  Matrix of features.
         y: array(n_obs,) - Array of observations.
-        R: float - Known variance.
+        obs_var: float - Conditional variance of observations.
         mu0: array(dim) - Prior mean.
         Sigma0: array(dimesion, dim) Prior covariance matrix.
     Returns:
         * array(dim) - Posterior mean.
         * array(n_obs, dim, dim) - Posterior precision matrix.
     """
-    posterior_prec = jnp.linalg.inv(Sigma0) + X.T @ X / R
-    b = jnp.linalg.inv(Sigma0) @ mu0 + X.T @ y / R
+    posterior_prec = jnp.linalg.inv(Sigma0) + X.T @ X / obs_var
+    b = jnp.linalg.inv(Sigma0) @ mu0 + X.T @ y / obs_var
     posterior_mean = jnp.linalg.solve(posterior_prec, b)
 
     return posterior_mean, posterior_prec
 
 
 def kf_linreg(X, y, R, mu0, Sigma0, F, Q):
-    """Online estimation of a linear regression
-    using Kalman filtering.
+    """Online estimation of a linear regression using Kalman filtering.
+
+    The latent state corresponds to the current estimate of the regression weights, w.
+
+    The observation model has the form:
+        p(y(t) |  w(t), x(t)) = N(y(t) | H(t) * w(t), R),
+    where H(t) = X[t,...] is the emission matrix for step t and * is matrix-vector
+    multiplication.
+
+    The dynamics model has the form:
+        p(w(t) | w(t-1)) = N(w(t) | F * w(t-1), Q),
+    where Q>0 allows for parameter drift.
 
     Args:
-        X: array(n_obs, 1, dim) -  Matrix of features,
-            acts here as a non-stationary emission matrix.
+        X: array(n_obs, 1, dim) -  Matrix of features, acts here as a 
+            non-stationary emission matrix with each row corresponding to the
+            emission matrix, H(t) shape (1, dim), for an individual observation.
         y: array(n_obs, 1) - Array of observations.
         R: array(1, 1) Emission covariance matrix.
+            The value of the single element is equal to the conditional variance
+            of observations in the linear regression model.
         mu0: array(dim) - Prior mean.
         Sigma0: array(dimesion, dim) Prior covariance matrix.
         F: array(dim, dim) - lds dynamics matrix.
@@ -74,27 +94,16 @@ def kf_linreg(X, y, R, mu0, Sigma0, F, Q):
     return lgssm_posterior.filtered_means, lgssm_posterior.filtered_covariances
 
 def online_kf_vs_batch_linreg():
-    """
-    Online Bayesian linear regression in 1d using Kalman filtering.
-
-    The latent state corresponds to the current estimate of the regression weights w.
-
-    The observation model has the form:
-        p(y(t) |  w(t), x(t)) = Gauss( C(t) * w(t), R(t)),
-    where C(t) = X[t,...] is the observation matrix for step t.
-
-    The dynamics model has the form:
-        p(w(t) | w(t-1)) = Gauss(A * w(t-1), Q),
-    where Q>0 allows for parameter  drift.
+    """Compare online linear regression with Kalman filtering vs batch solution.
     """
 
     n_obs = 21
-    timesteps = jnp.arange(n_obs)
     x = jnp.linspace(0, 20, n_obs)
-    X = jnp.column_stack((jnp.ones_like(x), x))
+    X = jnp.column_stack((jnp.ones_like(x), x)) # Design matrix.
     F = jnp.eye(2)
-    Q = jnp.zeros((2,2))
-    R = jnp.ones((1,1))
+    Q = jnp.zeros((2,2)) # No parameter drift.
+    obs_var = 1.
+    R = jnp.ones((1,1)) * obs_var
     mu0 = jnp.zeros(2)
     Sigma0 = jnp.eye(2) * 10.
 
@@ -104,7 +113,7 @@ def online_kf_vs_batch_linreg():
                    1.1672, 6.6524, 4.1452, 5.2677, 6.3403, 9.6264, 14.7842])
 
     kf_results  = kf_linreg(X[:,None,:], y[:,None], R, mu0, Sigma0, F, Q)
-    batch_results = batch_bayesian_lreg(X,y,R.item(),mu0,Sigma0)
+    batch_results = batch_bayesian_lreg(X,y,obs_var,mu0,Sigma0)
 
     return kf_results, batch_results
 
