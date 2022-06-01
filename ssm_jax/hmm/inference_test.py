@@ -78,8 +78,8 @@ def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
         assert jnp.allclose(predicted_probs[t], predicted_probs_t)
 
 
-def test_hmm_posterior_sample(key=0, num_timesteps=5, num_states=2, 
-                              num_samples=100000, num_iterations=20):
+def test_hmm_posterior_sample(key=0, num_timesteps=5, num_states=2, eps=1e-3,
+                              num_samples=1000000, num_iterations=5):
     if isinstance(key, int):
         key = jr.PRNGKey(key)
     
@@ -94,12 +94,14 @@ def test_hmm_posterior_sample(key=0, num_timesteps=5, num_states=2,
                           (0, None, None, None), (0, 0))(keys_iter, *args)[1]
         unique_seqs, counts = jnp.unique(state_seqs, axis=0, size=max_unique_size,
                                          return_counts=True)
+        blj_sample = counts / counts.sum()
 
-        # Run Viterbi algorithm to compute mode sequence
-        mode_seq = core.hmm_posterior_mode(*args)
+        # Compute joint probabilities
+        blj = jnp.exp(big_log_joint(*args))
+        blj = jnp.ravel(blj / blj.sum())
 
-        # Compare the mode from samples to Viterbi mode
-        return jnp.array_equal(unique_seqs[counts.argmax()], mode_seq)
+        # Compare the joint distributions
+        return jnp.allclose(blj_sample, blj, rtol=0, atol=eps)
     
     keys = jr.split(key, num_iterations)
     assert jnp.all(vmap(iterate_test)(keys))
@@ -218,3 +220,5 @@ def test_hmm_smoother_stability(key=0, num_timesteps=10000, num_states=100, scal
 
     assert jnp.all(jnp.isfinite(posterior.smoothed_probs))
     assert jnp.allclose(posterior.smoothed_probs.sum(1), 1.0)
+
+test_hmm_posterior_sample()
