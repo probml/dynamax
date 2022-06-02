@@ -155,6 +155,7 @@ def plot_online_kf_vs_batch_linreg(kf_results,batch_results):
     ax.legend();
 
     dict_figures = {"linreg_online_kalman":fig}
+    return dict_figures
 
 
 def main(test_mode=False):
