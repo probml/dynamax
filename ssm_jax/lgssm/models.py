@@ -1,11 +1,15 @@
+from functools import partial
+
 from jax import numpy as jnp
 from jax import random as jr
 from jax import lax
+from jax.tree_util import tree_map
 
 from distrax import MultivariateNormalFullCovariance as MVN
 
 from ssm_jax.lgssm.inference import lgssm_filter, lgssm_smoother
 from ssm_jax.utils import PSDToRealBijector
+
 
 
 class LinearGaussianSSM:
@@ -113,22 +117,110 @@ class LinearGaussianSSM:
         return lp
 
     def marginal_log_prob(self, emissions, inputs=None):
-        num_timesteps = len(emissions)
-        inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-        filtered_posterior = lgssm_filter(self, inputs, emissions)
+        filtered_posterior = lgssm_filter(self, emissions, inputs)
         return filtered_posterior.marginal_loglik
 
     def filter(self, emissions, inputs=None):
-        num_timesteps = len(emissions)
-        inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-        return lgssm_filter(self, inputs, emissions)
+        return lgssm_filter(self, emissions, inputs)
 
     def smoother(self, emissions, inputs=None):
-        num_timesteps = len(emissions)
-        inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-        return lgssm_smoother(self, inputs, emissions)
+        return lgssm_smoother(self, emissions, inputs)
 
-        # Properties to allow unconstrained optimization and JAX jitting
+    ### Expectation-maximization (EM) code
+    def e_step(self, batch_emissions, batch_inputs, batch_num_timesteps):
+        """The E-step computes sums of expected sufficient statistics under the
+        posterior. In the generic case, we simply return the posterior itself.
+        """
+
+        def _single_e_step(emissions, inputs, num_timesteps):
+            # Run the smoother to get posterior expectations
+            posterior = lgssm_smoother(self, emissions, inputs, num_timesteps)
+
+            # shorthand
+            Ex = posterior.smoothed_means
+            Exp = posterior.smoothed_means[:-1]
+            Exn = posterior.smoothed_means[1:]
+            Vx = posterior.smoothed_covariances
+            Vxp = posterior.smoothed_covariances[:-1]
+            Vxn = posterior.smoothed_covariances[1:]
+            Expxn = posterior.smoothed_cross_covariances
+            up = inputs[:-1]
+            u = inputs
+            y = emissions
+
+            # expected sufficient statistics for the initial distribution
+            Ex0 = posterior.smoothed_means[0]
+            Ex0x0T = posterior.smoothed_covariances[0] + jnp.outer(Ex0, Ex0)
+            init_stats = (Ex0, Ex0x0T, 1)
+
+            # expected sufficient statistics for the dynamics distribution
+            # let zp[t] = [x[t], u[t], 1] for t = 0...T-2
+            # let xn[t] = x[t+1]          for t = 0...T-2
+            sum_zpzpT = jnp.block([[Exp.T @ Exp,         Exp.T @ up,          Exp.sum(0)[:, None]],
+                                   [up.T @ Exp,          up.T @ up,           up.sum(0)[:, None]],
+                                   [Exp.sum(0)[None, :], up.sum(0)[:, None],  num_timesteps-1]])
+            sum_zpzpT = sum_zpzpT.at[:self.state_dim, :self.state_dim].add(Vxp.sum(0))
+            sum_zpxnT = jnp.block([[Expxn.sum(0)],
+                                   [up.T @ Exn],
+                                   [Exn.sum(0)[None, :]]])
+            sum_xnxnT = Vxn.sum(0) + Exn.T @ Exn
+            dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps-1)
+
+            # more expected sufficient statistics for the emissions
+            # let z[t] = [x[t], u[t], 1] for t = 0...T-1
+            sum_zzT = jnp.block([[Ex.T @ Ex,          Ex.T @ u,          Ex.sum(0)[:, None]],
+                                 [u.T @ Ex,           u.T @ u,           u.sum(0)[:, None]],
+                                 [Ex.sum(0)[None, :], u.sum(0)[:, None], num_timesteps]])
+            sum_zzT = sum_zzT.at[:self.state_dim, :self.state_dim].add(Vx.sum(0))
+            sum_zyT = jnp.block([[Ex.T @ y],
+                                 [u.T @ y],
+                                 [y.sum(0)[None,:]]])
+            sum_yyT = emissions.T @ emissions
+            emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
+
+            return init_stats, dynamics_stats, emission_stats
+
+        # TODO: what's the best way to vectorize/parallelize this?
+        return lax.vmap(_single_e_step, (batch_emissions, batch_inputs, batch_num_timesteps))
+
+    @classmethod
+    def m_step(cls, batch_stats):
+        def fit_linear_regression(ExxT, ExyT, EyyT, N):
+            # Solve a linear regression given sufficient statistics
+            W = jnp.linalg.solve(ExxT, ExyT).T
+            Sigma = (EyyT - W @ ExyT - ExyT.T @ W.T + W @ ExxT @ W.T) / N
+            return W, Sigma
+
+        # Sum the statistics across all batches
+        stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
+        init_stats, dynamics_stats, emission_stats = stats
+
+        # initial distribution
+        sum_x0, sum_x0x0T, N = init_stats
+        dim = sum_x0.shape[0]
+        m1 = sum_x0 / N
+        Q1 = (sum_x0x0T - jnp.outer(sum_x0, sum_x0) + 1e-4 * jnp.eye(dim)) / N
+
+        # dynamics distribution
+        W_d, Q = fit_linear_regression(*dynamics_stats)
+        A, B, b = W_d[:, :dim], W_d[:, dim:-1], W_d[:, -1]
+
+        # emission distribution
+        W_e, R = fit_linear_regression(*emission_stats)
+        C, D, d = W_e[:, :dim], W_e[:, dim:-1], W_e[:, -1]
+
+        return cls(dynamics_matrix=A,
+                   dynamics_covariance=Q,
+                   emission_matrix=C,
+                   emission_covariance=R,
+                   initial_mean=m1,
+                   initial_covariance=Q1,
+                   dynamics_input_weights=B,
+                   dynamics_bias=b,
+                   emission_input_weights=D,
+                   emission_bias=d)
+
+    # Properties to allow unconstrained optimization and JAX jitting
     def unconstrained_params(self):
         """Helper property to get a PyTree of unconstrained parameters.
         """

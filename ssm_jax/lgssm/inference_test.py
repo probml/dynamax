@@ -26,7 +26,7 @@ def lgssm_ssm_jax_to_tfp(num_timesteps, lgssm):
         lgssm.dynamics_matrix, dynamics_noise_dist,
         lgssm.emission_matrix, emission_noise_dist,
         initial_dist)
-    
+
     return tfp_lgssm
 
 

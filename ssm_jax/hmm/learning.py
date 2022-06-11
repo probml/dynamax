@@ -1,13 +1,10 @@
 # Code for parameter estimation (MLE, MAP) using EM and SGD
 
 import jax.numpy as jnp
-from jax import jit, value_and_grad, vmap, lax
+from jax import jit, value_and_grad, vmap
 import optax
 
 from tqdm.auto import trange
-
-# Helper function to access parameters
-_get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
 
 
 def hmm_fit_em(hmm, batch_emissions, num_iters=50):

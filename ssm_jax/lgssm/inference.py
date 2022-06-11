@@ -79,7 +79,7 @@ def _condition_on(m, S, C, D, d, R, u, y):
     return mu_cond, Sigma_cond
 
 
-def lgssm_filter(params, inputs, emissions, num_timesteps=None):
+def lgssm_filter(params, emissions, inputs=None, num_timesteps=None):
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
 
@@ -95,6 +95,7 @@ def lgssm_filter(params, inputs, emissions, num_timesteps=None):
             filtered_covariances
     """
     num_timesteps = len(emissions) if num_timesteps is None else num_timesteps
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
@@ -134,7 +135,7 @@ def lgssm_filter(params, inputs, emissions, num_timesteps=None):
                           filtered_covariances=filtered_covs)
 
 
-def lgssm_posterior_sample(rng, params, inputs, emissions, num_timesteps=None):
+def lgssm_posterior_sample(rng, params, emissions, inputs=None, num_timesteps=None):
     """Run forward-filtering, backward-sampling to draw samples of
         x_{1:T} | y_{1:T}, u_{1:T}.
 
@@ -149,6 +150,7 @@ def lgssm_posterior_sample(rng, params, inputs, emissions, num_timesteps=None):
         states: array (T,K) of samples from the posterior distribution on latent states.
     """
     num_timesteps = len(emissions) if num_timesteps is None else num_timesteps
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     # Run the Kalman filter
     filtered_posterior = lgssm_filter(params, inputs, emissions, num_timesteps)
@@ -185,7 +187,7 @@ def lgssm_posterior_sample(rng, params, inputs, emissions, num_timesteps=None):
     return ll, states
 
 
-def lgssm_smoother(params, inputs, emissions, num_timesteps=None):
+def lgssm_smoother(params, emissions, inputs=None, num_timesteps=None):
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -200,6 +202,7 @@ def lgssm_smoother(params, inputs, emissions, num_timesteps=None):
             filtered and smoothed posterior distributions.
     """
     num_timesteps = len(emissions) if num_timesteps is None else num_timesteps
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     # Run the Kalman filter
     filtered_posterior = lgssm_filter(params, inputs, emissions, num_timesteps)
