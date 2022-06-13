@@ -153,7 +153,7 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None, num_timesteps=No
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     # Run the Kalman filter
-    filtered_posterior = lgssm_filter(params, inputs, emissions, num_timesteps)
+    filtered_posterior = lgssm_filter(params, emissions, inputs, num_timesteps)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Sample backward in time
@@ -205,7 +205,7 @@ def lgssm_smoother(params, emissions, inputs=None, num_timesteps=None):
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     # Run the Kalman filter
-    filtered_posterior = lgssm_filter(params, inputs, emissions, num_timesteps)
+    filtered_posterior = lgssm_filter(params, emissions, inputs, num_timesteps)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Run the smoother backward in time

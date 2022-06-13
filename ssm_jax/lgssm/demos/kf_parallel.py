@@ -48,11 +48,10 @@ def kf_parallel():
     num_samples = 4
     key = jr.PRNGKey(310)
     keys = jr.split(key,num_samples)
-    inputs = jnp.zeros((num_samples, num_timesteps,0))
 
     xs, ys = vmap(lambda key: lgssm.sample(key, num_timesteps))(keys)
 
-    lgssm_posteriors = vmap(lgssm_smoother,(None,0,0))(lgssm,inputs,ys)
+    lgssm_posteriors = vmap(lgssm_smoother, (None, 0))(lgssm, ys)
 
     return xs, ys, lgssm_posteriors
 
@@ -100,7 +99,7 @@ def plot_kf_parallel(xs, ys, lgssm_posteriors):
     ax.legend(fontsize=10);
     ax.set_title("Smoothed Posterior")
     dict_figures["missiles_smoothed"] = fig
-    
+
     return dict_figures
 
 def main(test_mode = False):
