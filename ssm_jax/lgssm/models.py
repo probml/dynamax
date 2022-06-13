@@ -13,7 +13,24 @@ from ssm_jax.utils import PSDToRealBijector
 
 
 class LinearGaussianSSM:
-
+    '''
+    Linear Gaussian State Space Model is defined as follows:
+    p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
+    p(y_t | z_t) = N(y_t | H_t z_t + D_t u_t + d_t, R_t)
+    p(z_1) = N(z_1 | mu_{1|0}, Sigma_{1|0})
+    where z_t = hidden, y_t = observed, u_t = inputs,
+    dynamics_matrix = F (or A)
+    dynamics_covariance = Q
+    emission_matrix = H (or C)
+    emissions_covariance = R
+    initial_mean = mu_{1|0}
+    initial_covariance = Sigma_{1|0}
+    Optional parameters (default to 0)
+    dynamics_input_matrix = B
+    dynamics_bias = b
+    emission_input_matrix = D
+    emission_bias = d
+    '''
     def __init__(self,
                  dynamics_matrix,
                  dynamics_covariance,

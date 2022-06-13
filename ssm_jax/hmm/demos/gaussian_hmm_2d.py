@@ -117,7 +117,7 @@ def plot_results(true_hmm, emissions, true_states, plot_timesteps):
     print("log marginal prob: ", true_hmm.marginal_log_prob(emissions))
     fig = plot_gaussian_hmm(true_hmm, emissions, true_states, "Generating HMM")
     dict_figures["hmm_gauss_2d_emissions"]= fig
-    plot_gaussian_hmm_data(true_hmm, emissions, true_states, xlim=(0, plot_timesteps))
+    fig = plot_gaussian_hmm_data(true_hmm, emissions, true_states, xlim=(0, plot_timesteps))
     dict_figures["hmm_gauss_2d_trace"]= fig
     return dict_figures
 

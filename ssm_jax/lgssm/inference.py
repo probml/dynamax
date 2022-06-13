@@ -63,15 +63,20 @@ def _predict(m, S, A, B, b, Q, u):
 
 def _condition_on(m, S, C, D, d, R, u, y):
     """Condition a Gaussian potential on a new linear Gaussian observation
-
+      p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1}) 
+        propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
+        = N(x_t | m, S) N(y_t | C_t x_t + D_t u_t + d_t, R_t)
+        = N(x_t | mm, SS)
+    where
+    mm = m + K*(y - yhat) = mu_cond
+    yhat = H*m + D*u + d
+    K = S * H' * (R + H * S * H')^{-1}
+    L = I - K*H
+    SS = L * S * L' + K * R * K' = Sigma_cond
     **Note! This can be done more efficiently when R is diagonal.**
     """
     # Compute the Kalman gain
     K = jnp.linalg.solve(R + C @ S @ C.T, C @ S).T
-
-    # Follow equations 8.80 and 8.86 in PML2
-    # This should be more numerically stable than
-    # Sigma_cond = S - K @ C @ S
     dim = m.shape[-1]
     ImKC = jnp.eye(dim) - K @ C
     Sigma_cond = ImKC @ S @ ImKC.T + K @ R @ K.T
