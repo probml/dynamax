@@ -3,7 +3,8 @@ import pytest
 from ssm_jax.lgssm.demos import (kf_tracking,
                                  kf_spiral,
                                  kf_parallel,
-                                 kf_linreg)
+                                 kf_linreg,
+                                 lgssm_learning)
 
 # Run all the demos in test mode, which turns off plotting
 def test_kf_tracking_demo():
@@ -21,4 +22,5 @@ def test_kf_parallel_demo():
 def test_kf_linreg_demo():
     kf_linreg.main(test_mode=True)
 
-
+def test_lgssm_learning_demo():
+    lgssm_learning.main(test_mode=True)

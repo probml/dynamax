@@ -13,7 +13,7 @@ def hmm_fit_em(hmm, batch_emissions, num_iters=50):
     def em_step(hmm):
         posterior_stats, marginal_loglik = hmm.e_step(batch_emissions)
         hmm = hmm.m_step(posterior_stats)
-        return hmm, marginal_loglik
+        return hmm, marginal_loglik.sum()
 
     log_probs = []
     for _ in trange(num_iters):

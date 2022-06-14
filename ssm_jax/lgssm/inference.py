@@ -63,7 +63,7 @@ def _predict(m, S, A, B, b, Q, u):
 
 def _condition_on(m, S, C, D, d, R, u, y):
     """Condition a Gaussian potential on a new linear Gaussian observation
-      p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1}) 
+      p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
         = N(x_t | m, S) N(y_t | C_t x_t + D_t u_t + d_t, R_t)
         = N(x_t | mm, SS)
@@ -84,7 +84,7 @@ def _condition_on(m, S, C, D, d, R, u, y):
     return mu_cond, Sigma_cond
 
 
-def lgssm_filter(params, emissions, inputs=None, num_timesteps=None):
+def lgssm_filter(params, emissions, inputs=None):
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
 
@@ -99,7 +99,7 @@ def lgssm_filter(params, emissions, inputs=None, num_timesteps=None):
             filtered_means
             filtered_covariances
     """
-    num_timesteps = len(emissions) if num_timesteps is None else num_timesteps
+    num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     def _step(carry, t):
@@ -140,7 +140,7 @@ def lgssm_filter(params, emissions, inputs=None, num_timesteps=None):
                           filtered_covariances=filtered_covs)
 
 
-def lgssm_posterior_sample(rng, params, emissions, inputs=None, num_timesteps=None):
+def lgssm_posterior_sample(rng, params, emissions, inputs=None):
     """Run forward-filtering, backward-sampling to draw samples of
         x_{1:T} | y_{1:T}, u_{1:T}.
 
@@ -154,11 +154,11 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None, num_timesteps=No
         ll: marginal log likelihood of the data
         states: array (T,K) of samples from the posterior distribution on latent states.
     """
-    num_timesteps = len(emissions) if num_timesteps is None else num_timesteps
+    num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     # Run the Kalman filter
-    filtered_posterior = lgssm_filter(params, emissions, inputs, num_timesteps)
+    filtered_posterior = lgssm_filter(params, emissions, inputs)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Sample backward in time
@@ -192,7 +192,7 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None, num_timesteps=No
     return ll, states
 
 
-def lgssm_smoother(params, emissions, inputs=None, num_timesteps=None):
+def lgssm_smoother(params, emissions, inputs=None):
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -206,11 +206,11 @@ def lgssm_smoother(params, emissions, inputs=None, num_timesteps=None):
         lgssm_posterior: LGSSMPosterior instance containing properites of
             filtered and smoothed posterior distributions.
     """
-    num_timesteps = len(emissions) if num_timesteps is None else num_timesteps
+    num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     # Run the Kalman filter
-    filtered_posterior = lgssm_filter(params, emissions, inputs, num_timesteps)
+    filtered_posterior = lgssm_filter(params, emissions, inputs)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Run the smoother backward in time

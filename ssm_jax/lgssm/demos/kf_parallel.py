@@ -8,6 +8,8 @@ from jax import random as jr
 from jax import vmap
 from matplotlib import pyplot as plt
 
+from functools import partial
+
 from ssm_jax.plotting import plot_lgssm_posterior
 from ssm_jax.lgssm.models import LinearGaussianSSM
 from ssm_jax.lgssm.inference import lgssm_smoother
@@ -51,7 +53,7 @@ def kf_parallel():
 
     xs, ys = vmap(lambda key: lgssm.sample(key, num_timesteps))(keys)
 
-    lgssm_posteriors = vmap(lgssm_smoother, (None, 0))(lgssm, ys)
+    lgssm_posteriors = vmap(partial(lgssm_smoother, lgssm))(ys)
 
     return xs, ys, lgssm_posteriors
 
