@@ -13,7 +13,6 @@ def main(state_dim=2,
          num_timesteps=100,
          test_mode=False):
     keys = map(jr.PRNGKey, count())
-    next(keys)
 
     true_model = LinearGaussianSSM.random_initialization(next(keys), state_dim, emission_dim)
     true_states, emissions = true_model.sample(next(keys), num_timesteps)
