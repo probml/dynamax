@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
+from jax import vmap
 
 import chex
 
@@ -179,7 +180,7 @@ def hmm_backward_filter(transition_matrix,
 def hmm_two_filter_smoother(initial_distribution,
                             transition_matrix,
                             log_likelihoods):
-    """Computed the smoothed state probabilities using the two-filter
+    """Compute the smoothed state probabilities using the two-filter
     smoother, a.k.a. the forward-backward algorithm.
 
     Args:
@@ -214,7 +215,7 @@ def hmm_two_filter_smoother(initial_distribution,
 def hmm_smoother(initial_distribution,
                  transition_matrix,
                  log_likelihoods):
-    """Computed the smoothed state probabilities using a general
+    """Compute the smoothed state probabilities using a general
     Bayesian smoother.
 
     Note: This is the discrete SSM analog of the RTS smoother for
@@ -265,6 +266,110 @@ def hmm_smoother(initial_distribution,
                         filtered_probs=filtered_probs,
                         predicted_probs=predicted_probs,
                         smoothed_probs=smoothed_probs)
+
+
+def hmm_fixed_lag_smoother(initial_distribution,
+                           transition_matrix,
+                           log_likelihoods,
+                           window_size):
+    """Compute the smoothed state probabilities using the fixed-lag smoother.
+
+    Args:
+        initial_distribution(k): prob(hid(1)=k)
+        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
+        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
+        window_size (int): size of smoothed window
+
+    Returns:
+        HMMPosterior object
+    """
+    num_timesteps, num_states = log_likelihoods.shape
+
+    def _step(carry, t):
+        # Unpack the inputs
+        log_normalizers, filtered_probs, predicted_probs, bmatrices = carry
+
+        # Get parameters for time t
+        A_fwd = _get_params(transition_matrix, 2, t-1)
+        A_bwd = _get_params(transition_matrix, 2, t)
+        ll = log_likelihoods[t]
+        
+        # Shift window forward by 1
+        log_normalizers = log_normalizers[1:]
+        predicted_probs = predicted_probs[1:]
+        filtered_probs = filtered_probs[1:]
+        bmatrices = bmatrices[1:]
+        
+        # Perform forward operation
+        predicted_probs_next = _predict(filtered_probs[-1], A_fwd)
+        filtered_probs_next, log_norm = _condition_on(predicted_probs_next, ll)
+        log_normalizers = jnp.concatenate((log_normalizers,
+                                           jnp.array([log_norm])))
+        filtered_probs = jnp.concatenate((filtered_probs,
+                                          jnp.array([filtered_probs_next])))
+        predicted_probs = jnp.concatenate((predicted_probs,
+                                           jnp.array([predicted_probs_next])))
+
+        # Smooth inside the window in parallel
+        def update_bmatrix(bmatrix):
+            return (bmatrix @ A_bwd) * jnp.exp(ll)
+        bmatrices = vmap(update_bmatrix)(bmatrices)
+        bmatrices = jnp.concatenate((bmatrices, jnp.eye(num_states)[None, :]))
+
+        # Compute beta values by row-summing bmatrices
+        def compute_beta(bmatrix):
+            beta = bmatrix.sum(axis=1)
+            return jnp.where(beta.sum(), beta/beta.sum(), beta)
+        betas = vmap(compute_beta)(bmatrices)
+
+        # Compute posterior values
+        def compute_posterior(filtered_probs, beta):
+            smoothed_probs = filtered_probs * beta
+            return jnp.where(smoothed_probs.sum(), 
+                             smoothed_probs/smoothed_probs.sum(), smoothed_probs)
+        smoothed_probs = vmap(compute_posterior, (0, 0))(filtered_probs, betas)
+
+        post = HMMPosterior(marginal_loglik = log_normalizers.sum(),
+                            filtered_probs = filtered_probs,
+                            predicted_probs = predicted_probs,
+                            smoothed_probs = smoothed_probs)
+
+        return (log_normalizers, filtered_probs, predicted_probs, bmatrices), post
+    
+    # Filter on first observation
+    ll = log_likelihoods[0]
+    filtered_probs, log_norm = _condition_on(initial_distribution, ll)
+    
+    # Reshape for lax.scan
+    filtered_probs = jnp.pad(jnp.expand_dims(filtered_probs, axis=0),
+                             ((window_size-1,0), (0,0)))
+    predicted_probs = jnp.pad(jnp.expand_dims(initial_distribution, axis=0),
+                              ((window_size-1,0), (0,0)))
+    log_normalizers = jnp.pad(jnp.array([log_norm]), (window_size-1,0))
+    bmatrices = jnp.pad(jnp.expand_dims(jnp.eye(num_states), axis=0),
+                        ((window_size-1,0), (0,0), (0,0)))
+
+    carry = (log_normalizers, filtered_probs, predicted_probs, bmatrices)
+    _, posts = lax.scan(
+        _step, carry, jnp.arange(1, num_timesteps)
+    )
+
+    # Include initial values
+    marginal_loglik = jnp.concatenate((jnp.array([log_normalizers.sum()]), 
+                                      posts.marginal_loglik))
+    predicted_probs = jnp.concatenate((jnp.expand_dims(predicted_probs, axis=0),
+                                       posts.predicted_probs))
+    smoothed_probs = jnp.concatenate((jnp.expand_dims(filtered_probs, axis=0),
+                                      posts.smoothed_probs))
+    filtered_probs = jnp.concatenate((jnp.expand_dims(filtered_probs, axis=0), 
+                                      posts.filtered_probs))
+
+    posts = HMMPosterior(marginal_loglik = marginal_loglik,
+                         filtered_probs = filtered_probs,
+                         predicted_probs = predicted_probs,
+                         smoothed_probs = smoothed_probs)
+
+    return posts
 
 
 def hmm_posterior_mode(initial_distribution,
