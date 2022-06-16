@@ -39,19 +39,19 @@ class LGSSMInfoPosterior:
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
 
 
-def _info_predict(eta, P, F_inv, Q_prec, B, u, b):
+def _info_predict(eta, Lambda, F, Q_prec, B, u, b):
     """Predict next mean and precision under a linear Gaussian model
 
         p(z_{t+1}) = \int N(z_t | mu_t, Sigma_t) N(z_{t+1} | F z_t, Q)
     """
-    I = jnp.eye(len(P))
-    # TODO: Is there a way to avoid this inverse?
-    Q = jnp.linalg.inv(Q_prec)
-    M = F_inv.T @ P @ F_inv
-    C = jnp.linalg.solve(I + M @ Q, F_inv.T)
-    P_pred = C @ P @ F_inv
-    eta_pred = C @ eta + P @ (B @ u + b)
-    return eta_pred, P_pred
+    K = jnp.linalg.solve(Lambda + F.T @ Q_prec @ F, F.T @ Q_prec).T
+    I = jnp.eye(len(Lambda))
+    ## This version should be more stable than:
+    # Lambda_pred = (I - K @ F.T) @ Q_prec
+    ImKF = I - K @ F.T
+    Lambda_pred = ImKF @ Q_prec @ ImKF.T + K @ Lambda @ K.T
+    eta_pred = K @ eta + Lambda_pred @ (B @ u + b)
+    return eta_pred, Lambda_pred
 
 
 def _info_condition_on(eta, P, H, R_prec, D, u, d, obs):
@@ -116,9 +116,8 @@ def lgssm_info_filter(params, inputs, emissions, num_timesteps=None):
             pred_eta, pred_prec, H, R_prec, D, u, d, y)
 
         # Predict the next state
-        F_inv = jnp.linalg.inv(F)
         pred_mean, pred_cov = _info_predict(
-            filtered_eta, filtered_prec, F_inv, Q_prec, B, u, b)
+            filtered_eta, filtered_prec, F, Q_prec, B, u, b)
 
         return (pred_mean, pred_cov), (filtered_eta, filtered_prec)
 
