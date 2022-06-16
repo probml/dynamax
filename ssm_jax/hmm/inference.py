@@ -9,7 +9,7 @@ import chex
 class HMMPosterior:
     """Simple wrapper for properties of an HMM posterior distribution.
 
-    marginal_loglik: log sum_{hidden(1:t)} prob(hidden(1:t), obs(1:t) | params)
+    marginal_loglik: log sum_{hidden(1:t)} p(hidden(1:t), obs(1:t) | params)
     filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
     predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
     smoothed_probs(t,k) = p(hidden(t)=k | obs(1:T))
@@ -54,8 +54,8 @@ def hmm_filter(initial_distribution,
     """Forwards filtering.  
 
     Args:
-        initial_distribution(k): prob(hid(1)=k)
-        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
+        initial_distribution(k): p(hid(1)=k)
+        transition_matrix(j,k): p(hid(t)=k | hid(t-1)=j)
         log_likelihoods(t,k): p(obs(t) | hid(t)=k)
 
     Returns: HMMPosterior object (smoothed_probs=None)
@@ -94,8 +94,8 @@ def hmm_posterior_sample(rng,
     """Sample a latent sequence from the posterior.  
 
     Args:
-        initial_distribution(k): prob(hid(1)=k)
-        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
+        initial_distribution(k): p(hid(1)=k)
+        transition_matrix(j,k): p(hid(t)=k | hid(t-1)=j)
         log_likelihoods(t,k): p(obs(t) | hid(t)=k)
 
     Returns:
@@ -146,8 +146,8 @@ def hmm_backward_filter(transition_matrix,
     """_summary_
 
     Args:
-        hmm_params (_type_): _description_
-        log_likelihoods (_type_): _description_
+        transition_matrix(j,k): p(hid(t)=k | hid(t-1)=j)
+        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
 
     Returns:
         log_marginal_lik
@@ -278,7 +278,7 @@ def hmm_fixed_lag_smoother(initial_distribution,
         initial_distribution(k): prob(hid(1)=k)
         transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
         log_likelihoods(t,k): p(obs(t) | hid(t)=k)
-        window_size (int): size of smoothed window
+        window_size(int): size of smoothed window
 
     Returns:
         HMMPosterior object
