@@ -12,7 +12,11 @@ class LGSSMInfoParams:
     initial_precision: chex.Array
     dynamics_matrix: chex.Array
     dynamics_precision: chex.Array
+    dynamics_input_weights: chex.Array
+    dynamics_bias: chex.Array
     emission_matrix: chex.Array
+    emission_input_weights: chex.Array
+    emission_bias: chex.Array
     emission_precision: chex.Array
 
 
@@ -35,21 +39,22 @@ class LGSSMInfoPosterior:
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
 
 
-def _info_predict(eta, P, F_inv, Q_prec):
+def _info_predict(eta, P, F_inv, Q_prec, B, u, b):
     """Predict next mean and precision under a linear Gaussian model
 
         p(z_{t+1}) = \int N(z_t | mu_t, Sigma_t) N(z_{t+1} | F z_t, Q)
     """
     I = jnp.eye(len(P))
+    # TODO: Is there a way to avoid this inverse?
     Q = jnp.linalg.inv(Q_prec)
     M = F_inv.T @ P @ F_inv
     C = jnp.linalg.solve(I + M @ Q, F_inv.T)
     P_pred = C @ P @ F_inv
-    eta_pred = C @ eta
+    eta_pred = C @ eta + P @ (B @ u + b)
     return eta_pred, P_pred
 
 
-def _info_condition_on(eta, P, H, R_prec, obs):
+def _info_condition_on(eta, P, H, R_prec, D, u, d, obs):
     """Condition a Gaussian potential on a new linear Gaussian observation.
 
         p(z_t|y_t) \prop  N(z_t | mu_{t|t-1}, Sigma_{t|t-1}) N(y_t | H z_t, R)
@@ -71,11 +76,11 @@ def _info_condition_on(eta, P, H, R_prec, obs):
     """
     C = H.T @ R_prec
     P_cond = P + C @ H
-    eta_cond = eta + C @ obs
+    eta_cond = eta + C @ (obs - D @ u - d)
     return eta_cond, P_cond
 
 
-def lgssm_info_filter(params, emissions, num_timesteps=None):
+def lgssm_info_filter(params, inputs, emissions, num_timesteps=None):
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
 
@@ -99,16 +104,21 @@ def lgssm_info_filter(params, emissions, num_timesteps=None):
         Q_prec = _get_params(params.dynamics_precision, 2, t)
         H = _get_params(params.emission_matrix, 2, t)
         R_prec = _get_params(params.emission_precision, 2, t)
+        B = _get_params(params.dynamics_input_weights, 2, t)
+        b = _get_params(params.dynamics_bias, 1, t)
+        D = _get_params(params.emission_input_weights, 2, t)
+        d = _get_params(params.emission_bias, 1, t)
+        u = inputs[t]
         y = emissions[t]
 
         # Condition on this emission
         filtered_eta, filtered_prec = _info_condition_on(
-            pred_eta, pred_prec, H, R_prec, y)
+            pred_eta, pred_prec, H, R_prec, D, u, d, y)
 
         # Predict the next state
         F_inv = jnp.linalg.inv(F)
         pred_mean, pred_cov = _info_predict(
-            filtered_eta, filtered_prec, F_inv, Q_prec)
+            filtered_eta, filtered_prec, F_inv, Q_prec, B, u, b)
 
         return (pred_mean, pred_cov), (filtered_eta, filtered_prec)
 
