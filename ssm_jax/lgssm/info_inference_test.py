@@ -69,7 +69,7 @@ def test_info_kalman_filter():
 
     lgssm_posterior = lgssm.filter(y)
     inputs = jnp.zeros((num_timesteps,1))
-    lgssm_info_posterior = lgssm_info_filter(lgssm_info, inputs, y) 
+    lgssm_info_posterior = lgssm_info_filter(lgssm_info, y, inputs) 
     
     info_filtered_means = vmap(jnp.linalg.solve)(
             lgssm_info_posterior.filtered_precisions,
@@ -85,7 +85,7 @@ def test_info_kalman_filter():
                         rtol=1e-2)
 
 
-def test_info_linreg():
+def test_info_kf_linreg():
     """Test non-stationary emission matrix in information filter.
     
     Compare to moment form filter using the example in 
@@ -136,8 +136,8 @@ def test_info_linreg():
         emission_precision=R_prec
     )
 
-    lgssm_moment_posterior = lgssm_filter(lgssm_moment,inputs,y[:,None])
-    lgssm_info_posterior = lgssm_info_filter(lgssm_info,inputs,y[:,None])
+    lgssm_moment_posterior = lgssm_filter(lgssm_moment, y[:,None], inputs)
+    lgssm_info_posterior = lgssm_info_filter(lgssm_info, y[:,None], inputs)
 
     info_filtered_means = vmap(jnp.linalg.solve)(
             lgssm_info_posterior.filtered_precisions,
