@@ -149,6 +149,26 @@ def test_hmm_smoother(key=0, num_timesteps=5, num_states=2):
         assert jnp.allclose(posterior.smoothed_probs[t], smoothed_probs_t)
 
 
+def test_hmm_fixed_lag_smoother(key=0, num_timesteps=5, num_states=2):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+    
+    args = random_hmm_args(key, num_timesteps, num_states)
+
+    # Run the HMM smoother
+    posterior = core.hmm_smoother(*args)
+
+    # Run the HMM fixed-lag smoother with full window size
+    posterior_fl = core.hmm_fixed_lag_smoother(*args, window_size=num_timesteps)
+
+    # Compare posterior values of fixed-lag smoother to those of smoother
+    assert jnp.allclose(posterior.marginal_loglik, posterior_fl.marginal_loglik[-1])
+    assert jnp.allclose(posterior.filtered_probs, posterior_fl.filtered_probs[-1])
+    assert jnp.allclose(posterior.predicted_probs, posterior_fl.predicted_probs[-1])
+    assert jnp.allclose(posterior.smoothed_probs, posterior_fl.smoothed_probs[-1])
+
+
+
 def test_compute_transition_probs(key=0, num_timesteps=5, num_states=2):
     if isinstance(key, int):
         key = jr.PRNGKey(key)
@@ -220,3 +240,4 @@ def test_hmm_smoother_stability(key=0, num_timesteps=10000, num_states=100, scal
 
     assert jnp.all(jnp.isfinite(posterior.smoothed_probs))
     assert jnp.allclose(posterior.smoothed_probs.sum(1), 1.0)
+    
