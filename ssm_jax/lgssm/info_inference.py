@@ -118,16 +118,15 @@ def _info_condition_on(eta, Lambda, H, R_prec, D, u, d, obs):
 
 
 def lgssm_info_filter(params, emissions, inputs):
-    """Run a Kalman filter to produce the marginal likelihood and filtered state
-    estimates.
+    """Run a Kalman filter to produce the filtered state estimates.
 
     Args:
-        params: an LGSSMParams instance (or object with the same fields)
-        inputs (T,D_in): array of inputs.
+        params: an LGSSMInfoParams instance.
         emissions (T,D_obs): array of observations.
+        inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: LGSSMPosterior instance containing,
+        filtered_posterior: LGSSMInfoPosterior instance containing,
             filtered_etas
             filtered_precisions
     """
