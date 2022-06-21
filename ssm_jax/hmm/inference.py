@@ -1,15 +1,17 @@
+import chex
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
-from jax import vmap
 
-import chex
+# Helper function to access parameters
+_get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
+
 
 @chex.dataclass
 class HMMPosterior:
     """Simple wrapper for properties of an HMM posterior distribution.
 
-    marginal_loglik: log sum_{hidden(1:t)} p(hidden(1:t), obs(1:t) | params)
+    marginal_loglik: log sum_{hidden(1:t)} prob(hidden(1:t), obs(1:t) | params)
     filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
     predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
     smoothed_probs(t,k) = p(hidden(t)=k | obs(1:T))
@@ -20,8 +22,22 @@ class HMMPosterior:
     smoothed_probs: chex.Array = None
 
 
-# Helper function to access parameters
-_get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
+def _normalize(u, axis=0, eps=1e-15):
+    """Normalizes the values within the axis in a way that they sum up to 1.
+    https://github.com/deepmind/distrax/blob/b6bffed85b8e0c36b88c96750ba13ca906b1102f/distrax/_src/utils/hmm.py#L28
+
+    Args:
+        u: Input array to normalize.
+        axis: Axis over which to normalize.
+        eps: Minimum value threshold for numerical stability.
+
+    Returns:
+        Tuple of the normalized values, and the normalizing denominator.
+    """
+    u = jnp.where(u == 0, 0, jnp.where(u < eps, eps, u))
+    c = u.sum(axis=axis)
+    c = jnp.where(c == 0, 1, c)
+    return u / c, c
 
 
 # Helper functions for the two key filtering steps
@@ -30,16 +46,15 @@ def _condition_on(probs, ll):
     for each discrete state, while avoiding numerical underflow.
 
     Args:
-        probs(k): prior for state k 
+        probs(k): prior for state k
         ll(k): log likelihood for state k
 
     Returns:
-        probs(k): posterior for state k 
+        probs(k): posterior for state k
     """
     ll_max = ll.max()
     new_probs = probs * jnp.exp(ll - ll_max)
-    norm = new_probs.sum()
-    new_probs /= norm
+    new_probs, norm = _normalize(new_probs)
     log_norm = jnp.log(norm) + ll_max
     return new_probs, log_norm
 
@@ -48,14 +63,12 @@ def _predict(probs, A):
     return A.T @ probs
 
 
-def hmm_filter(initial_distribution,
-               transition_matrix,
-               log_likelihoods):
-    """Forwards filtering.  
+def hmm_filter(initial_distribution, transition_matrix, log_likelihoods):
+    """Forwards filtering.
 
     Args:
-        initial_distribution(k): p(hid(1)=k)
-        transition_matrix(j,k): p(hid(t)=k | hid(t-1)=j)
+        initial_distribution(k): prob(hid(1)=k)
+        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
         log_likelihoods(t,k): p(obs(t) | hid(t)=k)
 
     Returns: HMMPosterior object (smoothed_probs=None)
@@ -78,24 +91,18 @@ def hmm_filter(initial_distribution,
         return (log_normalizer, predicted_probs_next), (filtered_probs, predicted_probs)
 
     carry = (0.0, initial_distribution)
-    (log_normalizer, _), (filtered_probs, predicted_probs) = lax.scan(
-        _step, carry, jnp.arange(num_timesteps))
+    (log_normalizer, _), (filtered_probs, predicted_probs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
 
-    post = HMMPosterior(marginal_loglik = log_normalizer,
-                        filtered_probs = filtered_probs,
-                        predicted_probs = predicted_probs)
+    post = HMMPosterior(marginal_loglik=log_normalizer, filtered_probs=filtered_probs, predicted_probs=predicted_probs)
     return post
 
 
-def hmm_posterior_sample(rng,
-                         initial_distribution,
-                         transition_matrix,
-                         log_likelihoods):
-    """Sample a latent sequence from the posterior.  
+def hmm_posterior_sample(rng, initial_distribution, transition_matrix, log_likelihoods):
+    """Sample a latent sequence from the posterior.
 
     Args:
-        initial_distribution(k): p(hid(1)=k)
-        transition_matrix(j,k): p(hid(t)=k | hid(t-1)=j)
+        initial_distribution(k): prob(hid(1)=k)
+        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
         log_likelihoods(t,k): p(obs(t) | hid(t)=k)
 
     Returns:
@@ -105,10 +112,7 @@ def hmm_posterior_sample(rng,
     num_timesteps, num_states = log_likelihoods.shape
 
     # Run the HMM filter
-    post = hmm_filter(initial_distribution,
-                      transition_matrix,
-                      log_likelihoods)
-    log_normalizer, filtered_probs = post.marginal_loglik, post.filtered_probs
+    log_normalizer, filtered_probs, _ = hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
 
     # Run the sampler backward in time
     def _step(carry, args):
@@ -124,30 +128,27 @@ def hmm_posterior_sample(rng,
         smoothed_probs /= smoothed_probs.sum()
 
         # Sample current state
-        state = jr.choice(rng, a=num_states, p=smoothed_probs)
+        state = jr.choice(rng, p=smoothed_probs)
 
         return state, state
 
     # Run the HMM smoother
     rngs = jr.split(rng, num_timesteps)
-    last_state = jr.choice(rngs[-1], a=num_states, p=filtered_probs[-1])
-    args = (jnp.arange(num_timesteps - 1, 0, -1),
-            rngs[:-1][::-1],
-            filtered_probs[:-1][::-1])
+    last_state = jr.choice(rngs[-1], filtered_probs[-1])
+    args = (jnp.arange(num_timesteps - 1, -1, -1), rngs[:-1], filtered_probs[:-1][::-1])
     _, rev_states = lax.scan(_step, last_state, args)
 
     # Reverse the arrays and return
-    states = jnp.concatenate([rev_states[::-1], jnp.array([last_state])])
+    states = jnp.row_stack([rev_states[::-1], last_state])
     return log_normalizer, states
-    
 
-def hmm_backward_filter(transition_matrix,
-                        log_likelihoods):
+
+def hmm_backward_filter(transition_matrix, log_likelihoods):
     """_summary_
 
     Args:
-        transition_matrix(j,k): p(hid(t)=k | hid(t-1)=j)
-        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
+        hmm_params (_type_): _description_
+        log_likelihoods (_type_): _description_
 
     Returns:
         log_marginal_lik
@@ -171,16 +172,13 @@ def hmm_backward_filter(transition_matrix,
         return (log_normalizer, next_backward_pred_probs), backward_pred_probs
 
     carry = (0.0, jnp.ones(num_states))
-    (log_normalizer, _), rev_backward_pred_probs = lax.scan(
-        _step, carry, jnp.arange(num_timesteps)[::-1])
+    (log_normalizer, _), rev_backward_pred_probs = lax.scan(_step, carry, jnp.arange(num_timesteps)[::-1])
     backward_pred_probs = rev_backward_pred_probs[::-1]
     return log_normalizer, backward_pred_probs
 
 
-def hmm_two_filter_smoother(initial_distribution,
-                            transition_matrix,
-                            log_likelihoods):
-    """Compute the smoothed state probabilities using the two-filter
+def hmm_two_filter_smoother(initial_distribution, transition_matrix, log_likelihoods):
+    """Computed the smoothed state probabilities using the two-filter
     smoother, a.k.a. the forward-backward algorithm.
 
     Args:
@@ -198,8 +196,7 @@ def hmm_two_filter_smoother(initial_distribution,
     ll = post.marginal_loglik
     filtered_probs, predicted_probs = post.filtered_probs, post.predicted_probs
 
-    _, backward_pred_probs = hmm_backward_filter(transition_matrix,
-                                                 log_likelihoods)
+    _, backward_pred_probs = hmm_backward_filter(transition_matrix, log_likelihoods)
 
     # Compute smoothed probabilities
     smoothed_probs = filtered_probs * backward_pred_probs
@@ -212,10 +209,8 @@ def hmm_two_filter_smoother(initial_distribution,
                         smoothed_probs=smoothed_probs)
 
 
-def hmm_smoother(initial_distribution,
-                 transition_matrix,
-                 log_likelihoods):
-    """Compute the smoothed state probabilities using a general
+def hmm_smoother(initial_distribution, transition_matrix, log_likelihoods):
+    """Computed the smoothed state probabilities using a general
     Bayesian smoother.
 
     Note: This is the discrete SSM analog of the RTS smoother for
@@ -254,9 +249,7 @@ def hmm_smoother(initial_distribution,
 
     # Run the HMM smoother
     carry = filtered_probs[-1]
-    args = (jnp.arange(num_timesteps - 2, -1, -1),
-            filtered_probs[:-1][::-1],
-            predicted_probs[1:][::-1])
+    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_probs[:-1][::-1], predicted_probs[1:][::-1])
     _, rev_smoothed_probs = lax.scan(_step, carry, args)
 
     # Reverse the arrays and return
