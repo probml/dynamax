@@ -10,13 +10,16 @@ import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import lax
+from jax import nn
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
+from ssm_jax.hmm.inference import _get_batch_emission_probs
+from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
-from ssm_jax.hmm.learning import compute_transition_probs
+from ssm_jax.hmm.inference import hmm_two_filter_smoother
 from ssm_jax.hmm.learning import hmm_fit_sgd
 from ssm_jax.utils import PSDToRealBijector
 
@@ -156,7 +159,7 @@ class BaseHMM(ABC):
             '''
             return posterior, trans_probs
 
-        return lax.map(_single_e_step, batch_emissions)
+        return vmap(_single_e_step)(batch_emissions)
 
     # @classmethod
     def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(1e-2), num_iters=50):
@@ -186,6 +189,7 @@ class BaseHMM(ABC):
 
         # TODO: minimize the negative expected log joint with SGD
         hmm, losses = hmm_fit_sgd(self, batch_emissions, optimizer, num_iters, neg_expected_log_joint)
+
         return hmm, -losses
 
     # Properties to allow unconstrained optimization and JAX jitting
@@ -281,6 +285,15 @@ class CategoricalHMM(BaseHMM):
         """
         super().__init__(initial_probabilities, transition_matrix)
 
+        num_states, num_emissions = emission_probs.shape
+
+        # Check shapes
+        assert initial_probabilities.shape == (num_states,)
+        assert transition_matrix.shape == (num_states, num_states)
+
+        self._num_states = num_states
+        self._num_emissions = num_emissions
+
         self._emission_distribution = tfd.Categorical(probs=emission_probs)
 
     @classmethod
@@ -314,6 +327,120 @@ class CategoricalHMM(BaseHMM):
         transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
         emission_probs = tfb.SoftmaxCentered().forward(unconstrained_params[2])
         return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
+
+    # Expectation-maximization (EM) code
+    def e_step(self, batch_emissions):
+        """The E-step computes expected sufficient statistics under the
+        posterior. In the generic case, we simply return the posterior itself.
+        """
+
+        def _single_e_step(emissions):
+            # TODO: do we need to use dynamic slice?
+
+            posterior = hmm_two_filter_smoother(self.initial_probabilities, self.transition_matrix,
+                                                self._conditional_logliks(emissions))
+
+            # Compute the transition probabilities
+            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+            return posterior, trans_probs
+
+        return vmap(_single_e_step)(batch_emissions)
+
+    def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(0.01), num_iters=50):
+
+        partial_get_emission_probs = partial(_get_batch_emission_probs, self)
+        batch_emission_probs = vmap(partial_get_emission_probs)(batch_emissions, batch_posteriors.smoothed_probs)
+
+        emission_probs = batch_emission_probs.sum(axis=0)
+        denom = emission_probs.sum(axis=-1, keepdims=True)
+        emission_probs = emission_probs / jnp.where(denom == 0, 1, denom)
+
+        transitions_probs = batch_trans_probs.sum(axis=0)
+        denom = transitions_probs.sum(axis=-1, keepdims=True)
+        transition_probs = transitions_probs / jnp.where(denom == 0, 1, denom)
+
+        batch_initial_probs = batch_posteriors.smoothed_probs[:, 0, :]
+        initial_probs = batch_initial_probs.sum(axis=0) / batch_initial_probs.sum()
+
+        hmm = CategoricalHMM(initial_probs, transition_probs, emission_probs)
+        return hmm, batch_posteriors.marginal_loglik
+
+
+@register_pytree_node_class
+class CategoricalLogitHMM(CategoricalHMM):
+
+    def __init__(self, initial_logits, transition_logits, emission_logits):
+        num_states, num_emissions = emission_logits.shape
+
+        # Check shapes
+        assert initial_logits.shape == (num_states,)
+        assert transition_logits.shape == (num_states, num_states)
+
+        self._num_states = num_states
+        self._num_emissions = num_emissions
+
+        # Construct the  distribution objects
+        self._initial_distribution = tfd.Categorical(logits=initial_logits)
+        self._transition_distribution = tfd.Categorical(logits=transition_logits)
+        self._emission_distribution = tfd.Categorical(logits=emission_logits)
+
+    # Properties to get various parameters of the model
+    @property
+    def emission_distribution(self):
+        return self._emission_distribution
+
+    @property
+    def initial_probabilities(self):
+        return self._initial_distribution.probs_parameter()
+
+    @property
+    def emission_probs(self):
+        return self._emission_distribution.probs_parameter()
+
+    @property
+    def transition_matrix(self):
+        return self._transition_distribution.probs_parameter()
+
+    @property
+    def initial_logits(self):
+        return self._initial_distribution.logits_parameter()
+
+    @property
+    def transition_logits(self):
+        return self._transition_distribution.logits_parameter()
+
+    @property
+    def emission_logits(self):
+        return self.emission_distribution.logits_parameter()
+
+    @property
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters.
+        """
+        return (self.initial_logits, self.transition_logits, self.emission_logits)
+
+    @classmethod
+    def from_unconstrained_params(cls, unconstrained_params, hypers):
+        return cls(*unconstrained_params, *hypers)
+
+    def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(0.01), num_iters=50):
+
+        partial_get_emission_probs = partial(_get_batch_emission_probs, self)
+        batch_emission_probs = vmap(partial_get_emission_probs)(batch_emissions, batch_posteriors.smoothed_probs)
+
+        emission_probs = batch_emission_probs.sum(axis=0)
+        denom = emission_probs.sum(axis=-1, keepdims=True)
+        emission_logits = jnp.log(emission_probs / jnp.where(denom == 0, 1, denom))
+
+        transitions_probs = batch_trans_probs.sum(axis=0)
+        denom = transitions_probs.sum(axis=-1, keepdims=True)
+        transition_logits = jnp.log(transitions_probs / jnp.where(denom == 0, 1, denom))
+        batch_initial_probs = batch_posteriors.smoothed_probs[:, 0, :]
+        initial_logits = jnp.log(batch_initial_probs.sum(axis=0) / batch_initial_probs.sum())
+
+        hmm = CategoricalLogitHMM(initial_logits, transition_logits, emission_logits)
+
+        return hmm, batch_posteriors.marginal_loglik
 
 
 @register_pytree_node_class
@@ -436,7 +563,7 @@ class GaussianHMM(BaseHMM):
 @register_pytree_node_class
 class PoissonHMM(BaseHMM):
 
-    def __init__(self, initial_probabilities, transition_matrix, emission_rates):
+    def __init__(self, initial_probabilities, transition_matrix, emission_log_rates):
         """_summary_
 
         Args:
@@ -445,16 +572,15 @@ class PoissonHMM(BaseHMM):
             emission_rates (_type_): _description_
         """
         super().__init__(initial_probabilities, transition_matrix)
-
-        self._emission_distribution = tfd.Independent(tfd.Poisson(emission_rates), reinterpreted_batch_ndims=1)
+        self._emission_distribution = tfd.Poisson(log_rate=emission_log_rates)
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
         key1, key2, key3 = jr.split(key, 3)
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
-        emission_rates = jr.exponential(key3, (num_states, emission_dim))
-        return cls(initial_probs, transition_matrix, emission_rates)
+        emission_log_rates = jnp.log(jr.exponential(key3, (num_states, emission_dim)))
+        return cls(initial_probs, transition_matrix, emission_log_rates)
 
     # Properties to get various parameters of the model
     @property
@@ -463,19 +589,19 @@ class PoissonHMM(BaseHMM):
 
     @property
     def emission_rates(self):
-        # TODO: does this work for Independent product of Poisson?
-        return self._emission_distribution.distribution.rate
+        return jnp.exp(self.emission_log_rates)
+
+    @property
+    def emission_log_rates(self):
+        return self._emission_distribution.log_rate
 
     @property
     def unconstrained_params(self):
         """Helper property to get a PyTree of unconstrained parameters.
         """
-        return (tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-                tfb.SoftmaxCentered().inverse(self.transition_matrix), tfb.Softplus().inverse(self.emission_rates))
+        return (nn.softmax(jnp.log(self.initial_probabilities),
+                           axis=-1), nn.softmax(jnp.log(self.transition_matrix), axis=-1), self.emission_log_rates)
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
-        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
-        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
-        emission_rates = tfb.Softplus().forward(unconstrained_params[2])
-        return cls(initial_probabilities, transition_matrix, emission_rates, *hypers)
+        return cls(*unconstrained_params, *hypers)
