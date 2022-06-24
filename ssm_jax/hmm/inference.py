@@ -25,7 +25,6 @@ class HMMPosterior:
 
 def _normalize(u, axis=0, eps=1e-15):
     """Normalizes the values within the axis in a way that they sum up to 1.
-    https://github.com/deepmind/distrax/blob/b6bffed85b8e0c36b88c96750ba13ca906b1102f/distrax/_src/utils/hmm.py#L28
 
     Args:
         u: Input array to normalize.
