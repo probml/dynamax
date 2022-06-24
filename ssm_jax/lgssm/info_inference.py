@@ -38,6 +38,25 @@ class LGSSMInfoPosterior:
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
 
+def _mvn_info_log_prob(eta,Lambda,x):
+    """Calculate the log probability of an observation from a MVN 
+    parameterised in information form.
+
+    Args:
+        eta (D,): precision weighted mean.
+        Lambda (D,D): precision.
+        x (D,): observation.
+
+    Returns:
+        log_prob: log probability of x.
+    """
+    D = len(Lambda)
+    lp = x.T @ eta - 0.5 * x.T @ Lambda @ x
+    lp += -0.5 * eta.T @ jnp.linalg.solve(Lambda, eta)
+    sign, logdet = jnp.linalg.slogdet(Lambda)
+    lp += -0.5 * (D * jnp.log(2*jnp.pi) - sign * logdet)
+    return lp
+
 
 def _info_predict(eta, Lambda, F, Q_prec, B, u, b):
     """Predict next mean and precision under a linear Gaussian model
