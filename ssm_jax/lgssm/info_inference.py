@@ -31,6 +31,7 @@ class LGSSMInfoPosterior:
             filtered_precisions: (T,K,K) array,
                 inv(Cov[x_t | y_{1:t}, u_{1:t}]).
     """
+    marginal_loglik: chex.Scalar = None
     filtered_etas: chex.Array = None
     filtered_precisions: chex.Array = None
 
@@ -92,7 +93,7 @@ def _info_predict(eta, Lambda, F, Q_prec, B, u, b):
         Lambda_pred (D_hid,D_hid): predicted precision.
     """
     K = jnp.linalg.solve(Lambda + F.T @ Q_prec @ F, F.T @ Q_prec).T
-    I = jnp.eye(len(Lambda))
+    I = jnp.eye(F.shape[0])
     ## This version should be more stable than:
     # Lambda_pred = (I - K @ F.T) @ Q_prec
     ImKF = I - K @ F.T
@@ -152,7 +153,7 @@ def lgssm_info_filter(params, emissions, inputs):
     num_timesteps = len(emissions) 
 
     def _step(carry, t):
-        pred_eta, pred_prec = carry
+        ll, pred_eta, pred_prec = carry
 
         # Shorthand: get parameters and inputs for time index t
         F = _get_params(params.dynamics_matrix, 2, t)
@@ -166,6 +167,11 @@ def lgssm_info_filter(params, emissions, inputs):
         u = inputs[t]
         y = emissions[t]
 
+        # Update the log likelihood
+        y_pred_eta, y_pred_prec = _info_predict(
+                pred_eta, pred_prec, H, R_prec, D, u, d)
+        ll += _mvn_info_log_prob(y_pred_eta, y_pred_prec, y)
+
         # Condition on this emission
         filtered_eta, filtered_prec = _info_condition_on(
             pred_eta, pred_prec, H, R_prec, D, u, d, y)
@@ -174,14 +180,15 @@ def lgssm_info_filter(params, emissions, inputs):
         pred_mean, pred_cov = _info_predict(
             filtered_eta, filtered_prec, F, Q_prec, B, u, b)
 
-        return (pred_mean, pred_cov), (filtered_eta, filtered_prec)
+        return (ll, pred_mean, pred_cov), (filtered_eta, filtered_prec)
 
     # Run the Kalman filter
     initial_eta = params.initial_precision @ params.initial_mean 
-    carry = (initial_eta, params.initial_precision)
-    _, (filtered_etas, filtered_precisions) = lax.scan(
+    carry = (0., initial_eta, params.initial_precision)
+    (ll, _, _), (filtered_etas, filtered_precisions) = lax.scan(
         _step, carry, jnp.arange(num_timesteps))
-    return LGSSMInfoPosterior(filtered_etas=filtered_etas,
+    return LGSSMInfoPosterior(marginal_loglik= ll,
+                              filtered_etas=filtered_etas,
                               filtered_precisions=filtered_precisions)
 
 

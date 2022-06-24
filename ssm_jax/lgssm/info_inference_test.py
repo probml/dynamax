@@ -83,6 +83,9 @@ def test_info_kalman_filter():
     assert jnp.allclose(info_filtered_covs,
                         lgssm_posterior.filtered_covariances,
                         rtol=1e-2)
+    assert jnp.allclose(lgssm_info_posterior.marginal_loglik,
+                        lgssm_posterior.marginal_loglik,
+                        rtol=1e-2)
 
 
 def test_info_kf_linreg():
