@@ -1,48 +1,9 @@
-import chex
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 from jax import jacfwd
 from distrax import MultivariateNormalFullCovariance as MVN
-from typing import Callable
-
-@chex.dataclass
-class ESSMParams:
-    """Lightweight container for ESSM parameters.
-    The functions below can be called with an instance of this class.
-    However, they can also accept a ssm.nlgssm.models.ESSM instance,
-    if you prefer a more object-oriented approach.
-    """
-    initial_mean: chex.Array
-    initial_covariance: chex.Array
-    dynamics_function: Callable
-    dynamics_covariance: chex.Array
-    emission_function: Callable
-    emission_covariance: chex.Array
-
-@chex.dataclass
-class ESSMPosterior:
-    """Simple wrapper for properties of an ESSM posterior distribution.
-
-    Attributes:
-            marginal_loglik: marginal log likelihood of the data
-            filtered_means: (T,D_hid) array,
-                E[x_t | y_{1:t}, u_{1:t}].
-            filtered_covariances: (T,D_hid,D_hid) array,
-                Cov[x_t | y_{1:t}, u_{1:t}].
-            smoothed_means: (T,D_hid) array,
-                E[x_t | y_{1:T}, u_{1:T}].
-            smoothed_covs: (T,D_hid,D_hid) array of smoothed marginal covariances,
-                Cov[x_t | y_{1:T}, u_{1:T}].
-            smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
-                E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
-    """
-    marginal_loglik: chex.Scalar = None
-    filtered_means: chex.Array = None
-    filtered_covariances: chex.Array = None
-    smoothed_means: chex.Array = None
-    smoothed_covariances: chex.Array = None
-    smoothed_cross_covariances: chex.Array = None
+from ssm_jax.nlgssm.models import NLGSSMParams, NLGSSMPosterior
 
 
 # Helper functions
@@ -160,6 +121,6 @@ def essm_filter(params, emissions, inputs=None):
     carry = (0., params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(
         _step, carry, jnp.arange(num_timesteps))
-    return ESSMPosterior(marginal_loglik=ll,
-                         filtered_means=filtered_means,
-                         filtered_covariances=filtered_covs)
+    return NLGSSMPosterior(marginal_loglik=ll,
+                           filtered_means=filtered_means,
+                           filtered_covariances=filtered_covs)
