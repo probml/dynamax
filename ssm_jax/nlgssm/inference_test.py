@@ -4,7 +4,7 @@ import jax.numpy as jnp
 from ssm_jax.lgssm.inference import lgssm_filter
 from ssm_jax.lgssm.models import LinearGaussianSSM
 from ssm_jax.nlgssm.extended_inference import extended_kalman_filter
-from ssm_jax.nlgssm.containers import NLGSSMParams
+from ssm_jax.nlgssm.models import NonLinearGaussianSSM
 
 # from filterpy.kalman import ExtendedKalmanFilter
 
@@ -14,7 +14,7 @@ _compare = lambda x, y: jnp.allclose(x, y, rtol=1e-4)
 def random_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2, linear=True):
     if isinstance(key, int):
         key = jr.PRNGKey(key)
-    *keys, subkey = jr.split(key, 9)
+    *keys, subkey = jr.split(key, 5)
     
     # Generate random parameters
     initial_mean = jr.normal(keys[0], (state_dim,))
@@ -23,27 +23,41 @@ def random_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2, linear=Tru
     emission_covariance = jnp.eye(emission_dim) * jr.uniform(keys[3])
 
     if linear:
+        *keys, subkey = jr.split(subkey, 5)
         params = LinearGaussianSSM(
             initial_mean = initial_mean,
             initial_covariance = initial_covariance,
-            dynamics_matrix = jr.normal(keys[4], (state_dim, state_dim)),
+            dynamics_matrix = jr.normal(keys[0], (state_dim, state_dim)),
             dynamics_covariance = dynamics_covariance,
-            dynamics_bias = jr.normal(keys[5], (state_dim,)),
-            emission_matrix = jr.normal(keys[6], (emission_dim, state_dim)),
+            dynamics_bias = jr.normal(keys[1], (state_dim,)),
+            emission_matrix = jr.normal(keys[2], (emission_dim, state_dim)),
             emission_covariance = emission_covariance,
-            emission_bias = jr.normal(keys[7], (emission_dim,))
+            emission_bias = jr.normal(keys[3], (emission_dim,))
+        )
+    else:
+        *keys, subkey = jr.split(subkey, 3)
+        # Some arbitrary non-linear functions
+        c_dynamics = jr.normal(keys[0], (3,))
+        dynamics_function = lambda x: jnp.sin(c_dynamics[0] * jnp.power(x, 3) + \
+            c_dynamics[1] * jnp.square(x) + c_dynamics[2])
+        c_emission = jr.normal(keys[1], (2,))
+        h = lambda x: jnp.cos(c_emission[0] * jnp.square(x) + c_emission[1])
+        emission_function = lambda x: h(x)[:emission_dim] if state_dim >= emission_dim \
+            else jnp.pad(h(x), (0, emission_dim - state_dim))
+
+        params = NonLinearGaussianSSM(
+            initial_mean = initial_mean,
+            initial_covariance = initial_covariance,
+            dynamics_function = dynamics_function,
+            dynamics_covariance = dynamics_covariance,
+            emission_function = emission_function,
+            emission_covariance = emission_covariance
         )
 
     # Generate random samples
     key, subkey = jr.split(subkey, 2)
     states, emissions = params.sample(key, num_timesteps)
     return params, states, emissions
-
-
-# def random_nonlinear_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2):
-#     if isinstance(key, int):
-#         key = jr.PRNGKey(key)
-#     *keys, subkey = jr.split(key, 9)
 
 
 def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
@@ -53,7 +67,7 @@ def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
     # Run standard Kalman filter
     kf_post = lgssm_filter(lgssm, emissions)
     # Run extended Kalman filter
-    nlgssm = NLGSSMParams(
+    nlgssm = NonLinearGaussianSSM(
         initial_mean = lgssm.initial_mean,
         initial_covariance = lgssm.initial_covariance,
         dynamics_function = lambda x: lgssm.dynamics_matrix @ x + lgssm.dynamics_bias,
