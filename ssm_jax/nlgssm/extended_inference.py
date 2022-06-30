@@ -128,7 +128,7 @@ def essm_filter(params, emissions, inputs=None):
     # If no input, add dummy input to functions
     if inputs is None:
         process_fn = lambda fn: (lambda x, u: fn(x))
-        f, h, F, H = process_fn(f), process_fn(h), process_fn(F), process_fn(H)
+        f, h, F, H = (process_fn(fn) for fn in (f, h, F, H))
 
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps,)) if inputs is None else inputs
