@@ -6,6 +6,7 @@ from jax.tree_util import register_pytree_node_class, tree_map
 from distrax import MultivariateNormalFullCovariance as MVN
 
 from ssm_jax.nlgssm.extended_inference import extended_kalman_filter
+from ssm_jax.utils import PSDToRealBijector
 
 @register_pytree_node_class
 class NonLinearGaussianSSM:
@@ -91,5 +92,48 @@ class NonLinearGaussianSSM:
         filtered_posterior = extended_kalman_filter(self, emissions, inputs)
         return filtered_posterior.marginal_loglik
 
-    def filter(self, emissions, inputs=None):
+    def ekf_filter(self, emissions, inputs=None):
         return extended_kalman_filter(self, emissions, inputs)
+    
+    # Properties to allow unconstrained optimization and JAX jitting
+    @property
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters.
+        """
+        return (self.initial_mean,
+                PSDToRealBijector.forward(self.initial_covariance),
+                self.dynamics_function,
+                PSDToRealBijector.forward(self.dynamics_covariance),
+                self.emission_function,
+                PSDToRealBijector.forward(self.emission_covariance))
+
+    @classmethod
+    def from_unconstrained_params(cls, unconstrained_params, hypers):
+        initial_mean = unconstrained_params[0]
+        initial_covariance = PSDToRealBijector.inverse(unconstrained_params[1])
+        dynamics_function = unconstrained_params[2]
+        dynamics_covariance = PSDToRealBijector.inverse(unconstrained_params[3])
+        emission_function = unconstrained_params[4]
+        emission_covariance = PSDToRealBijector.inverse(unconstrained_params[5])
+        return cls(dynamics_function=dynamics_function,
+                   dynamics_covariance=dynamics_covariance,
+                   emission_function=emission_function,
+                   emission_covariance=emission_covariance,
+                   initial_mean=initial_mean,
+                   initial_covariance=initial_covariance)
+
+    @property
+    def hyperparams(self):
+        """Helper property to get a PyTree of model hyperparameters.
+        """
+        return tuple()
+
+    # Use the to/from unconstrained properties to implement JAX tree_flatten/unflatten
+    def tree_flatten(self):
+        children = self.unconstrained_params
+        aux_data = self.hyperparams
+        return children, aux_data
+
+    @classmethod
+    def tree_unflatten(cls, aux_data, children):
+        return cls.from_unconstrained_params(children, aux_data)
