@@ -68,7 +68,7 @@ def _condition_on(m, S, h, H, R, u, y):
     return mu_cond, Sigma_cond
 
 
-def essm_filter(params, emissions, inputs=None):
+def extended_kalman_filter(params, emissions, inputs=None):
     """Run an extended Kalman filter to produce the marginal likelihood and 
     filtered state estimates.
 
@@ -117,7 +117,7 @@ def essm_filter(params, emissions, inputs=None):
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
-    # Run the Kalman filter
+    # Run the extended Kalman filter
     carry = (0., params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(
         _step, carry, jnp.arange(num_timesteps))
