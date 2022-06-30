@@ -83,16 +83,15 @@ def extended_kalman_filter(params, emissions, inputs=None):
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
     """
+    num_timesteps = len(emissions)
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
     F, H = jacfwd(f), jacfwd(h)
     # If no input, add dummy input to functions
     if inputs is None:
+        inputs = jnp.zeros((num_timesteps,))
         process_fn = lambda fn: (lambda x, u: fn(x))
         f, h, F, H = (process_fn(fn) for fn in (f, h, F, H))
-
-    num_timesteps = len(emissions)
-    inputs = jnp.zeros((num_timesteps,)) if inputs is None else inputs
 
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
