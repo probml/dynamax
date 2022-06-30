@@ -3,7 +3,7 @@ import jax.random as jr
 from jax import lax
 from jax import jacfwd
 from distrax import MultivariateNormalFullCovariance as MVN
-from ssm_jax.nlgssm.models import NLGSSMParams, NLGSSMPosterior
+from ssm_jax.nlgssm.containers import NLGSSMPosterior
 
 
 # Helper functions
