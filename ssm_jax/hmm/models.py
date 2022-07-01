@@ -413,6 +413,14 @@ class CategoricalLogitHMM(CategoricalHMM):
     def emission_logits(self):
         return self.emission_distribution.logits_parameter()
 
+    @classmethod
+    def random_initialization(cls, key, num_states, emission_dim):
+        key1, key2, key3 = jr.split(key, 3)
+        initial_probs = jr.normal(key1, (num_states,))
+        transition_matrix = jr.normal(key2, (num_states, num_states))
+        emission_probs = jr.normal(key3, (num_states, emission_dim))
+        return cls(initial_probs, transition_matrix, emission_probs)
+
     @property
     def unconstrained_params(self):
         """Helper property to get a PyTree of unconstrained parameters.
