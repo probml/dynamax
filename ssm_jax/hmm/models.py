@@ -114,21 +114,25 @@ class BaseHMM(ABC):
     ### Basic inference code
     def marginal_log_prob(self, emissions):
         """Compute log marginal likelihood of observations."""
-        post = hmm_filter(self.initial_probabilities, self.transition_matrix,  self._conditional_logliks(emissions))
+        post = hmm_filter(self.initial_probabilities, self.transition_matrix,
+                          self._conditional_logliks(emissions))
         ll = post.marginal_loglik
         return ll
 
     def most_likely_states(self, emissions):
         """Compute Viterbi path."""
-        return hmm_posterior_mode(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+        return hmm_posterior_mode(self.initial_probabilities, self.transition_matrix,
+                                  self._conditional_logliks(emissions))
 
     def filter(self, emissions):
         """Compute filtering distribution."""
-        return hmm_filter(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+        return hmm_filter(self.initial_probabilities, self.transition_matrix,
+                          self._conditional_logliks(emissions))
 
     def smoother(self, emissions):
         """Compute smoothing distribution."""
-        return hmm_smoother(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+        return hmm_smoother(self.initial_probabilities, self.transition_matrix,
+                            self._conditional_logliks(emissions))
 
     ### Expectation-maximization (EM) code
     def e_step(self, batch_emissions, batch_num_timesteps):
@@ -139,7 +143,8 @@ class BaseHMM(ABC):
             # TODO: do we need to use dynamic slice?
             emissions = lax.dynamic_slice_in_dim(emissions, 0, num_timesteps)
 
-            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
+                                     self._conditional_logliks(emissions))
 
             # Compute the transition probabilities
             trans_probs = compute_transition_probs(self.transition_matrix, posterior)
@@ -166,6 +171,7 @@ class BaseHMM(ABC):
         """
         def _single_expected_log_joint(hmm, emissions, num_timesteps, posterior, trans_probs):
             # TODO: do we need to use dynamic slice?
+            # log_likelihoods = hmm._conditional_logliks(emissions)
             log_likelihoods = hmm.emission_distribution.log_prob(emissions[:num_timesteps, None,...])
             expected_states = posterior.smoothed_probs[:num_timesteps]
 
