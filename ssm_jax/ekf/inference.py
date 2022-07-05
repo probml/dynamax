@@ -123,3 +123,68 @@ def extended_kalman_filter(params, emissions, inputs=None):
     return NLGSSMPosterior(marginal_loglik=ll,
                            filtered_means=filtered_means,
                            filtered_covariances=filtered_covs)
+
+
+def extended_kalman_smoother(params, emissions, inputs=None):
+    num_timesteps = len(emissions)
+    
+    # Run the extended Kalman filter
+    ekf_posterior = extended_kalman_filter(params, emissions, inputs)
+    ll, filtered_means, filtered_covs, *_ = ekf_posterior.to_tuple()
+    
+    # Dynamics and emission functions and their Jacobians
+    f, h = params.dynamics_function, params.emission_function
+    F, H = jacfwd(f), jacfwd(h)
+    # If no input, add dummy input to functions
+    if inputs is None:
+        inputs = jnp.zeros((num_timesteps,))
+        process_fn = lambda fn: (lambda x, u: fn(x))
+        f, h, F, H = (process_fn(fn) for fn in (f, h, F, H))
+
+    def _step(carry, args):
+        # Unpack the inputs
+        smoothed_mean_next, smoothed_cov_next = carry
+        t, filtered_mean, filtered_cov = args
+
+        # Get parameters and inputs for time index t
+        Q = _get_params(params.dynamics_covariance, 2, t)
+        R = _get_params(params.emission_covariance, 2, t)
+        u = inputs[t]
+        F_x = F(filtered_mean, u)
+
+        # Prediction step
+        m_pred = f(filtered_mean, u)
+        S_pred = Q + F_x @ filtered_cov @ F_x.T
+        G = jnp.linalg.solve(S_pred, F_x @ filtered_cov).T
+
+        # Compute smoothed mean and covariance
+        smoothed_mean = filtered_mean + G @ (smoothed_mean_next - m_pred)
+        smoothed_cov = filtered_cov + G @ (smoothed_cov_next - S_pred) @ G.T
+
+        # Compute the smoothed expectation of x_t x_{t+1}^T
+        smoothed_cross = G @ smoothed_cov_next + \
+            jnp.outer(smoothed_mean, smoothed_mean_next)
+        
+        return (smoothed_mean, smoothed_cov), \
+               (smoothed_mean, smoothed_cov, smoothed_cross)
+
+    # Run the extended Kalman smoother
+    init_carry = (filtered_means[-1], filtered_covs[-1])
+    args = (
+        jnp.arange(num_timesteps-2, -1, -1),
+        filtered_means[:-1][::-1],
+        filtered_covs[:-1][::-1]
+    )
+    _, (smoothed_means, smoothed_covs, smoothed_cross) = \
+        lax.scan(_step, init_carry, args)
+    
+    # Reverse the arrays and return
+    smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None,...]))
+    smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None,...]))
+    smoothed_cross = smoothed_cross[::-1]
+    return NLGSSMPosterior(marginal_loglik=ll,
+                          filtered_means=filtered_means,
+                          filtered_covariances=filtered_covs,
+                          smoothed_means=smoothed_means,
+                          smoothed_covariances=smoothed_covs,
+                          smoothed_cross_covariances=smoothed_cross)
