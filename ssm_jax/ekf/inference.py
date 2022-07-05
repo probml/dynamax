@@ -73,7 +73,7 @@ def extended_kalman_filter(params, emissions, inputs=None):
     filtered state estimates.
 
     Args:
-        params: an ESSMParams instance (or object with the same fields)
+        params: an NLGSSMParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
         inputs (T,D_in): array of inputs.
 
@@ -126,6 +126,17 @@ def extended_kalman_filter(params, emissions, inputs=None):
 
 
 def extended_kalman_smoother(params, emissions, inputs=None):
+    """Run an extended Kalman (RTS) smoother.
+
+    Args:
+        params: an NLGSSMParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        nlgssm_posterior: ESSMPosterior instance containing properties of
+            filtered and smoothed posterior distributions.
+    """
     num_timesteps = len(emissions)
     
     # Run the extended Kalman filter
