@@ -4,10 +4,26 @@ from jax import random as jr
 
 from ssm_jax.lgssm.models import LinearGaussianSSM
 from ssm_jax.lgssm.inference import LGSSMParams, lgssm_filter
-from ssm_jax.lgssm.info_inference import LGSSMInfoParams, lgssm_info_filter
+from ssm_jax.lgssm.info_inference import LGSSMInfoParams, lgssm_info_filter, lgssm_info_smoother
 
-def test_info_kalman_filter():
-    """ Test information form kalman filter against the moment form version."""
+
+def info_to_moment_form(etas,Lambdas):
+    """Convert information form parameters to moment form.
+
+    Args:
+        etas (N,D): precision weighted means.
+        Lambdas (N,D,D): precision matrices.
+
+    Returns:
+        means (N,D)
+        covs (N,D,D)
+    """
+    means = vmap(jnp.linalg.solve)(Lambdas,etas)
+    covs = jnp.linalg.inv(Lambdas)
+    return means, covs
+
+def test_info_kalman_filtering_and_smoothing():
+    """ Test information form Kalman filter against the moment form version."""
 
     delta = 1.0
     F = jnp.array([
@@ -67,21 +83,30 @@ def test_info_kalman_filter():
     num_timesteps = 15
     x, y = lgssm.sample(key,num_timesteps)
 
-    lgssm_posterior = lgssm.filter(y)
+    lgssm_posterior = lgssm.smoother(y)
     inputs = jnp.zeros((num_timesteps,1))
-    lgssm_info_posterior = lgssm_info_filter(lgssm_info, y, inputs) 
+    lgssm_info_posterior = lgssm_info_smoother(lgssm_info, y, inputs) 
     
-    info_filtered_means = vmap(jnp.linalg.solve)(
-            lgssm_info_posterior.filtered_precisions,
-            lgssm_info_posterior.filtered_etas
+    info_filtered_means, info_filtered_covs = info_to_moment_form(
+            lgssm_info_posterior.filtered_etas,
+            lgssm_info_posterior.filtered_precisions
             )
-    info_filtered_covs = jnp.linalg.inv(lgssm_info_posterior.filtered_precisions)
+    info_smoothed_means, info_smoothed_covs = info_to_moment_form(
+            lgssm_info_posterior.smoothed_etas,
+            lgssm_info_posterior.smoothed_precisions
+            )
 
     assert jnp.allclose(info_filtered_means,
                         lgssm_posterior.filtered_means,
                         rtol=1e-2)
     assert jnp.allclose(info_filtered_covs,
                         lgssm_posterior.filtered_covariances,
+                        rtol=1e-2)
+    assert jnp.allclose(info_smoothed_means,
+                        lgssm_posterior.smoothed_means,
+                        rtol=1e-2)
+    assert jnp.allclose(info_smoothed_covs,
+                        lgssm_posterior.smoothed_covariances,
                         rtol=1e-2)
     assert jnp.allclose(lgssm_info_posterior.marginal_loglik,
                         lgssm_posterior.marginal_loglik,
@@ -142,11 +167,10 @@ def test_info_kf_linreg():
     lgssm_moment_posterior = lgssm_filter(lgssm_moment, y[:,None], inputs)
     lgssm_info_posterior = lgssm_info_filter(lgssm_info, y[:,None], inputs)
 
-    info_filtered_means = vmap(jnp.linalg.solve)(
-            lgssm_info_posterior.filtered_precisions,
-            lgssm_info_posterior.filtered_etas
+    info_filtered_means, info_filtered_covs = info_to_moment_form(
+            lgssm_info_posterior.filtered_etas,
+            lgssm_info_posterior.filtered_precisions
             )
-    info_filtered_covs = jnp.linalg.inv(lgssm_info_posterior.filtered_precisions)
 
     assert jnp.allclose(info_filtered_means,
                         lgssm_moment_posterior.filtered_means,
