@@ -1,12 +1,33 @@
 import jax.random as jr
 import jax.numpy as jnp
 
-from ssm_jax.lgssm.inference import lgssm_filter
+from ssm_jax.lgssm.inference import lgssm_filter, lgssm_smoother
 from ssm_jax.lgssm.models import LinearGaussianSSM
-from ssm_jax.ekf.inference import extended_kalman_filter
+from ssm_jax.ekf.inference import extended_kalman_filter, extended_kalman_smoother
 from ssm_jax.nlgssm.models import NonLinearGaussianSSM
 
 from filterpy.kalman import ExtendedKalmanFilter
+
+
+# Helper function to turn linear transform into function form
+def _lgssm_to_nlgssm(params):
+    """Generates NonLinearGaussianSSM params from LinearGaussianSSM params
+
+    Args:
+        params: LinearGaussianSSM object
+
+    Returns:
+        nlgssm_params: NonLienarGaussianSSM object
+    """    
+    nlgssm_params = NonLinearGaussianSSM(
+        initial_mean = params.initial_mean,
+        initial_covariance = params.initial_covariance,
+        dynamics_function = lambda x: params.dynamics_matrix @ x + params.dynamics_bias,
+        dynamics_covariance = params.dynamics_covariance,
+        emission_function = lambda x: params.emission_matrix @ x + params.emission_bias,
+        emission_covariance = params.emission_covariance
+    )
+    return nlgssm_params
 
 
 def random_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2, linear=True):
@@ -65,15 +86,7 @@ def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
     # Run standard Kalman filter
     kf_post = lgssm_filter(lgssm, emissions)
     # Run extended Kalman filter
-    nlgssm = NonLinearGaussianSSM(
-        initial_mean = lgssm.initial_mean,
-        initial_covariance = lgssm.initial_covariance,
-        dynamics_function = lambda x: lgssm.dynamics_matrix @ x + lgssm.dynamics_bias,
-        dynamics_covariance = lgssm.dynamics_covariance,
-        emission_function = lambda x: lgssm.emission_matrix @ x + lgssm.emission_bias,
-        emission_covariance = lgssm.emission_covariance
-    )
-    ekf_post = extended_kalman_filter(nlgssm, emissions)
+    ekf_post = extended_kalman_filter(_lgssm_to_nlgssm(lgssm), emissions)
 
     # Compare filter results
     assert jnp.allclose(kf_post.marginal_loglik, ekf_post.marginal_loglik)
@@ -86,4 +99,21 @@ def test_extended_kalman_filter_nonlinear(key=0, num_timesteps=15):
         random_args(key=key, num_timesteps=num_timesteps, linear=False)
     
     # Run EKF from filterpy library
+    # TODO
+    assert True
+
+def test_extended_kalman_smoother_linear(key=0, num_timesteps=15):
+    lgssm, _, emissions = \
+        random_args(key=key, num_timesteps=num_timesteps, linear=True)
     
+    # Run standard Kalman smoother
+    kf_post = lgssm_smoother(lgssm, emissions)
+    # Run extended Kalman filter
+    ekf_post = extended_kalman_smoother(_lgssm_to_nlgssm(lgssm), emissions)
+
+    # Compare smoother results
+    assert jnp.allclose(kf_post.smoothed_means, ekf_post.smoothed_means)
+    assert jnp.allclose(kf_post.smoothed_covariances, 
+        ekf_post.smoothed_covariances)
+    assert jnp.allclose(kf_post.smoothed_cross_covariances, 
+        ekf_post.smoothed_cross_covariances)
