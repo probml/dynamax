@@ -123,6 +123,3 @@ def extended_kalman_filter(params, emissions, inputs=None):
     return NLGSSMPosterior(marginal_loglik=ll,
                            filtered_means=filtered_means,
                            filtered_covariances=filtered_covs)
-
-
-def extended_kalman_smoother(params, emissions, inputs=None):
