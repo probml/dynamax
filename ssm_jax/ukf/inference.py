@@ -9,6 +9,21 @@ from ssm_jax.nlgssm.containers import NLGSSMPosterior
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
 
+def _compute_sigmas(m, S, lamb):
+    """Compute (2n+1) sigma points used for inputs to  unscented transform.
+
+    Args:
+        m (D_hid,): mean..
+        S (D_hid,D_hid): covariance..
+        lamb (Scalar): unscented parameter lambda.
+
+    Returns:
+        sigmas (2*D_hid+1,): 2n+1 sigma points.
+    """
+
+
+
+
 def _predict(m, S, f, F, Q, u):
     """Predict next mean and covariance using first-order additive EKF
 

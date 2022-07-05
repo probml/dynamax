@@ -3,13 +3,11 @@ import jax.numpy as jnp
 
 from ssm_jax.lgssm.inference import lgssm_filter
 from ssm_jax.lgssm.models import LinearGaussianSSM
-from ssm_jax.nlgssm.extended_inference import extended_kalman_filter
+from ssm_jax.ekf.inference import extended_kalman_filter
 from ssm_jax.nlgssm.models import NonLinearGaussianSSM
 
-# from filterpy.kalman import ExtendedKalmanFilter
+from filterpy.kalman import ExtendedKalmanFilter
 
-# Helper function
-_compare = lambda x, y: jnp.allclose(x, y, rtol=1e-4)
 
 def random_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2, linear=True):
     if isinstance(key, int):
@@ -78,6 +76,14 @@ def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
     ekf_post = extended_kalman_filter(nlgssm, emissions)
 
     # Compare filter results
-    assert _compare(kf_post.marginal_loglik, ekf_post.marginal_loglik)
-    assert _compare(kf_post.filtered_means, ekf_post.filtered_means)
-    assert _compare(kf_post.filtered_covariances, ekf_post.filtered_covariances)
+    assert jnp.allclose(kf_post.marginal_loglik, ekf_post.marginal_loglik)
+    assert jnp.allclose(kf_post.filtered_means, ekf_post.filtered_means)
+    assert jnp.allclose(kf_post.filtered_covariances, ekf_post.filtered_covariances)
+
+
+def test_extended_kalman_filter_nonlinear(key=0, num_timesteps=15):
+    nlgssm, _, emissions = \
+        random_args(key=key, num_timesteps=num_timesteps, linear=False)
+    
+    # Run EKF from filterpy library
+    
