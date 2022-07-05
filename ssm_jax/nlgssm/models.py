@@ -5,7 +5,7 @@ from jax.tree_util import register_pytree_node_class, tree_map
 
 from distrax import MultivariateNormalFullCovariance as MVN
 
-from ssm_jax.nlgssm.extended_inference import extended_kalman_filter
+from ssm_jax.ekf.inference import extended_kalman_filter
 from ssm_jax.utils import PSDToRealBijector
 
 @register_pytree_node_class
