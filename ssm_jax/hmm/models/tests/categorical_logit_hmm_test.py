@@ -2,8 +2,8 @@ import jax.numpy as jnp
 import jax.random as jr
 import pytest
 from jax import nn
-from ssm_jax.hmm.models import CategoricalHMM
-from ssm_jax.hmm.models import CategoricalLogitHMM
+from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
+from ssm_jax.hmm.models.categorical_logit_hmm import CategoricalLogitHMM
 
 
 def init_categorical_hmm_from(categorical_logit_hmm):
