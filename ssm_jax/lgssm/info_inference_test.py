@@ -46,6 +46,12 @@ def test_info_kalman_filtering_and_smoothing():
     R = jnp.eye(observation_size) * 1.0
     R_prec = jnp.linalg.inv(R)
 
+    input_size = 1
+    B = jnp.array([1.,0.5,-0.05,-0.01]).reshape((state_size,input_size))
+    b = jnp.ones((state_size,)) * 0.01
+    D = jnp.ones((observation_size,input_size))
+    d = jnp.ones((observation_size,)) * 0.02
+
     # Prior parameter distribution
     mu0 = jnp.array([8., 10., 1., 0.])
     Sigma0 = jnp.eye(state_size) * 0.1
@@ -57,15 +63,14 @@ def test_info_kalman_filtering_and_smoothing():
         initial_covariance=Sigma0,
         dynamics_matrix=F,
         dynamics_covariance=Q,
+        dynamics_input_weights=B,
+        dynamics_bias=b,
         emission_matrix=H,
-        emission_covariance=R)
+        emission_covariance=R,
+        emission_input_weights=D,
+        emission_bias=d)
 
     # Collect information form parameters
-    B = jnp.zeros((state_size,1))
-    b = jnp.zeros((state_size,1))
-    D = jnp.zeros((observation_size,1))
-    d = jnp.zeros((observation_size,1))
-
     lgssm_info = LGSSMInfoParams(
         initial_mean=mu0,
         initial_precision=Lambda0,
@@ -81,10 +86,10 @@ def test_info_kalman_filtering_and_smoothing():
     # Sample data from model.
     key = jr.PRNGKey(111)
     num_timesteps = 15
-    x, y = lgssm.sample(key,num_timesteps)
+    inputs = jnp.zeros((num_timesteps,input_size))
+    x, y = lgssm.sample(key,num_timesteps,inputs)
 
-    lgssm_posterior = lgssm.smoother(y)
-    inputs = jnp.zeros((num_timesteps,1))
+    lgssm_posterior = lgssm.smoother(y,inputs)
     lgssm_info_posterior = lgssm_info_smoother(lgssm_info, y, inputs) 
     
     info_filtered_means, info_filtered_covs = info_to_moment_form(
