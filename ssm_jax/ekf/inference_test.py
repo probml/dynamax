@@ -5,6 +5,7 @@ from ssm_jax.lgssm.inference import lgssm_filter, lgssm_smoother
 from ssm_jax.lgssm.models import LinearGaussianSSM
 from ssm_jax.ekf.inference import extended_kalman_filter, extended_kalman_smoother
 from ssm_jax.nlgssm.models import NonLinearGaussianSSM
+from ssm_jax.nlgssm.sarkka_lib import ekf_firstorder_additive
 
 from filterpy.kalman import ExtendedKalmanFilter
 
@@ -98,9 +99,15 @@ def test_extended_kalman_filter_nonlinear(key=0, num_timesteps=15):
     nlgssm, _, emissions = \
         random_args(key=key, num_timesteps=num_timesteps, linear=False)
     
-    # Run EKF from filterpy library
-    # TODO
-    assert True
+    # Run EKF from sarkka-jax library
+    means_ext, covs_ext = ekf_firstorder_additive(*(nlgssm.return_params), emissions)
+    # Run EKF from SSM-Jax
+    ekf_post = extended_kalman_filter(nlgssm, emissions)
+
+    # Compare filter results
+    assert jnp.allclose(means_ext, ekf_post.filtered_means)
+    assert jnp.allclose(covs_ext, ekf_post.filtered_covariances)
+
 
 def test_extended_kalman_smoother_linear(key=0, num_timesteps=15):
     lgssm, _, emissions = \
