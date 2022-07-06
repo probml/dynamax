@@ -22,9 +22,11 @@ def info_to_moment_form(etas,Lambdas):
     covs = jnp.linalg.inv(Lambdas)
     return means, covs
 
-def test_info_kalman_filtering_and_smoothing():
-    """ Test information form Kalman filter against the moment form version."""
 
+class TestInfoFilteringAndSmoothing:
+    """Test information form filtering and smoothing by comparing it to moment
+    form.
+    """
     delta = 1.0
     F = jnp.array([
         [1., 0, delta, 0],
@@ -89,9 +91,9 @@ def test_info_kalman_filtering_and_smoothing():
     inputs = jnp.zeros((num_timesteps,input_size))
     x, y = lgssm.sample(key,num_timesteps,inputs)
 
-    lgssm_posterior = lgssm.smoother(y,inputs)
+    lgssm_moment_posterior = lgssm.smoother(y,inputs)
     lgssm_info_posterior = lgssm_info_smoother(lgssm_info, y, inputs) 
-    
+
     info_filtered_means, info_filtered_covs = info_to_moment_form(
             lgssm_info_posterior.filtered_etas,
             lgssm_info_posterior.filtered_precisions
@@ -100,25 +102,32 @@ def test_info_kalman_filtering_and_smoothing():
             lgssm_info_posterior.smoothed_etas,
             lgssm_info_posterior.smoothed_precisions
             )
+    def test_filtered_means(self):
+        assert jnp.allclose(self.info_filtered_means,
+                            self.lgssm_moment_posterior.filtered_means,
+                            rtol=1e-2)
 
-    assert jnp.allclose(info_filtered_means,
-                        lgssm_posterior.filtered_means,
-                        rtol=1e-2)
-    assert jnp.allclose(info_filtered_covs,
-                        lgssm_posterior.filtered_covariances,
-                        rtol=1e-2)
-    assert jnp.allclose(info_smoothed_means,
-                        lgssm_posterior.smoothed_means,
-                        rtol=1e-2)
-    assert jnp.allclose(info_smoothed_covs,
-                        lgssm_posterior.smoothed_covariances,
-                        rtol=1e-2)
-    assert jnp.allclose(lgssm_info_posterior.marginal_loglik,
-                        lgssm_posterior.marginal_loglik,
-                        rtol=1e-2)
+    def test_filtered_covs(self):
+        assert jnp.allclose(self.info_filtered_covs,
+                            self.lgssm_moment_posterior.filtered_covariances,
+                            rtol=1e-2)
 
+    def test_smoothed_means(self):
+        assert jnp.allclose(self.info_smoothed_means,
+                            self.lgssm_moment_posterior.smoothed_means,
+                            rtol=1e-2)
 
-def test_info_kf_linreg():
+    def test_smoothed_covs(self):
+        assert jnp.allclose(self.info_smoothed_covs,
+                            self.lgssm_moment_posterior.smoothed_covariances,
+                            rtol=1e-2)
+    
+    def test_marginal_loglik(self):
+        assert jnp.allclose(self.lgssm_info_posterior.marginal_loglik,
+                            self.lgssm_moment_posterior.marginal_loglik,
+                            rtol=1e-2)
+
+class TestInfoKFLinReg:
     """Test non-stationary emission matrix in information filter.
     
     Compare to moment form filter using the example in 
@@ -177,10 +186,12 @@ def test_info_kf_linreg():
             lgssm_info_posterior.filtered_precisions
             )
 
-    assert jnp.allclose(info_filtered_means,
-                        lgssm_moment_posterior.filtered_means,
-                        rtol=1e-2)
-    assert jnp.allclose(info_filtered_covs,
-                        lgssm_moment_posterior.filtered_covariances,
-                        rtol=1e-2)
-
+    def test_filtered_means(self):
+        assert jnp.allclose(self.info_filtered_means,
+                            self.lgssm_moment_posterior.filtered_means,
+                            rtol=1e-2)
+    def test_filtered_covs(self):
+        assert jnp.allclose(self.info_filtered_covs,
+                            self.lgssm_moment_posterior.filtered_covariances,
+                            rtol=1e-2)
+    
