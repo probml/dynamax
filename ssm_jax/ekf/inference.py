@@ -171,13 +171,9 @@ def extended_kalman_smoother(params, emissions, inputs=None):
         # Compute smoothed mean and covariance
         smoothed_mean = filtered_mean + G @ (smoothed_mean_next - m_pred)
         smoothed_cov = filtered_cov + G @ (smoothed_cov_next - S_pred) @ G.T
-
-        # Compute the smoothed expectation of x_t x_{t+1}^T
-        smoothed_cross = G @ smoothed_cov_next + \
-            jnp.outer(smoothed_mean, smoothed_mean_next)
         
         return (smoothed_mean, smoothed_cov), \
-               (smoothed_mean, smoothed_cov, smoothed_cross)
+               (smoothed_mean, smoothed_cov)
 
     # Run the extended Kalman smoother
     init_carry = (filtered_means[-1], filtered_covs[-1])
@@ -186,16 +182,14 @@ def extended_kalman_smoother(params, emissions, inputs=None):
         filtered_means[:-1][::-1],
         filtered_covs[:-1][::-1]
     )
-    _, (smoothed_means, smoothed_covs, smoothed_cross) = \
+    _, (smoothed_means, smoothed_covs) = \
         lax.scan(_step, init_carry, args)
     
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None,...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None,...]))
-    smoothed_cross = smoothed_cross[::-1]
     return NLGSSMPosterior(marginal_loglik=ll,
                           filtered_means=filtered_means,
                           filtered_covariances=filtered_covs,
                           smoothed_means=smoothed_means,
-                          smoothed_covariances=smoothed_covs,
-                          smoothed_cross_covariances=smoothed_cross)
+                          smoothed_covariances=smoothed_covs)

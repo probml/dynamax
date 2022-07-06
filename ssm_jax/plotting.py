@@ -1,3 +1,4 @@
+import jax.numpy as jnp
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, transforms
@@ -150,3 +151,17 @@ def plot_lgssm_posterior(post_means, post_covs, ax=None,
 
     return ax
 
+
+def plot_nlgssm_pendulum(time_grid, x_tr, x_obs, x_est=None, est_type=""):
+    fig, ax = plt.subplots()
+    ax.plot(time_grid, x_tr, color='darkgray', linewidth=4, label="True Angle")
+    ax.plot(time_grid, x_obs, 'ok', fillstyle='none', ms=1.5, label='Measurements')
+    if x_est is not None:
+        ax.plot(time_grid, x_est, color='k', linewidth=1.5, label=f"{est_type} Estimate")
+    ax.set_xlabel('Time $t$'); ax.set_ylabel('Pendulum angle $x_{1,k}$')
+    ax.set_xlim(0, 5); ax.set_ylim(-3, 5)
+    ax.set_xticks(jnp.arange(0.5, 4.6, 0.5))
+    ax.set_yticks(jnp.arange(-3, 5.1, 1))
+    ax.set_aspect(0.5)
+    ax.legend(loc=1, borderpad=0.5, handlelength=4, fancybox=False, edgecolor='k');
+    return fig

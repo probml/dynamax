@@ -97,6 +97,15 @@ class NonLinearGaussianSSM:
     
     # Properties to allow unconstrained optimization and JAX jitting
     @property
+    def return_params(self):
+        return (self.initial_mean,
+                self.initial_covariance,
+                self.dynamics_function,
+                self.dynamics_covariance,
+                self.emission_function,
+                self.emission_covariance)
+
+    @property
     def unconstrained_params(self):
         """Helper property to get a PyTree of unconstrained parameters.
         """

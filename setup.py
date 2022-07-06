@@ -13,8 +13,7 @@ setup(
         "optax",
         "chex",
         "distrax",
-        "tensorflow_probability",
-        "filterpy"
+        "tensorflow_probability"
     ],
     packages=setuptools.find_packages(),
 )
