@@ -43,7 +43,9 @@ class LinearGaussianSSM:
                  emission_input_weights=None,
                  emission_bias=None):
         self.emission_dim, self.state_dim = emission_matrix.shape
-        self.input_dim = dynamics_input_weights.shape[1] if dynamics_input_weights is not None else 0
+        dynamics_input_dim = dynamics_input_weights.shape[1] if dynamics_input_weights is not None else 0
+        emission_input_dim = emission_input_weights.shape[1] if emission_input_weights is not None else 0
+        self.input_dim = max(dynamics_input_dim, emission_input_dim)
 
         # Save required args
         self.dynamics_matrix = dynamics_matrix
