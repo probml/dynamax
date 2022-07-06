@@ -74,23 +74,23 @@ def _predict(m, S, F, B, b, Q, u):
     return mu_pred, Sigma_pred
 
 
-def _condition_on(m, S, H, D, d, R, u, y):
+def _condition_on(m, P, H, D, d, R, u, y):
     """Condition a Gaussian potential on a new linear Gaussian observation
       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
-        = N(x_t | m, S) N(y_t | H_t x_t + D_t u_t + d_t, R_t)
-        = N(x_t | mm, SS)
+        = N(x_t | m, P) N(y_t | H_t x_t + D_t u_t + d_t, R_t)
+        = N(x_t | mm, PP)
     where
         mm = m + K*(y - yhat) = mu_cond
         yhat = H*m + D*u + d
-        K = S * H' * (R + H * S * H')^{-1}
-        L = I - K*H
-        SS = L * S * L' + K * R * K' = Sigma_cond
+        S = (R + H * P * H')
+        K = P * H' * S^{-1}
+        PP = P - K S K' = Sigma_cond
     **Note! This can be done more efficiently when R is diagonal.**
 
    Args:
         m (D_hid,): prior mean.
-        S (D_hid,D_hid): prior covariance.
+        P (D_hid,D_hid): prior covariance.
         H (D_obs,D_hid): emission matrix.
         D (D_obs,D_in): emission input weights.
         u (D_in,): inputs.
@@ -103,10 +103,11 @@ def _condition_on(m, S, H, D, d, R, u, y):
         Sigma_pred (D_hid,D_hid): predicted covariance.
     """
     # Compute the Kalman gain
-    K = jnp.linalg.solve(R + H @ S @ H.T, H @ S).T
+    S = R + H @ P @ H.T
+    K = jnp.linalg.solve(S, H @ P).T
     dim = m.shape[-1]
     ImKH = jnp.eye(dim) - K @ H
-    Sigma_cond = ImKH @ S @ ImKH.T + K @ R @ K.T
+    Sigma_cond = P -  K @ S @ K.T
     mu_cond = m + K @ (y - D @ u - d - H @ m)
     return mu_cond, Sigma_cond
 

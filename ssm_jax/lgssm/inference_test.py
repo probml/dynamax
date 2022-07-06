@@ -30,7 +30,7 @@ def lgssm_ssm_jax_to_tfp(num_timesteps, lgssm):
     return tfp_lgssm
 
 
-def test_kalman_filter(num_timesteps=15, seed=0):
+def test_kalman_filter(num_timesteps=5, seed=0):
 
     delta = 1.0
     F = jnp.array([
