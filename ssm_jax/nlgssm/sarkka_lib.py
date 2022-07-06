@@ -10,7 +10,7 @@ from jax import lax
 from jax import jacfwd
 
 # First-order additive EKF (Sarkka Algorithm 5.4)
-def ekf_firstorder_additive(m_0, P_0, f, Q, h, R, Y):
+def ekf(m_0, P_0, f, Q, h, R, Y):
     num_timesteps = len(Y)
     # Compute Jacobians
     F, H = jacfwd(f), jacfwd(h)
@@ -36,6 +36,40 @@ def ekf_firstorder_additive(m_0, P_0, f, Q, h, R, Y):
         _step, carry, jnp.arange(num_timesteps)
     )
     return ms, Ps
+
+
+# First-order additive EK smoother
+def eks(m_0, P_0, f, Q, h, R, Y):
+    num_timesteps = len(Y)
+
+    # Run ekf
+    m_post, P_post = ekf(m_0, P_0, f, Q, h, R, Y)
+
+    # Compute Jacobians
+    F, H = jacfwd(f), jacfwd(h)
+
+    def _step(carry, t):
+        m_k, P_k = carry
+
+        # Prediction step
+        m_pred = f(m_post[t])
+        P_pred = F(m_post[t]) @ P_post[t] @ F(m_post[t]).T + Q
+        G = P_post[t] @ F(m_post[t]).T @ jnp.linalg.inv(P_pred)
+
+        # Update step
+        m_sm = m_post[t] + G @ (m_k - m_pred)
+        P_sm = P_post[t] + G @ (P_k - P_pred) @ G.T
+
+        return (m_sm, P_sm), (m_sm, P_sm)
+    
+    carry = (m_post[-1], P_post[-1])
+    _, (m_sm, P_sm) = lax.scan(
+        _step, carry, jnp.arange(num_timesteps-2, -1, -1)
+    )
+    m_sm = jnp.concatenate((jnp.array([m_post[-1]]), m_sm))[::-1]
+    P_sm = jnp.concatenate((jnp.array([P_post[-1]]), P_sm))[::-1]
+
+    return m_sm, P_sm
 
 
 # Additive SLF with closed-form expectations (Sarkka Algorithm 5.10)
