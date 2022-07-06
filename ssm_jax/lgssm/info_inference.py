@@ -31,12 +31,34 @@ class LGSSMInfoPosterior:
             filtered_precisions: (T,K,K) array,
                 inv(Cov[x_t | y_{1:t}, u_{1:t}]).
     """
+    marginal_loglik: chex.Scalar = None
     filtered_etas: chex.Array = None
     filtered_precisions: chex.Array = None
+    smoothed_etas: chex.Array = None
+    smoothed_precisions: chex.Array = None
 
 
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
+
+def _mvn_info_log_prob(eta,Lambda,x):
+    """Calculate the log probability of an observation from a MVN 
+    parameterised in information form.
+
+    Args:
+        eta (D,): precision weighted mean.
+        Lambda (D,D): precision.
+        x (D,): observation.
+
+    Returns:
+        log_prob: log probability of x.
+    """
+    D = len(Lambda)
+    lp = x.T @ eta - 0.5 * x.T @ Lambda @ x
+    lp += -0.5 * eta.T @ jnp.linalg.solve(Lambda, eta)
+    sign, logdet = jnp.linalg.slogdet(Lambda)
+    lp += -0.5 * (D * jnp.log(2*jnp.pi) - sign * logdet)
+    return lp
 
 
 def _info_predict(eta, Lambda, F, Q_prec, B, u, b):
@@ -73,7 +95,7 @@ def _info_predict(eta, Lambda, F, Q_prec, B, u, b):
         Lambda_pred (D_hid,D_hid): predicted precision.
     """
     K = jnp.linalg.solve(Lambda + F.T @ Q_prec @ F, F.T @ Q_prec).T
-    I = jnp.eye(len(Lambda))
+    I = jnp.eye(F.shape[0])
     ## This version should be more stable than:
     # Lambda_pred = (I - K @ F.T) @ Q_prec
     ImKF = I - K @ F.T
@@ -132,8 +154,8 @@ def lgssm_info_filter(params, emissions, inputs):
     """
     num_timesteps = len(emissions) 
 
-    def _step(carry, t):
-        pred_eta, pred_prec = carry
+    def _filter_step(carry, t):
+        ll, pred_eta, pred_prec = carry
 
         # Shorthand: get parameters and inputs for time index t
         F = _get_params(params.dynamics_matrix, 2, t)
@@ -147,22 +169,96 @@ def lgssm_info_filter(params, emissions, inputs):
         u = inputs[t]
         y = emissions[t]
 
+        # Update the log likelihood
+        y_pred_eta, y_pred_prec = _info_predict(
+                pred_eta, pred_prec, H, R_prec, D, u, d)
+        ll += _mvn_info_log_prob(y_pred_eta, y_pred_prec, y)
+
         # Condition on this emission
         filtered_eta, filtered_prec = _info_condition_on(
             pred_eta, pred_prec, H, R_prec, D, u, d, y)
 
         # Predict the next state
-        pred_mean, pred_cov = _info_predict(
+        pred_eta, pred_prec = _info_predict(
             filtered_eta, filtered_prec, F, Q_prec, B, u, b)
 
-        return (pred_mean, pred_cov), (filtered_eta, filtered_prec)
+        return (ll, pred_eta, pred_prec), (filtered_eta, filtered_prec)
 
     # Run the Kalman filter
     initial_eta = params.initial_precision @ params.initial_mean 
-    carry = (initial_eta, params.initial_precision)
-    _, (filtered_etas, filtered_precisions) = lax.scan(
-        _step, carry, jnp.arange(num_timesteps))
-    return LGSSMInfoPosterior(filtered_etas=filtered_etas,
+    carry = (0., initial_eta, params.initial_precision)
+    (ll, _, _), (filtered_etas, filtered_precisions) = lax.scan(
+        _filter_step, carry, jnp.arange(num_timesteps))
+    return LGSSMInfoPosterior(marginal_loglik=ll,
+                              filtered_etas=filtered_etas,
                               filtered_precisions=filtered_precisions)
 
 
+def lgssm_info_smoother(params, emissions, inputs=None):
+    """Run forward-filtering, backward-smoother to compute expectations
+    under the posterior distribution on latent states. This
+    is the information form of the Rauch-Tung-Striebel (RTS) smoother.
+
+    Args:
+        params: an LGSSMInfoParams instance.
+        inputs: array of (T,Din) containing inputs.
+        emissions: array (T,Dout) of data.
+
+    Returns:
+        lgssm_info_posterior: LGSSMInfoPosterior instance containing properites
+            of filtered and smoothed posterior distributions.
+    """
+    num_timesteps = len(emissions)
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
+
+    # Run the Kalman filter
+    filtered_posterior = lgssm_info_filter(params, emissions, inputs)
+    ll, filtered_etas, filtered_precisions, *_ = filtered_posterior.to_tuple()
+
+    # Run the smoother backward in time
+    def _smooth_step(carry, args):
+        # Unpack the inputs
+        smoothed_eta_next, smoothed_prec_next = carry
+        t, filtered_eta, filtered_prec = args
+
+        # Shorthand: get parameters and inputs for time index t
+        F = _get_params(params.dynamics_matrix, 2, t)
+        B = _get_params(params.dynamics_input_weights, 2, t)
+        b = _get_params(params.dynamics_bias, 1, t)
+        Q_prec = _get_params(params.dynamics_precision, 2, t)
+        u = inputs[t]
+
+        # Predict the next state
+        # TODO: Pass predicted params from lgssm_info_filter?
+        pred_eta, pred_prec = _info_predict(
+            filtered_eta, filtered_prec, F, Q_prec, B, u, b)
+
+        # This is the information form version of the 'reverse' Kalman gain
+        # See Eq 8.11 of Saarka's "Bayesian Filtering and Smoothing"
+        G = jnp.linalg.solve(Q_prec + smoothed_prec_next - pred_prec, Q_prec @ F)
+
+        # Compute the smoothed parameter estimates
+        smoothed_prec = filtered_prec + F.T @ Q_prec @ (F - G)
+        smoothed_eta = filtered_eta +\
+                       G.T @ (smoothed_eta_next - pred_eta) +\
+                       (G.T - F.T) @ Q_prec @ (B @ u + b)
+
+        return (smoothed_eta, smoothed_prec), (smoothed_eta, smoothed_prec)
+
+    # Run the Kalman smoother
+    init_carry = (filtered_etas[-1], filtered_precisions[-1])
+    args = (jnp.arange(num_timesteps-2, -1, -1),
+            filtered_etas[:-1][::-1],
+            filtered_precisions[:-1][::-1])
+    _, (smoothed_etas, smoothed_precisions) = lax.scan(_smooth_step, init_carry, args)
+
+    # Reverse the arrays and return
+    smoothed_etas = jnp.row_stack((smoothed_etas[::-1],
+                                   filtered_etas[-1][None,...]))
+    smoothed_precisions = jnp.row_stack((smoothed_precisions[::-1],
+                                         filtered_precisions[-1][None,...]))
+    return LGSSMInfoPosterior(marginal_loglik=ll,
+                              filtered_etas=filtered_etas,
+                              filtered_precisions=filtered_precisions,
+                              smoothed_etas=smoothed_etas,
+                              smoothed_precisions=smoothed_precisions)
