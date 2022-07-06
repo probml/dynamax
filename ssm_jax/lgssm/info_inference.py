@@ -239,7 +239,9 @@ def lgssm_info_smoother(params, emissions, inputs=None):
 
         # Compute the smoothed parameter estimates
         smoothed_prec = filtered_prec + F.T @ Q_prec @ (F - G)
-        smoothed_eta = filtered_eta + G.T @ (smoothed_eta_next - pred_eta)
+        smoothed_eta = filtered_eta +\
+                       G.T @ (smoothed_eta_next - pred_eta) +\
+                       (G.T - F.T) @ Q_prec @ (B @ u + b)
 
         return (smoothed_eta, smoothed_prec), (smoothed_eta, smoothed_prec)
 
