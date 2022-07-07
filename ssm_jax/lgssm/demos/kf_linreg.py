@@ -19,7 +19,7 @@ from ssm_jax.lgssm.inference import lgssm_filter, LGSSMParams
 
 
 def batch_bayesian_lreg(X, y, obs_var, mu0, Sigma0):
-    """Compute posterior mean and covariance matrix of weights in Bayesian 
+    """Compute posterior mean and covariance matrix of weights in Bayesian
     linear regression.
 
     The conditional probability of observations, y(t), given covariate x(t), and
@@ -60,7 +60,7 @@ def kf_linreg(X, y, R, mu0, Sigma0, F, Q):
     where Q>0 allows for parameter drift.
 
     Args:
-        X: array(n_obs, 1, dim) -  Matrix of features, acts here as a 
+        X: array(n_obs, 1, dim) -  Matrix of features, acts here as a
             non-stationary emission matrix with each row corresponding to the
             emission matrix, H(t) shape (1, dim), for an individual observation.
         y: array(n_obs, 1) - Array of observations.
@@ -80,45 +80,68 @@ def kf_linreg(X, y, R, mu0, Sigma0, F, Q):
         initial_mean=mu0,
         initial_covariance=Sigma0,
         dynamics_matrix=F,
-        dynamics_input_weights=jnp.zeros((mu0.shape[0],1)), # no inputs
+        dynamics_input_weights=jnp.zeros((mu0.shape[0], 1)),  # no inputs
         dynamics_bias=jnp.zeros(1),
         dynamics_covariance=Q,
         emission_matrix=X,
         emission_input_weights=jnp.zeros(1),
         emission_bias=jnp.zeros(1),
-        emission_covariance=R
+        emission_covariance=R,
     )
-    
-    inputs = jnp.zeros((len(y),1))
-    lgssm_posterior = lgssm_filter(lgssm,inputs,y)
+
+    inputs = jnp.zeros((len(y), 1))
+    lgssm_posterior = lgssm_filter(lgssm, inputs, y)
     return lgssm_posterior.filtered_means, lgssm_posterior.filtered_covariances
 
+
 def online_kf_vs_batch_linreg():
-    """Compare online linear regression with Kalman filtering vs batch solution.
-    """
+    """Compare online linear regression with Kalman filtering vs batch solution."""
 
     n_obs = 21
     x = jnp.linspace(0, 20, n_obs)
-    X = jnp.column_stack((jnp.ones_like(x), x)) # Design matrix.
+    X = jnp.column_stack((jnp.ones_like(x), x))  # Design matrix.
     F = jnp.eye(2)
-    Q = jnp.zeros((2,2)) # No parameter drift.
-    obs_var = 1.
-    R = jnp.ones((1,1)) * obs_var
+    Q = jnp.zeros((2, 2))  # No parameter drift.
+    obs_var = 1.0
+    R = jnp.ones((1, 1)) * obs_var
     mu0 = jnp.zeros(2)
-    Sigma0 = jnp.eye(2) * 10.
+    Sigma0 = jnp.eye(2) * 10.0
 
     # Data from original matlab example
-    y = jnp.array([2.4865, -0.3033, -4.0531, -4.3359, -6.1742, -5.604, -3.5069,
-                   -2.3257, -4.6377, -0.2327, -1.9858, 1.0284, -2.264, -0.4508,
-                   1.1672, 6.6524, 4.1452, 5.2677, 6.3403, 9.6264, 14.7842])
+    y = jnp.array(
+        [
+            2.4865,
+            -0.3033,
+            -4.0531,
+            -4.3359,
+            -6.1742,
+            -5.604,
+            -3.5069,
+            -2.3257,
+            -4.6377,
+            -0.2327,
+            -1.9858,
+            1.0284,
+            -2.264,
+            -0.4508,
+            1.1672,
+            6.6524,
+            4.1452,
+            5.2677,
+            6.3403,
+            9.6264,
+            14.7842,
+        ]
+    )
 
-    kf_results  = kf_linreg(X[:,None,:], y[:,None], R, mu0, Sigma0, F, Q)
-    batch_results = batch_bayesian_lreg(X,y,obs_var,mu0,Sigma0)
+    kf_results = kf_linreg(X[:, None, :], y[:, None], R, mu0, Sigma0, F, Q)
+    batch_results = batch_bayesian_lreg(X, y, obs_var, mu0, Sigma0)
 
     return kf_results, batch_results
 
-def plot_online_kf_vs_batch_linreg(kf_results,batch_results):
-    """ Plot a comparison of the online and batch results. """
+
+def plot_online_kf_vs_batch_linreg(kf_results, batch_results):
+    """Plot a comparison of the online and batch results."""
     # Unpack kalman filter results
     post_weights_kf, post_sigma_kf = kf_results
     w0_kf_hist, w1_kf_hist = post_weights_kf.T
@@ -130,7 +153,6 @@ def plot_online_kf_vs_batch_linreg(kf_results,batch_results):
     Sigma_post_batch = jnp.linalg.inv(post_prec_batch)
     w0_std_batch, w1_std_batch = jnp.sqrt(Sigma_post_batch[[0, 1], [0, 1]])
 
-
     fig, ax = plt.subplots()
     timesteps = jnp.arange(len(w0_kf_hist))
 
@@ -140,21 +162,17 @@ def plot_online_kf_vs_batch_linreg(kf_results,batch_results):
 
     # Plot batch posterior.
     ax.hlines(y=w0_post_batch, xmin=timesteps[0], xmax=timesteps[-1], color="black", label="$w_0$ batch")
-    ax.hlines(y=w1_post_batch, xmin=timesteps[0], xmax=timesteps[-1], color="tab:red", linestyle="--", label="$w_1$ batch")
-    ax.fill_between(timesteps,
-            w0_post_batch - w0_std_batch,
-            w0_post_batch + w0_std_batch,
-            color="black", alpha=0.4)
-    ax.fill_between(timesteps,
-            w1_post_batch - w1_std_batch, 
-            w1_post_batch + w1_std_batch, 
-            color="tab:red", alpha=0.4)
+    ax.hlines(
+        y=w1_post_batch, xmin=timesteps[0], xmax=timesteps[-1], color="tab:red", linestyle="--", label="$w_1$ batch"
+    )
+    ax.fill_between(timesteps, w0_post_batch - w0_std_batch, w0_post_batch + w0_std_batch, color="black", alpha=0.4)
+    ax.fill_between(timesteps, w1_post_batch - w1_std_batch, w1_post_batch + w1_std_batch, color="tab:red", alpha=0.4)
 
     ax.set_xlabel("time")
     ax.set_ylabel("weights")
-    ax.legend();
+    ax.legend()
 
-    dict_figures = {"linreg_online_kalman":fig}
+    dict_figures = {"linreg_online_kalman": fig}
     return dict_figures
 
 

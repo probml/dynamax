@@ -13,7 +13,7 @@ from ssm_jax.utils import PSDToRealBijector
 
 @register_pytree_node_class
 class LinearGaussianSSM:
-    '''
+    """
     Linear Gaussian State Space Model is defined as follows:
     p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
     p(y_t | z_t) = N(y_t | H_t z_t + D_t u_t + d_t, R_t)
@@ -30,18 +30,21 @@ class LinearGaussianSSM:
     dynamics_bias = b
     emission_input_matrix = D
     emission_bias = d
-    '''
-    def __init__(self,
-                 dynamics_matrix,
-                 dynamics_covariance,
-                 emission_matrix,
-                 emission_covariance,
-                 initial_mean=None,
-                 initial_covariance=None,
-                 dynamics_input_weights=None,
-                 dynamics_bias=None,
-                 emission_input_weights=None,
-                 emission_bias=None):
+    """
+
+    def __init__(
+        self,
+        dynamics_matrix,
+        dynamics_covariance,
+        emission_matrix,
+        emission_covariance,
+        initial_mean=None,
+        initial_covariance=None,
+        dynamics_input_weights=None,
+        dynamics_bias=None,
+        emission_input_weights=None,
+        emission_bias=None,
+    ):
         self.emission_dim, self.state_dim = emission_matrix.shape
         dynamics_input_dim = dynamics_input_weights.shape[1] if dynamics_input_weights is not None else 0
         emission_input_dim = emission_input_weights.shape[1] if emission_input_weights is not None else 0
@@ -57,11 +60,9 @@ class LinearGaussianSSM:
         default = lambda x, v: x if x is not None else v
         self.initial_mean = default(initial_mean, jnp.zeros(self.state_dim))
         self.initial_covariance = default(initial_covariance, jnp.eye(self.state_dim))
-        self.dynamics_input_weights = default(dynamics_input_weights,
-                                              jnp.zeros((self.state_dim, self.input_dim)))
+        self.dynamics_input_weights = default(dynamics_input_weights, jnp.zeros((self.state_dim, self.input_dim)))
         self.dynamics_bias = default(dynamics_bias, jnp.zeros(self.state_dim))
-        self.emission_input_weights = default(emission_input_weights,
-                                              jnp.zeros((self.emission_dim, self.input_dim)))
+        self.emission_input_weights = default(emission_input_weights, jnp.zeros((self.emission_dim, self.input_dim)))
         self.emission_bias = default(emission_bias, jnp.zeros(self.emission_dim))
 
         # Check shapes
@@ -90,16 +91,18 @@ class LinearGaussianSSM:
         D = jnp.zeros((emission_dim, input_dim))
         d = jr.normal(k3, (emission_dim,))
         R = 0.1 * jnp.eye(emission_dim)
-        return cls(dynamics_matrix=A,
-                   dynamics_covariance=Q,
-                   emission_matrix=C,
-                   emission_covariance=R,
-                   initial_mean=m1,
-                   initial_covariance=Q1,
-                   dynamics_input_weights=B,
-                   dynamics_bias=b,
-                   emission_input_weights=D,
-                   emission_bias=d)
+        return cls(
+            dynamics_matrix=A,
+            dynamics_covariance=Q,
+            emission_matrix=C,
+            emission_covariance=R,
+            initial_mean=m1,
+            initial_covariance=Q1,
+            dynamics_input_weights=B,
+            dynamics_bias=b,
+            emission_input_weights=D,
+            emission_bias=d,
+        )
 
     def sample(self, key, num_timesteps, inputs=None):
         if inputs is None:
@@ -146,14 +149,22 @@ class LinearGaussianSSM:
 
         # Compute log prob
         lp = MVN(self.initial_mean, self.initial_covariance).log_prob(states[0])
-        lp += MVN(states[:-1] @ self.dynamics_matrix.T +
-                  inputs[:-1] @ self.dynamics_input_weights.T +
-                  self.dynamics_bias,
-                  self.dynamics_covariance).log_prob(states[1:]).sum()
-        lp += MVN(states @ self.emission_matrix.T +
-                  inputs @ self.emission_input_weights.T +
-                  self.emission_bias,
-                  self.emission_covariance).log_prob(emissions).sum()
+        lp += (
+            MVN(
+                states[:-1] @ self.dynamics_matrix.T + inputs[:-1] @ self.dynamics_input_weights.T + self.dynamics_bias,
+                self.dynamics_covariance,
+            )
+            .log_prob(states[1:])
+            .sum()
+        )
+        lp += (
+            MVN(
+                states @ self.emission_matrix.T + inputs @ self.emission_input_weights.T + self.emission_bias,
+                self.emission_covariance,
+            )
+            .log_prob(emissions)
+            .sum()
+        )
         return lp
 
     def marginal_log_prob(self, emissions, inputs=None):
@@ -199,25 +210,29 @@ class LinearGaussianSSM:
             # expected sufficient statistics for the dynamics distribution
             # let zp[t] = [x[t], u[t], 1] for t = 0...T-2
             # let xn[t] = x[t+1]          for t = 0...T-2
-            sum_zpzpT = jnp.block([[Exp.T @ Exp,         Exp.T @ up,          Exp.sum(0)[:, None]],
-                                   [up.T @ Exp,          up.T @ up,           up.sum(0)[:, None]],
-                                   [Exp.sum(0)[None, :], up.sum(0)[None, :],  num_timesteps-1 ]])
-            sum_zpzpT = sum_zpzpT.at[:self.state_dim, :self.state_dim].add(Vxp.sum(0))
-            sum_zpxnT = jnp.block([[Expxn.sum(0)],
-                                   [up.T @ Exn],
-                                   [Exn.sum(0)[None, :]]])
+            sum_zpzpT = jnp.block(
+                [
+                    [Exp.T @ Exp, Exp.T @ up, Exp.sum(0)[:, None]],
+                    [up.T @ Exp, up.T @ up, up.sum(0)[:, None]],
+                    [Exp.sum(0)[None, :], up.sum(0)[None, :], num_timesteps - 1],
+                ]
+            )
+            sum_zpzpT = sum_zpzpT.at[: self.state_dim, : self.state_dim].add(Vxp.sum(0))
+            sum_zpxnT = jnp.block([[Expxn.sum(0)], [up.T @ Exn], [Exn.sum(0)[None, :]]])
             sum_xnxnT = Vxn.sum(0) + Exn.T @ Exn
-            dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps-1)
+            dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps - 1)
 
             # more expected sufficient statistics for the emissions
             # let z[t] = [x[t], u[t], 1] for t = 0...T-1
-            sum_zzT = jnp.block([[Ex.T @ Ex,          Ex.T @ u,          Ex.sum(0)[:, None]],
-                                 [u.T @ Ex,           u.T @ u,           u.sum(0)[:, None]],
-                                 [Ex.sum(0)[None, :], u.sum(0)[None, :], num_timesteps]])
-            sum_zzT = sum_zzT.at[:self.state_dim, :self.state_dim].add(Vx.sum(0))
-            sum_zyT = jnp.block([[Ex.T @ y],
-                                 [u.T @ y],
-                                 [y.sum(0)[None,:]]])
+            sum_zzT = jnp.block(
+                [
+                    [Ex.T @ Ex, Ex.T @ u, Ex.sum(0)[:, None]],
+                    [u.T @ Ex, u.T @ u, u.sum(0)[:, None]],
+                    [Ex.sum(0)[None, :], u.sum(0)[None, :], num_timesteps],
+                ]
+            )
+            sum_zzT = sum_zzT.at[: self.state_dim, : self.state_dim].add(Vx.sum(0))
+            sum_zyT = jnp.block([[Ex.T @ y], [u.T @ y], [y.sum(0)[None, :]]])
             sum_yyT = emissions.T @ emissions
             emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
 
@@ -252,32 +267,35 @@ class LinearGaussianSSM:
         W_e, R = fit_linear_regression(*emission_stats)
         C, D, d = W_e[:, :dim], W_e[:, dim:-1], W_e[:, -1]
 
-        return cls(dynamics_matrix=A,
-                   dynamics_covariance=Q,
-                   emission_matrix=C,
-                   emission_covariance=R,
-                   initial_mean=m1,
-                   initial_covariance=Q1,
-                   dynamics_input_weights=B,
-                   dynamics_bias=b,
-                   emission_input_weights=D,
-                   emission_bias=d)
+        return cls(
+            dynamics_matrix=A,
+            dynamics_covariance=Q,
+            emission_matrix=C,
+            emission_covariance=R,
+            initial_mean=m1,
+            initial_covariance=Q1,
+            dynamics_input_weights=B,
+            dynamics_bias=b,
+            emission_input_weights=D,
+            emission_bias=d,
+        )
 
     # Properties to allow unconstrained optimization and JAX jitting
     @property
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
-        return (self.initial_mean,
-                PSDToRealBijector.forward(self.initial_covariance),
-                self.dynamics_matrix,
-                self.dynamics_input_weights,
-                self.dynamics_bias,
-                PSDToRealBijector.forward(self.dynamics_covariance),
-                self.emission_matrix,
-                self.emission_input_weights,
-                self.emission_bias,
-                PSDToRealBijector.forward(self.emission_covariance))
+        """Helper property to get a PyTree of unconstrained parameters."""
+        return (
+            self.initial_mean,
+            PSDToRealBijector.forward(self.initial_covariance),
+            self.dynamics_matrix,
+            self.dynamics_input_weights,
+            self.dynamics_bias,
+            PSDToRealBijector.forward(self.dynamics_covariance),
+            self.emission_matrix,
+            self.emission_input_weights,
+            self.emission_bias,
+            PSDToRealBijector.forward(self.emission_covariance),
+        )
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
@@ -291,21 +309,22 @@ class LinearGaussianSSM:
         emission_input_weights = unconstrained_params[7]
         emission_bias = unconstrained_params[8]
         emission_covariance = PSDToRealBijector.inverse(unconstrained_params[9])
-        return cls(dynamics_matrix=dynamics_matrix,
-                   dynamics_covariance=dynamics_covariance,
-                   emission_matrix=emission_matrix,
-                   emission_covariance=emission_covariance,
-                   initial_mean=initial_mean,
-                   initial_covariance=initial_covariance,
-                   dynamics_input_weights=dynamics_input_weights,
-                   dynamics_bias=dynamics_bias,
-                   emission_input_weights=emission_input_weights,
-                   emission_bias=emission_bias)
+        return cls(
+            dynamics_matrix=dynamics_matrix,
+            dynamics_covariance=dynamics_covariance,
+            emission_matrix=emission_matrix,
+            emission_covariance=emission_covariance,
+            initial_mean=initial_mean,
+            initial_covariance=initial_covariance,
+            dynamics_input_weights=dynamics_input_weights,
+            dynamics_bias=dynamics_bias,
+            emission_input_weights=emission_input_weights,
+            emission_bias=emission_bias,
+        )
 
     @property
     def hyperparams(self):
-        """Helper property to get a PyTree of model hyperparameters.
-        """
+        """Helper property to get a PyTree of model hyperparameters."""
         return tuple()
 
     # Use the to/from unconstrained properties to implement JAX tree_flatten/unflatten

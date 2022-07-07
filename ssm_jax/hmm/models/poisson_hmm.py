@@ -11,7 +11,6 @@ from ssm_jax.hmm.models.base import BaseHMM
 
 @register_pytree_node_class
 class PoissonHMM(BaseHMM):
-
     def __init__(self, initial_probabilities, transition_matrix, emission_log_rates):
         """_summary_
 
@@ -46,10 +45,12 @@ class PoissonHMM(BaseHMM):
 
     @property
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
-        return (nn.softmax(jnp.log(self.initial_probabilities),
-                           axis=-1), nn.softmax(jnp.log(self.transition_matrix), axis=-1), self.emission_log_rates)
+        """Helper property to get a PyTree of unconstrained parameters."""
+        return (
+            nn.softmax(jnp.log(self.initial_probabilities), axis=-1),
+            nn.softmax(jnp.log(self.transition_matrix), axis=-1),
+            self.emission_log_rates,
+        )
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
