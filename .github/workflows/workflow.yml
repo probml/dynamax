@@ -1,4 +1,4 @@
-name: Pytest
+name: Workflow
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
     - main
 
 jobs:
-  Pytest:
+  Workflow:
     runs-on: ubuntu-latest
     steps:
     - name: Clone the reference repository
@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: | 
         pip install -r requirements.txt
-        pip install black pytest
+        pip install black[jupyter] pytest
 
     - name: Code formatting with black
       run: black --check .
