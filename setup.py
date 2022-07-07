@@ -2,10 +2,8 @@
 from distutils.core import setup
 import setuptools
 
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     requirements = list(map(lambda x: x.strip(), f.read().strip().splitlines()))
-
-print(requirements)
 
 setup(
     name="ssm_jax",
