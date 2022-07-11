@@ -97,7 +97,7 @@ def make_hmm(num_states=5, emission_dim=2):
             jnp.zeros((num_states, emission_dim - 2)),
         ]
     )
-    emission_covs = jnp.tile(0.1 ** 2 * jnp.eye(emission_dim), (num_states, 1, 1))
+    emission_covs = jnp.tile(0.1**2 * jnp.eye(emission_dim), (num_states, 1, 1))
 
     true_hmm = GaussianHMM(initial_probs, transition_matrix, emission_means, emission_covs)
     return true_hmm

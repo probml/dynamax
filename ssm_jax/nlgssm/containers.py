@@ -4,8 +4,7 @@ import chex
 
 @chex.dataclass
 class NLGSSMParams:
-    """Lightweight container for NLGSSM parameters.
-    """
+    """Lightweight container for NLGSSM parameters."""
 
     initial_mean: chex.Array
     initial_covariance: chex.Array

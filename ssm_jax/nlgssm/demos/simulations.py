@@ -17,10 +17,10 @@ class PendulumSimulation:
         self.initial_state = jnp.array([jnp.pi / 2, 0])
         self.dynamics_function = lambda x: jnp.array([x[0] + x[1] * self.dt, x[1] - g * jnp.sin(x[0]) * self.dt])
         self.dynamics_covariance = jnp.array(
-            [[q_c * self.dt ** 3 / 3, q_c * self.dt ** 2 / 2], [q_c * self.dt ** 2 / 2, q_c * self.dt]]
+            [[q_c * self.dt**3 / 3, q_c * self.dt**2 / 2], [q_c * self.dt**2 / 2, q_c * self.dt]]
         )
         self.emission_function = lambda x: jnp.array([jnp.sin(x[0])])
-        self.emission_covariance = jnp.eye(1) * (r ** 2)
+        self.emission_covariance = jnp.eye(1) * (r**2)
 
     def sample(self, key=0, num_steps=400):
         if isinstance(key, int):

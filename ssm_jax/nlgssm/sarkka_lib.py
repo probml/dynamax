@@ -98,13 +98,13 @@ def slf_additive(m_0, P_0, f, Q, h, R, Ef, Efdx, Eh, Ehdx, Y):
 # Additive UKF (Sarkka Algorithm 5.14)
 def ukf_additive(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
     num_timesteps, n = len(Y), P_0.shape[0]
-    lamb = alpha ** 2 * (n + kappa) - n
+    lamb = alpha**2 * (n + kappa) - n
 
     # Compute weights for mean and covariance estimates
     def compute_weights(n, alpha, beta, lamb):
         factor = 1 / (2 * (n + lamb))
         w_mean = jnp.concatenate((jnp.array([lamb / (n + lamb)]), jnp.ones(2 * n) * factor))
-        w_cov = jnp.concatenate((jnp.array([lamb / (n + lamb) + (1 - alpha ** 2 + beta)]), jnp.ones(2 * n) * factor))
+        w_cov = jnp.concatenate((jnp.array([lamb / (n + lamb) + (1 - alpha**2 + beta)]), jnp.ones(2 * n) * factor))
         return w_mean, w_cov
 
     w_mean, w_cov = compute_weights(n, alpha, beta, lamb)

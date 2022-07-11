@@ -38,30 +38,30 @@ def _predict(m, S, f, F, Q, u):
 
 def _condition_on(m, P, h, H, R, u, y):
     """Condition a Gaussian potential on a new observation
-      p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
-        propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
-        = N(x_t | m, S) N(y_t | h_t(x_t, u_t), R_t)
-        = N(x_t | mm, SS)
-    where
-        mm = m + K*(y - yhat) = mu_cond
-        yhat = h(m, u)
-        K = S * H(m, u)' * (R + H(m, u) * S * H(m, u)')^{-1}
-        L = I - K*H(m, u)
-        SS = L * S * L' + K * R * K' = Sigma_cond
-    **Note! This can be done more efficiently when R is diagonal.**
+       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
+         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
+         = N(x_t | m, S) N(y_t | h_t(x_t, u_t), R_t)
+         = N(x_t | mm, SS)
+     where
+         mm = m + K*(y - yhat) = mu_cond
+         yhat = h(m, u)
+         K = S * H(m, u)' * (R + H(m, u) * S * H(m, u)')^{-1}
+         L = I - K*H(m, u)
+         SS = L * S * L' + K * R * K' = Sigma_cond
+     **Note! This can be done more efficiently when R is diagonal.**
 
-   Args:
-        m (D_hid,): prior mean.
-        S (D_hid,D_hid): prior covariance.
-        h (Callable): emission function.
-        H (Callable): Jacobian of emission function.
-        R (D_obs,D_obs): emission covariance matrix.
-        u (D_in,): inputs.
-        y (D_obs,): observation.
+    Args:
+         m (D_hid,): prior mean.
+         S (D_hid,D_hid): prior covariance.
+         h (Callable): emission function.
+         H (Callable): Jacobian of emission function.
+         R (D_obs,D_obs): emission covariance matrix.
+         u (D_in,): inputs.
+         y (D_obs,): observation.
 
-    Returns:
-        mu_cond (D_hid,): filtered mean.
-        Sigma_cond (D_hid,D_hid): filtered covariance.
+     Returns:
+         mu_cond (D_hid,): filtered mean.
+         Sigma_cond (D_hid,D_hid): filtered covariance.
     """
     H_x = H(m, u)
     S = R + H_x @ P @ H_x.T
@@ -74,7 +74,7 @@ def _condition_on(m, P, h, H, R, u, y):
 
 
 def extended_kalman_filter(params, emissions, inputs=None):
-    """Run an extended Kalman filter to produce the marginal likelihood and 
+    """Run an extended Kalman filter to produce the marginal likelihood and
     filtered state estimates.
 
     Args:
@@ -83,8 +83,8 @@ def extended_kalman_filter(params, emissions, inputs=None):
         inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: ESSMPosterior instance containing,
-            marginal_log_lik 
+        filtered_posterior: LGSSMPosterior instance containing,
+            marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
     """
@@ -131,7 +131,7 @@ def extended_kalman_smoother(params, emissions, inputs=None):
         inputs (T,D_in): array of inputs.
 
     Returns:
-        nlgssm_posterior: ESSMPosterior instance containing properties of
+        nlgssm_posterior: LGSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
     num_timesteps = len(emissions)
