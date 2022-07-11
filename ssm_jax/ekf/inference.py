@@ -33,7 +33,7 @@ def _predict(m, S, f, F, Q, u):
     return mu_pred, Sigma_pred
 
 
-def _condition_on(m, S, h, H, R, u, y):
+def _condition_on(m, P, h, H, R, u, y):
     """Condition a Gaussian potential on a new observation
       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
@@ -61,9 +61,11 @@ def _condition_on(m, S, h, H, R, u, y):
         Sigma_cond (D_hid,D_hid): filtered covariance.
     """
     H_x = H(m, u)
-    K = jnp.linalg.solve(R + H_x @ S @ H_x.T, H_x @ S).T
-    ImKH = jnp.eye(m.shape[-1]) - K @ H_x
-    Sigma_cond = ImKH @ S @ ImKH.T + K @ R @ K.T
+    S = R + H_x @ P @ H_x.T
+    K = jnp.linalg.solve(S, H_x @ P).T
+    dim = m.shape[-1]
+    ImKH = jnp.eye(dim) - K @ H_x
+    Sigma_cond = P - K @ S @ K.T
     mu_cond = m + K @ (y - h(m, u))
     return mu_cond, Sigma_cond
 
