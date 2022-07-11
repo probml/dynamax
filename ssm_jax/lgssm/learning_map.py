@@ -1,5 +1,8 @@
 import jax.numpy as jnp
 import jax.random as jr
+from jax import jit
+
+from tqdm.auto import trange
 
 from models import LinearGaussianSSM
 
@@ -27,11 +30,11 @@ class _LinearGaussianSSM(LinearGaussianSSM):
                          emission_input_weights,
                          emission_bias)
         self._prior = None
-        
+    
     def initialization_from_prior(cls, key):
         k1, k2, k3 = jr.split(key, num=3)
-        m1 = jnp.zeros(state_dim)
-        Q1 = jnp.eye(state_dim)
+        m1 = jnp.zeros(self.state_dim)
+        Q1 = jnp.eye(self.state_dim)
         A = None
         B = None
         b = None
@@ -81,4 +84,19 @@ class _LinearGaussianSSM(LinearGaussianSSM):
                    emission_input_weights=D,
                    emission_bias=d)
         
+
+def lgssm_fit_emap(model, batch_emission, num_iters=50):
+
+    @jit
+    def emap_step(model):
+        posterior_stats, marginal_loglikes = model.e_step(batch_emission)
+        model = model.map_step(posterior_stats)
+        marginal_log_evs = 0
+        return model, marginal_log_evs.sum()
     
+    log_evs = []
+    for _ in trange(num_iters):
+        model, marginal_evidence = emap_step(model)
+        log_evs.append(marginal_evidence)
+        
+    return model, jnp.array(log_evs)

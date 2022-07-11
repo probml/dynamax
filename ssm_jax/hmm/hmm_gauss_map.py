@@ -1,11 +1,11 @@
 from abc import abstractproperty
-from jax import jit, tree_map
+from jax import jit, lax, value_and_grad, vmap, tree_map
 import jax.numpy as jnp
 import jax.random as jr
 import optax
 from tqdm.auto import trange
 
-from learning import hmm_fit_sgd
+from learning import hmm_fit_sgd, _sample_minibatches
 from models import BaseHMM, GaussianHMM
 from NIW import NormalInverseWishart
 
@@ -41,13 +41,13 @@ class _BaseHMM(BaseHMM):
             return 
         def neg_expected_():
             return 
-        hmm, losses = hmm_fit_sgd() # hmm_fit_sgd only use log marginal as loss function
+        hmm, losses = hmm_fit_sgd(loss_fn=marginal_log_evidence) 
         return hmm, -losses
     
     
 class _GaussianHMM(GaussianHMM):
     
-    def __init(self, initial_probabilities, transition_matrix, emission_means, emission_covariance_matrices,
+    def __init__(self, initial_probabilities, transition_matrix, emission_means, emission_covariance_matrices,
                prior_params=None):
         super().__init__(initial_probabilities, transition_matrix, emission_means, emission_covariance_matrices)
         
@@ -98,4 +98,44 @@ def hmm_fit_emap(hmm, batch_emissions, optimizer=optax.adam(1e-2), num_iters=50)
     return hmm, log_evs
 
 
+def hmm_fit_minibatch_gradient_descent(hmm, emissions, optimizer, loss_fn=None, batch_size=1, num_iters=50, key=jr.PRNGKey(0)):
+    cls = hmm.__class__
+    hypers = hmm.hyperparams
     
+    params = hmm.unconstrained_params
+    opt_state = optimizer.init(params)
+    
+    num_complete_batches, leftover = jnp.divmod(len(emissions), batch_size)
+    num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
+    
+    def loss(params, batch_emissions):
+        hmm = cls.from_unconstrained_params(params, hypers)
+        f = lambda emissions: -hmm.marginal_log_prob(emissions) / len(emissions)
+        return vmap(f)(batch_emissions).mean()
+    
+    loss_grad_fn = jit(value_and_grad(loss))
+    
+    def train_step(carry, key):
+        perm = jr.permutation(key, len(emissions))
+        _emissions = emissions[perm]
+        sample_generator = _sample_minibatches(_emissions, batch_size)
+        
+        def opt_step(carry, i):
+            params, opt_state = carry
+            batch = next(sample_generator)
+            val, grads = loss_grad_fn(params, batch)
+            updates, opt_state = optimizer.update(grads, opt_state)
+            params = optax.apply_updates(params, updates)
+            return (params, opt_state), val
+
+        state, losses = lax.scan(opt_step, carry, jnp.arange(num_batches))
+        return state, losses.mean()
+    
+    keys = jr.split(key, num_iters)
+    (params, _), losses = lax.scan(train_step, (params, opt_state), keys)
+    
+    losses = losses.flatten()
+    hmm = cls.from_unconstrained_params(params, hypers)
+    
+    return hmm, losses
+        
