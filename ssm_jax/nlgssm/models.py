@@ -8,9 +8,10 @@ from distrax import MultivariateNormalFullCovariance as MVN
 from ssm_jax.ekf.inference import extended_kalman_filter
 from ssm_jax.utils import PSDToRealBijector
 
+
 @register_pytree_node_class
 class NonLinearGaussianSSM:
-    '''
+    """
     Non-Linear Gaussian State Space Model is defined as follows:
     p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)
     p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)
@@ -23,14 +24,17 @@ class NonLinearGaussianSSM:
     initial_mean = mu_{1|0}
     initial_covariance = Sigma_{1|0}
     Optional parameters (default to 0)
-    '''
-    def __init__(self,
-                 dynamics_function,
-                 dynamics_covariance,
-                 emission_function,
-                 emission_covariance,
-                 initial_mean=None,
-                 initial_covariance=None):
+    """
+
+    def __init__(
+        self,
+        dynamics_function,
+        dynamics_covariance,
+        emission_function,
+        emission_covariance,
+        initial_mean=None,
+        initial_covariance=None,
+    ):
         self.state_dim = dynamics_covariance.shape[0]
         self.emission_dim = emission_covariance.shape[0]
 
@@ -91,16 +95,18 @@ class NonLinearGaussianSSM:
 
     def ekf_filter(self, emissions, inputs=None):
         return extended_kalman_filter(self, emissions, inputs)
-    
+
     # Properties to allow unconstrained optimization and JAX jitting
     @property
     def return_params(self):
-        return (self.initial_mean,
-                self.initial_covariance,
-                self.dynamics_function,
-                self.dynamics_covariance,
-                self.emission_function,
-                self.emission_covariance)
+        return (
+            self.initial_mean,
+            self.initial_covariance,
+            self.dynamics_function,
+            self.dynamics_covariance,
+            self.emission_function,
+            self.emission_covariance,
+        )
 
     # Use the to/from unconstrained properties to implement JAX tree_flatten/unflatten
     def tree_flatten(self):

@@ -32,11 +32,9 @@ def ekf(m_0, P_0, f, Q, h, R, Y):
         P_pred = F(m_post) @ P_post @ F(m_post).T + Q
 
         return (m_pred, P_pred), (m_post, P_post)
-    
+
     carry = (m_0, P_0)
-    _, (ms, Ps) = lax.scan(
-        _step, carry, jnp.arange(num_timesteps)
-    )
+    _, (ms, Ps) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     return ms, Ps
 
 
@@ -63,11 +61,9 @@ def eks(m_0, P_0, f, Q, h, R, Y):
         P_sm = P_post[t] + G @ (P_k - P_pred) @ G.T
 
         return (m_sm, P_sm), (m_sm, P_sm)
-    
+
     carry = (m_post[-1], P_post[-1])
-    _, (m_sm, P_sm) = lax.scan(
-        _step, carry, jnp.arange(num_timesteps-2, -1, -1)
-    )
+    _, (m_sm, P_sm) = lax.scan(_step, carry, jnp.arange(num_timesteps - 2, -1, -1))
     m_sm = jnp.concatenate((jnp.array([m_post[-1]]), m_sm))[::-1]
     P_sm = jnp.concatenate((jnp.array([P_post[-1]]), P_sm))[::-1]
 
@@ -83,38 +79,32 @@ def slf_additive(m_0, P_0, f, Q, h, R, Ef, Efdx, Eh, Ehdx, Y):
 
         # Update step
         v = Y[t] - Eh(m_k, P_k)
-        S = jnp.atleast_2d(Ehdx(m_k, P_k) @ jnp.linalg.inv(P_k) \
-                           @ Ehdx(m_k, P_k).T + R)
+        S = jnp.atleast_2d(Ehdx(m_k, P_k) @ jnp.linalg.inv(P_k) @ Ehdx(m_k, P_k).T + R)
         K = Ehdx(m_k, P_k).T @ jnp.linalg.inv(S)
         m_post = m_k + K @ v
         P_post = P_k - K @ S @ K.T
 
         # Prediction step
         m_pred = Ef(m_post, P_post)
-        P_pred = Efdx(m_post, P_post) @ \
-            jnp.linalg.inv(P_post) @ Efdx(m_post, P_post).T + Q
+        P_pred = Efdx(m_post, P_post) @ jnp.linalg.inv(P_post) @ Efdx(m_post, P_post).T + Q
 
         return (m_pred, P_pred), (m_post, P_post)
-    
+
     carry = (m_0, P_0)
-    _, (ms, Ps) = lax.scan(
-        _step, carry, jnp.arange(num_timesteps)
-    )
+    _, (ms, Ps) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     return ms, Ps
 
 
 # Additive UKF (Sarkka Algorithm 5.14)
 def ukf_additive(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
     num_timesteps, n = len(Y), P_0.shape[0]
-    lamb = alpha**2 * (n + kappa) - n
+    lamb = alpha ** 2 * (n + kappa) - n
 
     # Compute weights for mean and covariance estimates
     def compute_weights(n, alpha, beta, lamb):
-        factor = 1/(2*(n+lamb))
-        w_mean = jnp.concatenate((jnp.array([lamb/(n+lamb)]), 
-                                  jnp.ones(2*n)*factor))
-        w_cov = jnp.concatenate((jnp.array([lamb/(n+lamb) + (1-alpha**2+beta)]),
-                                 jnp.ones(2*n)*factor))
+        factor = 1 / (2 * (n + lamb))
+        w_mean = jnp.concatenate((jnp.array([lamb / (n + lamb)]), jnp.ones(2 * n) * factor))
+        w_cov = jnp.concatenate((jnp.array([lamb / (n + lamb) + (1 - alpha ** 2 + beta)]), jnp.ones(2 * n) * factor))
         return w_mean, w_cov
 
     w_mean, w_cov = compute_weights(n, alpha, beta, lamb)
@@ -129,12 +119,8 @@ def ukf_additive(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
         sigmas_update_prop = vmap(h, 0, 0)(sigmas_update)
         # 3. Compute params
         mu = jnp.tensordot(w_mean, sigmas_update_prop, axes=1)
-        S = jnp.tensordot(w_cov, 
-                          outer(sigmas_update_prop-mu, sigmas_update_prop-mu), 
-                          axes=1) + R
-        C = jnp.tensordot(w_cov, 
-                          outer(sigmas_update-m_pred, sigmas_update_prop-mu), 
-                          axes=1)
+        S = jnp.tensordot(w_cov, outer(sigmas_update_prop - mu, sigmas_update_prop - mu), axes=1) + R
+        C = jnp.tensordot(w_cov, outer(sigmas_update - m_pred, sigmas_update_prop - mu), axes=1)
         # 4. Compute posterior
         K = C @ jnp.linalg.inv(S)
         m_post = m_k + K @ (Y[t] - mu)
@@ -149,21 +135,17 @@ def ukf_additive(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
         m_pred = jnp.tensordot(w_mean, sigmas_pred, axes=1)
         outer = lambda x, y: jnp.atleast_2d(x).T @ jnp.atleast_2d(y)
         outer = vmap(outer, 0, 0)
-        P_pred = jnp.tensordot(w_cov, 
-                               outer(sigmas_pred-m_pred, sigmas_pred-m_pred), 
-                               axes=1) + Q
-        
+        P_pred = jnp.tensordot(w_cov, outer(sigmas_pred - m_pred, sigmas_pred - m_pred), axes=1) + Q
+
         return (m_pred, P_pred), (m_post, P_post)
 
     # Find 2n+1 sigma points
     def compute_sigmas(m, P, n, lamb):
         disc = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(P)
-        sigma_plus = jnp.array([m + disc[:,i] for i in range(n)])
-        sigma_minus = jnp.array([m - disc[:,i] for i in range(n)])
+        sigma_plus = jnp.array([m + disc[:, i] for i in range(n)])
+        sigma_minus = jnp.array([m - disc[:, i] for i in range(n)])
         return jnp.concatenate((jnp.array([m]), sigma_plus, sigma_minus))
 
     carry = (m_0, P_0)
-    _, (ms, Ps) = lax.scan(
-        _step, carry, jnp.arange(num_timesteps)
-    )
+    _, (ms, Ps) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     return ms, Ps

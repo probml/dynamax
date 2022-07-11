@@ -17,7 +17,7 @@ def big_log_joint(initial_probs, transition_matrix, log_likelihoods):
         log_lkhds (_type_): _description_
     """
     num_timesteps, num_states = log_likelihoods.shape
-    flat_log_joint = jnp.zeros(num_states**num_timesteps)
+    flat_log_joint = jnp.zeros(num_states ** num_timesteps)
 
     # Compute each entry in the exponentially large log joint table
     for states in it.product(*([jnp.arange(num_states)] * num_timesteps)):

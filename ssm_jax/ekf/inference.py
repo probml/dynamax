@@ -7,7 +7,7 @@ from ssm_jax.nlgssm.containers import NLGSSMPosterior
 
 
 # Helper functions
-_get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
+_get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
 _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
 
@@ -109,22 +109,17 @@ def extended_kalman_filter(params, emissions, inputs=None):
         ll += MVN(h(pred_mean, u), H_x @ pred_cov @ H_x.T + R).log_prob(y)
 
         # Condition on this emission
-        filtered_mean, filtered_cov = _condition_on(
-            pred_mean, pred_cov, h, H, R, u, y)
+        filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, h, H, R, u, y)
 
         # Predict the next state
-        pred_mean, pred_cov = _predict(
-            filtered_mean, filtered_cov, f, F, Q, u)
+        pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, f, F, Q, u)
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
     # Run the extended Kalman filter
-    carry = (0., params.initial_mean, params.initial_covariance)
-    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(
-        _step, carry, jnp.arange(num_timesteps))
-    return NLGSSMPosterior(marginal_loglik=ll,
-                           filtered_means=filtered_means,
-                           filtered_covariances=filtered_covs)
+    carry = (0.0, params.initial_mean, params.initial_covariance)
+    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    return NLGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def extended_kalman_smoother(params, emissions, inputs=None):
@@ -140,11 +135,11 @@ def extended_kalman_smoother(params, emissions, inputs=None):
             filtered and smoothed posterior distributions.
     """
     num_timesteps = len(emissions)
-    
+
     # Run the extended Kalman filter
     ekf_posterior = extended_kalman_filter(params, emissions, inputs)
     ll, filtered_means, filtered_covs, *_ = ekf_posterior.to_tuple()
-    
+
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
     F, H = jacfwd(f), jacfwd(h)
@@ -170,25 +165,21 @@ def extended_kalman_smoother(params, emissions, inputs=None):
         # Compute smoothed mean and covariance
         smoothed_mean = filtered_mean + G @ (smoothed_mean_next - m_pred)
         smoothed_cov = filtered_cov + G @ (smoothed_cov_next - S_pred) @ G.T
-        
-        return (smoothed_mean, smoothed_cov), \
-               (smoothed_mean, smoothed_cov)
+
+        return (smoothed_mean, smoothed_cov), (smoothed_mean, smoothed_cov)
 
     # Run the extended Kalman smoother
     init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (
-        jnp.arange(num_timesteps-2, -1, -1),
-        filtered_means[:-1][::-1],
-        filtered_covs[:-1][::-1]
-    )
-    _, (smoothed_means, smoothed_covs) = \
-        lax.scan(_step, init_carry, args)
-    
+    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_means[:-1][::-1], filtered_covs[:-1][::-1])
+    _, (smoothed_means, smoothed_covs) = lax.scan(_step, init_carry, args)
+
     # Reverse the arrays and return
-    smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None,...]))
-    smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None,...]))
-    return NLGSSMPosterior(marginal_loglik=ll,
-                          filtered_means=filtered_means,
-                          filtered_covariances=filtered_covs,
-                          smoothed_means=smoothed_means,
-                          smoothed_covariances=smoothed_covs)
+    smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
+    smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
+    return NLGSSMPosterior(
+        marginal_loglik=ll,
+        filtered_means=filtered_means,
+        filtered_covariances=filtered_covs,
+        smoothed_means=smoothed_means,
+        smoothed_covariances=smoothed_covs,
+    )

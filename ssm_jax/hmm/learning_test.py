@@ -21,7 +21,7 @@ def make_rnd_hmm():
             jnp.sin(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
         ]
     )
-    emission_covs = jnp.tile(0.1**2 * jnp.eye(emission_dim), (num_states, 1, 1))
+    emission_covs = jnp.tile(0.1 ** 2 * jnp.eye(emission_dim), (num_states, 1, 1))
 
     # Make a true HMM
     true_hmm = GaussianHMM(initial_probs, transition_matrix, emission_means, emission_covs)

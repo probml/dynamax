@@ -17,12 +17,12 @@ def ekf_pendulum():
 
     # Define parameters for EKF
     ekf_params = NLGSSMParams(
-        initial_mean = pendulum.initial_state,
-        initial_covariance = jnp.eye(states.shape[-1])*0.1,
-        dynamics_function = pendulum.dynamics_function,
-        dynamics_covariance = pendulum.dynamics_covariance,
-        emission_function = pendulum.emission_function,
-        emission_covariance = pendulum.emission_covariance
+        initial_mean=pendulum.initial_state,
+        initial_covariance=jnp.eye(states.shape[-1]) * 0.1,
+        dynamics_function=pendulum.dynamics_function,
+        dynamics_covariance=pendulum.dynamics_covariance,
+        emission_function=pendulum.emission_function,
+        emission_covariance=pendulum.emission_covariance,
     )
 
     # Run extended Kalman smoother
@@ -33,11 +33,13 @@ def ekf_pendulum():
 
 def plot_ekf_pendulum(states, obs, grid, ekf_posterior):
     dict_figures = {}
-    dict_figures["pendulum_data"] = plot_pendulum(grid, states[:,0], obs)
-    dict_figures["pendulum_filtered"] = plot_pendulum(grid, states[:,0], obs,
-        x_est = ekf_posterior.filtered_means[:,0], est_type="EK Filter")
-    dict_figures["pendulum_smoothed"] = plot_pendulum(grid, states[:,0], obs,
-        x_est = ekf_posterior.smoothed_means[:,0], est_type="EK Smoother")
+    dict_figures["pendulum_data"] = plot_pendulum(grid, states[:, 0], obs)
+    dict_figures["pendulum_filtered"] = plot_pendulum(
+        grid, states[:, 0], obs, x_est=ekf_posterior.filtered_means[:, 0], est_type="EK Filter"
+    )
+    dict_figures["pendulum_smoothed"] = plot_pendulum(
+        grid, states[:, 0], obs, x_est=ekf_posterior.smoothed_means[:, 0], est_type="EK Smoother"
+    )
     return dict_figures
 
 
@@ -45,6 +47,7 @@ def main(test_mode=False):
     if not test_mode:
         _ = plot_ekf_pendulum(*(ekf_pendulum()))
         plt.show()
+
 
 if __name__ == "__main__":
     main()
