@@ -1,4 +1,3 @@
-import jax.random as jr
 import jax.numpy as jnp
 
 from ssm_jax.lgssm.inference import lgssm_filter, lgssm_smoother
