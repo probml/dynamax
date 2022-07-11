@@ -5,6 +5,8 @@ import jax.numpy as jnp
 import jax.random as jr
 import pytest
 from jax import vmap
+from ssm_jax.hmm.learning import hmm_fit_em
+from ssm_jax.hmm.models.base import BaseHMM
 from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
 
 
@@ -108,3 +110,21 @@ class TestCategoricalHMM:
         state_sequence, emissions = hmm.sample(key, num_samples)
         assert len(emissions) == len(state_sequence) == num_samples
         assert len(jnp.unique(emissions)) == self.num_features
+
+    def test_em(self, key=jr.PRNGKey(0), num_states=4, num_samples=1000):
+        sample_key, init_key = jr.split(key)
+
+        true_initial_probs = jnp.ones((num_states,)) / (num_states * 1.)
+        true_transition_matrix = 0.90 * jnp.eye(num_states) + 0.10 * jnp.ones((num_states, num_states)) / num_states
+        true_emission_probs = 0.90 * jnp.eye(num_states) + 0.10 * jnp.ones((num_states, num_states)) / num_states
+        true_hmm = CategoricalHMM(true_initial_probs, true_transition_matrix, true_emission_probs)
+        state_sequence, emissions = true_hmm.sample(sample_key, num_samples)
+
+        hmm = CategoricalHMM.random_initialization(init_key, num_states, num_states)
+        res1, lps1 = hmm_fit_em(hmm, emissions[None, ...])
+        hmm.m_step = BaseHMM.m_step
+        res2, lps2 = hmm_fit_em(hmm, emissions[None, ...])
+
+        assert jnp.allclose(res1.emission_probs, res2.emission_probs)
+        assert jnp.allclose(res1.initial_probabilities, res2.initial_probabilities)
+        assert jnp.allclose(jnp.array(lps1), jnp.array(lps2))
