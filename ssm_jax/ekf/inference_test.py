@@ -10,6 +10,10 @@ from ssm_jax.nlgssm.sarkka_lib import ekf, eks
 from filterpy.kalman import ExtendedKalmanFilter
 
 
+# Test closeness with slightly more lenient tolerance than the default
+_all_close = lambda x, y: jnp.allclose(x, y, rtol=1e-3)
+
+
 # Helper function to turn linear transform into function form
 def _lgssm_to_nlgssm(params):
     """Generates NonLinearGaussianSSM params from LinearGaussianSSM params
@@ -34,7 +38,7 @@ def _lgssm_to_nlgssm(params):
 def random_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2, linear=True):
     if isinstance(key, int):
         key = jr.PRNGKey(key)
-    *keys, subkey = jr.split(key, 5)
+    *keys, subkey = jr.split(key, 9)
     
     # Generate random parameters
     initial_mean = jr.normal(keys[0], (state_dim,))
@@ -43,24 +47,22 @@ def random_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2, linear=Tru
     emission_covariance = jnp.eye(emission_dim) * jr.uniform(keys[3])
 
     if linear:
-        *keys, subkey = jr.split(subkey, 5)
         params = LinearGaussianSSM(
             initial_mean = initial_mean,
             initial_covariance = initial_covariance,
-            dynamics_matrix = jr.normal(keys[0], (state_dim, state_dim)),
+            dynamics_matrix = jr.normal(keys[4], (state_dim, state_dim)),
             dynamics_covariance = dynamics_covariance,
-            dynamics_bias = jr.normal(keys[1], (state_dim,)),
-            emission_matrix = jr.normal(keys[2], (emission_dim, state_dim)),
+            dynamics_bias = jr.normal(keys[5], (state_dim,)),
+            emission_matrix = jr.normal(keys[6], (emission_dim, state_dim)),
             emission_covariance = emission_covariance,
-            emission_bias = jr.normal(keys[3], (emission_dim,))
+            emission_bias = jr.normal(keys[7], (emission_dim,))
         )
     else:
-        *keys, subkey = jr.split(subkey, 3)
         # Some arbitrary non-linear functions
-        c_dynamics = jr.normal(keys[0], (3,))
+        c_dynamics = jr.normal(keys[4], (3,))
         dynamics_function = lambda x: jnp.sin(c_dynamics[0] * jnp.power(x, 3) + \
             c_dynamics[1] * jnp.square(x) + c_dynamics[2])
-        c_emission = jr.normal(keys[1], (2,))
+        c_emission = jr.normal(keys[5], (2,))
         h = lambda x: jnp.cos(c_emission[0] * jnp.square(x) + c_emission[1])
         emission_function = lambda x: h(x)[:emission_dim] if state_dim >= emission_dim \
             else jnp.pad(h(x), (0, emission_dim - state_dim))
@@ -90,9 +92,9 @@ def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
     ekf_post = extended_kalman_filter(_lgssm_to_nlgssm(lgssm), emissions)
 
     # Compare filter results
-    assert jnp.allclose(kf_post.marginal_loglik, ekf_post.marginal_loglik)
-    assert jnp.allclose(kf_post.filtered_means, ekf_post.filtered_means)
-    assert jnp.allclose(kf_post.filtered_covariances, ekf_post.filtered_covariances)
+    assert _all_close(kf_post.marginal_loglik, ekf_post.marginal_loglik)
+    assert _all_close(kf_post.filtered_means, ekf_post.filtered_means)
+    assert _all_close(kf_post.filtered_covariances, ekf_post.filtered_covariances)
 
 
 def test_extended_kalman_filter_nonlinear(key=0, num_timesteps=15):
@@ -105,8 +107,8 @@ def test_extended_kalman_filter_nonlinear(key=0, num_timesteps=15):
     ekf_post = extended_kalman_filter(nlgssm, emissions)
 
     # Compare filter results
-    assert jnp.allclose(means_ext, ekf_post.filtered_means)
-    assert jnp.allclose(covs_ext, ekf_post.filtered_covariances)
+    assert _all_close(means_ext, ekf_post.filtered_means)
+    assert _all_close(covs_ext, ekf_post.filtered_covariances)
 
 
 def test_extended_kalman_smoother_linear(key=0, num_timesteps=15):
@@ -119,9 +121,8 @@ def test_extended_kalman_smoother_linear(key=0, num_timesteps=15):
     ekf_post = extended_kalman_smoother(_lgssm_to_nlgssm(lgssm), emissions)
 
     # Compare smoother results
-    assert jnp.allclose(kf_post.smoothed_means, ekf_post.smoothed_means)
-    assert jnp.allclose(kf_post.smoothed_covariances, 
-        ekf_post.smoothed_covariances)
+    assert _all_close(kf_post.smoothed_means, ekf_post.smoothed_means)
+    assert _all_close(kf_post.smoothed_covariances, ekf_post.smoothed_covariances)
 
 
 def test_extended_kalman_smoother_nonlinear(key=0, num_timesteps=15):
@@ -134,5 +135,5 @@ def test_extended_kalman_smoother_nonlinear(key=0, num_timesteps=15):
     ekf_post = extended_kalman_smoother(nlgssm, emissions)
 
     # Compare filter results
-    assert jnp.allclose(means_ext, ekf_post.smoothed_means)
-    assert jnp.allclose(covs_ext, ekf_post.smoothed_covariances)
+    assert _all_close(means_ext, ekf_post.smoothed_means)
+    assert _all_close(covs_ext, ekf_post.smoothed_covariances)
