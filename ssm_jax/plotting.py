@@ -143,7 +143,6 @@ def plot_lgssm_posterior(post_means, post_covs, ax=None, ellipse_kwargs={}, **kw
         ax.legend()
 
     return ax
-<<<<<<< HEAD
 
 
 def plot_nlgssm_pendulum(time_grid, x_tr, x_obs, x_est=None, est_type=""):
@@ -159,5 +158,3 @@ def plot_nlgssm_pendulum(time_grid, x_tr, x_obs, x_est=None, est_type=""):
     ax.set_aspect(0.5)
     ax.legend(loc=1, borderpad=0.5, handlelength=4, fancybox=False, edgecolor='k');
     return fig
-=======
->>>>>>> upstream/main
