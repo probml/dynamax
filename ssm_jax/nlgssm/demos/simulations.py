@@ -2,6 +2,7 @@
 # Taken from:
 # Simo Särkkä (2013), “Bayesian Filtering and Smoothing,” (pg. 74)
 # Example 5.1 (Pendulum tracking with EKF)
+# Available: https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
 
 import jax.numpy as jnp
 import jax.random as jr

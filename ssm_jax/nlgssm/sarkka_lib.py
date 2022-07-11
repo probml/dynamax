@@ -1,6 +1,8 @@
 """
 External implementations of nlgssm algorithms to use for unit test.
 Taken from https://github.com/petergchang/sarkka-jax
+Based on Simo Särkkä (2013), “Bayesian Filtering and Smoothing,”
+Available: https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
 """
 
 import jax.numpy as jnp
