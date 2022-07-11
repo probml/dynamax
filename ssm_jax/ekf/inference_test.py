@@ -22,7 +22,7 @@ def _lgssm_to_nlgssm(params):
         params: LinearGaussianSSM object
 
     Returns:
-        nlgssm_params: NonLienarGaussianSSM object
+        nlgssm_params: NonLinearGaussianSSM object
     """    
     nlgssm_params = NonLinearGaussianSSM(
         initial_mean = params.initial_mean,
