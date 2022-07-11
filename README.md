@@ -29,6 +29,11 @@ To install in colab, do this
 !pip install -e .
 ```
 
+To install [black](https://black.readthedocs.io/en/stable/), do this (quotes are mandatory for `zsh`)
+```
+pip install -U 'black[jupyter]'
+```
+
 Related libraries:
 
 - [murphy-lab/JSL](https://github.com/probml/JSL) 
