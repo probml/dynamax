@@ -8,6 +8,9 @@ from ssm_jax.nlgssm.containers import NLGSSMPosterior
 
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
+_process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
+_process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
+
 
 def _predict(m, S, f, F, Q, u):
     """Predict next mean and covariance using first-order additive EKF
@@ -89,11 +92,8 @@ def extended_kalman_filter(params, emissions, inputs=None):
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
     F, H = jacfwd(f), jacfwd(h)
-    # If no input, add dummy input to functions
-    if inputs is None:
-        inputs = jnp.zeros((num_timesteps,))
-        process_fn = lambda fn: (lambda x, u: fn(x))
-        f, h, F, H = (process_fn(fn) for fn in (f, h, F, H))
+    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
+    inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
@@ -148,11 +148,8 @@ def extended_kalman_smoother(params, emissions, inputs=None):
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
     F, H = jacfwd(f), jacfwd(h)
-    # If no input, add dummy input to functions
-    if inputs is None:
-        inputs = jnp.zeros((num_timesteps,))
-        process_fn = lambda fn: (lambda x, u: fn(x))
-        f, h, F, H = (process_fn(fn) for fn in (f, h, F, H))
+    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
+    inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, args):
         # Unpack the inputs
