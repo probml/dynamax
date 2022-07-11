@@ -13,6 +13,7 @@ from ssm_jax.hmm.models.base import BaseHMM
 
 @register_pytree_node_class
 class CategoricalHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_probs):
         """_summary_
 
@@ -42,23 +43,13 @@ class CategoricalHMM(BaseHMM):
         emission_probs = jr.dirichlet(key3, jnp.ones(emission_dim), (num_states,))
         return cls(initial_probs, transition_matrix, emission_probs)
 
-    # Properties to get various parameters of the model
-    @property
-    def emission_distribution(self):
-        return self._emission_distribution
-
-    @property
-    def emission_probs(self):
-        return self.emission_distribution.probs_parameter()
-
     @property
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters."""
-        return (
-            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-            tfb.SoftmaxCentered().inverse(self.transition_matrix),
-            tfb.SoftmaxCentered().inverse(self.emission_probs),
-        )
+        """Helper property to get a PyTree of unconstrained parameters.
+        """
+        return (tfb.SoftmaxCentered().inverse(self.initial_probabilities),
+                tfb.SoftmaxCentered().inverse(self.transition_matrix),
+                tfb.SoftmaxCentered().inverse(self.emission_probs))
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):

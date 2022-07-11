@@ -18,6 +18,7 @@ from ssm_jax.hmm.learning import hmm_fit_sgd
 
 
 class BaseHMM(ABC):
+
     def __init__(self, initial_probabilities, transition_matrix):
         """Abstract base class for Hidden Markov Models.
         Child class specifies the emission distribution.
@@ -39,31 +40,47 @@ class BaseHMM(ABC):
     # Properties to get various attributes of the model from underyling distribution objects
     @property
     def num_states(self):
-        return self._initial_distribution.probs.shape[-1]
+        return self.initial_probabilities[-1]
 
     @property
     def num_obs(self):
         return self._emission_distribution.event_shape[0]
 
     @property
-    def initial_probabilities(self):
-        return self._initial_distribution.probs
-
-    @property
-    def transition_matrix(self):
-        return self._transition_distribution.probs
-
-    @property
     def initial_distribution(self):
         return self._initial_distribution
+
+    @property
+    def emission_distribution(self):
+        return self._emission_distribution
 
     @property
     def transition_distribution(self):
         return self._transition_distribution
 
-    @abstractproperty
-    def emission_distribution(self):
-        raise NotImplementedError
+    @property
+    def initial_probabilities(self):
+        return self.initial_distribution.probs_parameter()
+
+    @property
+    def emission_probs(self):
+        return self.emission_distribution.probs_parameter()
+
+    @property
+    def transition_matrix(self):
+        return self.transition_distribution.probs_parameter()
+
+    @property
+    def initial_logits(self):
+        return self.initial_distribution.logits_parameter()
+
+    @property
+    def transition_logits(self):
+        return self.transition_distribution.logits_parameter()
+
+    @property
+    def emission_logits(self):
+        return self.emission_distribution.logits_parameter()
 
     def sample(self, key, num_timesteps):
         """Sample a sequence of latent states and emissions.
@@ -89,7 +106,8 @@ class BaseHMM(ABC):
         return states, emissions
 
     def log_prob(self, states, emissions):
-        """Compute the log joint probability of the states and observations"""
+        """Compute the log joint probability of the states and observations
+        """
         lp = self.initial_distribution.log_prob(states[0])
         lp += self.transition_distribution[states[:-1]].log_prob(states[1:]).sum()
         lp += self.emission_distribution[states].log_prob(emissions).sum(0)
@@ -100,7 +118,8 @@ class BaseHMM(ABC):
         # Add extra dimension to emissions for broadcasting over states.
         # Becomes emissions(T,:) or emissions(T,:,D) which broadcasts with emissions distribution
         # of shape (K,) or (K,D).
-        log_likelihoods = self.emission_distribution.log_prob(emissions[:, None, ...])
+        log_likelihoods = vmap(self.emission_distribution.log_prob)(emissions.reshape((-1, 1)))
+        log_likelihoods = log_likelihoods.reshape((-1, self.num_states))
         return log_likelihoods
 
     # Basic inference code
@@ -112,9 +131,8 @@ class BaseHMM(ABC):
 
     def most_likely_states(self, emissions):
         """Compute Viterbi path."""
-        return hmm_posterior_mode(
-            self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions)
-        )
+        return hmm_posterior_mode(self.initial_probabilities, self.transition_matrix,
+                                  self._conditional_logliks(emissions))
 
     def filter(self, emissions):
         """Compute filtering distribution."""
@@ -133,9 +151,8 @@ class BaseHMM(ABC):
         def _single_e_step(emissions):
             # TODO: do we need to use dynamic slice?
 
-            posterior = hmm_two_filter_smoother(
-                self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions)
-            )
+            posterior = hmm_two_filter_smoother(self.initial_probabilities, self.transition_matrix,
+                                                self._conditional_logliks(emissions))
 
             # Compute the transition probabilities
             trans_probs = compute_transition_probs(self.transition_matrix, posterior)
@@ -177,7 +194,8 @@ class BaseHMM(ABC):
     # Properties to allow unconstrained optimization and JAX jitting
     @abstractproperty
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters."""
+        """Helper property to get a PyTree of unconstrained parameters.
+        """
         raise NotImplementedError
 
     @abstractclassmethod
@@ -186,7 +204,8 @@ class BaseHMM(ABC):
 
     @property
     def hyperparams(self):
-        """Helper property to get a PyTree of model hyperparameters."""
+        """Helper property to get a PyTree of model hyperparameters.
+        """
         return tuple()
 
     # Use the to/from unconstrained properties to implement JAX tree_flatten/unflatten
