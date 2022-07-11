@@ -54,11 +54,20 @@ class PoissonHMM(BaseHMM):
         return (nn.softmax(jnp.log(self.initial_probabilities),
                            axis=-1), nn.softmax(jnp.log(self.transition_matrix), axis=-1), self.emission_log_rates)
 
+    def _conditional_logliks(self, emissions):
+        # Input: emissions(T,) for scalar, or emissions(T,D) for vector
+        # Add extra dimension to emissions for broadcasting over states.
+        # Becomes emissions(T,:) or emissions(T,:,D) which broadcasts with emissions distribution
+        # of shape (K,) or (K,D).
+        log_likelihoods = vmap(self.emission_distribution.log_prob)(emissions.reshape((1, -1)))
+        log_likelihoods = log_likelihoods.reshape((-1, self.num_states))
+        return log_likelihoods
+
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
         return cls(*unconstrained_params, *hypers)
 
-    def _sufficient_statistics(datapoint):
+    def _sufficient_statistics(self, datapoint):
         return (datapoint, jnp.ones_like(datapoint))
 
     def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(0.01), num_iters=50):

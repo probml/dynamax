@@ -62,7 +62,7 @@ class BernoulliHMM(BaseHMM):
         emission_probs = tfb.Sigmoid().forward(unconstrained_params[2])
         return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
 
-    def _sufficient_statistics(datapoint):
+    def _sufficient_statistics(self, datapoint):
         return datapoint, 1 - datapoint
 
     def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(0.01), num_iters=50):

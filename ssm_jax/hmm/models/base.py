@@ -40,7 +40,7 @@ class BaseHMM(ABC):
     # Properties to get various attributes of the model from underyling distribution objects
     @property
     def num_states(self):
-        return self.initial_probabilities[-1]
+        return self.initial_probabilities.shape[-1]
 
     @property
     def num_obs(self):
