@@ -12,7 +12,6 @@ import chex
 class UKFHyperParams:
     """Lightweight container for UKF hyperparameters.
     """
-
     alpha: chex.Scalar = 1
     beta: chex.Scalar = 1
     kappa: chex.Scalar = 2
@@ -21,21 +20,22 @@ class UKFHyperParams:
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _outer = vmap(lambda x, y: jnp.atleast_2d(x).T @ jnp.atleast_2d(y), 0, 0)
+_process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
+_process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
 
 
-def _compute_sigmas(m, n, S, lamb):
+def _compute_sigmas(m, S, n, lamb):
     """Compute (2n+1) sigma points used for inputs to  unscented transform.
 
     Args:
         m (D_hid,): mean.
-        n (int): number of state dimensions.
         S (D_hid,D_hid): covariance.
+        n (int): number of state dimensions.
         lamb (Scalar): unscented parameter lambda.
 
     Returns:
         sigmas (2*D_hid+1,): 2n+1 sigma points.
     """
-    assert len(m) == n
     distances = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(S)
     sigma_plus = jnp.array([m + distances[:, i] for i in range(n)])
     sigma_minus = jnp.array([m - distances[:, i] for i in range(n)])
@@ -82,7 +82,7 @@ def _predict(m, S, f, Q, lamb, w_mean, w_cov, u):
     # Form sigma points and propagate
     sigmas_pred = _compute_sigmas(m, S, n, lamb)
     u_s = jnp.array([u] * len(sigmas_pred))
-    sigmas_pred = vmap(f, (0, 0), 0)(sigmas_pred, us)
+    sigmas_pred = vmap(f, (0, 0), 0)(sigmas_pred, u_s)
 
     # Compute predicted mean and covariance
     m_pred = jnp.tensordot(w_mean, sigmas_pred, axes=1)
@@ -116,9 +116,9 @@ def _condition_on(m, S, h, R, lamb, w_mean, w_cov, u, y):
     sigmas_cond_prop = vmap(h, (0, 0), 0)(sigmas_cond, u_s)
 
     # Compute parameters needed to filter
-    pred_mean = jnp.tensordor(w_mean, sigmas_cond_prop, axes=1)
+    pred_mean = jnp.tensordot(w_mean, sigmas_cond_prop, axes=1)
     pred_cov = jnp.tensordot(w_cov, _outer(sigmas_cond_prop - pred_mean, sigmas_cond_prop - pred_mean), axes=1) + R
-    pred_cross = jnp.tensordot(w_cov, _outer(sigmas_cond - m, sigmas_cond - m), axes=1)
+    pred_cross = jnp.tensordot(w_cov, _outer(sigmas_cond - m, sigmas_cond_prop - pred_mean), axes=1)
 
     # Compute log-likelihood of observation
     ll = MVN(pred_mean, pred_cov).log_prob(y)
@@ -141,12 +141,8 @@ def unscented_kalman_filter(params, emissions, hyperparams, inputs=None):
 
     # Dynamics and emission functions
     f, h = params.dynamics_function, params.emission_function
-
-    # If no input, add dummy input to functions
-    if inputs is None:
-        inputs = jnp.zeros((num_timesteps,))
-        process_fn = lambda fn: (lambda x, u: fn(x))
-        f, h = (process_fn(fn) for fn in (f, h))
+    f, h = (_process_fn(fn, inputs) for fn in (f, h))
+    inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
