@@ -1,6 +1,9 @@
 import jax.numpy as jnp
 import jax.random as jr
 from jax import jit
+from distrax import MultivariateNormalFullCovariance as MVN
+from NIW import InverseWishart as IW
+from _ import MatrixNormal as MN
 
 from tqdm.auto import trange
 
@@ -17,7 +20,8 @@ class _LinearGaussianSSM(LinearGaussianSSM):
                  dynamics_input_weights=None,
                  dynamics_bias=None,
                  emission_input_weights=None,
-                 emission_bias=None):
+                 emission_bias=None,
+                 prior=None):
         super().__init__(self,
                          dynamics_matrix,
                          dynamics_covariance,
@@ -29,26 +33,32 @@ class _LinearGaussianSSM(LinearGaussianSSM):
                          dynamics_bias,
                          emission_input_weights,
                          emission_bias)
-        self._prior = None
+        self._prior = prior
     
-    def initialization_from_prior(cls, key):
-        k1, k2, k3 = jr.split(key, num=3)
-        m1 = jnp.zeros(self.state_dim)
-        Q1 = jnp.eye(self.state_dim)
-        A = None
-        B = None
-        b = None
-        Q = None
-        C = None
-        D = None
-        d = None
-        R = None
-        return cls(dynamics_matrix=A,
+    @classmethod
+    def initialization_from_prior(cls, rng, prior):
+        rngs = iter(jr.split(rng, 8))
+        # Initialize the initial state
+        S = IW().sample(seed=next(rngs))
+        m = MVN(prior.m_mu, prior.m_cov).sample(seed=next(rngs))
+        # Initialize the dynamics parameters
+        Q = IW().sample(seed=next(rngs))
+        F = MN().sample(seed=next(rngs)) 
+        Bb = MN().sample(seed=next(rngs)) 
+        b = Bb[:,0]
+        B = Bb[:,1:]
+        # Initialize the emission parameters
+        R = IW().sample(seed=next(rngs))
+        H = MN().sample(seed=next(rngs)) 
+        Dd = MN().sample(seed=next(rngs))
+        D = Dd[:,0]
+        d = Dd[:,1:]
+        return cls(dynamics_matrix=F,
                    dynamics_covariance=Q,
-                   emission_matrix=C,
+                   emission_matrix=H,
                    emission_covariance=R,
-                   initial_mean=m1,
-                   initial_covariance=Q1,
+                   initial_mean=m,
+                   initial_covariance=S,
                    dynamics_input_weights=B,
                    dynamics_bias=b,
                    emission_input_weights=D,
@@ -57,28 +67,28 @@ class _LinearGaussianSSM(LinearGaussianSSM):
     def marginal_log_evidence(self, emissions, inputs=None):
         """log marginal evidence (log marginal likelihood of observations + log prior of parameters)"""
         mlp = self.marginal_log_prob(emissions, inputs)
-        lp = 0
+        lp = self._prior.log_prob()
         mle = mlp + lp
         return mle
     
     @classmethod
     def map_step(cls, batch_stats):
-        A = None
+        F = None
         Q = None
-        C = None
+        H = None
         R = None
-        m1 = None
-        Q1 = None
+        m = None
+        S = None
         B = None
         b = None
         D = None
         d = None
-        return cls(dynamics_matrix=A,
+        return cls(dynamics_matrix=F,
                    dynamics_covariance=Q,
-                   emission_matrix=C,
+                   emission_matrix=H,
                    emission_covariance=R,
-                   initial_mean=m1,
-                   initial_covariance=Q1,
+                   initial_mean=m,
+                   initial_covariance=S,
                    dynamics_input_weights=B,
                    dynamics_bias=b,
                    emission_input_weights=D,

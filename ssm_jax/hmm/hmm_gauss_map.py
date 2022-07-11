@@ -4,6 +4,8 @@ import jax.numpy as jnp
 import jax.random as jr
 import optax
 from tqdm.auto import trange
+from functools import partial
+import tensorflow_probability.substrates.jax.distributions as tfd
 
 from learning import hmm_fit_sgd, _sample_minibatches
 from models import BaseHMM, GaussianHMM
@@ -21,8 +23,9 @@ class _BaseHMM(BaseHMM):
     
     def marginal_log_evidence(self, emissions):
         """log marginal evidence (log marginal likelihood of observations + log prior of emission)"""
-        le = 0
-        return le
+        ll = self.marginal_log_prob(emissions)
+        l_prior = self.emission_prior.log_prob(emission_params)
+        return ll + l_prior
     
     def map_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(1e-2), num_iters=50):
         """_summary_
@@ -37,11 +40,24 @@ class _BaseHMM(BaseHMM):
         Returns:
             _type_: _description_
         """
-        def _single_():
-            return 
-        def neg_expected_():
-            return 
-        hmm, losses = hmm_fit_sgd(loss_fn=marginal_log_evidence) 
+        def _single_expected_log_joint_plus_prior(hmm, emissions, posterior, trans_probs):
+            log_likelihoods = vmap(hmm.emission_distribution.log_prob)(emissions)
+            expected_states = posterior.smoothed_probs
+            
+            lp = jnp.sum(expected_states[0] * jnp.log(hmm.initial_probabilities))
+            lp += jnp.sum(trans_probs * jnp.log(hmm.transition_matrix))
+            lp += jnp.sum(expected_states * log_likelihoods)
+            
+            l_prior = vmap(hmm.emission_prior.log_prob)(emissions_params)
+            return lp + l_prior
+            
+        def neg_expected_log_joint_plus_prior(params):
+            hmm = self.from_unconstrained_params(params, hypers)
+            f = vmap(partial(_single_expected_log_joint_plus_prior, hmm))
+            lps = f(batch_emissions, batch_posteriors, batch_trans_probs)
+            return -jnp.sum(lps / jnp.ones_like(batch_emissions).sum())
+        
+        hmm, losses = hmm_fit_sgd(self, batch_emissions, optimizer, num_iters, neg_expected_log_joint_plus_prior) 
         return hmm, -losses
     
     
@@ -62,15 +78,25 @@ class _GaussianHMM(GaussianHMM):
         return self._emission_prior
     
     @classmethod
+    def initialization_from_prior(cls, key, num_states, emission_dim):
+        key1, key2, key3 = jr.split(key, 3)
+        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
+        emission_params = emission_prior.sample(seed=key3, shape=(num_states))
+        emission_means = emission_params['mu']
+        emission_covs = emission_params['Sig']
+        return cls(initial_probs, transition_matrix, emission_means, emission_covs)
+    
+    @classmethod
     def map_step(cls, batch_stats):
         # Sum the statistics across all batches
-        stats = tree_map()
+        stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
         
         # Initial distribution
-        initial_probs = None
+        initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
         
         # Transition distribution
-        transition_matrix = None
+        transition_matrix = tfd.Dirichlet(1.0001 + stats.sum_trans_probs).mode()
         
         # Gaussian emission distribution
         emission_dim = stats.sum_x.shape[-1]
