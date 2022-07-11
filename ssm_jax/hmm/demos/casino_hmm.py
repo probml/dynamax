@@ -27,8 +27,7 @@ def find_dishonest_intervals(states):
     list of tuples with span of values
     """
     states = np.array(states)
-    changepoints = np.concatenate(
-        [[0], np.nonzero(np.diff(states))[0] + 1, [len(states)]])
+    changepoints = np.concatenate([[0], np.nonzero(np.diff(states))[0] + 1, [len(states)]])
     starts, ends = changepoints[:-1], changepoints[1:]
 
     # Return the (start, end) pairs where the start state is 1
@@ -73,22 +72,22 @@ def plot_inference(inference_values, states, ax, state=1, map_estimate=False):
 
 def make_model_and_data():
     # Construct the model
-    transition_matrix = jnp.array([
-        [0.95, 0.05],
-        [0.10, 0.90]
-    ])
-    emission_probs = jnp.array([
-        [1/6,  1/6,  1/6,  1/6,  1/6,  1/6],  # fair die
-        [1/10, 1/10, 1/10, 1/10, 1/10, 5/10]  # loaded die
-    ])
-    init_state_probs = jnp.array([1/2, 1/2])
+    transition_matrix = jnp.array([[0.95, 0.05], [0.10, 0.90]])
+    emission_probs = jnp.array(
+        [
+            [1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6],  # fair die
+            [1 / 10, 1 / 10, 1 / 10, 1 / 10, 1 / 10, 5 / 10],  # loaded die
+        ]
+    )
+    init_state_probs = jnp.array([1 / 2, 1 / 2])
     hmm = CategoricalHMM(init_state_probs, transition_matrix, emission_probs)
 
     # Simulate data
     n_timesteps = 300
     true_states, emissions = hmm.sample(jr.PRNGKey(0), n_timesteps)
- 
+
     return hmm, true_states, emissions
+
 
 def plot_results(true_states, emissions, posterior, most_likely_states):
     print("Printing sample observed/latent...")
@@ -119,7 +118,7 @@ def plot_results(true_states, emissions, posterior, most_likely_states):
     return dict_figures
 
 
-def main(test_mode = False):
+def main(test_mode=False):
     hmm, true_states, emissions = make_model_and_data()
     posterior = hmm.smoother(emissions)
     most_likely_states = hmm.most_likely_states(emissions)

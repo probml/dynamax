@@ -15,10 +15,12 @@ def make_rnd_hmm():
     # Specify parameters of the HMM
     initial_probs = jnp.ones(num_states) / num_states
     transition_matrix = 0.95 * jnp.eye(num_states) + 0.05 * jnp.roll(jnp.eye(num_states), 1, axis=1)
-    emission_means = jnp.column_stack([
-        jnp.cos(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
-        jnp.sin(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1]
-    ])
+    emission_means = jnp.column_stack(
+        [
+            jnp.cos(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
+            jnp.sin(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
+        ]
+    )
     emission_covs = jnp.tile(0.1**2 * jnp.eye(emission_dim), (num_states, 1, 1))
 
     # Make a true HMM

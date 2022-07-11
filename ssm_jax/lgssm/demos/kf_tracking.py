@@ -9,19 +9,12 @@ from matplotlib import pyplot as plt
 from ssm_jax.plotting import plot_lgssm_posterior
 from ssm_jax.lgssm.models import LinearGaussianSSM
 
+
 def kf_tracking():
     delta = 1.0
-    F = jnp.array([
-        [1., 0, delta, 0],
-        [0, 1., 0, delta],
-        [0, 0, 1., 0],
-        [0, 0, 0, 1.]
-    ])
+    F = jnp.array([[1.0, 0, delta, 0], [0, 1.0, 0, delta], [0, 0, 1.0, 0], [0, 0, 0, 1.0]])
 
-    H = jnp.array([
-        [1., 0, 0, 0],
-        [0, 1., 0, 0]
-    ])
+    H = jnp.array([[1.0, 0, 0, 0], [0, 1.0, 0, 0]])
 
     state_size, _ = F.shape
     observation_size, _ = H.shape
@@ -30,7 +23,7 @@ def kf_tracking():
     R = jnp.eye(observation_size) * 1.0
 
     # Prior parameter distribution
-    mu0 = jnp.array([8., 10., 1., 0.])
+    mu0 = jnp.array([8.0, 10.0, 1.0, 0.0])
     Sigma0 = jnp.eye(state_size) * 0.1
 
     lgssm = LinearGaussianSSM(
@@ -39,12 +32,13 @@ def kf_tracking():
         dynamics_matrix=F,
         dynamics_covariance=Q,
         emission_matrix=H,
-        emission_covariance=R)
+        emission_covariance=R,
+    )
 
     # Sample data from model.
     key = jr.PRNGKey(111)
     num_timesteps = 15
-    x, y = lgssm.sample(key,num_timesteps)
+    x, y = lgssm.sample(key, num_timesteps)
 
     # Calculate filtered and smoothed posterior values.
     lgssm_posterior = lgssm.smoother(y)
@@ -52,65 +46,55 @@ def kf_tracking():
     return x, y, lgssm_posterior
 
 
-def plot_kf_tracking(x,y,lgssm_posterior):
+def plot_kf_tracking(x, y, lgssm_posterior):
 
-    observation_marker_kwargs={
-        "marker":"o",
-        "markerfacecolor":"none",
-        "markeredgewidth":2,
-        "markersize":8
-    }
+    observation_marker_kwargs = {"marker": "o", "markerfacecolor": "none", "markeredgewidth": 2, "markersize": 8}
     dict_figures = {}
 
     # Plot Data
     fig, ax = plt.subplots()
-    ax.plot(*x[:,:2].T, marker="s", color="C0", label="true state");
-    ax.plot(*y.T, ls="",
-             **observation_marker_kwargs,
-             color="tab:green",
-             label="emissions")
+    ax.plot(*x[:, :2].T, marker="s", color="C0", label="true state")
+    ax.plot(*y.T, ls="", **observation_marker_kwargs, color="tab:green", label="emissions")
     ax.legend()
     dict_figures["kalman_tracking_truth"] = fig
 
     # Plot Filtering
     fig, ax = plt.subplots()
-    ax.plot(*y.T, ls="",
-             **observation_marker_kwargs,
-             color="tab:green",
-             label="observed")
-    ax.plot(*x[:,:2].T,
-             ls="--", color="darkgrey", label="true state")
-    plot_lgssm_posterior(lgssm_posterior.filtered_means,
-                         lgssm_posterior.filtered_covariances,
-                         ax,
-                         color="tab:red", label="filtered means",
-                         ellipse_kwargs={'edgecolor':'k',
-                                         'linewidth':0.5});
+    ax.plot(*y.T, ls="", **observation_marker_kwargs, color="tab:green", label="observed")
+    ax.plot(*x[:, :2].T, ls="--", color="darkgrey", label="true state")
+    plot_lgssm_posterior(
+        lgssm_posterior.filtered_means,
+        lgssm_posterior.filtered_covariances,
+        ax,
+        color="tab:red",
+        label="filtered means",
+        ellipse_kwargs={"edgecolor": "k", "linewidth": 0.5},
+    )
     dict_figures["kalman_tracking_filtered"] = fig
 
     # Plot Smoothing
     fig, ax = plt.subplots()
-    ax.plot(*y.T, ls="",
-             **observation_marker_kwargs,
-             color="tab:green",
-             label="observed")
-    ax.plot(*x[:,:2].T,
-             ls="--", color="darkgrey", label="true state")
-    plot_lgssm_posterior(lgssm_posterior.smoothed_means,
-                         lgssm_posterior.smoothed_covariances,
-                         ax,
-                         color="tab:red", label="smoothed means",
-                         ellipse_kwargs={'edgecolor':'k',
-                                         'linewidth':0.5});
+    ax.plot(*y.T, ls="", **observation_marker_kwargs, color="tab:green", label="observed")
+    ax.plot(*x[:, :2].T, ls="--", color="darkgrey", label="true state")
+    plot_lgssm_posterior(
+        lgssm_posterior.smoothed_means,
+        lgssm_posterior.smoothed_covariances,
+        ax,
+        color="tab:red",
+        label="smoothed means",
+        ellipse_kwargs={"edgecolor": "k", "linewidth": 0.5},
+    )
     dict_figures["kalman_tracking_smoothed"] = fig
 
     return dict_figures
 
-def main(test_mode = False):
+
+def main(test_mode=False):
     x, y, lgssm_posterior = kf_tracking()
     if not test_mode:
         dict_figures = plot_kf_tracking(x, y, lgssm_posterior)
         plt.show()
+
 
 if __name__ == "__main__":
     main()

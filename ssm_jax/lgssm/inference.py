@@ -4,6 +4,7 @@ from jax import lax
 from distrax import MultivariateNormalFullCovariance as MVN
 import chex
 
+
 @chex.dataclass
 class LGSSMParams:
     """Lightweight container for LGSSM parameters.
@@ -11,6 +12,7 @@ class LGSSMParams:
     However, they can also accept a ssm.lgssm.models.LinearGaussianSSM instance,
     if you prefer a more object-oriented approach.
     """
+
     initial_mean: chex.Array
     initial_covariance: chex.Array
     dynamics_matrix: chex.Array
@@ -21,6 +23,7 @@ class LGSSMParams:
     emission_input_weights: chex.Array
     emission_bias: chex.Array
     emission_covariance: chex.Array
+
 
 @chex.dataclass
 class LGSSMPosterior:
@@ -39,6 +42,7 @@ class LGSSMPosterior:
             smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
                 E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
     """
+
     marginal_loglik: chex.Scalar = None
     filtered_means: chex.Array = None
     filtered_covariances: chex.Array = None
@@ -48,7 +52,8 @@ class LGSSMPosterior:
 
 
 # Helper functions
-_get_params = lambda x, dim, t: x[t] if x.ndim == dim+1 else x
+_get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
+
 
 def _predict(m, S, F, B, b, Q, u):
     """Predict next mean and covariance under a linear Gaussian model
@@ -74,39 +79,40 @@ def _predict(m, S, F, B, b, Q, u):
     return mu_pred, Sigma_pred
 
 
-def _condition_on(m, S, H, D, d, R, u, y):
+def _condition_on(m, P, H, D, d, R, u, y):
     """Condition a Gaussian potential on a new linear Gaussian observation
-      p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
-        propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
-        = N(x_t | m, S) N(y_t | H_t x_t + D_t u_t + d_t, R_t)
-        = N(x_t | mm, SS)
-    where
-        mm = m + K*(y - yhat) = mu_cond
-        yhat = H*m + D*u + d
-        K = S * H' * (R + H * S * H')^{-1}
-        L = I - K*H
-        SS = L * S * L' + K * R * K' = Sigma_cond
-    **Note! This can be done more efficiently when R is diagonal.**
+       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
+         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
+         = N(x_t | m, P) N(y_t | H_t x_t + D_t u_t + d_t, R_t)
+         = N(x_t | mm, PP)
+     where
+         mm = m + K*(y - yhat) = mu_cond
+         yhat = H*m + D*u + d
+         S = (R + H * P * H')
+         K = P * H' * S^{-1}
+         PP = P - K S K' = Sigma_cond
+     **Note! This can be done more efficiently when R is diagonal.**
 
-   Args:
-        m (D_hid,): prior mean.
-        S (D_hid,D_hid): prior covariance.
-        H (D_obs,D_hid): emission matrix.
-        D (D_obs,D_in): emission input weights.
-        u (D_in,): inputs.
-        d (D_obs,): emission bias.
-        R (D_obs,D_obs): emission covariance matrix.
-        y (D_obs,): observation.
+    Args:
+         m (D_hid,): prior mean.
+         P (D_hid,D_hid): prior covariance.
+         H (D_obs,D_hid): emission matrix.
+         D (D_obs,D_in): emission input weights.
+         u (D_in,): inputs.
+         d (D_obs,): emission bias.
+         R (D_obs,D_obs): emission covariance matrix.
+         y (D_obs,): observation.
 
-    Returns:
-        mu_pred (D_hid,): predicted mean.
-        Sigma_pred (D_hid,D_hid): predicted covariance.
+     Returns:
+         mu_pred (D_hid,): predicted mean.
+         Sigma_pred (D_hid,D_hid): predicted covariance.
     """
     # Compute the Kalman gain
-    K = jnp.linalg.solve(R + H @ S @ H.T, H @ S).T
+    S = R + H @ P @ H.T
+    K = jnp.linalg.solve(S, H @ P).T
     dim = m.shape[-1]
     ImKH = jnp.eye(dim) - K @ H
-    Sigma_cond = ImKH @ S @ ImKH.T + K @ R @ K.T
+    Sigma_cond = P - K @ S @ K.T
     mu_cond = m + K @ (y - D @ u - d - H @ m)
     return mu_cond, Sigma_cond
 
@@ -122,7 +128,7 @@ def lgssm_filter(params, emissions, inputs=None):
 
     Returns:
         filtered_posterior: LGSSMPosterior instance containing,
-            marginal_log_lik 
+            marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
     """
@@ -145,26 +151,20 @@ def lgssm_filter(params, emissions, inputs=None):
         y = emissions[t]
 
         # Update the log likelihood
-        ll += MVN(H @ pred_mean + D @ u + d,
-                  H @ pred_cov @ H.T + R).log_prob(y)
+        ll += MVN(H @ pred_mean + D @ u + d, H @ pred_cov @ H.T + R).log_prob(y)
 
         # Condition on this emission
-        filtered_mean, filtered_cov = _condition_on(
-            pred_mean, pred_cov, H, D, d, R, u, y)
+        filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, H, D, d, R, u, y)
 
         # Predict the next state
-        pred_mean, pred_cov = _predict(
-            filtered_mean, filtered_cov, F, B, b, Q, u)
+        pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, F, B, b, Q, u)
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
     # Run the Kalman filter
-    carry = (0., params.initial_mean, params.initial_covariance)
-    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(
-        _step, carry, jnp.arange(num_timesteps))
-    return LGSSMPosterior(marginal_loglik=ll,
-                          filtered_means=filtered_means,
-                          filtered_covariances=filtered_covs)
+    carry = (0.0, params.initial_mean, params.initial_covariance)
+    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    return LGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def lgssm_posterior_sample(rng, params, emissions, inputs=None):
@@ -201,8 +201,7 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
         u = inputs[t]
 
         # Condition on next state
-        smoothed_mean, smoothed_cov = _condition_on(
-            filtered_mean, filtered_cov, F, B, b, Q, u, next_state)
+        smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F, B, b, Q, u, next_state)
         state = MVN(smoothed_mean, smoothed_cov).sample(seed=rng)
         return state, state
 
@@ -210,10 +209,12 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
     rng, this_rng = jr.split(rng, 2)
     last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_rng)
 
-    args = (jr.split(rng, num_timesteps-1),
-            filtered_means[:-1][::-1],
-            filtered_covs[:-1][::-1],
-            jnp.arange(num_timesteps-2, -1, -1))
+    args = (
+        jr.split(rng, num_timesteps - 1),
+        filtered_means[:-1][::-1],
+        filtered_covs[:-1][::-1],
+        jnp.arange(num_timesteps - 2, -1, -1),
+    )
     _, reversed_states = lax.scan(_step, last_state, args)
     states = jnp.row_stack([reversed_states[::-1], last_state])
     return ll, states
@@ -258,33 +259,28 @@ def lgssm_smoother(params, emissions, inputs=None):
         G = jnp.linalg.solve(Q + F @ filtered_cov @ F.T, F @ filtered_cov).T
 
         # Compute the smoothed mean and covariance
-        smoothed_mean = filtered_mean + \
-            G @ (smoothed_mean_next - F @ filtered_mean - B @ u - b)
-        smoothed_cov = filtered_cov + \
-            G @ (smoothed_cov_next - F @ filtered_cov @ F.T - Q) @ G.T
+        smoothed_mean = filtered_mean + G @ (smoothed_mean_next - F @ filtered_mean - B @ u - b)
+        smoothed_cov = filtered_cov + G @ (smoothed_cov_next - F @ filtered_cov @ F.T - Q) @ G.T
 
         # Compute the smoothed expectation of x_t x_{t+1}^T
-        smoothed_cross = G @ smoothed_cov_next + \
-            jnp.outer(smoothed_mean, smoothed_mean_next)
+        smoothed_cross = G @ smoothed_cov_next + jnp.outer(smoothed_mean, smoothed_mean_next)
 
-        return (smoothed_mean, smoothed_cov), \
-               (smoothed_mean, smoothed_cov, smoothed_cross)
+        return (smoothed_mean, smoothed_cov), (smoothed_mean, smoothed_cov, smoothed_cross)
 
     # Run the Kalman smoother
     init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (jnp.arange(num_timesteps-2, -1, -1),
-            filtered_means[:-1][::-1],
-            filtered_covs[:-1][::-1])
-    _, (smoothed_means, smoothed_covs, smoothed_cross) = \
-        lax.scan(_step, init_carry, args)
+    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_means[:-1][::-1], filtered_covs[:-1][::-1])
+    _, (smoothed_means, smoothed_covs, smoothed_cross) = lax.scan(_step, init_carry, args)
 
     # Reverse the arrays and return
-    smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None,...]))
-    smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None,...]))
+    smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
+    smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
     smoothed_cross = smoothed_cross[::-1]
-    return LGSSMPosterior(marginal_loglik=ll,
-                          filtered_means=filtered_means,
-                          filtered_covariances=filtered_covs,
-                          smoothed_means=smoothed_means,
-                          smoothed_covariances=smoothed_covs,
-                          smoothed_cross_covariances=smoothed_cross)
+    return LGSSMPosterior(
+        marginal_loglik=ll,
+        filtered_means=filtered_means,
+        filtered_covariances=filtered_covs,
+        smoothed_means=smoothed_means,
+        smoothed_covariances=smoothed_covs,
+        smoothed_cross_covariances=smoothed_cross,
+    )
