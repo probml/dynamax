@@ -7,8 +7,6 @@ from ssm_jax.ekf.inference import extended_kalman_filter, extended_kalman_smooth
 from ssm_jax.nlgssm.models import NonLinearGaussianSSM
 from ssm_jax.nlgssm.sarkka_lib import ekf, eks
 
-from filterpy.kalman import ExtendedKalmanFilter
-
 
 # Test closeness with slightly more lenient tolerance than the default
 _all_close = lambda x, y: jnp.allclose(x, y, rtol=1e-3)

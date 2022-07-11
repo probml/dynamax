@@ -29,7 +29,7 @@ jobs:
         pip install black[jupyter] pytest
 
     - name: Code formatting with black
-      run: black .
+      run: black --check .
 
     - name: Run tests
       run: pytest
