@@ -14,11 +14,9 @@ predict future earthquake danger, espeically on a geological time scale.
 Based on
 https://github.com/hmmlearn/hmmlearn/blob/main/examples/plot_poisson_hmm.py
 """
-
 import jax.numpy as jnp
 import jax.random as jr
 import matplotlib.pyplot as plt
-from scipy.stats import poisson
 from ssm_jax.hmm.learning import hmm_fit_em
 from ssm_jax.hmm.models.poisson_hmm import PoissonHMM
 
@@ -39,7 +37,7 @@ ax.set_xlabel('Year')
 ax.set_ylabel('Count')
 fig.show()
 
-emission_dim = earthquakes.size
+emission_dim = 1
 
 # %%
 # Now, fit a Poisson Hidden Markov Model to the data.
@@ -50,8 +48,15 @@ for num_states in range(1, 5):
     for idx in range(10):  # ten different random starting states
 
         key = jr.PRNGKey(idx)
-        model = PoissonHMM.random_initialization(key, num_states, emission_dim)
-        model, _ = hmm_fit_em(model, earthquakes[None, ..., None])
+
+        key1, key2, key3 = jr.split(key, 3)
+        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
+        emission_rates = jr.uniform(key3, (num_states, emission_dim), minval=10., maxval=35.)
+        emission_log_rates = jnp.log(emission_rates)
+
+        model = PoissonHMM(initial_probs, transition_matrix, emission_log_rates)
+        model, *_ = hmm_fit_em(model, earthquakes[None, ..., None], num_iters=20)
         models.append(model)
         scores.append(model.marginal_log_prob(earthquakes[:, None]))
         print(f'Score: {scores[-1]}')
@@ -64,6 +69,19 @@ print(f'The best model had a score of {max(scores)} and '
 # use the Viterbi algorithm to predict the most likely sequence of states
 # given the model
 states = model.most_likely_states(earthquakes[:, None])
+# %%
+# Let's plot the waiting times from our most likely series of states of
+# earthquake activity with the earthquake data. As we can see, the
+# model with the maximum likelihood had different states which may reflect
+# times of varying earthquake danger.
+
+# plot model states over time
+fig, ax = plt.subplots()
+ax.plot(model.emission_rates[states], ".-", ms=6, mfc="orange")
+ax.plot(earthquakes)
+ax.set_title('States compared to generated')
+ax.set_xlabel('State')
+plt.savefig("earthquake_states")
 
 # %%
 # Fortunately, 2006 ended with a period of relative tectonic stability, and,
