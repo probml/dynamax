@@ -18,6 +18,7 @@ from ssm_jax.hmm.learning import hmm_fit_sgd
 
 
 class BaseHMM(ABC):
+
     def __init__(self, initial_probabilities, transition_matrix):
         """Abstract base class for Hidden Markov Models.
         Child class specifies the emission distribution.
@@ -112,9 +113,8 @@ class BaseHMM(ABC):
 
     def most_likely_states(self, emissions):
         """Compute Viterbi path."""
-        return hmm_posterior_mode(
-            self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions)
-        )
+        return hmm_posterior_mode(self.initial_probabilities, self.transition_matrix,
+                                  self._conditional_logliks(emissions))
 
     def filter(self, emissions):
         """Compute filtering distribution."""
@@ -133,9 +133,8 @@ class BaseHMM(ABC):
         def _single_e_step(emissions):
             # TODO: do we need to use dynamic slice?
 
-            posterior = hmm_two_filter_smoother(
-                self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions)
-            )
+            posterior = hmm_two_filter_smoother(self.initial_probabilities, self.transition_matrix,
+                                                self._conditional_logliks(emissions))
 
             # Compute the transition probabilities
             trans_probs = compute_transition_probs(self.transition_matrix, posterior)
@@ -143,7 +142,7 @@ class BaseHMM(ABC):
 
         return vmap(_single_e_step)(batch_emissions)
 
-    # @classmethod
+    @classmethod
     def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(1e-2), num_iters=50):
         """_summary_
 
