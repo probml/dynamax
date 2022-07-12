@@ -47,7 +47,7 @@ def get_mlp_flattened_params(model_dims, key=0):
         flat_params: Flattened parameters initialized using dummy input.
         unflatten_fn: Function to unflatten parameters.
         apply_fn: fn(flat_params, x) that returns the result of applying the model.
-    """    
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -63,13 +63,14 @@ def get_mlp_flattened_params(model_dims, key=0):
     # Define apply function
     def apply(flat_params, x, model, unflatten_fn):
         return model.apply(unflatten_fn(flat_params), jnp.atleast_1d(x))
+
     apply_fn = partial(apply, model=model, unflatten_fn=unflatten_fn)
 
     return model, flat_params, unflatten_fn, apply_fn
 
 
 def sample_observations(f, x_min, x_max, x_var=0.1, y_var=3.0, num_obs=200, key=0):
-    """Generate random training set for MLP given true function and 
+    """Generate random training set for MLP given true function and
     distribution parameters.
 
     Args:
@@ -84,7 +85,7 @@ def sample_observations(f, x_min, x_max, x_var=0.1, y_var=3.0, num_obs=200, key=
     Returns:
         x (num_obs,): x-coordinates of generated data
         y (num_obs,): y-coordinates of generated data
-    """    
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
     keys = jr.split(key, 3)
@@ -92,7 +93,7 @@ def sample_observations(f, x_min, x_max, x_var=0.1, y_var=3.0, num_obs=200, key=
     # Generate noisy x coordinates
     x_noise = jr.normal(keys[0], (num_obs,)) * x_var
     x = jnp.linspace(x_min, x_max, num_obs) + x_noise
-    
+
     # Generate noisy y coordinates
     y_noise = jr.normal(keys[1], (num_obs,)) * y_var
     y = f(x) + y_noise
@@ -106,9 +107,9 @@ def sample_observations(f, x_min, x_max, x_var=0.1, y_var=3.0, num_obs=200, key=
 def plot_mlp_prediction(f, x_obs, y_obs, x_grid, w_mean, w_cov, ax, num_samples=100, legend=True, key=0):
     if isinstance(key, int):
         key = jr.PRNGKey(key)
-    
+
     # Plot observations (training set)
-    ax.plot(x_obs, y_obs, 'ok', fillstyle='none', ms=4, alpha=0.5, label="Training Set")
+    ax.plot(x_obs, y_obs, "ok", fillstyle="none", ms=4, alpha=0.5, label="Training Set")
 
     # Indicate uncertainty through sampling
     w_samples = jr.multivariate_normal(key, w_mean, w_cov, (num_samples,))
@@ -119,10 +120,10 @@ def plot_mlp_prediction(f, x_obs, y_obs, x_grid, w_mean, w_cov, ax, num_samples=
     # Plot prediction on grid using filtered mean of MLP params
     y_mean = vmap(f, in_axes=(None, 0))(w_mean, x_grid)
     ax.plot(x_grid, y_mean, linewidth=1.5, label="MLP Prediction")
-    
+
     ax.set_xlim(x_obs.min(), x_obs.max())
     if legend:
-        ax.legend(loc=2, borderpad=0.5, handlelength=4, fancybox=False, edgecolor='k')
+        ax.legend(loc=2, borderpad=0.5, handlelength=4, fancybox=False, edgecolor="k")
 
 
 def main():
@@ -143,12 +144,12 @@ def main():
     # and the emission function is the model apply function
     state_dim, emission_dim = flat_params.size, output_dim
     ekf_params = NLGSSMParams(
-        initial_mean = flat_params,
-        initial_covariance = jnp.eye(state_dim) * 100,
-        dynamics_function = lambda x, u: x,
-        dynamics_covariance = jnp.eye(state_dim) * 1e-4,
-        emission_function = apply_fn,
-        emission_covariance = jnp.eye(emission_dim) * y_var,
+        initial_mean=flat_params,
+        initial_covariance=jnp.eye(state_dim) * 100,
+        dynamics_function=lambda x, u: x,
+        dynamics_covariance=jnp.eye(state_dim) * 1e-4,
+        emission_function=apply_fn,
+        emission_covariance=jnp.eye(emission_dim) * y_var,
     )
 
     # Run EKF on training set to train MLP
@@ -167,9 +168,10 @@ def main():
     intermediate_steps = [10, 20, 30, 40, 50, 60]
     fig, ax = plt.subplots(3, 2, figsize=(8, 10))
     for step, axi in zip(intermediate_steps, ax.flatten()):
-        plot_mlp_prediction(apply_fn, inputs[:step], emissions[:step], inputs_grid,
-                            w_means[step], w_covs[step], axi, key=step)
-        axi.set_title(f'step={step}')
+        plot_mlp_prediction(
+            apply_fn, inputs[:step], emissions[:step], inputs_grid, w_means[step], w_covs[step], axi, key=step
+        )
+        axi.set_title(f"step={step}")
     plt.suptitle("Training MLP Using EKF")
     plt.tight_layout()
     all_figures["intermediate"] = fig
