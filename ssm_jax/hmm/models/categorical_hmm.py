@@ -13,6 +13,7 @@ from ssm_jax.hmm.models.base import BaseHMM
 
 @register_pytree_node_class
 class CategoricalHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_probs):
         """_summary_
 
@@ -68,7 +69,6 @@ class CategoricalHMM(BaseHMM):
         return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
 
     def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(0.01), num_iters=50):
-
         partial_get_emission_probs = partial(_get_batch_emission_probs, self)
         batch_emission_probs = vmap(partial_get_emission_probs)(batch_emissions, batch_posteriors.smoothed_probs)
 
