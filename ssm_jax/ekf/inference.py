@@ -106,7 +106,7 @@ def extended_kalman_filter(params, emissions, inputs=None):
 
         # Update the log likelihood
         H_x = H(pred_mean, u)
-        ll += MVN(h(pred_mean, u), H_x @ pred_cov @ H_x.T + R).log_prob(y)
+        ll += MVN(h(pred_mean, u), H_x @ pred_cov @ H_x.T + R).log_prob(jnp.atleast_1d(y))
 
         # Condition on this emission
         filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, h, H, R, u, y)
