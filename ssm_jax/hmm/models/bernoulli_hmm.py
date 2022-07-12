@@ -8,6 +8,7 @@ from ssm_jax.hmm.models.base import BaseHMM
 
 @register_pytree_node_class
 class BernoulliHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_probs):
         """_summary_
 
