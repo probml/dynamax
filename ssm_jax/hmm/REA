@@ -1,0 +1,4 @@
+# Hidden Markov Models
+
+We provide a model class definition for multiple kinds of emission models (e.g., categorical, Gaussian),
+plus code for exact posterior inference using forwards-backwards algorithm, and code for parameter estimation using EM and SGD.
