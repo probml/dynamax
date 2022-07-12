@@ -16,6 +16,7 @@ from ssm_jax.utils import sgd_helper
 
 
 class BaseHMM(ABC):
+
     def __init__(self, initial_probabilities, transition_matrix):
         """
         Abstract base class for Hidden Markov Models.
@@ -148,7 +149,6 @@ class BaseHMM(ABC):
 
         def _single_e_step(emissions, **covariates):
             # TODO: do we need to use dynamic slice?
-
             posterior = hmm_two_filter_smoother(
                 self.initial_probabilities,
                 self.transition_matrix,
@@ -169,6 +169,7 @@ class BaseHMM(ABC):
                optimizer=optax.adam(1e-2),
                num_iters=50,
                **batch_covariates):
+
         """_summary_
 
         Args:
