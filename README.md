@@ -9,7 +9,7 @@ MIT License. 2022
 
 To run a specific demo, do something like this
 ```
-python ssm_jax/hmm/demos/gaussian_hmm.py 
+python ssm_jax/hmm/demos/gaussian_hmm_2d.py 
 ```
 
 To run all the tests, do this

@@ -1,8 +1,9 @@
 import pytest
 
-from ssm_jax.hmm.demos import (casino_hmm, gaussian_hmm_2d, gaussian_hmm_2d_fit)
+from ssm_jax.hmm.demos import casino_hmm, gaussian_hmm_2d, gaussian_hmm_2d_fit
 
 # Run all the demos in test mode, which turns off plotting
+
 
 def test_casino():
     casino_hmm.main(test_mode=True)
