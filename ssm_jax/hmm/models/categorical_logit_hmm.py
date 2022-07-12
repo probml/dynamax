@@ -12,6 +12,7 @@ from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
 
 @register_pytree_node_class
 class CategoricalLogitHMM(CategoricalHMM):
+
     def __init__(self, initial_logits, transition_logits, emission_logits):
         num_states, num_emissions = emission_logits.shape
 
@@ -27,35 +28,6 @@ class CategoricalLogitHMM(CategoricalHMM):
         self._transition_distribution = tfd.Categorical(logits=transition_logits)
         self._emission_distribution = tfd.Categorical(logits=emission_logits)
 
-    # Properties to get various parameters of the model
-    @property
-    def emission_distribution(self):
-        return self._emission_distribution
-
-    @property
-    def initial_probabilities(self):
-        return self._initial_distribution.probs_parameter()
-
-    @property
-    def emission_probs(self):
-        return self._emission_distribution.probs_parameter()
-
-    @property
-    def transition_matrix(self):
-        return self._transition_distribution.probs_parameter()
-
-    @property
-    def initial_logits(self):
-        return self._initial_distribution.logits_parameter()
-
-    @property
-    def transition_logits(self):
-        return self._transition_distribution.logits_parameter()
-
-    @property
-    def emission_logits(self):
-        return self.emission_distribution.logits_parameter()
-
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
         key1, key2, key3 = jr.split(key, 3)
@@ -66,7 +38,8 @@ class CategoricalLogitHMM(CategoricalHMM):
 
     @property
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters."""
+        """Helper property to get a PyTree of unconstrained parameters.
+        """
         return (self.initial_logits, self.transition_logits, self.emission_logits)
 
     @classmethod
