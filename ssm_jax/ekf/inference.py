@@ -12,7 +12,7 @@ _process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
 _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
 
 
-def _predict(m, S, f, F, Q, u):
+def _predict(m, P, f, F, Q, u):
     """Predict next mean and covariance using first-order additive EKF
 
         p(x_{t+1}) = \int N(x_t | m, S) N(x_{t+1} | f(x_t, u), Q)
@@ -20,7 +20,7 @@ def _predict(m, S, f, F, Q, u):
 
     Args:
         m (D_hid,): prior mean.
-        S (D_hid,D_hid): prior covariance.
+        P (D_hid,D_hid): prior covariance.
         f (Callable): dynamics function.
         F (Callable): Jacobian of dynamics function.
         Q (D_hid,D_hid): dynamics covariance matrix.
@@ -32,7 +32,7 @@ def _predict(m, S, f, F, Q, u):
     """
     F_x = F(m, u)
     mu_pred = f(m, u)
-    Sigma_pred = F_x @ S @ F_x.T + Q
+    Sigma_pred = F_x @ P @ F_x.T + Q
     return mu_pred, Sigma_pred
 
 
@@ -45,14 +45,14 @@ def _condition_on(m, P, h, H, R, u, y):
      where
          mm = m + K*(y - yhat) = mu_cond
          yhat = h(m, u)
-         K = S * H(m, u)' * (R + H(m, u) * S * H(m, u)')^{-1}
-         L = I - K*H(m, u)
-         SS = L * S * L' + K * R * K' = Sigma_cond
+         S = R + H(m,u) * P * H(m,u)'  
+         K = P * H(m, u)' * S^{-1}
+         SS = P - K * S * K' = Sigma_cond
      **Note! This can be done more efficiently when R is diagonal.**
 
     Args:
          m (D_hid,): prior mean.
-         S (D_hid,D_hid): prior covariance.
+         P (D_hid,D_hid): prior covariance.
          h (Callable): emission function.
          H (Callable): Jacobian of emission function.
          R (D_obs,D_obs): emission covariance matrix.
@@ -67,7 +67,7 @@ def _condition_on(m, P, h, H, R, u, y):
     S = R + H_x @ P @ H_x.T
     K = jnp.linalg.solve(S, H_x @ P).T
     dim = m.shape[-1]
-    ImKH = jnp.eye(dim) - K @ H_x
+    #ImKH = jnp.eye(dim) - K @ H_x
     Sigma_cond = P - K @ S @ K.T
     mu_cond = m + K @ (y - h(m, u))
     return mu_cond, Sigma_cond

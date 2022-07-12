@@ -65,7 +65,7 @@ def _mvn_info_log_prob(eta, Lambda, x):
 
 
 def _info_predict(eta, Lambda, F, Q_prec, B, u, b):
-    """Predict next mean and precision under a linear Gaussian model
+    """Predict next mean and precision under a linear Gaussian model.
 
     Marginalising over the uncertainty in z_t the predicted latent state at
     the next time step is given by:
