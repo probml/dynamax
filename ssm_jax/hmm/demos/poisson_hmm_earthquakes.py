@@ -1,18 +1,10 @@
 """
 Using a Hidden Markov Model with Poisson Emissions to Understand Earthquakes
-----------------------------------------------------------------------------
-Let's look at data of magnitude 7+ earthquakes between 1900-2006 in the
-world collected by the US Geological Survey as described in this textbook:
-Zucchini & MacDonald, "Hidden Markov Models for Time Series"
-(https://ayorho.files.wordpress.com/2011/05/chapter1.pdf). The goal is to
-see if we can separate out different tectonic processes that cause
-earthquakes based on their frequency of occurance. The idea is that each
-tectonic boundary may cause earthquakes with a particular distribution
-of waiting times depending on how active it is. This might tell help us
-predict future earthquake danger, espeically on a geological time scale.
 
 Based on
 https://github.com/hmmlearn/hmmlearn/blob/main/examples/plot_poisson_hmm.py
+https://hmmlearn.readthedocs.io/en/latest/auto_examples/plot_poisson_hmm.html
+
 """
 import jax.numpy as jnp
 import jax.random as jr
