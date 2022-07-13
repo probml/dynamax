@@ -19,7 +19,8 @@ class MultinomialHMM(BaseHMM):
         super().__init__(initial_probabilities, transition_matrix)
 
         self._num_trials = num_trials
-        self._emission_distribution = tfd.Multinomial(num_trials, probs=emission_probs)
+        self._num_trials = num_trials
+        self._emission_probs = emission_probs
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -28,6 +29,9 @@ class MultinomialHMM(BaseHMM):
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
         emission_probs = jr.uniform(key3, (num_states, emission_dim))
         return cls(initial_probs, transition_matrix, emission_probs)
+
+    def emission_distribution(self, state):
+        return tfd.Multinomial(self._num_trials, probs=self._emission_probs[state])
 
     def unconstrained_params(self):
         """Helper property to get a PyTree of unconstrained parameters."""

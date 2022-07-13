@@ -27,7 +27,8 @@ class GaussianHMM(BaseHMM):
         """
         super().__init__(initial_probabilities, transition_matrix)
 
-        self._emission_distribution = tfd.MultivariateNormalFullCovariance(emission_means, emission_covariance_matrices)
+        self._emission_means = emission_means
+        self._emission_covs = emission_covariance_matrices
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -41,11 +42,15 @@ class GaussianHMM(BaseHMM):
     # Properties to get various parameters of the model
     @property
     def emission_means(self):
-        return self._emission_distribution.mean()
+        return self._emission_means
 
     @property
     def emission_covariance_matrices(self):
-        return self._emission_distribution.covariance()
+        return self._emission_covs
+
+    def emission_distribution(self, state):
+        return tfd.MultivariateNormalFullCovariance(
+            self._emission_means[state], self._emission_covs[state])
 
     @property
     def unconstrained_params(self):
@@ -71,7 +76,6 @@ class GaussianHMM(BaseHMM):
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
-
         @chex.dataclass
         class GaussianHMMSuffStats:
             # Wrapper for sufficient statistics of a GaussianHMM
@@ -98,7 +102,11 @@ class GaussianHMM(BaseHMM):
 
             # TODO: might need to normalize x_sum and xxT_sum for numerical stability
             stats = GaussianHMMSuffStats(
-                initial_probs=initial_probs, sum_trans_probs=sum_trans_probs, sum_w=sum_w, sum_x=sum_x, sum_xxT=sum_xxT
+                initial_probs=initial_probs,
+                sum_trans_probs=sum_trans_probs,
+                sum_w=sum_w,
+                sum_x=sum_x,
+                sum_xxT=sum_xxT
             )
             return stats, posterior.marginal_loglik
 
@@ -106,9 +114,9 @@ class GaussianHMM(BaseHMM):
         return vmap(_single_e_step)(batch_emissions)
 
     @classmethod
-    def m_step(cls, batch_stats):
+    def m_step(cls, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
-        stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
+        stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Initial distribution
         initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
