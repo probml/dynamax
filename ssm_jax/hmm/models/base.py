@@ -18,7 +18,6 @@ from ssm_jax.hmm.learning import hmm_fit_sgd
 
 
 class BaseHMM(ABC):
-
     def __init__(self, initial_probabilities, transition_matrix):
         """Abstract base class for Hidden Markov Models.
         Child class specifies the emission distribution.
@@ -106,8 +105,7 @@ class BaseHMM(ABC):
         return states, emissions
 
     def log_prob(self, states, emissions):
-        """Compute the log joint probability of the states and observations
-        """
+        """Compute the log joint probability of the states and observations"""
         lp = self.initial_distribution.log_prob(states[0])
         lp += self.transition_distribution[states[:-1]].log_prob(states[1:]).sum()
         lp += self.emission_distribution[states].log_prob(emissions).sum(0)
@@ -131,8 +129,9 @@ class BaseHMM(ABC):
 
     def most_likely_states(self, emissions):
         """Compute Viterbi path."""
-        return hmm_posterior_mode(self.initial_probabilities, self.transition_matrix,
-                                  self._conditional_logliks(emissions))
+        return hmm_posterior_mode(
+            self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions)
+        )
 
     def filter(self, emissions):
         """Compute filtering distribution."""
@@ -151,8 +150,9 @@ class BaseHMM(ABC):
         def _single_e_step(emissions):
             # TODO: do we need to use dynamic slice?
 
-            posterior = hmm_two_filter_smoother(self.initial_probabilities, self.transition_matrix,
-                                                self._conditional_logliks(emissions))
+            posterior = hmm_two_filter_smoother(
+                self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions)
+            )
 
             # Compute the transition probabilities
             trans_probs = compute_transition_probs(self.transition_matrix, posterior)
@@ -194,8 +194,7 @@ class BaseHMM(ABC):
     # Properties to allow unconstrained optimization and JAX jitting
     @abstractproperty
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
+        """Helper property to get a PyTree of unconstrained parameters."""
         raise NotImplementedError
 
     @abstractclassmethod
@@ -204,8 +203,7 @@ class BaseHMM(ABC):
 
     @property
     def hyperparams(self):
-        """Helper property to get a PyTree of model hyperparameters.
-        """
+        """Helper property to get a PyTree of model hyperparameters."""
         return tuple()
 
     # Use the to/from unconstrained properties to implement JAX tree_flatten/unflatten

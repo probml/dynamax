@@ -11,7 +11,6 @@ from ssm_jax.hmm.models.base import BaseHMM
 
 @register_pytree_node_class
 class BernoulliHMM(BaseHMM):
-
     def __init__(self, initial_probabilities, transition_matrix, emission_probs):
         """_summary_
         Args:
@@ -46,10 +45,12 @@ class BernoulliHMM(BaseHMM):
 
     @property
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
-        return (tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-                tfb.SoftmaxCentered().inverse(self.transition_matrix), tfb.Sigmoid().inverse(self.emission_probs))
+        """Helper property to get a PyTree of unconstrained parameters."""
+        return (
+            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
+            tfb.SoftmaxCentered().inverse(self.transition_matrix),
+            tfb.Sigmoid().inverse(self.emission_probs),
+        )
 
     @property
     def emission_distribution(self):
@@ -70,10 +71,10 @@ class BernoulliHMM(BaseHMM):
         Another  way to calculate emission probs:
 
         smoothed_probs = batch_posteriors.smoothed_probs
-        
+
         def get_expected_probs(x, y):
             return x.reshape((-1, 1)) * jnp.tile(y, reps=(self.num_states, 1))
-            
+
         emission_probs1 = vmap(lambda x, y: vmap(get_expected_probs)(x, y))(smoothed_probs, batch_emissions)
         emission_probs0 = vmap(lambda x, y: vmap(get_expected_probs)(x, y))(smoothed_probs, 1 - batch_emissions)
 
@@ -83,7 +84,7 @@ class BernoulliHMM(BaseHMM):
         emission_probs0 = jnp.sum(emission_probs0, axis=0)
         emission_probs0 = jnp.sum(emission_probs0, axis=0)
         emission_probs = emission_probs1 / (emission_probs1 + emission_probs0)
-        
+
         """
 
         def flatten(x):
@@ -94,7 +95,7 @@ class BernoulliHMM(BaseHMM):
         flat_data = flatten(batch_emissions)
 
         stats = vmap(self._sufficient_statistics)(flat_data)
-        stats = tree_map(lambda x: jnp.einsum('nk,n...->k...', flat_weights, x), stats)
+        stats = tree_map(lambda x: jnp.einsum("nk,n...->k...", flat_weights, x), stats)
 
         prior = tfd.Beta(1.1, 1.1)
         stats = tree_map(jnp.add, stats, (prior.concentration1, prior.concentration0))

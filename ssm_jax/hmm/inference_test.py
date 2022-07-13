@@ -44,8 +44,7 @@ def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
-    initial_probs, transition_matrix, log_lkhds = \
-        random_hmm_args(key, num_timesteps, num_states)
+    initial_probs, transition_matrix, log_lkhds = random_hmm_args(key, num_timesteps, num_states)
 
     # Run the HMM filter
     post = core.hmm_filter(initial_probs, transition_matrix, log_lkhds)
@@ -58,15 +57,16 @@ def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
 
     # Compare filtered_probs to manually computed entries
     for t in range(num_timesteps):
-        log_joint_t = big_log_joint(initial_probs, transition_matrix, log_lkhds[:(t + 1)])
+        log_joint_t = big_log_joint(initial_probs, transition_matrix, log_lkhds[: (t + 1)])
         log_joint_t -= logsumexp(log_joint_t)
         filtered_probs_t = jnp.exp(logsumexp(log_joint_t, axis=tuple(jnp.arange(t))))
         assert jnp.allclose(filtered_probs[t], filtered_probs_t, atol=1e-4)
 
     # Compare predicted_probs to manually computed entries
     for t in range(num_timesteps):
-        log_joint_t = big_log_joint(initial_probs, transition_matrix,
-                                    jnp.row_stack([log_lkhds[:t], jnp.zeros(num_states)]))
+        log_joint_t = big_log_joint(
+            initial_probs, transition_matrix, jnp.row_stack([log_lkhds[:t], jnp.zeros(num_states)])
+        )
 
         log_joint_t -= logsumexp(log_joint_t)
         predicted_probs_t = jnp.exp(logsumexp(log_joint_t, axis=tuple(jnp.arange(t))))

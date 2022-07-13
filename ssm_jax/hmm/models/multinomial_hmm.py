@@ -8,7 +8,6 @@ from ssm_jax.hmm.models.base import BaseHMM
 
 @register_pytree_node_class
 class MultinomialHMM(BaseHMM):
-
     def __init__(self, initial_probabilities, transition_matrix, emission_probs, num_trials=1):
         """_summary_
 
@@ -31,10 +30,12 @@ class MultinomialHMM(BaseHMM):
         return cls(initial_probs, transition_matrix, emission_probs)
 
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
-        return (tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-                tfb.SoftmaxCentered().inverse(self.transition_matrix), tfb.Sigmoid().inverse(self.emission_probs))
+        """Helper property to get a PyTree of unconstrained parameters."""
+        return (
+            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
+            tfb.SoftmaxCentered().inverse(self.transition_matrix),
+            tfb.Sigmoid().inverse(self.emission_probs),
+        )
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):

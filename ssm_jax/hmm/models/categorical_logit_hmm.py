@@ -12,7 +12,6 @@ from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
 
 @register_pytree_node_class
 class CategoricalLogitHMM(CategoricalHMM):
-
     def __init__(self, initial_logits, transition_logits, emission_logits):
         num_states, num_emissions = emission_logits.shape
 
@@ -38,8 +37,7 @@ class CategoricalLogitHMM(CategoricalHMM):
 
     @property
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
+        """Helper property to get a PyTree of unconstrained parameters."""
         return (self.initial_logits, self.transition_logits, self.emission_logits)
 
     @classmethod
