@@ -109,7 +109,7 @@ def plot_mlp_prediction(f, obs, x_grid, w_mean, w_cov, ax, num_samples=100, x_li
         key = jr.PRNGKey(key)
 
     # Plot observations (training set)
-    ax.plot(obs[0], obs[1], "ok", fillstyle="none", ms=4, alpha=0.5, label="Training Set")
+    ax.plot(obs[0], obs[1], "ok", fillstyle="none", ms=4, alpha=0.5, label="Data")
 
     # Indicate uncertainty through sampling
     w_samples = jr.multivariate_normal(key, w_mean, w_cov, (num_samples,))
@@ -119,11 +119,11 @@ def plot_mlp_prediction(f, obs, x_grid, w_mean, w_cov, ax, num_samples=100, x_li
 
     # Plot prediction on grid using filtered mean of MLP params
     y_mean = vmap(f, in_axes=(None, 0))(w_mean, x_grid)
-    ax.plot(x_grid, y_mean, linewidth=1.5, label="MLP Prediction")
+    ax.plot(x_grid, y_mean, linewidth=1.5, label="Prediction")
 
     ax.set_xlim(x_lim)
     ax.set_ylim(y_lim)
-    ax.legend(loc=4, borderpad=0.5, handlelength=4, fancybox=False, edgecolor="k")
+    #ax.legend(loc=4, borderpad=0.5, handlelength=4, fancybox=False, edgecolor="k")
 
 
 def main():
@@ -161,15 +161,13 @@ def main():
     inputs_grid = jnp.linspace(inputs.min(), inputs.max(), len(inputs))
     intermediate_steps = [10, 20, 30, 200]
     for step in intermediate_steps:
+        print('ntraining=', step)
         fig, ax = plt.subplots()
         plot_mlp_prediction(
             apply_fn, (inputs[:step], emissions[:step]), inputs_grid, w_means[step - 1], w_covs[step - 1], ax, key=step
         )
-        if step == 200:
-            ax.set_title(f"EKF-trained MLP Final Prediction (step={step})")
-        else:
-            ax.set_title(f"Training MLP Using EKF (step={step})")
-        all_figures[f"step {step}"] = fig
+        ax.set_title(f"Step={step}")
+        all_figures[f"ekf_mlp_step_{step}"] = fig
 
     return all_figures
 

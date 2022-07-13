@@ -26,10 +26,7 @@ jobs:
     - name: Install dependencies
       run: | 
         pip install -r requirements.txt
-        pip install black[jupyter] pytest
-
-    - name: Code formatting with black
-      run: black --check .
+        pip install pytest
 
     - name: Run tests
       run: pytest
