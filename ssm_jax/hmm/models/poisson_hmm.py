@@ -23,9 +23,7 @@ class PoissonHMM(BaseHMM):
             emission_rates (_type_): _description_
         """
         super().__init__(initial_probabilities, transition_matrix)
-        self._emission_distribution = tfd.Independent(
-            tfd.Poisson(log_rate=emission_log_rates), reinterpreted_batch_ndims=1
-        )
+        self._emission_log_rates = emission_log_rates
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -36,9 +34,10 @@ class PoissonHMM(BaseHMM):
         return cls(initial_probs, transition_matrix, emission_log_rates)
 
     # Properties to get various parameters of the model
-    @property
-    def num_obs(self):
-        return self.emission_log_rates.shape[-1]
+    def emission_distribution(self, state):
+        return tfd.Independent(
+            tfd.Poisson(log_rate=self._emission_log_rates[state]),
+            reinterpreted_batch_ndims=1)
 
     @property
     def emission_rates(self):
@@ -57,15 +56,6 @@ class PoissonHMM(BaseHMM):
             self.emission_log_rates,
         )
 
-    def _conditional_logliks(self, emissions):
-        # Input: emissions(T,) for scalar, or emissions(T,D) for vector
-        # Add extra dimension to emissions for broadcasting over states.
-        # Becomes emissions(T,:) or emissions(T,:,D) which broadcasts with emissions distribution
-        # of shape (K,) or (K,D).
-        log_likelihoods = vmap(self.emission_distribution.log_prob)(emissions)
-        log_likelihoods = log_likelihoods.reshape((-1, self.num_states))
-        return log_likelihoods
-
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
         return cls(*unconstrained_params, *hypers)
@@ -73,10 +63,15 @@ class PoissonHMM(BaseHMM):
     def _sufficient_statistics(self, datapoint):
         return (datapoint, jnp.ones_like(datapoint))
 
-    def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(0.01), num_iters=50):
+    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
+
+        # TODO: This naming needs to be fixed up by changing BaseHMM.e_step
+        batch_posteriors, batch_trans_probs = batch_posteriors
+
         def flatten(x):
             return x.reshape(-1, x.shape[-1])
 
+        # TODO: This should use smoothed_probs
         filtered_probs = batch_posteriors.filtered_probs
         flat_weights = flatten(filtered_probs)
         flat_data = flatten(batch_emissions)
@@ -97,4 +92,4 @@ class PoissonHMM(BaseHMM):
 
         hmm = PoissonHMM(initial_probs, transitions_probs, emission_log_rates)
 
-        return hmm, batch_posteriors.marginal_loglik
+        return hmm

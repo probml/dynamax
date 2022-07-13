@@ -1,6 +1,7 @@
+import pytest
+
 import jax.numpy as jnp
 import jax.random as jr
-import pytest
 from jax import nn
 from ssm_jax.hmm.models import CategoricalHMM
 from ssm_jax.hmm.models import CategoricalLogitHMM
@@ -30,8 +31,8 @@ def test_categorical_hmm_parameters(key=jr.PRNGKey(0), num_states=2, emission_di
     assert jnp.allclose(categorical_hmm.transition_matrix, transition_matrix)
     assert jnp.allclose(categorical_hmm.emission_probs, emission_probs)
 
-    assert jnp.allclose(categorical_hmm.emission_probs, nn.softmax(categorical_logit_hmm.emission_logits, axis=-1))
-    assert jnp.allclose(categorical_hmm.transition_matrix, nn.softmax(categorical_logit_hmm.transition_logits, axis=-1))
+    assert jnp.allclose(categorical_hmm.emission_probs, nn.softmax(categorical_logit_hmm._emission_logits, axis=-1))
+    assert jnp.allclose(categorical_hmm.transition_matrix, nn.softmax(categorical_logit_hmm._transition_logits, axis=-1))
 
 
 def test_categorical_hmm_sample(key=jr.PRNGKey(0), num_states=4, emission_dim=10, num_timesteps=100):
