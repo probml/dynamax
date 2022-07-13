@@ -2,17 +2,18 @@ from functools import partial
 
 import jax.numpy as jnp
 import jax.random as jr
-import optax
-import tensorflow_probability.substrates.jax.distributions as tfd
+from jax.scipy.special import logsumexp
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
+
+import optax
+import tensorflow_probability.substrates.jax.distributions as tfd
 from ssm_jax.hmm.inference import _get_batch_emission_probs
 from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
 
 
 @register_pytree_node_class
 class CategoricalLogitHMM(CategoricalHMM):
-
     def __init__(self, initial_logits, transition_logits, emission_logits):
         num_states, num_emissions = emission_logits.shape
 
@@ -24,22 +25,45 @@ class CategoricalLogitHMM(CategoricalHMM):
         self._num_emissions = num_emissions
 
         # Construct the  distribution objects
-        self._initial_distribution = tfd.Categorical(logits=initial_logits)
-        self._transition_distribution = tfd.Categorical(logits=transition_logits)
-        self._emission_distribution = tfd.Categorical(logits=emission_logits)
+        self._initial_logits = initial_logits
+        self._transition_logits = transition_logits
+        self._emission_logits = emission_logits
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
         key1, key2, key3 = jr.split(key, 3)
-        initial_probs = jr.normal(key1, (num_states,))
-        transition_matrix = jr.normal(key2, (num_states, num_states))
-        emission_probs = jr.normal(key3, (num_states, emission_dim))
-        return cls(initial_probs, transition_matrix, emission_probs)
+        initial_logits = jr.normal(key1, (num_states,))
+        transition_logits = jr.normal(key2, (num_states, num_states))
+        emission_logits = jr.normal(key3, (num_states, emission_dim))
+        return cls(initial_logits, transition_logits, emission_logits)
+
+    def initial_distribution(self):
+        return tfd.Categorical(logits=self._initial_logits)
+
+    @property
+    def initial_probabilities(self):
+        logits = self._initial_logits
+        return jnp.exp(logits - logsumexp(logits, keepdims=True))
+
+    def transition_distribution(self, state):
+        return tfd.Categorical(logits=self._transition_logits[state])
+
+    @property
+    def transition_matrix(self):
+        logits = self._transition_logits
+        return jnp.exp(logits - logsumexp(logits, axis=1, keepdims=True))
+
+    def emission_distribution(self, state):
+        return tfd.Categorical(logits=self._emission_logits[state])
+
+    @property
+    def emission_probs(self):
+        logits = self._emission_logits
+        return jnp.exp(logits - logsumexp(logits, axis=1, keepdims=True))
 
     @property
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
+        """Helper property to get a PyTree of unconstrained parameters."""
         return (self.initial_logits, self.transition_logits, self.emission_logits)
 
     @classmethod

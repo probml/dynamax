@@ -39,10 +39,10 @@ def normalized(X, axis=None):
 
 
 def new_hmm():
-    '''
+    """
     States : rainy, sunny
     Emissions : walk, shop, clean
-    '''
+    """
     initial_probabilities = jnp.array([0.6, 0.4])
     transition_matrix = jnp.array([[0.7, 0.3], [0.4, 0.6]])
     emission_probs = jnp.array([[0.1, 0.4, 0.5], [0.6, 0.3, 0.1]])
@@ -74,17 +74,20 @@ class TestCategoricalAgainstWikipedia:
         posteriors = vmap(hmm.filter)(X)
         filtered_probs = jnp.squeeze(posteriors.filtered_probs, axis=1)
         print(filtered_probs)
-        assert jnp.allclose(filtered_probs,
-                            jnp.array([
-                                [0.23170303, 0.76829697],
-                                [0.62406281, 0.37593719],
-                                [0.86397706, 0.13602294],
-                            ]),
-                            atol=1e-1)
+        assert jnp.allclose(
+            filtered_probs,
+            jnp.array(
+                [
+                    [0.23170303, 0.76829697],
+                    [0.62406281, 0.37593719],
+                    [0.86397706, 0.13602294],
+                ]
+            ),
+            atol=1e-1,
+        )
 
 
 class TestCategoricalHMM:
-
     def setup(self):
         self.num_components = 2
         self.num_features = 3
@@ -114,7 +117,7 @@ class TestCategoricalHMM:
     def test_em(self, key=jr.PRNGKey(0), num_states=4, num_samples=1000):
         sample_key, init_key = jr.split(key)
 
-        true_initial_probs = jnp.ones((num_states,)) / (num_states * 1.)
+        true_initial_probs = jnp.ones((num_states,)) / (num_states * 1.0)
         true_transition_matrix = 0.90 * jnp.eye(num_states) + 0.10 * jnp.ones((num_states, num_states)) / num_states
         true_emission_probs = 0.90 * jnp.eye(num_states) + 0.10 * jnp.ones((num_states, num_states)) / num_states
         true_hmm = CategoricalHMM(true_initial_probs, true_transition_matrix, true_emission_probs)

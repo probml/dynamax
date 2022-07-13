@@ -1,3 +1,4 @@
+black[jupyter]
 jax
 jaxlib
 optax

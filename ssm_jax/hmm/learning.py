@@ -12,19 +12,18 @@ from jax import vmap
 from tqdm.auto import trange
 
 
-def hmm_fit_em(hmm, batch_emissions, optimizer=optax.adam(1e-2), num_iters=50):
-
+def hmm_fit_em(hmm, batch_emissions, num_iters=50, **kwargs):
     @jit
     def em_step(hmm):
-        batch_posteriors, batch_trans_probs = hmm.e_step(batch_emissions)
-        hmm, marginal_logliks = hmm.m_step(batch_emissions, batch_posteriors, batch_trans_probs, optimizer)
-        return hmm, marginal_logliks, batch_posteriors
+        batch_posteriors, marginal_logliks = hmm.e_step(batch_emissions)
+        hmm = hmm.m_step(batch_emissions, batch_posteriors, **kwargs)
+        return hmm, marginal_logliks.sum(), batch_posteriors
 
     log_probs = []
     batch_posteriors = None
     for _ in trange(num_iters):
         hmm, marginal_logliks, batch_posteriors = em_step(hmm)
-        log_probs.append(marginal_logliks[-1])
+        log_probs.append(marginal_logliks)
 
     return hmm, log_probs, batch_posteriors
 
@@ -46,19 +45,19 @@ def _sample_minibatches(key, sequences, lens, batch_size, shuffle):
     _lens = lens[perm]
 
     for idx in range(0, n_seq, batch_size):
-        yield _sequences[idx:min(idx + batch_size, n_seq)], _lens[idx:min(idx + batch_size, n_seq)]
+        yield _sequences[idx : min(idx + batch_size, n_seq)], _lens[idx : min(idx + batch_size, n_seq)]
 
 
 def hmm_fit_sgd(
-        hmm,
-        batch_emissions,
-        lens=None,
-        optimizer=optax.adam(1e-3),
-        batch_size=1,
-        num_iters=50,
-        loss_fn=None,
-        shuffle=False,
-        key=jr.PRNGKey(0),
+    hmm,
+    batch_emissions,
+    lens=None,
+    optimizer=optax.adam(1e-3),
+    batch_size=1,
+    num_iters=50,
+    loss_fn=None,
+    shuffle=False,
+    key=jr.PRNGKey(0),
 ):
     """
     Note that batch_emissions is initially of shape (N,T)

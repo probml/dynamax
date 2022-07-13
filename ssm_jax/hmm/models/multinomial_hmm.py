@@ -8,7 +8,6 @@ from ssm_jax.hmm.models.base import BaseHMM
 
 @register_pytree_node_class
 class MultinomialHMM(BaseHMM):
-
     def __init__(self, initial_probabilities, transition_matrix, emission_probs, num_trials=1):
         """_summary_
 
@@ -20,7 +19,8 @@ class MultinomialHMM(BaseHMM):
         super().__init__(initial_probabilities, transition_matrix)
 
         self._num_trials = num_trials
-        self._emission_distribution = tfd.Multinomial(num_trials, probs=emission_probs)
+        self._num_trials = num_trials
+        self._emission_probs = emission_probs
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -30,11 +30,16 @@ class MultinomialHMM(BaseHMM):
         emission_probs = jr.uniform(key3, (num_states, emission_dim))
         return cls(initial_probs, transition_matrix, emission_probs)
 
+    def emission_distribution(self, state):
+        return tfd.Multinomial(self._num_trials, probs=self._emission_probs[state])
+
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
-        return (tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-                tfb.SoftmaxCentered().inverse(self.transition_matrix), tfb.Sigmoid().inverse(self.emission_probs))
+        """Helper property to get a PyTree of unconstrained parameters."""
+        return (
+            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
+            tfb.SoftmaxCentered().inverse(self.transition_matrix),
+            tfb.Sigmoid().inverse(self.emission_probs),
+        )
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):

@@ -45,7 +45,7 @@ def _condition_on(m, P, h, H, R, u, y):
      where
          mm = m + K*(y - yhat) = mu_cond
          yhat = h(m, u)
-         S = R + H(m,u) * P * H(m,u)'  
+         S = R + H(m,u) * P * H(m,u)'
          K = P * H(m, u)' * S^{-1}
          SS = P - K * S * K' = Sigma_cond
      **Note! This can be done more efficiently when R is diagonal.**
@@ -67,7 +67,7 @@ def _condition_on(m, P, h, H, R, u, y):
     S = R + H_x @ P @ H_x.T
     K = jnp.linalg.solve(S, H_x @ P).T
     dim = m.shape[-1]
-    #ImKH = jnp.eye(dim) - K @ H_x
+    # ImKH = jnp.eye(dim) - K @ H_x
     Sigma_cond = P - K @ S @ K.T
     mu_cond = m + K @ (y - h(m, u))
     return mu_cond, Sigma_cond

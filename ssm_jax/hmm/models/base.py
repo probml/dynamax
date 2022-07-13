@@ -1,6 +1,4 @@
-from abc import ABC
-from abc import abstractclassmethod
-from abc import abstractproperty
+from abc import ABC, abstractmethod
 from functools import partial
 
 import jax.numpy as jnp
@@ -14,13 +12,15 @@ from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import hmm_two_filter_smoother
+
 from ssm_jax.hmm.learning import hmm_fit_sgd
 
 
 class BaseHMM(ABC):
 
     def __init__(self, initial_probabilities, transition_matrix):
-        """Abstract base class for Hidden Markov Models.
+        """
+        Abstract base class for Hidden Markov Models.
         Child class specifies the emission distribution.
 
         Args:
@@ -34,53 +34,38 @@ class BaseHMM(ABC):
         assert transition_matrix.shape == (num_states, num_states)
 
         # Construct the  distribution objects
-        self._initial_distribution = tfd.Categorical(probs=initial_probabilities)
-        self._transition_distribution = tfd.Categorical(probs=transition_matrix)
+        self._initial_probabilities = initial_probabilities
+        self._transition_matrix = transition_matrix
 
     # Properties to get various attributes of the model from underyling distribution objects
     @property
     def num_states(self):
-        return self.initial_probabilities.shape[-1]
+        return self.initial_distribution().probs_parameter().shape[0]
 
     @property
     def num_obs(self):
-        return self._emission_distribution.event_shape[0]
+        return self.emission_distribution(0).event_shape[0]
 
-    @property
     def initial_distribution(self):
-        return self._initial_distribution
+        return tfd.Categorical(probs=self._initial_probabilities)
 
-    @property
-    def emission_distribution(self):
-        return self._emission_distribution
-
-    @property
-    def transition_distribution(self):
-        return self._transition_distribution
+    def transition_distribution(self, state):
+        return tfd.Categorical(probs=self._transition_matrix[state])
 
     @property
     def initial_probabilities(self):
-        return self.initial_distribution.probs_parameter()
-
-    @property
-    def emission_probs(self):
-        return self.emission_distribution.probs_parameter()
+        return self.initial_distribution().probs_parameter()
 
     @property
     def transition_matrix(self):
-        return self.transition_distribution.probs_parameter()
+        # Note: This will generalize to models with transition *functions*
+        return vmap(lambda state: \
+            self.transition_distribution(state).probs_parameter())(
+            jnp.arange(self.num_states))
 
-    @property
-    def initial_logits(self):
-        return self.initial_distribution.logits_parameter()
-
-    @property
-    def transition_logits(self):
-        return self.transition_distribution.logits_parameter()
-
-    @property
-    def emission_logits(self):
-        return self.emission_distribution.logits_parameter()
+    @abstractmethod
+    def emission_distribution(self, state):
+        raise NotImplementedError
 
     def sample(self, key, num_timesteps):
         """Sample a sequence of latent states and emissions.
@@ -92,13 +77,13 @@ class BaseHMM(ABC):
 
         def _step(state, key):
             key1, key2 = jr.split(key, 2)
-            emission = self.emission_distribution[state].sample(seed=key1)  # defined in child
-            next_state = self.transition_distribution[state].sample(seed=key2)
+            emission = self.emission_distribution(state).sample(seed=key1)
+            next_state = self.transition_distribution(state).sample(seed=key2)
             return next_state, (state, emission)
 
         # Sample the initial state
         key1, key = jr.split(key, 2)
-        initial_state = self.initial_distribution.sample(seed=key1)
+        initial_state = self.initial_distribution().sample(seed=key1)
 
         # Sample the remaining emissions and states
         keys = jr.split(key, num_timesteps)
@@ -106,41 +91,56 @@ class BaseHMM(ABC):
         return states, emissions
 
     def log_prob(self, states, emissions):
-        """Compute the log joint probability of the states and observations
-        """
-        lp = self.initial_distribution.log_prob(states[0])
-        lp += self.transition_distribution[states[:-1]].log_prob(states[1:]).sum()
-        lp += self.emission_distribution[states].log_prob(emissions).sum(0)
+        """Compute the log joint probability of the states and observations"""
+        lp = self.initial_distribution().log_prob(states[0])
+        lp += self.transition_distribution(states[:-1]).log_prob(states[1:]).sum()
+        f = lambda state, emission: \
+            self.emission_distribution(state).log_prob(emission)
+        lp += vmap(f)(states, emissions).sum()
         return lp
 
     def _conditional_logliks(self, emissions):
-        # Input: emissions(T,) for scalar, or emissions(T,D) for vector
-        # Add extra dimension to emissions for broadcasting over states.
-        # Becomes emissions(T,:) or emissions(T,:,D) which broadcasts with emissions distribution
-        # of shape (K,) or (K,D).
-        log_likelihoods = vmap(self.emission_distribution.log_prob)(emissions.reshape((-1, 1)))
-        log_likelihoods = log_likelihoods.reshape((-1, self.num_states))
-        return log_likelihoods
+        # Compute the log probability for each time step.
+        # NOTE: This assumes each covariate is a time series
+        #       of the same length as the emissions. We could consider having another
+        #       argument for `metadata` that is static.
+
+        # Perform a nested vmap over timeteps and states
+        f = lambda emission: \
+            vmap(lambda state: \
+                self.emission_distribution(state).log_prob(emission))(
+                    jnp.arange(self.num_states)
+                )
+        return vmap(f)(emissions)
 
     # Basic inference code
     def marginal_log_prob(self, emissions):
         """Compute log marginal likelihood of observations."""
-        post = hmm_filter(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+        post = hmm_filter(self.initial_probabilities,
+                          self.transition_matrix,
+                          self._conditional_logliks(emissions))
         ll = post.marginal_loglik
         return ll
 
     def most_likely_states(self, emissions):
         """Compute Viterbi path."""
-        return hmm_posterior_mode(self.initial_probabilities, self.transition_matrix,
-                                  self._conditional_logliks(emissions))
+        return hmm_posterior_mode(
+            self.initial_probabilities,
+            self.transition_matrix,
+            self._conditional_logliks(emissions)
+        )
 
     def filter(self, emissions):
         """Compute filtering distribution."""
-        return hmm_filter(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+        return hmm_filter(self.initial_probabilities,
+                          self.transition_matrix,
+                          self._conditional_logliks(emissions))
 
     def smoother(self, emissions):
         """Compute smoothing distribution."""
-        return hmm_smoother(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+        return hmm_smoother(self.initial_probabilities,
+                            self.transition_matrix,
+                            self._conditional_logliks(emissions))
 
     # Expectation-maximization (EM) code
     def e_step(self, batch_emissions):
@@ -150,18 +150,24 @@ class BaseHMM(ABC):
 
         def _single_e_step(emissions):
             # TODO: do we need to use dynamic slice?
-
-            posterior = hmm_two_filter_smoother(self.initial_probabilities, self.transition_matrix,
-                                                self._conditional_logliks(emissions))
+            posterior = hmm_two_filter_smoother(
+                self.initial_probabilities,
+                self.transition_matrix,
+                self._conditional_logliks(emissions)
+            )
 
             # Compute the transition probabilities
-            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
-            return posterior, trans_probs
+            trans_probs = compute_transition_probs(
+                self.transition_matrix, posterior)
+
+            return (posterior, trans_probs), posterior.marginal_loglik
 
         return vmap(_single_e_step)(batch_emissions)
 
     @classmethod
-    def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(1e-2), num_iters=50):
+    def m_step(self, batch_emissions, batch_posteriors,
+               optimizer=optax.adam(1e-2),
+               num_mstep_iters=50):
         """_summary_
 
         Args:
@@ -171,6 +177,9 @@ class BaseHMM(ABC):
         hypers = self.hyperparams
 
         def _single_expected_log_joint(hmm, emissions, posterior, trans_probs):
+            # TODO: This needs help! Ideally, posterior would include trans_probs as a field
+            posterior, trans_probs = posterior
+
             # TODO: do we need to use dynamic slice?
             log_likelihoods = vmap(hmm.emission_distribution.log_prob)(emissions)
             expected_states = posterior.smoothed_probs
@@ -183,29 +192,31 @@ class BaseHMM(ABC):
         def neg_expected_log_joint(params):
             hmm = self.from_unconstrained_params(params, hypers)
             f = vmap(partial(_single_expected_log_joint, hmm))
-            lps = f(batch_emissions, batch_posteriors, batch_trans_probs)
+            lps = f(batch_emissions, batch_posteriors)
             return -jnp.sum(lps / jnp.ones_like(batch_emissions).sum())
 
         # TODO: minimize the negative expected log joint with SGD
-        hmm, losses = hmm_fit_sgd(self, batch_emissions, optimizer, num_iters, neg_expected_log_joint)
-
-        return hmm, -losses
+        hmm, losses = hmm_fit_sgd(self, batch_emissions,
+                                  optimizer,
+                                  num_mstep_iters,
+                                  neg_expected_log_joint)
+        return hmm
 
     # Properties to allow unconstrained optimization and JAX jitting
-    @abstractproperty
+    @property
+    @abstractmethod
     def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
+        """Helper property to get a PyTree of unconstrained parameters."""
         raise NotImplementedError
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
         raise NotImplementedError
 
     @property
     def hyperparams(self):
-        """Helper property to get a PyTree of model hyperparameters.
-        """
+        """Helper property to get a PyTree of model hyperparameters."""
         return tuple()
 
     # Use the to/from unconstrained properties to implement JAX tree_flatten/unflatten

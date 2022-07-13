@@ -11,7 +11,6 @@ from ssm_jax.hmm.models.base import BaseHMM
 
 @register_pytree_node_class
 class BernoulliHMM(BaseHMM):
-
     def __init__(self, initial_probabilities, transition_matrix, emission_probs):
         """_summary_
         Args:
@@ -21,20 +20,7 @@ class BernoulliHMM(BaseHMM):
         """
         super().__init__(initial_probabilities, transition_matrix)
 
-        self._emission_distribution = tfd.Independent(tfd.Bernoulli(probs=emission_probs), reinterpreted_batch_ndims=1)
-
-    def _conditional_logliks(self, emissions):
-        # Input: emissions(T,) for scalar, or emissions(T,D) for vector
-        # Add extra dimension to emissions for broadcasting over states.
-        # Becomes emissions(T,:) or emissions(T,:,D) which broadcasts with emissions distribution
-        # of shape (K,) or (K,D).
-
-        def log_prob_fn(x):
-            log_prob = self._emission_distribution.log_prob(x.reshape((1, -1)))
-            return log_prob
-
-        log_likelihoods = vmap(log_prob_fn)(emissions)
-        return jnp.squeeze(log_likelihoods)
+        self._emission_probs = emission_probs
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -44,16 +30,18 @@ class BernoulliHMM(BaseHMM):
         emission_probs = jr.uniform(key3, (num_states, emission_dim))
         return cls(initial_probs, transition_matrix, emission_probs)
 
-    @property
-    def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters.
-        """
-        return (tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-                tfb.SoftmaxCentered().inverse(self.transition_matrix), tfb.Sigmoid().inverse(self.emission_probs))
+    def emission_distribution(self, state):
+        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs[state]),
+                               reinterpreted_batch_ndims=1)
 
     @property
-    def emission_distribution(self):
-        return self._emission_distribution.distribution
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters."""
+        return (
+            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
+            tfb.SoftmaxCentered().inverse(self.transition_matrix),
+            tfb.Sigmoid().inverse(self.emission_probs),
+        )
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
@@ -65,15 +53,15 @@ class BernoulliHMM(BaseHMM):
     def _sufficient_statistics(self, datapoint):
         return datapoint, 1 - datapoint
 
-    def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(0.01), num_iters=50):
+    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
         """
         Another  way to calculate emission probs:
 
         smoothed_probs = batch_posteriors.smoothed_probs
-        
+
         def get_expected_probs(x, y):
             return x.reshape((-1, 1)) * jnp.tile(y, reps=(self.num_states, 1))
-            
+
         emission_probs1 = vmap(lambda x, y: vmap(get_expected_probs)(x, y))(smoothed_probs, batch_emissions)
         emission_probs0 = vmap(lambda x, y: vmap(get_expected_probs)(x, y))(smoothed_probs, 1 - batch_emissions)
 
@@ -83,8 +71,10 @@ class BernoulliHMM(BaseHMM):
         emission_probs0 = jnp.sum(emission_probs0, axis=0)
         emission_probs0 = jnp.sum(emission_probs0, axis=0)
         emission_probs = emission_probs1 / (emission_probs1 + emission_probs0)
-        
+
         """
+        # TODO: This naming needs to be fixed up by changing BaseHMM.e_step
+        batch_posteriors, batch_trans_probs = batch_posteriors
 
         def flatten(x):
             return x.reshape(-1, x.shape[-1])
@@ -94,7 +84,7 @@ class BernoulliHMM(BaseHMM):
         flat_data = flatten(batch_emissions)
 
         stats = vmap(self._sufficient_statistics)(flat_data)
-        stats = tree_map(lambda x: jnp.einsum('nk,n...->k...', flat_weights, x), stats)
+        stats = tree_map(lambda x: jnp.einsum("nk,n...->k...", flat_weights, x), stats)
 
         prior = tfd.Beta(1.1, 1.1)
         stats = tree_map(jnp.add, stats, (prior.concentration1, prior.concentration0))
@@ -110,4 +100,4 @@ class BernoulliHMM(BaseHMM):
 
         hmm = BernoulliHMM(initial_probs, transitions_probs, emission_probs)
 
-        return hmm, batch_posteriors.marginal_loglik
+        return hmm
