@@ -160,3 +160,17 @@ def plot_nlgssm_pendulum(time_grid, x_tr, x_obs, x_est=None, est_type=""):
     ax.set_aspect(0.5)
     ax.legend(loc=1, borderpad=0.5, handlelength=4, fancybox=False, edgecolor="k")
     return fig
+
+
+def plot_inference(states, emissions, estimates=None, est_type="", ax=None, title="", aspect=0.8, show_states=True):
+    if ax is None:
+        fig, ax = plt.subplots()
+    if show_states:
+        ax.plot(*states.T, label="True States")
+    ax.plot(*emissions.T, "ok", fillstyle="none", ms=4, label="Observations")
+    if estimates is not None:
+        ax.plot(*estimates.T, color="r", linewidth=1.5, label=f"{est_type} Estimate")
+    ax.set_aspect(aspect)
+    ax.set_title(title)
+    ax.legend(loc=1, borderpad=0.5, handlelength=4, fancybox=False, edgecolor="k")
+    return ax
