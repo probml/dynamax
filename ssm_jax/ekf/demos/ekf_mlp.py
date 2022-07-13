@@ -104,12 +104,12 @@ def sample_observations(f, x_min, x_max, x_var=0.1, y_var=3.0, num_obs=200, key=
     return x, y
 
 
-def plot_mlp_prediction(f, x_obs, y_obs, x_grid, w_mean, w_cov, ax, num_samples=100, legend=True, key=0):
+def plot_mlp_prediction(f, obs, x_grid, w_mean, w_cov, ax, num_samples=100, x_lim=(-3, 3), y_lim=(-30, 30), key=0):
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
     # Plot observations (training set)
-    ax.plot(x_obs, y_obs, "ok", fillstyle="none", ms=4, alpha=0.5, label="Training Set")
+    ax.plot(obs[0], obs[1], "ok", fillstyle="none", ms=4, alpha=0.5, label="Training Set")
 
     # Indicate uncertainty through sampling
     w_samples = jr.multivariate_normal(key, w_mean, w_cov, (num_samples,))
@@ -121,16 +121,16 @@ def plot_mlp_prediction(f, x_obs, y_obs, x_grid, w_mean, w_cov, ax, num_samples=
     y_mean = vmap(f, in_axes=(None, 0))(w_mean, x_grid)
     ax.plot(x_grid, y_mean, linewidth=1.5, label="MLP Prediction")
 
-    ax.set_xlim(x_obs.min(), x_obs.max())
-    if legend:
-        ax.legend(loc=2, borderpad=0.5, handlelength=4, fancybox=False, edgecolor="k")
+    ax.set_xlim(x_lim)
+    ax.set_ylim(y_lim)
+    ax.legend(loc=4, borderpad=0.5, handlelength=4, fancybox=False, edgecolor="k")
 
 
 def main():
     # Define MLP architecture and generate MLP
     input_dim, hidden_dim, output_dim = 1, 6, 1
     model_dims = [input_dim, hidden_dim, output_dim]
-    model, flat_params, unflatten_fn, apply_fn = get_mlp_flattened_params(model_dims)
+    _, flat_params, _, apply_fn = get_mlp_flattened_params(model_dims)
 
     # Generate training set.
     # Note that we view the x-coordinates of training data as control inputs
@@ -156,25 +156,20 @@ def main():
     ekf_post = extended_kalman_filter(ekf_params, emissions, inputs)
     w_means, w_covs = ekf_post.filtered_means, ekf_post.filtered_covariances
 
-    # Plot final prediction
+    # Plot predictions
     all_figures = {}
     inputs_grid = jnp.linspace(inputs.min(), inputs.max(), len(inputs))
-    fig, ax = plt.subplots()
-    plot_mlp_prediction(apply_fn, inputs, emissions, inputs_grid, w_means[-1], w_covs[-1], ax)
-    ax.set_title("EKF-trained MLP Final Prediction")
-    all_figures["final"] = fig
-
-    # Plot intermediate predictions
-    intermediate_steps = [10, 20, 30, 40, 50, 60]
-    fig, ax = plt.subplots(3, 2, figsize=(8, 10))
-    for step, axi in zip(intermediate_steps, ax.flatten()):
+    intermediate_steps = [10, 20, 30, 200]
+    for step in intermediate_steps:
+        fig, ax = plt.subplots()
         plot_mlp_prediction(
-            apply_fn, inputs[:step], emissions[:step], inputs_grid, w_means[step], w_covs[step], axi, key=step
+            apply_fn, (inputs[:step], emissions[:step]), inputs_grid, w_means[step - 1], w_covs[step - 1], ax, key=step
         )
-        axi.set_title(f"step={step}")
-    plt.suptitle("Training MLP Using EKF")
-    plt.tight_layout()
-    all_figures["intermediate"] = fig
+        if step == 200:
+            ax.set_title(f"EKF-trained MLP Final Prediction (step={step})")
+        else:
+            ax.set_title(f"Training MLP Using EKF (step={step})")
+        all_figures[f"step {step}"] = fig
 
     return all_figures
 
