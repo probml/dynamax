@@ -34,6 +34,10 @@ class BernoulliHMM(BaseHMM):
         emission_probs = jr.uniform(key3, (num_states, emission_dim))
         return cls(initial_probs, transition_matrix, emission_probs)
 
+    @property
+    def emission_probs(self):
+        return self._emission_probs
+
     def emission_distribution(self, state):
         return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs[state]),
                                reinterpreted_batch_ndims=1)
@@ -49,7 +53,6 @@ class BernoulliHMM(BaseHMM):
             marginal_loglik: chex.Scalar
             initial_probs: chex.Array
             trans_probs: chex.Array
-            sum_w: chex.Array
             sum_x: chex.Array
             sum_1mx: chex.Array
 
