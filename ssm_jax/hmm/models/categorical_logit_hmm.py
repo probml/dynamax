@@ -124,21 +124,3 @@ class CategoricalLogitHMM(CategoricalHMM):
         transition_logits = jnp.log(stats.trans_probs + 1e-1)
         emission_logits = jnp.log(stats.sum_x + 1e-1)
         return cls(initial_logits, transition_logits, emission_logits)
-
-        # emission_logits = jnp.log(batch_post)
-        # partial_get_emission_probs = partial(_get_batch_emission_probs, self)
-        # batch_emission_probs = vmap(partial_get_emission_probs)(batch_emissions, batch_posteriors.smoothed_probs)
-
-        # emission_probs = batch_emission_probs.sum(axis=0)
-        # denom = emission_probs.sum(axis=-1, keepdims=True)
-        # emission_logits = jnp.log(emission_probs / jnp.where(denom == 0, 1, denom))
-
-        # transitions_probs = batch_trans_probs.sum(axis=0)
-        # denom = transitions_probs.sum(axis=-1, keepdims=True)
-        # transition_logits = jnp.log(transitions_probs / jnp.where(denom == 0, 1, denom))
-        # batch_initial_probs = batch_posteriors.smoothed_probs[:, 0, :]
-        # initial_logits = jnp.log(batch_initial_probs.sum(axis=0) / batch_initial_probs.sum())
-
-        # hmm = CategoricalLogitHMM(initial_logits, transition_logits, emission_logits)
-
-        # return hmm, batch_posteriors.marginal_loglik
