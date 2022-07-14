@@ -14,6 +14,7 @@ from ssm_jax.hmm.models.base import BaseHMM
 
 @register_pytree_node_class
 class PoissonHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_log_rates):
         """_summary_
 
@@ -35,17 +36,15 @@ class PoissonHMM(BaseHMM):
 
     # Properties to get various parameters of the model
     def emission_distribution(self, state):
-        return tfd.Independent(
-            tfd.Poisson(log_rate=self._emission_log_rates[state]),
-            reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Poisson(log_rate=self._emission_log_rates[state]), reinterpreted_batch_ndims=1)
 
     @property
     def emission_rates(self):
-        return jnp.exp(self.emission_log_rates)
+        return jnp.exp(self._emission_log_rates)
 
     @property
     def emission_log_rates(self):
-        return self.emission_distribution.distribution.log_rate
+        return self._emission_log_rates
 
     @property
     def unconstrained_params(self):
