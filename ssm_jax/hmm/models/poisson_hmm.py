@@ -66,7 +66,7 @@ class PoissonHMM(BaseHMM):
     def m_step(self, batch_emissions, batch_posteriors, **kwargs):
 
         # TODO: This naming needs to be fixed up by changing BaseHMM.e_step
-        batch_posteriors, batch_trans_probs = batch_posteriors
+        batch_posteriors = batch_posteriors
 
         def flatten(x):
             return x.reshape(-1, x.shape[-1])
@@ -83,7 +83,7 @@ class PoissonHMM(BaseHMM):
         emission_rates = tfd.Gamma(concentration, rate).mode()
         emission_log_rates = jnp.log(emission_rates)
 
-        transitions_probs = batch_trans_probs.sum(axis=0)
+        transitions_probs = batch_posteriors.trans_probs.sum(axis=0)
         denom = transitions_probs.sum(axis=-1, keepdims=True)
         transitions_probs = transitions_probs / jnp.where(denom == 0, 1, denom)
 

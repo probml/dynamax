@@ -7,11 +7,7 @@ import ssm_jax.hmm.learning as learn
 from ssm_jax.hmm.models import GaussianHMM
 
 
-def make_rnd_hmm():
-    # Set dimensions
-    num_states = 5
-    emission_dim = 2
-
+def make_rnd_hmm(num_states=5, emission_dim=2):
     # Specify parameters of the HMM
     initial_probs = jnp.ones(num_states) / num_states
     transition_matrix = 0.95 * jnp.eye(num_states) + 0.05 * jnp.roll(jnp.eye(num_states), 1, axis=1)
@@ -29,9 +25,8 @@ def make_rnd_hmm():
     return true_hmm
 
 
-def make_rnd_model_and_data():
-    true_hmm = make_rnd_hmm()
-    num_timesteps = 2000
+def make_rnd_model_and_data(num_states=5, emission_dim=2, num_timesteps=2000):
+    true_hmm = make_rnd_hmm(num_states, emission_dim)
     true_states, emissions = true_hmm.sample(jr.PRNGKey(0), num_timesteps)
     batch_emissions = emissions[None, ...]
     return true_hmm, true_states, batch_emissions
@@ -41,6 +36,16 @@ def test_loglik():
     true_hmm, true_states, batch_emissions = make_rnd_model_and_data()
     assert jnp.allclose(true_hmm.log_prob(true_states, batch_emissions[0]), 3149.1013, atol=1e-1)
     assert jnp.allclose(true_hmm.marginal_log_prob(batch_emissions[0]), 3149.1047, atol=1e-1)
+
+
+# def test_padded_marginal_log_prob(num_states=5, emission_dim=2):
+#     true_hmm, _, batch_emissions = make_rnd_model_and_data(num_states, emission_dim)
+#     emissions = batch_emissions[0]
+#     lp = true_hmm.marginal_log_prob(emissions)
+#     # pad the emissions with nans
+#     pad_emissions = jnp.row_stack([emissions, jnp.full((10, emission_dim), jnp.nan)])
+#     lp2 = true_hmm.marginal_log_prob(pad_emissions)
+#     assert jnp.allclose(lp, lp2)
 
 
 def test_hmm_fit_em(num_iters=2):

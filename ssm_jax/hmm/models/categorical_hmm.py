@@ -68,8 +68,7 @@ class CategoricalHMM(BaseHMM):
 
     @classmethod
     def m_step(cls, batch_emissions, batch_posteriors, **kwargs):
-        # TODO: This naming needs to be fixed up by changing BaseHMM.e_step
-        batch_posteriors, batch_trans_probs = batch_posteriors
+        batch_posteriors = batch_posteriors
 
         partial_get_emission_probs = partial(_get_batch_emission_probs, self)
         batch_emission_probs = vmap(partial_get_emission_probs)(batch_emissions, batch_posteriors.smoothed_probs)
@@ -78,7 +77,7 @@ class CategoricalHMM(BaseHMM):
         denom = emission_probs.sum(axis=-1, keepdims=True)
         emission_probs = emission_probs / jnp.where(denom == 0, 1, denom)
 
-        transitions_probs = batch_trans_probs.sum(axis=0)
+        transitions_probs = batch_posteriors.trans_probs.sum(axis=0)
         denom = transitions_probs.sum(axis=-1, keepdims=True)
         transition_probs = transitions_probs / jnp.where(denom == 0, 1, denom)
 

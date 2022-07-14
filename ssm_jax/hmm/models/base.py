@@ -3,16 +3,16 @@ from functools import partial
 
 import jax.numpy as jnp
 import jax.random as jr
+from jax import lax, vmap
+
 import optax
 import tensorflow_probability.substrates.jax.distributions as tfd
-from jax import lax
-from jax import vmap
+
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import hmm_two_filter_smoother
-
 from ssm_jax.hmm.learning import hmm_fit_sgd
 
 
@@ -157,10 +157,10 @@ class BaseHMM(ABC):
             )
 
             # Compute the transition probabilities
-            trans_probs = compute_transition_probs(
+            posterior.trans_probs = compute_transition_probs(
                 self.transition_matrix, posterior)
 
-            return (posterior, trans_probs), posterior.marginal_loglik
+            return posterior
 
         return vmap(_single_e_step)(batch_emissions)
 
@@ -181,7 +181,7 @@ class BaseHMM(ABC):
             posterior, trans_probs = posterior
 
             # TODO: do we need to use dynamic slice?
-            log_likelihoods = vmap(hmm.emission_distribution.log_prob)(emissions)
+            log_likelihoods = hmm._conditional_logliks(emissions)
             expected_states = posterior.smoothed_probs
 
             lp = jnp.sum(expected_states[0] * jnp.log(hmm.initial_probabilities))

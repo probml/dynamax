@@ -16,12 +16,17 @@ class HMMPosterior:
     filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
     predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
     smoothed_probs(t,k) = p(hidden(t)=k | obs(1:T))
+
+    transition probabilities may be 2d or 3d with either
+    trans_probs[i,j] = \sum_t p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
+    trans_probs[t,i,j] = p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
     """
 
     marginal_loglik: chex.Scalar = None
     filtered_probs: chex.Array = None
     predicted_probs: chex.Array = None
     smoothed_probs: chex.Array = None
+    trans_probs: chex.Array = None
 
 
 def _normalize(u, axis=0, eps=1e-15):
@@ -189,8 +194,6 @@ def hmm_two_filter_smoother(initial_distribution, transition_matrix, log_likelih
     Returns:
         HMMPosterior object
     """
-    num_timesteps, num_states = log_likelihoods.shape
-
     # Run the filters forward and backward
     post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
     ll = post.marginal_loglik
