@@ -55,9 +55,9 @@ class BernoulliHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(
-                self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions)
-            )
+            posterior = hmm_smoother(self.initial_probabilities,
+                                     self.transition_matrix,
+                                     self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
@@ -69,7 +69,7 @@ class BernoulliHMM(BaseHMM):
             sum_1mx = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
                                  jnp.where(jnp.isnan(emissions), 0, 1-emissions))
 
-            # TODO: might need to normalize x_sum and xxT_sum for numerical stability
+            # Pack into a dataclass
             stats = BernoulliHMMSuffStats(
                 marginal_loglik=posterior.marginal_loglik,
                 initial_probs=initial_probs,
@@ -86,17 +86,11 @@ class BernoulliHMM(BaseHMM):
     def m_step(cls, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
-
-        # Initial distribution
+        # Then maximize the expected log probability as a fn of model parameters
         initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
-
-        # Transition distribution
         transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
-
-        # Gaussian emission distribution
         emission_probs = tfd.Beta(1.1 + stats.sum_x, 1.1 + stats.sum_1mx).mode()
-
-        # Pack the results into a new GaussianHMM
+        # Pack the results into a new HMM
         return cls(initial_probs, transition_matrix, emission_probs)
 
     @property
