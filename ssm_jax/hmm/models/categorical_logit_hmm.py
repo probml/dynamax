@@ -2,13 +2,12 @@ from functools import partial
 
 import jax.numpy as jnp
 import jax.random as jr
-from jax.scipy.special import logsumexp
-from jax import vmap
-from jax.tree_util import register_pytree_node_class
-
-import optax
 import tensorflow_probability.substrates.jax.distributions as tfd
+from jax import vmap
+from jax.scipy.special import logsumexp
+from jax.tree_util import register_pytree_node_class
 from ssm_jax.hmm.inference import _get_batch_emission_probs
+from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
 
 
@@ -45,6 +44,10 @@ class CategoricalLogitHMM(CategoricalHMM):
         logits = self._initial_logits
         return jnp.exp(logits - logsumexp(logits, keepdims=True))
 
+    @property
+    def initial_logits(self):
+        return self._initial_logits
+        
     def transition_distribution(self, state):
         return tfd.Categorical(logits=self._transition_logits[state])
 
@@ -64,20 +67,24 @@ class CategoricalLogitHMM(CategoricalHMM):
     @property
     def unconstrained_params(self):
         """Helper property to get a PyTree of unconstrained parameters."""
-        return (self.initial_logits, self.transition_logits, self.emission_logits)
+        return (self._initial_logits, self._transition_logits, self._emission_logits)
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
         return cls(*unconstrained_params, *hypers)
 
-    def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(0.01), num_iters=50):
-
+    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
+            
         partial_get_emission_probs = partial(_get_batch_emission_probs, self)
         batch_emission_probs = vmap(partial_get_emission_probs)(batch_emissions, batch_posteriors.smoothed_probs)
 
         emission_probs = batch_emission_probs.sum(axis=0)
         denom = emission_probs.sum(axis=-1, keepdims=True)
         emission_logits = jnp.log(emission_probs / jnp.where(denom == 0, 1, denom))
+
+        # Compute the transition probabilities
+        batch_trans_probs = vmap(compute_transition_probs, in_axes=(None, 0))(
+                self.transition_matrix, batch_posteriors)
 
         transitions_probs = batch_trans_probs.sum(axis=0)
         denom = transitions_probs.sum(axis=-1, keepdims=True)
@@ -87,4 +94,4 @@ class CategoricalLogitHMM(CategoricalHMM):
 
         hmm = CategoricalLogitHMM(initial_logits, transition_logits, emission_logits)
 
-        return hmm, batch_posteriors.marginal_loglik
+        return hmm
