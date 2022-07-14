@@ -124,9 +124,9 @@ class TestCategoricalHMM:
         state_sequence, emissions = true_hmm.sample(sample_key, num_samples)
 
         hmm = CategoricalHMM.random_initialization(init_key, num_states, num_states)
-        res1, lps1, posteriors = hmm_fit_em(hmm, emissions[None, ...])
+        res1, lps1 = hmm_fit_em(hmm, emissions[None, ...])
         hmm.m_step = BaseHMM.m_step
-        res2, lps2, posteriors = hmm_fit_em(hmm, emissions[None, ...])
+        res2, lps2 = hmm_fit_em(hmm, emissions[None, ...])
 
         assert jnp.allclose(res1.emission_probs, res2.emission_probs)
         assert jnp.allclose(res1.initial_probabilities, res2.initial_probabilities)

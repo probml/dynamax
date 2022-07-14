@@ -42,7 +42,7 @@ def test_hmm_fit_em(num_iters=2):
     true_hmm, _, batch_emissions = make_rnd_model_and_data()
     test_hmm_em = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     # Quick test: 2 iterations
-    test_hmm_em, logprobs_em, posteriors = learn.hmm_fit_em(test_hmm_em, batch_emissions, num_iters=num_iters)
+    test_hmm_em, logprobs_em = learn.hmm_fit_em(test_hmm_em, batch_emissions, num_iters=num_iters)
     assert jnp.allclose(logprobs_em[-1], -3600.2395, atol=1e-1)
     mu = np.array(test_hmm_em.emission_means)
     assert jnp.alltrue(mu.shape == (10, 2))

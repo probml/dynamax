@@ -24,7 +24,7 @@ def hmm_fit_em(hmm, batch_emissions, num_iters=50, **kwargs):
         hmm, batch_posteriors = em_step(hmm)
         log_probs.append(batch_posteriors.marginal_loglik.sum())
 
-    return hmm, log_probs, batch_posteriors
+    return hmm, log_probs
 
 
 def _loss_fn(hmm, params, batch_emissions, lens):
