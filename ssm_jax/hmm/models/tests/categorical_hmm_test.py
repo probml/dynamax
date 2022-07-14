@@ -1,4 +1,5 @@
 """
+Based on
 https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/tests/test_categorical_hmm.py
 """
 import jax.numpy as jnp
