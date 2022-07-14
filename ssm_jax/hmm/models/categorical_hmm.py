@@ -68,8 +68,6 @@ class CategoricalHMM(BaseHMM):
 
     @classmethod
     def m_step(cls, batch_emissions, batch_posteriors, **kwargs):
-        batch_posteriors = batch_posteriors
-
         partial_get_emission_probs = partial(_get_batch_emission_probs, self)
         batch_emission_probs = vmap(partial_get_emission_probs)(batch_emissions, batch_posteriors.smoothed_probs)
 

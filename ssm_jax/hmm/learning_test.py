@@ -38,16 +38,6 @@ def test_loglik():
     assert jnp.allclose(true_hmm.marginal_log_prob(batch_emissions[0]), 3149.1047, atol=1e-1)
 
 
-# def test_padded_marginal_log_prob(num_states=5, emission_dim=2):
-#     true_hmm, _, batch_emissions = make_rnd_model_and_data(num_states, emission_dim)
-#     emissions = batch_emissions[0]
-#     lp = true_hmm.marginal_log_prob(emissions)
-#     # pad the emissions with nans
-#     pad_emissions = jnp.row_stack([emissions, jnp.full((10, emission_dim), jnp.nan)])
-#     lp2 = true_hmm.marginal_log_prob(pad_emissions)
-#     assert jnp.allclose(lp, lp2)
-
-
 def test_hmm_fit_em(num_iters=2):
     true_hmm, _, batch_emissions = make_rnd_model_and_data()
     test_hmm_em = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
