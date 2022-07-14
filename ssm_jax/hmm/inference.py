@@ -468,14 +468,3 @@ def compute_transition_probs(transition_matrix, hmm_posterior, reduce_sum=True):
         return _compute_sum_transition_probs(transition_matrix, hmm_posterior)
     else:
         return _compute_all_transition_probs(transition_matrix, hmm_posterior)
-
-
-def _get_batch_emission_probs(hmm, obs, gamma):
-    def scan_fn(BB, elems):
-        o, g = elems
-        BB = BB.at[:, o].set(BB[:, o] + g)
-        return BB, jnp.zeros((0,))
-
-    BB = jnp.zeros((hmm._num_states, hmm._num_emissions))
-    BB, _ = lax.scan(scan_fn, BB, (obs, gamma))
-    return BB

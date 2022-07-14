@@ -12,7 +12,6 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import compute_transition_probs
-from ssm_jax.hmm.inference import _get_batch_emission_probs
 from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
 from ssm_jax.utils import one_hot
 

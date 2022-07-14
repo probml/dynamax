@@ -1,15 +1,15 @@
-from functools import partial
-
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
+import chex
+
+from functools import partial
 from jax import vmap
 from jax import tree_map
 from jax.tree_util import register_pytree_node_class
-
-import chex
-from ssm_jax.hmm.inference import _get_batch_emission_probs, hmm_smoother, compute_transition_probs
+from ssm_jax.hmm.inference import hmm_smoother
+from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.models.base import BaseHMM
 from ssm_jax.utils import one_hot
 
