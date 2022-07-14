@@ -155,13 +155,8 @@ class BaseHMM(ABC):
                 self.transition_matrix,
                 self._conditional_logliks(emissions)
             )
-
-            # Compute the transition probabilities
-            trans_probs = compute_transition_probs(
-                self.transition_matrix, posterior)
-
-            return (posterior, trans_probs), posterior.marginal_loglik
-
+            return posterior, posterior.marginal_loglik
+  
         return vmap(_single_e_step)(batch_emissions)
 
     @classmethod
