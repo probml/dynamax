@@ -1,6 +1,5 @@
 import jax.numpy as jnp
 import jax.random as jr
-import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map

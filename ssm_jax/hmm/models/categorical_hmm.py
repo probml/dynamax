@@ -7,8 +7,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
 
-import chex
-from ssm_jax.hmm.inference import _get_batch_emission_probs, hmm_smoother, compute_transition_probs
+from ssm_jax.hmm.inference import _get_batch_emission_probs
 from ssm_jax.hmm.models.base import BaseHMM
 
 
