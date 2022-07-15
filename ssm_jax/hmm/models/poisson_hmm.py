@@ -38,7 +38,8 @@ class PoissonHMM(BaseHMM):
 
     # Properties to get various parameters of the model
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Poisson(rate=self._emission_rates[state]), reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Poisson(rate=self._emission_rates[state].reshape((1, -1))),
+                               reinterpreted_batch_ndims=1)
 
     @property
     def emission_rates(self):
@@ -52,6 +53,20 @@ class PoissonHMM(BaseHMM):
             tfb.SoftmaxCentered().inverse(self.transition_matrix),
             tfb.Softplus().inverse(self._emission_rates),
         )
+
+    def _conditional_logliks(self, emissions):
+        # Compute the log probability for each time step.
+        # NOTE: This assumes each covariate is a time series
+        #       of the same length as the emissions. We could consider having another
+        #       argument for `metadata` that is static.
+
+        # Perform a nested vmap over timeteps and states
+        f = lambda emission: \
+            vmap(lambda state: \
+                self.emission_distribution(state).log_prob(emission))(
+                    jnp.arange(self.num_states)
+                )
+        return jnp.squeeze(vmap(f)(emissions), axis=-1)
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
