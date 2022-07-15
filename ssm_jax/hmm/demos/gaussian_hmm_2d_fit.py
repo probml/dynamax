@@ -2,15 +2,17 @@
 """
 import jax.numpy as jnp
 import jax.random as jr
-import optax
-
-from ssm_jax.hmm.models import GaussianHMM
-import ssm_jax.hmm.learning as learning
-
 import matplotlib.pyplot as plt
-from ssm_jax.plotting import white_to_color_cmap, COLORS, CMAP
-
-from ssm_jax.hmm.demos.gaussian_hmm_2d import plot_gaussian_hmm, plot_gaussian_hmm_data, plot_hmm_posterior, make_hmm
+import optax
+import ssm_jax.hmm.learning as learning
+from ssm_jax.hmm.demos.gaussian_hmm_2d import make_hmm
+from ssm_jax.hmm.demos.gaussian_hmm_2d import plot_gaussian_hmm
+from ssm_jax.hmm.demos.gaussian_hmm_2d import plot_gaussian_hmm_data
+from ssm_jax.hmm.demos.gaussian_hmm_2d import plot_hmm_posterior
+from ssm_jax.hmm.models import GaussianHMM
+from ssm_jax.plotting import CMAP
+from ssm_jax.plotting import COLORS
+from ssm_jax.plotting import white_to_color_cmap
 
 
 def main(num_timesteps=2000, plot_timesteps=200, num_em_iters=50, num_sgd_iters=2000, test_mode=False):
@@ -49,7 +51,10 @@ def main(num_timesteps=2000, plot_timesteps=200, num_em_iters=50, num_sgd_iters=
     print("Fit with SGD")
     test_hmm_sgd = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     optimizer = optax.adam(learning_rate=1e-2)
-    test_hmm_sgd, losses = learning.hmm_fit_sgd(test_hmm_sgd, batch_emissions, optimizer, num_iters=num_sgd_iters)
+    test_hmm_sgd, losses = learning.hmm_fit_sgd(test_hmm_sgd,
+                                                batch_emissions,
+                                                optimizer=optimizer,
+                                                num_iters=num_sgd_iters)
 
     # Get the posterior
     print("true LL: ", true_hmm.marginal_log_prob(emissions))

@@ -11,11 +11,13 @@ from jax.tree_util import tree_map
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
+from ssm_jax.hmm.models.utils import get_training_parametrization
 from ssm_jax.utils import PSDToRealBijector
 
 
 @register_pytree_node_class
 class GaussianHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_means, emission_covariance_matrices):
         """_summary_
 
@@ -49,8 +51,7 @@ class GaussianHMM(BaseHMM):
         return self._emission_covs
 
     def emission_distribution(self, state):
-        return tfd.MultivariateNormalFullCovariance(
-            self._emission_means[state], self._emission_covs[state])
+        return tfd.MultivariateNormalFullCovariance(self._emission_means[state], self._emission_covs[state])
 
     @property
     def unconstrained_params(self):
@@ -76,6 +77,7 @@ class GaussianHMM(BaseHMM):
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
+
         @chex.dataclass
         class GaussianHMMSuffStats:
             # Wrapper for sufficient statistics of a GaussianHMM
@@ -88,9 +90,8 @@ class GaussianHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(
-                self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions)
-            )
+            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
+                                     self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
@@ -102,14 +103,12 @@ class GaussianHMM(BaseHMM):
             sum_xxT = jnp.einsum("tk, ti, tj->kij", posterior.smoothed_probs, emissions, emissions)
 
             # TODO: might need to normalize x_sum and xxT_sum for numerical stability
-            stats = GaussianHMMSuffStats(
-                marginal_loglik=posterior.marginal_loglik,
-                initial_probs=initial_probs,
-                trans_probs=trans_probs,
-                sum_w=sum_w,
-                sum_x=sum_x,
-                sum_xxT=sum_xxT
-            )
+            stats = GaussianHMMSuffStats(marginal_loglik=posterior.marginal_loglik,
+                                         initial_probs=initial_probs,
+                                         trans_probs=trans_probs,
+                                         sum_w=sum_w,
+                                         sum_x=sum_x,
+                                         sum_xxT=sum_xxT)
             return stats
 
         # Map the E step calculations over batches
@@ -129,11 +128,16 @@ class GaussianHMM(BaseHMM):
         # Gaussian emission distribution
         emission_dim = stats.sum_x.shape[-1]
         emission_means = stats.sum_x / stats.sum_w[:, None]
-        emission_covs = (
-            stats.sum_xxT / stats.sum_w[:, None, None]
-            - jnp.einsum("ki,kj->kij", emission_means, emission_means)
-            + 1e-4 * jnp.eye(emission_dim)
-        )
+        emission_covs = (stats.sum_xxT / stats.sum_w[:, None, None] -
+                         jnp.einsum("ki,kj->kij", emission_means, emission_means) + 1e-4 * jnp.eye(emission_dim))
 
         # Pack the results into a new GaussianHMM
         return cls(initial_probs, transition_matrix, emission_means, emission_covs)
+
+    def training_parametrization(self, params_names="ite"):
+        initial_dist_params = self._initial_probabilities
+        transition_dist_params = self._transition_matrix
+        emission_dist_params = (self._emission_means, self._emission_covs)
+        return get_training_parametrization(initial_dist_params, transition_dist_params, emission_dist_params,
+                                            self.hyperparams, self.unconstrained_params, self.from_unconstrained_params,
+                                            params_names)

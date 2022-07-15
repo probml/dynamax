@@ -4,6 +4,7 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax.tree_util import register_pytree_node_class
 from ssm_jax.hmm.models.base import BaseHMM
+from ssm_jax.hmm.models.utils import get_training_parametrization
 
 
 @register_pytree_node_class
@@ -51,3 +52,11 @@ class MultinomialHMM(BaseHMM):
     @property
     def num_trials(self):
         return self._num_trials
+
+    def training_parametrization(self, params_names="ite"):
+        initial_dist_params = self._initial_probabilities
+        transition_dist_params = self._transition_matrix
+        emission_dist_params = (self._emission_probs,)
+        return get_training_parametrization(initial_dist_params, transition_dist_params, emission_dist_params,
+                                            self.hyperparams, self.unconstrained_params, self.from_unconstrained_params,
+                                            params_names)

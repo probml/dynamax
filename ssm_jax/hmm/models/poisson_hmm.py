@@ -1,21 +1,22 @@
+from functools import partial
+
+import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-import chex
-
-from functools import partial
-from jax import nn
 from jax import tree_map
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
-
+from ssm_jax.hmm.inference import compute_transition_probs
+from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
-from ssm_jax.hmm.inference import hmm_smoother, compute_transition_probs
+from ssm_jax.hmm.models.utils import get_training_parametrization
 
 
 @register_pytree_node_class
 class PoissonHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_rates):
         """_summary_
 
@@ -37,9 +38,7 @@ class PoissonHMM(BaseHMM):
 
     # Properties to get various parameters of the model
     def emission_distribution(self, state):
-        return tfd.Independent(
-            tfd.Poisson(rate=self._emission_rates[state]),
-            reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Poisson(rate=self._emission_rates[state]), reinterpreted_batch_ndims=1)
 
     @property
     def emission_rates(self):
@@ -66,6 +65,7 @@ class PoissonHMM(BaseHMM):
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
+
         @chex.dataclass
         class PoissonHMMSuffStats:
             # Wrapper for sufficient statistics of a BernoulliHMM
@@ -77,8 +77,7 @@ class PoissonHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probabilities,
-                                     self.transition_matrix,
+            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
                                      self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
@@ -112,3 +111,11 @@ class PoissonHMM(BaseHMM):
         emission_rates = tfd.Gamma(1.1 + stats.sum_x, 1.1 + stats.sum_w).mode()
         # Pack the results into a new HMM
         return cls(initial_probs, transition_matrix, emission_rates)
+
+    def training_parametrization(self, params_names="ite"):
+        initial_dist_params = self._initial_probabilities
+        transition_dist_params = self._transition_matrix
+        emission_dist_params = (self._emission_rates,)
+        return get_training_parametrization(initial_dist_params, transition_dist_params, emission_dist_params,
+                                            self.hyperparams, self.unconstrained_params, self.from_unconstrained_params,
+                                            params_names)

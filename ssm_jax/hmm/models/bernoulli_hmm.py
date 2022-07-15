@@ -1,3 +1,6 @@
+from functools import partial
+
+import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
@@ -5,16 +8,15 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
-
-import chex
-from functools import partial
-
+from ssm_jax.hmm.inference import compute_transition_probs
+from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
-from ssm_jax.hmm.inference import hmm_smoother, compute_transition_probs
+from ssm_jax.hmm.models.utils import get_training_parametrization
 
 
 @register_pytree_node_class
 class BernoulliHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_probs):
         """_summary_
         Args:
@@ -39,14 +41,14 @@ class BernoulliHMM(BaseHMM):
         return self._emission_probs
 
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs[state]),
-                               reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs[state]), reinterpreted_batch_ndims=1)
 
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
+
         @chex.dataclass
         class BernoulliHMMSuffStats:
             # Wrapper for sufficient statistics of a BernoulliHMM
@@ -58,8 +60,7 @@ class BernoulliHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probabilities,
-                                     self.transition_matrix,
+            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
                                      self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
@@ -67,19 +68,16 @@ class BernoulliHMM(BaseHMM):
             trans_probs = compute_transition_probs(self.transition_matrix, posterior)
 
             # Compute the expected sufficient statistics
-            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
-                               jnp.where(jnp.isnan(emissions), 0, emissions))
+            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs, jnp.where(jnp.isnan(emissions), 0, emissions))
             sum_1mx = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
-                                 jnp.where(jnp.isnan(emissions), 0, 1-emissions))
+                                 jnp.where(jnp.isnan(emissions), 0, 1 - emissions))
 
             # Pack into a dataclass
-            stats = BernoulliHMMSuffStats(
-                marginal_loglik=posterior.marginal_loglik,
-                initial_probs=initial_probs,
-                trans_probs=trans_probs,
-                sum_x=sum_x,
-                sum_1mx=sum_1mx
-            )
+            stats = BernoulliHMMSuffStats(marginal_loglik=posterior.marginal_loglik,
+                                          initial_probs=initial_probs,
+                                          trans_probs=trans_probs,
+                                          sum_x=sum_x,
+                                          sum_1mx=sum_1mx)
             return stats
 
         # Map the E step calculations over batches
@@ -111,3 +109,11 @@ class BernoulliHMM(BaseHMM):
         transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
         emission_probs = tfb.Sigmoid().forward(unconstrained_params[2])
         return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
+
+    def training_parametrization(self, params_names="ite"):
+        initial_dist_params = self._initial_probabilities
+        transition_dist_params = self._transition_matrix
+        emission_dist_params = (self._emission_probs,)
+        return get_training_parametrization(initial_dist_params, transition_dist_params, emission_dist_params,
+                                            self.hyperparams, self.unconstrained_params, self.from_unconstrained_params,
+                                            params_names)

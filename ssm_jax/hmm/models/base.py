@@ -1,19 +1,21 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from functools import partial
 
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax, vmap
-
 import optax
 import tensorflow_probability.substrates.jax.distributions as tfd
-
+from jax import lax
+from jax import vmap
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import hmm_two_filter_smoother
 from ssm_jax.hmm.learning import hmm_fit_sgd
+from ssm_jax.hmm.models.utils import ParameterTransformation
+from ssm_jax.hmm.models.utils import _check_training_params
 
 
 class BaseHMM(ABC):
@@ -116,31 +118,22 @@ class BaseHMM(ABC):
     # Basic inference code
     def marginal_log_prob(self, emissions):
         """Compute log marginal likelihood of observations."""
-        post = hmm_filter(self.initial_probabilities,
-                          self.transition_matrix,
-                          self._conditional_logliks(emissions))
+        post = hmm_filter(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
         ll = post.marginal_loglik
         return ll
 
     def most_likely_states(self, emissions):
         """Compute Viterbi path."""
-        return hmm_posterior_mode(
-            self.initial_probabilities,
-            self.transition_matrix,
-            self._conditional_logliks(emissions)
-        )
+        return hmm_posterior_mode(self.initial_probabilities, self.transition_matrix,
+                                  self._conditional_logliks(emissions))
 
     def filter(self, emissions):
         """Compute filtering distribution."""
-        return hmm_filter(self.initial_probabilities,
-                          self.transition_matrix,
-                          self._conditional_logliks(emissions))
+        return hmm_filter(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
 
     def smoother(self, emissions):
         """Compute smoothing distribution."""
-        return hmm_smoother(self.initial_probabilities,
-                            self.transition_matrix,
-                            self._conditional_logliks(emissions))
+        return hmm_smoother(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
 
     # Expectation-maximization (EM) code
     def e_step(self, batch_emissions):
@@ -150,24 +143,18 @@ class BaseHMM(ABC):
 
         def _single_e_step(emissions):
             # TODO: do we need to use dynamic slice?
-            posterior = hmm_two_filter_smoother(
-                self.initial_probabilities,
-                self.transition_matrix,
-                self._conditional_logliks(emissions)
-            )
+            posterior = hmm_two_filter_smoother(self.initial_probabilities, self.transition_matrix,
+                                                self._conditional_logliks(emissions))
 
             # Compute the transition probabilities
-            posterior.trans_probs = compute_transition_probs(
-                self.transition_matrix, posterior)
+            posterior.trans_probs = compute_transition_probs(self.transition_matrix, posterior)
 
             return posterior
 
         return vmap(_single_e_step)(batch_emissions)
 
     @classmethod
-    def m_step(self, batch_emissions, batch_posteriors,
-               optimizer=optax.adam(1e-2),
-               num_mstep_iters=50):
+    def m_step(self, batch_emissions, batch_posteriors, optimizer=optax.adam(1e-2), num_mstep_iters=50):
         """_summary_
 
         Args:
@@ -196,10 +183,7 @@ class BaseHMM(ABC):
             return -jnp.sum(lps / jnp.ones_like(batch_emissions).sum())
 
         # TODO: minimize the negative expected log joint with SGD
-        hmm, losses = hmm_fit_sgd(self, batch_emissions,
-                                  optimizer,
-                                  num_mstep_iters,
-                                  neg_expected_log_joint)
+        hmm, losses = hmm_fit_sgd(self, batch_emissions, optimizer, num_mstep_iters, neg_expected_log_joint)
         return hmm
 
     # Properties to allow unconstrained optimization and JAX jitting
@@ -228,3 +212,6 @@ class BaseHMM(ABC):
     @classmethod
     def tree_unflatten(cls, aux_data, children):
         return cls.from_unconstrained_params(children, aux_data)
+
+    def training_parametrization(self, params_names="ite"):
+        raise NotImplementedError

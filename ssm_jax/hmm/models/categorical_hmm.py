@@ -1,21 +1,23 @@
+from functools import partial
+
+import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-import chex
-
-from functools import partial
-from jax import vmap
 from jax import tree_map
+from jax import vmap
 from jax.tree_util import register_pytree_node_class
-from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import compute_transition_probs
+from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
+from ssm_jax.hmm.models.utils import get_training_parametrization
 from ssm_jax.utils import one_hot
 
 
 @register_pytree_node_class
 class CategoricalHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_probs):
         """_summary_
 
@@ -35,7 +37,6 @@ class CategoricalHMM(BaseHMM):
         self._num_states = num_states
         self._num_emissions = num_emissions
         self._emission_probs = emission_probs
-
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -73,6 +74,7 @@ class CategoricalHMM(BaseHMM):
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
+
         @chex.dataclass
         class CategoricalHMMSuffStats:
             # Wrapper for sufficient statistics of a BernoulliHMM
@@ -83,8 +85,7 @@ class CategoricalHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probabilities,
-                                     self.transition_matrix,
+            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
                                      self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
@@ -92,9 +93,8 @@ class CategoricalHMM(BaseHMM):
             trans_probs = compute_transition_probs(self.transition_matrix, posterior)
 
             # Compute the expected sufficient statistics
-            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
-                               one_hot(emissions, self.num_states))
-            
+            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs, one_hot(emissions, self.num_states))
+
             # Pack into a dataclass
             stats = CategoricalHMMSuffStats(
                 marginal_loglik=posterior.marginal_loglik,
@@ -117,3 +117,11 @@ class CategoricalHMM(BaseHMM):
         emission_probs = tfd.Dirichlet(1.1 + stats.sum_x).mode()
         # Pack the results into a new HMM
         return cls(initial_probs, transition_matrix, emission_probs)
+
+    def training_parametrization(self, params_names="ite"):
+        initial_dist_params = self._initial_probabilities
+        transition_dist_params = self._transition_matrix
+        emission_dist_params = (self._emission_probs,)
+        return get_training_parametrization(initial_dist_params, transition_dist_params, emission_dist_params,
+                                            self.hyperparams, self.unconstrained_params, self.from_unconstrained_params,
+                                            params_names)

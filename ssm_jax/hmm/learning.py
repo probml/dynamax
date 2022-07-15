@@ -13,6 +13,7 @@ from tqdm.auto import trange
 
 
 def hmm_fit_em(hmm, batch_emissions, num_iters=50, **kwargs):
+
     @jit
     def em_step(hmm):
         batch_posteriors = hmm.e_step(batch_emissions)
@@ -27,11 +28,9 @@ def hmm_fit_em(hmm, batch_emissions, num_iters=50, **kwargs):
     return hmm, log_probs
 
 
-def _loss_fn(hmm, params, batch_emissions, lens):
+def _loss_fn(hmm, unflatten_fn, params, batch_emissions, lens):
     """Default objective function."""
-    cls = hmm.__class__
-    hypers = hmm.hyperparams
-    hmm = cls.from_unconstrained_params(params, hypers)
+    hmm = unflatten_fn(params)
     f = lambda emissions, t: -hmm.marginal_log_prob(emissions) / t
     return vmap(f)(batch_emissions, lens).mean()
 
@@ -44,20 +43,19 @@ def _sample_minibatches(key, sequences, lens, batch_size, shuffle):
     _lens = lens[perm]
 
     for idx in range(0, n_seq, batch_size):
-        yield _sequences[idx : min(idx + batch_size, n_seq)], _lens[idx : min(idx + batch_size, n_seq)]
+        yield _sequences[idx:min(idx + batch_size, n_seq)], _lens[idx:min(idx + batch_size, n_seq)]
 
 
-def hmm_fit_sgd(
-    hmm,
-    batch_emissions,
-    lens=None,
-    optimizer=optax.adam(1e-3),
-    batch_size=1,
-    num_iters=50,
-    loss_fn=None,
-    shuffle=False,
-    key=jr.PRNGKey(0),
-):
+def hmm_fit_sgd(hmm,
+                batch_emissions,
+                lens=None,
+                optimizer=optax.adam(1e-3),
+                batch_size=1,
+                num_iters=50,
+                loss_fn=None,
+                shuffle=False,
+                key=jr.PRNGKey(0),
+                params_names="ite"):
     """
     Note that batch_emissions is initially of shape (N,T)
     where N is the number of independent sequences and
@@ -79,14 +77,12 @@ def hmm_fit_sgd(
         hmm: HMM with optimized parameters.
         losses: Output of loss_fn stored at each step.
     """
-    cls = hmm.__class__
-    hypers = hmm.hyperparams
-
-    params = hmm.unconstrained_params
+    parameter_transformation = hmm.training_parametrization(params_names)
+    params = parameter_transformation.init()
     opt_state = optimizer.init(params)
 
     if lens is None:
-        num_sequences, num_timesteps = batch_emissions.shape
+        num_sequences, num_timesteps = batch_emissions.shape[:2]
         lens = jnp.ones((num_sequences,)) * num_timesteps
 
     if batch_size == len(batch_emissions):
@@ -96,7 +92,7 @@ def hmm_fit_sgd(
     num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
 
     if loss_fn is None:
-        loss_fn = partial(_loss_fn, hmm)
+        loss_fn = partial(_loss_fn, hmm, parameter_transformation.update)
 
     loss_grad_fn = value_and_grad(loss_fn)
 
@@ -119,6 +115,6 @@ def hmm_fit_sgd(
     (params, _), losses = lax.scan(train_step, (params, opt_state), keys)
 
     losses = losses.flatten()
-    hmm = cls.from_unconstrained_params(params, hypers)
+    hmm = parameter_transformation.update(params)
 
     return hmm, losses
