@@ -8,3 +8,4 @@ tensorflow_probability
 matplotlib
 seaborn
 tqdm
+flax

@@ -57,16 +57,15 @@ def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
 
     # Compare filtered_probs to manually computed entries
     for t in range(num_timesteps):
-        log_joint_t = big_log_joint(initial_probs, transition_matrix, log_lkhds[: (t + 1)])
+        log_joint_t = big_log_joint(initial_probs, transition_matrix, log_lkhds[:(t + 1)])
         log_joint_t -= logsumexp(log_joint_t)
         filtered_probs_t = jnp.exp(logsumexp(log_joint_t, axis=tuple(jnp.arange(t))))
         assert jnp.allclose(filtered_probs[t], filtered_probs_t, atol=1e-4)
 
     # Compare predicted_probs to manually computed entries
     for t in range(num_timesteps):
-        log_joint_t = big_log_joint(
-            initial_probs, transition_matrix, jnp.row_stack([log_lkhds[:t], jnp.zeros(num_states)])
-        )
+        log_joint_t = big_log_joint(initial_probs, transition_matrix,
+                                    jnp.row_stack([log_lkhds[:t], jnp.zeros(num_states)]))
 
         log_joint_t -= logsumexp(log_joint_t)
         predicted_probs_t = jnp.exp(logsumexp(log_joint_t, axis=tuple(jnp.arange(t))))
@@ -154,10 +153,10 @@ def test_hmm_fixed_lag_smoother(key=0, num_timesteps=5, num_states=2):
     posterior_fl = core.hmm_fixed_lag_smoother(*args, window_size=num_timesteps)
 
     # Compare posterior values of fixed-lag smoother to those of smoother
-    assert jnp.allclose(posterior.marginal_loglik, posterior_fl.marginal_loglik[-1], atol=1e-4)
+    assert jnp.allclose(posterior.marginal_loglik, posterior_fl.marginal_loglik[-1], atol=1e-3)
     assert jnp.allclose(posterior.filtered_probs, posterior_fl.filtered_probs[-1], atol=1e-4)
     assert jnp.allclose(posterior.predicted_probs, posterior_fl.predicted_probs[-1], atol=1e-4)
-    assert jnp.allclose(posterior.smoothed_probs, posterior_fl.smoothed_probs[-1], atol=1e-4)
+    assert jnp.allclose(posterior.smoothed_probs, posterior_fl.smoothed_probs[-1], atol=1e-3)
 
 
 def test_compute_transition_probs(key=0, num_timesteps=5, num_states=2):
@@ -199,7 +198,7 @@ def test_compute_transition_probs_reduce(key=0, num_timesteps=5, num_states=2):
     for t in range(num_timesteps - 1):
         sum_trans_probs_t += jnp.sum(joint, axis=tuple(jnp.arange(t)) + tuple(jnp.arange(t + 2, num_timesteps)))
 
-    assert jnp.allclose(sum_trans_probs, sum_trans_probs_t, atol=1e-4)
+    assert jnp.allclose(sum_trans_probs, sum_trans_probs_t, atol=1e-3)
 
 
 def test_hmm_posterior_mode(key=0, num_timesteps=5, num_states=2):

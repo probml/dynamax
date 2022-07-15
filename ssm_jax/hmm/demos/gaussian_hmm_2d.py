@@ -1,14 +1,12 @@
 """Demo of a simple Gaussian HMM with 2D emissions.
 """
-import numpy as np
 import jax.numpy as jnp
 import jax.random as jr
-import optax
-
-from ssm_jax.hmm.models import GaussianHMM
-
 import matplotlib.pyplot as plt
-from ssm_jax.plotting import white_to_color_cmap, COLORS, CMAP
+from ssm_jax.hmm.models import GaussianHMM
+from ssm_jax.plotting import CMAP
+from ssm_jax.plotting import COLORS
+from ssm_jax.plotting import white_to_color_cmap
 
 
 def plot_gaussian_hmm(hmm, emissions, states, ttl="Emission Distributions"):
@@ -70,9 +68,13 @@ def plot_hmm_posterior(true_states, posterior, plot_timesteps=None):
     if plot_timesteps is None:
         plot_timesteps = len(true_states)
     fig, axs = plt.subplots(2, 1, sharex=True)
-    axs[0].imshow(
-        true_states[None, :], aspect="auto", interpolation="none", cmap=CMAP, vmin=0, vmax=len(COLORS) - 1, alpha=1
-    )
+    axs[0].imshow(true_states[None, :],
+                  aspect="auto",
+                  interpolation="none",
+                  cmap=CMAP,
+                  vmin=0,
+                  vmax=len(COLORS) - 1,
+                  alpha=1)
     axs[0].set_yticks([])
     axs[0].set_title("true states")
 
@@ -90,13 +92,11 @@ def make_hmm(num_states=5, emission_dim=2):
     # Specify parameters of the HMM
     initial_probs = jnp.ones(num_states) / num_states
     transition_matrix = 0.95 * jnp.eye(num_states) + 0.05 * jnp.roll(jnp.eye(num_states), 1, axis=1)
-    emission_means = jnp.column_stack(
-        [
-            jnp.cos(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
-            jnp.sin(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
-            jnp.zeros((num_states, emission_dim - 2)),
-        ]
-    )
+    emission_means = jnp.column_stack([
+        jnp.cos(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
+        jnp.sin(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
+        jnp.zeros((num_states, emission_dim - 2)),
+    ])
     emission_covs = jnp.tile(0.1**2 * jnp.eye(emission_dim), (num_states, 1, 1))
 
     true_hmm = GaussianHMM(initial_probs, transition_matrix, emission_means, emission_covs)
