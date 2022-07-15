@@ -100,12 +100,8 @@ class BaseHMM(ABC):
         return lp
 
     def _conditional_logliks(self, emissions):
-        # Compute the log probability for each time step.
-        # NOTE: This assumes each covariate is a time series
-        #       of the same length as the emissions. We could consider having another
-        #       argument for `metadata` that is static.
-
-        # Perform a nested vmap over timeteps and states
+        # Compute the log probability for each time step by
+        # performing a nested vmap over emission time steps and states.
         f = lambda emission: \
             vmap(lambda state: \
                 self.emission_distribution(state).log_prob(emission))(

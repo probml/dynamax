@@ -5,6 +5,7 @@ import jax.random as jr
 from jax.scipy.special import logsumexp
 from jax import vmap
 from jax import tree_map
+from jax.nn import one_hot
 from jax.tree_util import register_pytree_node_class
 
 import chex
@@ -13,7 +14,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
-from ssm_jax.utils import one_hot
+
 
 
 @register_pytree_node_class

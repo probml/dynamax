@@ -37,13 +37,3 @@ def pad_sequences(observations, valid_lens, pad_val=0):
 
     dataset = vmap(pad, in_axes=(0, 0))(observations, valid_lens), valid_lens
     return dataset
-
-def one_hot(z, K):
-    z = jnp.atleast_1d(z).astype(int)
-    # assert jnp.all(z >= 0) and jnp.all(z < K)
-    shp = z.shape
-    N = z.size
-    zoh = jnp.zeros((N, K))
-    zoh = zoh.at[jnp.arange(N), jnp.arange(K)[jnp.ravel(z)]].set(1)
-    zoh = jnp.reshape(zoh, shp + (K,))
-    return zoh

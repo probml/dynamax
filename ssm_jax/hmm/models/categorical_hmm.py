@@ -7,11 +7,11 @@ import chex
 from functools import partial
 from jax import vmap
 from jax import tree_map
+from jax.nn import one_hot
 from jax.tree_util import register_pytree_node_class
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.models.base import BaseHMM
-from ssm_jax.utils import one_hot
 
 
 @register_pytree_node_class
