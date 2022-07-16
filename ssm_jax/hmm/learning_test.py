@@ -7,11 +7,7 @@ import ssm_jax.hmm.learning as learn
 from ssm_jax.hmm.models import GaussianHMM
 
 
-def make_rnd_hmm():
-    # Set dimensions
-    num_states = 5
-    emission_dim = 2
-
+def make_rnd_hmm(num_states=5, emission_dim=2):
     # Specify parameters of the HMM
     initial_probs = jnp.ones(num_states) / num_states
     transition_matrix = 0.95 * jnp.eye(num_states) + 0.05 * jnp.roll(jnp.eye(num_states), 1, axis=1)
@@ -27,9 +23,8 @@ def make_rnd_hmm():
     return true_hmm
 
 
-def make_rnd_model_and_data():
-    true_hmm = make_rnd_hmm()
-    num_timesteps = 2000
+def make_rnd_model_and_data(num_states=5, emission_dim=2, num_timesteps=2000):
+    true_hmm = make_rnd_hmm(num_states, emission_dim)
     true_states, emissions = true_hmm.sample(jr.PRNGKey(0), num_timesteps)
     batch_emissions = emissions[None, ...]
     return true_hmm, true_states, batch_emissions
@@ -45,8 +40,8 @@ def test_hmm_fit_em(num_iters=2):
     true_hmm, _, batch_emissions = make_rnd_model_and_data()
     test_hmm_em = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     # Quick test: 2 iterations
-    test_hmm_em, logprobs_em, posteriors = learn.hmm_fit_em(test_hmm_em, batch_emissions, num_iters=num_iters)
-    assert jnp.allclose(logprobs_em[-1], -3600.2395, atol=1)
+    test_hmm_em, logprobs_em = learn.hmm_fit_em(test_hmm_em, batch_emissions, num_iters=num_iters)
+    assert jnp.allclose(logprobs_em[-1], -3600.2395, atol=1e-1)
     mu = np.array(test_hmm_em.emission_means)
     assert jnp.alltrue(mu.shape == (10, 2))
     assert jnp.allclose(mu[0, 0], -0.712, atol=1e-1)

@@ -79,8 +79,9 @@ class GaussianHMM(BaseHMM):
         @chex.dataclass
         class GaussianHMMSuffStats:
             # Wrapper for sufficient statistics of a GaussianHMM
+            marginal_loglik: chex.Scalar
             initial_probs: chex.Array
-            sum_trans_probs: chex.Array
+            trans_probs: chex.Array
             sum_w: chex.Array
             sum_x: chex.Array
             sum_xxT: chex.Array
@@ -93,7 +94,7 @@ class GaussianHMM(BaseHMM):
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
-            sum_trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
 
             # Compute the expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
@@ -102,13 +103,14 @@ class GaussianHMM(BaseHMM):
 
             # TODO: might need to normalize x_sum and xxT_sum for numerical stability
             stats = GaussianHMMSuffStats(
+                marginal_loglik=posterior.marginal_loglik,
                 initial_probs=initial_probs,
-                sum_trans_probs=sum_trans_probs,
+                trans_probs=trans_probs,
                 sum_w=sum_w,
                 sum_x=sum_x,
                 sum_xxT=sum_xxT
             )
-            return stats, posterior.marginal_loglik
+            return stats
 
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
@@ -122,7 +124,7 @@ class GaussianHMM(BaseHMM):
         initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
 
         # Transition distribution
-        transition_matrix = tfd.Dirichlet(1.0001 + stats.sum_trans_probs).mode()
+        transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
 
         # Gaussian emission distribution
         emission_dim = stats.sum_x.shape[-1]

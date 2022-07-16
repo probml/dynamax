@@ -1,14 +1,16 @@
-from functools import partial
-
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-from jax import vmap
-from jax.tree_util import register_pytree_node_class
-
 import chex
-from ssm_jax.hmm.inference import _get_batch_emission_probs, hmm_smoother, compute_transition_probs
+
+from functools import partial
+from jax import vmap
+from jax import tree_map
+from jax.nn import one_hot
+from jax.tree_util import register_pytree_node_class
+from ssm_jax.hmm.inference import hmm_smoother
+from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.models.base import BaseHMM
 
 
@@ -66,24 +68,52 @@ class CategoricalHMM(BaseHMM):
         emission_probs = tfb.SoftmaxCentered().forward(unconstrained_params[2])
         return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
 
+    def e_step(self, batch_emissions):
+        """The E-step computes expected sufficient statistics under the
+        posterior. In the Gaussian case, this these are the first two
+        moments of the data
+        """
+        @chex.dataclass
+        class CategoricalHMMSuffStats:
+            # Wrapper for sufficient statistics of a BernoulliHMM
+            marginal_loglik: chex.Scalar
+            initial_probs: chex.Array
+            trans_probs: chex.Array
+            sum_x: chex.Array
+
+        def _single_e_step(emissions):
+            # Run the smoother
+            posterior = hmm_smoother(self.initial_probabilities,
+                                     self.transition_matrix,
+                                     self._conditional_logliks(emissions))
+
+            # Compute the initial state and transition probabilities
+            initial_probs = posterior.smoothed_probs[0]
+            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+
+            # Compute the expected sufficient statistics
+            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
+                               one_hot(emissions, self.num_states))
+            
+            # Pack into a dataclass
+            stats = CategoricalHMMSuffStats(
+                marginal_loglik=posterior.marginal_loglik,
+                initial_probs=initial_probs,
+                trans_probs=trans_probs,
+                sum_x=sum_x,
+            )
+            return stats
+
+        # Map the E step calculations over batches
+        return vmap(_single_e_step)(batch_emissions)
+
     @classmethod
     def m_step(cls, batch_emissions, batch_posteriors, **kwargs):
-        # TODO: This naming needs to be fixed up by changing BaseHMM.e_step
-        batch_posteriors, batch_trans_probs = batch_posteriors
-
-        partial_get_emission_probs = partial(_get_batch_emission_probs, self)
-        batch_emission_probs = vmap(partial_get_emission_probs)(batch_emissions, batch_posteriors.smoothed_probs)
-
-        emission_probs = batch_emission_probs.sum(axis=0)
-        denom = emission_probs.sum(axis=-1, keepdims=True)
-        emission_probs = emission_probs / jnp.where(denom == 0, 1, denom)
-
-        transitions_probs = batch_trans_probs.sum(axis=0)
-        denom = transitions_probs.sum(axis=-1, keepdims=True)
-        transition_probs = transitions_probs / jnp.where(denom == 0, 1, denom)
-
-        batch_initial_probs = batch_posteriors.smoothed_probs[:, 0, :]
-        initial_probs = batch_initial_probs.sum(axis=0) / batch_initial_probs.sum()
-
-        hmm = CategoricalHMM(initial_probs, transition_probs, emission_probs)
-        return hmm
+        # Sum the statistics across all batches
+        stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
+        # Then maximize the expected log probability as a fn of model parameters
+        initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        emission_probs = tfd.Dirichlet(1.1 + stats.sum_x).mode()
+        # Pack the results into a new HMM
+        return cls(initial_probs, transition_matrix, emission_probs)

@@ -16,17 +16,16 @@ def hmm_fit_em(hmm, batch_emissions, num_iters=50, **kwargs):
 
     @jit
     def em_step(hmm):
-        batch_posteriors, marginal_logliks = hmm.e_step(batch_emissions)
+        batch_posteriors = hmm.e_step(batch_emissions)
         hmm = hmm.m_step(batch_emissions, batch_posteriors, **kwargs)
-        return hmm, marginal_logliks.sum(), batch_posteriors
+        return hmm, batch_posteriors
 
     log_probs = []
-    batch_posteriors = None
     for _ in trange(num_iters):
-        hmm, marginal_logliks, batch_posteriors = em_step(hmm)
-        log_probs.append(marginal_logliks)
+        hmm, batch_posteriors = em_step(hmm)
+        log_probs.append(batch_posteriors.marginal_loglik.sum())
 
-    return hmm, log_probs, batch_posteriors
+    return hmm, log_probs
 
 
 def _loss_fn(hmm, params, batch_emissions, lens):
