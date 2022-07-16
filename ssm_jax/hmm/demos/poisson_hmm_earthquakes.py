@@ -141,7 +141,7 @@ def main(test_mode=False):
     scores = list()
     models = list()
 
-    for num_states in range(1, 5):
+    for num_states in range(2, 5):
         for idx in range(10):  # ten different random starting states
 
             key = jr.PRNGKey(idx)
@@ -150,9 +150,8 @@ def main(test_mode=False):
             initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
             transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
             emission_rates = jr.uniform(key3, (num_states, emission_dim), minval=10.0, maxval=35.0)
-            emission_log_rates = jnp.log(emission_rates)
-
-            model = PoissonHMM(initial_probs, transition_matrix, emission_log_rates)
+            
+            model = PoissonHMM(initial_probs, transition_matrix, emission_rates)
             model, *_ = hmm_fit_em(model, earthquakes[None, ..., None], num_iters=20)
             models.append(model)
             scores.append(model.marginal_log_prob(earthquakes[:, None]))

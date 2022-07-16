@@ -27,17 +27,37 @@ class BaseHMM(ABC):
             initial_probabilities[k]: prob(hidden(1)=k)
             transition_matrix[j,k]: prob(hidden(t) = k | hidden(t-1)j)
         """
-        num_states = transition_matrix.shape[-1]
-
         # Check shapes
+        num_states = transition_matrix.shape[-1]
         assert initial_probabilities.shape == (num_states,)
         assert transition_matrix.shape == (num_states, num_states)
 
-        # Construct the  distribution objects
+        # Store the parameters
         self._initial_probabilities = initial_probabilities
         self._transition_matrix = transition_matrix
 
-    # Properties to get various attributes of the model from underyling distribution objects
+    # Properties to allow unconstrained optimization
+    @property
+    @abstractmethod
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters."""
+        raise NotImplementedError
+
+    @unconstrained_params.setter
+    @abstractmethod
+    def unconstrained_params(self, value):
+        raise NotImplementedError
+
+    @property
+    def hyperparams(self):
+        """Helper property to get a PyTree of model hyperparameters."""
+        return None
+
+    @hyperparams.setter
+    def hyperparams(self, value):
+        pass
+
+    # Properties to get various attributes of the model.
     @property
     def num_states(self):
         return self.initial_distribution().probs_parameter().shape[0]
@@ -160,7 +180,6 @@ class BaseHMM(ABC):
 
         return vmap(_single_e_step)(batch_emissions)
 
-    @classmethod
     def m_step(self, batch_emissions, batch_posteriors,
                optimizer=optax.adam(1e-2),
                num_mstep_iters=50):
@@ -193,27 +212,10 @@ class BaseHMM(ABC):
 
         # TODO: minimize the negative expected log joint with SGD
         hmm, losses = hmm_fit_sgd(self, batch_emissions,
-                                  optimizer,
-                                  num_mstep_iters,
-                                  neg_expected_log_joint)
+                                  optimizer=optimizer,
+                                  num_iters=num_mstep_iters,
+                                  loss_fn=neg_expected_log_joint)
         return hmm
-
-    # Properties to allow unconstrained optimization and JAX jitting
-    @property
-    @abstractmethod
-    def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters."""
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def from_unconstrained_params(cls, unconstrained_params, hypers):
-        raise NotImplementedError
-
-    @property
-    def hyperparams(self):
-        """Helper property to get a PyTree of model hyperparameters."""
-        return tuple()
 
     # Use the to/from unconstrained properties to implement JAX tree_flatten/unflatten
     def tree_flatten(self):
@@ -223,4 +225,7 @@ class BaseHMM(ABC):
 
     @classmethod
     def tree_unflatten(cls, aux_data, children):
-        return cls.from_unconstrained_params(children, aux_data)
+        obj = object.__new__(cls)
+        obj.unconstrained_params = children
+        obj.hyperparams = aux_data
+        return obj

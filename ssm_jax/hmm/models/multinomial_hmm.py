@@ -30,6 +30,10 @@ class MultinomialHMM(BaseHMM):
         emission_probs = jr.uniform(key3, (num_states, emission_dim))
         return cls(initial_probs, transition_matrix, emission_probs)
 
+    @property
+    def num_trials(self):
+        return self._num_trials
+
     def emission_distribution(self, state):
         return tfd.Multinomial(self._num_trials, probs=self._emission_probs[state])
 
@@ -41,13 +45,9 @@ class MultinomialHMM(BaseHMM):
             tfb.Sigmoid().inverse(self.emission_probs),
         )
 
-    @classmethod
-    def from_unconstrained_params(cls, unconstrained_params, hypers):
-        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
-        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
-        emission_probs = tfb.Sigmoid().forward(unconstrained_params[2])
-        return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
-
-    @property
-    def num_trials(self):
-        return self._num_trials
+    @unconstrained_params.setter
+    def unconstrained_params(self, unconstrained_params):
+        self._initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        self._transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        self._emission_probs = tfb.Sigmoid().forward(unconstrained_params[2])
+        

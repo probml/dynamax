@@ -26,47 +26,34 @@ class CategoricalHMM(BaseHMM):
         """
         super().__init__(initial_probabilities, transition_matrix)
 
-        num_states, num_emissions = emission_probs.shape
-
         # Check shapes
-        assert initial_probabilities.shape == (num_states,)
-        assert transition_matrix.shape == (num_states, num_states)
-
-        self._num_states = num_states
-        self._num_emissions = num_emissions
+        assert emission_probs.ndim == 3, \
+            "emission_probs must be (num_states x num_emissions x num_classes)"
         self._emission_probs = emission_probs
 
-
     @classmethod
-    def random_initialization(cls, key, num_states, emission_dim):
+    def random_initialization(cls, key, num_states, num_emissions, num_classes):
         key1, key2, key3 = jr.split(key, 3)
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
-        emission_probs = jr.dirichlet(key3, jnp.ones(emission_dim), (num_states,))
+        emission_probs = jr.dirichlet(key3, jnp.ones(num_classes), (num_states, num_emissions))
         return cls(initial_probs, transition_matrix, emission_probs)
 
+    @property
+    def num_emissions(self):
+        return self._emission_probs.shape[1]
+
+    @property
+    def num_classes(self):
+        return self._emission_probs.shape[2]
+
     def emission_distribution(self, state):
-        return tfd.Categorical(probs=self._emission_probs[state])
+        return tfd.Independent(tfd.Categorical(probs=self._emission_probs[state]),
+                               reinterpreted_batch_ndims=1)
 
     @property
     def emission_probs(self):
         return self._emission_probs
-
-    @property
-    def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters."""
-        return (
-            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-            tfb.SoftmaxCentered().inverse(self.transition_matrix),
-            tfb.SoftmaxCentered().inverse(self.emission_probs),
-        )
-
-    @classmethod
-    def from_unconstrained_params(cls, unconstrained_params, hypers):
-        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
-        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
-        emission_probs = tfb.SoftmaxCentered().forward(unconstrained_params[2])
-        return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
 
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
@@ -92,8 +79,8 @@ class CategoricalHMM(BaseHMM):
             trans_probs = compute_transition_probs(self.transition_matrix, posterior)
 
             # Compute the expected sufficient statistics
-            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
-                               one_hot(emissions, self.num_states))
+            sum_x = jnp.einsum("tk, tdi->kdi", posterior.smoothed_probs,
+                               one_hot(emissions, self.num_classes))
             
             # Pack into a dataclass
             stats = CategoricalHMMSuffStats(
@@ -107,13 +94,26 @@ class CategoricalHMM(BaseHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    @classmethod
-    def m_step(cls, batch_emissions, batch_posteriors, **kwargs):
+    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
         # Then maximize the expected log probability as a fn of model parameters
-        initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
-        transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
-        emission_probs = tfd.Dirichlet(1.1 + stats.sum_x).mode()
-        # Pack the results into a new HMM
-        return cls(initial_probs, transition_matrix, emission_probs)
+        self._initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._emission_probs = tfd.Dirichlet(1.1 + stats.sum_x).mode()
+
+    @property
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters."""
+        return (
+            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
+            tfb.SoftmaxCentered().inverse(self.transition_matrix),
+            tfb.SoftmaxCentered().inverse(self.emission_probs),
+        )
+
+    @unconstrained_params.setter
+    def unconstrained_params(self, unconstrained_params):
+        self._initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        self._transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        self._emission_probs = tfb.SoftmaxCentered().forward(unconstrained_params[2])
+        

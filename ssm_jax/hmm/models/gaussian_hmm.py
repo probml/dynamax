@@ -52,24 +52,6 @@ class GaussianHMM(BaseHMM):
         return tfd.MultivariateNormalFullCovariance(
             self._emission_means[state], self._emission_covs[state])
 
-    @property
-    def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters."""
-        return (
-            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-            tfb.SoftmaxCentered().inverse(self.transition_matrix),
-            self.emission_means,
-            PSDToRealBijector.forward(self.emission_covariance_matrices),
-        )
-
-    @classmethod
-    def from_unconstrained_params(cls, unconstrained_params, hypers):
-        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
-        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
-        emission_means = unconstrained_params[2]
-        emission_covs = PSDToRealBijector.inverse(unconstrained_params[3])
-        return cls(initial_probabilities, transition_matrix, emission_means, emission_covs, *hypers)
-
     # Expectation-maximization (EM) code
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
@@ -115,25 +97,39 @@ class GaussianHMM(BaseHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    @classmethod
-    def m_step(cls, batch_emissions, batch_posteriors, **kwargs):
+    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Initial distribution
-        initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
 
         # Transition distribution
-        transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
 
         # Gaussian emission distribution
         emission_dim = stats.sum_x.shape[-1]
-        emission_means = stats.sum_x / stats.sum_w[:, None]
-        emission_covs = (
+        self._emission_means = stats.sum_x / stats.sum_w[:, None]
+        self._emission_covs = (
             stats.sum_xxT / stats.sum_w[:, None, None]
-            - jnp.einsum("ki,kj->kij", emission_means, emission_means)
+            - jnp.einsum("ki,kj->kij", self._emission_means, self._emission_means)
             + 1e-4 * jnp.eye(emission_dim)
         )
 
-        # Pack the results into a new GaussianHMM
-        return cls(initial_probs, transition_matrix, emission_means, emission_covs)
+    @property
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters."""
+        return (
+            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
+            tfb.SoftmaxCentered().inverse(self.transition_matrix),
+            self.emission_means,
+            PSDToRealBijector.forward(self.emission_covariance_matrices),
+        )
+
+    @unconstrained_params.setter
+    def unconstrained_params(self, unconstrained_params):
+        self._initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        self._transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        self._emission_means = unconstrained_params[2]
+        self._emission_covs = PSDToRealBijector.inverse(unconstrained_params[3])
+        
