@@ -20,14 +20,11 @@ from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
 @register_pytree_node_class
 class CategoricalLogitHMM(CategoricalHMM):
     def __init__(self, initial_logits, transition_logits, emission_logits):
-        num_states, num_emissions = emission_logits.shape
+        num_states, num_emissions, num_classes = emission_logits.shape
 
         # Check shapes
         assert initial_logits.shape == (num_states,)
         assert transition_logits.shape == (num_states, num_states)
-
-        self._num_states = num_states
-        self._num_emissions = num_emissions
 
         # Construct the  distribution objects
         self._initial_logits = initial_logits
@@ -35,11 +32,11 @@ class CategoricalLogitHMM(CategoricalHMM):
         self._emission_logits = emission_logits
 
     @classmethod
-    def random_initialization(cls, key, num_states, emission_dim):
+    def random_initialization(cls, key, num_states, num_emissions, num_classes):
         key1, key2, key3 = jr.split(key, 3)
         initial_logits = jr.normal(key1, (num_states,))
         transition_logits = jr.normal(key2, (num_states, num_states))
-        emission_logits = jr.normal(key3, (num_states, emission_dim))
+        emission_logits = jr.normal(key3, (num_states, num_emissions, num_classes))
         return cls(initial_logits, transition_logits, emission_logits)
 
     def initial_distribution(self):
@@ -59,21 +56,22 @@ class CategoricalLogitHMM(CategoricalHMM):
         return jnp.exp(logits - logsumexp(logits, axis=1, keepdims=True))
 
     def emission_distribution(self, state):
-        return tfd.Categorical(logits=self._emission_logits[state])
+        return tfd.Independent(tfd.Categorical(logits=self._emission_logits[state]),
+                               reinterpreted_batch_ndims=1)
 
     @property
     def emission_probs(self):
         logits = self._emission_logits
-        return jnp.exp(logits - logsumexp(logits, axis=1, keepdims=True))
+        return jnp.exp(logits - logsumexp(logits, axis=-1, keepdims=True))
 
     @property
     def unconstrained_params(self):
         """Helper property to get a PyTree of unconstrained parameters."""
-        return (self._initial_logits, self._transition_logits, self._emission_logits)
+        return self._initial_logits, self._transition_logits, self._emission_logits
 
-    @classmethod
-    def from_unconstrained_params(cls, unconstrained_params, hypers):
-        return cls(*unconstrained_params, *hypers)
+    @unconstrained_params.setter
+    def unconstrained_params(cls, value):
+        self._initial_logits, self._transition_logits, self._emission_logits = value
 
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the

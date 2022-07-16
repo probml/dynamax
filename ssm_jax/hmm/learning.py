@@ -17,7 +17,7 @@ def hmm_fit_em(hmm, batch_emissions, num_iters=50, **kwargs):
     @jit
     def em_step(hmm):
         batch_posteriors = hmm.e_step(batch_emissions)
-        hmm = hmm.m_step(batch_emissions, batch_posteriors, **kwargs)
+        hmm.m_step(batch_emissions, batch_posteriors, **kwargs)
         return hmm, batch_posteriors
 
     log_probs = []
@@ -30,9 +30,7 @@ def hmm_fit_em(hmm, batch_emissions, num_iters=50, **kwargs):
 
 def _loss_fn(hmm, params, batch_emissions, lens):
     """Default objective function."""
-    cls = hmm.__class__
-    hypers = hmm.hyperparams
-    hmm = cls.from_unconstrained_params(params, hypers)
+    hmm.unconstrained_params = params
     f = lambda emissions, t: -hmm.marginal_log_prob(emissions) / t
     return vmap(f)(batch_emissions, lens).mean()
 
@@ -80,9 +78,6 @@ def hmm_fit_sgd(
         hmm: HMM with optimized parameters.
         losses: Output of loss_fn stored at each step.
     """
-    cls = hmm.__class__
-    hypers = hmm.hyperparams
-
     params = hmm.unconstrained_params
     opt_state = optimizer.init(params)
 
@@ -120,6 +115,6 @@ def hmm_fit_sgd(
     (params, _), losses = lax.scan(train_step, (params, opt_state), keys)
 
     losses = losses.flatten()
-    hmm = cls.from_unconstrained_params(params, hypers)
+    hmm.unconstrained_params = params
 
     return hmm, losses

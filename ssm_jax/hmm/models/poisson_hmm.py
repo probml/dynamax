@@ -45,22 +45,6 @@ class PoissonHMM(BaseHMM):
     def emission_rates(self):
         return self._emission_rates
 
-    @property
-    def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters."""
-        return (
-            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-            tfb.SoftmaxCentered().inverse(self.transition_matrix),
-            tfb.Softplus().inverse(self._emission_rates),
-        )
-
-    @classmethod
-    def from_unconstrained_params(cls, unconstrained_params, hypers):
-        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
-        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
-        emission_rates = tfb.Softplus().forward(unconstrained_params[2])
-        return cls(initial_probabilities, transition_matrix, emission_rates, *hypers)
-
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
@@ -102,13 +86,26 @@ class PoissonHMM(BaseHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    @classmethod
-    def m_step(cls, batch_emissions, batch_posteriors, **kwargs):
+    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
         # Then maximize the expected log probability as a fn of model parameters
-        initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
-        transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
-        emission_rates = tfd.Gamma(1.1 + stats.sum_x, 1.1 + stats.sum_w).mode()
-        # Pack the results into a new HMM
-        return cls(initial_probs, transition_matrix, emission_rates)
+        self._initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._emission_rates = tfd.Gamma(1.1 + stats.sum_x, 1.1 + stats.sum_w).mode()
+        
+    @property
+    def unconstrained_params(self):
+        """Helper property to get a PyTree of unconstrained parameters."""
+        return (
+            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
+            tfb.SoftmaxCentered().inverse(self.transition_matrix),
+            tfb.Softplus().inverse(self._emission_rates),
+        )
+
+    @unconstrained_params.setter
+    def unconstrained_params(self, unconstrained_params):
+        self._initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        self._transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        self._emission_rates = tfb.Softplus().forward(unconstrained_params[2])
+        
