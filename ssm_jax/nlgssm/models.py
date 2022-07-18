@@ -6,6 +6,7 @@ from jax.tree_util import register_pytree_node_class, tree_map
 from distrax import MultivariateNormalFullCovariance as MVN
 
 from ssm_jax.ekf.inference import extended_kalman_filter
+from ssm_jax.ukf.inference import unscented_kalman_filter
 from ssm_jax.utils import PSDToRealBijector
 
 
@@ -95,6 +96,9 @@ class NonLinearGaussianSSM:
 
     def ekf_filter(self, emissions, inputs=None):
         return extended_kalman_filter(self, emissions, inputs)
+    
+    def ukf_filter(self, emissions, hyperparams, inputs=None):
+        return unscented_kalman_filter(self, emissions, hyperparams, inputs)
 
     # Properties to allow unconstrained optimization and JAX jitting
     @property
