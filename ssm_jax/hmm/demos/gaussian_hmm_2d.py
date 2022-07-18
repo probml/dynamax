@@ -14,10 +14,10 @@ def plot_gaussian_hmm(hmm, emissions, states, ttl="Emission Distributions"):
     XX, YY = jnp.meshgrid(jnp.linspace(-lim, lim, 100), jnp.linspace(-lim, lim, 100))
     grid = jnp.column_stack((XX.ravel(), YY.ravel()))
 
-    lls = hmm.emission_distribution.log_prob(grid[:, None, :])
     plt.figure()
     for k in range(hmm.num_states):
-        plt.contour(XX, YY, jnp.exp(lls[:, k]).reshape(XX.shape), cmap=white_to_color_cmap(COLORS[k]))
+        lls = hmm.emission_distribution(k).log_prob(grid)
+        plt.contour(XX, YY, jnp.exp(lls).reshape(XX.shape), cmap=white_to_color_cmap(COLORS[k]))
         plt.plot(emissions[states == k, 0], emissions[states == k, 1], "o", mfc=COLORS[k], mec="none", ms=3, alpha=0.5)
 
     plt.plot(emissions[:, 0], emissions[:, 1], "-k", lw=1, alpha=0.25)

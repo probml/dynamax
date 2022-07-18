@@ -1,12 +1,16 @@
 import jax.numpy as jnp
 import jax.random as jr
-import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
+
+import chex
+from functools import partial
+
 from ssm_jax.hmm.models.base import BaseHMM
+from ssm_jax.hmm.inference import hmm_smoother, compute_transition_probs
 
 
 @register_pytree_node_class
@@ -30,74 +34,77 @@ class BernoulliHMM(BaseHMM):
         emission_probs = jr.uniform(key3, (num_states, emission_dim))
         return cls(initial_probs, transition_matrix, emission_probs)
 
+    @property
+    def emission_probs(self):
+        return self._emission_probs
+
     def emission_distribution(self, state):
         return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs[state]),
                                reinterpreted_batch_ndims=1)
+
+    def e_step(self, batch_emissions):
+        """The E-step computes expected sufficient statistics under the
+        posterior. In the Gaussian case, this these are the first two
+        moments of the data
+        """
+        @chex.dataclass
+        class BernoulliHMMSuffStats:
+            # Wrapper for sufficient statistics of a BernoulliHMM
+            marginal_loglik: chex.Scalar
+            initial_probs: chex.Array
+            trans_probs: chex.Array
+            sum_x: chex.Array
+            sum_1mx: chex.Array
+
+        def _single_e_step(emissions):
+            # Run the smoother
+            posterior = hmm_smoother(self.initial_probabilities,
+                                     self.transition_matrix,
+                                     self._conditional_logliks(emissions))
+
+            # Compute the initial state and transition probabilities
+            initial_probs = posterior.smoothed_probs[0]
+            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+
+            # Compute the expected sufficient statistics
+            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
+                               jnp.where(jnp.isnan(emissions), 0, emissions))
+            sum_1mx = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
+                                 jnp.where(jnp.isnan(emissions), 0, 1-emissions))
+
+            # Pack into a dataclass
+            stats = BernoulliHMMSuffStats(
+                marginal_loglik=posterior.marginal_loglik,
+                initial_probs=initial_probs,
+                trans_probs=trans_probs,
+                sum_x=sum_x,
+                sum_1mx=sum_1mx
+            )
+            return stats
+
+        # Map the E step calculations over batches
+        return vmap(_single_e_step)(batch_emissions)
+
+    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
+        # Sum the statistics across all batches
+        stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
+        # Then maximize the expected log probability as a fn of model parameters
+        self._initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._emission_probs = tfd.Beta(1.1 + stats.sum_x, 1.1 + stats.sum_1mx).mode()
 
     @property
     def unconstrained_params(self):
         """Helper property to get a PyTree of unconstrained parameters."""
         return (
-            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-            tfb.SoftmaxCentered().inverse(self.transition_matrix),
-            tfb.Sigmoid().inverse(self.emission_probs),
+            tfb.SoftmaxCentered().inverse(self._initial_probabilities),
+            tfb.SoftmaxCentered().inverse(self._transition_matrix),
+            tfb.Sigmoid().inverse(self._emission_probs),
         )
 
-    @classmethod
-    def from_unconstrained_params(cls, unconstrained_params, hypers):
-        initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
-        transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
-        emission_probs = tfb.Sigmoid().forward(unconstrained_params[2])
-        return cls(initial_probabilities, transition_matrix, emission_probs, *hypers)
-
-    def _sufficient_statistics(self, datapoint):
-        return datapoint, 1 - datapoint
-
-    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
-        """
-        Another  way to calculate emission probs:
-
-        smoothed_probs = batch_posteriors.smoothed_probs
-
-        def get_expected_probs(x, y):
-            return x.reshape((-1, 1)) * jnp.tile(y, reps=(self.num_states, 1))
-
-        emission_probs1 = vmap(lambda x, y: vmap(get_expected_probs)(x, y))(smoothed_probs, batch_emissions)
-        emission_probs0 = vmap(lambda x, y: vmap(get_expected_probs)(x, y))(smoothed_probs, 1 - batch_emissions)
-
-        emission_probs1 = jnp.sum(emission_probs1, axis=0)
-        emission_probs1 = jnp.sum(emission_probs1, axis=0)
-
-        emission_probs0 = jnp.sum(emission_probs0, axis=0)
-        emission_probs0 = jnp.sum(emission_probs0, axis=0)
-        emission_probs = emission_probs1 / (emission_probs1 + emission_probs0)
-
-        """
-        # TODO: This naming needs to be fixed up by changing BaseHMM.e_step
-        batch_posteriors, batch_trans_probs = batch_posteriors
-
-        def flatten(x):
-            return x.reshape(-1, x.shape[-1])
-
-        smoothed_probs = batch_posteriors.smoothed_probs
-        flat_weights = flatten(smoothed_probs)
-        flat_data = flatten(batch_emissions)
-
-        stats = vmap(self._sufficient_statistics)(flat_data)
-        stats = tree_map(lambda x: jnp.einsum("nk,n...->k...", flat_weights, x), stats)
-
-        prior = tfd.Beta(1.1, 1.1)
-        stats = tree_map(jnp.add, stats, (prior.concentration1, prior.concentration0))
-        concentration1, concentration0 = stats
-        emission_probs = tfd.Beta(concentration1, concentration0).mode()
-
-        transitions_probs = batch_trans_probs.sum(axis=0)
-        denom = transitions_probs.sum(axis=-1, keepdims=True)
-        transitions_probs = transitions_probs / jnp.where(denom == 0, 1, denom)
-
-        batch_initial_probs = smoothed_probs[:, 0, :]
-        initial_probs = batch_initial_probs.sum(axis=0) / batch_initial_probs.sum()
-
-        hmm = BernoulliHMM(initial_probs, transitions_probs, emission_probs)
-
-        return hmm
+    @unconstrained_params.setter
+    def unconstrained_params(self, unconstrained_params):
+        self._initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        self._transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        self._emission_probs = tfb.Sigmoid().forward(unconstrained_params[2])
+        

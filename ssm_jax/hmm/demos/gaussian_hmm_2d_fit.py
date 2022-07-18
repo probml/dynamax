@@ -27,7 +27,7 @@ def main(num_timesteps=2000, plot_timesteps=200, num_em_iters=50, num_sgd_iters=
     print("Fit with EM")
     batch_emissions = emissions[None, ...]
     test_hmm_em = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
-    test_hmm_em, logprobs_em, _ = learning.hmm_fit_em(test_hmm_em, batch_emissions, num_iters=num_em_iters)
+    test_hmm_em, logprobs_em = learning.hmm_fit_em(test_hmm_em, batch_emissions, num_iters=num_em_iters)
 
     # Get the posterior
     print("true LL: ", true_hmm.marginal_log_prob(emissions))

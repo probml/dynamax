@@ -78,7 +78,7 @@ def make_model_and_data():
             [1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6],  # fair die
             [1 / 10, 1 / 10, 1 / 10, 1 / 10, 1 / 10, 5 / 10],  # loaded die
         ]
-    )
+    ).reshape((2, 1, 6))
     init_state_probs = jnp.array([1 / 2, 1 / 2])
     hmm = CategoricalHMM(init_state_probs, transition_matrix, emission_probs)
 

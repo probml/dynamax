@@ -1,21 +1,22 @@
 import jax.numpy as jnp
 import jax.random as jr
-import optax
+import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
+import chex
+
+from functools import partial
 from jax import nn
 from jax import tree_map
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
-from ssm_jax.hmm.models.base import BaseHMM
 
-# Using TFP for now since it has all our distributions
-# (Distrax doesn't have Poisson, it seems.)
+from ssm_jax.hmm.models.base import BaseHMM
+from ssm_jax.hmm.inference import hmm_smoother, compute_transition_probs
 
 
 @register_pytree_node_class
 class PoissonHMM(BaseHMM):
-
-    def __init__(self, initial_probabilities, transition_matrix, emission_log_rates):
+    def __init__(self, initial_probabilities, transition_matrix, emission_rates):
         """_summary_
 
         Args:
@@ -24,71 +25,87 @@ class PoissonHMM(BaseHMM):
             emission_rates (_type_): _description_
         """
         super().__init__(initial_probabilities, transition_matrix)
-        self._emission_log_rates = emission_log_rates
+        self._emission_rates = emission_rates
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
         key1, key2, key3 = jr.split(key, 3)
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
-        emission_log_rates = jnp.log(jr.exponential(key3, (num_states, emission_dim)))
-        return cls(initial_probs, transition_matrix, emission_log_rates)
+        emission_rates = jr.exponential(key3, (num_states, emission_dim))
+        return cls(initial_probs, transition_matrix, emission_rates)
 
     # Properties to get various parameters of the model
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Poisson(log_rate=self._emission_log_rates[state]), reinterpreted_batch_ndims=1)
+        return tfd.Independent(
+            tfd.Poisson(rate=self._emission_rates[state]),
+            reinterpreted_batch_ndims=1)
 
     @property
     def emission_rates(self):
-        return jnp.exp(self._emission_log_rates)
+        return self._emission_rates
 
-    @property
-    def emission_log_rates(self):
-        return self._emission_log_rates
+    def e_step(self, batch_emissions):
+        """The E-step computes expected sufficient statistics under the
+        posterior. In the Gaussian case, this these are the first two
+        moments of the data
+        """
+        @chex.dataclass
+        class PoissonHMMSuffStats:
+            # Wrapper for sufficient statistics of a BernoulliHMM
+            marginal_loglik: chex.Scalar
+            initial_probs: chex.Array
+            trans_probs: chex.Array
+            sum_w: chex.Array
+            sum_x: chex.Array
 
+        def _single_e_step(emissions):
+            # Run the smoother
+            posterior = hmm_smoother(self.initial_probabilities,
+                                     self.transition_matrix,
+                                     self._conditional_logliks(emissions))
+
+            # Compute the initial state and transition probabilities
+            initial_probs = posterior.smoothed_probs[0]
+            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+
+            # Compute the expected sufficient statistics
+            sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)[:, None]
+            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs, emissions)
+
+            # Pack into a dataclass
+            stats = PoissonHMMSuffStats(
+                marginal_loglik=posterior.marginal_loglik,
+                initial_probs=initial_probs,
+                trans_probs=trans_probs,
+                sum_w=sum_w,
+                sum_x=sum_x,
+            )
+            return stats
+
+        # Map the E step calculations over batches
+        return vmap(_single_e_step)(batch_emissions)
+
+    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
+        # Sum the statistics across all batches
+        stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
+        # Then maximize the expected log probability as a fn of model parameters
+        self._initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._emission_rates = tfd.Gamma(1.1 + stats.sum_x, 1.1 + stats.sum_w).mode()
+        
     @property
     def unconstrained_params(self):
         """Helper property to get a PyTree of unconstrained parameters."""
         return (
-            nn.softmax(jnp.log(self.initial_probabilities), axis=-1),
-            nn.softmax(jnp.log(self.transition_matrix), axis=-1),
-            self.emission_log_rates,
+            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
+            tfb.SoftmaxCentered().inverse(self.transition_matrix),
+            tfb.Softplus().inverse(self._emission_rates),
         )
 
-    @classmethod
-    def from_unconstrained_params(cls, unconstrained_params, hypers):
-        return cls(*unconstrained_params, *hypers)
-
-    def _sufficient_statistics(self, datapoint):
-        return (datapoint, jnp.ones_like(datapoint))
-
-    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
-
-        # TODO: This naming needs to be fixed up by changing BaseHMM.e_step
-        batch_posteriors, batch_trans_probs = batch_posteriors
-
-        def flatten(x):
-            return x.reshape(-1, x.shape[-1])
-
-        # TODO: This should use smoothed_probs
-        filtered_probs = batch_posteriors.filtered_probs
-        flat_weights = flatten(filtered_probs)
-        flat_data = flatten(batch_emissions)
-
-        stats = vmap(self._sufficient_statistics)(flat_data)
-        stats = tree_map(lambda x: jnp.einsum("nk,n...->k...", flat_weights, x), stats)
-
-        concentration, rate = stats
-        emission_rates = tfd.Gamma(concentration, rate).mode()
-        emission_log_rates = jnp.log(emission_rates)
-
-        transitions_probs = batch_trans_probs.sum(axis=0)
-        denom = transitions_probs.sum(axis=-1, keepdims=True)
-        transitions_probs = transitions_probs / jnp.where(denom == 0, 1, denom)
-
-        batch_initial_probs = filtered_probs[:, 0, :]
-        initial_probs = batch_initial_probs.sum(axis=0) / batch_initial_probs.sum()
-
-        hmm = PoissonHMM(initial_probs, transitions_probs, emission_log_rates)
-
-        return hmm
+    @unconstrained_params.setter
+    def unconstrained_params(self, unconstrained_params):
+        self._initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
+        self._transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
+        self._emission_rates = tfb.Softplus().forward(unconstrained_params[2])
+        
