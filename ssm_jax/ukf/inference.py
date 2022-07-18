@@ -10,7 +10,9 @@ import chex
 
 @chex.dataclass
 class UKFHyperParams:
-    """Lightweight container for UKF hyperparameters."""
+    """Lightweight container for UKF hyperparameters.
+    Default values taken from https://github.com/sbitzer/UKF-exposed
+    """
 
     alpha: chex.Scalar = jnp.sqrt(3)
     beta: chex.Scalar = 2
