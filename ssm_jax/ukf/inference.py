@@ -25,19 +25,19 @@ _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
 _compute_lambda = lambda x, y, z: x**2 + (y + z) - z
 
 
-def _compute_sigmas(m, S, n, lamb):
+def _compute_sigmas(m, P, n, lamb):
     """Compute (2n+1) sigma points used for inputs to  unscented transform.
 
     Args:
         m (D_hid,): mean.
-        S (D_hid,D_hid): covariance.
+        P (D_hid,D_hid): covariance.
         n (int): number of state dimensions.
         lamb (Scalar): unscented parameter lambda.
 
     Returns:
         sigmas (2*D_hid+1,): 2n+1 sigma points.
     """
-    distances = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(S)
+    distances = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(P)
     sigma_plus = jnp.array([m + distances[:, i] for i in range(n)])
     sigma_minus = jnp.array([m - distances[:, i] for i in range(n)])
     return jnp.concatenate((jnp.array([m]), sigma_plus, sigma_minus))
@@ -62,12 +62,12 @@ def _compute_weights(n, alpha, beta, lamb):
     return w_mean, w_cov
 
 
-def _predict(m, S, f, Q, lamb, w_mean, w_cov, u):
+def _predict(m, P, f, Q, lamb, w_mean, w_cov, u):
     """Predict next mean and covariance using additive UKF
 
     Args:
         m (D_hid,): prior mean.
-        S (D_hid,D_hid): prior covariance.
+        P (D_hid,D_hid): prior covariance.
         f (Callable): dynamics function.
         Q (D_hid,D_hid): dynamics covariance matrix.
         lamb (float): lamb = alpha**2 *(n + kappa) - n.
@@ -77,27 +77,27 @@ def _predict(m, S, f, Q, lamb, w_mean, w_cov, u):
 
     Returns:
         m_pred (D_hid,): predicted mean.
-        S_pred (D_hid,D_hid): predicted covariance.
+        P_pred (D_hid,D_hid): predicted covariance.
     """
     n = len(m)
     # Form sigma points and propagate
-    sigmas_pred = _compute_sigmas(m, S, n, lamb)
+    sigmas_pred = _compute_sigmas(m, P, n, lamb)
     u_s = jnp.array([u] * len(sigmas_pred))
     sigmas_pred_prop = vmap(f, (0, 0), 0)(sigmas_pred, u_s)
 
     # Compute predicted mean and covariance
     m_pred = jnp.tensordot(w_mean, sigmas_pred_prop, axes=1)
-    S_pred = jnp.tensordot(w_cov, _outer(sigmas_pred_prop - m_pred, sigmas_pred_prop - m_pred), axes=1) + Q
-    S_cross = jnp.tensordot(w_cov, _outer(sigmas_pred - m, sigmas_pred_prop - m_pred), axes=1)
-    return m_pred, S_pred, S_cross
+    P_pred = jnp.tensordot(w_cov, _outer(sigmas_pred_prop - m_pred, sigmas_pred_prop - m_pred), axes=1) + Q
+    P_cross = jnp.tensordot(w_cov, _outer(sigmas_pred - m, sigmas_pred_prop - m_pred), axes=1)
+    return m_pred, P_pred, P_cross
 
 
-def _condition_on(m, S, h, R, lamb, w_mean, w_cov, u, y):
+def _condition_on(m, P, h, R, lamb, w_mean, w_cov, u, y):
     """Condition a Gaussian potential on a new observation
 
     Args:
         m (D_hid,): prior mean.
-        S (D_hid,D_hid): prior covariance.
+        P (D_hid,D_hid): prior covariance.
         h (Callable): emission function.
         R (D_obs,D_obs): emssion covariance matrix
         lamb (float): lamb = alpha**2 *(n + kappa) - n.
@@ -109,11 +109,11 @@ def _condition_on(m, S, h, R, lamb, w_mean, w_cov, u, y):
     Returns:
         ll (float): log-likelihood of observation
         m_cond (D_hid,): filtered mean.
-        S_cond (D_hid,D_hid): filtered covariance.
+        P_cond (D_hid,D_hid): filtered covariance.
     """
     n = len(m)
     # Form sigma points and propagate
-    sigmas_cond = _compute_sigmas(m, S, n, lamb)
+    sigmas_cond = _compute_sigmas(m, P, n, lamb)
     u_s = jnp.array([u] * len(sigmas_cond))
     sigmas_cond_prop = vmap(h, (0, 0), 0)(sigmas_cond, u_s)
 
@@ -128,8 +128,8 @@ def _condition_on(m, S, h, R, lamb, w_mean, w_cov, u, y):
     # Compute filtered mean and covariace
     K = jnp.linalg.solve(pred_cov, pred_cross.T).T  # Filter gain
     m_cond = m + K @ (y - pred_mean)
-    S_cond = S - K @ pred_cov @ K.T
-    return ll, m_cond, S_cond
+    P_cond = P - K @ pred_cov @ K.T
+    return ll, m_cond, P_cond
 
 
 def unscented_kalman_filter(params, emissions, hyperparams, inputs=None):
