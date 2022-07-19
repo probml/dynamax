@@ -151,8 +151,8 @@ def plot_nlgssm_pendulum(time_grid, x_tr, x_obs, x_est=None, est_type=""):
     ax.plot(time_grid, x_obs, "ok", fillstyle="none", ms=1.5, label="Measurements")
     if x_est is not None:
         ax.plot(time_grid, x_est, color="k", linewidth=1.5, label=f"{est_type} Estimate")
-    ax.set_xlabel("Time $t$")
-    ax.set_ylabel("Pendulum angle $x_{1,k}$")
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Pendulum angle")
     ax.set_xlim(0, 5)
     ax.set_ylim(-3, 5)
     ax.set_xticks(jnp.arange(0.5, 4.6, 0.5))

@@ -34,21 +34,20 @@ def ukf_pendulum():
 
 def plot_ukf_pendulum(states, obs, grid, ukf_posterior):
     dict_figures = {}
-    dict_figures["pendulum_data"] = plot_pendulum(grid, states[:, 0], obs)
-    dict_figures["pendulum_filtered"] = plot_pendulum(
-        grid, states[:, 0], obs, x_est=ukf_posterior.filtered_means[:, 0], est_type="UK Filter"
+    dict_figures["ukf_pendulum_data"] = plot_pendulum(grid, states[:, 0], obs)
+    dict_figures["ukf_pendulum_filtered"] = plot_pendulum(
+        grid, states[:, 0], obs, x_est=ukf_posterior.filtered_means[:, 0], est_type="UKF"
     )
-    dict_figures["pendulum_smoothed"] = plot_pendulum(
-        grid, states[:, 0], obs, x_est=ukf_posterior.smoothed_means[:, 0], est_type="UK Smoother"
+    dict_figures["ukf_pendulum_smoothed"] = plot_pendulum(
+        grid, states[:, 0], obs, x_est=ukf_posterior.smoothed_means[:, 0], est_type="UKS"
     )
     return dict_figures
 
 
 def main(test_mode=False):
-    if not test_mode:
-        _ = plot_ukf_pendulum(*(ukf_pendulum()))
-        plt.show()
-
+    figures = plot_ukf_pendulum(*(ukf_pendulum()))
+    return figures
 
 if __name__ == "__main__":
-    main()
+    figures = main()
+    plt.show()
