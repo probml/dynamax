@@ -28,7 +28,7 @@ class _LinearGaussianSSM(LinearGaussianSSM):
                  dynamics_bias=None,
                  emission_input_weights=None,
                  emission_bias=None,
-                 prior_params=None):
+                 prior_hyperparams=None):
         super().__init__(self,
                          dynamics_matrix,
                          dynamics_covariance,
@@ -40,9 +40,9 @@ class _LinearGaussianSSM(LinearGaussianSSM):
                          dynamics_bias,
                          emission_input_weights,
                          emission_bias)
-        self.initial_prior_params = prior_params['initial']
-        self.dynamics_prior_params = prior_params['dynamics']
-        self.emission_prior_params = prior_params['emission']
+        self.initial_prior_params = prior_hyperparams['initial']
+        self.dynamics_prior_params = prior_hyperparams['dynamics']
+        self.emission_prior_params = prior_hyperparams['emission']
     
     def m_step(self, batch_stats, MAP=True):
         
@@ -73,7 +73,7 @@ class _LinearGaussianSSM(LinearGaussianSSM):
             
             m = (precision_pri * loc_pri + sum_x0) / (precision_pri + N)
             S = scale_pri + (sum_x0x0T - jnp.outer(sum_x0, sum_x0)) \
-                - jnp.outer(sum_x0/N-loc_pri, sum_x0/N-loc_pri)*(precision_pri*N)/(precision_pri + N)
+                + jnp.outer(sum_x0/N-loc_pri, sum_x0/N-loc_pri)*(precision_pri*N)/(precision_pri + N)
             S /= df_pri + N + dim + 2
             
             # dynamics distribution

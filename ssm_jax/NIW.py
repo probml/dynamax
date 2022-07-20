@@ -105,7 +105,7 @@ class NormalInverseWishart(tfd.JointDistributionNamed):
                                1 / (self._df + dim + 2), self._scale)
         return self._loc, covariance
 
-class InverseWishart(tfd.JointDistributionNamed):
+class InverseWishart(tfd.TransformedDistribution):
     def __init__(self, df, scale, **kwargs):
         """
         An inverse Wishart (IW) distribution with
@@ -125,13 +125,13 @@ class InverseWishart(tfd.JointDistributionNamed):
         # Note: this could be done more efficiently.
         self.wishart_scale_tril = np.linalg.cholesky(np.linalg.inv(scale))
 
-        super(InverseWishart, self).__init__(Sigma=lambda: tfd.TransformedDistribution(
-                                             tfd.WishartTriL(df, scale_tril=self.wishart_scale_tril),
+        super(InverseWishart, self).__init__(tfd.WishartTriL(df, scale_tril=self.wishart_scale_tril),
                                              tfb.Chain([tfb.CholeskyOuterProduct(),                 
                                              tfb.CholeskyToInvCholesky(),                
                                              tfb.Invert(tfb.CholeskyOuterProduct())]))
-                                            )
         # Replace the default JointDistributionNamed parameters with the IW ones
         # because the JointDistributionNamed parameters contain lambda functions,
         # which are not jittable.
         self._parameters = dict(df=df, scale=scale)
+        
+    
