@@ -59,14 +59,14 @@ class GaussianHMM(BaseHMM):
         moments of the data
         """
         @chex.dataclass
-        class GaussianHMMSuffStats:
-            # Wrapper for sufficient statistics of a GaussianHMM
+        class NormalizedGaussianHMMSuffStats:
+            # Wrapper for (normalized) sufficient statistics of a GaussianHMM
             marginal_loglik: chex.Scalar
             initial_probs: chex.Array
             trans_probs: chex.Array
             sum_w: chex.Array
-            sum_x: chex.Array
-            sum_xxT: chex.Array
+            normd_x: chex.Array
+            normd_xxT: chex.Array
 
         def _single_e_step(emissions):
             # Run the smoother
@@ -78,19 +78,28 @@ class GaussianHMM(BaseHMM):
             initial_probs = posterior.smoothed_probs[0]
             trans_probs = compute_transition_probs(self.transition_matrix, posterior)
 
-            # Compute the expected sufficient statistics
+            # Compute the normalized expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
-            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs, emissions)
-            sum_xxT = jnp.einsum("tk, ti, tj->kij", posterior.smoothed_probs, emissions, emissions)
+            normd_w = posterior.smoothed_probs / sum_w
+            normd_x = jnp.einsum("tk, ti->ki", normd_w, emissions)
+            normd_xxT = jnp.einsum("tk, ti, tj->kij", normd_w, emissions, emissions)
 
-            # TODO: might need to normalize x_sum and xxT_sum for numerical stability
-            stats = GaussianHMMSuffStats(
+            # Catch NaNs that result from DBZ due to sum_w = 0
+            emissions_dim = emissions.shape[-1]
+            normd_x = jnp.where(sum_w[:, None] > 1e-6,
+                                normd_x,
+                                jnp.zeros(emissions_dim))
+            normd_xxT = jnp.where(sum_w[:, None, None] > 1e-6,
+                                  normd_xxT,
+                                  1e6 * jnp.eye(emissions_dim))
+
+            stats = NormalizedGaussianHMMSuffStats(
                 marginal_loglik=posterior.marginal_loglik,
                 initial_probs=initial_probs,
                 trans_probs=trans_probs,
                 sum_w=sum_w,
-                sum_x=sum_x,
-                sum_xxT=sum_xxT
+                normd_x=normd_x,
+                normd_xxT=normd_xxT
             )
             return stats
 
@@ -98,20 +107,20 @@ class GaussianHMM(BaseHMM):
         return vmap(_single_e_step)(batch_emissions)
 
     def m_step(self, batch_emissions, batch_posteriors, **kwargs):
-        # Sum the statistics across all batches
-        stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
-
         # Initial distribution
-        self._initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        initial_probs = jnp.sum(batch_posteriors.initial_probs, axis=0)
+        self._initial_probs = tfd.Dirichlet(1.0001 + initial_probs).mode()
 
         # Transition distribution
-        self._transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        trans_probs = jnp.sum(batch_posteriors.trans_probs, axis=0)
+        self._transition_matrix = tfd.Dirichlet(1.0001 + trans_probs).mode()
 
         # Gaussian emission distribution
-        emission_dim = stats.sum_x.shape[-1]
-        self._emission_means = stats.sum_x / stats.sum_w[:, None]
+        emission_dim = batch_posteriors.normd_x.shape[-1]
+        normd_w = batch_posteriors.sum_w / jnp.sum(batch_posteriors.sum_w, axis=0)
+        self._emission_means = jnp.sum(batch_posteriors.normd_x * normd_w[...,None], axis=0)
         self._emission_covs = (
-            stats.sum_xxT / stats.sum_w[:, None, None]
+            jnp.sum(batch_posteriors.normd_xxT * normd_w[..., None, None], axis=0)
             - jnp.einsum("ki,kj->kij", self._emission_means, self._emission_means)
             + 1e-4 * jnp.eye(emission_dim)
         )
