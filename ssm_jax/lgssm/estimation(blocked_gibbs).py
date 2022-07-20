@@ -65,18 +65,22 @@ def lgssm_blocked_gibbs(rng, num_itrs, emissions, prior=None, inputs=None, dimen
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
     
-    def _lgssm_params_sample(rng, params_current, states, inputs, emissions):
-        m = params_current.initial_mean
-        S = params_current.initial_covariance
-        F = params_current.dynamics_matrix
-        B = params_current.dynamics_input_weights
-        b = params_current.dynamics_bias
-        Q = params_current.dynamics_covariance
-        H = params_current.emission_matrix
-        D = params_current.emission_input_weights
-        d = params_current.emission_bias
-        R = params_current.emission_covariance
+    def posterior_update(prior_params, X, Y):
+        M_pri, V_pri, nu_pri, Psi_pri = prior_params
+        N = X.shape[1]
         
+        Sxx = V_pri + X @ X.T
+        Sxy = X @ Y.T + V_pri @ M_pri.T
+        Syy = Y @ Y.T + M_pri @ V_pri @ M_pri.T
+        
+        M_pos = jnp.linalg.solve(Sxx, Sxy).T
+        V_pos = Sxx
+        nu_pos = nu_pri + N
+        Psi_pos = Psi_pri + Syy - M_pos @ Sxy
+        
+        return M_pos, V_pos, nu_pos, Psi_pos
+    
+    def lgssm_params_sample(rng, states, inputs, emissions):
         rngs = iter(jr.split(rng, 8))
         # Sample the initial params
         S_posterior = None
@@ -85,24 +89,20 @@ def lgssm_blocked_gibbs(rng, num_itrs, emissions, prior=None, inputs=None, dimen
         m = MVN().sample(seed=next(rngs))
         
         # Sample the dynamics params
-        Q_posterior = None
-        Q = IW().sample(seed=next(rngs))
-        F_posterior = None
-        F = MN().sample(seed=next(rngs))
-        Bb_posterior = None
-        Bb = MN().sample(seed=next(rngs))
-        b = Bb[:,0]
-        B = Bb[:,1:]
+        X_dyn = 
+        Y_dyn = 
+        M_dyn, V_dyn, nu_dyn, Psi_dyn = posterior_update(prior_params, X_dyn, Y_dyn)
+        Q = IW(nu_dyn, Psi_dyn).sample(seed=next(rngs))
+        FBb = MN(M_dyn, Q, V_dyn).sample(seed=next(rngs))
+        F, B, b = FBb[], FBb[:,1:], FBb[:,0]
         
         # Sample the emission params
-        R_posterior = None
-        R = IW().sample(seed=next(rngs))
-        H_posterior = None
-        H = MN().sample(seed=next(rngs))
-        Dd_posterior = None
-        Dd = MN.sample(seed=next(rngs))
-        d = Dd[:,0]
-        D = Dd[:,1:]
+        X_ems = 
+        Y_ems = 
+        M_ems, V_ems, nu_ems, Psi_ems = posterior_update(prior_params, X_ems, Y_ems)
+        R = IW(nu_ems, Psi_ems).sample(seed=next(rngs))
+        HDd = MN(M_ems, R, V_ems).sample(seed=next(rngs))
+        H, D, d = HDd[], HDd[:,1:], HDd[:,0]
         
         return LGSSMParams(initial_mean = m,
                            initial_covariance = S,
@@ -115,10 +115,10 @@ def lgssm_blocked_gibbs(rng, num_itrs, emissions, prior=None, inputs=None, dimen
                            emission_bias = d,
                            emission_covariance = R)
     
-    def _one_sample(params_current, rng):
+    def one_sample(params_current, rng):
         rngs = jr.split(rng, 2)
         ll, states = lgssm_posterior_sample(rngs[0], params_current, emissions, inputs)
-        params_new = _lgssm_params_sample(rngs[1], params_current, states, inputs, emissions)
+        params_new = lgssm_params_sample(rngs[1], params_current, states, inputs, emissions)
         l_prior = prior.log_probability(params_new)
         log_evidence = ll + l_prior
         return (params_new, log_evidence), params_new
@@ -160,6 +160,6 @@ def lgssm_blocked_gibbs(rng, num_itrs, emissions, prior=None, inputs=None, dimen
     
     # Sample
     rngs = jr.split(rng, num_itrs)
-    params_samples, log_evidence = lax.scan(_one_sample, params_0, rngs)
+    params_samples, log_evidence = lax.scan(one_sample, params_0, rngs)
     
     return params_samples, log_evidence
