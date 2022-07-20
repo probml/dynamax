@@ -8,7 +8,6 @@ from tqdm.auto import trange
 
 
 def lgssm_fit_em(model, batch_emissions, num_iters=50):
-
     @jit
     def em_step(model):
         posterior_stats, marginal_loglikes = model.e_step(batch_emissions)

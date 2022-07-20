@@ -3,10 +3,7 @@ from jax import lax, value_and_grad
 from jax.scipy.linalg import solve_triangular
 
 
-
-def block_tridiag_mvn_log_normalizer(precision_diag_blocks,
-                                     precision_lower_diag_blocks,
-                                     linear_potential):
+def block_tridiag_mvn_log_normalizer(precision_diag_blocks, precision_lower_diag_blocks, linear_potential):
     """
     Compute the log normalizing constant for a multivariate normal distribution
     with natural parameters :math:`J` and :math:`h` with density,
@@ -85,20 +82,16 @@ def block_tridiag_mvn_log_normalizer(precision_diag_blocks,
     # Initialize
     Jp0 = np.zeros((dim, dim))
     hp0 = np.zeros((dim,))
-    (_, _, log_Z), (filtered_Js, filtered_hs) = \
-        lax.scan(marginalize, (Jp0, hp0, 0), np.arange(num_timesteps))
+    (_, _, log_Z), (filtered_Js, filtered_hs) = lax.scan(marginalize, (Jp0, hp0, 0), np.arange(num_timesteps))
     return log_Z, (filtered_Js, filtered_hs)
 
 
-def block_tridiag_mvn_expectations(precision_diag_blocks,
-                                   precision_lower_diag_blocks,
-                                   linear_potential):
+def block_tridiag_mvn_expectations(precision_diag_blocks, precision_lower_diag_blocks, linear_potential):
     # Run message passing code to get the log normalizer, the filtering potentials,
     # and the expected values of x. Technically, the natural parameters are -1/2 J
     # so we need to do a little correction of the gradients to get the expectations.
     f = value_and_grad(block_tridiag_mvn_log_normalizer, argnums=(0, 1, 2), has_aux=True)
-    (log_normalizer, _), grads = \
-        f(precision_diag_blocks, precision_lower_diag_blocks, linear_potential)
+    (log_normalizer, _), grads = f(precision_diag_blocks, precision_lower_diag_blocks, linear_potential)
 
     # Correct for the -1/2 J -> J implementation
     ExxT = -2 * grads[0]
@@ -120,31 +113,18 @@ def lds_to_block_tridiag(lds, data, inputs):
     T = len(data)
 
     # diagonal blocks of precision matrix
-    J_diag = np.array([
-        np.dot(C(t).T, np.linalg.solve(R(t), C(t)))
-        for t in range(T)])
+    J_diag = np.array([np.dot(C(t).T, np.linalg.solve(R(t), C(t))) for t in range(T)])
     J_diag = J_diag.at[0].add(np.linalg.inv(Q0))
-    J_diag = J_diag.at[:-1].add(np.array([
-        np.dot(A(t).T, np.linalg.solve(Q(t), A(t)))
-        for t in range(T-1)]))
-    J_diag = J_diag.at[1:].add(np.array([
-        np.linalg.inv(Q(t)) for t in range(0, T-1)]))
+    J_diag = J_diag.at[:-1].add(np.array([np.dot(A(t).T, np.linalg.solve(Q(t), A(t))) for t in range(T - 1)]))
+    J_diag = J_diag.at[1:].add(np.array([np.linalg.inv(Q(t)) for t in range(0, T - 1)]))
 
     # lower diagonal blocks of precision matrix
-    J_lower_diag = np.array([
-        -np.linalg.solve(Q(t), A(t))
-        for t in range(T-1)])
+    J_lower_diag = np.array([-np.linalg.solve(Q(t), A(t)) for t in range(T - 1)])
 
     # linear potential
-    h = np.array([np.dot(data[t] - D(t) @ inputs[t],
-                         np.linalg.solve(R(t), C(t)))
-                  for t in range(T)])
+    h = np.array([np.dot(data[t] - D(t) @ inputs[t], np.linalg.solve(R(t), C(t))) for t in range(T)])
     h = h.at[0].add(np.linalg.solve(Q0, m0))
-    h = h.at[:-1].add(np.array([
-        -np.dot(A(t).T, np.linalg.solve(Q(t), B(t) @ inputs[t]))
-        for t in range(T-1)]))
-    h = h.at[1:].add(np.array([
-        np.linalg.solve(Q(t), B(t) @ inputs[t])
-        for t in range(T-1)]))
+    h = h.at[:-1].add(np.array([-np.dot(A(t).T, np.linalg.solve(Q(t), B(t) @ inputs[t])) for t in range(T - 1)]))
+    h = h.at[1:].add(np.array([np.linalg.solve(Q(t), B(t) @ inputs[t]) for t in range(T - 1)]))
 
     return J_diag, J_lower_diag, h

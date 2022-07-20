@@ -4,16 +4,18 @@ from jax import vmap, jit
 
 # From https://www.tensorflow.org/probability/examples/
 # TensorFlow_Probability_Case_Study_Covariance_Estimation
-PSDToRealBijector = tfb.Chain([
-    tfb.Invert(tfb.FillTriangular()),
-    tfb.TransformDiagonal(tfb.Invert(tfb.Exp())),
-    tfb.Invert(tfb.CholeskyOuterProduct()),
-])
+PSDToRealBijector = tfb.Chain(
+    [
+        tfb.Invert(tfb.FillTriangular()),
+        tfb.TransformDiagonal(tfb.Invert(tfb.Exp())),
+        tfb.Invert(tfb.CholeskyOuterProduct()),
+    ]
+)
 
 
 @jit
 def pad_sequences(observations, valid_lens, pad_val=0):
-    '''
+    """
     Pad ragged sequences to a fixed length.
     Parameters
     ----------
@@ -27,7 +29,7 @@ def pad_sequences(observations, valid_lens, pad_val=0):
     -------
     * array(n, max_len)
         Ragged dataset
-    '''
+    """
 
     def pad(seq, len):
         idx = jnp.arange(1, seq.shape[0] + 1)

@@ -16,11 +16,17 @@ class HMMPosterior:
     filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
     predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
     smoothed_probs(t,k) = p(hidden(t)=k | obs(1:T))
+
+    transition probabilities may be 2d or 3d with either
+    trans_probs[i,j] = \sum_t p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
+    trans_probs[t,i,j] = p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
     """
+
     marginal_loglik: chex.Scalar = None
     filtered_probs: chex.Array = None
     predicted_probs: chex.Array = None
     smoothed_probs: chex.Array = None
+    trans_probs: chex.Array = None
 
 
 def _normalize(u, axis=0, eps=1e-15):
@@ -99,12 +105,10 @@ def hmm_filter(initial_distribution, transition_matrix, log_likelihoods):
 
 def hmm_posterior_sample(rng, initial_distribution, transition_matrix, log_likelihoods):
     """Sample a latent sequence from the posterior.
-
     Args:
         initial_distribution(k): prob(hid(1)=k)
         transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
         log_likelihoods(t,k): p(obs(t) | hid(t)=k)
-
     Returns:
         log_prob
         sampled_states(1:T)
@@ -112,7 +116,8 @@ def hmm_posterior_sample(rng, initial_distribution, transition_matrix, log_likel
     num_timesteps, num_states = log_likelihoods.shape
 
     # Run the HMM filter
-    log_normalizer, filtered_probs, _ = hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
+    post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
+    log_normalizer, filtered_probs = post.marginal_loglik, post.filtered_probs
 
     # Run the sampler backward in time
     def _step(carry, args):
@@ -128,18 +133,18 @@ def hmm_posterior_sample(rng, initial_distribution, transition_matrix, log_likel
         smoothed_probs /= smoothed_probs.sum()
 
         # Sample current state
-        state = jr.choice(rng, p=smoothed_probs)
+        state = jr.choice(rng, a=num_states, p=smoothed_probs)
 
         return state, state
 
     # Run the HMM smoother
     rngs = jr.split(rng, num_timesteps)
-    last_state = jr.choice(rngs[-1], filtered_probs[-1])
-    args = (jnp.arange(num_timesteps - 1, -1, -1), rngs[:-1], filtered_probs[:-1][::-1])
+    last_state = jr.choice(rngs[-1], a=num_states, p=filtered_probs[-1])
+    args = (jnp.arange(num_timesteps - 1, 0, -1), rngs[:-1][::-1], filtered_probs[:-1][::-1])
     _, rev_states = lax.scan(_step, last_state, args)
 
     # Reverse the arrays and return
-    states = jnp.row_stack([rev_states[::-1], last_state])
+    states = jnp.concatenate([rev_states[::-1], jnp.array([last_state])])
     return log_normalizer, states
 
 
@@ -189,8 +194,6 @@ def hmm_two_filter_smoother(initial_distribution, transition_matrix, log_likelih
     Returns:
         HMMPosterior object
     """
-    num_timesteps, num_states = log_likelihoods.shape
-
     # Run the filters forward and backward
     post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
     ll = post.marginal_loglik
@@ -203,10 +206,12 @@ def hmm_two_filter_smoother(initial_distribution, transition_matrix, log_likelih
     norm = smoothed_probs.sum(axis=1, keepdims=True)
     smoothed_probs /= norm
 
-    return HMMPosterior(marginal_loglik=ll,
-                        filtered_probs=filtered_probs,
-                        predicted_probs=predicted_probs,
-                        smoothed_probs=smoothed_probs)
+    return HMMPosterior(
+        marginal_loglik=ll,
+        filtered_probs=filtered_probs,
+        predicted_probs=predicted_probs,
+        smoothed_probs=smoothed_probs,
+    )
 
 
 def hmm_smoother(initial_distribution, transition_matrix, log_likelihoods):
@@ -255,10 +260,12 @@ def hmm_smoother(initial_distribution, transition_matrix, log_likelihoods):
     # Reverse the arrays and return
     smoothed_probs = jnp.row_stack([rev_smoothed_probs[::-1], filtered_probs[-1]])
 
-    return HMMPosterior(marginal_loglik=ll,
-                        filtered_probs=filtered_probs,
-                        predicted_probs=predicted_probs,
-                        smoothed_probs=smoothed_probs)
+    return HMMPosterior(
+        marginal_loglik=ll,
+        filtered_probs=filtered_probs,
+        predicted_probs=predicted_probs,
+        smoothed_probs=smoothed_probs,
+    )
 
 
 def hmm_fixed_lag_smoother(initial_distribution, transition_matrix, log_likelihoods, window_size):
@@ -318,10 +325,12 @@ def hmm_fixed_lag_smoother(initial_distribution, transition_matrix, log_likeliho
 
         smoothed_probs = vmap(compute_posterior, (0, 0))(filtered_probs, betas)
 
-        post = HMMPosterior(marginal_loglik=log_normalizers.sum(),
-                            filtered_probs=filtered_probs,
-                            predicted_probs=predicted_probs,
-                            smoothed_probs=smoothed_probs)
+        post = HMMPosterior(
+            marginal_loglik=log_normalizers.sum(),
+            filtered_probs=filtered_probs,
+            predicted_probs=predicted_probs,
+            smoothed_probs=smoothed_probs,
+        )
 
         return (log_normalizers, filtered_probs, predicted_probs, bmatrices), post
 
@@ -344,10 +353,12 @@ def hmm_fixed_lag_smoother(initial_distribution, transition_matrix, log_likeliho
     smoothed_probs = jnp.concatenate((jnp.expand_dims(filtered_probs, axis=0), posts.smoothed_probs))
     filtered_probs = jnp.concatenate((jnp.expand_dims(filtered_probs, axis=0), posts.filtered_probs))
 
-    posts = HMMPosterior(marginal_loglik=marginal_loglik,
-                         filtered_probs=filtered_probs,
-                         predicted_probs=predicted_probs,
-                         smoothed_probs=smoothed_probs)
+    posts = HMMPosterior(
+        marginal_loglik=marginal_loglik,
+        filtered_probs=filtered_probs,
+        predicted_probs=predicted_probs,
+        smoothed_probs=smoothed_probs,
+    )
 
     return posts
 
@@ -373,10 +384,9 @@ def hmm_posterior_mode(initial_distribution, transition_matrix, log_likelihoods)
         return best_next_score, best_next_state
 
     num_states = log_likelihoods.shape[1]
-    best_second_score, rev_best_next_states = \
-        lax.scan(_backward_pass,
-                 jnp.zeros(num_states),
-                 jnp.arange(num_timesteps - 2, -1, -1))
+    best_second_score, rev_best_next_states = lax.scan(
+        _backward_pass, jnp.zeros(num_states), jnp.arange(num_timesteps - 2, -1, -1)
+    )
     best_next_states = rev_best_next_states[::-1]
 
     # Run the forward pass
@@ -412,9 +422,16 @@ def _compute_sum_transition_probs(transition_matrix, hmm_posterior):
     # Initialize the recursion
     num_states = transition_matrix.shape[-1]
     num_timesteps = len(hmm_posterior.filtered_probs)
-    sum_transition_probs, _ = lax.scan(_step, jnp.zeros((num_states, num_states)),
-                                       (hmm_posterior.filtered_probs[:-1], hmm_posterior.smoothed_probs[1:],
-                                        hmm_posterior.predicted_probs[1:], jnp.arange(num_timesteps - 1)))
+    sum_transition_probs, _ = lax.scan(
+        _step,
+        jnp.zeros((num_states, num_states)),
+        (
+            hmm_posterior.filtered_probs[:-1],
+            hmm_posterior.smoothed_probs[1:],
+            hmm_posterior.predicted_probs[1:],
+            jnp.arange(num_timesteps - 1),
+        ),
+    )
     return sum_transition_probs
 
 
@@ -428,8 +445,7 @@ def _compute_all_transition_probs(transition_matrix, hmm_posterior):
     smoothed_probs_next = hmm_posterior.smoothed_probs[1:]
     predicted_probs_next = hmm_posterior.predicted_probs[1:]
     relative_probs_next = smoothed_probs_next / predicted_probs_next
-    transition_probs = filtered_probs[:, :, None] * \
-        transition_matrix * relative_probs_next[:, None, :]
+    transition_probs = filtered_probs[:, :, None] * transition_matrix * relative_probs_next[:, None, :]
     return transition_probs
 
 
@@ -452,15 +468,3 @@ def compute_transition_probs(transition_matrix, hmm_posterior, reduce_sum=True):
         return _compute_sum_transition_probs(transition_matrix, hmm_posterior)
     else:
         return _compute_all_transition_probs(transition_matrix, hmm_posterior)
-
-
-def _get_batch_emission_probs(hmm, obs, gamma):
-
-    def scan_fn(BB, elems):
-        o, g = elems
-        BB = BB.at[:, o].set(BB[:, o] + g)
-        return BB, jnp.zeros((0,))
-
-    BB = jnp.zeros((hmm._num_states, hmm._num_emissions))
-    BB, _ = lax.scan(scan_fn, BB, (obs, gamma))
-    return BB

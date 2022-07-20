@@ -1,0 +1,11 @@
+black[jupyter]
+jax
+jaxlib
+optax
+chex
+distrax
+tensorflow_probability
+matplotlib
+seaborn
+tqdm
+flax
