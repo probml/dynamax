@@ -188,6 +188,7 @@ class _GaussianHMM(GaussianHMM):
             initial_probs = tfd.Dirichlet(1. + stats.initial_probs).mode()
             # Transition distribution
             transition_matrix = tfd.Dirichlet(1. + stats.sum_trans_probs).mode()
+            
             # Gaussian emission distribution
             emission_means = stats.sum_x / stats.sum_w[:, None]
             emission_covs = stats.sum_xxT / stats.sum_w[:, None, None] \
