@@ -7,6 +7,48 @@ from ssm_jax.lgssm.inference import LGSSMParams, lgssm_posterior_sample
 from ssm_jax.utils_distributions import NormalInverseWishart as NIW, MatrixNormalInverseWishart as MNIW
 
 
+def niw_distribution_update(loc_pri, precision_pri, df_pri, scale_pri, Sx, SxxT, N):
+    """Update the NormalInverseWishart distribution for the initial parameters
+    
+    Returns:
+        the parameters of the posterior NIW distribution
+    """
+    loc_pos = (precision_pri*loc_pri + Sx) / (precision_pri + N)
+    precision_pos = precision_pri + N
+    df_pos = df_pri + N
+    scale_pos = scale_pri + SxxT \
+        + precision_pri*jnp.outer(loc_pri, loc_pri) - precision_pos*jnp.outer(loc_pos, loc_pos)
+    
+    return loc_pos, precision_pos, df_pos, scale_pos
+
+
+def mniw_distribution_update(M_pri, V_pri, nu_pri, Psi_pri, SxxT, SxyT, SyyT, N):
+    """Update the MatrixNormalInverseWishart distribution for the dynamics or the emission
+
+    Args:
+        M_pri:   loc of the MNIW prior
+        V_pri:   col_precision matrix of the MNIW prior
+        nu_pri:  df of the MNIW prior
+        Psi_pri: scale matrix of the MNIW prior
+        SxxT:    
+        SxyT:    
+        SyyT:    
+        N:       
+
+    Returns:
+        the parameters of the posterior MNIW distribution
+    """
+    Sxx = V_pri + SxxT
+    Sxy = SxyT + V_pri @ M_pri.T
+    Syy = SyyT + M_pri @ V_pri @ M_pri.T
+    M_pos = jnp.linalg.solve(Sxx, Sxy).T
+    V_pos = Sxx
+    nu_pos = nu_pri + N
+    Psi_pos = Psi_pri + Syy - M_pos @ Sxy
+    
+    return M_pos, V_pos, nu_pos, Psi_pos
+
+
 def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams=None, inputs=None, D_hid=None):
     """Estimation using blocked-Gibbs sampler
     
@@ -95,6 +137,8 @@ def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams=None, inputs=None,
         u, up= inputs, inputs[:-1]
         y = emissions
         
+        init_stats = (x[0], jnp.linalg.outer(x[0], x[0]), 1)
+        
         # quantities for the dynamics distribution
         # let zp[t] = [x[t], u[t], 1] for t = 0...T-2
         sum_zpzpT = jnp.block([[xp.T @ xp,          xp.T @ up,          xp.sum(0)[:, None]],
@@ -117,56 +161,15 @@ def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams=None, inputs=None,
         sum_yyT = y.T @ y
         emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
         
-        return x[0], dynamics_stats, emission_stats
-    
-    def niw_distribution_update(loc_pri, precision_pri, df_pri, scale_pri, state, N=1):
-        """Update the NormalInverseWishart distribution for the initial parameters
+        return init_stats, dynamics_stats, emission_stats
         
-        Returns:
-            the parameters of the posterior NIW distribution
-        """
-        state = jnp.atleast_2d(state)
-        loc_pos = (precision_pri*loc_pri + state.sum(axis=0)) / (precision_pri + N)
-        precision_pos = precision_pri + N
-        df_pos = df_pri + N
-        scale_pos = scale_pri + state.T @ state \
-            + precision_pri*jnp.outer(loc_pri, loc_pri) - precision_pos*jnp.outer(loc_pos, loc_pos)
-        
-        return loc_pos, precision_pos, df_pos, scale_pos
-    
-    def mniw_distribution_update(M_pri, V_pri, nu_pri, Psi_pri, SxxT, SxyT, SyyT, N):
-        """Update the MatrixNormalInverseWishart distribution for the dynamics or the emission
-
-        Args:
-            M_pri:   loc of the MNIW prior
-            V_pri:   col_precision matrix of the MNIW prior
-            nu_pri:  df of the MNIW prior
-            Psi_pri: scale matrix of the MNIW prior
-            SxxT:    
-            SxyT:    
-            SyyT:    
-            N:       
-
-        Returns:
-            the parameters of the posterior MNIW distribution
-        """
-        Sxx = V_pri + SxxT
-        Sxy = SxyT + V_pri @ M_pri.T
-        Syy = SyyT + M_pri @ V_pri @ M_pri.T
-        M_pos = jnp.linalg.solve(Sxx, Sxy).T
-        V_pos = Sxx
-        nu_pos = nu_pri + N
-        Psi_pos = Psi_pri + Syy - M_pos @ Sxy
-        
-        return M_pos, V_pos, nu_pos, Psi_pos
-        
-    def lgssm_params_sample(rng, initial_state, dynamics_stats, emission_stats):
+    def lgssm_params_sample(rng, init_stats, dynamics_stats, emission_stats):
         """Sample parameters of the model.
         """
         rngs = iter(jr.split(rng, 3))
         
         # Sample the initial params
-        initial_pos_params = niw_distribution_update(*initial_prior_params, initial_state)
+        initial_pos_params = niw_distribution_update(*initial_prior_params, *init_stats)
         Sm = NIW(*initial_pos_params).sample(seed=next(rngs))
         S, m = Sm['Sigma'], Sm['mu']
         
@@ -201,9 +204,9 @@ def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams=None, inputs=None,
         # Sample the states
         ll, states = lgssm_posterior_sample(rngs[0], params, emissions, inputs)
         # Compute sufficient statistics for parameters
-        sufficient_stats = sufficient_stats_from_sample(states)
+        _stats = sufficient_stats_from_sample(states)
         # Sample parameters
-        params_new = lgssm_params_sample(rngs[1], *sufficient_stats)
+        params_new = lgssm_params_sample(rngs[1], *_stats)
         log_probs = l_prior + ll
         return params_new, (params_new, log_probs)
     

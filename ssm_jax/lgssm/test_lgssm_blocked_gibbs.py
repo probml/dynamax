@@ -3,7 +3,6 @@ from jax import numpy as jnp
 from jax import lax
 
 from ssm_jax.lgssm.blocked_gibbs import blocked_gibbs
-from ssm_jax.lgssm.models import LinearGaussianSSM
 
 
 def test_lgssm_blocked_gibbs(num_itrs=10, timesteps=100, seed=jr.PRNGKey(0)):
@@ -45,8 +44,8 @@ def test_lgssm_blocked_gibbs(num_itrs=10, timesteps=100, seed=jr.PRNGKey(0)):
         return state_new, emission
     
     emission_1st = H.dot(initial_state) + D.dot(inputs[0]) + d + noise_emission[0]
-    _, emissions = lax.scan(state_update, initial_state, (inputs[1:], noise_dynamics, noise_emission[1:])) 
-    emissions = jnp.row_stack((emission_1st, emissions))   
+    _, _emissions = lax.scan(state_update, initial_state, (inputs[1:], noise_dynamics, noise_emission[1:])) 
+    emissions = jnp.row_stack((emission_1st, _emissions))   
     
     # Set the hyperparameter for the prior distribution of parameters
     loc_init, precision_init, df_init, scale_init = jnp.ones(dim_hid), 1., dim_hid, jnp.eye(dim_hid)
