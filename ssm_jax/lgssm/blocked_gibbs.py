@@ -12,7 +12,7 @@ from NIW import NormalInverseWishart as NIW
 from NIW import InverseWishart as IW
 
 
-def lgssm_blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams=None, inputs=None, dimension_hidden=None):
+def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams, inputs=None):
     """Estimation using blocked-Gibbs sampler
     
     Assume that parameters are fixed over time
@@ -26,7 +26,7 @@ def lgssm_blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams=None, inputs
     initial_prior_params, dynamics_prior_params, emission_prior_params = prior_hyperparams
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-    D_hid = dimension_hidden
+    D_hid = initial_prior_params
     D_obs = emissions.shape[1]
     D_in = inputs.shapes[1]
     

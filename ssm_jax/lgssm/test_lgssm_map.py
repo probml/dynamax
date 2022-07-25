@@ -8,7 +8,7 @@ from blocked_gibbs import lgssm_blocked_gibbs
 from models import LinearGaussianSSM
 
 
-def test_lgssm_blocked_gibbs(num_itrs=100, timesteps=100, seed=jr.PRNGKey(0)):
+def test_lgssm_map(num_itrs=100, timesteps=100, seed=jr.PRNGKey(0)):
     
     # Set the dimension of the system
     dim_obs = 2
@@ -57,10 +57,4 @@ def test_lgssm_blocked_gibbs(num_itrs=100, timesteps=100, seed=jr.PRNGKey(0)):
     emission_prior_params = (M_ems, V_ems, nu_ems, Psi_ems)
     prior_hyperparams = (initial_prior_params, dynamics_prior_params, emission_prior_params)
 
-    # Run the blocked gibbs sampling algorithm
-    params_samples, log_probs = lgssm_blocked_gibbs(next(key), 
-                                                    num_itrs, 
-                                                    emissions, 
-                                                    prior_hyperparams, 
-                                                    inputs, 
-                                                    dimension_hidden=None)
+    
