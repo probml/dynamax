@@ -2,13 +2,12 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 
-from distrax import MultivariateNormalFullCovariance as MVN
-from inference import LGSSMParams, lgssm_posterior_sample
+from ssm_jax.lgssm.inference import LGSSMParams, lgssm_posterior_sample
 
-from utils_distributions import NormalInverseWishart as NIW, InverseWishart as IW, MatrixNormal as MN, MatrixNormalInverseWishart as MNIW
+from ssm_jax.utils_distributions import NormalInverseWishart as NIW, MatrixNormalInverseWishart as MNIW
 
 
-def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams, inputs=None):
+def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams=None, inputs=None, D_hid=None):
     """Estimation using blocked-Gibbs sampler
     
     Assume that parameters are fixed over time
@@ -28,14 +27,32 @@ def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams, inputs=None):
                                 is a tuple of parameters of an MNIW object
                            emission_prior_params = (loc, col_precision_matrix, df, scale)
                                 is a tuple of parameters of an MNIW object
+        D_hid:             dimension of hidden state. Not needed if prior_hyperparams is not None,
+                           otherwise D_hid must be provided
         inputs:            inputs
     """
-    initial_prior_params, dynamics_prior_params, emission_prior_params = prior_hyperparams
+    assert prior_hyperparams is not None or D_hid is not None, \
+           "prior_hyperparams and D_hid should not both be None"
+    
+    if prior_hyperparams is not None:
+        initial_prior_params, dynamics_prior_params, emission_prior_params = prior_hyperparams
+        D_hid = initial_prior_params[0].shape[0]
+    else:
+        # Set hyperparameters for the prior
+        initial_prior_params = jnp.zeros(D_hid), 1., D_hid, 1e4*jnp.eye(D_hid)
+        dynamics_prior_params = (jnp.zeros((D_hid, D_hid+D_in+1)), 
+                                 jnp.eye(D_hid+D_in+1), 
+                                 D_hid, 
+                                 1e4 * jnp.eye(D_hid))
+        emission_prior_params = (jnp.zeros((D_obs, D_hid+D_in+1)), 
+                                 jnp.eye(D_hid+D_in+1), 
+                                 D_obs, 
+                                 1e4 * jnp.eye(D_obs))
+        
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-    D_hid = initial_prior_params[0].shape[0]
     D_obs = emissions.shape[1]
-    D_in = inputs.shapes[1]
+    D_in = inputs.shape[1]
     
     def log_prior_prob(params):
         """log probability of the model parameters under the prior distributions
@@ -48,65 +65,24 @@ def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams, inputs=None):
         """
         # log prior probability of the initial state
         initial_pri = NIW(*initial_prior_params)
-        lp_Sm = initial_pri.log_prob({'mu':params.initial_mean, 
-                                      'Sigma':params.initial_covariance})
+        lp_init = initial_pri.log_prob({'mu':params.initial_mean, 
+                                        'Sigma':params.initial_covariance})
         
         # log prior probability of the dynamics
         QFBb_pri = MNIW(*dynamics_prior_params)
-        lp_QFBb = QFBb_pri.log_prob({'Matrix':jnp.hstack((params.dynamics_matrix, 
-                                                          jnp.vstack((params.dynamics_input_weights,
-                                                                      params.dynamics_bias)))),
-                                     'Sigma':params.dynamics_covariance})
+        lp_dyn = QFBb_pri.log_prob({'Matrix':jnp.hstack((params.dynamics_matrix, 
+                                                         jnp.hstack((params.dynamics_input_weights,
+                                                                     params.dynamics_bias[:,None])))),
+                                    'Sigma':params.dynamics_covariance})
         
         # log prior probability of the emission
         RHDd_pri = MNIW(*emission_prior_params)
-        lp_RHDd = RHDd_pri.log_prob({'Matrix':jnp.hstack((params.emission_matrix, 
-                                                          jnp.vstack((params.emission_input_weights,
-                                                                      params.emission_bias)))),
-                                     'Sigma':params.emission_covariance})
+        lp_ems = RHDd_pri.log_prob({'Matrix':jnp.hstack((params.emission_matrix, 
+                                                         jnp.hstack((params.emission_input_weights,
+                                                                     params.emission_bias[:,None])))),
+                                    'Sigma':params.emission_covariance})
         
-        return lp_Sm + lp_QFBb + lp_RHDd 
-    
-    def mniw_distribution_update(M_pri, V_pri, nu_pri, Psi_pri, SxxT, SxyT, SyyT, N):
-        """Update the MatrixNormalInverseWishart distribution for the dynamics or the emission
-
-        Args:
-            M_pri:   loc of the MNIW prior
-            V_pri:   col_precision matrix of the MNIW prior
-            nu_pri:  df of the MNIW prior
-            Psi_pri: scale matrix of the MNIW prior
-            SxxT:    
-            SxyT:    
-            SyyT:    
-            N:       
-
-        Returns:
-            the parameters of the posterior MNIW distribution
-        """
-        Sxx = V_pri + SxxT
-        Sxy = SxyT + V_pri @ M_pri.T
-        Syy = SyyT + M_pri @ V_pri @ M_pri.T
-        M_pos = jnp.linalg.solve(Sxx, Sxy).T
-        V_pos = Sxx
-        nu_pos = nu_pri + N
-        Psi_pos = Psi_pri + Syy - M_pos @ Sxy
-        
-        return M_pos, V_pos, nu_pos, Psi_pos
-    
-    def niw_distribution_update(loc_pri, precision_pri, df_pri, scale_pri, state, N=1):
-        """Update the NormalInverseWishart distribution for the initial parameters
-        
-        Returns:
-            the parameters of the posterior NIW distribution
-        """
-        state = jnp.atleast_2d(state)
-        loc_pos = (precision_pri*loc_pri + state.sum(axis=0)) / (precision_pri + N)
-        precision_pos = precision_pri + N
-        df_pos = df_pri + N
-        scale_pos = scale_pri + state.T @ state \
-            + precision_pri*jnp.outer(loc_pri, loc_pri) - precision_pos*jnp.outer(loc_pos, loc_pos)
-        
-        return loc_pos, precision_pos, df_pos, scale_pos
+        return lp_init + lp_dyn + lp_ems 
     
     def sufficient_stats_from_sample(states):
         """Convert samples of states to sufficient statistics
@@ -142,6 +118,47 @@ def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams, inputs=None):
         emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
         
         return x[0], dynamics_stats, emission_stats
+    
+    def niw_distribution_update(loc_pri, precision_pri, df_pri, scale_pri, state, N=1):
+        """Update the NormalInverseWishart distribution for the initial parameters
+        
+        Returns:
+            the parameters of the posterior NIW distribution
+        """
+        state = jnp.atleast_2d(state)
+        loc_pos = (precision_pri*loc_pri + state.sum(axis=0)) / (precision_pri + N)
+        precision_pos = precision_pri + N
+        df_pos = df_pri + N
+        scale_pos = scale_pri + state.T @ state \
+            + precision_pri*jnp.outer(loc_pri, loc_pri) - precision_pos*jnp.outer(loc_pos, loc_pos)
+        
+        return loc_pos, precision_pos, df_pos, scale_pos
+    
+    def mniw_distribution_update(M_pri, V_pri, nu_pri, Psi_pri, SxxT, SxyT, SyyT, N):
+        """Update the MatrixNormalInverseWishart distribution for the dynamics or the emission
+
+        Args:
+            M_pri:   loc of the MNIW prior
+            V_pri:   col_precision matrix of the MNIW prior
+            nu_pri:  df of the MNIW prior
+            Psi_pri: scale matrix of the MNIW prior
+            SxxT:    
+            SxyT:    
+            SyyT:    
+            N:       
+
+        Returns:
+            the parameters of the posterior MNIW distribution
+        """
+        Sxx = V_pri + SxxT
+        Sxy = SxyT + V_pri @ M_pri.T
+        Syy = SyyT + M_pri @ V_pri @ M_pri.T
+        M_pos = jnp.linalg.solve(Sxx, Sxy).T
+        V_pos = Sxx
+        nu_pos = nu_pri + N
+        Psi_pos = Psi_pri + Syy - M_pos @ Sxy
+        
+        return M_pos, V_pos, nu_pos, Psi_pos
         
     def lgssm_params_sample(rng, initial_state, dynamics_stats, emission_stats):
         """Sample parameters of the model.
@@ -150,18 +167,18 @@ def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams, inputs=None):
         
         # Sample the initial params
         initial_pos_params = niw_distribution_update(*initial_prior_params, initial_state)
-        Sm = NIW(initial_pos_params).sample(seed=next(rngs))
+        Sm = NIW(*initial_pos_params).sample(seed=next(rngs))
         S, m = Sm['Sigma'], Sm['mu']
         
         # Sample the dynamics params
         dynamics_pos_params = mniw_distribution_update(*dynamics_prior_params, *dynamics_stats)
-        QFBb = MNIW(dynamics_pos_params).sample(seed=next(rngs))
+        QFBb = MNIW(*dynamics_pos_params).sample(seed=next(rngs))
         Q, FBb = QFBb['Sigma'], QFBb['Matrix']
         F, B, b = FBb[:, :D_hid], FBb[:, D_hid:-1], FBb[:, -1]
         
         # Sample the emission params
         emission_pos_params = mniw_distribution_update(*emission_prior_params, *emission_stats)
-        RHDd = MNIW(emission_pos_params).sample(seed=next(rngs))
+        RHDd = MNIW(*emission_pos_params).sample(seed=next(rngs))
         R, HDd = RHDd['Sigma'], RHDd['Matrix']
         H, D, d = HDd[:, :D_hid], HDd[:, D_hid:-1], HDd[:, -1]
         
@@ -189,18 +206,6 @@ def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams, inputs=None):
         params_new = lgssm_params_sample(rngs[1], *sufficient_stats)
         log_probs = l_prior + ll
         return params_new, (params_new, log_probs)
-    
-    # Initialize the parameters from the prior
-    if prior_hyperparams is None:
-        initial_prior_params = jnp.zeros(D_hid), 1., D_hid, 1e4*jnp.eye(D_hid)
-        dynamics_prior_params = (jnp.zeros((D_hid, D_hid+D_in+1)), 
-                                 jnp.eye(D_hid+D_in+1), 
-                                 D_hid, 
-                                 1e4 * jnp.eye(D_hid))
-        emission_prior_params = (jnp.zeros((D_obs, D_hid+D_in+1)), 
-                                 jnp.eye(D_hid+D_in+1), 
-                                 D_obs, 
-                                 1e4 * jnp.eye(D_obs))
     
     rng, *rngs = jr.split(rng, 3+1)
     rngs = iter(rngs)
@@ -231,8 +236,8 @@ def blocked_gibbs(rng, num_itrs, emissions, prior_hyperparams, inputs=None):
                            emission_covariance = R_0)
     
     # Sample
-    rngs = jr.split(rng, num_itrs)
-    _, samples_and_log_probs = lax.scan(one_sample, params_0, rngs)
+    keys = jr.split(rng, num_itrs)
+    _, samples_and_log_probs = lax.scan(one_sample, params_0, keys)
     samples_of_parameters, log_probs = samples_and_log_probs
     
     return samples_of_parameters, log_probs

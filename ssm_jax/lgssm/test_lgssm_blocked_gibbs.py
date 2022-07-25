@@ -2,13 +2,11 @@ from jax import random as  jr
 from jax import numpy as jnp
 from jax import lax
 
-import os
-os.chdir('/home/xinglong/git_local/ssm-jax/ssm_jax/lgssm')
-from blocked_gibbs import lgssm_blocked_gibbs
-from models import LinearGaussianSSM
+from ssm_jax.lgssm.blocked_gibbs import blocked_gibbs
+from ssm_jax.lgssm.models import LinearGaussianSSM
 
 
-def test_lgssm_blocked_gibbs(num_itrs=100, timesteps=100, seed=jr.PRNGKey(0)):
+def test_lgssm_blocked_gibbs(num_itrs=10, timesteps=100, seed=jr.PRNGKey(0)):
     
     # Set the dimension of the system
     dim_obs = 2
@@ -23,10 +21,12 @@ def test_lgssm_blocked_gibbs(num_itrs=100, timesteps=100, seed=jr.PRNGKey(0)):
                    [0, 1, 0, 0, 0, 0],
                    [0, 0, 1, 0, 0, 0],
                    [0, 0, 0, 1, 0, 0]])
+    b = 1e-1*jnp.ones(dim_hid)
     R = 1e-3 * jnp.eye(dim_obs)
     H = jnp.array([[1.0, 0, 0, 0], [0, 1.0, 0, 0]])
     D = jnp.array([[0, 0, 0, 0, 1, 0],
                    [0, 0, 0, 0, 0, 1]])
+    d = 1e-1*jnp.ones(dim_obs)
     
     # Set the input
     u1, u2 = 1., 2.
@@ -40,27 +40,34 @@ def test_lgssm_blocked_gibbs(num_itrs=100, timesteps=100, seed=jr.PRNGKey(0)):
     
     def state_update(state, extras):
         input, noise_dyn, noise_ems = extras
-        state_new = F.dot(state)  + B.dot(input) + noise_dyn
-        emission = H.dot(state_new) + D.dot(input) + noise_ems
+        state_new = F.dot(state)  + B.dot(input) + b + noise_dyn
+        emission = H.dot(state_new) + D.dot(input) + d + noise_ems
         return state_new, emission
     
-    emission_1st = H.dot(initial_state) + D.dot(inputs[0]) + noise_emission[0]
+    emission_1st = H.dot(initial_state) + D.dot(inputs[0]) + d + noise_emission[0]
     _, emissions = lax.scan(state_update, initial_state, (inputs[1:], noise_dynamics, noise_emission[1:])) 
     emissions = jnp.row_stack((emission_1st, emissions))   
     
     # Set the hyperparameter for the prior distribution of parameters
-    mu_init, Cov_init = jnp.zeros(dim_hid), jnp.eye(dim_hid)
-    M_dyn, V_dyn, nu_dyn, Psi_dyn = jnp.zeros((dim_hid, dim_hid+dim_in)), jnp.eye(dim_hid+dim_in), dim_hid, jnp.eye(dim_hid)
-    M_ems, V_ems, nu_ems, Psi_ems = jnp.zeros((dim_obs, dim_hid+dim_in)), jnp.eye(dim_hid+dim_in), dim_obs, jnp.eye(dim_obs)
-    initial_prior_params = (mu_init, Cov_init)
+    loc_init, precision_init, df_init, scale_init = jnp.ones(dim_hid), 1., dim_hid, jnp.eye(dim_hid)
+    initial_prior_params = (loc_init, precision_init, df_init, scale_init)
+    
+    M_dyn, V_dyn = jnp.hstack((F, B, b[:,None])), jnp.eye(dim_hid+dim_in+1)
+    nu_dyn, Psi_dyn = dim_hid, jnp.eye(dim_hid)
     dynamics_prior_params = (M_dyn, V_dyn, nu_dyn, Psi_dyn)
+    
+    M_ems, V_ems = jnp.hstack((H, D, d[:,None])), jnp.eye(dim_hid+dim_in+1)
+    nu_ems, Psi_ems = dim_obs, jnp.eye(dim_obs)
     emission_prior_params = (M_ems, V_ems, nu_ems, Psi_ems)
+    
     prior_hyperparams = (initial_prior_params, dynamics_prior_params, emission_prior_params)
 
     # Run the blocked gibbs sampling algorithm
-    params_samples, log_probs = lgssm_blocked_gibbs(next(key), 
-                                                    num_itrs, 
-                                                    emissions, 
-                                                    prior_hyperparams, 
-                                                    inputs, 
-                                                    dimension_hidden=None)
+    samples_of_parameters, log_probs = blocked_gibbs(jr.PRNGKey(0), 
+                                                     num_itrs, 
+                                                     emissions, 
+                                                     prior_hyperparams, 
+                                                     inputs, 
+                                                     D_hid=None)
+    
+    return samples_of_parameters, log_probs

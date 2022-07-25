@@ -1,9 +1,7 @@
 import jax.numpy as jnp
 import jax.random as jr
 
-import os
-os.chdir('/home/xinglong/git_local/ssm-jax/ssm_jax')
-from utils_distributions import NormalInverseWishart as NIW, InverseWishart as IW, MatrixNormal as MN, MatrixNormalInverseWishart as MNIW
+from ssm_jax.utils_distributions import NormalInverseWishart as NIW, InverseWishart as IW, MatrixNormal as MN, MatrixNormalInverseWishart as MNIW
 
 key = jr.PRNGKey(0)
 

@@ -6,7 +6,6 @@ and
 https://github.com/lindermanlab/hackathons/blob/master/notebooks/TFP_Normal_Inverse_Wishart_(Part_2).ipynb
 """
 
-from distrax import MultivariateNormalFullCovariance
 import jax.numpy as jnp
 import tensorflow_probability.substrates.jax as tfp
 from typing import Any, Optional
