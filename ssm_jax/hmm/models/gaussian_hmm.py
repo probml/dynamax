@@ -7,10 +7,10 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
+from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
-from ssm_jax.hmm.models.parameter import Parameter
 from ssm_jax.utils import PSDToRealBijector
 
 

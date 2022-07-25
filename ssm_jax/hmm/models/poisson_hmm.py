@@ -8,10 +8,10 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
+from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
-from ssm_jax.hmm.models.parameter import Parameter
 
 
 @register_pytree_node_class
@@ -45,7 +45,7 @@ class PoissonHMM(BaseHMM):
 
     def unfreeze_emission_rates(self):
         self._emission_rates_param.is_frozen = False
-        
+
     # Properties to get various parameters of the model
     def emission_distribution(self, state):
         return tfd.Independent(tfd.Poisson(rate=self.emission_rates[state]), reinterpreted_batch_ndims=1)

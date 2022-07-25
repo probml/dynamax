@@ -9,10 +9,10 @@ from jax import tree_map
 from jax import vmap
 from jax.nn import one_hot
 from jax.tree_util import register_pytree_node_class
+from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
-from ssm_jax.hmm.models.parameter import Parameter
 
 
 @register_pytree_node_class
@@ -44,7 +44,7 @@ class CategoricalHMM(BaseHMM):
     @property
     def emission_probs(self):
         return self._emission_probs_param.value
-    
+
     @property
     def num_emissions(self):
         return self.emission_probs.shape[1]
@@ -61,7 +61,7 @@ class CategoricalHMM(BaseHMM):
 
     def unfreeze_emission_probabilities(self):
         self._emission_probs_param.is_frozen = False
-        
+
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two

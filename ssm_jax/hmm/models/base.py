@@ -14,8 +14,7 @@ from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import hmm_two_filter_smoother
 from ssm_jax.hmm.learning import hmm_fit_sgd
-from ssm_jax.hmm.models.module import Module
-from ssm_jax.hmm.models.parameter import Parameter
+from ssm_jax.abstractions import Module, Parameter
 
 
 class BaseHMM(Module):
@@ -59,7 +58,7 @@ class BaseHMM(Module):
 
     def freeze_initial_probabilities(self):
         self._initial_probs_param.is_frozen = True
-    
+
     def unfreeze_initial_probabilities(self):
         self._initial_probs_param.is_frozen = False
 
@@ -68,7 +67,7 @@ class BaseHMM(Module):
 
     def unfreeze_transition_matrix(self):
         self._transition_probs_param.is_frozen = False
-        
+
     @property
     def transition_matrix(self):
         # Note: This will generalize to models with transition *functions*
