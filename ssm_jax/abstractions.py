@@ -1,12 +1,16 @@
 from abc import ABC
-
 from jax.tree_util import register_pytree_node_class
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
 
 @register_pytree_node_class
 class Parameter:
-
+    """A lightweight wrapper for parameters of a model. It combines the `value`
+    (a JAX PyTree) with a flag `is_frozen` (bool) to specify whether or not
+    the parameter should be updated during model learning, as well as a `bijector`
+    (tensorflow_probability.bijectors.Bijector) to map the parameter to/from an
+    unconstrained space.
+    """
     def __init__(self, value, is_frozen=False, bijector=None):
         self.value = value
         self.is_frozen = is_frozen
@@ -32,13 +36,18 @@ class Parameter:
 
 
 class Module(ABC):
-
+    """A base class for state space models. Such models consist of parameters, which
+    we may learn, as well as hyperparameters, which specify static properties of the
+    model. This base class allows parameters to be indicated a standardized way
+    so that they can easily be converted to/from unconstrained form. It also uses
+    these parameters to implement the tree_flatten and tree_unflatten methods necessary
+    to register a model as a JAX PyTree.
+    """
     @property
     def unconstrained_params(self):
         # Find all parameters and convert to unconstrained
         items = sorted(self.__dict__.items())
         params = [prm.unconstrained_value for key, prm in items if isinstance(prm, Parameter) and not prm.is_frozen]
-
         return params
 
     @unconstrained_params.setter
@@ -55,14 +64,6 @@ class Module(ABC):
         items = sorted(self.__dict__.items())
         hyper_values = [val for key, val in items if not isinstance(val, Parameter)]
         return hyper_values
-
-    @hyperparams.setter
-    def hyperparams(self, values):
-        items = sorted(self.__dict__.items())
-        params = [val for key, val in items if not isinstance(val, Parameter)]
-        assert len(params) == len(values)
-        for param, value in zip(params, values):
-            param.value = value
 
     # Generic implementation of tree_flatten and unflatten. This assumes that
     # the Parameters are all valid JAX PyTree nodes.
