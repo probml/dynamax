@@ -1,33 +1,30 @@
 from abc import abstractproperty
-from jax import jit, lax, value_and_grad, vmap, tree_map
+from jax import vmap, tree_map
 import jax.numpy as jnp
-import jax.random as jr
 import optax
-from tqdm.auto import trange
 from functools import partial
 import tensorflow_probability.substrates.jax.distributions as tfd
 
-from learning import hmm_fit_sgd, _sample_minibatches
-from models import BaseHMM, GaussianHMM
-from NIW import NormalInverseWishart as NIW 
-from NIW import InverseWishart as IW
-
+from ssm_jax.hmm.learning import hmm_fit_sgd
+from ssm_jax.hmm.models.base import BaseHMM
+from ssm_jax.hmm.models.gaussian_hmm import GaussianHMM
+from ssm_jax.utils_distributions import NormalInverseWishart as NIW, MatrixNormalInverseWishart as MNIW
 
 class _BaseHMM(BaseHMM):
     
     def __init__(self, initial_probabilities, transition_matrix, 
-                 initial_dirichlet_concentration=None, transition_dirichlet_concentration=None):
-        super().__init__(self, initial_probabilities, transition_matrix)
+                 prior_dirichlet_concentrations=None):
+        super().__init__(initial_probabilities, transition_matrix)
         
-        if initial_dirichlet_concentration is None:
-            initial_dirichlet_concentration = 1e-4 * jnp.ones(self.num_states)
-        if transition_dirichlet_concentration is None:
-            transition_dirichlet_concentration = 1e-4 * jnp.ones(self.num_states)
-            
-        self._initial_dirichlet_concent = initial_dirichlet_concentration
-        self._transition_dirichlet_concent = transition_dirichlet_concentration
-        self._initial_prior = tfd.Dirichlet(initial_dirichlet_concentration)
-        self._transition_prior = tfd.Dirichlet(transition_dirichlet_concentration)
+        if prior_dirichlet_concentrations is None:
+            self._init_dirichlet_concentration = 1e-4 * jnp.ones(self.num_states)
+            self._transit_dirichlet_concentration = 1e-4 * jnp.ones(self.num_states)
+        else:
+            self._init_dirichlet_concentration = prior_dirichlet_concentrations[0]
+            self._transit_dirichlet_concentration = prior_dirichlet_concentrations[1]
+
+        self._initial_prior = tfd.Dirichlet(self._init_dirichlet_concentration)
+        self._transition_prior = tfd.Dirichlet(self._transit_dirichlet_concentration)
         
         @property
         def initial_prior(self):
@@ -46,7 +43,8 @@ class _BaseHMM(BaseHMM):
             # return the parameter of the emission distribution for all clusters
             return NotImplementedError
         
-    def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, optimizer=optax.adam(1e-2), num_iters=50, MAP=True):
+    def m_step(self, batch_emissions, batch_posteriors, batch_trans_probs, 
+               optimizer=optax.adam(1e-2), num_iters=50):
         
         hypers = self.hyperparams
         
@@ -58,17 +56,14 @@ class _BaseHMM(BaseHMM):
             lp += jnp.sum(trans_probs * jnp.log(hmm.transition_matrix))
             lp += jnp.sum(expected_states * log_likelihoods)
             
-            if MAP:
-                initial_params = hmm.initial_probabilities
-                transition_params = hmm.transition_matrix
-                emissions_params = hmm.emissions_params
-                l_prior += hmm.initial_prior.log_prob(initial_params)
-                l_prior += vmap(hmm.transition_prior.log_prob)(transition_params).sum()
-                l_prior = vmap(hmm.emission_prior.log_prob)(emissions_params).sum()
-                
-                return lp + l_prior         
+            initial_params = hmm.initial_probabilities
+            transition_params = hmm.transition_matrix
+            emissions_params = hmm.emissions_params
+            l_prior += hmm.initial_prior.log_prob(initial_params)
+            l_prior += vmap(hmm.transition_prior.log_prob)(transition_params).sum()
+            l_prior = vmap(hmm.emission_prior.log_prob)(emissions_params).sum()
             
-            return lp 
+            return lp + l_prior         
             
         def neg_expected_log_joint(params):
             hmm = self.from_unconstrained_params(params, hypers)
@@ -78,36 +73,27 @@ class _BaseHMM(BaseHMM):
         
         hmm, losses = hmm_fit_sgd(self, batch_emissions, optimizer, num_iters, neg_expected_log_joint)
          
-        return hmm, -losses
+        return hmm
     
     
 class _GaussianHMM(GaussianHMM):
     
-    def __init__(self, initial_probabilities, transition_matrix, emission_means, emission_covariance_matrices, 
-                 initial_dirichlet_concentration=None, transition_dirichlet_concentration=None,
-                 emission_prior_type='Joint',
-                 emission_means_mean=None, emission_means_cov=None,
-                 emission_covariance_df=None, emission_covariance_scale=None,
-                 emission_precision=None):
-        assert emission_prior_type in ['Joint', 'Mean', 'Covariance']
-        super().__init__(initial_probabilities, transition_matrix, emission_means, emission_covariance_matrices)
-        self.emission_dim = emission_means.shape[1]
-        self._emission_prior_type = emission_prior_type
+    def __init__(self, initial_probabilities, transition_matrix, 
+                 prior_dirichlet_concentration,
+                 emission_means, emission_covariance_matrices,
+                 emission_prior_hyperparams):
         
-        if initial_dirichlet_concentration is None:
-            initial_dirichlet_concentration = 1e-4 * jnp.ones(self.num_states)
-        if transition_dirichlet_concentration is None:
-            transition_dirichlet_concentration = 1e-4 * jnp.ones(self.num_states)
-        if emission_covariance_scale is None:
-            emission_covariance_scale = 1e4 * jnp.eye(self.emission_dim)
-        if emission_covariance_df is None:
-            emission_covariance_df = self.emission_dim - 1. + 1e-4
-        if emission_means_mean is None:
-            emission_means_mean = jnp.zeros(self.emission_dim)
-        if emission_means_cov is None:
-            emission_means_cov = 1e4 * jnp.eye(self.emission_dim)
-        if emission_precision is None:
-            emission_precision = 1.
+        super().__init__(initial_probabilities, transition_matrix, 
+                         emission_means, emission_covariance_matrices)
+        
+        self.emission_dim = emission_means.shape[1]
+        
+        if emission_prior_hyperparams is None:
+            niw_params = (jnp.zeros(self.emission_dim),
+                          1.,
+                          self.emission_dim,
+                          1e4 * jnp.eye(self.emission_dim))
+            emission_prior_hyperparams = niw_params
             
         self._initial_dirichlet_concent = initial_dirichlet_concentration
         self._transition_dirichlet_concent = transition_dirichlet_concentration
