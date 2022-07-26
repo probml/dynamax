@@ -24,7 +24,7 @@ _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _outer = vmap(lambda x, y: jnp.atleast_2d(x).T @ jnp.atleast_2d(y), 0, 0)
 _process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
 _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
-_compute_lambda = lambda x, y, z: x**2 + (y + z) - z
+_compute_lambda = lambda x, y, z: x**2 * (y + z) - z
 
 
 def _compute_sigmas(m, P, n, lamb):
