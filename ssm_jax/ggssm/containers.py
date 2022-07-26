@@ -1,8 +1,8 @@
 from typing import Callable
+from itertools import product
 from dataclasses import dataclass, field
 
 from numpy.polynomial.hermite_e import hermegauss
-from sklearn.utils.extmath import cartesian
 from jax import jacfwd
 from jax import vmap
 import jax.numpy as jnp
@@ -124,8 +124,7 @@ class GHKFParams(SigmaPointParams):
         n = len(self.initial_mean)
         samples_1d, weights_1d = hermegauss(self.order)
         weights_1d /= weights_1d.sum()
-        print(jnp.array([weights_1d] * n))
-        weights = jnp.prod(cartesian(jnp.array([weights_1d] * n)), axis=1)
-        unit_sigmas = cartesian(jnp.array([samples_1d] * n))
+        weights = jnp.prod(jnp.array(list(product(weights_1d, repeat=n))), axis=1)
+        unit_sigmas = jnp.array(list(product(samples_1d, repeat=n)))
         sigmas = m + vmap(jnp.matmul, [None, 0], 0)(jnp.linalg.cholesky(P), unit_sigmas)
         return weights, weights, sigmas
