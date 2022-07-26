@@ -34,8 +34,8 @@ class BaseHMM(Module):
         assert transition_matrix.shape == (num_states, num_states)
 
         # Store the parameters
-        self._initial_probs_param = Parameter(initial_probabilities, bijector=tfb.Invert(tfb.SoftmaxCentered()))
-        self._transition_probs_param = Parameter(transition_matrix, bijector=tfb.Invert(tfb.SoftmaxCentered()))
+        self._initial_probs = Parameter(initial_probabilities, bijector=tfb.Invert(tfb.SoftmaxCentered()))
+        self._transition_matrix = Parameter(transition_matrix, bijector=tfb.Invert(tfb.SoftmaxCentered()))
 
     # Properties to get various attributes of the model.
     @property
@@ -46,32 +46,20 @@ class BaseHMM(Module):
     def num_obs(self):
         return self.emission_distribution(0).event_shape[0]
 
-    def initial_distribution(self):
-        return tfd.Categorical(probs=self._initial_probs_param.value)
-
-    def transition_distribution(self, state):
-        return tfd.Categorical(probs=self._transition_probs_param.value[state])
-
     @property
-    def initial_probabilities(self):
-        return self.initial_distribution().probs_parameter()
-
-    def freeze_initial_probabilities(self):
-        self._initial_probs_param.is_frozen = True
-
-    def unfreeze_initial_probabilities(self):
-        self._initial_probs_param.is_frozen = False
-
-    def freeze_transition_matrix(self):
-        self._transition_probs_param.is_frozen = True
-
-    def unfreeze_transition_matrix(self):
-        self._transition_probs_param.is_frozen = False
+    def initial_probs(self):
+        return self._initial_probs
 
     @property
     def transition_matrix(self):
-        # Note: This will generalize to models with transition *functions*
-        return vmap(lambda state: self.transition_distribution(state).probs_parameter())(jnp.arange(self.num_states))
+        return self._transition_matrix
+
+    # The following three functions define a state space model
+    def initial_distribution(self):
+        return tfd.Categorical(probs=self._initial_probs.value)
+
+    def transition_distribution(self, state):
+        return tfd.Categorical(probs=self._transition_matrix.value[state])
 
     @abstractmethod
     def emission_distribution(self, state):
@@ -118,22 +106,29 @@ class BaseHMM(Module):
     # Basic inference code
     def marginal_log_prob(self, emissions):
         """Compute log marginal likelihood of observations."""
-        post = hmm_filter(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+        post = hmm_filter(self.initial_probs.value,
+                          self.transition_matrix.value,
+                          self._conditional_logliks(emissions))
         ll = post.marginal_loglik
         return ll
 
     def most_likely_states(self, emissions):
         """Compute Viterbi path."""
-        return hmm_posterior_mode(self.initial_probabilities, self.transition_matrix,
+        return hmm_posterior_mode(self.initial_probs.value,
+                                  self.transition_matrix.value,
                                   self._conditional_logliks(emissions))
 
     def filter(self, emissions):
         """Compute filtering distribution."""
-        return hmm_filter(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+        return hmm_filter(self.initial_probs.value,
+                          self.transition_matrix.value,
+                          self._conditional_logliks(emissions))
 
     def smoother(self, emissions):
         """Compute smoothing distribution."""
-        return hmm_smoother(self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions))
+        return hmm_smoother(self.initial_probs.value,
+                            self.transition_matrix.value,
+                            self._conditional_logliks(emissions))
 
     # Expectation-maximization (EM) code
     def e_step(self, batch_emissions):
@@ -143,11 +138,12 @@ class BaseHMM(Module):
 
         def _single_e_step(emissions):
             # TODO: do we need to use dynamic slice?
-            posterior = hmm_two_filter_smoother(self.initial_probabilities, self.transition_matrix,
+            posterior = hmm_two_filter_smoother(self.initial_probs.value,
+                                                self.transition_matrix.value,
                                                 self._conditional_logliks(emissions))
 
             # Compute the transition probabilities
-            posterior.trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+            posterior.trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
 
             return posterior
 
@@ -170,8 +166,8 @@ class BaseHMM(Module):
             log_likelihoods = hmm._conditional_logliks(emissions)
             expected_states = posterior.smoothed_probs
 
-            lp = jnp.sum(expected_states[0] * jnp.log(hmm.initial_probabilities))
-            lp += jnp.sum(trans_probs * jnp.log(hmm.transition_matrix))
+            lp = jnp.sum(expected_states[0] * jnp.log(hmm.initial_probs.value))
+            lp += jnp.sum(trans_probs * jnp.log(hmm.transition_matrix.value))
             lp += jnp.sum(expected_states * log_likelihoods)
             return lp
 

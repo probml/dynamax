@@ -25,6 +25,12 @@ class Parameter:
     def unconstrained_value(self):
         return self.bijector(self.value)
 
+    def freeze(self):
+        self.is_frozen = True
+
+    def unfreeze(self):
+        self.is_frozen = False
+
     def tree_flatten(self):
         children = (self.value,)
         aux_data = self.is_frozen, self.bijector

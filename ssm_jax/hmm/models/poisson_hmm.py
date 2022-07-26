@@ -26,7 +26,7 @@ class PoissonHMM(BaseHMM):
             emission_rates (_type_): _description_
         """
         super().__init__(initial_probabilities, transition_matrix)
-        self._emission_rates_param = Parameter(emission_rates, bijector=tfb.Invert(tfb.Softplus()))
+        self._emission_rates = Parameter(emission_rates, bijector=tfb.Invert(tfb.Softplus()))
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -38,17 +38,12 @@ class PoissonHMM(BaseHMM):
 
     @property
     def emission_rates(self):
-        return self._emission_rates_param.value
-
-    def freeze_emission_rates(self):
-        self._emission_rates_param.is_frozen = True
-
-    def unfreeze_emission_rates(self):
-        self._emission_rates_param.is_frozen = False
+        return self._emission_rates
 
     # Properties to get various parameters of the model
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Poisson(rate=self.emission_rates[state]), reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Poisson(rate=self.emission_rates.value[state]),
+                               reinterpreted_batch_ndims=1)
 
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
@@ -67,12 +62,13 @@ class PoissonHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
+            posterior = hmm_smoother(self.initial_probs.value,
+                                     self.transition_matrix.value,
                                      self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
-            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
 
             # Compute the expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)[:, None]
@@ -95,6 +91,6 @@ class PoissonHMM(BaseHMM):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
         # Then maximize the expected log probability as a fn of model parameters
-        self._initial_probs_param.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
-        self._transition_probs_param.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
-        self._emission_rates_param.value = tfd.Gamma(1.1 + stats.sum_x, 1.1 + stats.sum_w).mode()
+        self._initial_probs.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._transition_matrix.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._emission_rates.value = tfd.Gamma(1.1 + stats.sum_x, 1.1 + stats.sum_w).mode()

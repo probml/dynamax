@@ -31,15 +31,14 @@ def test_fit_means(key=random.PRNGKey(0), num_states=3, num_emissions=3, num_sam
     batch_states, batch_emissions = vmap(lambda rng: hmm.sample(rng, 10))(keys)
 
     # Mess up the parameters and see if we can re-learn them.
-    # TODO: change the params and uncomment the check
-    hmm.freeze_transition_matrix()
-    hmm.freeze_initial_probabilities()
-    hmm.freeze_emission_covariance_matrices()
+    hmm.transition_matrix.freeze()
+    hmm.initial_probs.freeze()
+    hmm.emission_covariance_matrices.freeze()
 
     hmm, losses = hmm_fit_sgd(hmm, batch_emissions)
-    assert jnp.allclose(hmm.initial_probabilities, initial_probabilities)
-    assert jnp.allclose(hmm.transition_matrix, transition_matrix)
-    assert jnp.allclose(hmm.emission_covariance_matrices, emission_covars)
+    assert jnp.allclose(hmm.initial_probs.value, initial_probabilities)
+    assert jnp.allclose(hmm.transition_matrix.value, transition_matrix)
+    assert jnp.allclose(hmm.emission_covariance_matrices.value, emission_covars)
 
 
 def test_fit_covars(key=random.PRNGKey(0), num_states=3, num_emissions=3, num_samples=10):
@@ -54,14 +53,14 @@ def test_fit_covars(key=random.PRNGKey(0), num_states=3, num_emissions=3, num_sa
 
     # Mess up the parameters and see if we can re-learn them.
     # TODO: change the params and uncomment the check
-    hmm.freeze_transition_matrix()
-    hmm.freeze_initial_probabilities()
-    hmm.freeze_emission_means()
+    hmm.transition_matrix.freeze()
+    hmm.initial_probs.freeze()
+    hmm.emission_means.freeze()
 
     hmm, losses = hmm_fit_sgd(hmm, batch_emissions)
-    assert jnp.allclose(hmm.initial_probabilities, initial_probabilities)
-    assert jnp.allclose(hmm.transition_matrix, transition_matrix)
-    assert jnp.allclose(hmm.emission_means, emission_means)
+    assert jnp.allclose(hmm.initial_probs.value, initial_probabilities)
+    assert jnp.allclose(hmm.transition_matrix.value, transition_matrix)
+    assert jnp.allclose(hmm.emission_means.value, emission_means)
 
 
 def test_fit_transition_matrix(key=random.PRNGKey(0), num_states=3, num_emissions=3, num_samples=10):
@@ -76,11 +75,11 @@ def test_fit_transition_matrix(key=random.PRNGKey(0), num_states=3, num_emission
 
     # Mess up the parameters and see if we can re-learn them.
     # TODO: change the params and uncomment the check
-    hmm.freeze_initial_probabilities()
-    hmm.freeze_emission_covariance_matrices()
-    hmm.freeze_emission_means()
+    hmm.initial_probs.freeze()
+    hmm.emission_covariance_matrices.freeze()
+    hmm.emission_means.freeze()
 
     hmm, losses = hmm_fit_sgd(hmm, batch_emissions)
-    assert jnp.allclose(hmm.initial_probabilities, initial_probabilities)
-    assert jnp.allclose(hmm.emission_means, emission_means)
-    assert jnp.allclose(hmm.emission_covariance_matrices, emission_covars)
+    assert jnp.allclose(hmm.initial_probs.value, initial_probabilities)
+    assert jnp.allclose(hmm.emission_means.value, emission_means)
+    assert jnp.allclose(hmm.emission_covariance_matrices.value, emission_covars)
