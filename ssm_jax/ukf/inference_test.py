@@ -20,9 +20,8 @@ def test_ukf_nonlinear(key=0, num_timesteps=15):
     # Run UKS from SSM-Jax
     uks_post = unscented_kalman_smoother(nlgssm, emissions, hyperparams)
 
-    # Compare filter results TODO
-    # assert _all_close(means_ukf, uks_post.filtered_means)
-    # assert _all_close(covs_ukf, uks_post.filtered_covariances)
-    # assert _all_close(means_uks, uks_post.smoothed_means)
-    # assert _all_close(covs_uks, uks_post.smoothed_covariances)
-    assert True
+    # Compare filter results
+    assert _all_close(means_ukf, uks_post.filtered_means)
+    assert _all_close(covs_ukf, uks_post.filtered_covariances)
+    assert _all_close(means_uks, uks_post.smoothed_means)
+    assert _all_close(covs_uks, uks_post.smoothed_covariances)
