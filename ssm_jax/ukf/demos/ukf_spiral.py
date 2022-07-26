@@ -32,7 +32,7 @@ def main():
     fig, ax = plt.subplots()
     true_title = "Noisy obervations from hidden trajectory"
     _ = plot_inference(states, emissions, ax=ax, title=true_title)
-    all_figures["True trajectory"] = fig
+    all_figures["ukf_spiral_true"] = fig
 
     # Plot UKF estimates
     fig, ax = plt.subplots()
@@ -40,7 +40,7 @@ def main():
     ax = plot_inference(states, emissions, ukf_means, "UKF", ax=ax, title=ekf_title)
     # Add uncertainty ellipses to every fourth estimate
     plot_uncertainty_ellipses(ukf_means[::4], ukf_covs[::4], ax)
-    all_figures["UKF estimate"] = fig
+    all_figures["ukf_spiral_est"] = fig
 
     return all_figures
 
