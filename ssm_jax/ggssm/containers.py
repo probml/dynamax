@@ -1,4 +1,5 @@
 from typing import Callable
+from dataclasses import dataclass
 
 from jax import jacfwd
 from jax import vmap
@@ -54,7 +55,7 @@ class EKFParams(GGSSMParams):
     gaussian_cross_covariance: Callable = lambda f, g, m, P: jacfwd(f)(m) @ P @ jacfwd(g)(m).T
 
 
-@chex.dataclass
+@dataclass
 class UKFParams(GGSSMParams):
     """
     Lightweight container for unscented Kalman filter/smoother parameters.
@@ -62,36 +63,33 @@ class UKFParams(GGSSMParams):
     alpha: chex.Scalar = jnp.sqrt(3)
     beta: chex.Scalar = 2
     kappa: chex.Scalar = 1
+    gaussian_expectation: Callable = None
+    gaussian_cross_covariance: Callable = None
+    
+    def __post_init__(self):
+        self.gaussian_expectation = self._gaussian_expectation
+        self.gaussian_cross_covariance = self._gaussian_cross_covariance
 
-    # Helper functions
-    def _compute_sigmas(self, m, P, n, lamb):
-        """Compute (2n+1) sigma points used for inputs to  unscented transform.
-        """
-        distances = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(P)
-        sigma_plus = jnp.array([m + distances[:, i] for i in range(n)])
-        sigma_minus = jnp.array([m - distances[:, i] for i in range(n)])
-        return jnp.concatenate((jnp.array([m]), sigma_plus, sigma_minus))
-    
-    def _compute_weights(self, n, alpha, beta, lamb):
-        """Compute weights used to compute predicted mean and covariance (Sarkka 5.77).
-        """
-        factor = 1 / (2 * (n + lamb))
-        w_mean = jnp.concatenate((jnp.array([lamb / (n + lamb)]), jnp.ones(2 * n) * factor))
-        w_cov = jnp.concatenate((jnp.array([lamb / (n + lamb) + (1 - alpha**2 + beta)]), jnp.ones(2 * n) * factor))
-        return w_mean, w_cov
-    
+    # Helper function
     def _compute_sigmas_and_weights(self, m, P):
         n = len(self.initial_mean)
         lamb = self.alpha**2 * (n + self.kappa) - n
-        w_mean, w_cov = self._compute_weights(n, self.alpha, self.beta, lamb)
-        sigmas = self._compute_sigmas(m, P, n, lamb)
+        # Compute weights
+        factor = 1 / (2 * (n + lamb))
+        w_mean = jnp.concatenate((jnp.array([lamb / (n + lamb)]), jnp.ones(2 * n) * factor))
+        w_cov = jnp.concatenate((jnp.array([lamb / (n + lamb) + (1 - self.alpha**2 + self.beta)]), jnp.ones(2 * n) * factor))
+        # Compute sigmas
+        distances = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(P)
+        sigma_plus = jnp.array([m + distances[:, i] for i in range(n)])
+        sigma_minus = jnp.array([m - distances[:, i] for i in range(n)])
+        sigmas = jnp.concatenate((jnp.array([m]), sigma_plus, sigma_minus))
         return w_mean, w_cov, sigmas
     
-    def gaussian_expectation(self, f, m, P):
+    def _gaussian_expectation(self, f, m, P):
         w_mean, _, sigmas = self._compute_sigmas_and_weights(m, P)
         return jnp.tensordot(w_mean, vmap(f)(sigmas), axes=1)
 
-    def gaussian_cross_covariance(self, f, g, m, P):
+    def _gaussian_cross_covariance(self, f, g, m, P):
         w_mean, w_cov, sigmas = self._compute_sigmas_and_weights(m, P)
         _outer = vmap(lambda x, y: jnp.atleast_2d(x).T @ jnp.atleast_2d(y), 0, 0)
         f_mean, g_mean = self.gaussian_expectation(f, m, P), self.gaussian_expectation(g, m, P)
