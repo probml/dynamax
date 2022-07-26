@@ -3,11 +3,11 @@ from functools import partial
 import chex
 import jax.numpy as jnp
 import jax.random as jr
-import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
+from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
@@ -16,6 +16,7 @@ from ssm_jax.utils import PSDToRealBijector
 
 @register_pytree_node_class
 class GaussianHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_means, emission_covariance_matrices):
         """_summary_
 
@@ -27,8 +28,8 @@ class GaussianHMM(BaseHMM):
         """
         super().__init__(initial_probabilities, transition_matrix)
 
-        self._emission_means = emission_means
-        self._emission_covs = emission_covariance_matrices
+        self._emission_means_param = Parameter(emission_means)
+        self._emission_covs_param = Parameter(emission_covariance_matrices, bijector=PSDToRealBijector)
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -42,15 +43,27 @@ class GaussianHMM(BaseHMM):
     # Properties to get various parameters of the model
     @property
     def emission_means(self):
-        return self._emission_means
+        return self._emission_means_param.value
+
+    def freeze_emission_means(self):
+        self._emission_means_param.is_frozen = True
+
+    def unfreeze_emission_mean(self):
+        self._emission_means_param.is_frozen = False
 
     @property
     def emission_covariance_matrices(self):
-        return self._emission_covs
+        return self._emission_covs_param.value
+
+    def freeze_emission_covariance_matrices(self):
+        self._emission_covs_param.is_frozen = True
+
+    def unfreeze_emission_covariance_matrices(self):
+        self._emission_covs_param.is_frozen = False
 
     def emission_distribution(self, state):
-        return tfd.MultivariateNormalFullCovariance(
-            self._emission_means[state], self._emission_covs[state])
+        return tfd.MultivariateNormalFullCovariance(self.emission_means[state],
+                                                    self.emission_covariance_matrices[state])
 
     # Expectation-maximization (EM) code
     def e_step(self, batch_emissions):
@@ -58,6 +71,7 @@ class GaussianHMM(BaseHMM):
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
+
         @chex.dataclass
         class GaussianHMMSuffStats:
             # Wrapper for sufficient statistics of a GaussianHMM
@@ -70,9 +84,8 @@ class GaussianHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(
-                self.initial_probabilities, self.transition_matrix, self._conditional_logliks(emissions)
-            )
+            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
+                                     self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
@@ -84,14 +97,12 @@ class GaussianHMM(BaseHMM):
             sum_xxT = jnp.einsum("tk, ti, tj->kij", posterior.smoothed_probs, emissions, emissions)
 
             # TODO: might need to normalize x_sum and xxT_sum for numerical stability
-            stats = GaussianHMMSuffStats(
-                marginal_loglik=posterior.marginal_loglik,
-                initial_probs=initial_probs,
-                trans_probs=trans_probs,
-                sum_w=sum_w,
-                sum_x=sum_x,
-                sum_xxT=sum_xxT
-            )
+            stats = GaussianHMMSuffStats(marginal_loglik=posterior.marginal_loglik,
+                                         initial_probs=initial_probs,
+                                         trans_probs=trans_probs,
+                                         sum_w=sum_w,
+                                         sum_x=sum_x,
+                                         sum_xxT=sum_xxT)
             return stats
 
         # Map the E step calculations over batches
@@ -102,34 +113,14 @@ class GaussianHMM(BaseHMM):
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Initial distribution
-        self._initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._initial_probs_param.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
 
         # Transition distribution
-        self._transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._transition_probs_param.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
 
         # Gaussian emission distribution
         emission_dim = stats.sum_x.shape[-1]
-        self._emission_means = stats.sum_x / stats.sum_w[:, None]
-        self._emission_covs = (
-            stats.sum_xxT / stats.sum_w[:, None, None]
-            - jnp.einsum("ki,kj->kij", self._emission_means, self._emission_means)
-            + 1e-4 * jnp.eye(emission_dim)
-        )
-
-    @property
-    def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters."""
-        return (
-            tfb.SoftmaxCentered().inverse(self.initial_probabilities),
-            tfb.SoftmaxCentered().inverse(self.transition_matrix),
-            self.emission_means,
-            PSDToRealBijector.forward(self.emission_covariance_matrices),
-        )
-
-    @unconstrained_params.setter
-    def unconstrained_params(self, unconstrained_params):
-        self._initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
-        self._transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
-        self._emission_means = unconstrained_params[2]
-        self._emission_covs = PSDToRealBijector.inverse(unconstrained_params[3])
-        
+        self._emission_means_param.value = stats.sum_x / stats.sum_w[:, None]
+        self._emission_covs_param.value = (stats.sum_xxT / stats.sum_w[:, None, None] -
+                                           jnp.einsum("ki,kj->kij", self.emission_means, self.emission_means) +
+                                           1e-4 * jnp.eye(emission_dim))
