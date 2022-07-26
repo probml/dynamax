@@ -8,14 +8,18 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import lax
 from jax import vmap
+from jax import jit
+from jax import lax
+from jax import vmap
+from tqdm.auto import trange
+
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import hmm_two_filter_smoother
-from ssm_jax.hmm.learning import hmm_fit_sgd
 from ssm_jax.abstractions import Module, Parameter
-
+from ssm_jax.optimize import run_sgd
 
 class BaseHMM(Module):
 
@@ -149,38 +153,108 @@ class BaseHMM(Module):
 
         return vmap(_single_e_step)(batch_emissions)
 
-    def m_step(self, batch_emissions, batch_posteriors, optimizer=optax.adam(1e-2), num_mstep_iters=50):
+    def m_step(self, batch_emissions, batch_posteriors,
+               optimizer=optax.adam(1e-2),
+               num_mstep_iters=50):
         """_summary_
 
         Args:
             emissions (_type_): _description_
             posterior (_type_): _description_
         """
-        hypers = self.hyperparams
+        def neg_expected_log_joint(params, minibatch):
+            minibatch_emissions, minibatch_posteriors = minibatch
+            self.unconstrained_params = params
 
-        def _single_expected_log_joint(hmm, emissions, posterior, trans_probs):
-            # TODO: This needs help! Ideally, posterior would include trans_probs as a field
-            posterior, trans_probs = posterior
+            def _single_expected_log_joint(emissions, posterior):
+                log_likelihoods = self._conditional_logliks(emissions)
+                expected_states = posterior.smoothed_probs
+                trans_probs = posterior.trans_probs
 
-            # TODO: do we need to use dynamic slice?
-            log_likelihoods = hmm._conditional_logliks(emissions)
-            expected_states = posterior.smoothed_probs
+                lp = jnp.sum(expected_states[0] * jnp.log(self.initial_probs.value))
+                lp += jnp.sum(trans_probs * jnp.log(self.transition_matrix.value))
+                lp += jnp.sum(expected_states * log_likelihoods)
+                return lp
 
-            lp = jnp.sum(expected_states[0] * jnp.log(hmm.initial_probs.value))
-            lp += jnp.sum(trans_probs * jnp.log(hmm.transition_matrix.value))
-            lp += jnp.sum(expected_states * log_likelihoods)
-            return lp
+            lps = vmap(_single_expected_log_joint)(minibatch_emissions, minibatch_posteriors)
+            return -jnp.sum(lps / batch_emissions.size)
 
-        def neg_expected_log_joint(params):
-            hmm = self.from_unconstrained_params(params, hypers)
-            f = vmap(partial(_single_expected_log_joint, hmm))
-            lps = f(batch_emissions, batch_posteriors)
-            return -jnp.sum(lps / jnp.ones_like(batch_emissions).sum())
+        # Minimize the negative expected log joint with SGD
+        params, losses = run_sgd(neg_expected_log_joint,
+                                 self.unconstrained_params,
+                                 (batch_emissions, batch_posteriors),
+                                 optimizer=optimizer,
+                                 num_epochs=num_mstep_iters)
+        self.unconstrained_params = params
 
-        # TODO: minimize the negative expected log joint with SGD
-        hmm, losses = hmm_fit_sgd(self,
-                                  batch_emissions,
-                                  optimizer=optimizer,
-                                  num_iters=num_mstep_iters,
-                                  loss_fn=neg_expected_log_joint)
-        return hmm
+    def fit_em(self, batch_emissions, num_iters=50, **kwargs):
+        """Fit this HMM with Expectation-Maximization (EM).
+
+        Args:
+            batch_emissions (_type_): _description_
+            num_iters (int, optional): _description_. Defaults to 50.
+
+        Returns:
+            _type_: _description_
+        """
+        @jit
+        def em_step(params):
+            self.unconstrained_params = params
+            batch_posteriors = self.e_step(batch_emissions)
+            self.m_step(batch_emissions, batch_posteriors, **kwargs)
+            return self.unconstrained_params, batch_posteriors
+
+        log_probs = []
+        params = self.unconstrained_params
+        for _ in trange(num_iters):
+            params, batch_posteriors = em_step(params)
+            log_probs.append(batch_posteriors.marginal_loglik.sum())
+
+        self.unconstrained_params = params
+        return jnp.array(log_probs)
+
+    def fit_sgd(self,
+                batch_emissions,
+                optimizer=optax.adam(1e-3),
+                batch_size=1,
+                num_epochs=50,
+                shuffle=False,
+                key=jr.PRNGKey(0),
+        ):
+        """
+        Fit this HMM by running SGD on the marginal log likelihood.
+
+        Note that batch_emissions is initially of shape (N,T)
+        where N is the number of independent sequences and
+        T is the length of a sequence. Then, a random susbet with shape (B, T)
+        of entire sequence, not time steps, is sampled at each step where B is
+        batch size.
+
+        Args:
+            batch_emissions (chex.Array): Independent sequences.
+            optmizer (optax.Optimizer): Optimizer.
+            batch_size (int): Number of sequences used at each update step.
+            num_iters (int): Iterations made on only one mini-batch.
+            loss_fn (Callable): Objective function.
+            shuffle (bool): Indicates whether to shuffle emissions.
+            key (chex.PRNGKey): RNG key.
+
+        Returns:
+            losses: Output of loss_fn stored at each step.
+        """
+        def _loss_fn(params, minibatch_emissions):
+            """Default objective function."""
+            self.unconstrained_params = params
+            f = lambda emissions: -self.marginal_log_prob(emissions) / len(emissions)
+            return vmap(f)(minibatch_emissions).mean()
+
+        params, losses = run_sgd(_loss_fn,
+                                 self.unconstrained_params,
+                                 batch_emissions,
+                                 optimizer=optimizer,
+                                 batch_size=batch_size,
+                                 num_epochs=num_epochs,
+                                 shuffle=shuffle,
+                                 key=key)
+        self.unconstrained_params = params
+        return losses
