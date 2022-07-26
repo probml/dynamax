@@ -26,7 +26,7 @@ class BernoulliHMM(BaseHMM):
         """
         super().__init__(initial_probabilities, transition_matrix)
 
-        self._emission_probs_param = Parameter(emission_probs, bijector=tfb.Invert(tfb.Sigmoid()))
+        self._emission_probs = Parameter(emission_probs, bijector=tfb.Invert(tfb.Sigmoid()))
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -38,16 +38,10 @@ class BernoulliHMM(BaseHMM):
 
     @property
     def emission_probs(self):
-        return self._emission_probs_param.value
-
-    def freeze_emission_probabilities(self):
-        self._emission_probs_param.is_frozen = True
-
-    def unfreeze_emission_probabilities(self):
-        self._emission_probs_param.is_frozen = False
+        return self._emission_probs
 
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs_param.value[state]),
+        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs.value[state]),
                                reinterpreted_batch_ndims=1)
 
     def e_step(self, batch_emissions):
@@ -67,12 +61,13 @@ class BernoulliHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
+            posterior = hmm_smoother(self.initial_probs.value,
+                                     self.transition_matrix.value,
                                      self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
-            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
 
             # Compute the expected sufficient statistics
             sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs, jnp.where(jnp.isnan(emissions), 0, emissions))
@@ -94,6 +89,6 @@ class BernoulliHMM(BaseHMM):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
         # Then maximize the expected log probability as a fn of model parameters
-        self._initial_probs_param.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
-        self._transition_probs_param.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
-        self._emission_probs_param.value = tfd.Beta(1.1 + stats.sum_x, 1.1 + stats.sum_1mx).mode()
+        self._initial_probs.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._transition_matrix.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._emission_probs.value = tfd.Beta(1.1 + stats.sum_x, 1.1 + stats.sum_1mx).mode()

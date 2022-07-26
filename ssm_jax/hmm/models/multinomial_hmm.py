@@ -36,7 +36,7 @@ class MultinomialHMM(BaseHMM):
 
     @property
     def emission_probs(self):
-        return self._emission_probs_param.value
+        return self._emission_probs
 
     @property
     def num_emissions(self):
@@ -51,5 +51,6 @@ class MultinomialHMM(BaseHMM):
         return self._num_trials
 
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Multinomial(self._num_trials, probs=self.emission_probs[state]),
+        return tfd.Independent(tfd.Multinomial(self._num_trials,
+                                               probs=self.emission_probs.value[state]),
                                retinterpreted_batch_ndims=1)

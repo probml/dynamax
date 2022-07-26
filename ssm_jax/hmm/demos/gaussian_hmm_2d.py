@@ -46,7 +46,7 @@ def plot_gaussian_hmm_data(hmm, emissions, states, xlim=None):
         alpha=1,
     )
 
-    means = hmm.emission_means[states]
+    means = hmm.emission_means.value[states]
     for d in range(emission_dim):
         plt.plot(emissions[:, d] + lim * d, "-k")
         plt.plot(means[:, d] + lim * d, ":k")

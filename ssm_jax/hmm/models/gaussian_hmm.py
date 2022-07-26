@@ -28,8 +28,8 @@ class GaussianHMM(BaseHMM):
         """
         super().__init__(initial_probabilities, transition_matrix)
 
-        self._emission_means_param = Parameter(emission_means)
-        self._emission_covs_param = Parameter(emission_covariance_matrices, bijector=PSDToRealBijector)
+        self._emission_means = Parameter(emission_means)
+        self._emission_covs = Parameter(emission_covariance_matrices, bijector=PSDToRealBijector)
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -43,27 +43,15 @@ class GaussianHMM(BaseHMM):
     # Properties to get various parameters of the model
     @property
     def emission_means(self):
-        return self._emission_means_param.value
-
-    def freeze_emission_means(self):
-        self._emission_means_param.is_frozen = True
-
-    def unfreeze_emission_mean(self):
-        self._emission_means_param.is_frozen = False
+        return self._emission_means
 
     @property
     def emission_covariance_matrices(self):
-        return self._emission_covs_param.value
-
-    def freeze_emission_covariance_matrices(self):
-        self._emission_covs_param.is_frozen = True
-
-    def unfreeze_emission_covariance_matrices(self):
-        self._emission_covs_param.is_frozen = False
+        return self._emission_covs
 
     def emission_distribution(self, state):
-        return tfd.MultivariateNormalFullCovariance(self.emission_means[state],
-                                                    self.emission_covariance_matrices[state])
+        return tfd.MultivariateNormalFullCovariance(self._emission_means.value[state],
+                                                    self._emission_covs.value[state])
 
     # Expectation-maximization (EM) code
     def e_step(self, batch_emissions):
@@ -84,12 +72,13 @@ class GaussianHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
+            posterior = hmm_smoother(self.initial_probs.value,
+                                     self.transition_matrix.value,
                                      self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
-            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
 
             # Compute the expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
@@ -113,14 +102,16 @@ class GaussianHMM(BaseHMM):
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Initial distribution
-        self._initial_probs_param.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._initial_probs.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
 
         # Transition distribution
-        self._transition_probs_param.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._transition_matrix.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
 
         # Gaussian emission distribution
         emission_dim = stats.sum_x.shape[-1]
-        self._emission_means_param.value = stats.sum_x / stats.sum_w[:, None]
-        self._emission_covs_param.value = (stats.sum_xxT / stats.sum_w[:, None, None] -
-                                           jnp.einsum("ki,kj->kij", self.emission_means, self.emission_means) +
+        self._emission_means.value = stats.sum_x / stats.sum_w[:, None]
+        self._emission_covs.value = (stats.sum_xxT / stats.sum_w[:, None, None] -
+                                           jnp.einsum("ki,kj->kij",
+                                                      self.emission_means.value,
+                                                      self.emission_means.value) +
                                            1e-4 * jnp.eye(emission_dim))

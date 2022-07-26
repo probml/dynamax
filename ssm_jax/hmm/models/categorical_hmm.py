@@ -31,7 +31,7 @@ class CategoricalHMM(BaseHMM):
         # Check shapes
         assert emission_probs.ndim == 3, \
             "emission_probs must be (num_states x num_emissions x num_classes)"
-        self._emission_probs_param = Parameter(emission_probs, bijector=tfb.Invert(tfb.SoftmaxCentered()))
+        self._emission_probs = Parameter(emission_probs, bijector=tfb.Invert(tfb.SoftmaxCentered()))
 
     @classmethod
     def random_initialization(cls, key, num_states, num_emissions, num_classes):
@@ -43,24 +43,20 @@ class CategoricalHMM(BaseHMM):
 
     @property
     def emission_probs(self):
-        return self._emission_probs_param.value
+        return self._emission_probs
 
     @property
     def num_emissions(self):
-        return self.emission_probs.shape[1]
+        return self.emission_probs.value.shape[1]
 
     @property
     def num_classes(self):
-        return self.emission_probs.shape[2]
+        return self.emission_probs.value.shape[2]
 
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Categorical(probs=self.emission_probs[state]), reinterpreted_batch_ndims=1)
-
-    def freeze_emission_probabilities(self):
-        self._emission_probs_param.is_frozen = True
-
-    def unfreeze_emission_probabilities(self):
-        self._emission_probs_param.is_frozen = False
+        return tfd.Independent(
+            tfd.Categorical(probs=self.emission_probs.value[state]),
+            reinterpreted_batch_ndims=1)
 
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
@@ -78,12 +74,13 @@ class CategoricalHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probabilities, self.transition_matrix,
+            posterior = hmm_smoother(self.initial_probs.value,
+                                     self.transition_matrix.value,
                                      self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
-            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
 
             # Compute the expected sufficient statistics
             sum_x = jnp.einsum("tk, tdi->kdi", posterior.smoothed_probs, one_hot(emissions, self.num_classes))
@@ -104,6 +101,6 @@ class CategoricalHMM(BaseHMM):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
         # Then maximize the expected log probability as a fn of model parameters
-        self._initial_probs_param.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
-        self._transition_probs_param.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
-        self._emission_probs_param.value = tfd.Dirichlet(1.1 + stats.sum_x).mode()
+        self._initial_probs.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._transition_matrix.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._emission_probs.value = tfd.Dirichlet(1.1 + stats.sum_x).mode()
