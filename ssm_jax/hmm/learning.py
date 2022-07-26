@@ -32,7 +32,7 @@ def _loss_fn(hmm, params, batch_emissions, lens):
     """Default objective function."""
     hmm.unconstrained_params = params
     f = lambda emissions, t: -hmm.marginal_log_prob(emissions) / t
-    return vmap(f)(batch_emissions, lens).mean()
+    return vmap(f)(batch_emissions, lens).mean() + hmm.prior_log_prob()
 
 
 def _sample_minibatches(key, sequences, lens, batch_size, shuffle):

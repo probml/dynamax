@@ -1,6 +1,8 @@
 from abc import ABC
-from jax.tree_util import register_pytree_node_class
+
+import jax.numpy as jnp
 import tensorflow_probability.substrates.jax.bijectors as tfb
+from jax.tree_util import register_pytree_node_class
 
 
 @register_pytree_node_class
@@ -11,10 +13,12 @@ class Parameter:
     (tensorflow_probability.bijectors.Bijector) to map the parameter to/from an
     unconstrained space.
     """
-    def __init__(self, value, is_frozen=False, bijector=None):
+
+    def __init__(self, value, is_frozen=False, bijector=None, prior=None):
         self.value = value
         self.is_frozen = is_frozen
         self.bijector = bijector if bijector is not None else tfb.Identity()
+        self.prior = prior
 
     def __repr__(self):
         return f"Parameter(value={self.value}, " \
@@ -30,6 +34,9 @@ class Parameter:
 
     def unfreeze(self):
         self.is_frozen = False
+    
+    def prior_log_prob(self):
+        return jnp.sum(self.prior.log_prob(self.value)) if self.prior is not None else 0
 
     def tree_flatten(self):
         children = (self.value,)
@@ -49,6 +56,7 @@ class Module(ABC):
     these parameters to implement the tree_flatten and tree_unflatten methods necessary
     to register a model as a JAX PyTree.
     """
+
     @property
     def unconstrained_params(self):
         # Find all parameters and convert to unconstrained
@@ -70,6 +78,15 @@ class Module(ABC):
         items = sorted(self.__dict__.items())
         hyper_values = [val for key, val in items if not isinstance(val, Parameter)]
         return hyper_values
+
+    def prior_log_prob(self):
+        items = sorted(self.__dict__.items())
+        prior_log_probs = [
+            val.prior_log_prob()
+            for _, val in items
+            if isinstance(val, Parameter) and not val.is_frozen and val.prior is not None
+        ]
+        return sum(prior_log_probs)
 
     # Generic implementation of tree_flatten and unflatten. This assumes that
     # the Parameters are all valid JAX PyTree nodes.
