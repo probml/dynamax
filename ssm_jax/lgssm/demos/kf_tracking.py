@@ -25,6 +25,7 @@ def kf_tracking():
     # Prior parameter distribution
     mu0 = jnp.array([8.0, 10.0, 1.0, 0.0])
     Sigma0 = jnp.eye(state_size) * 0.1
+    print('prior sigma', Sigma0)
 
     lgssm = LinearGaussianSSM(
         initial_mean=mu0,
