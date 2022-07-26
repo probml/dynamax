@@ -23,7 +23,7 @@ def main():
     states, emissions = nlgssm.sample(key=0, num_timesteps=100)
 
     # Run EKF on emissions
-    hyperparams = UKFHyperParams()
+    hyperparams = UKFHyperParams(alpha=10, beta=10, kappa=10)
     ukf_post = nlgssm.ukf_filter(emissions, hyperparams)
     ukf_means, ukf_covs = ukf_post.filtered_means, ukf_post.filtered_covariances
 
