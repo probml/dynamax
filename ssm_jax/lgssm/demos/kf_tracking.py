@@ -52,39 +52,42 @@ def plot_kf_tracking(x, y, lgssm_posterior):
     dict_figures = {}
 
     # Plot Data
-    fig, ax = plt.subplots()
-    ax.plot(*x[:, :2].T, marker="s", color="C0", label="true state")
-    ax.plot(*y.T, ls="", **observation_marker_kwargs, color="tab:green", label="emissions")
-    ax.legend()
-    dict_figures["kalman_tracking_truth"] = fig
+    fig1, ax1 = plt.subplots()
+    ax1.plot(*x[:, :2].T, marker="s", color="C0", label="true state")
+    ax1.plot(*y.T, ls="", **observation_marker_kwargs, color="tab:green", label="emissions")
+    ax1.legend(loc="upper left")
 
     # Plot Filtering
-    fig, ax = plt.subplots()
-    ax.plot(*y.T, ls="", **observation_marker_kwargs, color="tab:green", label="observed")
-    ax.plot(*x[:, :2].T, ls="--", color="darkgrey", label="true state")
+    fig2, ax2 = plt.subplots()
+    ax2.plot(*y.T, ls="", **observation_marker_kwargs, color="tab:green", label="observed")
+    ax2.plot(*x[:, :2].T, ls="--", color="darkgrey", label="true state")
     plot_lgssm_posterior(
         lgssm_posterior.filtered_means,
         lgssm_posterior.filtered_covariances,
-        ax,
+        ax2,
         color="tab:red",
         label="filtered means",
         ellipse_kwargs={"edgecolor": "k", "linewidth": 0.5},
+        legend_kwargs={"loc":"upper left"}
     )
-    dict_figures["kalman_tracking_filtered"] = fig
 
     # Plot Smoothing
-    fig, ax = plt.subplots()
-    ax.plot(*y.T, ls="", **observation_marker_kwargs, color="tab:green", label="observed")
-    ax.plot(*x[:, :2].T, ls="--", color="darkgrey", label="true state")
+    fig3, ax3 = plt.subplots()
+    ax3.plot(*y.T, ls="", **observation_marker_kwargs, color="tab:green", label="observed")
+    ax3.plot(*x[:, :2].T, ls="--", color="darkgrey", label="true state")
     plot_lgssm_posterior(
         lgssm_posterior.smoothed_means,
         lgssm_posterior.smoothed_covariances,
-        ax,
+        ax3,
         color="tab:red",
         label="smoothed means",
         ellipse_kwargs={"edgecolor": "k", "linewidth": 0.5},
+        legend_kwargs={"loc":"upper left"}
     )
-    dict_figures["kalman_tracking_smoothed"] = fig
+
+    dict_figures["kalman_tracking_truth"] = fig1
+    dict_figures["kalman_tracking_filtered"] = fig2
+    dict_figures["kalman_tracking_smoothed"] = fig3
 
     return dict_figures
 
