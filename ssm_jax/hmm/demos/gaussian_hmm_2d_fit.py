@@ -46,7 +46,6 @@ def main(num_timesteps=2000, plot_timesteps=200, num_em_iters=50, num_sgd_iters=
     print("Fit with SGD")
     test_hmm_sgd = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     optimizer = optax.adam(learning_rate=1e-2)
-    print("hii")
     losses = test_hmm_sgd.fit_sgd(batch_emissions,
                                   optimizer=optimizer,
                                   num_epochs=num_sgd_iters)

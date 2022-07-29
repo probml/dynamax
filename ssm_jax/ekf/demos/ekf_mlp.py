@@ -28,7 +28,7 @@ class MLP(nn.Module):
     @nn.compact
     def __call__(self, x):
         for feat in self.features[:-1]:
-            x = nn.relu(nn.Dense(feat)(x))
+            x = nn.sigmoid(nn.Dense(feat)(x))
         x = nn.Dense(self.features[-1])(x)
         return x
 
@@ -118,7 +118,8 @@ def plot_mlp_prediction(f, obs, x_grid, w_mean, w_cov, ax, num_samples=100, x_li
         ax.plot(x_grid, y_sample, color="gray", alpha=0.07)
 
     # Plot prediction on grid using filtered mean of MLP params
-    y_mean = vmap(f, in_axes=(None, 0))(w_mean, x_grid)
+    # y_mean = vmap(f, in_axes=(None, 0))(w_mean, x_grid)
+    y_mean = y_samples.mean(axis=0)
     ax.plot(x_grid, y_mean, linewidth=1.5, label="Prediction")
 
     ax.set_xlim(x_lim)
@@ -149,7 +150,7 @@ def main():
         dynamics_function=lambda x, u: x,
         dynamics_covariance=jnp.eye(state_dim) * 1e-4,
         emission_function=apply_fn,
-        emission_covariance=jnp.eye(emission_dim) * y_var,
+        emission_covariance=jnp.eye(emission_dim) * y_var**2,
     )
 
     # Run EKF on training set to train MLP
@@ -161,7 +162,7 @@ def main():
     inputs_grid = jnp.linspace(inputs.min(), inputs.max(), len(inputs))
     intermediate_steps = [10, 20, 30, 200]
     for step in intermediate_steps:
-        print('ntraining=', step)
+        print('ntraining =', step)
         fig, ax = plt.subplots()
         plot_mlp_prediction(
             apply_fn, (inputs[:step], emissions[:step]), inputs_grid, w_means[step - 1], w_covs[step - 1], ax, key=step
