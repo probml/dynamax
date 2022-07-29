@@ -1,15 +1,12 @@
 from abc import abstractmethod
-from functools import partial
 
 import jax.numpy as jnp
 import jax.random as jr
 import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-from jax import lax
 from jax import vmap
 from jax import jit
-from jax import lax
 from jax import vmap
 from tqdm.auto import trange
 
@@ -18,10 +15,10 @@ from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import hmm_two_filter_smoother
-from ssm_jax.abstractions import Module, Parameter
+from ssm_jax.abstractions import SSM, Parameter
 from ssm_jax.optimize import run_sgd
 
-class BaseHMM(Module):
+class BaseHMM(SSM):
 
     def __init__(self, initial_probabilities, transition_matrix):
         """
@@ -58,7 +55,6 @@ class BaseHMM(Module):
     def transition_matrix(self):
         return self._transition_matrix
 
-    # The following three functions define a state space model
     def initial_distribution(self):
         return tfd.Categorical(probs=self._initial_probs.value)
 
@@ -67,38 +63,15 @@ class BaseHMM(Module):
 
     @abstractmethod
     def emission_distribution(self, state):
-        raise NotImplementedError
-
-    def sample(self, key, num_timesteps):
-        """Sample a sequence of latent states and emissions.
+        """Return a distribution over emissions given current state.
 
         Args:
-            key: rng key
-            num_timesteps: length of sequence to generate
+            state (PyTree): current latent state.
+
+        Returns:
+            dist (tfd.Distribution): conditional distribution of current emission.
         """
-
-        def _step(state, key):
-            key1, key2 = jr.split(key, 2)
-            emission = self.emission_distribution(state).sample(seed=key1)
-            next_state = self.transition_distribution(state).sample(seed=key2)
-            return next_state, (state, emission)
-
-        # Sample the initial state
-        key1, key = jr.split(key, 2)
-        initial_state = self.initial_distribution().sample(seed=key1)
-
-        # Sample the remaining emissions and states
-        keys = jr.split(key, num_timesteps)
-        _, (states, emissions) = lax.scan(_step, initial_state, keys)
-        return states, emissions
-
-    def log_prob(self, states, emissions):
-        """Compute the log joint probability of the states and observations"""
-        lp = self.initial_distribution().log_prob(states[0])
-        lp += self.transition_distribution(states[:-1]).log_prob(states[1:]).sum()
-        f = lambda state, emission: self.emission_distribution(state).log_prob(emission)
-        lp += vmap(f)(states, emissions).sum()
-        return lp
+        raise NotImplementedError
 
     def _conditional_logliks(self, emissions):
         # Compute the log probability for each time step by
