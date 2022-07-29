@@ -165,29 +165,21 @@ def hmm_fit_stochastic_em(
     num_complete_batches, leftover = jnp.divmod(len(batch_emissions), batch_size)
     num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
 
-    # Learning rate schedule
-    schedule = optax.exponential_decay(
-        init_value=1.,
-        transition_steps=num_epochs*num_batches,
-        decay_rate=(num_epochs*num_batches)**(-1./learning_rate_asymp_frac),
-        end_value=0.
-        )
-
     num_sequences, num_timesteps = batch_emissions.shape[:2]
     lens = jnp.ones((num_sequences,)) * num_timesteps
     scale = num_sequences / batch_size
-    rolling_stats = _init_suff_stats(hmm, (1,))
-    log_probs = []
-    for epoch in range(num_epochs):
-        sample_generator = _sample_minibatches(jr.fold_in(key, epoch),
-                                               batch_emissions, lens, batch_size, True)
-        for b in range(num_batches):
+
+    @jit
+    def _epoch_step(carry, input):
+        def _minibatch_step(carry, input):
+            (hmm, rolling_stats), rate = carry, input
+
             emissions, _ = next(sample_generator)
             
-            batch_stats = hmm.e_step(emissions)
+            minibatch_stats = hmm.e_step(emissions)
+            these_stats = tree_map(
+                partial(jnp.sum, axis=0, keepdims=True), minibatch_stats)
             
-            rate = schedule(epoch*num_batches + b)
-            these_stats = tree_map(partial(jnp.sum, axis=0, keepdims=True), batch_stats)
             rolling_stats = lax.cond(
                 jnp.all(rolling_stats.initial_probs==0),
                 partial(tree_map, lambda _, s1:  rate * scale * s1),
@@ -196,8 +188,34 @@ def hmm_fit_stochastic_em(
             )
             
             hmm.m_step(emissions, rolling_stats)
+            return (hmm, rolling_stats), these_stats.marginal_loglik.sum()
 
-        # Report log_prob of last batch in epoch
-        log_probs.append(these_stats.marginal_loglik.sum())
+        # ------------------------------------------------------------------
+        (hmm, rolling_stats), (key, learn_rates) = carry, input
+
+        sample_generator = \
+            _sample_minibatches(key, batch_emissions, lens, batch_size, True)
+
+        (hmm, rolling_stats), minibath_log_probs = lax.scan(
+                        _minibatch_step, (hmm, rolling_stats), learn_rates)
+
+        return (hmm, rolling_stats), minibath_log_probs[-1]
+    
+    # ========================================================================
+    # Learning rate schedule
+    schedule = optax.exponential_decay(
+        init_value=1.,
+        transition_steps=num_epochs*num_batches,
+        decay_rate=(num_epochs*num_batches)**(-1./learning_rate_asymp_frac),
+        end_value=0.
+        )
+    learn_rates = schedule(jnp.arange(num_epochs*num_batches))
+    learn_rates = learn_rates.reshape(num_epochs, num_batches)
+
+    # Initialize suff stats fields to 0-arrays with shape (1, hmm.num_states, ...)
+    init_stats = _init_suff_stats(hmm, (1,))
+
+    (hmm, _), log_probs = lax.scan( \
+        _epoch_step, (hmm, init_stats), (jr.split(key, num_epochs), learn_rates))
 
     return hmm, log_probs
