@@ -10,7 +10,7 @@ from jax import lax
 from jax import value_and_grad
 from jax import vmap
 from tqdm.auto import trange
-
+from jax import tree_map
 
 def hmm_fit_em(hmm, batch_emissions, num_iters=50, **kwargs):
 
@@ -67,6 +67,7 @@ def hmm_fit_sgd(
     Args:
         hmm (BaseHMM): HMM class whose parameters will be estimated.
         batch_emissions (chex.Array): Independent sequences.
+        lens (chex.Array or None): num_timesteps in each independent batch emissions
         optmizer (optax.Optimizer): Optimizer.
         batch_size (int): Number of sequences used at each update step.
         num_iters (int): Iterations made on only one mini-batch.
@@ -118,3 +119,85 @@ def hmm_fit_sgd(
     hmm.unconstrained_params = params
 
     return hmm, losses
+
+def _init_suff_stats(hmm, batch_shape=()):
+    """Initialize expected sufficient statistics dataclass associated with hmm.
+    Each field set 0-arrays with shape (*batch_shape, hmm.num_states, ...).""" 
+    return tree_map(
+        lambda shp: jnp.zeros(batch_shape + shp),
+        hmm.suff_stats_event_shape,
+        is_leaf=lambda x: isinstance(x, tuple) # Stop tree-mapping when we get to shape tuples
+    )
+
+def hmm_fit_stochastic_em(
+    hmm,
+    batch_emissions,
+    batch_size=1,
+    num_epochs=50,
+    learning_rate_asymp_frac=0.9,
+    key=jr.PRNGKey(0),
+):
+    """
+    Note that batch_emissions is initially of shape (N,T,D) where N is the
+    number of independent sequences and T is the length of a sequence.
+    Then, a random subset of the entire sequence with shape (B,T,D), is sampled
+    at each step where B is batch size.
+
+    TODO This only works for the models which explicitly return expected
+    sufficient statistics. Does not work in the general case when an
+    HMMPosterior object is returned.
+
+    Args:
+        hmm (BaseHMM): HMM class whose parameters will be estimated.
+        batch_emissions (chex.Array): Independent sequences, shape (N,T,D).
+        batch_size (int): Number of sequences used at each update step, B.
+        key (chex.PRNGKey): PRNG key.
+        num_epochs (int): number of iterations to run on shuffled minibatches
+        learning_rate_asymp_frac (float): Fraction of _total_ training iterations
+            (i.e. num_epochs * num_batches) at which learning rate levels off,
+            under an exponential decay model. Must be in range (0,1].
+
+    Returns:
+        hmm: HMM with optimized parameters.
+        log_probs: sum of marginal_loglikelihood
+    """
+    
+    num_complete_batches, leftover = jnp.divmod(len(batch_emissions), batch_size)
+    num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
+
+    # Learning rate schedule
+    schedule = optax.exponential_decay(
+        init_value=1.,
+        transition_steps=num_epochs*num_batches,
+        decay_rate=(num_epochs*num_batches)**(-1./learning_rate_asymp_frac),
+        end_value=0.
+        )
+
+    num_sequences, num_timesteps = batch_emissions.shape[:2]
+    lens = jnp.ones((num_sequences,)) * num_timesteps
+    scale = num_sequences / batch_size
+    rolling_stats = _init_suff_stats(hmm, (1,))
+    log_probs = []
+    for epoch in range(num_epochs):
+        sample_generator = _sample_minibatches(jr.fold_in(key, epoch),
+                                               batch_emissions, lens, batch_size, True)
+        for b in range(num_batches):
+            emissions, _ = next(sample_generator)
+            
+            batch_stats = hmm.e_step(emissions)
+            
+            rate = schedule(epoch*num_batches + b)
+            these_stats = tree_map(partial(jnp.sum, axis=0, keepdims=True), batch_stats)
+            rolling_stats = lax.cond(
+                jnp.all(rolling_stats.initial_probs==0),
+                partial(tree_map, lambda _, s1:  rate * scale * s1),
+                partial(tree_map, lambda s0, s1: (1-rate) * s0 + rate * scale * s1,),
+                rolling_stats, these_stats
+            )
+            
+            hmm.m_step(emissions, rolling_stats)
+
+        # Report log_prob of last batch in epoch
+        log_probs.append(these_stats.marginal_loglik.sum())
+
+    return hmm, log_probs
