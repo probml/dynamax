@@ -9,7 +9,6 @@ https://hmmlearn.readthedocs.io/en/latest/auto_examples/plot_poisson_hmm.html
 import jax.numpy as jnp
 import jax.random as jr
 import matplotlib.pyplot as plt
-from ssm_jax.hmm.learning import hmm_fit_em
 from ssm_jax.hmm.models.poisson_hmm import PoissonHMM
 
 
@@ -150,9 +149,9 @@ def main(test_mode=False):
             initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
             transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
             emission_rates = jr.uniform(key3, (num_states, emission_dim), minval=10.0, maxval=35.0)
-            
+
             model = PoissonHMM(initial_probs, transition_matrix, emission_rates)
-            model, *_ = hmm_fit_em(model, earthquakes[None, ..., None], num_iters=20)
+            losses = model.fit_em(earthquakes[None, ..., None], num_iters=20)
             models.append(model)
             scores.append(model.marginal_log_prob(earthquakes[:, None]))
             print(f"Score: {scores[-1]}")
