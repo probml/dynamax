@@ -1,16 +1,12 @@
 # Code for parameter estimation (MLE, MAP) using EM and SGD
 
 from functools import partial
-
 import jax.numpy as jnp
 import jax.random as jr
+from jax import jit, vmap, lax, value_and_grad, tree_map
 import optax
-from jax import jit
-from jax import lax
-from jax import value_and_grad
-from jax import vmap
+
 from tqdm.auto import trange
-from jax import tree_map
 
 def hmm_fit_em(hmm, batch_emissions, num_iters=50, **kwargs):
 
@@ -151,11 +147,11 @@ def hmm_fit_stochastic_em(
         hmm (BaseHMM): HMM class whose parameters will be estimated.
         batch_emissions (chex.Array): Independent sequences, shape (N,T,D).
         batch_size (int): Number of sequences used at each update step, B.
-        key (chex.PRNGKey): PRNG key.
         num_epochs (int): number of iterations to run on shuffled minibatches
         learning_rate_asymp_frac (float): Fraction of _total_ training iterations
             (i.e. num_epochs * num_batches) at which learning rate levels off,
             under an exponential decay model. Must be in range (0,1].
+        key (chex.PRNGKey): PRNG key.
 
     Returns:
         hmm: HMM with optimized parameters.

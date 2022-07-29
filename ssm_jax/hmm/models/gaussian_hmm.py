@@ -63,7 +63,7 @@ class GaussianHMM(BaseHMM):
                                                     self._emission_covs.value[state])
 
     @property
-    def suff_stats_event_shape(self) -> dict:
+    def suff_stats_event_shape(self):
         """Return dataclass containing 'event_shape' of each sufficient statistic."""
         return GaussianHMMSuffStats(
             marginal_loglik = (),
@@ -91,7 +91,7 @@ class GaussianHMM(BaseHMM):
             initial_probs = posterior.smoothed_probs[0]
             trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
 
-            # Compute the normalized expected sufficient statistics
+            # Compute the expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
             sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs, emissions)
             sum_xxT = jnp.einsum("tk, ti, tj->kij", posterior.smoothed_probs, emissions, emissions)

@@ -1,24 +1,12 @@
+import pytest
+
 import jax.numpy as jnp
 import jax.random as jr
+from jax import vmap
 import optax
-import pytest
-import chex
+
 import ssm_jax.hmm.learning as learn
 from ssm_jax.hmm.models import GaussianHMM
-
-# =============================================================================
-# "STANDARD" EM steps for Gaussian HMM
-#   This perfroms out-of-place HMM updates (i.e. a new HMM is returned)
-#   These results are used as reference for test cases
-# =============================================================================
-from functools import partial
-from jax import vmap, tree_map
-from ssm_jax.hmm.inference import hmm_smoother, compute_transition_probs
-from tensorflow_probability.substrates.jax.distributions import Dirichlet
-
-# =============================================================================
-# Setup
-# =============================================================================
                  
 def make_rnd_hmm(num_states=5, emission_dim=2):
     # Specify parameters of the HMM
@@ -41,7 +29,7 @@ def make_rnd_model_and_data(num_states=5, emission_dim=2, num_timesteps=2000, nu
 
     if num_batches == 1: # Keep this condition for comptaibility with earlier tests
         true_states, emissions = true_hmm.sample(jr.PRNGKey(0), num_timesteps)
-        batch_true_states = true_states
+        batch_true_states = true_states[None, ...]
         batch_emissions = emissions[None, ...]
     else:
         batch_true_states, batch_emissions = \
@@ -53,7 +41,7 @@ def make_rnd_model_and_data(num_states=5, emission_dim=2, num_timesteps=2000, nu
 
 def test_loglik():
     true_hmm, true_states, batch_emissions = make_rnd_model_and_data()
-    assert jnp.allclose(true_hmm.log_prob(true_states, batch_emissions[0]), 3149.1013, atol=1e-1)
+    assert jnp.allclose(true_hmm.log_prob(true_states[0], batch_emissions[0]), 3149.1013, atol=1e-1)
     assert jnp.allclose(true_hmm.marginal_log_prob(batch_emissions[0]), 3149.1047, atol=1e-1)
 
 
