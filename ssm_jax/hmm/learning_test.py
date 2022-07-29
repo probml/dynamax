@@ -80,7 +80,7 @@ def test_hmm_stochastic_fit(num_iters=10):
 
     test_hmm, test_lps = learn.hmm_fit_stochastic_em(
         test_hmm, batch_emissions, 
-        batch_size=4, num_epochs=2*num_iters, key=jr.PRNGKey(2), 
+        batch_size=4, num_iters=2*num_iters, key=jr.PRNGKey(2), 
     )
     
     # -------------------------------------------------------------------------

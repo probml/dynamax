@@ -129,7 +129,7 @@ def hmm_fit_stochastic_em(
     hmm,
     batch_emissions,
     batch_size=1,
-    num_epochs=50,
+    num_iters=50,
     learning_rate_asymp_frac=0.9,
     key=jr.PRNGKey(0),
 ):
@@ -147,7 +147,7 @@ def hmm_fit_stochastic_em(
         hmm (BaseHMM): HMM class whose parameters will be estimated.
         batch_emissions (chex.Array): Independent sequences, shape (N,T,D).
         batch_size (int): Number of sequences used at each update step, B.
-        num_epochs (int): number of iterations to run on shuffled minibatches
+        num_iters (int): number of em iterations (epochs) to run.
         learning_rate_asymp_frac (float): Fraction of _total_ training iterations
             (i.e. num_epochs * num_batches) at which learning rate levels off,
             under an exponential decay model. Must be in range (0,1].
@@ -201,17 +201,17 @@ def hmm_fit_stochastic_em(
     # Learning rate schedule
     schedule = optax.exponential_decay(
         init_value=1.,
-        transition_steps=num_epochs*num_batches,
-        decay_rate=(num_epochs*num_batches)**(-1./learning_rate_asymp_frac),
+        transition_steps=num_iters*num_batches,
+        decay_rate=(num_iters*num_batches)**(-1./learning_rate_asymp_frac),
         end_value=0.
         )
-    learn_rates = schedule(jnp.arange(num_epochs*num_batches))
-    learn_rates = learn_rates.reshape(num_epochs, num_batches)
+    learn_rates = schedule(jnp.arange(num_iters*num_batches))
+    learn_rates = learn_rates.reshape(num_iters, num_batches)
 
     # Initialize suff stats fields to 0-arrays with shape (1, hmm.num_states, ...)
     init_stats = _init_suff_stats(hmm, (1,))
 
     (hmm, _), log_probs = lax.scan( \
-        _epoch_step, (hmm, init_stats), (jr.split(key, num_epochs), learn_rates))
+        _epoch_step, (hmm, init_stats), (jr.split(key, num_iters), learn_rates))
 
     return hmm, log_probs
