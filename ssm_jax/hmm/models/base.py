@@ -234,10 +234,9 @@ class BaseHMM(Module):
             batch_emissions (chex.Array): Independent sequences.
             optmizer (optax.Optimizer): Optimizer.
             batch_size (int): Number of sequences used at each update step.
-            num_iters (int): Iterations made on only one mini-batch.
-            loss_fn (Callable): Objective function.
-            shuffle (bool): Indicates whether to shuffle emissions.
-            key (chex.PRNGKey): RNG key.
+            num_epochs (int): Iterations made through entire dataset.
+            shuffle (bool): Indicates whether to shuffle minibatches.
+            key (chex.PRNGKey): RNG key to shuffle minibatches.
 
         Returns:
             losses: Output of loss_fn stored at each step.
