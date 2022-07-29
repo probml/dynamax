@@ -1,3 +1,6 @@
+from functools import partial
+
+import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
@@ -5,16 +8,15 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
-
-import chex
-from functools import partial
-
+from ssm_jax.abstractions import Parameter
+from ssm_jax.hmm.inference import compute_transition_probs
+from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
-from ssm_jax.hmm.inference import hmm_smoother, compute_transition_probs
 
 
 @register_pytree_node_class
 class BernoulliHMM(BaseHMM):
+
     def __init__(self, initial_probabilities, transition_matrix, emission_probs):
         """_summary_
         Args:
@@ -24,7 +26,7 @@ class BernoulliHMM(BaseHMM):
         """
         super().__init__(initial_probabilities, transition_matrix)
 
-        self._emission_probs = emission_probs
+        self._emission_probs = Parameter(emission_probs, bijector=tfb.Invert(tfb.Sigmoid()))
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -39,7 +41,7 @@ class BernoulliHMM(BaseHMM):
         return self._emission_probs
 
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs[state]),
+        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs.value[state]),
                                reinterpreted_batch_ndims=1)
 
     def e_step(self, batch_emissions):
@@ -47,6 +49,7 @@ class BernoulliHMM(BaseHMM):
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
+
         @chex.dataclass
         class BernoulliHMMSuffStats:
             # Wrapper for sufficient statistics of a BernoulliHMM
@@ -58,28 +61,25 @@ class BernoulliHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probabilities,
-                                     self.transition_matrix,
+            posterior = hmm_smoother(self.initial_probs.value,
+                                     self.transition_matrix.value,
                                      self._conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
-            trans_probs = compute_transition_probs(self.transition_matrix, posterior)
+            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
 
             # Compute the expected sufficient statistics
-            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
-                               jnp.where(jnp.isnan(emissions), 0, emissions))
+            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs, jnp.where(jnp.isnan(emissions), 0, emissions))
             sum_1mx = jnp.einsum("tk, ti->ki", posterior.smoothed_probs,
-                                 jnp.where(jnp.isnan(emissions), 0, 1-emissions))
+                                 jnp.where(jnp.isnan(emissions), 0, 1 - emissions))
 
             # Pack into a dataclass
-            stats = BernoulliHMMSuffStats(
-                marginal_loglik=posterior.marginal_loglik,
-                initial_probs=initial_probs,
-                trans_probs=trans_probs,
-                sum_x=sum_x,
-                sum_1mx=sum_1mx
-            )
+            stats = BernoulliHMMSuffStats(marginal_loglik=posterior.marginal_loglik,
+                                          initial_probs=initial_probs,
+                                          trans_probs=trans_probs,
+                                          sum_x=sum_x,
+                                          sum_1mx=sum_1mx)
             return stats
 
         # Map the E step calculations over batches
@@ -89,22 +89,6 @@ class BernoulliHMM(BaseHMM):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
         # Then maximize the expected log probability as a fn of model parameters
-        self._initial_probs = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
-        self._transition_matrix = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
-        self._emission_probs = tfd.Beta(1.1 + stats.sum_x, 1.1 + stats.sum_1mx).mode()
-
-    @property
-    def unconstrained_params(self):
-        """Helper property to get a PyTree of unconstrained parameters."""
-        return (
-            tfb.SoftmaxCentered().inverse(self._initial_probabilities),
-            tfb.SoftmaxCentered().inverse(self._transition_matrix),
-            tfb.Sigmoid().inverse(self._emission_probs),
-        )
-
-    @unconstrained_params.setter
-    def unconstrained_params(self, unconstrained_params):
-        self._initial_probabilities = tfb.SoftmaxCentered().forward(unconstrained_params[0])
-        self._transition_matrix = tfb.SoftmaxCentered().forward(unconstrained_params[1])
-        self._emission_probs = tfb.Sigmoid().forward(unconstrained_params[2])
-        
+        self._initial_probs.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
+        self._transition_matrix.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
+        self._emission_probs.value = tfd.Beta(1.1 + stats.sum_x, 1.1 + stats.sum_1mx).mode()

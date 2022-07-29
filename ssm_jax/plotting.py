@@ -105,7 +105,7 @@ def plot_uncertainty_ellipses(means, Sigmas, ax, n_std=3.0, **kwargs):
         plot_ellipse(Sigma, mu, ax, n_std, **kwargs)
 
 
-def plot_lgssm_posterior(post_means, post_covs, ax=None, ellipse_kwargs={}, **kwargs):
+def plot_lgssm_posterior(post_means, post_covs, ax=None, ellipse_kwargs={}, legend_kwargs={}, **kwargs):
     """Plot posterior means and covariances for the first two dimensions of
      the latent state of a LGSSM.
 
@@ -140,7 +140,7 @@ def plot_lgssm_posterior(post_means, post_covs, ax=None, ellipse_kwargs={}, **kw
     ax.axis("equal")
 
     if "label" in kwargs:
-        ax.legend()
+        ax.legend(**legend_kwargs)
 
     return ax
 
