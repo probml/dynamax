@@ -14,7 +14,14 @@ from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import BaseHMM
 
-
+@chex.dataclass
+class CategoricalHMMSuffStats:
+    # Wrapper for sufficient statistics of a BernoulliHMM
+    marginal_loglik: chex.Scalar
+    initial_probs: chex.Array
+    trans_probs: chex.Array
+    sum_x: chex.Array
+    
 @register_pytree_node_class
 class CategoricalHMM(BaseHMM):
 
@@ -58,19 +65,21 @@ class CategoricalHMM(BaseHMM):
             tfd.Categorical(probs=self.emission_probs.value[state]),
             reinterpreted_batch_ndims=1)
 
+    @property
+    def suff_stats_event_shape(self):
+        """Return dataclass containing 'event_shape' of each sufficient statistic."""
+        return CategoricalHMMSuffStats(
+            marginal_loglik = (),
+            initial_probs   = (self.num_states,),
+            trans_probs     = (self.num_states, self.num_states),
+            sum_x           = (self.num_states, self.num_obs, self.num_classes),
+        )
+
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
-
-        @chex.dataclass
-        class CategoricalHMMSuffStats:
-            # Wrapper for sufficient statistics of a BernoulliHMM
-            marginal_loglik: chex.Scalar
-            initial_probs: chex.Array
-            trans_probs: chex.Array
-            sum_x: chex.Array
 
         def _single_e_step(emissions):
             # Run the smoother

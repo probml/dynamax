@@ -131,6 +131,11 @@ class BaseHMM(Module):
                             self._conditional_logliks(emissions))
 
     # Expectation-maximization (EM) code
+    @property
+    def suff_stats_event_shape(self):
+        """Return dataclass containing 'event_shape' of each sufficient statistic."""
+        raise NotImplementedError
+
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
         posterior. In the generic case, we simply return the posterior itself.
