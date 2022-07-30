@@ -10,14 +10,20 @@ from jax.tree_util import tree_map
 from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
-from ssm_jax.hmm.models.base import BaseHMM
+from ssm_jax.hmm.models.base import StandardHMM
 from ssm_jax.utils import PSDToRealBijector
 
 
 @register_pytree_node_class
-class GaussianHMM(BaseHMM):
+class GaussianHMM(StandardHMM):
 
-    def __init__(self, initial_probabilities, transition_matrix, emission_means, emission_covariance_matrices):
+    def __init__(self,
+                 initial_probabilities,
+                 transition_matrix,
+                 emission_means,
+                 emission_covariance_matrices,
+                 initial_probs_concentration=1.1,
+                 transition_matrix_concentration=1.1):
         """_summary_
 
         Args:
@@ -26,7 +32,9 @@ class GaussianHMM(BaseHMM):
             emission_means (_type_): _description_
             emission_covariance_matrices (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix)
+        super().__init__(initial_probabilities, transition_matrix,
+                         initial_probs_concentration=initial_probs_concentration,
+                         transition_matrix_concentration=transition_matrix_concentration)
 
         self._emission_means = Parameter(emission_means)
         self._emission_covs = Parameter(emission_covariance_matrices, bijector=PSDToRealBijector)
@@ -53,6 +61,12 @@ class GaussianHMM(BaseHMM):
         return tfd.MultivariateNormalFullCovariance(self._emission_means.value[state],
                                                     self._emission_covs.value[state])
 
+    def log_prior(self):
+        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
+        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
+        # TODO: Add Gaussian prior here
+        return lp
+
     # Expectation-maximization (EM) code
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
@@ -72,9 +86,9 @@ class GaussianHMM(BaseHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probs.value,
-                                     self.transition_matrix.value,
-                                     self._conditional_logliks(emissions))
+            posterior = hmm_smoother(self._compute_initial_probs(),
+                                     self._compute_transition_matrices(),
+                                     self._compute_conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
@@ -97,17 +111,11 @@ class GaussianHMM(BaseHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
-        # Initial distribution
-        self._initial_probs.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
-
-        # Transition distribution
-        self._transition_matrix.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
-
-        # Gaussian emission distribution
+        # Then maximize the expected log probability as a fn of model parameters
         emission_dim = stats.sum_x.shape[-1]
         self._emission_means.value = stats.sum_x / stats.sum_w[:, None]
         self._emission_covs.value = (stats.sum_xxT / stats.sum_w[:, None, None] -
