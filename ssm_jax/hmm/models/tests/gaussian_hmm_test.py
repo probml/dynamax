@@ -2,7 +2,6 @@ import jax.numpy as jnp
 from jax import random
 from jax import vmap
 from sklearn.datasets import make_spd_matrix
-from ssm_jax.hmm.learning import hmm_fit_sgd
 from ssm_jax.hmm.models.gaussian_hmm import GaussianHMM
 
 
@@ -35,7 +34,7 @@ def test_fit_means(key=random.PRNGKey(0), num_states=3, num_emissions=3, num_sam
     hmm.initial_probs.freeze()
     hmm.emission_covariance_matrices.freeze()
 
-    hmm, losses = hmm_fit_sgd(hmm, batch_emissions)
+    losses = hmm.fit_sgd(batch_emissions)
     assert jnp.allclose(hmm.initial_probs.value, initial_probabilities)
     assert jnp.allclose(hmm.transition_matrix.value, transition_matrix)
     assert jnp.allclose(hmm.emission_covariance_matrices.value, emission_covars)
@@ -57,7 +56,7 @@ def test_fit_covars(key=random.PRNGKey(0), num_states=3, num_emissions=3, num_sa
     hmm.initial_probs.freeze()
     hmm.emission_means.freeze()
 
-    hmm, losses = hmm_fit_sgd(hmm, batch_emissions)
+    losses = hmm.fit_sgd(batch_emissions)
     assert jnp.allclose(hmm.initial_probs.value, initial_probabilities)
     assert jnp.allclose(hmm.transition_matrix.value, transition_matrix)
     assert jnp.allclose(hmm.emission_means.value, emission_means)
@@ -79,7 +78,7 @@ def test_fit_transition_matrix(key=random.PRNGKey(0), num_states=3, num_emission
     hmm.emission_covariance_matrices.freeze()
     hmm.emission_means.freeze()
 
-    hmm, losses = hmm_fit_sgd(hmm, batch_emissions)
+    losses = hmm.fit_sgd(batch_emissions)
     assert jnp.allclose(hmm.initial_probs.value, initial_probabilities)
     assert jnp.allclose(hmm.emission_means.value, emission_means)
     assert jnp.allclose(hmm.emission_covariance_matrices.value, emission_covars)

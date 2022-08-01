@@ -4,8 +4,6 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
 import optax
-
-import ssm_jax.hmm.learning as learn
 from ssm_jax.hmm.models import GaussianHMM
                  
 def make_rnd_hmm(num_states=5, emission_dim=2):
@@ -26,7 +24,6 @@ def make_rnd_hmm(num_states=5, emission_dim=2):
 
 def make_rnd_model_and_data(num_states=5, emission_dim=2, num_timesteps=2000, num_batches=1):
     true_hmm = make_rnd_hmm(num_states, emission_dim)
-
     if num_batches == 1: # Keep this condition for comptaibility with earlier tests
         true_states, emissions = true_hmm.sample(jr.PRNGKey(0), num_timesteps)
         batch_true_states = true_states[None, ...]
@@ -35,7 +32,6 @@ def make_rnd_model_and_data(num_states=5, emission_dim=2, num_timesteps=2000, nu
         batch_true_states, batch_emissions = \
             vmap(true_hmm.sample, in_axes=(0, None))\
                 (jr.split(jr.PRNGKey(0), num_batches), num_timesteps)
-    
     return true_hmm, batch_true_states, batch_emissions
 
 
@@ -47,27 +43,27 @@ def test_loglik():
 
 def test_hmm_fit_em(num_iters=2):
     true_hmm, _, batch_emissions = make_rnd_model_and_data()
-    test_hmm_em = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
+    test_hmm = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     # Quick test: 2 iterations
-    test_hmm_em, logprobs_em = learn.hmm_fit_em(test_hmm_em, batch_emissions, num_iters=num_iters)
+    logprobs_em = test_hmm.fit_em(batch_emissions, num_iters=num_iters)
     assert jnp.allclose(logprobs_em[-1], -3600.2395, atol=1e-1)
-    mu = test_hmm_em.emission_means.value
+    mu = test_hmm.emission_means.value
     assert jnp.alltrue(mu.shape == (10, 2))
     assert jnp.allclose(mu[0, 0], -0.712, atol=1e-1)
 
 def test_hmm_fit_sgd(num_iters=2):
     true_hmm, _, batch_emissions = make_rnd_model_and_data()
     print(batch_emissions.shape)
-    test_hmm_sgd = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
+    test_hmm = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     # Quick test: 2 iterations
     optimizer = optax.adam(learning_rate=1e-2)
-    test_hmm_sgd, losses = learn.hmm_fit_sgd(test_hmm_sgd, batch_emissions, optimizer=optimizer, num_iters=num_iters)
+    losses = test_hmm.fit_sgd(batch_emissions, optimizer=optimizer, num_epochs=num_iters)
     assert jnp.allclose(losses[-1], 2.852, atol=1e-1)
-    mu = test_hmm_sgd.emission_means.value
+    mu = test_hmm.emission_means.value
     assert jnp.alltrue(mu.shape == (10, 2))
     assert jnp.allclose(mu[0, 0], -1.827, atol=1e-1)
 
-def test_hmm_stochastic_fit(num_iters=10):
+def test_hmm_fit_stochastic_em(num_iters=10):
     # Compare stochastic em fit vs. full batch fit.
     # Let stochastic em run for 2*num_iters
     true_hmm, _, batch_emissions = make_rnd_model_and_data(num_batches=8)
@@ -76,11 +72,10 @@ def test_hmm_stochastic_fit(num_iters=10):
     refr_hmm = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     test_hmm = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
 
-    refr_hmm, refr_lps = learn.hmm_fit_em(refr_hmm, batch_emissions, num_iters)
+    refr_lps = refr_hmm.fit_em(batch_emissions, num_iters)
 
-    test_hmm, test_lps = learn.hmm_fit_stochastic_em(
-        test_hmm, batch_emissions, 
-        batch_size=4, num_iters=2*num_iters, key=jr.PRNGKey(2), 
+    test_lps = test_hmm.fit_stochastic_em(
+        batch_emissions, batch_size=4, num_epochs=2*num_iters, key=jr.PRNGKey(2), 
     )
     
     # -------------------------------------------------------------------------

@@ -1,6 +1,8 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import jax.numpy as jnp
+import jax.random as jr
+from jax import lax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from jax.tree_util import register_pytree_node_class
 
@@ -34,7 +36,7 @@ class Parameter:
 
     def unfreeze(self):
         self.is_frozen = False
-    
+
     def prior_log_prob(self):
         return jnp.sum(self.prior.log_prob(self.value)) if self.prior is not None else 0
 
@@ -48,7 +50,7 @@ class Parameter:
         return cls(children[0], *aux_data)
 
 
-class Module(ABC):
+class SSM(ABC):
     """A base class for state space models. Such models consist of parameters, which
     we may learn, as well as hyperparameters, which specify static properties of the
     model. This base class allows parameters to be indicated a standardized way
@@ -56,6 +58,78 @@ class Module(ABC):
     these parameters to implement the tree_flatten and tree_unflatten methods necessary
     to register a model as a JAX PyTree.
     """
+    @abstractmethod
+    def initial_distribution(self):
+        """Return an initial distribution over latent states.
+
+        Returns:
+            dist (tfd.Distribution): distribution over initial latent state.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def transition_distribution(self, state):
+        """Return a distribution over next latent state given current state.
+
+        Args:
+            state (PyTree): current latent state
+
+        Returns:
+            dist (tfd.Distribution): conditional distribution of next latent state.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def emission_distribution(self, state):
+        """Return a distribution over emissions given current state.
+
+        Args:
+            state (PyTree): current latent state.
+
+        Returns:
+            dist (tfd.Distribution): conditional distribution of current emission.
+        """
+        raise NotImplementedError
+
+    def sample(self, key, num_timesteps):
+        """Sample a sequence of latent states and emissions.
+
+        Args:
+            key: rng key
+            num_timesteps: length of sequence to generate
+        """
+
+        def _step(state, key):
+            key1, key2 = jr.split(key, 2)
+            emission = self.emission_distribution(state).sample(seed=key1)
+            next_state = self.transition_distribution(state).sample(seed=key2)
+            return next_state, (state, emission)
+
+        # Sample the initial state
+        key1, key = jr.split(key, 2)
+        initial_state = self.initial_distribution().sample(seed=key1)
+
+        # Sample the remaining emissions and states
+        keys = jr.split(key, num_timesteps)
+        _, (states, emissions) = lax.scan(_step, initial_state, keys)
+        return states, emissions
+
+    def log_prob(self, states, emissions):
+        """Compute the log joint probability of the states and observations"""
+        def _step(carry, args):
+            lp, prev_state = carry
+            state, emission = args
+            lp += self.transition_distribution(prev_state).log_prob(state)
+            lp += self.emission_distribution(state).log_prob(emission)
+            return (lp, state), None
+
+        # Compute log prob of initial time step
+        lp = self.initial_distribution().log_prob(states[0])
+        lp += self.emission_distribution(states[0]).log_prob(emissions[0])
+
+        # Scan over remaining time steps
+        (lp, _), _ = lax.scan(_step, (lp, states[0]), (states[1:], emissions[1:]))
+        return lp
 
     @property
     def unconstrained_params(self):
