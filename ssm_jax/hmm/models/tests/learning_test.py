@@ -40,20 +40,20 @@ def test_hmm_fit_em(num_iters=2):
     test_hmm = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     # Quick test: 2 iterations
     logprobs_em = test_hmm.fit_em(batch_emissions, num_iters=num_iters)
-    assert jnp.allclose(logprobs_em[-1], -3600.2395, atol=1e-1)
+    assert jnp.allclose(logprobs_em[-1], -3704.3, atol=1e-1)
     mu = test_hmm.emission_means.value
     assert jnp.alltrue(mu.shape == (10, 2))
     assert jnp.allclose(mu[0, 0], -0.712, atol=1e-1)
 
 
-def test_hmm_fit_sgd(num_iters=2):
+def test_hmm_fit_sgd(num_epochs=2):
     true_hmm, _, batch_emissions = make_rnd_model_and_data()
     print(batch_emissions.shape)
     test_hmm = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     # Quick test: 2 iterations
     optimizer = optax.adam(learning_rate=1e-2)
-    losses = test_hmm.fit_sgd(batch_emissions, optimizer=optimizer, num_epochs=num_iters)
-    assert jnp.allclose(losses[-1], 2.852, atol=1e-1)
+    losses = test_hmm.fit_sgd(batch_emissions, optimizer=optimizer, num_epochs=num_epochs)
+    assert jnp.allclose(losses[-1], 1.3912, atol=1e-1)
     mu = test_hmm.emission_means.value
     assert jnp.alltrue(mu.shape == (10, 2))
     assert jnp.allclose(mu[0, 0], -1.827, atol=1e-1)
