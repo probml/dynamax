@@ -91,30 +91,6 @@ class InverseWishart(tfd.TransformedDistribution):
             return vmap(_single_variance)(dfs, scales)
 
 
-# class NormalInverseWishart(tfd.JointDistributionNamed):
-#     def __init__(self, loc, mean_concentration, df, scale, **kwargs):
-#         """
-#         A normal inverse Wishart (NIW) distribution with
-#         TODO: Finish this description
-#         Args:
-#             loc:            \mu_0 in math above
-#             mean_concentration: \kappa_0
-#             df:             \nu
-#             scale:          \Psi
-#         """
-#         # Store hyperparameters.
-#         # Note: these should really be private.
-#         self._loc = loc
-#         self._mean_concentration = mean_concentration
-#         self._df = df
-#         self._scale = scale
-
-#         super(NormalInverseWishart, self).__init__(dict(
-#             Sigma=lambda: InverseWishart(df, scale),
-#             mu=lambda Sigma: tfd.MultivariateNormalFullCovariance(
-#                 loc, Sigma / mean_concentration)
-#         ))
-
 class NormalInverseWishart(tfd.JointDistributionSequential):
     def __init__(self, loc, mean_concentration, df, scale):
         """
