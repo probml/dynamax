@@ -24,7 +24,7 @@ class CategoricalHMM(StandardHMM):
                  emission_probs,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
-                 emission_probs_concentration=1.1):
+                 emission_prior_concentration=1.1):
         """_summary_
 
         Args:
@@ -43,7 +43,7 @@ class CategoricalHMM(StandardHMM):
 
         # Save parameters and hyperparameters
         self._emission_probs = Parameter(emission_probs, bijector=tfb.Invert(tfb.SoftmaxCentered()))
-        self._emission_probs_concentration = Parameter(emission_probs_concentration  * jnp.ones(num_classes),
+        self._emission_prior_concentration = Parameter(emission_prior_concentration  * jnp.ones(num_classes),
                                                        is_frozen=True,
                                                        bijector=tfb.Invert(tfb.Softplus()))
 
@@ -75,7 +75,7 @@ class CategoricalHMM(StandardHMM):
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
-        lp += tfd.Dirichlet(self._emission_probs_concentration.value).log_prob(self.emission_probs.value).sum()
+        lp += tfd.Dirichlet(self._emission_prior_concentration.value).log_prob(self.emission_probs.value).sum()
         return lp
 
     def e_step(self, batch_emissions):
@@ -122,5 +122,5 @@ class CategoricalHMM(StandardHMM):
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Then maximize the expected log probability as a fn of model parameters
-        self._emission_probs.value = tfd.Dirichlet(self._emission_probs_concentration.value +
+        self._emission_probs.value = tfd.Dirichlet(self._emission_prior_concentration.value +
                                                    stats.sum_x).mode()

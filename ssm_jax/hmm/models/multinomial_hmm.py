@@ -17,7 +17,7 @@ class MultinomialHMM(StandardHMM):
                  num_trials=1,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
-                 emission_probs_concentration=1.1):
+                 emission_prior_concentration=1.1):
         """_summary_
 
         Args:
@@ -35,7 +35,7 @@ class MultinomialHMM(StandardHMM):
         num_classes = emission_probs.shape[2]
         self._num_trials = num_trials
         self._emission_probs = Parameter(emission_probs, bijector=tfb.Invert(tfb.SoftmaxCentered()))
-        self._emission_probs_concentration = Parameter(emission_probs_concentration  * jnp.ones(num_classes),
+        self._emission_prior_concentration = Parameter(emission_prior_concentration  * jnp.ones(num_classes),
                                                        is_frozen=True,
                                                        bijector=tfb.Invert(tfb.Softplus()))
 
@@ -71,5 +71,5 @@ class MultinomialHMM(StandardHMM):
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
-        lp += tfd.Dirichlet(self._emission_probs_concentration.value).log_prob(self._emission_probs.value).sum()
+        lp += tfd.Dirichlet(self._emission_prior_concentration.value).log_prob(self._emission_probs.value).sum()
         return lp

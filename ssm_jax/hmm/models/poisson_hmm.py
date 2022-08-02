@@ -23,8 +23,8 @@ class PoissonHMM(StandardHMM):
                  emission_rates,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
-                 emission_rates_prior_concentration=1.1,
-                 emission_rates_prior_rate=0.1):
+                 emission_prior_concentration=1.1,
+                 emission_prior_rate=0.1):
         """_summary_
 
         Args:
@@ -37,12 +37,12 @@ class PoissonHMM(StandardHMM):
                          transition_matrix_concentration=transition_matrix_concentration)
 
         self._emission_rates = Parameter(emission_rates, bijector=tfb.Invert(tfb.Softplus()))
-        self._emission_rates_prior_concentration = Parameter(emission_rates_prior_concentration,
-                                                             is_frozen=True,
-                                                             bijector=tfb.Invert(tfb.Softplus()))
-        self._emission_rates_prior_rate = Parameter(emission_rates_prior_rate,
-                                                    is_frozen=True,
-                                                    bijector=tfb.Invert(tfb.Softplus()))
+        self._emission_prior_concentration = Parameter(emission_prior_concentration,
+                                                       is_frozen=True,
+                                                       bijector=tfb.Invert(tfb.Softplus()))
+        self._emission_prior_rate = Parameter(emission_prior_rate,
+                                              is_frozen=True,
+                                              bijector=tfb.Invert(tfb.Softplus()))
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -64,8 +64,8 @@ class PoissonHMM(StandardHMM):
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
-        lp += tfd.Gamma(self._emission_rates_prior_concentration.value,
-                          self._emission_rates_prior_rate.value).log_prob(self._emission_rates.value).sum()
+        lp += tfd.Gamma(self._emission_prior_concentration.value,
+                          self._emission_prior_rate.value).log_prob(self._emission_rates.value).sum()
         return lp
 
     def e_step(self, batch_emissions):
@@ -115,6 +115,6 @@ class PoissonHMM(StandardHMM):
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Then maximize the expected log probability as a fn of model parameters
-        post_concentration = self._emission_rates_prior_concentration.value + stats.sum_x
-        post_rate = self._emission_rates_prior_rate.value + stats.sum_w
+        post_concentration = self._emission_prior_concentration.value + stats.sum_x
+        post_rate = self._emission_prior_rate.value + stats.sum_w
         self._emission_rates.value = tfd.Gamma(post_concentration, post_rate).mode()
