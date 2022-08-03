@@ -49,7 +49,8 @@ class GaussianHMM(StandardHMM):
 
         dim = emission_means.shape[-1]
         self._emission_prior_mean = Parameter(
-            emission_prior_mean * jnp.ones(dim), is_frozen=True)
+            emission_prior_mean * jnp.ones(dim),
+            is_frozen=True)
         self._emission_prior_conc = Parameter(
             emission_prior_concentration,
             is_frozen=True,
