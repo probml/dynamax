@@ -20,7 +20,6 @@ class Parameter:
         self.value = value
         self.is_frozen = is_frozen
         self.bijector = bijector if bijector is not None else tfb.Identity()
-        self.prior = prior
 
     def __repr__(self):
         return f"Parameter(value={self.value}, " \
@@ -36,9 +35,6 @@ class Parameter:
 
     def unfreeze(self):
         self.is_frozen = False
-
-    def prior_log_prob(self):
-        return jnp.sum(self.prior.log_prob(self.value)) if self.prior is not None else 0
 
     def tree_flatten(self):
         children = (self.value,)
@@ -130,6 +126,14 @@ class SSM(ABC):
         # Scan over remaining time steps
         (lp, _), _ = lax.scan(_step, (lp, states[0]), (states[1:], emissions[1:]))
         return lp
+
+    def log_prior(self):
+        """Return the log prior probability of any model parameters.
+
+        Returns:
+            lp (Scalar): log prior probability.
+        """
+        return 0.0
 
     @property
     def unconstrained_params(self):

@@ -9,7 +9,7 @@ def _get_dataset_len(dataset):
     return len(tree_leaves(dataset)[0])
 
 
-def _sample_minibatches(key, dataset, batch_size, shuffle):
+def sample_minibatches(key, dataset, batch_size, shuffle):
     """Sequence generator."""
     n_data = _get_dataset_len(dataset)
     perm = jnp.where(shuffle, jr.permutation(key, n_data), jnp.arange(n_data))
@@ -56,7 +56,7 @@ def run_sgd(loss_fn,
 
     def train_step(carry, key):
         params, opt_state = carry
-        sample_generator = _sample_minibatches(key, dataset, batch_size, shuffle)
+        sample_generator = sample_minibatches(key, dataset, batch_size, shuffle)
 
         def cond_fun(state):
             itr, params, opt_state, avg_loss = state

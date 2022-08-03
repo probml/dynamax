@@ -11,7 +11,7 @@ from jax.tree_util import register_pytree_node_class
 from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
-from ssm_jax.hmm.models.base import BaseHMM
+from ssm_jax.hmm.models.base import ExponentialFamilyHMM
 
 @chex.dataclass
 class PoissonHMMSuffStats:
@@ -23,9 +23,16 @@ class PoissonHMMSuffStats:
     sum_x: chex.Array
 
 @register_pytree_node_class
-class PoissonHMM(BaseHMM):
+class PoissonHMM(ExponentialFamilyHMM):
 
-    def __init__(self, initial_probabilities, transition_matrix, emission_rates):
+    def __init__(self,
+                 initial_probabilities,
+                 transition_matrix,
+                 emission_rates,
+                 initial_probs_concentration=1.1,
+                 transition_matrix_concentration=1.1,
+                 emission_prior_concentration=1.1,
+                 emission_prior_rate=0.1):
         """_summary_
 
         Args:
@@ -33,8 +40,17 @@ class PoissonHMM(BaseHMM):
             transition_matrix (_type_): _description_
             emission_rates (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix)
+        super().__init__(initial_probabilities, transition_matrix,
+                         initial_probs_concentration=initial_probs_concentration,
+                         transition_matrix_concentration=transition_matrix_concentration)
+
         self._emission_rates = Parameter(emission_rates, bijector=tfb.Invert(tfb.Softplus()))
+        self._emission_prior_concentration = Parameter(emission_prior_concentration,
+                                                       is_frozen=True,
+                                                       bijector=tfb.Invert(tfb.Softplus()))
+        self._emission_prior_rate = Parameter(emission_prior_rate,
+                                              is_frozen=True,
+                                              bijector=tfb.Invert(tfb.Softplus()))
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -53,17 +69,23 @@ class PoissonHMM(BaseHMM):
         return tfd.Independent(tfd.Poisson(rate=self.emission_rates.value[state]),
                                reinterpreted_batch_ndims=1)
 
-    @property
-    def suff_stats_event_shape(self):
+    def _zeros_like_suff_stats(self):
         """Return dataclass containing 'event_shape' of each sufficient statistic."""
         return PoissonHMMSuffStats(
-            marginal_loglik = (),
-            initial_probs   = (self.num_states,),
-            trans_probs     = (self.num_states, self.num_states),
-            sum_w           = (self.num_states, 1),
-            sum_x           = (self.num_states, self.num_obs),
+            marginal_loglik = 0.0,
+            initial_probs   = jnp.zeros((self.num_states,)),
+            trans_probs     = jnp.zeros((self.num_states, self.num_states)),
+            sum_w           = jnp.zeros((self.num_states, 1)),
+            sum_x           = jnp.zeros((self.num_states, self.num_obs)),
         )
- 
+
+    def log_prior(self):
+        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
+        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
+        lp += tfd.Gamma(self._emission_prior_concentration.value,
+                          self._emission_prior_rate.value).log_prob(self._emission_rates.value).sum()
+        return lp
+
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
@@ -74,7 +96,7 @@ class PoissonHMM(BaseHMM):
             # Run the smoother
             posterior = hmm_smoother(self.initial_probs.value,
                                      self.transition_matrix.value,
-                                     self._conditional_logliks(emissions))
+                                     self._compute_conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
@@ -97,10 +119,11 @@ class PoissonHMM(BaseHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def m_step(self, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
+
         # Then maximize the expected log probability as a fn of model parameters
-        self._initial_probs.value = tfd.Dirichlet(1.0001 + stats.initial_probs).mode()
-        self._transition_matrix.value = tfd.Dirichlet(1.0001 + stats.trans_probs).mode()
-        self._emission_rates.value = tfd.Gamma(1.1 + stats.sum_x, 1.1 + stats.sum_w).mode()
+        post_concentration = self._emission_prior_concentration.value + stats.sum_x
+        post_rate = self._emission_prior_rate.value + stats.sum_w
+        self._emission_rates.value = tfd.Gamma(post_concentration, post_rate).mode()
