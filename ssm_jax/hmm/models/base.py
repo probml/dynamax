@@ -158,7 +158,7 @@ class BaseHMM(SSM):
         @jit
         def em_step(params):
             self.unconstrained_params = params
-            batch_posteriors = self.e_step(batch_emissions)
+            batch_posteriors = self.e_step(batch_emissions, **batch_covariates)
             lp = self.log_prior() + batch_posteriors.marginal_loglik.sum()
             self.m_step(batch_emissions, batch_posteriors, **mstep_kwargs, **batch_covariates)
             return self.unconstrained_params, lp
@@ -280,12 +280,12 @@ class StandardHMM(BaseHMM):
         """
         raise NotImplementedError
 
-    def _m_step_initial_probs(self, batch_emissions, batch_posteriors):
+    def _m_step_initial_probs(self, batch_emissions, batch_posteriors, **batch_covariates):
         post = tfd.Dirichlet(self._initial_probs_concentration.value +
                              batch_posteriors.initial_probs.sum(axis=0))
         self._initial_probs.value = post.mode()
 
-    def _m_step_transition_matrix(self, batch_emissions, batch_posteriors):
+    def _m_step_transition_matrix(self, batch_emissions, batch_posteriors, **batch_covariates):
         post = tfd.Dirichlet(self._transition_matrix_concentration.value +
                              batch_posteriors.trans_probs.sum(axis=0))
         self._transition_matrix.value = post.mode()
@@ -323,13 +323,8 @@ class StandardHMM(BaseHMM):
 
     def m_step(self, batch_emissions,
                batch_posteriors,
-               optimizer=optax.adam(1e-2),
-               num_mstep_iters=50,
                **batch_covariates):
 
         self._m_step_initial_probs(batch_emissions, batch_posteriors, **batch_covariates)
         self._m_step_transition_matrix(batch_emissions, batch_posteriors, **batch_covariates)
-        self._m_step_emissions(batch_emissions, batch_posteriors,
-                               optimizer=optimizer,
-                               num_mstep_iters=num_mstep_iters,
-                               **batch_covariates)
+        self._m_step_emissions(batch_emissions, batch_posteriors, **batch_covariates)

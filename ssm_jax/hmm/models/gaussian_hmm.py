@@ -1,8 +1,6 @@
 from functools import partial
-from tkinter import N
 
 import chex
-from distrax import Normal
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
@@ -143,7 +141,7 @@ class GaussianHMM(StandardHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, batch_emissions, batch_posteriors):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
