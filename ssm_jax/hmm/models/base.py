@@ -279,8 +279,9 @@ class StandardHMM(BaseHMM):
         raise NotImplementedError
 
     def _m_step_initial_probs(self, batch_emissions, batch_posteriors):
+        # TODO: Put initial probs in the data class
         post = tfd.Dirichlet(self._initial_probs_concentration.value +
-                             batch_posteriors.initial_probs.sum(axis=0))
+                             batch_posteriors.smoothed_probs[:, 0].sum(axis=0))
         self._initial_probs.value = post.mode()
 
     def _m_step_transition_matrix(self, batch_emissions, batch_posteriors):
@@ -298,10 +299,9 @@ class StandardHMM(BaseHMM):
             self.unconstrained_params = params
 
             def _single_expected_log_like(emissions, posterior):
-                log_likelihoods = self._conditional_logliks(emissions)
+                log_likelihoods = self._compute_conditional_logliks(emissions)
                 expected_states = posterior.smoothed_probs
-                lp += jnp.sum(expected_states * log_likelihoods)
-                return lp
+                return jnp.sum(expected_states * log_likelihoods)
 
             log_prior = self.log_prior()
             minibatch_ells = vmap(_single_expected_log_like)(
