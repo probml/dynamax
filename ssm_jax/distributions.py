@@ -196,8 +196,8 @@ class MatrixNormal(tfd.TransformedDistribution):
     @property
     def mode(self):
         return self._loc
-    
-    
+
+
 class MatrixNormalInverseWishart(tfd.JointDistributionSequential):
     def __init__(self, loc, col_precision, df, scale):
         """A matrix normal inverse Wishart (MNIW) distribution
@@ -212,22 +212,12 @@ class MatrixNormalInverseWishart(tfd.JointDistributionSequential):
         Returns: 
             A tfp.JointDistribution object.
         """
-        # Convert the inverse Wishart scale to the scale_tril of a Wishart.
-        self.wishart_scale_tril = jnp.linalg.cholesky(jnp.linalg.inv(scale))
         self._matrix_normal_shape = loc.shape
         self._loc = loc
-        self._col_precision = col_precision
-        self._col_cov = jnp.linalg.inv(col_precision)
-        # Vectorize by row, which is consistent with the tfb.Reshape bijector
-        self._vec_mean = jnp.ravel(loc)
         self._df = df
         self._scale = scale
         super().__init__([InverseWishart(df, scale),
-                          lambda Sigma: tfd.TransformedDistribution(
-                          tfd.MultivariateNormalFullCovariance(self._vec_mean, 
-                                jnp.kron(Sigma, self._col_cov)),
-                          tfb.Reshape(event_shape_out=self._matrix_normal_shape))
-                          ])
+                          lambda Sigma: MatrixNormal(loc, Sigma, col_precision)])
         self._parameters = dict(loc=loc,
                                 col_precision=col_precision,
                                 df=df,
