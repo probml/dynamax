@@ -8,6 +8,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
 from jax import jit
 from jax import vmap
+from jax.tree_util import tree_map
 from tqdm.auto import trange
 
 from ssm_jax.hmm.inference import compute_transition_probs
@@ -44,7 +45,8 @@ class BaseHMM(SSM):
                 vmap(lambda state: \
                     self.transition_distribution(state, **covariate).probs_parameter())(
                         jnp.arange(self.num_states))
-            return vmap(f)(**covariates)
+            next_covariates = tree_map(lambda x: x[1:], covariates)
+            return vmap(f)(**next_covariates)
         else:
             g = vmap(lambda state: self.transition_distribution(state).probs_parameter())
             return g(jnp.arange(self.num_states))
@@ -281,8 +283,9 @@ class StandardHMM(BaseHMM):
         raise NotImplementedError
 
     def _m_step_initial_probs(self, batch_emissions, batch_posteriors, **batch_covariates):
+        initial_probs = batch_posteriors.smoothed_probs[:, 0, :]
         post = tfd.Dirichlet(self._initial_probs_concentration.value +
-                             batch_posteriors.initial_probs.sum(axis=0))
+                             initial_probs.sum(axis=0))
         self._initial_probs.value = post.mode()
 
     def _m_step_transition_matrix(self, batch_emissions, batch_posteriors, **batch_covariates):
@@ -302,14 +305,15 @@ class StandardHMM(BaseHMM):
             self.unconstrained_params = params
 
             def _single_expected_log_like(emissions, posterior, **covariates):
-                log_likelihoods = self._conditional_logliks(emissions, **covariates)
+                log_likelihoods = self._compute_conditional_logliks(emissions, **covariates)
                 expected_states = posterior.smoothed_probs
+                lp = 0.0
                 lp += jnp.sum(expected_states * log_likelihoods)
                 return lp
 
             log_prior = self.log_prior()
             minibatch_ells = vmap(_single_expected_log_like)(
-                minibatch_emissions, minibatch_posteriors, minibatch_covariates)
+                minibatch_emissions, minibatch_posteriors, **minibatch_covariates)
             expected_log_joint = log_prior + minibatch_ells.sum() * scale
             return -expected_log_joint / batch_emissions.size
 
