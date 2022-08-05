@@ -1,3 +1,4 @@
+from typing import Any, Optional
 import jax.numpy as jnp
 from jax import vmap
 from tensorflow_probability.substrates import jax as tfp
@@ -147,3 +148,94 @@ class NormalInverseWishart(tfd.JointDistributionSequential):
         dim = self._loc.shape[-1]
         covariance = jnp.einsum("...,...ij->...ij", 1 / (self._df + dim + 2), self._scale)
         return covariance, self._loc
+
+
+class MatrixNormal(tfd.TransformedDistribution):
+    def __init__(self, loc, row_covariance, col_precision):
+        """A matrix normal distribution
+
+        Args:
+            loc:            mean value of the matrix
+            row_covariance: covariance matrix of rows of the matrix 
+            col_precision:  precision matrix (inverse of covariance) of columns of the matrix
+            
+        Returns: 
+            A tfp.Distribution object.
+        """
+        self._shape = loc.shape
+        self._loc = loc
+        self._row_cov = row_covariance
+        self._col_precision = col_precision
+        self._col_cov = jnp.linalg.inv(col_precision)
+        # Vectorize by row, which is consistent with the tfb.Reshape bijector
+        self._vec_mean = jnp.ravel(loc) 
+        self._vec_cov = jnp.kron(row_covariance, self._col_cov)
+        super().__init__(tfd.MultivariateNormalFullCovariance(self._vec_mean, self._vec_cov),
+                         tfb.Reshape(event_shape_out=self._shape))
+        
+        # Replace the default MultivariateNormalFullCovariance parameters with the MatrixNormal ones
+        self._parameters = dict(loc=loc, 
+                                row_covariance=row_covariance,
+                                col_precision=col_precision)
+        
+    @classmethod
+    def _parameter_properties(cls, dtype: Optional[Any], num_classes=None):
+        td_properties = super()._parameter_properties(dtype,
+                                                      num_classes=num_classes)
+        del td_properties['bijector']
+        return td_properties
+    
+    @property
+    def row_covariance(self):
+        return self._row_cov
+    
+    @property
+    def col_precision(self):
+        return self._col_precision
+        
+    @property
+    def mode(self):
+        return self._loc
+    
+    
+class MatrixNormalInverseWishart(tfd.JointDistributionSequential):
+    def __init__(self, loc, col_precision, df, scale):
+        """A matrix normal inverse Wishart (MNIW) distribution
+
+        Args:
+            loc:           mean value matrix of the matrix normal distribution
+            col_precision: column precision matrix (the inverse of the column covariance)
+                           of the matrix normal ditribution
+            df:            degree of freedom parameter of the inverse Wishart distribution
+            scale:         the scale matrix of the inverse Wishart distribution
+        
+        Returns: 
+            A tfp.JointDistribution object.
+        """
+        # Convert the inverse Wishart scale to the scale_tril of a Wishart.
+        self.wishart_scale_tril = jnp.linalg.cholesky(jnp.linalg.inv(scale))
+        self._matrix_normal_shape = loc.shape
+        self._loc = loc
+        self._col_precision = col_precision
+        self._col_cov = jnp.linalg.inv(col_precision)
+        # Vectorize by row, which is consistent with the tfb.Reshape bijector
+        self._vec_mean = jnp.ravel(loc)
+        self._df = df
+        self._scale = scale
+        super().__init__([InverseWishart(df, scale),
+                          lambda Sigma: tfd.TransformedDistribution(
+                          tfd.MultivariateNormalFullCovariance(self._vec_mean, 
+                                jnp.kron(Sigma, self._col_cov)),
+                          tfb.Reshape(event_shape_out=self._matrix_normal_shape))
+                          ])
+        self._parameters = dict(loc=loc,
+                                col_precision=col_precision,
+                                df=df,
+                                scale=scale)
+    
+    @property
+    def mode(self):
+        num_row, num_col = self._matrix_normal_shape
+        covariance = jnp.einsum("...,...ij->...ij", 
+                               1 / (self._df + num_row + num_col + 1), self._scale)
+        return self._loc, covariance
