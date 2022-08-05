@@ -76,7 +76,7 @@ def test_hmm_fit_stochastic_em(num_iters=100):
     refr_lps = refr_hmm.fit_em(batch_emissions, num_iters)
 
     test_lps = test_hmm.fit_stochastic_em(
-        batch_emissions, batch_size=1, num_epochs=num_iters, key=jr.PRNGKey(2),
+        batch_emissions, batch_size=2, num_epochs=num_iters, key=jr.PRNGKey(2),
     )
 
     # -------------------------------------------------------------------------

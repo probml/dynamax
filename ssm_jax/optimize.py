@@ -10,12 +10,46 @@ def _get_dataset_len(dataset):
 
 
 def sample_minibatches(key, dataset, batch_size, shuffle):
-    """Sequence generator."""
+    """Sequence generator.
+    
+    NB: The generator does not preform as expected when used to yield data
+        within jit'd code. This is likely because the generator internally
+        updates a state with each yield (which doesn't play well with jit).
+    """
     n_data = _get_dataset_len(dataset)
     perm = jnp.where(shuffle, jr.permutation(key, n_data), jnp.arange(n_data))
     for idx in range(0, n_data, batch_size):
         yield tree_map(lambda x: x[perm[idx:min(idx + batch_size, n_data)]], dataset)
 
+def shuffle_minibatches(key, dataset, batch_size, shuffle=True):
+    """Generate permuted indices for iterate through dataset.
+    
+    Args:
+        dataset (chex.array): Data array with leading batch dimension size n_data
+        batch_size (int): Number of sequences used at each update step.
+        num_iters (int): Iterations made on only one mini-batch.
+        key (chex.PRNGKey): RNG key.
+        shuffle (bool): Indicates whether to shuffle emissions.
+        
+    Returns:
+        shuffled_indices (chex.Array, shape [n_batches, batch_size]):
+            Indices to leading dimension.
+
+    TODO    
+        - Allow minibatches to have different lengths, i.e. allow
+          dataset to be PyTree of data arrays with leading batch dimension
+    """
+    
+    n_data = _get_dataset_len(dataset)
+    assert n_data % batch_size == 0, 'TODO Support ragged dataset length'
+    n_complete_batches, leftover = jnp.divmod(n_data, batch_size)
+    n_batches = n_complete_batches + jnp.where(leftover == 0, 0, 1)
+
+    perm = jnp.where(shuffle,
+                     jr.permutation(key, n_batches*batch_size),
+                     jnp.arange(n_batches*batch_size))
+
+    return perm.reshape(-1, batch_size)
 
 def run_sgd(loss_fn,
             params,
