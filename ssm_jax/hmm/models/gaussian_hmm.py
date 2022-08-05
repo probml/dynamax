@@ -1,8 +1,6 @@
 from functools import partial
-from tkinter import N
 
 import chex
-from distrax import Normal
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd

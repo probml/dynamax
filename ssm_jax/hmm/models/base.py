@@ -19,7 +19,7 @@ from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import hmm_two_filter_smoother
 from ssm_jax.abstractions import SSM, Parameter
-from ssm_jax.optimize import run_sgd, sample_minibatches, shuffle_minibatches
+from ssm_jax.optimize import run_sgd, sample_minibatches
 
 
 class BaseHMM(SSM):
@@ -333,7 +333,9 @@ class StandardHMM(BaseHMM):
 
 
 class ExponentialFamilyHMM(StandardHMM):
-    """TODO
+    """
+    These models belong the exponential family of distributions and return a
+    set of expected sufficient statistics instead of an HMMPosterior object.
     """
 
     @abstractmethod
@@ -341,52 +343,47 @@ class ExponentialFamilyHMM(StandardHMM):
         raise NotImplementedError
 
     def fit_stochastic_em(self,
-                          batch_emissions,
+                          emissions_generator,
+                          total_emissions,
                           schedule=None,
-                          batch_size=1,
                           num_epochs=50,
-                          shuffle=True,
-                          key=jr.PRNGKey(0),
         ):
 
         """
         Fit this HMM by running Stochastic Expectation-Maximization.
 
-        Note that batch_emissions is initially of shape (N,T) where N is the
-        number of independent sequences and T is the length of a sequence.
-        Then a random subset of the sequences, and not of the timesteps, is
-        sampledat each sub-epoch, with shape (B,T) where B is batch size.
-
-        Note that this method assumes the instance's E-step returns sufficient
-        statistics, instead of a more generic HMMPosterior object.
-
-        This method also uses an exponentially decaying learning rate to anneal
-        the minibatch sufficient statistics at each stage of training. It is
-        recommended to set a value >0.5, and typically best to set a value >0.9.
-
+        Assuming the original dataset consists of N independent sequences of
+        length T, this algorithm performs EM on a random subset of B sequences 
+        (not timesteps) at each step. Importantly, the subsets of B sequences
+        are shuffled at each epoch. It is up to the user to correctly
+        instantiate the Dataloader generator object to exhibit this property.
+        
+        The algorithm uses a learning rate schedule to anneal the minibatch 
+        sufficient statistics at each stage of training. If a schedule is not
+        specified, an exponentially decaying model is used such that the
+        learning rate which decreases by 5% at each epoch.
+        
         Args:
-            batch_emissions (chex.Array): Independent sequences.
-            schedule (optax schedule, Callable: int -> [0, 1]): learning rate schedule;
-                Defaults to exponential schedule.
-            batch_size (int): Number of sequences used at each update step.
-            num_epochs (int): Iterations made through entire dataset.
-            shuffle (bool): Indicates whether to shuffle minibatches.
-            key (chex.PRNGKey): RNG key to shuffle minibatches.
+            emissions_generator (torch.data.utils.Dataloader): Iterable over the
+                emissions dataset; auto-shuffles batches after each epoch.
+            total_emissions (int): Total number of emissions that the generator
+                will load. Used to scale the minibatch statistics.
+            schedule (optax schedule, Callable: int -> [0, 1]): Learning rate
+                schedule; defaults to exponential schedule.
+            num_epochs (int): Num of iterations made through the entire dataset.
 
         Returns:
-            expected_log_prob (chex.Array): Returns the average expected log
-                probability at each epoch.
+            expected_log_prob (chex.Array): Mean expected log prob of each epoch.
+        
+        TODO Any way to take a weighted average of rolling stats (in addition
+             to the convex combination) given the number of emissions we see
+             with each new minibatch? This would allow us to remove the
+             `total_emissions` variable, and avoid errors in math in calculating
+             total number of emissions (which could get tricky esp. with
+             variable batch sizes.)
         """
 
-        # Set up the minibatch stuff
-        num_complete_batches, leftover = jnp.divmod(len(batch_emissions), batch_size)
-        # TODO: Support minibatches of different lengths
-        # num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
-        num_batches = num_complete_batches
-
-        _get_minibatch = lambda indices: \
-            vmap(lax.dynamic_index_in_dim, in_axes=(None, 0, None, None)) \
-                (batch_emissions, indices, 0, False)
+        num_batches = len(emissions_generator)
 
         # Set global training learning rates: shape (num_epochs, num_batches)
         if schedule is None:
@@ -396,31 +393,31 @@ class ExponentialFamilyHMM(StandardHMM):
                 transition_steps=num_batches,
                 decay_rate=.95,
             )
-        total_iters = num_epochs * num_batches
-        learning_rates = schedule(jnp.arange(total_iters))
+
+        learning_rates = schedule(jnp.arange(num_epochs*num_batches))
         assert learning_rates[0] == 1.0, "Learning rate must start at 1."
         learning_rates = learning_rates.reshape(num_epochs, num_batches)
 
-        # Set the scaling factor for the minibatch statistics.
-        # TODO: revisit this when we allow variable length time series
-        scale = len(batch_emissions) / batch_size
-
         @jit
-        def minibatch_step(carry, args):
-            self.unconstrained_params, rolling_stats = carry
-            batch_indices, batch_learn_rate = args
+        def minibatch_em_step(carry, inputs):
+            params, rolling_stats = carry
+            minibatch_emissions, learn_rate = inputs
 
-            # Get minibatch of data and compute the associated stats
-            emissions = _get_minibatch(batch_indices)
-            minibatch_stats = self.e_step(emissions)
+            # Compute the sufficient stats given a minibatch of emissions
+            self.unconstrained_params = params
+            minibatch_stats = self.e_step(minibatch_emissions)
             
             # Scale the stats as if they came from the whole dataset
-            scaled_minibatch_stats = tree_map(lambda x: jnp.sum(x, axis=0) * scale, minibatch_stats)
+            scale = total_emissions / len(minibatch_emissions.reshape(-1, self.num_obs))
+            scaled_minibatch_stats = tree_map(
+                lambda x: jnp.sum(x, axis=0) * scale,
+                minibatch_stats
+            )
             expected_lp = self.log_prior() + scaled_minibatch_stats.marginal_loglik
             
             # Incorporate these these stats into the rolling averaged stats
             rolling_stats = tree_map(
-                lambda s0, s1: (1-batch_learn_rate) * s0 + batch_learn_rate * s1,
+                lambda s0, s1: (1-learn_rate) * s0 + learn_rate * s1,
                 rolling_stats,
                 scaled_minibatch_stats
             )
@@ -429,7 +426,7 @@ class ExponentialFamilyHMM(StandardHMM):
             batched_rolling_stats = tree_map(
                 lambda x: jnp.expand_dims(x, axis=0), rolling_stats
             )
-            self.m_step(emissions, batched_rolling_stats)
+            self.m_step(minibatch_emissions, batched_rolling_stats)
 
             return (self.unconstrained_params, rolling_stats), expected_lp
         
@@ -437,22 +434,18 @@ class ExponentialFamilyHMM(StandardHMM):
         expected_log_probs = []
         params = self.unconstrained_params
         rolling_stats = self._zeros_like_suff_stats()
-        
         for epoch in trange(num_epochs):
-            # Shuffled indices, shape (num_batches, batch_size)
-            shuffled_indices = shuffle_minibatches(
-                jr.fold_in(key, epoch), batch_emissions, batch_size, shuffle
-            )
 
-            # Run EM across the set of the minibatches
-            (params, rolling_stats), expected_lps = lax.scan(
-                minibatch_step,
-                (params, rolling_stats),
-                (shuffled_indices, learning_rates[epoch])
-            )
+            _expected_lps = 0.
+            for minibatch, minibatch_emissions in enumerate(emissions_generator):
+                (params, rolling_stats), expected_lp = minibatch_em_step(
+                    (params, rolling_stats),
+                    (minibatch_emissions, learning_rates[epoch][minibatch]),
+                )
+                _expected_lps += expected_lp
 
-            # Save average of expected log probs
-            expected_log_probs.append(expected_lps.mean())
+            # Save epoch mean of expected log probs
+            expected_log_probs.append(_expected_lps/num_batches)
 
         # Update self with fitted params
         self.unconstrained_params = params
