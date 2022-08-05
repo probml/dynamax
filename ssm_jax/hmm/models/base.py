@@ -270,6 +270,12 @@ class StandardHMM(BaseHMM):
     def transition_distribution(self, state, **covariates):
         return tfd.Categorical(probs=self._transition_matrix.value[state])
 
+    def _compute_initial_probs(self, **covariates):
+        return self.initial_probs.value
+
+    def _compute_transition_matrices(self, **covariates):
+        return self.transition_matrix.value
+
     @abstractmethod
     def emission_distribution(self, state, **covariates):
         """Return a distribution over emissions given current state.
