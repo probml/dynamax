@@ -38,14 +38,10 @@ class CategoricalRegressionHMM(StandardHMM):
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
-        # Check shapes
-        # assert emission_probs.ndim == 3, \
-        #     "emission_probs must be (num_states x num_classes)"
-        self._num_classes = emission_biases.shape[0]
         # Save parameters and hyperparameters
+        self._num_classes = emission_biases.shape[0]
         self._emission_matrices = Parameter(emission_matrices)
         self._emission_biases = Parameter(emission_biases)
-        # self._emission_probs = Parameter(emission_probs, bijector=tfb.Invert(tfb.SoftmaxCentered()))
         self._emission_prior_concentration = Parameter(emission_prior_concentration  * jnp.ones(self._num_classes),
                                                        is_frozen=True,
                                                        bijector=tfb.Invert(tfb.Softplus()))
