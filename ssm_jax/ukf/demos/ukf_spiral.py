@@ -23,7 +23,7 @@ def main():
     states, emissions = nlgssm.sample(key=0, num_timesteps=100)
 
     # Run EKF on emissions
-    hyperparams = UKFHyperParams()
+    hyperparams = UKFHyperParams(alpha=10, beta=10, kappa=10)
     ukf_post = nlgssm.ukf_filter(emissions, hyperparams)
     ukf_means, ukf_covs = ukf_post.filtered_means, ukf_post.filtered_covariances
 
@@ -32,7 +32,7 @@ def main():
     fig, ax = plt.subplots()
     true_title = "Noisy obervations from hidden trajectory"
     _ = plot_inference(states, emissions, ax=ax, title=true_title)
-    all_figures["True trajectory"] = fig
+    all_figures["ukf_spiral_true"] = fig
 
     # Plot UKF estimates
     fig, ax = plt.subplots()
@@ -40,7 +40,7 @@ def main():
     ax = plot_inference(states, emissions, ukf_means, "UKF", ax=ax, title=ekf_title)
     # Add uncertainty ellipses to every fourth estimate
     plot_uncertainty_ellipses(ukf_means[::4], ukf_covs[::4], ax)
-    all_figures["UKF estimate"] = fig
+    all_figures["ukf_spiral_est"] = fig
 
     return all_figures
 
