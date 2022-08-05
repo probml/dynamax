@@ -1,9 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax
 import tensorflow_probability.substrates.jax.bijectors as tfb
+from jax import lax
 from jax.tree_util import register_pytree_node_class
 
 
@@ -17,14 +18,23 @@ class Parameter:
     """
 
     def __init__(self, value, is_frozen=False, bijector=None, prior=None):
-        self.value = value
+        self._value = value
         self.is_frozen = is_frozen
         self.bijector = bijector if bijector is not None else tfb.Identity()
 
     def __repr__(self):
-        return f"Parameter(value={self.value}, " \
+        return f"Parameter(value={self._value}, " \
                f"is_frozen={self.is_frozen}, " \
                f"bijector={self.bijector})"
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        if not self.is_frozen:
+            self._value = value
 
     @property
     def unconstrained_value(self):
@@ -54,6 +64,7 @@ class SSM(ABC):
     these parameters to implement the tree_flatten and tree_unflatten methods necessary
     to register a model as a JAX PyTree.
     """
+
     @abstractmethod
     def initial_distribution(self):
         """Return an initial distribution over latent states.
@@ -112,6 +123,7 @@ class SSM(ABC):
 
     def log_prob(self, states, emissions):
         """Compute the log joint probability of the states and observations"""
+
         def _step(carry, args):
             lp, prev_state = carry
             state, emission = args
