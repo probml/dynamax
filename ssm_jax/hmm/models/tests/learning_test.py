@@ -88,7 +88,7 @@ def test_hmm_fit_stochastic_em(num_iters=100):
     test_mu = test_hmm.emission_means.value
 
     assert jnp.alltrue(test_mu.shape == (10, 2))
-    assert jnp.allclose(jnp.linalg.norm(test_mu-refr_mu, axis=-1), 0., atol=1)
+    assert jnp.allclose(jnp.linalg.norm(test_mu-refr_mu, axis=-1), 0., atol=2)
 
     refr_cov = refr_hmm.emission_covariance_matrices.value
     test_cov = test_hmm.emission_covariance_matrices.value

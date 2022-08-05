@@ -380,21 +380,15 @@ class ExponentialFamilyHMM(StandardHMM):
 
         # Set up the minibatch stuff
         num_complete_batches, leftover = jnp.divmod(len(batch_emissions), batch_size)
-        # TODO support minibatches of different lengths
+        # TODO: Support minibatches of different lengths
         # num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
         num_batches = num_complete_batches
-
-        # Get indices to shuffle data: shape (num_epochs, num_batches, batch_size)
-        # and setup function to get minibatches
-        shuffled_indices = \
-            vmap(shuffle_minibatches, in_axes=(0, None, None, None))\
-                (jr.split(key, num_epochs), batch_emissions, batch_size, shuffle)
 
         _get_minibatch = lambda indices: \
             vmap(lax.dynamic_index_in_dim, in_axes=(None, 0, None, None)) \
                 (batch_emissions, indices, 0, False)
 
-        # Set learning rates: shape (num_epochs, num_batches)
+        # Set global training learning rates: shape (num_epochs, num_batches)
         if schedule is None:
             schedule = optax.exponential_decay(
                 init_value=1.,
@@ -412,54 +406,54 @@ class ExponentialFamilyHMM(StandardHMM):
         scale = len(batch_emissions) / batch_size
 
         @jit
-        def train_step(carry, input):
+        def minibatch_step(carry, args):
             self.unconstrained_params, rolling_stats = carry
-            epoch_indices, epoch_learning_rates = input
+            batch_indices, batch_learn_rate = args
+
+            # Get minibatch of data and compute the associated stats
+            emissions = _get_minibatch(batch_indices)
+            minibatch_stats = self.e_step(emissions)
             
-            def _minibatch_step(carry, args):
-                self.unconstrained_params, rolling_stats = carry
-                batch_indices, batch_learn_rate = args
-
-                # Get minibatch of data and compute the associated stats
-                emissions = _get_minibatch(batch_indices)
-                minibatch_stats = self.e_step(emissions)
-                
-                # Scale the stats as if they came from the whole dataset
-                scaled_minibatch_stats = tree_map(lambda x: jnp.sum(x, axis=0) * scale, minibatch_stats)
-                expected_lp = self.log_prior() + scaled_minibatch_stats.marginal_loglik
-                
-                # Incorporate these these stats into the rolling averaged stats
-                rolling_stats = tree_map(
-                    lambda s0, s1: (1-batch_learn_rate) * s0 + batch_learn_rate * s1,
-                    rolling_stats,
-                    scaled_minibatch_stats
-                )
-
-                # Add a batch dimension and call M-step
-                batched_rolling_stats = tree_map(
-                    lambda x: jnp.expand_dims(x, axis=0), rolling_stats
-                )
-                self.m_step(emissions, batched_rolling_stats)
-
-                return (self.unconstrained_params, rolling_stats), expected_lp
-
-            # Run EM on shuffled minibatches of data!
-            (params, rolling_stats), minibatch_expected_lp = lax.scan(
-                _minibatch_step,
-                (self.unconstrained_params, rolling_stats),
-                (epoch_indices, epoch_learning_rates)
+            # Scale the stats as if they came from the whole dataset
+            scaled_minibatch_stats = tree_map(lambda x: jnp.sum(x, axis=0) * scale, minibatch_stats)
+            expected_lp = self.log_prior() + scaled_minibatch_stats.marginal_loglik
+            
+            # Incorporate these these stats into the rolling averaged stats
+            rolling_stats = tree_map(
+                lambda s0, s1: (1-batch_learn_rate) * s0 + batch_learn_rate * s1,
+                rolling_stats,
+                scaled_minibatch_stats
             )
-            return (params, rolling_stats), minibatch_expected_lp.mean()
 
-        # Initialize rolling sufficient statistics with 0-arrays
-        init_stats = self._zeros_like_suff_stats()
-                    
-        # Run it!
-        (params, _), log_probs = lax.scan(
-            train_step,
-            (self.unconstrained_params, init_stats),
-            (shuffled_indices, learning_rates)
-        )
+            # Add a batch dimension and call M-step
+            batched_rolling_stats = tree_map(
+                lambda x: jnp.expand_dims(x, axis=0), rolling_stats
+            )
+            self.m_step(emissions, batched_rolling_stats)
 
+            return (self.unconstrained_params, rolling_stats), expected_lp
+        
+        # Initialize and train
+        expected_log_probs = []
+        params = self.unconstrained_params
+        rolling_stats = self._zeros_like_suff_stats()
+        
+        for epoch in trange(num_epochs):
+            # Shuffled indices, shape (num_batches, batch_size)
+            shuffled_indices = shuffle_minibatches(
+                jr.fold_in(key, epoch), batch_emissions, batch_size, shuffle
+            )
+
+            # Run EM across the set of the minibatches
+            (params, rolling_stats), expected_lps = lax.scan(
+                minibatch_step,
+                (params, rolling_stats),
+                (shuffled_indices, learning_rates[epoch])
+            )
+
+            # Save average of expected log probs
+            expected_log_probs.append(expected_lps.mean())
+
+        # Update self with fitted params
         self.unconstrained_params = params
-        return log_probs
+        return jnp.array(expected_log_probs)
