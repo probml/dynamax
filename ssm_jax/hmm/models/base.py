@@ -329,10 +329,15 @@ class StandardHMM(BaseHMM):
                                  num_epochs=num_mstep_iters)
         self.unconstrained_params = params
 
-    def m_step(self, batch_emissions, batch_posteriors, **batch_covariates):
+    def m_step(self,
+               batch_emissions,
+               batch_posteriors,
+               generic_mstep_kwargs=dict(optimizer=optax.adam(1e-2),
+                                         num_mstep_iters=50,),
+               **batch_covariates):
         self._m_step_initial_probs(batch_emissions, batch_posteriors, **batch_covariates)
         self._m_step_transition_matrix(batch_emissions, batch_posteriors, **batch_covariates)
-        self._m_step_emissions(batch_emissions, batch_posteriors, **batch_covariates)
+        self._m_step_emissions(batch_emissions, batch_posteriors, **generic_mstep_kwargs, **batch_covariates)
 
 
 class ExponentialFamilyHMM(StandardHMM):
@@ -349,7 +354,7 @@ class ExponentialFamilyHMM(StandardHMM):
                           emissions_generator,
                           total_emissions,
                           schedule=None,
-                          num_epochs=50,
+                          num_epochs=50
         ):
 
         """
