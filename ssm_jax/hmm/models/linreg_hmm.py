@@ -1,11 +1,9 @@
 from functools import partial
-from tkinter import N
 
 import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
-import tensorflow_probability.substrates.jax.bijectors as tfb
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
@@ -14,7 +12,6 @@ from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import StandardHMM
 from ssm_jax.utils import PSDToRealBijector
-from ssm_jax.distributions import NormalInverseWishart
 
 
 @register_pytree_node_class
