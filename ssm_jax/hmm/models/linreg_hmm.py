@@ -83,7 +83,7 @@ class LinearRegressionHMM(StandardHMM):
         return lp
 
     # Expectation-maximization (EM) code
-    def e_step(self, batch_emissions, batch_features=None):
+    def e_step(self, batch_emissions, features=None):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
         moments of the data
@@ -131,9 +131,9 @@ class LinearRegressionHMM(StandardHMM):
                 sum_yyT=sum_yyT)
 
         # Map the E step calculations over batches
-        return vmap(_single_e_step)(batch_emissions, batch_features)
+        return vmap(_single_e_step)(batch_emissions, features)
 
-    def _m_step_emissions(self, batch_emissions, batch_posteriors, batch_features=None):
+    def _m_step_emissions(self, batch_emissions, batch_posteriors, features=None):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
