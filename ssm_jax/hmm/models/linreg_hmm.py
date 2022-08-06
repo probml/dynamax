@@ -66,24 +66,18 @@ class LinearRegressionHMM(StandardHMM):
     def emission_covariance_matrices(self):
         return self._emission_covs
 
-    def emission_distribution(self, state, features=None):
-        prediction = self._emission_matrices.value[state] @ features + self._emission_biases.value[state]
+    def emission_distribution(self, state, **covariates):
+        prediction = self._emission_matrices.value[state] @ covariates['features'] + self._emission_biases.value[state]
         return tfd.MultivariateNormalFullCovariance(prediction, self._emission_covs.value[state])
 
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
-
-        # lp += NormalInverseWishart(
-        #     self._emission_prior_mean.value,
-        #     self._emission_prior_conc.value,
-        #     self._emission_prior_df.value,
-        #     self._emission_prior_scale.value
-        # ).log_prob((self.emission_covariance_matrices.value, self.emission_matrices.value)).sum()
+        # TODO: Add MatrixNormalInverseWishart prior
         return lp
 
     # Expectation-maximization (EM) code
-    def e_step(self, batch_emissions, features=None):
+    def e_step(self, batch_emissions, **batch_covariates):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
         moments of the data
@@ -102,7 +96,8 @@ class LinearRegressionHMM(StandardHMM):
             sum_xyT: chex.Array
             sum_yyT: chex.Array
 
-        def _single_e_step(emissions, features):
+        def _single_e_step(emissions, **covariates):
+            features = covariates['features']
             # Run the smoother
             posterior = hmm_smoother(self._compute_initial_probs(),
                                      self._compute_transition_matrices(),
@@ -131,28 +126,16 @@ class LinearRegressionHMM(StandardHMM):
                 sum_yyT=sum_yyT)
 
         # Map the E step calculations over batches
-        return vmap(_single_e_step)(batch_emissions, features)
+        return vmap(_single_e_step)(batch_emissions, **batch_covariates)
 
-    def _m_step_emissions(self, batch_emissions, batch_posteriors, features=None, **kwargs):
+    def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
-        # The expected log joint is equal to the log prob of a normal inverse
-        # Wishart distribution, up to additive factors. Find this NIW distribution
-        # take its mode.
-        # mu0 = self._emission_prior_mean.value
-        # kappa0 = self._emission_prior_conc.value
-        # nu0 = self._emission_prior_df.value
-        # Psi0 = self._emission_prior_scale.value
+        # TODO: Add MatrixNormalInverseWishart prior
 
         # Find the posterior parameters of the NIW distribution
         def _single_m_step(sum_w, sum_x, sum_y, sum_xxT, sum_xyT, sum_yyT):
-            # kappa_post = kappa0 + sum_w
-            # mu_post = (kappa0 * mu0 + sum_x) / kappa_post
-            # nu_post = nu0 + sum_w
-            # Psi_post = Psi0 + kappa0 * jnp.outer(mu0, mu0) + sum_xxT - kappa_post * jnp.outer(mu_post, mu_post)
-            # return NormalInverseWishart(mu_post, kappa_post, nu_post, Psi_post).mode()
-
             # Make block matrices for stacking features (x) and bias (1)
             sum_x1x1T = jnp.block(
                 [[sum_xxT,                   jnp.expand_dims(sum_x, 1)],
