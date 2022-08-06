@@ -1,8 +1,6 @@
 from functools import partial
-from tkinter import N
 
 import chex
-from distrax import Normal
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
@@ -11,15 +9,24 @@ from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import Parameter
+from ssm_jax.distributions import NormalInverseWishart
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
-from ssm_jax.hmm.models.base import StandardHMM
+from ssm_jax.hmm.models.base import ExponentialFamilyHMM
 from ssm_jax.utils import PSDToRealBijector
-from ssm_jax.distributions import NormalInverseWishart
 
+@chex.dataclass
+class GaussianHMMSuffStats:
+    # Wrapper for sufficient statistics of a GaussianHMM
+    marginal_loglik: chex.Scalar
+    initial_probs: chex.Array
+    trans_probs: chex.Array
+    sum_w: chex.Array
+    sum_x: chex.Array
+    sum_xxT: chex.Array
 
 @register_pytree_node_class
-class GaussianHMM(StandardHMM):
+class GaussianHMM(ExponentialFamilyHMM):
 
     def __init__(self,
                  initial_probabilities,
@@ -86,6 +93,18 @@ class GaussianHMM(StandardHMM):
         return tfd.MultivariateNormalFullCovariance(self._emission_means.value[state],
                                                     self._emission_covs.value[state])
 
+    @property
+    def suff_stats_event_shape(self):
+        """Return dataclass containing 'event_shape' of each sufficient statistic."""
+        return GaussianHMMSuffStats(
+            marginal_loglik = (),
+            initial_probs   = (self.num_states,),
+            trans_probs     = (self.num_states, self.num_states),
+            sum_w           = (self.num_states,),
+            sum_x           = (self.num_states, self.num_obs),
+            sum_xxT         = (self.num_states, self.num_obs, self.num_obs),
+        )
+
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
@@ -98,22 +117,24 @@ class GaussianHMM(StandardHMM):
         ).log_prob((self.emission_covariance_matrices.value, self.emission_means.value)).sum()
         return lp
 
+    def _zeros_like_suff_stats(self):
+        dim = self.num_obs
+        num_states = self.num_states
+        return GaussianHMMSuffStats(
+            marginal_loglik = 0.0,
+            initial_probs   = jnp.zeros((num_states,)),
+            trans_probs     = jnp.zeros((num_states, num_states)),
+            sum_w           = jnp.zeros((num_states,)),
+            sum_x           = jnp.zeros((num_states, dim)),
+            sum_xxT         = jnp.zeros((num_states, dim, dim)),
+        )
+
     # Expectation-maximization (EM) code
     def e_step(self, batch_emissions):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
-
-        @chex.dataclass
-        class GaussianHMMSuffStats:
-            # Wrapper for sufficient statistics of a GaussianHMM
-            marginal_loglik: chex.Scalar
-            initial_probs: chex.Array
-            trans_probs: chex.Array
-            sum_w: chex.Array
-            sum_x: chex.Array
-            sum_xxT: chex.Array
 
         def _single_e_step(emissions):
             # Run the smoother

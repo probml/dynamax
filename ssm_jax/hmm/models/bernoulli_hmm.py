@@ -11,11 +11,19 @@ from jax.tree_util import register_pytree_node_class
 from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
-from ssm_jax.hmm.models.base import StandardHMM
+from ssm_jax.hmm.models.base import ExponentialFamilyHMM
 
+@chex.dataclass
+class BernoulliHMMSuffStats:
+    # Wrapper for sufficient statistics of a BernoulliHMM
+    marginal_loglik: chex.Scalar
+    initial_probs: chex.Array
+    trans_probs: chex.Array
+    sum_x: chex.Array
+    sum_1mx: chex.Array
 
 @register_pytree_node_class
-class BernoulliHMM(StandardHMM):
+class BernoulliHMM(ExponentialFamilyHMM):
 
     def __init__(self,
                  initial_probabilities,
@@ -59,6 +67,16 @@ class BernoulliHMM(StandardHMM):
         return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs.value[state]),
                                reinterpreted_batch_ndims=1)
 
+    def _zeros_like_suff_stats(self):
+        """Return dataclass containing 'event_shape' of each sufficient statistic."""
+        return BernoulliHMMSuffStats(
+            marginal_loglik = 0.0,
+            initial_probs   = jnp.zeros((self.num_states,)),
+            trans_probs     = jnp.zeros((self.num_states, self.num_states)),
+            sum_x           = jnp.zeros((self.num_states, self.num_obs)),
+            sum_1mx         = jnp.zeros((self.num_states, self.num_obs)),
+        )
+
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
@@ -71,15 +89,6 @@ class BernoulliHMM(StandardHMM):
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
-
-        @chex.dataclass
-        class BernoulliHMMSuffStats:
-            # Wrapper for sufficient statistics of a BernoulliHMM
-            marginal_loglik: chex.Scalar
-            initial_probs: chex.Array
-            trans_probs: chex.Array
-            sum_x: chex.Array
-            sum_1mx: chex.Array
 
         def _single_e_step(emissions):
             # Run the smoother
