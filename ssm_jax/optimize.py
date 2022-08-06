@@ -9,13 +9,17 @@ def _get_dataset_len(dataset):
     return len(tree_leaves(dataset)[0])
 
 
-def _sample_minibatches(key, dataset, batch_size, shuffle):
-    """Sequence generator."""
+def sample_minibatches(key, dataset, batch_size, shuffle):
+    """Sequence generator.
+    
+    NB: The generator does not preform as expected when used to yield data
+        within jit'd code. This is likely because the generator internally
+        updates a state with each yield (which doesn't play well with jit).
+    """
     n_data = _get_dataset_len(dataset)
     perm = jnp.where(shuffle, jr.permutation(key, n_data), jnp.arange(n_data))
     for idx in range(0, n_data, batch_size):
         yield tree_map(lambda x: x[perm[idx:min(idx + batch_size, n_data)]], dataset)
-
 
 def run_sgd(loss_fn,
             params,
@@ -57,7 +61,7 @@ def run_sgd(loss_fn,
 
     def train_step(carry, key):
         params, opt_state = carry
-        sample_generator = _sample_minibatches(key, dataset, batch_size, shuffle)
+        sample_generator = sample_minibatches(key, dataset, batch_size, shuffle)
 
         def cond_fun(state):
             itr, params, opt_state, avg_loss = state
