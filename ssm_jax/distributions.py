@@ -150,7 +150,7 @@ class NormalInverseWishart(tfd.JointDistributionSequential):
         return covariance, self._loc
 
 
-class MatrixNormal(tfd.TransformedDistribution):
+class MatrixNormalPrecision(tfd.TransformedDistribution):
     def __init__(self, loc, row_covariance, col_precision):
         """A matrix normal distribution
 
@@ -177,13 +177,16 @@ class MatrixNormal(tfd.TransformedDistribution):
         self._parameters = dict(loc=loc, 
                                 row_covariance=row_covariance,
                                 col_precision=col_precision)
-        
+    
     @classmethod
-    def _parameter_properties(cls, dtype: Optional[Any], num_classes=None):
-        td_properties = super()._parameter_properties(dtype,
-                                                      num_classes=num_classes)
-        del td_properties['bijector']
-        return td_properties
+    def _parameter_properties(self, dtype, num_classes=None):
+        return dict(
+            # Annotations may optionally specify properties, such as `event_ndims`,
+            # `default_constraining_bijector_fn`, `specifies_shape`, etc.; see
+            # the `ParameterProperties` documentation for details.
+            loc = tfp.util.ParameterProperties(event_ndims=2),
+            row_covariance=tfp.util.ParameterProperties(event_ndims=2),
+            col_precision=tfp.util.ParameterProperties(event_ndims=2))
     
     @property
     def row_covariance(self):
@@ -193,8 +196,7 @@ class MatrixNormal(tfd.TransformedDistribution):
     def col_precision(self):
         return self._col_precision
         
-    @property
-    def mode(self):
+    def _mode(self):
         return self._loc
 
 
@@ -217,14 +219,13 @@ class MatrixNormalInverseWishart(tfd.JointDistributionSequential):
         self._df = df
         self._scale = scale
         super().__init__([InverseWishart(df, scale),
-                          lambda Sigma: MatrixNormal(loc, Sigma, col_precision)])
+                          lambda Sigma: MatrixNormalPrecision(loc, Sigma, col_precision)])
         self._parameters = dict(loc=loc,
                                 col_precision=col_precision,
                                 df=df,
                                 scale=scale)
     
-    @property
-    def mode(self):
+    def _mode(self):
         num_row, num_col = self._matrix_normal_shape
         covariance = jnp.einsum("...,...ij->...ij", 
                                1 / (self._df + num_row + num_col + 1), self._scale)

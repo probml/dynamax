@@ -2,7 +2,7 @@ import pytest
 
 import jax.numpy as jnp
 import jax.random as jr
-from ssm_jax.distributions import InverseWishart, NormalInverseWishart, MatrixNormal, MatrixNormalInverseWishart
+from ssm_jax.distributions import InverseWishart, NormalInverseWishart, MatrixNormalPrecision, MatrixNormalInverseWishart
 
 def test_inverse_wishart_mode(df=7.0, dim=3, scale_factor=3.0):
     scale = scale_factor * jnp.eye(dim)
@@ -78,13 +78,13 @@ def test_matrix_normal_log_prob(loc=jnp.ones((2,3)), row_cov=jnp.eye(2), col_pre
     """
     from scipy.stats import matrix_normal
     
-    mn = MatrixNormal(loc, row_cov, col_precision)
+    mn = MatrixNormalPrecision(loc, row_cov, col_precision)
     mn_samples = mn.sample(seed=jr.PRNGKey(0), sample_shape=n_samples)
     mn_probs = mn.prob(mn_samples)
     mn_log_probs = mn.log_prob(mn_samples)
     lps = matrix_normal.logpdf(mn_samples, mean=loc, rowcov=row_cov, colcov=jnp.linalg.inv(col_precision))
-    assert jnp.allclose(mn_log_probs, lps)
-    assert jnp.allclose(mn_probs, jnp.exp(lps))
+    assert jnp.allclose(jnp.array(mn_log_probs), lps)
+    assert jnp.allclose(jnp.array(mn_probs), jnp.exp(lps))
 
 
 def test_matrix_normal_inverse_wishart_log_prob(loc=jnp.ones((2,3)), col_precision=jnp.eye(3), df=3, scale=jnp.eye(2), n_samples=2):
