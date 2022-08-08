@@ -7,11 +7,21 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map
 from jax import vmap
+from jax.nn import one_hot
 from jax.tree_util import register_pytree_node_class
 from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import StandardHMM
+
+
+@chex.dataclass
+class CategoricalHMMSuffStats:
+    # Wrapper for sufficient statistics of a BernoulliHMM
+    marginal_loglik: chex.Scalar
+    initial_probs: chex.Array
+    trans_probs: chex.Array
+    sum_x: chex.Array
 
 
 @register_pytree_node_class
@@ -61,11 +71,11 @@ class MultinomialHMM(StandardHMM):
 
     @property
     def num_emissions(self):
-        return self.emission_probs.shape[1]
+        return self.emission_probs.value.shape[1]
 
     @property
     def num_classes(self):
-        return self.emission_probs.shape[2]
+        return self.emission_probs.value.shape[2]
 
     @property
     def num_trials(self):
@@ -87,14 +97,6 @@ class MultinomialHMM(StandardHMM):
         moments of the data
         """
 
-        @chex.dataclass
-        class CategoricalHMMSuffStats:
-            # Wrapper for sufficient statistics of a BernoulliHMM
-            marginal_loglik: chex.Scalar
-            initial_probs: chex.Array
-            trans_probs: chex.Array
-            sum_x: chex.Array
-
         def _single_e_step(emissions):
             # Run the smoother
             posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
@@ -106,6 +108,7 @@ class MultinomialHMM(StandardHMM):
 
             # Compute the expected sufficient statistics
             sum_x = jnp.einsum("tk, tdi->kdi", posterior.smoothed_probs, emissions)
+
             # Pack into a dataclass
             stats = CategoricalHMMSuffStats(
                 marginal_loglik=posterior.marginal_loglik,
