@@ -7,7 +7,6 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map
 from jax import vmap
-from jax.nn import one_hot
 from jax.tree_util import register_pytree_node_class
 from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
