@@ -11,6 +11,8 @@ from ssm_jax.lgssm.inference import lgssm_filter, lgssm_smoother
 from ssm_jax.utils import PSDToRealBijector
 
 
+_get_shape = lambda x, dim: x.shape[1:] if x.ndim == dim + 1 else x.shape
+
 @register_pytree_node_class
 class LinearGaussianSSM:
     """
@@ -45,7 +47,7 @@ class LinearGaussianSSM:
         emission_input_weights=None,
         emission_bias=None,
     ):
-        self.emission_dim, self.state_dim = emission_matrix.shape
+        self.emission_dim, self.state_dim = _get_shape(emission_matrix, 2)
         dynamics_input_dim = dynamics_input_weights.shape[1] if dynamics_input_weights is not None else 0
         emission_input_dim = emission_input_weights.shape[1] if emission_input_weights is not None else 0
         self.input_dim = max(dynamics_input_dim, emission_input_dim)
