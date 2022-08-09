@@ -64,7 +64,7 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
          mu_cond (D_hid,): filtered mean.
          Sigma_cond (D_hid,D_hid): filtered covariance.
     """
-    def _step(carry, j):
+    def _step(carry, _):
         prior_mean, prior_cov = carry
         H_x = H(prior_mean, u)
         S = R + H_x @ prior_cov @ H_x.T
