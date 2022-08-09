@@ -5,7 +5,6 @@ import jax.random as jr
 from jax import vmap
 import optax
 from ssm_jax.hmm.models import GaussianHMM
-from torch.utils.data import DataLoader
 
 def make_rnd_hmm(num_states=5, emission_dim=2):
     # Specify parameters of the HMM
@@ -38,8 +37,8 @@ def make_rnd_model_and_data(num_states=5, emission_dim=2, num_timesteps=2000, nu
 
 def test_loglik():
     true_hmm, true_states, batch_emissions = make_rnd_model_and_data()
-    assert jnp.allclose(true_hmm.log_prob(true_states[0], batch_emissions[0]), 3149.1013, atol=1e-1)
-    assert jnp.allclose(true_hmm.marginal_log_prob(batch_emissions[0]), 3149.1047, atol=1e-1)
+    assert jnp.allclose(true_hmm.log_prob(true_states[0], batch_emissions[0]), 3230.615, atol=1e-1)
+    assert jnp.allclose(true_hmm.marginal_log_prob(batch_emissions[0]), 3230.583, atol=1e-1)
 
 
 def test_hmm_fit_em(num_iters=2):
@@ -47,7 +46,7 @@ def test_hmm_fit_em(num_iters=2):
     test_hmm = GaussianHMM.random_initialization(jr.PRNGKey(1), 2 * true_hmm.num_states, true_hmm.num_obs)
     # Quick test: 2 iterations
     logprobs_em = test_hmm.fit_em(batch_emissions, num_iters=num_iters)
-    assert jnp.allclose(logprobs_em[-1], -3704.3, atol=1e-1)
+    assert jnp.allclose(logprobs_em[-1], -3698.948, atol=1e-1)
     mu = test_hmm.emission_means.value
     assert jnp.alltrue(mu.shape == (10, 2))
     assert jnp.allclose(mu[0, 0], -0.712, atol=1e-1)
@@ -65,40 +64,43 @@ def test_hmm_fit_sgd(num_epochs=2):
     assert jnp.alltrue(mu.shape == (10, 2))
     assert jnp.allclose(mu[0, 0], -1.827, atol=1e-1)
 
-# -------------------------------------------------------------
-def _collate(batch):
-    """Merges a list of samples to form a batch of tensors."""
-    if isinstance(batch[0], jnp.ndarray):
-        return jnp.stack(batch)
-    elif isinstance(batch[0], (tuple,list)):
-        transposed = zip(*batch)
-        return [_collate(samples) for samples in transposed]
-    else:
-        return jnp.array(batch)
 
-class ArrayLoader(DataLoader):
-    """Generates an iterable over the given array, with option to reshuffle.
-
-    Args:
-        dataset (chex.Array or Dataset): Any object implementing __len__ and __getitem__
-        batch_size (int): Number of samples to load per batch
-        shuffle (bool): If True, reshuffle data at every epoch
-        drop_last (bool): If true, drop last incomplete batch if dataset size is
-            not divisible by batch size, drop last incomplete batch. Else, keep
-            (smaller) last batch.
-    """
-    def __init__(self, dataset, batch_size=1, shuffle=True, drop_last=True):
-        
-        super(self.__class__, self).__init__(dataset,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            collate_fn=_collate,
-            drop_last=drop_last
-            )
-            
+@pytest.mark.skip(reason="this would introduce a torch dependency")
 def test_hmm_fit_stochastic_em(num_iters=100):
     """Evaluate stochastic em fit with respect to exact em fit."""
 
+    # -------------------------------------------------------------
+    def _collate(batch):
+        """Merges a list of samples to form a batch of tensors."""
+        if isinstance(batch[0], jnp.ndarray):
+            return jnp.stack(batch)
+        elif isinstance(batch[0], (tuple,list)):
+            transposed = zip(*batch)
+            return [_collate(samples) for samples in transposed]
+        else:
+            return jnp.array(batch)
+
+
+    from torch.utils.data import DataLoader
+    class ArrayLoader(DataLoader):
+        """Generates an iterable over the given array, with option to reshuffle.
+
+        Args:
+            dataset (chex.Array or Dataset): Any object implementing __len__ and __getitem__
+            batch_size (int): Number of samples to load per batch
+            shuffle (bool): If True, reshuffle data at every epoch
+            drop_last (bool): If true, drop last incomplete batch if dataset size is
+                not divisible by batch size, drop last incomplete batch. Else, keep
+                (smaller) last batch.
+        """
+        def __init__(self, dataset, batch_size=1, shuffle=True, drop_last=True):
+
+            super(self.__class__, self).__init__(dataset,
+                batch_size=batch_size,
+                shuffle=shuffle,
+                collate_fn=_collate,
+                drop_last=drop_last
+                )
     # Generate data and construct dataloader
     true_hmm, _, batch_emissions = make_rnd_model_and_data(num_batches=8)
     emissions_generator = ArrayLoader(batch_emissions, batch_size=2, shuffle=True)
