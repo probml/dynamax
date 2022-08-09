@@ -76,7 +76,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
         emission_means = jr.normal(key3, (num_states, emission_dim))
-        emission_covs = jnp.tile(jnp.eye(emission_dim), (num_states, 1, 1))
+        emission_covs = jnp.eye(emission_dim)
         return cls(initial_probs, transition_matrix, emission_means, emission_covs)
 
     # Properties to get various parameters of the model
@@ -89,7 +89,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         return self._emission_covs
 
     def emission_distribution(self, state):
-        return tfd.MultivariateNormalFullCovariance(self._emission_means.value[state], self._emission_covs.value[state])
+        return tfd.MultivariateNormalFullCovariance(self._emission_means.value[state], self._emission_covs.value)
 
     @property
     def suff_stats_event_shape(self):
@@ -100,7 +100,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
             trans_probs=(self.num_states, self.num_states),
             sum_w=(self.num_states,),
             sum_x=(self.num_states, self.num_obs),
-            sum_xxT=(self.num_states, self.num_obs, self.num_obs),
+            sum_xxT=(self.num_obs, self.num_obs),
         )
 
     def log_prior(self):
@@ -175,8 +175,14 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
             mu_post = (kappa0 * mu0 + sum_x) / kappa_post
             nu_post = nu0 + sum_w
             Psi_post = Psi0 + kappa0 * jnp.outer(mu0, mu0) + sum_xxT - kappa_post * jnp.outer(mu_post, mu_post)
-            return NormalInverseWishart(mu_post, kappa_post, nu_post, Psi_post).mode()
+            return mu_post, kappa_post, nu_post, Psi_post
 
-        covs, means = vmap(_single_m_step)(stats.sum_w, stats.sum_x, stats.sum_xxT)
-        self.emission_covariance_matrices.value = covs
+        mu_post, kappa_post, nu_post, Psi_post = vmap(_single_m_step)(stats.sum_w, stats.sum_x, stats.sum_xxT)
+        kappa_post, nu_post, Psi_post = kappa_post.sum(axis=0), nu_post.sum(axis=0), Psi_post.sum(axis=0)
+
+        def _map_estimation(mu):
+            return NormalInverseWishart(mu, kappa_post, nu_post, Psi_post).mode()
+
+        covs, means = vmap(_map_estimation)(mu_post)
+        self.emission_covariance_matrices.value = covs[0]
         self.emission_means.value = means
