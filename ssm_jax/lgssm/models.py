@@ -11,8 +11,7 @@ from ssm_jax.lgssm.inference import lgssm_filter, lgssm_smoother
 from ssm_jax.utils import PSDToRealBijector
 
 
-_get_shape = lambda x, dim, t: x.shape[1:] if x.ndim == dim + 1 else x.shape
-
+_get_shape = lambda x, dim: x.shape[1:] if x.ndim == dim + 1 else x.shape
 
 @register_pytree_node_class
 class LinearGaussianSSM:
@@ -71,13 +70,12 @@ class LinearGaussianSSM:
         # Check shapes
         assert self.initial_mean.shape == (self.state_dim,)
         assert self.initial_covariance.shape == (self.state_dim, self.state_dim)
-        assert self.dynamics_matrix.shape == (self.state_dim, self.state_dim)
-        assert self.dynamics_input_weights.shape == (self.state_dim, self.input_dim)
-        assert self.dynamics_bias.shape == (self.state_dim,)
+        assert self.dynamics_matrix.shape[-2:] == (self.state_dim, self.state_dim)
+        assert self.dynamics_input_weights.shape[-2:] == (self.state_dim, self.input_dim)
+        assert self.dynamics_bias.shape[-1:] == (self.state_dim,)
         assert self.dynamics_covariance.shape == (self.state_dim, self.state_dim)
-        assert self.emission_matrix.ndim == 2
-        assert self.emission_input_weights.shape == (self.emission_dim, self.input_dim)
-        assert self.emission_bias.shape == (self.emission_dim,)
+        assert self.emission_input_weights.shape[-2:] == (self.emission_dim, self.input_dim)
+        assert self.emission_bias.shape[-1:] == (self.emission_dim,)
         assert self.emission_covariance.shape == (self.emission_dim, self.emission_dim)
 
     @classmethod
