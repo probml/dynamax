@@ -21,7 +21,6 @@ class MultivariateNormalSphericalHMM(StandardHMM):
         super().__init__(initial_probabilities, transition_matrix, initial_probs_concentration,
                          transition_matrix_concentration)
         self._emission_means = Parameter(emission_means)
-
         self._emission_cov_diag_factors = Parameter(emission_cov_diag_factors.reshape((-1, 1)),
                                                     bijector=tfb.Invert(tfb.Softplus()))
 
@@ -40,7 +39,7 @@ class MultivariateNormalSphericalHMM(StandardHMM):
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
         emission_means = jr.normal(key3, (num_states, emission_dim))
-        emission_cov_diag_factors = jr.exponential(key4, (num_states, emission_dim))
+        emission_cov_diag_factors = jr.exponential(key4, (num_states, 1))
         return cls(initial_probs, transition_matrix, emission_means, emission_cov_diag_factors)
 
     # Properties to get various parameters of the model
@@ -54,13 +53,14 @@ class MultivariateNormalSphericalHMM(StandardHMM):
 
     def emission_distribution(self, state):
         loc = self._emission_means.value[state]
-        scale_diag = jnp.tile(self._emission_cov_diag_factors.value[state], (1, self.num_obs))
+        dim = loc.shape[-1]
+        scale_diag = jnp.tile(self._emission_cov_diag_factors.value[state], dim)
         return tfd.MultivariateNormalDiag(loc, scale_diag)
 
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
-        scale_diag = jnp.tile(self._emission_cov_diag_factors.value, (1, self.num_obs))
-        lp += tfd.Gamma(self._emission_cov_diag_factors_concentration.value,
-                        self._emission_cov_diag_factors_rate.value).log_prob(scale_diag).sum()
+        lp += (tfd.Gamma(self._emission_cov_diag_factors_concentration.value,
+                         self._emission_cov_diag_factors_rate.value).log_prob(self._emission_cov_diag_factors.value) *
+               self.num_obs).sum()
         return lp
