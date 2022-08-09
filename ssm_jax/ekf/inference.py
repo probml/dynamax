@@ -1,15 +1,15 @@
 import jax.numpy as jnp
-import jax.random as jr
 from jax import lax
 from jax import jacfwd
 from distrax import MultivariateNormalFullCovariance as MVN
 from ssm_jax.nlgssm.containers import NLGSSMPosterior
+from ssm_jax.lgssm.models import LinearGaussianSSM
 
 
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
-_process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
+_process_input = lambda x, y: jnp.zeros((y,1)) if x is None else x
 
 
 def _predict(m, P, f, F, Q, u):
@@ -187,6 +187,63 @@ def extended_kalman_smoother(params, emissions, inputs=None):
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
+        smoothed_means=smoothed_means,
+        smoothed_covariances=smoothed_covs,
+    )
+
+def _posterior_linearize(m, P, f, F, h, H, num_timesteps, inputs):
+    def _step(_, t):
+        mean, cov = m[t], P[t]
+        u = inputs[t]
+        F_x, b = F(mean, u), f(mean, u) - F(mean, u) @ mean
+        H_x, d = H(mean, u), h(mean, u) - H(mean, u) @ mean
+        return None, (F_x, b, H_x, d)
+    
+    _, (Fs, bs, Hs, ds) = lax.scan(_step, None, jnp.arange(num_timesteps))
+    return (Fs, bs, Hs, ds)
+
+
+def iterated_extended_kalman_smoother(params, emissions, num_iter=1, inputs=None):
+    num_timesteps = len(emissions)
+
+    # Run first iteration of eks
+    post = extended_kalman_smoother(params, emissions, inputs)
+    smoothed_means, smoothed_covs = post.smoothed_means, post.smoothed_covariances
+
+    # Dynamics and emission functions and their Jacobians
+    f, h = params.dynamics_function, params.emission_function
+    F, H = jacfwd(f), jacfwd(h)
+    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
+    inputs = _process_input(inputs, num_timesteps)
+
+    def _step(carry, _):
+        means, covs = carry
+        Fs, bs, Hs, ds = _posterior_linearize(means, covs, f, F, h, H, num_timesteps, inputs)
+
+        # Run LGSSM smoother
+        lgssm = LinearGaussianSSM(
+            initial_mean = params.initial_mean,
+            initial_covariance = params.initial_covariance,
+            dynamics_matrix = Fs,
+            dynamics_input_weights = jnp.zeros((Fs.shape[-2], inputs.shape[-1])), # TODO
+            dynamics_bias = bs,
+            dynamics_covariance = params.dynamics_covariance,
+            emission_matrix = Hs,
+            emission_input_weights = jnp.zeros((Hs.shape[-2], inputs.shape[-1])), # TODO
+            emission_bias = ds,
+            emission_covariance = params.emission_covariance
+        )
+        lgssm_post = lgssm.smoother(emissions, inputs)
+
+        smoothed_means, smoothed_covs = lgssm_post.smoothed_means, lgssm_post.smoothed_covariances
+        return (smoothed_means, smoothed_covs), None
+    
+    carry = (smoothed_means, smoothed_covs)
+    (smoothed_means, smoothed_covs), _ = lax.scan(_step, carry, jnp.arange(num_iter))
+    return NLGSSMPosterior(
+        marginal_loglik=post.marginal_loglik,
+        filtered_means=post.filtered_means,
+        filtered_covariances=post.filtered_covariances,
         smoothed_means=smoothed_means,
         smoothed_covariances=smoothed_covs,
     )
