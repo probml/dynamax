@@ -335,23 +335,3 @@ def iw_posterior_update(iw_prior, sufficient_stats):
                           scale_pos)
 
 
-def mnp_posterior_update(mnp_prior, sufficient_stats):
-    """Update the MatrixNormalPrecision distribution using sufficient statistics
-    
-    Returns:
-        posterior MNP distribution
-    """
-    # extract parameters of the prior distribution
-    loc_pri, row_cov_pri, col_precision_pri = mnp_prior.parameters.values()
-    
-    # unpack the sufficient statistics
-    
-    
-    # compute parameters of the posterior distribution
-    loc_pos = None
-    row_cov_pos = None
-    col_precision_pos = None
-    
-    return MatrixNormalPrecision(loc_pos, 
-                                 row_cov_pos,
-                                 col_precision_pos)
