@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import jax.random as jr
 import pytest
-from ssm_jax.hmm.models.mvn_spherical_hmm import MultivariateNormalSphericalHMM
+from ssm_jax.hmm.models import MultivariateNormalSphericalHMM
 from ssm_jax.utils import monotonically_increasing
 
 

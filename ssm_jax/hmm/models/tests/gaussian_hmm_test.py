@@ -2,9 +2,7 @@ import jax.numpy as jnp
 import jax.random as jr
 import pytest
 from jax import vmap
-from ssm_jax.hmm.models.gaussian_hmm import GaussianHMM
-from ssm_jax.hmm.models.mvn_diag_hmm import DiagonalGaussianHMM
-from ssm_jax.utils import monotonically_increasing
+from ssm_jax.hmm.models import GaussianHMM
 
 
 def get_random_gaussian_hmm_params(key, num_states, num_emissions):
@@ -85,29 +83,3 @@ def test_fit_transition_matrix(key=jr.PRNGKey(0), num_states=3, num_emissions=3,
     assert jnp.allclose(hmm.initial_probs.value, initial_probabilities)
     assert jnp.allclose(hmm.emission_means.value, emission_means)
     assert jnp.allclose(hmm.emission_covariance_matrices.value, emission_covars)
-
-
-class TestGaussianHMMWithDiagonalCovars:
-
-    def setup(self):
-        key = jr.PRNGKey(0)
-        self.num_states = 3
-        self.emission_dim = 3
-        self.true_hmm = DiagonalGaussianHMM.random_initialization(key, self.num_states, self.emission_dim)
-
-    def test_fit(self, key=jr.PRNGKey(0), num_timesteps=100):
-
-        state_sequence, emissions = self.true_hmm.sample(key, num_timesteps)
-        hmm = DiagonalGaussianHMM.random_initialization(key, self.num_states, self.emission_dim)
-
-        lps = hmm.fit_em(emissions[None, ...])
-        assert monotonically_increasing(lps, atol=1)
-
-    def test_filter(self, key=jr.PRNGKey(0), num_timesteps=100):
-        state_sequence, emissions = self.true_hmm.sample(key, num_timesteps)
-
-        hmm = DiagonalGaussianHMM.random_initialization(key, self.num_states, self.emission_dim)
-
-        posteriors = hmm.filter(emissions)
-        assert not jnp.isnan(posteriors.filtered_probs).any()
-        assert jnp.allclose(posteriors.filtered_probs.sum(axis=1), 1.)
