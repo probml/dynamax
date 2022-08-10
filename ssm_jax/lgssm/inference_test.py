@@ -1,9 +1,14 @@
+from functools import partial
+
 from jax import random as jr
 from jax import numpy as jnp
+from jax import vmap
+
+import matplotlib.pyplot as plt
 
 import tensorflow_probability.substrates.jax.distributions as tfd
 
-from ssm_jax.lgssm.inference import lgssm_filter
+from ssm_jax.lgssm.inference import lgssm_filter, lgssm_posterior_sample
 from ssm_jax.lgssm.models import LinearGaussianSSM
 
 
@@ -75,3 +80,43 @@ def test_kalman_filter(num_timesteps=5, seed=0):
     assert jnp.allclose(ssm_posterior.smoothed_means, tfp_smoothed_means, rtol=1e-2)
     assert jnp.allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs, rtol=1e-2)
     assert jnp.allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
+
+
+def test_posterior_sample(num_timesteps=100, key=jr.PRNGKey(0), sample_size=50):
+    
+    # Setup the true model
+    D_hid = 1
+    D_obs = 1
+    
+    initial_mean = jnp.array([5.0])
+    initial_covariance = jnp.eye(D_hid)
+    dynamics_matrix = jnp.eye(D_hid) * 1.01
+    dynamics_cov = jnp.eye(D_hid)
+    emission_matrix = jnp.eye(D_obs)
+    emission_cov = jnp.eye(D_obs) * 5.**2
+    
+    lgssm = LinearGaussianSSM(initial_mean=initial_mean, 
+                              initial_covariance=initial_covariance,
+                              dynamics_matrix=dynamics_matrix,
+                              dynamics_covariance=dynamics_cov,
+                              emission_matrix=emission_matrix,
+                              emission_covariance=emission_cov)
+    
+    # Define the same model using tfd.LinearGaussianStateSpaceModel
+    tfp_lgssm = lgssm_ssm_jax_to_tfp(num_timesteps, lgssm)
+    
+    # Generate true observation
+    observations = tfp_lgssm.sample(seed=key)
+    
+    # Sample from the posterior distribution
+    posterior_sample = partial(lgssm_posterior_sample, params=lgssm, emissions=observations)
+    keys = jr.split(key, sample_size)
+    _, samples = vmap(posterior_sample)(keys)
+    
+    tfp_samples = tfp_lgssm.posterior_sample(observations, seed=key, sample_shape=sample_size)
+    
+    # Plot the samples
+    plt.plot(observations, color='red')
+    plt.plot(samples[:,:,0].T, alpha=0.12, color='blue')
+    plt.plot(tfp_samples[:,:,0].T, alpha=0.12, color='green')
+    plt.show()
