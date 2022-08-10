@@ -34,7 +34,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
                  initial_probabilities,
                  transition_matrix,
                  emission_means,
-                 emission_covariance_matrices,
+                 emission_covariance_matrix,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
                  emission_prior_mean=0.0,
@@ -47,7 +47,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
             initial_probabilities (_type_): _description_
             transition_matrix (_type_): _description_
             emission_means (_type_): _description_
-            emission_covariance_matrices (_type_): _description_
+            emission_covariance_matrix (_type_): _description_
         """
         super().__init__(initial_probabilities,
                          transition_matrix,
@@ -55,7 +55,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
                          transition_matrix_concentration=transition_matrix_concentration)
 
         self._emission_means = Parameter(emission_means)
-        self._emission_covs = Parameter(emission_covariance_matrices, bijector=PSDToRealBijector)
+        self._emission_cov = Parameter(emission_covariance_matrix, bijector=PSDToRealBijector)
 
         dim = emission_means.shape[-1]
         self._emission_prior_mean = Parameter(emission_prior_mean * jnp.ones(dim), is_frozen=True)
@@ -76,8 +76,8 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
         emission_means = jr.normal(key3, (num_states, emission_dim))
-        emission_covs = jnp.eye(emission_dim)
-        return cls(initial_probs, transition_matrix, emission_means, emission_covs)
+        emission_cov = jnp.eye(emission_dim)
+        return cls(initial_probs, transition_matrix, emission_means, emission_cov)
 
     # Properties to get various parameters of the model
     @property
@@ -85,11 +85,11 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         return self._emission_means
 
     @property
-    def emission_covariance_matrices(self):
-        return self._emission_covs
+    def emission_covariance_matrix(self):
+        return self._emission_cov
 
     def emission_distribution(self, state):
-        return tfd.MultivariateNormalFullCovariance(self._emission_means.value[state], self._emission_covs.value)
+        return tfd.MultivariateNormalFullCovariance(self._emission_means.value[state], self._emission_cov.value)
 
     @property
     def suff_stats_event_shape(self):
@@ -109,7 +109,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
 
         lp += NormalInverseWishart(self._emission_prior_mean.value, self._emission_prior_conc.value,
                                    self._emission_prior_df.value, self._emission_prior_scale.value).log_prob(
-                                       (self.emission_covariance_matrices.value, self.emission_means.value)).sum()
+                                       (self.emission_covariance_matrix.value, self.emission_means.value)).sum()
         return lp
 
     def _zeros_like_suff_stats(self):
@@ -184,5 +184,5 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
             return NormalInverseWishart(mu, kappa_post, nu_post, Psi_post).mode()
 
         covs, means = vmap(_map_estimation)(mu_post)
-        self.emission_covariance_matrices.value = covs[0]
+        self.emission_covariance_matrix.value = covs[0]
         self.emission_means.value = means

@@ -21,7 +21,7 @@ class TestGaussianHMMWithDiagonalCovars:
         assert hmm.transition_matrix.value.shape == (self.num_states, self.num_states)
         assert jnp.allclose(jnp.sum(hmm.transition_matrix.value, axis=-1), 1)
         assert hmm.emission_means.value.shape == (self.num_states, self.emission_dim)
-        assert hmm.emission_covariance_matrices.value.shape == (self.emission_dim, self.emission_dim)
+        assert hmm.emission_covariance_matrix.value.shape == (self.emission_dim, self.emission_dim)
 
     def test_fit(self, key=jr.PRNGKey(0), num_timesteps=100):
 
