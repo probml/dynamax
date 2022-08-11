@@ -18,11 +18,13 @@ class MultivariateNormalSphericalHMM(StandardHMM):
                  emission_cov_diag_factors_concentration=1.1,
                  emission_cov_diag_factors_rate=1.1):
 
+        ndim = jnp.ndim(emission_cov_diag_factors)
+        assert ndim == 1 or ndim == 2 and emission_cov_diag_factors.shape[1] == 1
+
         super().__init__(initial_probabilities, transition_matrix, initial_probs_concentration,
                          transition_matrix_concentration)
         self._emission_means = Parameter(emission_means)
-        self._emission_cov_diag_factors = Parameter(emission_cov_diag_factors.reshape((-1, 1)),
-                                                    bijector=tfb.Invert(tfb.Softplus()))
+        self._emission_cov_diag_factors = Parameter(emission_cov_diag_factors, bijector=tfb.Invert(tfb.Softplus()))
 
         # The hyperparameters of the prior
         self._emission_cov_diag_factors_concentration = Parameter(emission_cov_diag_factors_concentration *
