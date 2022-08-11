@@ -160,29 +160,6 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
     def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
-
-        # The expected log joint is equal to the log prob of a normal inverse
-        # Wishart distribution, up to additive factors. Find this NIW distribution
-        # take its mode.
-        mu0 = self._emission_prior_mean.value
-        kappa0 = self._emission_prior_conc.value
-        nu0 = self._emission_prior_df.value
-        Psi0 = self._emission_prior_scale.value
-
-        # Find the posterior parameters of the NIW distribution
-        def _single_m_step(sum_w, sum_x, sum_xxT):
-            kappa_post = kappa0 + sum_w
-            mu_post = (kappa0 * mu0 + sum_x) / kappa_post
-            nu_post = nu0 + sum_w
-            Psi_post = Psi0 + kappa0 * jnp.outer(mu0, mu0) + sum_xxT - kappa_post * jnp.outer(mu_post, mu_post)
-            return mu_post, kappa_post, nu_post, Psi_post
-
-        mu_post, kappa_post, nu_post, Psi_post = vmap(_single_m_step)(stats.sum_w, stats.sum_x, stats.sum_xxT)
-        kappa_post, nu_post, Psi_post = kappa_post.sum(axis=0), nu_post.sum(axis=0), Psi_post.sum(axis=0)
-
-        def _map_estimation(mu):
-            return NormalInverseWishart(mu, kappa_post, nu_post, Psi_post).mode()
-
-        covs, means = vmap(_map_estimation)(mu_post)
-        self.emission_covariance_matrix.value = covs[0]
-        self.emission_means.value = means
+        self.emission_means.value = stats.sum_x / stats.sum_w[:, None]
+        self.emission_covariance_matrix.value = 1 / stats.sum_w.sum() * (
+            stats.sum_xxT - jnp.einsum("ki,kj->kij", stats.sum_x, stats.sum_x) / stats.sum_w[:, None, None]).sum(axis=0)

@@ -29,7 +29,7 @@ class TestGaussianHMMWithDiagonalCovars:
         hmm = MultivariateNormalTiedHMM.random_initialization(key, self.num_states, self.emission_dim)
 
         lps = hmm.fit_em(emissions[None, ...])
-        assert monotonically_increasing(lps, atol=1)
+        assert monotonically_increasing(lps, 1e-1)
 
     def test_filter(self, key=jr.PRNGKey(0), num_timesteps=100):
         state_sequence, emissions = self.true_hmm.sample(key, num_timesteps)
