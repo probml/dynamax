@@ -43,7 +43,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
     return mu_pred, Sigma_pred, cross_pred
 
 
-def _condition_on(m, P, y_cond_mean, y_cond_var, y, g_ev, g_cov, num_iter):
+def _condition_on(m, P, y_cond_mean, y_cond_var, u, y, g_ev, g_cov, num_iter):
     """Condition a Gaussian potential on a new observation with arbitrary
        likelihood with given functions for conditional moments and make a
        Gaussian approximation.
@@ -76,13 +76,15 @@ def _condition_on(m, P, y_cond_mean, y_cond_var, y, g_ev, g_cov, num_iter):
         Sigma_cond (D_hid,D_hid): conditioned covariance.
     """
     identity_fn = lambda x: x
+    m_Y = lambda x: y_cond_mean(x, u)
+    Var_Y = lambda x: y_cond_var(x, u)
 
     def _step(carry, _):
         prior_mean, prior_cov = carry
-        yhat = g_ev(y_cond_mean, prior_mean, prior_cov)
-        S = g_ev(y_cond_var) + g_cov(y_cond_mean, y_cond_mean, prior_mean, prior_cov)
+        yhat = g_ev(m_Y, prior_mean, prior_cov)
+        S = g_ev(Var_Y) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
         log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
-        C = g_cov(identity_fn, y_cond_mean, prior_mean, prior_cov)
+        C = g_cov(identity_fn, m_Y, prior_mean, prior_cov)
         K = jnp.linalg.solve(S, C.T).T
         posterior_mean = prior_mean + K @ (y - yhat)
         posterior_cov = prior_cov - K @ S @ K.T
@@ -124,12 +126,11 @@ def statistical_linear_regression(mu, Sigma, m, S, C):
 def general_linearization_filter(params, emissions, num_iter=0, inputs=None):
     num_timesteps = len(emissions)
     
-    # Process dynamics function to take in control inputs
-    f  = _process_fn(params.dynamics_function, inputs)
-    inputs = _process_input(inputs, num_timesteps)
-
-    # Conditional emission moments
+    # Process dynamics function and conditional emission moments to take in control inputs
+    f = params.dynamics_function
     m_Y, Var_Y = params.emission_mean_function, params.emission_var_function
+    f, m_Y, Var_Y  = (_process_fn(fn, inputs) for fn in (f, m_Y, Var_Y))
+    inputs = _process_input(inputs, num_timesteps)
 
     # Gaussian expectation value function
     g_ev = params.gaussian_expectation
