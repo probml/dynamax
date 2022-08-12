@@ -26,6 +26,7 @@ class HMMPosterior:
     filtered_probs: chex.Array = None
     predicted_probs: chex.Array = None
     smoothed_probs: chex.Array = None
+    initial_probs: chex.Array = None
     trans_probs: chex.Array = None
 
 
@@ -211,6 +212,7 @@ def hmm_two_filter_smoother(initial_distribution, transition_matrix, log_likelih
         filtered_probs=filtered_probs,
         predicted_probs=predicted_probs,
         smoothed_probs=smoothed_probs,
+        initial_probs=smoothed_probs[0]
     )
 
 
@@ -265,6 +267,7 @@ def hmm_smoother(initial_distribution, transition_matrix, log_likelihoods):
         filtered_probs=filtered_probs,
         predicted_probs=predicted_probs,
         smoothed_probs=smoothed_probs,
+        initial_probs=smoothed_probs[0]
     )
 
 
@@ -330,6 +333,7 @@ def hmm_fixed_lag_smoother(initial_distribution, transition_matrix, log_likeliho
             filtered_probs=filtered_probs,
             predicted_probs=predicted_probs,
             smoothed_probs=smoothed_probs,
+            initial_probs=smoothed_probs[0]
         )
 
         return (log_normalizers, filtered_probs, predicted_probs, bmatrices), post
@@ -358,6 +362,7 @@ def hmm_fixed_lag_smoother(initial_distribution, transition_matrix, log_likeliho
         filtered_probs=filtered_probs,
         predicted_probs=predicted_probs,
         smoothed_probs=smoothed_probs,
+        initial_probs=smoothed_probs[0]
     )
 
     return posts

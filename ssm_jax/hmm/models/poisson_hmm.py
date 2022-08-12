@@ -99,7 +99,6 @@ class PoissonHMM(ExponentialFamilyHMM):
                                      self._compute_conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
-            initial_probs = posterior.smoothed_probs[0]
             trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
 
             # Compute the expected sufficient statistics
@@ -109,7 +108,7 @@ class PoissonHMM(ExponentialFamilyHMM):
             # Pack into a dataclass
             stats = PoissonHMMSuffStats(
                 marginal_loglik=posterior.marginal_loglik,
-                initial_probs=initial_probs,
+                initial_probs=posterior.initial_probs,
                 trans_probs=trans_probs,
                 sum_w=sum_w,
                 sum_x=sum_x,
