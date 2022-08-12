@@ -64,7 +64,7 @@ def plot_gaussian_hmm_data(hmm, emissions, states, xlim=None):
     return plt.gcf()
 
 
-def plot_hmm_posterior(true_states, posterior, plot_timesteps=None):
+def plot_hmm_posterior(true_states, posterior, perm=None, plot_timesteps=None, plot_mode=False):
     if plot_timesteps is None:
         plot_timesteps = len(true_states)
     fig, axs = plt.subplots(2, 1, sharex=True)
@@ -78,10 +78,28 @@ def plot_hmm_posterior(true_states, posterior, plot_timesteps=None):
     axs[0].set_yticks([])
     axs[0].set_title("true states")
 
-    axs[1].imshow(posterior.smoothed_probs.T, aspect="auto", interpolation="none", cmap="Greys", vmin=0, vmax=1)
+    if perm is None:
+        perm = jnp.arange(posterior.smoothed_probs.shape[-1])
+    if plot_mode:
+        most_likely_states = jnp.argmax(posterior.smoothed_probs[:, perm], axis=-1)
+        axs[1].imshow(most_likely_states[None, :],
+                  aspect="auto",
+                  interpolation="none",
+                  cmap=CMAP,
+                  vmin=0,
+                  vmax=len(COLORS) - 1,
+                  alpha=1)
+        axs[1].set_yticks([])
+        axs[1].set_title("mode of expected states")
+        
+    else:
+        axs[1].imshow(posterior.smoothed_probs[:, perm].T,
+                      aspect="auto", interpolation="none", cmap="Greys",
+                      vmin=0, vmax=1)
+        axs[1].set_title("expected states")
+
     axs[1].set_ylabel("state")
     axs[1].set_xlabel("time")
-    axs[1].set_title("expected states")
 
     plt.xlim(0, plot_timesteps)
     plt.tight_layout()
