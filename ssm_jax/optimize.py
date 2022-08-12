@@ -71,6 +71,7 @@ def run_sgd(loss_fn,
 
     losses = []
     keys = jr.split(key, num_epochs)
+
     for key in keys:
         losses_per_batch = []
         sample_generator = sample_minibatches(key, dataset, batch_size, shuffle)
