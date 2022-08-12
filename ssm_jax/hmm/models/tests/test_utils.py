@@ -19,9 +19,5 @@ def normalize(a, axis=None):
     return a / a_sum
 
 
-def normalized(X, axis=None):
-    return normalize(X, axis=axis)
-
-
 def monotonically_increasing(x):
     return jnp.all(x[1:] >= x[:-1])
