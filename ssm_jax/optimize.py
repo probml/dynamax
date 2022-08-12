@@ -80,6 +80,7 @@ def run_sgd(loss_fn,
             params, opt_state, loss = update(params, opt_state, minibatch)
             losses_per_batch.append(loss)
 
-        losses.append(jnp.mean(jnp.array(losses_per_batch)))
+        losses.append(losses_per_batch)
 
-    return params, jnp.array(losses)
+    losses = jnp.array(losses).mean(axis=-1)
+    return params, losses
