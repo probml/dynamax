@@ -5,19 +5,18 @@ import jax.random as jr
 import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-from jax import vmap
 from jax import jit
 from jax import vmap
 from jax.tree_util import tree_map
-from tqdm.auto import trange
-
+from ssm_jax.abstractions import SSM
+from ssm_jax.abstractions import Parameter
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import hmm_two_filter_smoother
-from ssm_jax.abstractions import SSM, Parameter
 from ssm_jax.optimize import run_sgd
+from tqdm.auto import trange
 
 
 class BaseHMM(SSM):
@@ -98,24 +97,26 @@ class BaseHMM(SSM):
                                                 self._compute_conditional_logliks(emissions, **covariates))
 
             # Compute the transition probabilities
-            posterior.trans_probs = compute_transition_probs(
-                transition_matrices, posterior,
-                reduce_sum=(transition_matrices.ndim == 2))
+            posterior.trans_probs = compute_transition_probs(transition_matrices,
+                                                             posterior,
+                                                             reduce_sum=(transition_matrices.ndim == 2))
 
             return posterior
 
         return vmap(_single_e_step)(batch_emissions, **batch_covariates)
 
-    def m_step(self, batch_emissions, batch_posteriors,
+    def m_step(self,
+               batch_emissions,
+               batch_posteriors,
                optimizer=optax.adam(1e-2),
                num_sgd_epochs_per_mstep=50,
                **batch_covariates):
         """_summary_
-
         Args:
             emissions (_type_): _description_
             posterior (_type_): _description_
         """
+
         def neg_expected_log_joint(params, minibatch):
             minibatch_emissions, minibatch_posteriors, minibatch_covariates = minibatch
             scale = len(batch_emissions) / len(minibatch_emissions)
@@ -149,14 +150,13 @@ class BaseHMM(SSM):
 
     def fit_em(self, batch_emissions, num_iters=50, mstep_kwargs=dict(), **batch_covariates):
         """Fit this HMM with Expectation-Maximization (EM).
-
         Args:
             batch_emissions (_type_): _description_
             num_iters (int, optional): _description_. Defaults to 50.
-
         Returns:
             _type_: _description_
         """
+
         @jit
         def em_step(params):
             self.unconstrained_params = params
@@ -181,17 +181,14 @@ class BaseHMM(SSM):
                 num_epochs=50,
                 shuffle=False,
                 key=jr.PRNGKey(0),
-                **batch_covariates
-        ):
+                **batch_covariates):
         """
         Fit this HMM by running SGD on the marginal log likelihood.
-
         Note that batch_emissions is initially of shape (N,T)
         where N is the number of independent sequences and
         T is the length of a sequence. Then, a random susbet with shape (B, T)
         of entire sequence, not time steps, is sampled at each step where B is
         batch size.
-
         Args:
             batch_emissions (chex.Array): Independent sequences.
             optmizer (optax.Optimizer): Optimizer.
@@ -199,7 +196,6 @@ class BaseHMM(SSM):
             num_epochs (int): Iterations made through entire dataset.
             shuffle (bool): Indicates whether to shuffle minibatches.
             key (chex.PRNGKey): RNG key to shuffle minibatches.
-
         Returns:
             losses: Output of loss_fn stored at each step.
         """
@@ -233,7 +229,6 @@ class StandardHMM(BaseHMM):
         """
         Abstract base class for Hidden Markov Models.
         Child class specifies the emission distribution.
-
         Args:
             initial_probabilities[k]: prob(hidden(1)=k)
             transition_matrix[j,k]: prob(hidden(t) = k | hidden(t-1)j)
@@ -278,26 +273,23 @@ class StandardHMM(BaseHMM):
     @abstractmethod
     def emission_distribution(self, state, **covariates):
         """Return a distribution over emissions given current state.
-
         Args:
             state (PyTree): current latent state.
-
         Returns:
             dist (tfd.Distribution): conditional distribution of current emission.
         """
         raise NotImplementedError
 
     def _m_step_initial_probs(self, batch_emissions, batch_posteriors, **batch_covariates):
-        post = tfd.Dirichlet(self._initial_probs_concentration.value +
-                             batch_posteriors.initial_probs.sum(axis=0))
+        post = tfd.Dirichlet(self._initial_probs_concentration.value + batch_posteriors.initial_probs.sum(axis=0))
         self._initial_probs.value = post.mode()
 
     def _m_step_transition_matrix(self, batch_emissions, batch_posteriors, **batch_covariates):
-        post = tfd.Dirichlet(self._transition_matrix_concentration.value +
-                             batch_posteriors.trans_probs.sum(axis=0))
+        post = tfd.Dirichlet(self._transition_matrix_concentration.value + batch_posteriors.trans_probs.sum(axis=0))
         self._transition_matrix.value = post.mode()
 
-    def _m_step_emissions(self, batch_emissions,
+    def _m_step_emissions(self,
+                          batch_emissions,
                           batch_posteriors,
                           optimizer=optax.adam(1e-2),
                           num_mstep_iters=50,
@@ -332,12 +324,27 @@ class StandardHMM(BaseHMM):
     def m_step(self,
                batch_emissions,
                batch_posteriors,
-               generic_mstep_kwargs=dict(optimizer=optax.adam(1e-2),
-                                         num_mstep_iters=50,),
+               generic_mstep_kwargs=dict(
+                   optimizer=optax.adam(1e-2),
+                   num_mstep_iters=50,
+               ),
                **batch_covariates):
-        self._m_step_initial_probs(batch_emissions, batch_posteriors, **batch_covariates)
-        self._m_step_transition_matrix(batch_emissions, batch_posteriors, **batch_covariates)
+
+        is_initial_probs_frozen = self.initial_probs.is_frozen
+        is_transition_matrix_frozen = self.transition_matrix.is_frozen
+
+        self.initial_probs.freeze()
+        self.transition_matrix.freeze()
+        # TODO: Check whether parameters for the emission distribution are frozen or not before updating
         self._m_step_emissions(batch_emissions, batch_posteriors, **generic_mstep_kwargs, **batch_covariates)
+
+        if not is_initial_probs_frozen:
+            self.initial_probs.unfreeze()
+            self._m_step_initial_probs(batch_emissions, batch_posteriors, **batch_covariates)
+
+        if not is_transition_matrix_frozen:
+            self.transition_matrix.unfreeze()
+            self._m_step_transition_matrix(batch_emissions, batch_posteriors, **batch_covariates)
 
 
 class ExponentialFamilyHMM(StandardHMM):
@@ -350,22 +357,14 @@ class ExponentialFamilyHMM(StandardHMM):
     def _zeros_like_suff_stats(self):
         raise NotImplementedError
 
-    def fit_stochastic_em(self,
-                          emissions_generator,
-                          total_emissions,
-                          schedule=None,
-                          num_epochs=50
-        ):
-
+    def fit_stochastic_em(self, emissions_generator, total_emissions, schedule=None, num_epochs=50):
         """
         Fit this HMM by running Stochastic Expectation-Maximization.
-
         Assuming the original dataset consists of N independent sequences of
         length T, this algorithm performs EM on a random subset of B sequences
         (not timesteps) at each step. Importantly, the subsets of B sequences
         are shuffled at each epoch. It is up to the user to correctly
         instantiate the Dataloader generator object to exhibit this property.
-
         The algorithm uses a learning rate schedule to anneal the minibatch
         sufficient statistics at each stage of training. If a schedule is not
         specified, an exponentially decaying model is used such that the
@@ -379,7 +378,6 @@ class ExponentialFamilyHMM(StandardHMM):
             schedule (optax schedule, Callable: int -> [0, 1]): Learning rate
                 schedule; defaults to exponential schedule.
             num_epochs (int): Num of iterations made through the entire dataset.
-
         Returns:
             expected_log_prob (chex.Array): Mean expected log prob of each epoch.
 
@@ -402,7 +400,7 @@ class ExponentialFamilyHMM(StandardHMM):
                 decay_rate=.95,
             )
 
-        learning_rates = schedule(jnp.arange(num_epochs*num_batches))
+        learning_rates = schedule(jnp.arange(num_epochs * num_batches))
         assert learning_rates[0] == 1.0, "Learning rate must start at 1."
         learning_rates = learning_rates.reshape(num_epochs, num_batches)
 
@@ -417,23 +415,15 @@ class ExponentialFamilyHMM(StandardHMM):
 
             # Scale the stats as if they came from the whole dataset
             scale = total_emissions / len(minibatch_emissions.reshape(-1, self.num_obs))
-            scaled_minibatch_stats = tree_map(
-                lambda x: jnp.sum(x, axis=0) * scale,
-                minibatch_stats
-            )
+            scaled_minibatch_stats = tree_map(lambda x: jnp.sum(x, axis=0) * scale, minibatch_stats)
             expected_lp = self.log_prior() + scaled_minibatch_stats.marginal_loglik
 
             # Incorporate these these stats into the rolling averaged stats
-            rolling_stats = tree_map(
-                lambda s0, s1: (1-learn_rate) * s0 + learn_rate * s1,
-                rolling_stats,
-                scaled_minibatch_stats
-            )
+            rolling_stats = tree_map(lambda s0, s1: (1 - learn_rate) * s0 + learn_rate * s1, rolling_stats,
+                                     scaled_minibatch_stats)
 
             # Add a batch dimension and call M-step
-            batched_rolling_stats = tree_map(
-                lambda x: jnp.expand_dims(x, axis=0), rolling_stats
-            )
+            batched_rolling_stats = tree_map(lambda x: jnp.expand_dims(x, axis=0), rolling_stats)
             self.m_step(minibatch_emissions, batched_rolling_stats)
 
             return (self.unconstrained_params, rolling_stats), expected_lp
@@ -458,3 +448,4 @@ class ExponentialFamilyHMM(StandardHMM):
         # Update self with fitted params
         self.unconstrained_params = params
         return jnp.array(expected_log_probs)
+        

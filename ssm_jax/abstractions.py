@@ -1,10 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from jax.tree_util import register_pytree_node_class, tree_map
+from jax import lax
+from jax.tree_util import register_pytree_node_class
+from jax.tree_util import tree_map
 
 
 @register_pytree_node_class
@@ -54,10 +56,10 @@ class SSM(ABC):
     these parameters to implement the tree_flatten and tree_unflatten methods necessary
     to register a model as a JAX PyTree.
     """
+
     @abstractmethod
     def initial_distribution(self, **covariates):
         """Return an initial distribution over latent states.
-
         Returns:
             dist (tfd.Distribution): distribution over initial latent state.
         """
@@ -66,10 +68,8 @@ class SSM(ABC):
     @abstractmethod
     def transition_distribution(self, state, **covariates):
         """Return a distribution over next latent state given current state.
-
         Args:
             state (PyTree): current latent state
-
         Returns:
             dist (tfd.Distribution): conditional distribution of next latent state.
         """
@@ -78,10 +78,8 @@ class SSM(ABC):
     @abstractmethod
     def emission_distribution(self, state, **covariates):
         """Return a distribution over emissions given current state.
-
         Args:
             state (PyTree): current latent state.
-
         Returns:
             dist (tfd.Distribution): conditional distribution of current emission.
         """
@@ -89,7 +87,6 @@ class SSM(ABC):
 
     def sample(self, key, num_timesteps, **covariates):
         """Sample a sequence of latent states and emissions.
-
         Args:
             key: rng key
             num_timesteps: length of sequence to generate
@@ -121,6 +118,7 @@ class SSM(ABC):
 
     def log_prob(self, states, emissions, **covariates):
         """Compute the log joint probability of the states and observations"""
+
         def _step(carry, args):
             lp, prev_state = carry
             state, emission, covariate = args
@@ -144,7 +142,6 @@ class SSM(ABC):
 
     def log_prior(self):
         """Return the log prior probability of any model parameters.
-
         Returns:
             lp (Scalar): log prior probability.
         """
