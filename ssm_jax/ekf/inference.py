@@ -169,9 +169,9 @@ def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Dynamics and emission functions and their Jacobians
-    f, h = params.dynamics_function, params.emission_function
-    F, H = jacfwd(f), jacfwd(h)
-    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
+    f = params.dynamics_function
+    F = jacfwd(f)
+    f, F = (_process_fn(fn, inputs) for fn in (f, F))
     inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, args):
@@ -226,8 +226,6 @@ def iterated_extended_kalman_smoother(params, emissions, num_iter=1, inputs=None
         nlgssm_posterior: LGSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
-    num_timesteps = len(emissions)
-
     # Run first iteration of eks
     smoothed_posterior = extended_kalman_smoother(params, emissions, inputs)
 
