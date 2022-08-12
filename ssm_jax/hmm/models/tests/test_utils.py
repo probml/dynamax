@@ -21,3 +21,7 @@ def normalize(a, axis=None):
 
 def normalized(X, axis=None):
     return normalize(X, axis=axis)
+
+
+def monotonically_increasing(x):
+    return jnp.all(x[1:] >= x[:-1])
