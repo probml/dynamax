@@ -28,7 +28,8 @@ def run_sgd(loss_fn,
             batch_size=1,
             num_epochs=50,
             shuffle=False,
-            key=jr.PRNGKey(0)):
+            key=jr.PRNGKey(0),
+            **batch_covariates):
     """
     Note that batch_emissions is initially of shape (N,T)
     where N is the number of independent sequences and

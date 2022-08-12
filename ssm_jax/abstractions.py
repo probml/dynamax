@@ -1,10 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax
 import tensorflow_probability.substrates.jax.bijectors as tfb
+from jax import lax
 from jax.tree_util import register_pytree_node_class
+from jax.tree_util import tree_map
 
 
 @register_pytree_node_class
@@ -54,82 +56,92 @@ class SSM(ABC):
     these parameters to implement the tree_flatten and tree_unflatten methods necessary
     to register a model as a JAX PyTree.
     """
-    @abstractmethod
-    def initial_distribution(self):
-        """Return an initial distribution over latent states.
 
+    @abstractmethod
+    def initial_distribution(self, **covariates):
+        """Return an initial distribution over latent states.
         Returns:
             dist (tfd.Distribution): distribution over initial latent state.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def transition_distribution(self, state):
+    def transition_distribution(self, state, **covariates):
         """Return a distribution over next latent state given current state.
-
         Args:
             state (PyTree): current latent state
-
         Returns:
             dist (tfd.Distribution): conditional distribution of next latent state.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def emission_distribution(self, state):
+    def emission_distribution(self, state, **covariates):
         """Return a distribution over emissions given current state.
-
         Args:
             state (PyTree): current latent state.
-
         Returns:
             dist (tfd.Distribution): conditional distribution of current emission.
         """
         raise NotImplementedError
 
-    def sample(self, key, num_timesteps):
+    def sample(self, key, num_timesteps, **covariates):
         """Sample a sequence of latent states and emissions.
-
         Args:
             key: rng key
             num_timesteps: length of sequence to generate
         """
 
-        def _step(state, key):
+        def _step(prev_state, args):
+            key, covariate = args
             key1, key2 = jr.split(key, 2)
-            emission = self.emission_distribution(state).sample(seed=key1)
-            next_state = self.transition_distribution(state).sample(seed=key2)
-            return next_state, (state, emission)
+            state = self.transition_distribution(prev_state, **covariate).sample(seed=key2)
+            emission = self.emission_distribution(state, **covariate).sample(seed=key1)
+            return state, (state, emission)
 
         # Sample the initial state
-        key1, key = jr.split(key, 2)
-        initial_state = self.initial_distribution().sample(seed=key1)
+        key1, key2, key = jr.split(key, 3)
+        initial_covariate = tree_map(lambda x: x[0], covariates)
+        initial_state = self.initial_distribution(**initial_covariate).sample(seed=key1)
+        initial_emission = self.emission_distribution(initial_state, **initial_covariate).sample(seed=key2)
 
         # Sample the remaining emissions and states
-        keys = jr.split(key, num_timesteps)
-        _, (states, emissions) = lax.scan(_step, initial_state, keys)
+        next_keys = jr.split(key, num_timesteps - 1)
+        next_covariates = tree_map(lambda x: x[1:], covariates)
+        _, (next_states, next_emissions) = lax.scan(_step, initial_state, (next_keys, next_covariates))
+
+        # Concatenate the initial state and emission with the following ones
+        expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
+        states = tree_map(expand_and_cat, initial_state, next_states)
+        emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
         return states, emissions
 
-    def log_prob(self, states, emissions):
+    def log_prob(self, states, emissions, **covariates):
         """Compute the log joint probability of the states and observations"""
+
         def _step(carry, args):
             lp, prev_state = carry
-            state, emission = args
-            lp += self.transition_distribution(prev_state).log_prob(state)
-            lp += self.emission_distribution(state).log_prob(emission)
+            state, emission, covariate = args
+            lp += self.transition_distribution(prev_state, **covariate).log_prob(state)
+            lp += self.emission_distribution(state, **covariate).log_prob(emission)
             return (lp, state), None
 
         # Compute log prob of initial time step
-        lp = self.initial_distribution().log_prob(states[0])
-        lp += self.emission_distribution(states[0]).log_prob(emissions[0])
+        initial_state = tree_map(lambda x: x[0], states)
+        initial_emission = tree_map(lambda x: x[0], emissions)
+        initial_covariate = tree_map(lambda x: x[0], covariates)
+        lp = self.initial_distribution(**initial_covariate).log_prob(initial_state)
+        lp += self.emission_distribution(initial_state, **initial_covariate).log_prob(initial_emission)
 
         # Scan over remaining time steps
-        (lp, _), _ = lax.scan(_step, (lp, states[0]), (states[1:], emissions[1:]))
+        next_states = tree_map(lambda x: x[1:], states)
+        next_emissions = tree_map(lambda x: x[1:], emissions)
+        next_covariates = tree_map(lambda x: x[1:], covariates)
+        (lp, _), _ = lax.scan(_step, (lp, initial_state), (next_states, next_emissions, next_covariates))
         return lp
 
     def log_prior(self):
         """Return the log prior probability of any model parameters.
-
         Returns:
             lp (Scalar): log prior probability.
         """
@@ -154,17 +166,8 @@ class SSM(ABC):
     def hyperparams(self):
         """Helper property to get a PyTree of model hyperparameters."""
         items = sorted(self.__dict__.items())
-        hyper_values = [val for key, val in items if not isinstance(val, Parameter)]
+        hyper_values = [val for key, val in items if (not isinstance(Parameter) or val.is_frozen)]
         return hyper_values
-
-    def prior_log_prob(self):
-        items = sorted(self.__dict__.items())
-        prior_log_probs = [
-            val.prior_log_prob()
-            for _, val in items
-            if isinstance(val, Parameter) and not val.is_frozen and val.prior is not None
-        ]
-        return sum(prior_log_probs)
 
     # Generic implementation of tree_flatten and unflatten. This assumes that
     # the Parameters are all valid JAX PyTree nodes.
