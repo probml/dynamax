@@ -73,13 +73,25 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
         posterior_mean = prior_mean + K @ (y - h(prior_mean, u))
         return (posterior_mean, posterior_cov), None
 
-    # Iterate linearization over posterior mean and covariance
+    # Iterate re-linearization over posterior mean and covariance
     carry = (m, P)
-    (mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter))
+    (mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter+1))
     return mu_cond, Sigma_cond
 
 
-def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
+def _posterior_linearize(m, P, f, F, h, H, num_timesteps, inputs):
+    def _step(_, t):
+        mean, cov = m[t], P[t]
+        u = inputs[t]
+        F_x, b = F(mean, u), f(mean, u) - F(mean, u) @ mean
+        H_x, d = H(mean, u), h(mean, u) - H(mean, u) @ mean
+        return None, (F_x, b, H_x, d)
+    
+    _, (Fs, bs, Hs, ds) = lax.scan(_step, None, jnp.arange(num_timesteps))
+    return (Fs, bs, Hs, ds)
+
+
+def extended_kalman_filter(params, emissions, num_iter=0, inputs=None):
     """Run an (iterated) extended Kalman filter to produce the 
     marginal likelihood and filtered state estimates.
 
@@ -127,6 +139,10 @@ def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     return NLGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+
+
+def iterated_extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
+    return extended_kalman_filter(params, emissions, num_iter, inputs)
 
 
 def extended_kalman_smoother(params, emissions, inputs=None):
@@ -190,17 +206,6 @@ def extended_kalman_smoother(params, emissions, inputs=None):
         smoothed_means=smoothed_means,
         smoothed_covariances=smoothed_covs,
     )
-
-def _posterior_linearize(m, P, f, F, h, H, num_timesteps, inputs):
-    def _step(_, t):
-        mean, cov = m[t], P[t]
-        u = inputs[t]
-        F_x, b = F(mean, u), f(mean, u) - F(mean, u) @ mean
-        H_x, d = H(mean, u), h(mean, u) - H(mean, u) @ mean
-        return None, (F_x, b, H_x, d)
-    
-    _, (Fs, bs, Hs, ds) = lax.scan(_step, None, jnp.arange(num_timesteps))
-    return (Fs, bs, Hs, ds)
 
 
 def iterated_extended_kalman_smoother(params, emissions, num_iter=1, inputs=None):
