@@ -331,7 +331,7 @@ def iw_posterior_update(iw_prior, sufficient_stats):
     df_pos = df_pri + N
     scale_pos = scale_pri + SxxT
     
-    return InverseWishart(df_pos, 
-                          scale_pos)
+    return InverseWishart(df=df_pos, 
+                          scale=scale_pos)
 
 
