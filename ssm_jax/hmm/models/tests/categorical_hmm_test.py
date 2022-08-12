@@ -3,13 +3,13 @@ https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/tests/test_categoric
 """
 import jax.numpy as jnp
 import jax.random as jr
+import numpy as np
 import pytest
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from ssm_jax.hmm.models.base import BaseHMM
 from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
 from ssm_jax.hmm.models.tests.test_utils import monotonically_increasing
-
 
 
 def new_hmm():
@@ -144,19 +144,20 @@ class TestCategoricalHMM:
                                 num_timesteps=1000):
 
         true_key, sample_key, init_key = jr.split(key, 3)
+
         true_hmm = CategoricalHMM.random_initialization(true_key, num_states, num_emissions, num_classes)
         state_sequence, emissions = true_hmm.sample(sample_key, num_timesteps)
 
         hmm = CategoricalHMM.random_initialization(init_key, num_states, num_emissions, num_classes)
 
+        initial_probs = jnp.asarray(hmm.initial_probs.value)
+        transition_matrix = jnp.asarray(hmm.transition_matrix.value)
+
         hmm.initial_probs.freeze()
         hmm.transition_matrix.freeze()
 
-        prev_initial_probs = hmm.initial_probs.value
-        prev_transition_matrix = hmm.transition_matrix.value
-
         lps3 = hmm.fit_em(emissions[None, ...])
 
-        assert jnp.allclose(prev_initial_probs, hmm.initial_probs.value)
-        assert jnp.allclose(prev_transition_matrix, hmm.transition_matrix.value)
+        assert jnp.allclose(initial_probs, jnp.asarray(hmm.initial_probs.value))
+        assert jnp.allclose(transition_matrix, jnp.asarray(hmm.transition_matrix.value))
         assert monotonically_increasing(lps3)
