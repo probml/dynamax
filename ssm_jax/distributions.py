@@ -262,7 +262,7 @@ class MatrixNormalInverseWishart(tfd.JointDistributionSequential):
         num_row, num_col = self._matrix_normal_shape
         covariance = jnp.einsum("...,...ij->...ij", 
                                1 / (self._df + num_row + num_col + 1), self._scale)
-        return self._loc, covariance
+        return covariance, self._loc
 
 
 ###############################################################################
