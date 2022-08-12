@@ -142,15 +142,32 @@ def extended_kalman_filter(params, emissions, num_iter=0, inputs=None):
 
 
 def iterated_extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
-    return extended_kalman_filter(params, emissions, num_iter, inputs)
+    """Run an iterated extended Kalman filter (IEKF).
+
+    Args:
+        params: an NLGSSMParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        num_iter (int): number of re-linearizations around smoothed posterior.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        filtered_posterior: LGSSMPosterior instance containing,
+            marginal_log_lik
+            filtered_means (T, D_hid)
+            filtered_covariances (T, D_hid, D_hid)
+    """
+    filtered_posterior = extended_kalman_filter(params, emissions, num_iter, inputs)
+    return filtered_posterior
 
 
-def extended_kalman_smoother(params, emissions, inputs=None):
+def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=None):
     """Run an extended Kalman (RTS) smoother.
 
     Args:
         params: an NLGSSMParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
+        filtered_posterior (NLGSSMPosterior): filtered posterior to use for smoothing.
+            If None, the smoother computes the filtered posterior directly.
         inputs (T,D_in): array of inputs.
 
     Returns:
@@ -159,9 +176,10 @@ def extended_kalman_smoother(params, emissions, inputs=None):
     """
     num_timesteps = len(emissions)
 
-    # Run the extended Kalman filter
-    ekf_posterior = extended_kalman_filter(params, emissions, inputs=inputs)
-    ll, filtered_means, filtered_covs, *_ = ekf_posterior.to_tuple()
+    # Get filtered posterior
+    if filtered_posterior is None:
+        filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs)
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
@@ -209,46 +227,28 @@ def extended_kalman_smoother(params, emissions, inputs=None):
 
 
 def iterated_extended_kalman_smoother(params, emissions, num_iter=1, inputs=None):
+    """Run an iterated extended Kalman smoother (IEKS).
+
+    Args:
+        params: an NLGSSMParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        num_iter (int): number of re-linearizations around smoothed posterior.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        nlgssm_posterior: LGSSMPosterior instance containing properties of
+            filtered and smoothed posterior distributions.
+    """
     num_timesteps = len(emissions)
 
     # Run first iteration of eks
-    post = extended_kalman_smoother(params, emissions, inputs)
-    smoothed_means, smoothed_covs = post.smoothed_means, post.smoothed_covariances
-
-    # Dynamics and emission functions and their Jacobians
-    f, h = params.dynamics_function, params.emission_function
-    F, H = jacfwd(f), jacfwd(h)
-    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
-    inputs = _process_input(inputs, num_timesteps)
+    smoothed_posterior = extended_kalman_smoother(params, emissions, inputs)
 
     def _step(carry, _):
-        means, covs = carry
-        Fs, bs, Hs, ds = _posterior_linearize(means, covs, f, F, h, H, num_timesteps, inputs)
+        # Relinearize around smoothed posterior from previous iteration
+        smoothed_prior = carry
+        smoothed_posterior = extended_kalman_smoother(params, emissions, smoothed_prior, inputs)
+        return smoothed_posterior, None
 
-        # Run LGSSM smoother
-        lgssm = LinearGaussianSSM(
-            initial_mean = params.initial_mean,
-            initial_covariance = params.initial_covariance,
-            dynamics_matrix = Fs,
-            dynamics_input_weights = jnp.zeros((Fs.shape[-2], inputs.shape[-1])), # TODO
-            dynamics_bias = bs,
-            dynamics_covariance = params.dynamics_covariance,
-            emission_matrix = Hs,
-            emission_input_weights = jnp.zeros((Hs.shape[-2], inputs.shape[-1])), # TODO
-            emission_bias = ds,
-            emission_covariance = params.emission_covariance
-        )
-        lgssm_post = lgssm.smoother(emissions, inputs)
-
-        smoothed_means, smoothed_covs = lgssm_post.smoothed_means, lgssm_post.smoothed_covariances
-        return (smoothed_means, smoothed_covs), None
-    
-    carry = (smoothed_means, smoothed_covs)
-    (smoothed_means, smoothed_covs), _ = lax.scan(_step, carry, jnp.arange(num_iter))
-    return NLGSSMPosterior(
-        marginal_loglik=post.marginal_loglik,
-        filtered_means=post.filtered_means,
-        filtered_covariances=post.filtered_covariances,
-        smoothed_means=smoothed_means,
-        smoothed_covariances=smoothed_covs,
-    )
+    smoothed_posterior, _ = lax.scan(_step, smoothed_posterior, jnp.arange(num_iter))
+    return smoothed_posterior
