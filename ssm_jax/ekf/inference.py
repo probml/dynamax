@@ -3,7 +3,6 @@ from jax import lax
 from jax import jacfwd
 from distrax import MultivariateNormalFullCovariance as MVN
 from ssm_jax.nlgssm.containers import NLGSSMPosterior
-from ssm_jax.lgssm.models import LinearGaussianSSM
 
 
 # Helper functions
@@ -77,18 +76,6 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
     carry = (m, P)
     (mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter+1))
     return mu_cond, Sigma_cond
-
-
-def _posterior_linearize(m, P, f, F, h, H, num_timesteps, inputs):
-    def _step(_, t):
-        mean, cov = m[t], P[t]
-        u = inputs[t]
-        F_x, b = F(mean, u), f(mean, u) - F(mean, u) @ mean
-        H_x, d = H(mean, u), h(mean, u) - H(mean, u) @ mean
-        return None, (F_x, b, H_x, d)
-    
-    _, (Fs, bs, Hs, ds) = lax.scan(_step, None, jnp.arange(num_timesteps))
-    return (Fs, bs, Hs, ds)
 
 
 def extended_kalman_filter(params, emissions, num_iter=0, inputs=None):
