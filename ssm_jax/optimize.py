@@ -1,8 +1,10 @@
 import jax.numpy as jnp
 import jax.random as jr
 import optax
-from jax import lax, value_and_grad
-from jax.tree_util import tree_map, tree_leaves
+from jax import jit
+from jax import value_and_grad
+from jax.tree_util import tree_leaves
+from jax.tree_util import tree_map
 
 
 def _get_dataset_len(dataset):
@@ -20,6 +22,7 @@ def sample_minibatches(key, dataset, batch_size, shuffle):
     perm = jnp.where(shuffle, jr.permutation(key, n_data), jnp.arange(n_data))
     for idx in range(0, n_data, batch_size):
         yield tree_map(lambda x: x[perm[idx:min(idx + batch_size, n_data)]], dataset)
+
 
 def run_sgd(loss_fn,
             params,
@@ -59,26 +62,23 @@ def run_sgd(loss_fn,
     if batch_size >= _get_dataset_len(dataset):
         shuffle = False
 
-    def train_step(carry, key):
-        params, opt_state = carry
+    @jit
+    def update(params, opt_state, minibatch):
+        loss, grads = loss_grad_fn(params, minibatch)
+        updates, opt_state = optimizer.update(grads, opt_state)
+        params = optax.apply_updates(params, updates)
+        return params, opt_state, loss
+
+    losses = []
+    keys = jr.split(key, num_epochs)
+    for key in keys:
+        losses_per_batch = []
         sample_generator = sample_minibatches(key, dataset, batch_size, shuffle)
 
-        def cond_fun(state):
-            itr, params, opt_state, avg_loss = state
-            return itr < num_batches
+        for minibatch in sample_generator:
+            params, opt_state, loss = update(params, opt_state, minibatch)
+            losses_per_batch.append(loss)
 
-        def body_fun(state):
-            itr, params, opt_state, avg_loss = state
-            minibatch = next(sample_generator)  ## TODO: Does this work inside while_loop??
-            this_loss, grads = loss_grad_fn(params, minibatch)
-            updates, opt_state = optimizer.update(grads, opt_state)
-            params = optax.apply_updates(params, updates)
-            return itr + 1, params, opt_state, (avg_loss * itr + this_loss) / (itr + 1)
+        losses.append(jnp.mean(jnp.array(losses_per_batch)))
 
-        init_val = (0, params, opt_state, 0.0)
-        _, params, opt_state, avg_loss = lax.while_loop(cond_fun, body_fun, init_val)
-        return (params, opt_state), avg_loss
-
-    keys = jr.split(key, num_epochs)
-    (params, _), losses = lax.scan(train_step, (params, opt_state), keys)
-    return params, losses
+    return params, jnp.array(losses)
