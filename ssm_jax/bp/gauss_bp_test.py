@@ -16,11 +16,11 @@ def test_clg_potential():
     Lambda = jnp.ones((2,2)) * 2
 
     # Form joint potential \phi(y,z)
-    K, h = potential_from_conditional_linear_gaussian(A,u,Lambda)
+    (Kzz, Kzy, Kyy), (hz,hy) = potential_from_conditional_linear_gaussian(A,u,Lambda)
     # Condition on z
-    K_cond, h_cond = info_condition(K,h,z)
+    K_cond, h_cond = info_condition(Kyy, Kzy.T, hy, z)
 
     # Check that we end up where we started...
-    assert jnp.allclose(Lambda, K_cond, rtol=1e-2)
-    assert jnp.allclose(Lambda @ (A @ z + u), h_cond, rtol=1e-2)
+    assert jnp.allclose(Lambda, K_cond, rtol=1e-3)
+    assert jnp.allclose(Lambda @ (A @ z + u), h_cond, rtol=1e-3)
 

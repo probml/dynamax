@@ -1,9 +1,12 @@
+from functools import partial
+from jax import jit
 from jax import numpy as jnp
-from jax import tree_map
+from jax.tree_util import tree_map
+
 
 def block_split(A, idx):
     """Split square matrix A into four blocks at `idx`
-    
+
     For example splitting
         [[0, 1, 2],
          [3, 4, 5],
@@ -25,9 +28,9 @@ def block_split(A, idx):
        where `dim1 + dim2 == D` and `dim2 = D - idx`.
     """
     split_array = jnp.array([idx])
-    vblocks = jnp.vsplit(A,split_array)
+    vblocks = jnp.vsplit(A, split_array)
     # [leaf for tree in forest for leaf in tree]
-    blocks = [block for vblock in vblocks for block in jnp.hsplit(vblock,split_array)]
+    blocks = [block for vblock in vblocks for block in jnp.hsplit(vblock, split_array)]
     # Can also do:
     #   blocks = tree_map(lambda arr: jnp.hsplit(arr,split_array),vblocks)
     # followed by a tree_flatten
@@ -35,66 +38,70 @@ def block_split(A, idx):
 
 
 def block_join(A11, A12, A21, A22):
-    return jnp.block([[A11, A12],[A21,A22]])
+    return jnp.block([[A11, A12], [A21, A22]])
 
-def block_rev(A,idx):
-    blocks = block_split(A,idx)
+
+def block_rev(A, idx):
+    blocks = block_split(A, idx)
     return block_join(*blocks[::-1])
 
-def vec_swap(a,idx):
-    return jnp.concatenate((a[idx:],a[:idx]))
+
+def vec_swap(a, idx):
+    return jnp.concatenate((a[idx:], a[:idx]))
+
 
 def info_marginalise(K_blocks, hs):
     """Calculate the parameters of marginalised MVN.
-    
-    For x1, x2 joint distributed as
-        p(x1, x2) = Nc(x1,x2| h, K),
-    the marginal distribution of x1 is given by:
-        p(x2) = \int p(x1, x2) dx1 = Nc(x2 | h2_marg, K2_marg)
+
+    For x, y joint distributed as
+        p(x, y) = Nc(x,y| h, K),
+    the marginal distribution of x is given by:
+        p(y) = \int p(x, y) dx = Nc(y | hy_marg, Ky_marg)
     where,
-        h2_marg = h2 - K21 K11^{-1} h1
-        K2_marg = K22 - K21 K11^{-1} K12
+        hy_marg = h2 - Kyx Kxx^{-1} h1
+        Ky_marg = Kyy - Kyx Kxx^{-1} Kxy
 
     Args:
-        K_blocks: blocks of the joint precision matrix, (K1, K12, K22),
-                    K1 (dim1,dim1),
-                    K12 (dim1, dim2),
-                    K22 (dim2, dim2).
-        hs (D,1): joint precision weighted mean, (h1, h2):
-                    h1 (dim1, 1),
-                    h2 (dim2, 1).
+        K_blocks: blocks of the joint precision matrix, (Kxx, Kxy, Kyy),
+                    Kxx (dim_x, dim_x),
+                    Kxy (dim_x, dim_y),
+                    Kyy (dim_y, dim_y).
+        hs (dim_x + dim_y, 1): joint precision weighted mean, (hx, hy):
+                    h1 (dim_x, 1),
+                    h2 (dim_y, 1).
     Returns:
-        K2_marg (dim2, dim2): marginal precision matrix.
-        h2_marg (dim2,1): marginal precision weighted mean.
+        Ky_marg (dim_y, dim_y): marginal precision matrix.
+        hy_marg (dim_y,1): marginal precision weighted mean.
     """
-    K11, K12, K22 = K_blocks
-    h1, h2 = hs 
-    G = jnp.linalg.solve(K11,K12)
-    K2_marg = K22 - K12.T @ G
-    h2_marg = h2 - G.T @ h1
-    return K2_marg, h2_marg
+    Kxx, Kxy, Kyy = K_blocks
+    hx, hy = hs
+    G = jnp.linalg.solve(Kxx, Kxy)
+    Ky_marg = Kyy - Kxy.T @ G
+    hy_marg = hy - G.T @ hx
+    return Ky_marg, hy_marg
 
-def info_condition(K11, K12, h1, y):
-    # TODO: Decide on (x1, x2) vs (x,y)
+
+def info_condition(Kxx, Kxy, hx, y):
     """Calculate the parameters of MVN after conditioning.
 
     For x,y with joint mvn
-        p(x1,x2) = Nc(x1,x2 | h, K),
+        p(x,y) = Nc(x,y | h, K),
     where h, K can be partitioned into,
-        h = [h1, h2]
-        K = [[K11, K12],
-            [[K21, K22]]
+        h = [hx, hy]
+        K = [[Kxx, Kxy],
+            [[Kyx, Kyy]]
     the distribution of x condition on a particular value of y is given by,
-        p(x1|x2) = Nc(x1 | h1_cond, K1_cond),
+        p(x|y) = Nc(x | hx_cond, Kx_cond),
     where
-        h1_cond = h1 - K12 x2
-        K1_cond = K11
+        hx_cond = hx - Kxy y
+        Kx_cond = Kxx
     """
-    return K11, h1 - K12 @ y
+    return Kxx, hx - Kxy @ y
 
-def potential_from_conditional_linear_gaussian(A,u,Lambda):
+
+def potential_from_conditional_linear_gaussian(A, u, Lambda):
     """Express a conditional linear gaussian as a potential in canonical form.
-    
+
     p(y|z) = N(y | Az + u, Lambda^{-1})
            \prop exp( -0.5(y z)^T K (y z) + (y z)^T h )
     where,
@@ -109,22 +116,97 @@ def potential_from_conditional_linear_gaussian(A,u,Lambda):
         K (dim1 + dim2, dim1 + dim2)
         h (dim1 + dim2,1)
     """
-    Kyy = Lambda 
-    Kyz  = -Lambda @ A
-    Kzz = -A.T @ Kyz
-    hy = Lambda @ u 
+    Kzy = -A.T @ Lambda
+    Kzz = -Kzy @ A
+    Kyy = Lambda
+    hy = Lambda @ u
     hz = -A.T @ hy
-    # TODO: Might be more natural to frame this the other way round, return. (x2 | x1)
-    #        or at least just return Kzy because we tend to want to condition on y.
-    return (Kyy, Kyz, Kzz), (hy,hz)
+    return (Kzz, Kzy, Kyy), (hz, hy)
 
 
 def info_multiply(params1, params2):
     """Calculate parameters resulting from multiplying gaussians."""
-    return tree_map(lambda a,b: a + b, params1, params2)
+    return tree_map(lambda a, b: a + b, params1, params2)
 
 
 def info_divide(params1, params2):
     """Calculate parameters resulting from dividing gaussians."""
-    return tree_map(lambda a,b: a - b, params1, params2)
+    return tree_map(lambda a, b: a - b, params1, params2)
 
+
+@partial(jit, static_argnums=2)
+def pair_cpot_condition(cpot, obs, obs_var):
+    """Convenience function for conditioning gaussian potentials involving two
+     variables.
+
+    Args:
+        cpot: canonical parameters of the potential, stored as nested tuples
+                of the form,
+                  ((K11, K12, K22), (h1, h1)).
+        obs: observation.
+        obs_var (int): the label of the variable being condition on.
+
+    Returns:
+        cond_pot: canonical parameters of the conditioned potential,
+                    (K_cond, h_cond).
+    """
+    (K11, K12, K22), (h1, h2) = cpot
+    if obs_var == 1:
+        return info_condition(K22, K12.T, h2, obs)
+    elif obs_var == 2:
+        return info_condition(K11, K12, h1, obs)
+    else:
+        raise ValueError("obs_var must take a value of either 1 or 2.")
+
+
+@partial(jit, static_argnums=1)
+def pair_cpot_marginalise(cpot, marg_var):
+    """Convenience function for marginalising gaussian potentials involving two
+     variables.
+
+    Args:
+        cpot: canonical parameters of the potential, stored as nested tuples
+                of the form,
+                  ((K11, K12, K22), (h1, h1)).
+        marg_var (int): the label of the output marginal variable.
+
+    Returns:
+        marg_pot: canonical parameters of the marginal potential,
+                    (K_marg, h_marg).
+    """
+    if marg_var == 1:
+        (K11, K12, K22), (h1, h2) = cpot
+        return info_marginalise((K22, K12.T, K11), (h2, h1))
+    elif marg_var == 2:
+        return info_marginalise(*cpot)
+    else:
+        raise ValueError("marg_var must take a value of either 1 or 2.")
+
+
+@partial(jit, static_argnums=2)
+def pair_cpot_absorb_message(cpot, message, message_var):
+    """Convenience function for absorbing a message into a gaussain potential
+     involving two variables.
+
+    Args:
+        cpot: canonical parameters of the potential, stored as nested tuples
+                of the form,
+                  ((K11, K12, K22), (h1, h1)).
+        message: the message potential which takes the form,
+                  (K_message, h_message)
+        message_var (int): the label of the output marginal variable.
+
+    Returns:
+        cpot_plus_message: canonical parameters of the joint potential after
+                            the message has been incorporated,
+                             ((K11, K12, K22), (h1, h2))
+    """
+    K_message, h_message = message
+    if message_var == 1:
+        padded_message = ((K_message, 0, 0), (h_message, 0))
+    elif message_var == 2:
+        padded_message = ((0, 0, K_message), (0, h_message))
+    else:
+        raise ValueError("message_var must take a value of either 1 or 2.")
+
+    return info_multiply(cpot, padded_message)
