@@ -21,7 +21,8 @@ class TestMultinomialHMM:
         return MultinomialHMM(initial_probabilities, transition_matrix, emission_probs, self.num_trials)
 
     def test_random_initialization(self, key=jr.PRNGKey(0)):
-        hmm = MultinomialHMM.random_initialization(key, self.num_states, self.emission_dim, self.num_classes)
+        hmm = MultinomialHMM.random_initialization(key, self.num_states, self.emission_dim, self.num_classes,
+                                                   self.num_trials)
 
         assert hmm.initial_probs.value.shape == (self.num_states,)
         assert jnp.allclose(hmm.initial_probs.value.sum(), 1.)
@@ -67,8 +68,8 @@ class TestMultinomialHMM:
         true_hmm = self.new_hmm()
         state_sequence, emissions = true_hmm.sample(sample_key, num_timesteps)
 
-        # Mess up the parameters and see if we can re-learn them.
-        hmm = MultinomialHMM.random_initialization(init_key, self.num_states, self.emission_dim, self.num_classes)
+        hmm = MultinomialHMM.random_initialization(init_key, self.num_states, self.emission_dim, self.num_classes,
+                                                   self.num_trials)
 
         lps = hmm.fit_em(emissions[None, ...])
 
@@ -80,8 +81,8 @@ class TestMultinomialHMM:
         true_hmm = self.new_hmm()
         state_sequence, emissions = true_hmm.sample(sample_key, num_timesteps)
 
-        # Mess up the parameters and see if we can re-learn them.
-        hmm = MultinomialHMM.random_initialization(init_key, self.num_states, self.emission_dim, self.num_classes)
+        hmm = MultinomialHMM.random_initialization(init_key, self.num_states, self.emission_dim, self.num_classes,
+                                                   self.num_trials)
 
         posteriors = hmm.smoother(emissions)
 
