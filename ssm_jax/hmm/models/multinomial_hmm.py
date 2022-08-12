@@ -15,8 +15,7 @@ from ssm_jax.hmm.models.base import StandardHMM
 
 
 @chex.dataclass
-class CategoricalHMMSuffStats:
-    # Wrapper for sufficient statistics of a BernoulliHMM
+class MultinomialHMMSuffStats:
     marginal_loglik: chex.Scalar
     initial_probs: chex.Array
     trans_probs: chex.Array
@@ -57,12 +56,11 @@ class MultinomialHMM(StandardHMM):
                                                        bijector=tfb.Invert(tfb.Softplus()))
 
     @classmethod
-    def random_initialization(cls, key, num_states, num_emissions, num_classes, num_trials=1):
-        key1, key2, key3, key4 = jr.split(key, 4)
+    def random_initialization(cls, key, num_states, num_emissions, num_classes, num_trials):
+        key1, key2, key3 = jr.split(key, 3)
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
         emission_probs = jr.dirichlet(key3, jnp.ones(num_classes), (num_states, num_emissions))
-        num_trials = jr.randint(key4, shape=(1,), minval=0, maxval=10).astype(jnp.float32)[0]
         return cls(initial_probs, transition_matrix, emission_probs, num_trials=num_trials)
 
     @property
@@ -110,7 +108,7 @@ class MultinomialHMM(StandardHMM):
             sum_x = jnp.einsum("tk, tdi->kdi", posterior.smoothed_probs, emissions)
 
             # Pack into a dataclass
-            stats = CategoricalHMMSuffStats(
+            stats = MultinomialHMMSuffStats(
                 marginal_loglik=posterior.marginal_loglik,
                 initial_probs=initial_probs,
                 trans_probs=trans_probs,
