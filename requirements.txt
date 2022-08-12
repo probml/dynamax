@@ -5,6 +5,7 @@ optax
 chex
 distrax
 tensorflow_probability
+torch
 matplotlib
 seaborn
 tqdm

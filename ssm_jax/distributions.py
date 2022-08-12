@@ -1,6 +1,7 @@
 from typing import Any, Optional
 import jax.numpy as jnp
 from jax import vmap
+from jax.scipy.linalg import solve_triangular
 from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -34,7 +35,10 @@ class InverseWishart(tfd.TransformedDistribution):
         self._scale = scale
         # Compute the Cholesky of the inverse scale to parameterize a
         # Wishart distribution
-        inv_scale_tril = jnp.linalg.cholesky(jnp.linalg.inv(scale))
+        dim = scale.shape[-1]
+        eye = jnp.broadcast_to(jnp.eye(dim), scale.shape)
+        cho_scale = jnp.linalg.cholesky(scale)
+        inv_scale_tril = solve_triangular(cho_scale, eye, lower=True)
 
         super().__init__(
             tfd.WishartTriL(df, scale_tril=inv_scale_tril),
