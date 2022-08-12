@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from functools import partial
 
 import jax.numpy as jnp
 import jax.random as jr
@@ -6,6 +7,11 @@ import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import jit
+from jax import lax
+from jax import tree_leaves
+from jax import tree_map
+from jax import vmap
+
 from jax import vmap
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
@@ -218,6 +224,7 @@ class BaseHMM(SSM):
                                  **batch_covariates)
         self.unconstrained_params = params
         return losses
+
 
 class StandardHMM(BaseHMM):
 
@@ -443,9 +450,8 @@ class ExponentialFamilyHMM(StandardHMM):
                 _expected_lps += expected_lp
 
             # Save epoch mean of expected log probs
-            expected_log_probs.append(_expected_lps/num_batches)
+            expected_log_probs.append(_expected_lps / num_batches)
 
         # Update self with fitted params
         self.unconstrained_params = params
         return jnp.array(expected_log_probs)
-        
