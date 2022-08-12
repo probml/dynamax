@@ -6,7 +6,6 @@ from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
-
 class InverseWishart(tfd.TransformedDistribution):
 
     def __init__(self, df, scale):
@@ -46,6 +45,9 @@ class InverseWishart(tfd.TransformedDistribution):
             tfb.Chain([tfb.CholeskyOuterProduct(),
                        tfb.CholeskyToInvCholesky(),
                        tfb.Invert(tfb.CholeskyOuterProduct())]))
+        
+        self._parameters = dict(df=df,
+                                scale=scale)
 
     @classmethod
     def _parameter_properties(self, dtype, num_classes=None):
@@ -119,6 +121,11 @@ class NormalInverseWishart(tfd.JointDistributionSequential):
             lambda Sigma: tfd.MultivariateNormalFullCovariance(
                 loc, Sigma / mean_concentration)]
         )
+        
+        self._parameters = dict(loc=loc,
+                                mean_concentration=mean_concentration,
+                                df=df,
+                                scale=scale)
 
     @property
     def loc(self):
@@ -193,6 +200,10 @@ class MatrixNormalPrecision(tfd.TransformedDistribution):
             col_precision=tfp.util.ParameterProperties(event_ndims=2))
     
     @property
+    def loc(self):
+        return self._loc
+    
+    @property
     def row_covariance(self):
         return self._row_cov
     
@@ -220,17 +231,111 @@ class MatrixNormalInverseWishart(tfd.JointDistributionSequential):
         """
         self._matrix_normal_shape = loc.shape
         self._loc = loc
+        self._col_precision = col_precision
         self._df = df
         self._scale = scale
         super().__init__([InverseWishart(df, scale),
                           lambda Sigma: MatrixNormalPrecision(loc, Sigma, col_precision)])
+        
         self._parameters = dict(loc=loc,
                                 col_precision=col_precision,
                                 df=df,
                                 scale=scale)
+    
+    @property
+    def loc(self):
+        return self._loc
+    
+    @property
+    def col_precision(self):
+        return self._col_precision
+    
+    @property
+    def df(self):
+        return self._df
+    
+    @property
+    def scale(self):
+        return self._scale
     
     def _mode(self):
         num_row, num_col = self._matrix_normal_shape
         covariance = jnp.einsum("...,...ij->...ij", 
                                1 / (self._df + num_row + num_col + 1), self._scale)
         return self._loc, covariance
+
+
+###############################################################################
+
+def niw_posterior_update(niw_prior, sufficient_stats):
+    """Update the NormalInverseWishart distribution using sufficient statistics
+    
+    Returns:
+        posterior NIW distribution
+    """
+    # extract parameters of the prior distribution
+    loc_pri, precision_pri, df_pri, scale_pri = niw_prior.parameters.values()
+    
+    # unpack the sufficient statistics
+    Sx, SxxT, N = sufficient_stats
+    
+    # compute parameters of the posterior distribution
+    loc_pos = (precision_pri*loc_pri + Sx) / (precision_pri + N)
+    precision_pos = precision_pri + N
+    df_pos = df_pri + N
+    scale_pos = scale_pri + SxxT \
+        + precision_pri*jnp.outer(loc_pri, loc_pri) - precision_pos*jnp.outer(loc_pos, loc_pos)
+    
+    return NormalInverseWishart(loc=loc_pos, 
+                                mean_concentration=precision_pos, 
+                                df=df_pos, 
+                                scale=scale_pos)
+
+
+def mniw_posterior_update(mniw_prior, sufficient_stats):
+    """Update the MatrixNormalInverseWishart distribution using sufficient statistics   
+
+    Returns:
+        the posterior MNIW distribution
+    """
+    # extract parameters of the prior distribution
+    M_pri, V_pri, nu_pri, Psi_pri = mniw_prior.parameters.values()
+    
+    # unpack the sufficient statistics
+    SxxT, SxyT, SyyT, N = sufficient_stats
+    
+    # compute parameters of the posterior distribution
+    Sxx = V_pri + SxxT
+    Sxy = SxyT + V_pri @ M_pri.T
+    Syy = SyyT + M_pri @ V_pri @ M_pri.T
+    M_pos = jnp.linalg.solve(Sxx, Sxy).T
+    V_pos = Sxx
+    nu_pos = nu_pri + N
+    Psi_pos = Psi_pri + Syy - M_pos @ Sxy
+    
+    return MatrixNormalInverseWishart(loc=M_pos, 
+                                      col_precision=V_pos, 
+                                      df=nu_pos, 
+                                      scale=Psi_pos)
+    
+
+def iw_posterior_update(iw_prior, sufficient_stats):
+    """Update the InverseWishart distribution using sufficient statistics
+    
+    Returns:
+        posterior IW distribution
+    """
+    # extract parameters of the prior distribution
+    df_pri, scale_pri = iw_prior.parameters.values()
+    
+    # unpack the sufficient statistics
+    N, SxxT = sufficient_stats
+    
+    # compute parameters of the posterior distribution
+    df_pos = df_pri + N
+    scale_pos = scale_pri + SxxT
+    
+    return InverseWishart(df_pos, 
+                          scale_pos)
+
+
