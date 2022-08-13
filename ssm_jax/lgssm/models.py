@@ -1,5 +1,3 @@
-from functools import partial
-
 from jax import numpy as jnp
 from jax import random as jr
 from jax import lax
