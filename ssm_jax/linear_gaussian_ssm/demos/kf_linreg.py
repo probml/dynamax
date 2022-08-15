@@ -15,7 +15,7 @@
 # We show that the result is equivalent to batch (offline) Bayesian inference.
 from jax import numpy as jnp
 from matplotlib import pyplot as plt
-from ssm_jax.lgssm.inference import lgssm_filter, LGSSMParams
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, LGSSMParams
 
 
 def batch_bayesian_lreg(X, y, obs_var, mu0, Sigma0):

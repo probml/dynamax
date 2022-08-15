@@ -6,9 +6,9 @@ import jax.random as jr
 
 import matplotlib.pyplot as plt
 
-from ssm_jax.lgssm.inference_test import lgssm_ssm_jax_to_tfp
-from ssm_jax.lgssm.models import LinearGaussianSSM
-from ssm_jax.lgssm.inference import lgssm_posterior_sample
+from ssm_jax.linear_gaussian_ssm.inference_test import lgssm_ssm_jax_to_tfp
+from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_posterior_sample
 
 
 def lgssm_sample_demo(num_timesteps=100, key=jr.PRNGKey(0), sample_size=50):

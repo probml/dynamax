@@ -7,7 +7,7 @@ from jax.tree_util import register_pytree_node_class, tree_map
 
 from distrax import MultivariateNormalFullCovariance as MVN
 
-from ssm_jax.lgssm.inference import lgssm_filter, lgssm_smoother
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother
 from ssm_jax.utils import PSDToRealBijector
 
 

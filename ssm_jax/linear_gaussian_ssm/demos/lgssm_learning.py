@@ -5,8 +5,8 @@ from jax import jit
 from itertools import count
 import matplotlib.pyplot as plt
 
-from ssm_jax.lgssm.models import LinearGaussianSSM
-from ssm_jax.lgssm.learning import lgssm_fit_em
+from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.learning import lgssm_fit_em
 
 
 def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False):

@@ -1,6 +1,6 @@
 import pytest
 
-from ssm_jax.lgssm.demos import kf_tracking, kf_spiral, kf_parallel, kf_linreg, lgssm_learning
+from ssm_jax.linear_gaussian_ssm.demos import kf_tracking, kf_spiral, kf_parallel, kf_linreg, lgssm_learning
 
 # Run all the demos in test mode, which turns off plotting
 def test_kf_tracking_demo():

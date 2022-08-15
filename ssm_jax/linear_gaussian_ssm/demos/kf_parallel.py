@@ -11,8 +11,8 @@ from matplotlib import pyplot as plt
 from functools import partial
 
 from ssm_jax.plotting import plot_lgssm_posterior
-from ssm_jax.lgssm.models import LinearGaussianSSM
-from ssm_jax.lgssm.inference import lgssm_smoother
+from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_smoother
 
 
 def kf_parallel():
