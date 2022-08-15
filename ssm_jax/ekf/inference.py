@@ -1,5 +1,4 @@
 import jax.numpy as jnp
-import jax.random as jr
 from jax import lax
 from jax import jacfwd
 from distrax import MultivariateNormalFullCovariance as MVN
@@ -9,7 +8,7 @@ from ssm_jax.nlgssm.containers import NLGSSMPosterior
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
-_process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
+_process_input = lambda x, y: jnp.zeros((y,1)) if x is None else x
 
 
 def _predict(m, P, f, F, Q, u):
@@ -36,7 +35,7 @@ def _predict(m, P, f, F, Q, u):
     return mu_pred, Sigma_pred
 
 
-def _condition_on(m, P, h, H, R, u, y):
+def _condition_on(m, P, h, H, R, u, y, num_iter):
     """Condition a Gaussian potential on a new observation
        p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
          propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
@@ -58,28 +57,35 @@ def _condition_on(m, P, h, H, R, u, y):
          R (D_obs,D_obs): emission covariance matrix.
          u (D_in,): inputs.
          y (D_obs,): observation.
+         num_iter (int): number of re-linearizations around posterior for update step.
 
      Returns:
          mu_cond (D_hid,): filtered mean.
          Sigma_cond (D_hid,D_hid): filtered covariance.
     """
-    H_x = H(m, u)
-    S = R + H_x @ P @ H_x.T
-    K = jnp.linalg.solve(S, H_x @ P).T
-    dim = m.shape[-1]
-    # ImKH = jnp.eye(dim) - K @ H_x
-    Sigma_cond = P - K @ S @ K.T
-    mu_cond = m + K @ (y - h(m, u))
+    def _step(carry, _):
+        prior_mean, prior_cov = carry
+        H_x = H(prior_mean, u)
+        S = R + H_x @ prior_cov @ H_x.T
+        K = jnp.linalg.solve(S, H_x @ prior_cov).T
+        posterior_cov = prior_cov - K @ S @ K.T
+        posterior_mean = prior_mean + K @ (y - h(prior_mean, u))
+        return (posterior_mean, posterior_cov), None
+
+    # Iterate re-linearization over posterior mean and covariance
+    carry = (m, P)
+    (mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter))
     return mu_cond, Sigma_cond
 
 
-def extended_kalman_filter(params, emissions, inputs=None):
-    """Run an extended Kalman filter to produce the marginal likelihood and
-    filtered state estimates.
+def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
+    """Run an (iterated) extended Kalman filter to produce the 
+    marginal likelihood and filtered state estimates.
 
     Args:
         params: an NLGSSMParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
+        num_iter (int): number of linearizations around posterior for update step.
         inputs (T,D_in): array of inputs.
 
     Returns:
@@ -109,7 +115,7 @@ def extended_kalman_filter(params, emissions, inputs=None):
         ll += MVN(h(pred_mean, u), H_x @ pred_cov @ H_x.T + R).log_prob(jnp.atleast_1d(y))
 
         # Condition on this emission
-        filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, h, H, R, u, y)
+        filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, h, H, R, u, y, num_iter)
 
         # Predict the next state
         pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, f, F, Q, u)
@@ -122,12 +128,33 @@ def extended_kalman_filter(params, emissions, inputs=None):
     return NLGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def extended_kalman_smoother(params, emissions, inputs=None):
+def iterated_extended_kalman_filter(params, emissions, num_iter=2, inputs=None):
+    """Run an iterated extended Kalman filter (IEKF).
+
+    Args:
+        params: an NLGSSMParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        num_iter (int): number of linearizations around smoothed posterior.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        filtered_posterior: LGSSMPosterior instance containing,
+            marginal_log_lik
+            filtered_means (T, D_hid)
+            filtered_covariances (T, D_hid, D_hid)
+    """
+    filtered_posterior = extended_kalman_filter(params, emissions, num_iter, inputs)
+    return filtered_posterior
+
+
+def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=None):
     """Run an extended Kalman (RTS) smoother.
 
     Args:
         params: an NLGSSMParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
+        filtered_posterior (NLGSSMPosterior): filtered posterior to use for smoothing.
+            If None, the smoother computes the filtered posterior directly.
         inputs (T,D_in): array of inputs.
 
     Returns:
@@ -136,14 +163,15 @@ def extended_kalman_smoother(params, emissions, inputs=None):
     """
     num_timesteps = len(emissions)
 
-    # Run the extended Kalman filter
-    ekf_posterior = extended_kalman_filter(params, emissions, inputs)
-    ll, filtered_means, filtered_covs, *_ = ekf_posterior.to_tuple()
+    # Get filtered posterior
+    if filtered_posterior is None:
+        filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs)
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Dynamics and emission functions and their Jacobians
-    f, h = params.dynamics_function, params.emission_function
-    F, H = jacfwd(f), jacfwd(h)
-    f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
+    f = params.dynamics_function
+    F = jacfwd(f)
+    f, F = (_process_fn(fn, inputs) for fn in (f, F))
     inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, args):
@@ -183,3 +211,27 @@ def extended_kalman_smoother(params, emissions, inputs=None):
         smoothed_means=smoothed_means,
         smoothed_covariances=smoothed_covs,
     )
+
+
+def iterated_extended_kalman_smoother(params, emissions, num_iter=2, inputs=None):
+    """Run an iterated extended Kalman smoother (IEKS).
+
+    Args:
+        params: an NLGSSMParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        num_iter (int): number of re-linearizations around smoothed posterior.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        nlgssm_posterior: LGSSMPosterior instance containing properties of
+            filtered and smoothed posterior distributions.
+    """
+
+    def _step(carry, _):
+        # Relinearize around smoothed posterior from previous iteration
+        smoothed_prior = carry
+        smoothed_posterior = extended_kalman_smoother(params, emissions, smoothed_prior, inputs)
+        return smoothed_posterior, None
+
+    smoothed_posterior, _ = lax.scan(_step, None, jnp.arange(num_iter))
+    return smoothed_posterior

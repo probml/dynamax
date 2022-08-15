@@ -1,6 +1,3 @@
-from typing import Callable
-
-import chex
 from jax import numpy as jnp
 from jax import lax
 from distrax import MultivariateNormalFullCovariance as MVN
