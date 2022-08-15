@@ -1,7 +1,7 @@
 from jax import numpy as jnp
 from jax import lax
 from distrax import MultivariateNormalFullCovariance as MVN
-from ssm_jax.cond_moments_gaussian_filter.containers import GSLRPosterior
+from ssm_jax.cond_moments_gaussian_filter.containers import CMGFPosterior
 
 
 # Helper functions
@@ -92,7 +92,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_var, u, y, g_ev, g_cov, num_iter):
 
     # Iterate re-linearization over posterior mean and covariance
     carry = (m, P)
-    (mu_cond, Sigma_cond), lls = lax.scan(_step, carry, jnp.arange(num_iter+1))
+    (mu_cond, Sigma_cond), lls = lax.scan(_step, carry, jnp.arange(num_iter))
     return lls[0], mu_cond, Sigma_cond
 
 
@@ -128,13 +128,13 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
     marginal likelihood and filtered state estimates.
 
     Args:
-        params: an GSLRParams instance (or object with the same fields)
+        params: a CMGFParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
-        num_iter (int): number of linearizations around posterior for update step.
+        num_iter (int): number of linearizations around prior/posterior for update step.
         inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: LGSSMPosterior instance containing,
+        filtered_posterior: CMGFPosterior instance containing,
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
@@ -171,20 +171,47 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
     # Run the general linearization filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return GSLRPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return CMGFPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def general_iterated_posterior_linearization_filter(params, emissions, num_iter=1, inputs=None):
-    filtered_posterior = general_linearization_filter(params, emissions, num_iter, inputs)
+def iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, inputs=None):
+    """Run an iterated conditional moments Gaussian filter.
+
+    Args:
+        params: a CMGFParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        num_iter (int): number of linearizations around smoothed posterior.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        filtered_posterior: CMGFPosterior instance containing,
+            marginal_log_lik
+            filtered_means (T, D_hid)
+            filtered_covariances (T, D_hid, D_hid)
+    """
+    filtered_posterior = conditional_moments_gaussian_filter(params, emissions, num_iter, inputs)
     return filtered_posterior
 
 
-def general_linearization_smoother(params, emissions, filtered_posterior=None, inputs=None):
+def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=None, inputs=None):
+    """Run a conditional moments Gaussian smoother.
+
+    Args:
+        params: a CMGFParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        filtered_posterior (GSLRPosterior): filtered posterior to use for smoothing.
+            If None, the smoother computes the filtered posterior directly.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        nlgssm_posterior: CMGFPosterior instance containing properties of
+            filtered and smoothed posterior distributions.
+    """
     num_timesteps = len(emissions)
 
     # Get filtered posterior
     if filtered_posterior is None:
-        filtered_posterior = general_linearization_filter(params, emissions, inputs)
+        filtered_posterior = conditional_moments_gaussian_filter(params, emissions, inputs)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Process dynamics function to take in control inputs
@@ -222,7 +249,7 @@ def general_linearization_smoother(params, emissions, filtered_posterior=None, i
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    return GSLRPosterior(
+    return CMGFPosterior(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
@@ -231,15 +258,24 @@ def general_linearization_smoother(params, emissions, filtered_posterior=None, i
     )
 
 
-def general_iterated_posterior_linearization_smoother(params, emissions, num_iter=1, inputs=None):
-    # Run first iteration of eks
-    smoothed_posterior = general_linearization_smoother(params, emissions, inputs)
+def iterated_conditional_moments_gaussian_smoother(params, emissions, num_iter=1, inputs=None):
+    """Run an iterated conditional moments Gaussian smoother.
 
+    Args:
+        params: an CMGFParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        num_iter (int): number of re-linearizations around smoothed posterior.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        nlgssm_posterior: CMGFPosterior instance containing properties of
+            filtered and smoothed posterior distributions.
+    """
     def _step(carry, _):
         # Relinearize around smoothed posterior from previous iteration
         smoothed_prior = carry
-        smoothed_posterior = general_linearization_smoother(params, emissions, smoothed_prior, inputs)
+        smoothed_posterior = conditional_moments_gaussian_smoother(params, emissions, smoothed_prior, inputs)
         return smoothed_posterior, None
 
-    smoothed_posterior, _ = lax.scan(_step, smoothed_posterior, jnp.arange(num_iter))
+    smoothed_posterior, _ = lax.scan(_step, None, jnp.arange(num_iter))
     return smoothed_posterior
