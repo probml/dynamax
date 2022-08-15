@@ -1,10 +1,10 @@
 import jax.numpy as jnp
 
-from ssm_jax.ggssm.inference import general_gaussian_smoother
-from ssm_jax.ggssm.containers import EKFParams, UKFParams
-from ssm_jax.ekf.inference import extended_kalman_smoother
-from ssm_jax.ukf.inference import unscented_kalman_smoother, UKFHyperParams
-from ssm_jax.nlgssm.inference_test import random_args
+from ssm_jax.generalized_gaussian_filter.inference import general_gaussian_smoother
+from ssm_jax.generalized_gaussian_filter.containers import EKFParams, UKFParams
+from ssm_jax.extended_kalman_filter.inference import extended_kalman_smoother
+from ssm_jax.unscented_kalman_filter.inference import unscented_kalman_smoother, UKFHyperParams
+from ssm_jax.nonlinear_gaussian_ssm.inference_test import random_args
 
 
 # Helper functions

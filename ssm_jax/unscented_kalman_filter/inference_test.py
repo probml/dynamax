@@ -1,8 +1,8 @@
 import jax.numpy as jnp
 
-from ssm_jax.ukf.inference import unscented_kalman_smoother, UKFHyperParams
-from ssm_jax.nlgssm.sarkka_lib import ukf, uks
-from ssm_jax.nlgssm.inference_test import random_args
+from ssm_jax.unscented_kalman_filter.inference import unscented_kalman_smoother, UKFHyperParams
+from ssm_jax.nonlinear_gaussian_ssm.sarkka_lib import ukf, uks
+from ssm_jax.nonlinear_gaussian_ssm.inference_test import random_args
 
 
 # Helper functions

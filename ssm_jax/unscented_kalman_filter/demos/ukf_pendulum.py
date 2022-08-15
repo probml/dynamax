@@ -4,10 +4,10 @@ from matplotlib import pyplot as plt
 
 import jax.numpy as jnp
 
-from ssm_jax.nlgssm.demos.simulations import PendulumSimulation
+from ssm_jax.nonlinear_gaussian_ssm.demos.simulations import PendulumSimulation
 from ssm_jax.plotting import plot_nlgssm_pendulum as plot_pendulum
-from ssm_jax.nlgssm.containers import NLGSSMParams
-from ssm_jax.ukf.inference import unscented_kalman_smoother, UKFHyperParams
+from ssm_jax.nonlinear_gaussian_ssm.containers import NLGSSMParams
+from ssm_jax.unscented_kalman_filter.inference import unscented_kalman_smoother, UKFHyperParams
 
 
 def ukf_pendulum():

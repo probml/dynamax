@@ -1,7 +1,7 @@
 from jax import numpy as jnp
 from jax import lax
 from distrax import MultivariateNormalFullCovariance as MVN
-from ssm_jax.ggssm.containers import GGSSMPosterior
+from ssm_jax.cond_moments_gaussian_filter.containers import GSLRPosterior
 
 
 # Helper functions
@@ -43,12 +43,14 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
     return mu_pred, Sigma_pred, cross_pred
 
 
-def _condition_on(m, P, h, R, u, y, g_ev, g_cov):
-    """Condition a Gaussian potential on a new observation
+def _condition_on(m, P, y_cond_mean, y_cond_var, u, y, g_ev, g_cov, num_iter):
+    """Condition a Gaussian potential on a new observation with arbitrary
+       likelihood with given functions for conditional moments and make a
+       Gaussian approximation.
        p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
          propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
-         = N(x_t | m, P) N(y_t | h(x_t, u), R_t)
-         = N(x_t | mu_cond, Sigma_cond)
+         = N(x_t | m, P) ArbitraryDist(y_t |y_cond_mean(x_t), y_cond_cov(x_t))
+         \approx N(x_t | mu_cond, Sigma_cond)
      where
         mu_cond = m + K*(y - yhat)
         yhat = gev(h, m, P)
@@ -60,36 +62,89 @@ def _condition_on(m, P, h, R, u, y, g_ev, g_cov):
     Args:
         m (D_hid,): prior mean.
         P (D_hid,D_hid): prior covariance.
-        h (Callable): emission function.
-        R (D_obs,D_obs): emission covariance matrix.
+        y_cond_mean (Callable): conditional emission mean function.
+        y_cond_var (Callable): conditional emission variance function.
         u (D_in,): inputs.
         y (D_obs,): observation.
         g_ev (Callable): Gaussian expectation value function.
         g_cov (Callable): Gaussian cross covariance function.
+        num_iter (int): number of re-linearizations around posterior for update step.
 
      Returns:
         log_likelihood (Scalar): prediction log likelihood for observation y
         mu_cond (D_hid,): conditioned mean.
         Sigma_cond (D_hid,D_hid): conditioned covariance.
     """
-    emission_fn = lambda x: h(x, u)
     identity_fn = lambda x: x
-    yhat = g_ev(emission_fn, m, P)
-    S = g_cov(emission_fn, emission_fn, m, P) + R
-    log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
-    C = g_cov(identity_fn, emission_fn, m, P)
-    K = jnp.linalg.solve(S, C.T).T
-    mu_cond = m + K @ (y - yhat)
-    Sigma_cond = P - K @ S @ K.T
-    return log_likelihood, mu_cond, Sigma_cond
+    m_Y = lambda x: y_cond_mean(x, u)
+    Var_Y = lambda x: y_cond_var(x, u)
+
+    def _step(carry, _):
+        prior_mean, prior_cov = carry
+        yhat = g_ev(m_Y, prior_mean, prior_cov)
+        S = g_ev(Var_Y) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
+        log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
+        C = g_cov(identity_fn, m_Y, prior_mean, prior_cov)
+        K = jnp.linalg.solve(S, C.T).T
+        posterior_mean = prior_mean + K @ (y - yhat)
+        posterior_cov = prior_cov - K @ S @ K.T
+        return (posterior_mean, posterior_cov), log_likelihood
+
+    # Iterate re-linearization over posterior mean and covariance
+    carry = (m, P)
+    (mu_cond, Sigma_cond), lls = lax.scan(_step, carry, jnp.arange(num_iter+1))
+    return lls[0], mu_cond, Sigma_cond
 
 
-def general_gaussian_filter(params, emissions, inputs=None):
+def statistical_linear_regression(mu, Sigma, m, S, C):
+    """Return moment-matching affine coefficients and approximation noise variance
+    given joint moments.
+        g(x) \approx Ax + b + e where e ~ N(0, Omega)
+        p(x) = N(x | mu, Sigma)
+        m = E[g(x)]
+        S = Var[g(x)]
+        C = Cov[x, g(x)]
+
+    Args:
+        mu (D_hid): prior mean.
+        Sigma (D_hid, D_hid): prior covariance.
+        m (D_obs): E[g(x)].
+        S (D_obs, D_obs): Var[g(x)]
+        C (D_hid, D_obs): Cov[x, g(x)]
+
+    Returns:
+        A (D_obs, D_hid): _description_
+        b (D_obs):
+        Omega (D_obs, D_obs): 
+    """    
+    A = jnp.linalg.solve(Sigma.T, C).T
+    b = m - A @ mu
+    Omega = S - A @ Sigma @ A.T
+    return A, b, Omega
+
+
+def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=None):
+    """Run an (iterated) conditional moments Gaussian filter to produce the 
+    marginal likelihood and filtered state estimates.
+
+    Args:
+        params: an GSLRParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        num_iter (int): number of linearizations around posterior for update step.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        filtered_posterior: LGSSMPosterior instance containing,
+            marginal_log_lik
+            filtered_means (T, D_hid)
+            filtered_covariances (T, D_hid, D_hid)
+    """
     num_timesteps = len(emissions)
     
-    # Process dynamics and emission functions to take in control inputs
-    f, h = params.dynamics_function, params.emission_function
-    f, h = (_process_fn(fn, inputs) for fn in (f, h))
+    # Process dynamics function and conditional emission moments to take in control inputs
+    f = params.dynamics_function
+    m_Y, Var_Y = params.emission_mean_function, params.emission_var_function
+    f, m_Y, Var_Y  = (_process_fn(fn, inputs) for fn in (f, m_Y, Var_Y))
     inputs = _process_input(inputs, num_timesteps)
 
     # Gaussian expectation value function
@@ -101,12 +156,11 @@ def general_gaussian_filter(params, emissions, inputs=None):
 
         # Get parameters and inputs for time index t
         Q = _get_params(params.dynamics_covariance, 2, t)
-        R = _get_params(params.emission_covariance, 2, t)
         u = inputs[t]
         y = emissions[t]
 
         # Condition on the emission
-        log_likelihood, filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, h, R, u, y, g_ev, g_cov)
+        log_likelihood, filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, m_Y, Var_Y, u, y, g_ev, g_cov, num_iter)
         ll += log_likelihood
 
         # Predict the next state
@@ -114,22 +168,27 @@ def general_gaussian_filter(params, emissions, inputs=None):
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
     
-    # Run the general Gaussian filter
+    # Run the general linearization filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return GGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return GSLRPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def general_gaussian_smoother(params, emissions, inputs=None):
+def general_iterated_posterior_linearization_filter(params, emissions, num_iter=1, inputs=None):
+    filtered_posterior = general_linearization_filter(params, emissions, num_iter, inputs)
+    return filtered_posterior
+
+
+def general_linearization_smoother(params, emissions, filtered_posterior=None, inputs=None):
     num_timesteps = len(emissions)
 
-    # Run the general Gaussian filter
-    filtered_posterior = general_gaussian_filter(params, emissions, inputs)
+    # Get filtered posterior
+    if filtered_posterior is None:
+        filtered_posterior = general_linearization_filter(params, emissions, inputs)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
-    # Process dynamics and emission functions to take in control inputs
-    f, h = params.dynamics_function, params.emission_function
-    f, h = (_process_fn(fn, inputs) for fn in (f, h))
+    # Process dynamics function to take in control inputs
+    f  = _process_fn(params.dynamics_function, inputs)
     inputs = _process_input(inputs, num_timesteps)
 
     # Gaussian expectation value function
@@ -143,7 +202,6 @@ def general_gaussian_smoother(params, emissions, inputs=None):
 
         # Get parameters and inputs for time index t
         Q = _get_params(params.dynamics_covariance, 2, t)
-        R = _get_params(params.emission_covariance, 2, t)
         u = inputs[t]
 
         # Prediction step
@@ -164,10 +222,24 @@ def general_gaussian_smoother(params, emissions, inputs=None):
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    return GGSSMPosterior(
+    return GSLRPosterior(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
         smoothed_means=smoothed_means,
         smoothed_covariances=smoothed_covs,
     )
+
+
+def general_iterated_posterior_linearization_smoother(params, emissions, num_iter=1, inputs=None):
+    # Run first iteration of eks
+    smoothed_posterior = general_linearization_smoother(params, emissions, inputs)
+
+    def _step(carry, _):
+        # Relinearize around smoothed posterior from previous iteration
+        smoothed_prior = carry
+        smoothed_posterior = general_linearization_smoother(params, emissions, smoothed_prior, inputs)
+        return smoothed_posterior, None
+
+    smoothed_posterior, _ = lax.scan(_step, smoothed_posterior, jnp.arange(num_iter))
+    return smoothed_posterior

@@ -4,7 +4,7 @@ from jax import lax
 from jax import vmap
 from jax import jacfwd
 from distrax import MultivariateNormalFullCovariance as MVN
-from ssm_jax.nlgssm.containers import NLGSSMPosterior
+from ssm_jax.nonlinear_gaussian_ssm.containers import NLGSSMPosterior
 import chex
 
 

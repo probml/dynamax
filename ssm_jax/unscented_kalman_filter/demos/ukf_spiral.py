@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import jax.numpy as jnp
 
 from ssm_jax.plotting import plot_inference, plot_uncertainty_ellipses
-from ssm_jax.nlgssm.models import NonLinearGaussianSSM
-from ssm_jax.ukf.inference import UKFHyperParams
+from ssm_jax.nonlinear_gaussian_ssm.models import NonLinearGaussianSSM
+from ssm_jax.unscented_kalman_filter.inference import UKFHyperParams
 
 
 def main():

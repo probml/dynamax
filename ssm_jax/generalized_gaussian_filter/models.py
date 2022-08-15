@@ -5,7 +5,7 @@ from jax.tree_util import register_pytree_node_class, tree_map
 
 from distrax import MultivariateNormalFullCovariance as MVN
 
-from ssm_jax.ggssm.inference import general_gaussian_filter
+from ssm_jax.generalized_gaussian_filter.inference import general_gaussian_filter
 
 
 @register_pytree_node_class
