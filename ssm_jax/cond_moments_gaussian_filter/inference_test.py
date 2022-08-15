@@ -60,5 +60,3 @@ def test_ukf(key=1, num_timesteps=15):
     assert _all_close(ukf_post.filtered_covariances, ggf_post.filtered_covariances)
     assert _all_close(ukf_post.smoothed_means, ggf_post.smoothed_means)
     assert _all_close(ukf_post.smoothed_covariances, ggf_post.smoothed_covariances)
-
-test_ukf()
