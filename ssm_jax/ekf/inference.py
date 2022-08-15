@@ -74,18 +74,18 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
 
     # Iterate re-linearization over posterior mean and covariance
     carry = (m, P)
-    (mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter+1))
+    (mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter))
     return mu_cond, Sigma_cond
 
 
-def extended_kalman_filter(params, emissions, num_iter=0, inputs=None):
+def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
     """Run an (iterated) extended Kalman filter to produce the 
     marginal likelihood and filtered state estimates.
 
     Args:
         params: an NLGSSMParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
-        num_iter (int): number of re-linearizations around posterior for update step.
+        num_iter (int): number of linearizations around posterior for update step.
         inputs (T,D_in): array of inputs.
 
     Returns:
