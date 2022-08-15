@@ -18,8 +18,8 @@ import flax.linen as nn
 from jax.flatten_util import ravel_pytree
 from jax import vmap
 
-from ssm_jax.nlgssm.containers import NLGSSMParams, NLGSSMPosterior
-from ssm_jax.ekf.inference import extended_kalman_filter
+from ssm_jax.nonlinear_gaussian_ssm.containers import NLGSSMParams, NLGSSMPosterior
+from ssm_jax.extended_kalman_filter.inference import extended_kalman_filter
 
 
 class MLP(nn.Module):

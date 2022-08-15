@@ -1,9 +1,9 @@
 import jax.numpy as jnp
 
-from ssm_jax.lgssm.inference import lgssm_filter, lgssm_smoother
-from ssm_jax.ekf.inference import extended_kalman_filter, extended_kalman_smoother
-from ssm_jax.nlgssm.sarkka_lib import ekf, eks
-from ssm_jax.nlgssm.inference_test import lgssm_to_nlgssm, random_args
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother
+from ssm_jax.extended_kalman_filter.inference import extended_kalman_filter, extended_kalman_smoother
+from ssm_jax.nonlinear_gaussian_ssm.sarkka_lib import ekf, eks
+from ssm_jax.nonlinear_gaussian_ssm.inference_test import lgssm_to_nlgssm, random_args
 
 
 # Helper functions
