@@ -75,14 +75,14 @@ def _condition_on(m, P, y_cond_mean, y_cond_var, u, y, g_ev, g_cov, num_iter):
         mu_cond (D_hid,): conditioned mean.
         Sigma_cond (D_hid,D_hid): conditioned covariance.
     """
-    identity_fn = lambda x: x
     m_Y = lambda x: y_cond_mean(x, u)
     Var_Y = lambda x: y_cond_var(x, u)
+    identity_fn = lambda x: x
 
     def _step(carry, _):
         prior_mean, prior_cov = carry
         yhat = g_ev(m_Y, prior_mean, prior_cov)
-        S = g_ev(Var_Y) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
+        S = g_ev(Var_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
         log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
         C = g_cov(identity_fn, m_Y, prior_mean, prior_cov)
         K = jnp.linalg.solve(S, C.T).T
@@ -211,7 +211,7 @@ def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=
 
     # Get filtered posterior
     if filtered_posterior is None:
-        filtered_posterior = conditional_moments_gaussian_filter(params, emissions, inputs)
+        filtered_posterior = conditional_moments_gaussian_filter(params, emissions, inputs=inputs)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Process dynamics function to take in control inputs
