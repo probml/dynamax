@@ -128,13 +128,13 @@ def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
     return NLGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def iterated_extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
+def iterated_extended_kalman_filter(params, emissions, num_iter=2, inputs=None):
     """Run an iterated extended Kalman filter (IEKF).
 
     Args:
         params: an NLGSSMParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
-        num_iter (int): number of re-linearizations around smoothed posterior.
+        num_iter (int): number of linearizations around smoothed posterior.
         inputs (T,D_in): array of inputs.
 
     Returns:
@@ -213,7 +213,7 @@ def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=
     )
 
 
-def iterated_extended_kalman_smoother(params, emissions, num_iter=1, inputs=None):
+def iterated_extended_kalman_smoother(params, emissions, num_iter=2, inputs=None):
     """Run an iterated extended Kalman smoother (IEKS).
 
     Args:
@@ -226,8 +226,6 @@ def iterated_extended_kalman_smoother(params, emissions, num_iter=1, inputs=None
         nlgssm_posterior: LGSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
-    # Run first iteration of eks
-    smoothed_posterior = extended_kalman_smoother(params, emissions, inputs)
 
     def _step(carry, _):
         # Relinearize around smoothed posterior from previous iteration
@@ -235,5 +233,5 @@ def iterated_extended_kalman_smoother(params, emissions, num_iter=1, inputs=None
         smoothed_posterior = extended_kalman_smoother(params, emissions, smoothed_prior, inputs)
         return smoothed_posterior, None
 
-    smoothed_posterior, _ = lax.scan(_step, smoothed_posterior, jnp.arange(num_iter))
+    smoothed_posterior, _ = lax.scan(_step, None, jnp.arange(num_iter))
     return smoothed_posterior
