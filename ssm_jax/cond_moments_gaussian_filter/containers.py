@@ -10,8 +10,8 @@ import chex
 
 
 @chex.dataclass
-class GSLRParams:
-    """Lightweight container for GSLR parameters.
+class CMGFParams:
+    """Lightweight container for CMGF parameters.
     """
     initial_mean: chex.Array
     initial_covariance: chex.Array
@@ -24,8 +24,8 @@ class GSLRParams:
 
 
 @chex.dataclass
-class GSLRPosterior:
-    """Simple wrapper for properties of an GSLR posterior distribution.
+class CMGFPosterior:
+    """Simple wrapper for properties of an CMGF posterior distribution.
 
     Attributes:
             marginal_loglik: marginal log likelihood of the data
@@ -46,7 +46,7 @@ class GSLRPosterior:
 
 
 @chex.dataclass
-class EKFParams(GSLRParams):
+class EKFParams(CMGFParams):
     """
     Lightweight container for extended Kalman filter/smoother parameters.
     """
@@ -55,7 +55,7 @@ class EKFParams(GSLRParams):
 
 
 @dataclass
-class SigmaPointParams(GSLRParams):
+class SigmaPointParams(CMGFParams):
     """
     Lightweight container for sigma point filter/smoother parameters.
     """
