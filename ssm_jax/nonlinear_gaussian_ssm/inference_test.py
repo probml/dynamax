@@ -1,8 +1,8 @@
 import jax.random as jr
 import jax.numpy as jnp
 
-from ssm_jax.lgssm.models import LinearGaussianSSM
-from ssm_jax.nlgssm.models import NonLinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.nonlinear_gaussian_ssm.models import NonLinearGaussianSSM
 
 
 def lgssm_to_nlgssm(params):
