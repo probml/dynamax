@@ -9,6 +9,8 @@ import jax.numpy as jnp
 import chex
 
 
+_jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
+
 @chex.dataclass
 class CMGFParams:
     """Lightweight container for CMGF parameters.
@@ -51,7 +53,7 @@ class EKFParams(CMGFParams):
     Lightweight container for extended Kalman filter/smoother parameters.
     """
     gaussian_expectation: Callable = lambda f, m, P: jnp.atleast_1d(f(m))
-    gaussian_cross_covariance: Callable = lambda f, g, m, P: jnp.atleast_2d(jacfwd(f)(m) @ P @ jacfwd(g)(m).T)
+    gaussian_cross_covariance: Callable = lambda f, g, m, P: _jacfwd_2d(f, m) @ P @ _jacfwd_2d(g, m).T
 
 
 @dataclass
