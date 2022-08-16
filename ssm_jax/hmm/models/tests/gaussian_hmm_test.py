@@ -83,3 +83,27 @@ def test_fit_transition_matrix(key=jr.PRNGKey(0), num_states=3, num_emissions=3,
     assert jnp.allclose(hmm.initial_probs.value, initial_probabilities)
     assert jnp.allclose(hmm.emission_means.value, emission_means)
     assert jnp.allclose(hmm.emission_covariance_matrices.value, emission_covars)
+
+
+def test_fit_emission_means(key=jr.PRNGKey(0), num_states=4, num_emissions=2, num_timesteps=1000):
+
+    true_key, sample_key, init_key = jr.split(key, 3)
+
+    true_hmm = GaussianHMM.random_initialization(true_key, num_states, num_emissions)
+    state_sequence, emissions = true_hmm.sample(sample_key, num_timesteps)
+
+    hmm = GaussianHMM.random_initialization(init_key, num_states, num_emissions)
+
+    initial_probs = jnp.asarray(hmm.initial_probs.value)
+    transition_matrix = jnp.asarray(hmm.transition_matrix.value)
+    emission_covariance_matrices = jnp.asarray(hmm.emission_covariance_matrices.value)
+
+    hmm.initial_probs.freeze()
+    hmm.transition_matrix.freeze()
+    hmm.emission_covariance_matrices.freeze()
+
+    lps3 = hmm.fit_em(emissions[None, ...])
+
+    assert jnp.allclose(initial_probs, jnp.asarray(hmm.initial_probs.value))
+    assert jnp.allclose(transition_matrix, jnp.asarray(hmm.transition_matrix.value))
+    assert jnp.allclose(emission_covariance_matrices, jnp.array(hmm.emission_covariance_matrices.value))
