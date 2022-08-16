@@ -34,7 +34,8 @@ class CategoricalRegressionHMM(StandardHMM):
             transition_matrix (_type_): _description_
             emission_probs (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix,
+        super().__init__(initial_probabilities,
+                         transition_matrix,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
@@ -42,7 +43,7 @@ class CategoricalRegressionHMM(StandardHMM):
         self._num_classes = emission_biases.shape[0]
         self._emission_matrices = Parameter(emission_matrices)
         self._emission_biases = Parameter(emission_biases)
-        self._emission_prior_concentration = Parameter(emission_prior_concentration  * jnp.ones(self._num_classes),
+        self._emission_prior_concentration = Parameter(emission_prior_concentration * jnp.ones(self._num_classes),
                                                        is_frozen=True,
                                                        bijector=tfb.Invert(tfb.Softplus()))
 
@@ -71,3 +72,7 @@ class CategoricalRegressionHMM(StandardHMM):
     def emission_distribution(self, state, **covariates):
         logits = self._emission_matrices.value[state] @ covariates['features'] + self._emission_biases.value[state]
         return tfd.Categorical(logits=logits)
+
+    @property
+    def emission_distribution_parameters(self):
+        return dict(emission_matrices=self._emission_matrices, emission_biases=self._emission_biases)

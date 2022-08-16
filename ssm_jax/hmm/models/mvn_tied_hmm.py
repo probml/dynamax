@@ -92,6 +92,13 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         return tfd.MultivariateNormalFullCovariance(self._emission_means.value[state], self._emission_cov.value)
 
     @property
+    def emission_distribution_parameters(self):
+        return dict(
+            emission_means=self._emission_means,
+            emission_cov=self._emission_cov,
+        )
+
+    @property
     def suff_stats_event_shape(self):
         """Return dataclass containing 'event_shape' of each sufficient statistic."""
         return MultivariateNormalTiedHMMSuffStats(
@@ -160,6 +167,11 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
     def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
-        self.emission_means.value = stats.sum_x / stats.sum_w[:, None]
-        self.emission_covariance_matrix.value = 1 / stats.sum_w.sum() * (
-            stats.sum_xxT - jnp.einsum("ki,kj->kij", stats.sum_x, stats.sum_x) / stats.sum_w[:, None, None]).sum(axis=0)
+
+        if not self.emission_means.is_frozen:
+            self.emission_means.value = stats.sum_x / stats.sum_w[:, None]
+
+        if not self.emission_covariance_matrix.is_frozen:
+            self.emission_covariance_matrix.value = 1 / stats.sum_w.sum() * (
+                stats.sum_xxT -
+                jnp.einsum("ki,kj->kij", stats.sum_x, stats.sum_x) / stats.sum_w[:, None, None]).sum(axis=0)

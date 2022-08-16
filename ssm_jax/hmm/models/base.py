@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from functools import partial
 
 import jax.numpy as jnp
 import jax.random as jr
@@ -7,11 +6,7 @@ import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import jit
-from jax import lax
-from jax import tree_leaves
 from jax import tree_map
-from jax import vmap
-
 from jax import vmap
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
@@ -67,8 +62,7 @@ class BaseHMM(SSM):
     # Basic inference code
     def marginal_log_prob(self, emissions, **covariates):
         """Compute log marginal likelihood of observations."""
-        post = hmm_filter(self._compute_initial_probs(**covariates),
-                          self._compute_transition_matrices(**covariates),
+        post = hmm_filter(self._compute_initial_probs(**covariates), self._compute_transition_matrices(**covariates),
                           self._compute_conditional_logliks(emissions, **covariates))
         ll = post.marginal_loglik
         return ll
@@ -81,14 +75,12 @@ class BaseHMM(SSM):
 
     def filter(self, emissions, **covariates):
         """Compute filtering distribution."""
-        return hmm_filter(self._compute_initial_probs(**covariates),
-                          self._compute_transition_matrices(**covariates),
+        return hmm_filter(self._compute_initial_probs(**covariates), self._compute_transition_matrices(**covariates),
                           self._compute_conditional_logliks(emissions, **covariates))
 
     def smoother(self, emissions, **covariates):
         """Compute smoothing distribution."""
-        return hmm_smoother(self._compute_initial_probs(**covariates),
-                            self._compute_transition_matrices(**covariates),
+        return hmm_smoother(self._compute_initial_probs(**covariates), self._compute_transition_matrices(**covariates),
                             self._compute_conditional_logliks(emissions, **covariates))
 
     # Expectation-maximization (EM) code
@@ -96,10 +88,10 @@ class BaseHMM(SSM):
         """The E-step computes expected sufficient statistics under the
         posterior. In the generic case, we simply return the posterior itself.
         """
+
         def _single_e_step(emissions, **covariates):
             transition_matrices = self._compute_transition_matrices(**covariates)
-            posterior = hmm_two_filter_smoother(self._compute_initial_probs(**covariates),
-                                                transition_matrices,
+            posterior = hmm_two_filter_smoother(self._compute_initial_probs(**covariates), transition_matrices,
                                                 self._compute_conditional_logliks(emissions, **covariates))
 
             # Compute the transition probabilities
@@ -141,15 +133,14 @@ class BaseHMM(SSM):
                 return lp
 
             log_prior = self.log_prior()
-            minibatch_lps = vmap(_single_expected_log_joint)(
-                minibatch_emissions, minibatch_posteriors, **minibatch_covariates)
+            minibatch_lps = vmap(_single_expected_log_joint)(minibatch_emissions, minibatch_posteriors,
+                                                             **minibatch_covariates)
             expected_log_joint = log_prior + minibatch_lps.sum() * scale
             return -expected_log_joint / batch_emissions.size
 
         # Minimize the negative expected log joint with SGD
         params, losses = run_sgd(neg_expected_log_joint,
-                                 self.unconstrained_params,
-                                 (batch_emissions, batch_posteriors, batch_covariates),
+                                 self.unconstrained_params, (batch_emissions, batch_posteriors, batch_covariates),
                                  optimizer=optimizer,
                                  num_epochs=num_sgd_epochs_per_mstep)
         self.unconstrained_params = params
@@ -205,6 +196,7 @@ class BaseHMM(SSM):
         Returns:
             losses: Output of loss_fn stored at each step.
         """
+
         def _loss_fn(params, minibatch_emissions, **minibatch_covariates):
             """Default objective function."""
             self.unconstrained_params = params
@@ -287,6 +279,10 @@ class StandardHMM(BaseHMM):
         """
         raise NotImplementedError
 
+    @property
+    def emission_distribution_parameters(self):
+        return {}
+
     def _m_step_initial_probs(self, batch_emissions, batch_posteriors, **batch_covariates):
         post = tfd.Dirichlet(self._initial_probs_concentration.value + batch_posteriors.initial_probs.sum(axis=0))
         self._initial_probs.value = post.mode()
@@ -315,15 +311,14 @@ class StandardHMM(BaseHMM):
                 return lp
 
             log_prior = self.log_prior()
-            minibatch_ells = vmap(_single_expected_log_like)(
-                minibatch_emissions, minibatch_posteriors, **minibatch_covariates)
+            minibatch_ells = vmap(_single_expected_log_like)(minibatch_emissions, minibatch_posteriors,
+                                                             **minibatch_covariates)
             expected_log_joint = log_prior + minibatch_ells.sum() * scale
             return -expected_log_joint / batch_emissions.size
 
         # Minimize the negative expected log joint with SGD
         params, losses = run_sgd(neg_expected_log_joint,
-                                 self.unconstrained_params,
-                                 (batch_emissions, batch_posteriors, batch_covariates),
+                                 self.unconstrained_params, (batch_emissions, batch_posteriors, batch_covariates),
                                  optimizer=optimizer,
                                  num_epochs=num_mstep_iters)
         self.unconstrained_params = params
@@ -342,8 +337,10 @@ class StandardHMM(BaseHMM):
 
         self.initial_probs.freeze()
         self.transition_matrix.freeze()
-        # TODO: Check whether parameters for the emission distribution are frozen or not before updating
-        self._m_step_emissions(batch_emissions, batch_posteriors, **generic_mstep_kwargs, **batch_covariates)
+
+        if len(self.emission_distribution_parameters) > 0 and any(
+            [not v.is_frozen for _, v in self.emission_distribution_parameters.items()]):
+            self._m_step_emissions(batch_emissions, batch_posteriors, **generic_mstep_kwargs, **batch_covariates)
 
         if not is_initial_probs_frozen:
             self.initial_probs.unfreeze()

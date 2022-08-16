@@ -25,7 +25,8 @@ class MultinomialHMM(StandardHMM):
             transition_matrix (_type_): _description_
             emission_probs (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix,
+        super().__init__(initial_probabilities,
+                         transition_matrix,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
@@ -33,9 +34,9 @@ class MultinomialHMM(StandardHMM):
         assert emission_probs.ndim == 3, \
             "emission_probs must be (num_states x num_emissions x num_classes)"
         num_classes = emission_probs.shape[2]
-        self._num_trials = num_trials
+        self._num_trials = Parameter(num_trials, is_frozen=True)
         self._emission_probs = Parameter(emission_probs, bijector=tfb.Invert(tfb.SoftmaxCentered()))
-        self._emission_prior_concentration = Parameter(emission_prior_concentration  * jnp.ones(num_classes),
+        self._emission_prior_concentration = Parameter(emission_prior_concentration * jnp.ones(num_classes),
                                                        is_frozen=True,
                                                        bijector=tfb.Invert(tfb.Softplus()))
 
@@ -64,9 +65,12 @@ class MultinomialHMM(StandardHMM):
         return self._num_trials
 
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Multinomial(self._num_trials,
-                                               probs=self.emission_probs.value[state]),
+        return tfd.Independent(tfd.Multinomial(self._num_trials.value, probs=self.emission_probs.value[state]),
                                retinterpreted_batch_ndims=1)
+
+    @property
+    def emission_distribution_parameters(self):
+        return dict(emission_probs=self._emission_probs, num_trials=self._num_trials)
 
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)

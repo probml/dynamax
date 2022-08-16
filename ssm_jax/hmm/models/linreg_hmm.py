@@ -24,8 +24,7 @@ class LinearRegressionHMM(StandardHMM):
                  emission_biases,
                  emission_covariance_matrices,
                  initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1
-                 ):
+                 transition_matrix_concentration=1.1):
         """_summary_
 
         Args:
@@ -35,7 +34,8 @@ class LinearRegressionHMM(StandardHMM):
             emission_biases (_type_): _description_
             emission_covariance_matrices (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix,
+        super().__init__(initial_probabilities,
+                         transition_matrix,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
@@ -70,6 +70,12 @@ class LinearRegressionHMM(StandardHMM):
         prediction = self._emission_matrices.value[state] @ covariates['features'] + self._emission_biases.value[state]
         return tfd.MultivariateNormalFullCovariance(prediction, self._emission_covs.value[state])
 
+    @property
+    def emission_distribution_parameters(self):
+        return dict(emission_matrices=self._emission_matrices,
+                    emission_biases=self._emission_biases,
+                    emission_covariance_matrices=self._emission_covs)
+
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
@@ -99,8 +105,7 @@ class LinearRegressionHMM(StandardHMM):
         def _single_e_step(emissions, **covariates):
             features = covariates['features']
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(),
-                                     self._compute_transition_matrices(),
+            posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
                                      self._compute_conditional_logliks(emissions, features=features))
 
             # Compute the initial state and transition probabilities
@@ -114,16 +119,15 @@ class LinearRegressionHMM(StandardHMM):
             sum_xyT = jnp.einsum("tk,ti,tj->kij", posterior.smoothed_probs, features, emissions)
             sum_yyT = jnp.einsum("tk,ti,tj->kij", posterior.smoothed_probs, emissions, emissions)
 
-            return LinearRegressionHMMSuffStats(
-                marginal_loglik=posterior.marginal_loglik,
-                initial_probs=posterior.initial_probs,
-                trans_probs=trans_probs,
-                sum_w=sum_w,
-                sum_x=sum_x,
-                sum_y=sum_y,
-                sum_xxT=sum_xxT,
-                sum_xyT=sum_xyT,
-                sum_yyT=sum_yyT)
+            return LinearRegressionHMMSuffStats(marginal_loglik=posterior.marginal_loglik,
+                                                initial_probs=posterior.initial_probs,
+                                                trans_probs=trans_probs,
+                                                sum_w=sum_w,
+                                                sum_x=sum_x,
+                                                sum_y=sum_y,
+                                                sum_xxT=sum_xxT,
+                                                sum_xyT=sum_xyT,
+                                                sum_yyT=sum_yyT)
 
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions, **batch_covariates)
@@ -137,19 +141,19 @@ class LinearRegressionHMM(StandardHMM):
         # Find the posterior parameters of the NIW distribution
         def _single_m_step(sum_w, sum_x, sum_y, sum_xxT, sum_xyT, sum_yyT):
             # Make block matrices for stacking features (x) and bias (1)
-            sum_x1x1T = jnp.block(
-                [[sum_xxT,                   jnp.expand_dims(sum_x, 1)],
-                 [jnp.expand_dims(sum_x, 0), jnp.expand_dims(sum_w, (0, 1))]]
-            )
+            sum_x1x1T = jnp.block([[sum_xxT, jnp.expand_dims(sum_x, 1)],
+                                   [jnp.expand_dims(sum_x, 0),
+                                    jnp.expand_dims(sum_w, (0, 1))]])
             sum_x1yT = jnp.vstack([sum_xyT, sum_y])
 
             # Solve for the optimal A, b, and Sigma
             Ab = jnp.linalg.solve(sum_x1x1T, sum_x1yT).T
             Sigma = 1 / sum_w * (sum_yyT - Ab @ sum_x1yT)
-            Sigma = 0.5 * (Sigma + Sigma.T)                 # for numerical stability
+            Sigma = 0.5 * (Sigma + Sigma.T)  # for numerical stability
             return Ab[:, :-1], Ab[:, -1], Sigma
 
-        As, bs, Sigmas = vmap(_single_m_step)(stats.sum_w, stats.sum_x, stats.sum_y, stats.sum_xxT, stats.sum_xyT, stats.sum_yyT)
+        As, bs, Sigmas = vmap(_single_m_step)(stats.sum_w, stats.sum_x, stats.sum_y, stats.sum_xxT, stats.sum_xyT,
+                                              stats.sum_yyT)
         self.emission_matrices.value = As
         self.emission_biases.value = bs
         self.emission_covariance_matrices.value = Sigmas

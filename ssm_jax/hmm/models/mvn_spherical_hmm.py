@@ -58,6 +58,13 @@ class MultivariateNormalSphericalHMM(StandardHMM):
         return tfd.MultivariateNormalDiag(self._emission_means.value[state],
                                           self._emission_cov_diag_factors.value[state] * jnp.ones((dim,)))
 
+    @property
+    def emission_distribution_parameters(self):
+        return dict(
+            emission_means=self._emission_means,
+            emission_cov_diag_factors=self._emission_cov_diag_factors,
+        )
+        
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()

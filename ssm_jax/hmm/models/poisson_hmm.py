@@ -13,6 +13,7 @@ from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import ExponentialFamilyHMM
 
+
 @chex.dataclass
 class PoissonHMMSuffStats:
     # Wrapper for sufficient statistics of a BernoulliHMM
@@ -21,6 +22,7 @@ class PoissonHMMSuffStats:
     trans_probs: chex.Array
     sum_w: chex.Array
     sum_x: chex.Array
+
 
 @register_pytree_node_class
 class PoissonHMM(ExponentialFamilyHMM):
@@ -40,7 +42,8 @@ class PoissonHMM(ExponentialFamilyHMM):
             transition_matrix (_type_): _description_
             emission_rates (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix,
+        super().__init__(initial_probabilities,
+                         transition_matrix,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
@@ -48,9 +51,7 @@ class PoissonHMM(ExponentialFamilyHMM):
         self._emission_prior_concentration = Parameter(emission_prior_concentration,
                                                        is_frozen=True,
                                                        bijector=tfb.Invert(tfb.Softplus()))
-        self._emission_prior_rate = Parameter(emission_prior_rate,
-                                              is_frozen=True,
-                                              bijector=tfb.Invert(tfb.Softplus()))
+        self._emission_prior_rate = Parameter(emission_prior_rate, is_frozen=True, bijector=tfb.Invert(tfb.Softplus()))
 
     @classmethod
     def random_initialization(cls, key, num_states, emission_dim):
@@ -66,24 +67,27 @@ class PoissonHMM(ExponentialFamilyHMM):
 
     # Properties to get various parameters of the model
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Poisson(rate=self.emission_rates.value[state]),
-                               reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Poisson(rate=self.emission_rates.value[state]), reinterpreted_batch_ndims=1)
+
+    @property
+    def emission_distribution_parameters(self):
+        return dict(emission_rates=self._emission_rates,)
 
     def _zeros_like_suff_stats(self):
         """Return dataclass containing 'event_shape' of each sufficient statistic."""
         return PoissonHMMSuffStats(
-            marginal_loglik = 0.0,
-            initial_probs   = jnp.zeros((self.num_states,)),
-            trans_probs     = jnp.zeros((self.num_states, self.num_states)),
-            sum_w           = jnp.zeros((self.num_states, 1)),
-            sum_x           = jnp.zeros((self.num_states, self.num_obs)),
+            marginal_loglik=0.0,
+            initial_probs=jnp.zeros((self.num_states,)),
+            trans_probs=jnp.zeros((self.num_states, self.num_states)),
+            sum_w=jnp.zeros((self.num_states, 1)),
+            sum_x=jnp.zeros((self.num_states, self.num_obs)),
         )
 
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
         lp += tfd.Gamma(self._emission_prior_concentration.value,
-                          self._emission_prior_rate.value).log_prob(self._emission_rates.value).sum()
+                        self._emission_prior_rate.value).log_prob(self._emission_rates.value).sum()
         return lp
 
     def e_step(self, batch_emissions):
@@ -94,8 +98,7 @@ class PoissonHMM(ExponentialFamilyHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self.initial_probs.value,
-                                     self.transition_matrix.value,
+            posterior = hmm_smoother(self.initial_probs.value, self.transition_matrix.value,
                                      self._compute_conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities

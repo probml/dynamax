@@ -14,6 +14,7 @@ from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import ExponentialFamilyHMM
 
+
 @chex.dataclass
 class CategoricalHMMSuffStats:
     # Wrapper for sufficient statistics of a BernoulliHMM
@@ -21,6 +22,7 @@ class CategoricalHMMSuffStats:
     initial_probs: chex.Array
     trans_probs: chex.Array
     sum_x: chex.Array
+
 
 @register_pytree_node_class
 class CategoricalHMM(ExponentialFamilyHMM):
@@ -39,7 +41,8 @@ class CategoricalHMM(ExponentialFamilyHMM):
             transition_matrix (_type_): _description_
             emission_probs (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix,
+        super().__init__(initial_probabilities,
+                         transition_matrix,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
@@ -50,7 +53,7 @@ class CategoricalHMM(ExponentialFamilyHMM):
 
         # Save parameters and hyperparameters
         self._emission_probs = Parameter(emission_probs, bijector=tfb.Invert(tfb.SoftmaxCentered()))
-        self._emission_prior_concentration = Parameter(emission_prior_concentration  * jnp.ones(num_classes),
+        self._emission_prior_concentration = Parameter(emission_prior_concentration * jnp.ones(num_classes),
                                                        is_frozen=True,
                                                        bijector=tfb.Invert(tfb.Softplus()))
 
@@ -75,18 +78,21 @@ class CategoricalHMM(ExponentialFamilyHMM):
         return self.emission_probs.value.shape[2]
 
     def emission_distribution(self, state):
-        return tfd.Independent(
-            tfd.Categorical(probs=self.emission_probs.value[state]),
-            reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Categorical(probs=self.emission_probs.value[state]), reinterpreted_batch_ndims=1)
+
+    @property
+    def emission_distribution_parameters(self):
+        return dict(emission_probs=self._emission_probs,)
 
     def _zeros_like_suff_stats(self):
         """Return dataclass containing 'event_shape' of each sufficient statistic."""
         return CategoricalHMMSuffStats(
-            marginal_loglik = 0.0,
-            initial_probs   = jnp.zeros((self.num_states,)),
-            trans_probs     = jnp.zeros((self.num_states, self.num_states)),
-            sum_x           = jnp.zeros((self.num_states, self.num_obs, self.num_classes)),
+            marginal_loglik=0.0,
+            initial_probs=jnp.zeros((self.num_states,)),
+            trans_probs=jnp.zeros((self.num_states, self.num_states)),
+            sum_x=jnp.zeros((self.num_states, self.num_obs, self.num_classes)),
         )
+
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
@@ -101,8 +107,7 @@ class CategoricalHMM(ExponentialFamilyHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(),
-                                     self._compute_transition_matrices(),
+            posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
                                      self._compute_conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
@@ -128,5 +133,4 @@ class CategoricalHMM(ExponentialFamilyHMM):
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Then maximize the expected log probability as a fn of model parameters
-        self._emission_probs.value = tfd.Dirichlet(self._emission_prior_concentration.value +
-                                                   stats.sum_x).mode()
+        self._emission_probs.value = tfd.Dirichlet(self._emission_prior_concentration.value + stats.sum_x).mode()

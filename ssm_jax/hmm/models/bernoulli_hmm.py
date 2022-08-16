@@ -13,6 +13,7 @@ from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import ExponentialFamilyHMM
 
+
 @chex.dataclass
 class BernoulliHMMSuffStats:
     # Wrapper for sufficient statistics of a BernoulliHMM
@@ -21,6 +22,7 @@ class BernoulliHMMSuffStats:
     trans_probs: chex.Array
     sum_x: chex.Array
     sum_1mx: chex.Array
+
 
 @register_pytree_node_class
 class BernoulliHMM(ExponentialFamilyHMM):
@@ -39,7 +41,8 @@ class BernoulliHMM(ExponentialFamilyHMM):
             transition_matrix (_type_): _description_
             emission_probs (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix,
+        super().__init__(initial_probabilities,
+                         transition_matrix,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
@@ -64,24 +67,27 @@ class BernoulliHMM(ExponentialFamilyHMM):
         return self._emission_probs
 
     def emission_distribution(self, state):
-        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs.value[state]),
-                               reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs.value[state]), reinterpreted_batch_ndims=1)
+
+    @property
+    def emission_distribution_parameters(self):
+        return dict(emission_probs=self._emission_probs,)
 
     def _zeros_like_suff_stats(self):
         """Return dataclass containing 'event_shape' of each sufficient statistic."""
         return BernoulliHMMSuffStats(
-            marginal_loglik = 0.0,
-            initial_probs   = jnp.zeros((self.num_states,)),
-            trans_probs     = jnp.zeros((self.num_states, self.num_states)),
-            sum_x           = jnp.zeros((self.num_states, self.num_obs)),
-            sum_1mx         = jnp.zeros((self.num_states, self.num_obs)),
+            marginal_loglik=0.0,
+            initial_probs=jnp.zeros((self.num_states,)),
+            trans_probs=jnp.zeros((self.num_states, self.num_states)),
+            sum_x=jnp.zeros((self.num_states, self.num_obs)),
+            sum_1mx=jnp.zeros((self.num_states, self.num_obs)),
         )
 
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
         lp += tfd.Beta(self._emission_prior_concentration1.value,
-                         self._emission_prior_concentration0.value).log_prob(self._emission_probs.value).sum()
+                       self._emission_prior_concentration0.value).log_prob(self._emission_probs.value).sum()
         return lp
 
     def e_step(self, batch_emissions):
@@ -92,8 +98,7 @@ class BernoulliHMM(ExponentialFamilyHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(),
-                                     self._compute_transition_matrices(),
+            posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
                                      self._compute_conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
@@ -120,6 +125,5 @@ class BernoulliHMM(ExponentialFamilyHMM):
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Then maximize the expected log probability as a fn of model parameters
-        self._emission_probs.value = tfd.Beta(
-            self._emission_prior_concentration1.value + stats.sum_x,
-            self._emission_prior_concentration0.value + stats.sum_1mx).mode()
+        self._emission_probs.value = tfd.Beta(self._emission_prior_concentration1.value + stats.sum_x,
+                                              self._emission_prior_concentration0.value + stats.sum_1mx).mode()
