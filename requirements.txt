@@ -4,6 +4,7 @@ jaxlib
 optax
 chex
 distrax
+tensorflow
 tensorflow_probability
 torch
 matplotlib
