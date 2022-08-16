@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import jax.random as jr
 import optax
+import tensorflow as tf
 from jax import jit
 from jax import value_and_grad
 from jax.tree_util import tree_leaves
@@ -55,11 +56,14 @@ def run_sgd(loss_fn,
         losses: Output of loss_fn stored at each step.
     """
     opt_state = optimizer.init(params)
-    num_complete_batches, leftover = jnp.divmod(len(dataset), batch_size)
-    num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
     loss_grad_fn = value_and_grad(loss_fn)
 
-    if batch_size >= _get_dataset_len(dataset):
+    dataset_len = _get_dataset_len(dataset)
+    
+    if isinstance(dataset, jnp.DeviceArray):
+        dataset = tf.data.Dataset.from_tensor_slices(dataset)
+    
+    if batch_size >= dataset_len:
         shuffle = False
 
     @jit
@@ -74,10 +78,12 @@ def run_sgd(loss_fn,
 
     for key in keys:
         losses_per_batch = []
-        sample_generator = sample_minibatches(key, dataset, batch_size, shuffle)
 
-        for minibatch in sample_generator:
-            params, opt_state, loss = update(params, opt_state, minibatch)
+        if shuffle:
+            dataset = dataset.shuffle(dataset_len)
+
+        for minibatch in dataset.batch(batch_size):
+            params, opt_state, loss = update(params, opt_state, jnp.asarray(minibatch))
             losses_per_batch.append(loss)
 
         losses.append(losses_per_batch)
