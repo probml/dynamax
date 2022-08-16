@@ -81,8 +81,8 @@ def _condition_on(m, P, y_cond_mean, y_cond_var, u, y, g_ev, g_cov, num_iter):
 
     def _step(carry, _):
         prior_mean, prior_cov = carry
-        yhat = jnp.atleast_1d(g_ev(m_Y, prior_mean, prior_cov))
-        S = jnp.atleast_2d(g_ev(Var_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov))
+        yhat = g_ev(m_Y, prior_mean, prior_cov)
+        S = g_ev(Var_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
         log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
         C = g_cov(identity_fn, m_Y, prior_mean, prior_cov)
         K = jnp.linalg.solve(S, C.T).T
