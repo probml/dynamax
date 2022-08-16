@@ -83,7 +83,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_var, u, y, g_ev, g_cov, num_iter):
         prior_mean, prior_cov = carry
         yhat = g_ev(m_Y, prior_mean, prior_cov)
         S = g_ev(Var_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
-        log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
+        log_likelihood = MVN(jnp.atleast_1d(yhat), S).log_prob(jnp.atleast_1d(y))
         C = g_cov(identity_fn, m_Y, prior_mean, prior_cov)
         K = jnp.linalg.solve(S, C.T).T
         posterior_mean = prior_mean + K @ (y - yhat)
