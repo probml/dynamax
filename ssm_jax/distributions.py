@@ -329,7 +329,7 @@ def iw_posterior_update(iw_prior, sufficient_stats):
     df_pri, scale_pri = iw_prior.parameters.values()
     
     # unpack the sufficient statistics
-    N, SxxT = sufficient_stats
+    SxxT, N = sufficient_stats
     
     # compute parameters of the posterior distribution
     df_pos = df_pri + N
