@@ -2,7 +2,7 @@ import pytest
 
 import jax.numpy as jnp
 import jax.random as jr
-from ssm_jax.distributions import InverseWishart, NormalInverseWishart
+from ssm_jax.distributions import InverseWishart, NormalInverseWishart, MatrixNormalPrecision, MatrixNormalInverseWishart
 
 def test_inverse_wishart_mode(df=7.0, dim=3, scale_factor=3.0):
     scale = scale_factor * jnp.eye(dim)
@@ -70,3 +70,37 @@ def test_normal_inverse_wishart_log_prob(loc=0., mean_conc=1.0, df=7.0, dim=3, s
     lps = niw.log_prob((Sigma_samples, mu_samples))
     assert lps.shape == (n_samples,)
     assert jnp.all(jnp.isfinite(lps))
+
+
+def test_matrix_normal_log_prob(loc=jnp.ones((2,3)), row_cov=jnp.eye(2), col_precision=jnp.eye(3), n_samples=2):
+    """
+    Evaluate the MN log prob using scipy.stats functions
+    """
+    from scipy.stats import matrix_normal
+    
+    mn = MatrixNormalPrecision(loc, row_cov, col_precision)
+    mn_samples = mn.sample(seed=jr.PRNGKey(0), sample_shape=n_samples)
+    mn_probs = mn.prob(mn_samples)
+    mn_log_probs = mn.log_prob(mn_samples)
+    lps = matrix_normal.logpdf(mn_samples, mean=loc, rowcov=row_cov, colcov=jnp.linalg.inv(col_precision))
+    assert jnp.allclose(jnp.array(mn_log_probs), lps)
+    assert jnp.allclose(jnp.array(mn_probs), jnp.exp(lps))
+
+
+def test_matrix_normal_inverse_wishart_log_prob(loc=jnp.ones((2,3)), col_precision=jnp.eye(3), df=3, scale=jnp.eye(2), n_samples=2):
+    """
+    Evaluate the MNIW log prob using scipy.stats functions
+    """
+    from scipy.stats import invwishart, matrix_normal
+    
+    mniw = MatrixNormalInverseWishart(loc, col_precision, df, scale)
+    Sigma_samples, Matrix_samples = mniw.sample(seed=jr.PRNGKey(0), sample_shape=n_samples)
+    mniw_probs = mniw.prob((Sigma_samples, Matrix_samples))
+    mniw_log_probs = mniw.log_prob((Sigma_samples, Matrix_samples))
+    
+    lp_iw = invwishart.logpdf(jnp.transpose(Sigma_samples, (1,2,0)), df, scale)
+    lp_mn = jnp.array([matrix_normal.logpdf(m, loc, sigma, jnp.linalg.inv(col_precision)) \
+                       for m, sigma in zip(Matrix_samples, Sigma_samples)])
+    
+    assert jnp.allclose(mniw_log_probs, lp_iw+lp_mn)
+    assert jnp.allclose(mniw_probs, jnp.exp(lp_iw+lp_mn))

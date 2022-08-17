@@ -1,16 +1,15 @@
-import tensorflow_probability.substrates.jax.bijectors as tfb
 import jax.numpy as jnp
-from jax import vmap, jit
+import tensorflow_probability.substrates.jax.bijectors as tfb
+from jax import jit
+from jax import vmap
 
 # From https://www.tensorflow.org/probability/examples/
 # TensorFlow_Probability_Case_Study_Covariance_Estimation
-PSDToRealBijector = tfb.Chain(
-    [
-        tfb.Invert(tfb.FillTriangular()),
-        tfb.TransformDiagonal(tfb.Invert(tfb.Exp())),
-        tfb.Invert(tfb.CholeskyOuterProduct()),
-    ]
-)
+PSDToRealBijector = tfb.Chain([
+    tfb.Invert(tfb.FillTriangular()),
+    tfb.TransformDiagonal(tfb.Invert(tfb.Exp())),
+    tfb.Invert(tfb.CholeskyOuterProduct()),
+])
 
 
 @jit
@@ -37,3 +36,7 @@ def pad_sequences(observations, valid_lens, pad_val=0):
 
     dataset = vmap(pad, in_axes=(0, 0))(observations, valid_lens), valid_lens
     return dataset
+
+
+def monotonically_increasing(x, atol=0):
+    return jnp.all(jnp.diff(x) > -atol)

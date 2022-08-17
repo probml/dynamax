@@ -1,42 +1,15 @@
 """
 https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/tests/test_categorical_hmm.py
 """
-import pytest
-
 import jax.numpy as jnp
 import jax.random as jr
+import numpy as np
+import pytest
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from ssm_jax.hmm.models.base import BaseHMM
 from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
-
-
-def normalize(a, axis=None):
-    """
-    Normalize the input array so that it sums to 1.
-    Parameters
-    ----------
-    a : array
-        Non-normalized input data.
-    axis : int
-        Dimension along which normalization is performed.
-    Notes
-    -----
-    Modifies the input **inplace**.
-    """
-    a_sum = a.sum(axis)
-    if axis and a.ndim > 1:
-        # Make sure we don't divide by zero.
-        a_sum[a_sum == 0] = 1
-        shape = list(a.shape)
-        shape[axis] = 1
-        a_sum.shape = shape
-
-    return a / a_sum
-
-
-def normalized(X, axis=None):
-    return normalize(X, axis=axis)
+from ssm_jax.hmm.models.tests.test_utils import monotonically_increasing
 
 
 def new_hmm():
@@ -48,10 +21,8 @@ def new_hmm():
     num_emissions = 1
     num_classes = 3
     initial_probabilities = jnp.array([0.6, 0.4])
-    transition_matrix = jnp.array([[0.7, 0.3],
-                                   [0.4, 0.6]])
-    emission_probs = jnp.array([[0.1, 0.4, 0.5],
-                                [0.6, 0.3, 0.1]])
+    transition_matrix = jnp.array([[0.7, 0.3], [0.4, 0.6]])
+    emission_probs = jnp.array([[0.1, 0.4, 0.5], [0.6, 0.3, 0.1]])
     emission_probs = emission_probs.reshape(num_states, num_emissions, num_classes)
     hmm = CategoricalHMM(initial_probabilities, transition_matrix, emission_probs)
     return hmm
@@ -83,18 +54,17 @@ class TestCategoricalAgainstWikipedia:
         print(filtered_probs)
         assert jnp.allclose(
             filtered_probs,
-            jnp.array(
-                [
-                    [0.23170303, 0.76829697],
-                    [0.62406281, 0.37593719],
-                    [0.86397706, 0.13602294],
-                ]
-            ),
+            jnp.array([
+                [0.23170303, 0.76829697],
+                [0.62406281, 0.37593719],
+                [0.86397706, 0.13602294],
+            ]),
             atol=1e-1,
         )
 
 
 class TestCategoricalHMM:
+
     def setup(self):
         self.num_states = 2
         self.num_classes = 3
@@ -112,6 +82,12 @@ class TestCategoricalHMM:
 
         assert jnp.allclose(filtered_probs.sum(axis=-1), jnp.ones((num_timesteps, 1)), atol=1e-6, rtol=1e-6)
         assert jnp.allclose(predicted_probs.sum(axis=-1), jnp.ones((num_timesteps, 1)), atol=1e-6, rtol=1e-6)
+
+    def test_random_initialization(self, key=jr.PRNGKey(0), num_states=4, num_emissions=2, num_classes=3):
+        hmm = CategoricalHMM.random_initialization(key, num_states, num_emissions, num_classes)
+        assert jnp.allclose(hmm.initial_probs.value.sum(), jnp.ones((num_states,)))
+        assert jnp.allclose(hmm.transition_matrix.value.sum(axis=-1), jnp.ones((num_states,)))
+        assert jnp.allclose(hmm.emission_probs.value.sum(axis=-1), jnp.ones((num_states, num_emissions)))
 
     def test_sample(self, key=jr.PRNGKey(0), num_timesteps=1000):
         hmm = new_hmm()
@@ -144,3 +120,44 @@ class TestCategoricalHMM:
         assert jnp.allclose(hmm1.emission_probs.value, hmm2.emission_probs.value, atol=1e-1)
         assert jnp.allclose(hmm1.initial_probs.value, hmm2.initial_probs.value, atol=1e-1)
         assert jnp.allclose(lps1, lps2, atol=1e-2 * num_timesteps)
+
+        assert monotonically_increasing(lps1)
+        assert monotonically_increasing(lps2)
+
+    def test_sgd(self, key=jr.PRNGKey(0), num_states=4, num_emissions=2, num_classes=3, num_timesteps=1000):
+        true_key, sample_key, init_key = jr.split(key, 3)
+        true_hmm = CategoricalHMM.random_initialization(true_key, num_states, num_emissions, num_classes)
+        state_sequence, emissions = true_hmm.sample(sample_key, num_timesteps)
+
+        hmm = CategoricalHMM.random_initialization(init_key, num_states, num_emissions, num_classes)
+        lps = hmm.fit_sgd(emissions[None, ...])
+
+        assert jnp.allclose(hmm.initial_probs.value.sum(), jnp.ones((num_states,)))
+        assert jnp.allclose(hmm.transition_matrix.value.sum(axis=-1), jnp.ones((num_states,)))
+        assert jnp.allclose(hmm.emission_probs.value.sum(axis=-1), jnp.ones((num_states, num_emissions)))
+
+    def test_fit_emission_probs(self,
+                                key=jr.PRNGKey(0),
+                                num_states=4,
+                                num_emissions=2,
+                                num_classes=3,
+                                num_timesteps=1000):
+
+        true_key, sample_key, init_key = jr.split(key, 3)
+
+        true_hmm = CategoricalHMM.random_initialization(true_key, num_states, num_emissions, num_classes)
+        state_sequence, emissions = true_hmm.sample(sample_key, num_timesteps)
+
+        hmm = CategoricalHMM.random_initialization(init_key, num_states, num_emissions, num_classes)
+
+        initial_probs = jnp.asarray(hmm.initial_probs.value)
+        transition_matrix = jnp.asarray(hmm.transition_matrix.value)
+
+        hmm.initial_probs.freeze()
+        hmm.transition_matrix.freeze()
+
+        lps3 = hmm.fit_em(emissions[None, ...])
+
+        assert jnp.allclose(initial_probs, jnp.asarray(hmm.initial_probs.value))
+        assert jnp.allclose(transition_matrix, jnp.asarray(hmm.transition_matrix.value))
+        assert monotonically_increasing(lps3)
