@@ -9,7 +9,7 @@ def test_sample_lowrank_hmm(key=jr.PRNGKey(0), num_states=4, emission_dim=2, num
     k1, k2 = jr.split(key, 2)
 
     hmm = LowRankHMM.random_initialization(k1, num_states, emission_dim)
-    hmm.emission_covariance_matrices.value *= 0.1
+    hmm.emission_cov_diag_factors.value *= 0.1
     states, emissions = hmm.sample(k2, num_timesteps)
 
 
@@ -17,7 +17,7 @@ def test_lowrank_hmm_em(key=jr.PRNGKey(0), num_states=4, emission_dim=2,  num_ti
     k1, k2, k3 = jr.split(key, 3)
 
     hmm = LowRankHMM.random_initialization(k1, num_states, emission_dim)
-    hmm.emission_covariance_matrices.value *= 0.1
+    hmm.emission_cov_diag_factors.value *= 0.1
     states, emissions = hmm.sample(k2, num_timesteps)
 
     # Try fitting it!
@@ -30,7 +30,7 @@ def test_sample_lowrank_viterbi(key=jr.PRNGKey(0), num_states=4, emission_dim=2,
     k1, k2 = jr.split(key, 2)
 
     hmm = LowRankHMM.random_initialization(k1, num_states, emission_dim)
-    hmm.emission_covariance_matrices.value *= 0.1
+    hmm.emission_cov_diag_factors.value *= 0.1
     states, emissions = hmm.sample(k2, num_timesteps)
 
     # Compute the most likely states
