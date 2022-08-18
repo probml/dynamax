@@ -2,8 +2,8 @@ from jax import numpy as jnp
 from jax import random as jr
 
 from ssm_jax.bp.gauss_chain import gauss_chain_potentials_from_lgssm, gauss_chain_bp
-from ssm_jax.lgssm.info_inference import lgssm_info_smoother
-from ssm_jax.lgssm.info_inference_test import build_lgssm_moment_and_info_form
+from ssm_jax.linear_gaussian_ssm.info_inference import lgssm_info_smoother
+from ssm_jax.linear_gaussian_ssm.info_inference_test import build_lgssm_moment_and_info_form
 
 def test_gauss_chain_bp():
     """Test that Gaussian chain belief propagation gets the same results as 
