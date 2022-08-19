@@ -1,10 +1,25 @@
+from functools import partial
+
+import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
+from jax import tree_map
+from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from ssm_jax.abstractions import Parameter
+from ssm_jax.hmm.inference import compute_transition_probs
+from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import StandardHMM
+
+
+@chex.dataclass
+class MultinomialHMMSuffStats:
+    marginal_loglik: chex.Scalar
+    initial_probs: chex.Array
+    trans_probs: chex.Array
+    sum_x: chex.Array
 
 
 @register_pytree_node_class
@@ -41,7 +56,7 @@ class MultinomialHMM(StandardHMM):
                                                        bijector=tfb.Invert(tfb.Softplus()))
 
     @classmethod
-    def random_initialization(cls, key, num_states, num_emissions, num_classes, num_trials=1):
+    def random_initialization(cls, key, num_states, num_emissions, num_classes, num_trials):
         key1, key2, key3 = jr.split(key, 3)
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
@@ -54,11 +69,11 @@ class MultinomialHMM(StandardHMM):
 
     @property
     def num_emissions(self):
-        return self.emission_probs.shape[1]
+        return self.emission_probs.value.shape[1]
 
     @property
     def num_classes(self):
-        return self.emission_probs.shape[2]
+        return self.emission_probs.value.shape[2]
 
     @property
     def num_trials(self):
@@ -77,3 +92,40 @@ class MultinomialHMM(StandardHMM):
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
         lp += tfd.Dirichlet(self._emission_prior_concentration.value).log_prob(self._emission_probs.value).sum()
         return lp
+
+    def e_step(self, batch_emissions):
+        """The E-step computes expected sufficient statistics under the
+        posterior. In the Gaussian case, this these are the first two
+        moments of the data
+        """
+
+        def _single_e_step(emissions):
+            # Run the smoother
+            posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
+                                     self._compute_conditional_logliks(emissions))
+
+            # Compute the initial state and transition probabilities
+            initial_probs = posterior.smoothed_probs[0]
+            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
+
+            # Compute the expected sufficient statistics
+            sum_x = jnp.einsum("tk, tdi->kdi", posterior.smoothed_probs, emissions)
+
+            # Pack into a dataclass
+            stats = MultinomialHMMSuffStats(
+                marginal_loglik=posterior.marginal_loglik,
+                initial_probs=initial_probs,
+                trans_probs=trans_probs,
+                sum_x=sum_x,
+            )
+            return stats
+
+        # Map the E step calculations over batches
+        return vmap(_single_e_step)(batch_emissions)
+
+    def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
+        # Sum the statistics across all batches
+        stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
+
+        # Then maximize the expected log probability as a fn of model parameters
+        self._emission_probs.value = tfd.Dirichlet(self._emission_prior_concentration.value + stats.sum_x).mode()

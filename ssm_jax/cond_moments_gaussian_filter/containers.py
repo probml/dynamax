@@ -9,6 +9,8 @@ import jax.numpy as jnp
 import chex
 
 
+_jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
+
 @chex.dataclass
 class CMGFParams:
     """Lightweight container for CMGF parameters.
@@ -50,8 +52,8 @@ class EKFParams(CMGFParams):
     """
     Lightweight container for extended Kalman filter/smoother parameters.
     """
-    gaussian_expectation: Callable = lambda f, m, P: f(m)
-    gaussian_cross_covariance: Callable = lambda f, g, m, P: jacfwd(f)(m) @ P @ jacfwd(g)(m).T
+    gaussian_expectation: Callable = lambda f, m, P: jnp.atleast_1d(f(m))
+    gaussian_cross_covariance: Callable = lambda f, g, m, P: _jacfwd_2d(f, m) @ P @ _jacfwd_2d(g, m).T
 
 
 @dataclass
@@ -61,13 +63,13 @@ class SigmaPointParams(CMGFParams):
     """
     def _gaussian_expectation(self, f, m, P):
         w_mean, _, sigmas = self.compute_weights_and_sigmas(m, P)
-        return jnp.tensordot(w_mean, vmap(f)(sigmas), axes=1)
+        return jnp.atleast_1d(jnp.tensordot(w_mean, vmap(f)(sigmas), axes=1))
 
     def _gaussian_cross_covariance(self, f, g, m, P):
         _, w_cov, sigmas = self.compute_weights_and_sigmas(m, P)
         _outer = vmap(lambda x, y: jnp.atleast_2d(x).T @ jnp.atleast_2d(y), 0, 0)
         f_mean, g_mean = self.gaussian_expectation(f, m, P), self.gaussian_expectation(g, m, P)
-        return jnp.tensordot(w_cov, _outer(vmap(f)(sigmas) - f_mean, vmap(g)(sigmas) - g_mean), axes=1)
+        return jnp.atleast_2d(jnp.tensordot(w_cov, _outer(vmap(f)(sigmas) - f_mean, vmap(g)(sigmas) - g_mean), axes=1))
 
 
 @dataclass
