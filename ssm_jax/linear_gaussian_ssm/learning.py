@@ -11,9 +11,7 @@ def lgssm_fit_em(model, batch_emissions, num_iters=50):
     @jit
     def em_step(model):
         posterior_stats, marginal_loglikes = model.e_step(batch_emissions)
-        model = model.m_step(posterior_stats,
-                             model.dynamics_bias_indicator,
-                             model.emission_bias_indicator)
+        model = model.m_step(posterior_stats)
         return model, marginal_loglikes.sum()
 
     log_probs = []
