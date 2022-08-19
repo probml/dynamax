@@ -16,6 +16,7 @@ from jax import vmap
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
 from ssm_jax.abstractions import Parameter
+from ssm_jax.hmm.inference import HMMPosterior
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
@@ -153,6 +154,40 @@ class BaseHMM(SSM):
                                  optimizer=optimizer,
                                  num_epochs=num_sgd_epochs_per_mstep)
         self.unconstrained_params = params
+
+    # def initialize(self, key, batch_emissions, **batch_covariates):
+    #     """Initialize the HMM using an algorithm inspired by KMeans++.
+    #     """
+    #     # Let's work with the first batch only
+    #     emissions = tree_map(lambda x: x[0], batch_emissions)
+    #     covariates = tree_map(lambda x: x[0], batch_covariates)
+    #     num_timesteps = len(tree_leaves(emissions)[0])
+
+    #     def _fit_single_emissions(state, emission, covariate):
+            
+    #         def _objective(params):
+    #             self.unconstrained_params = params
+    #             ll = self.emission_distribution(state, **covariate).log_prob(emission)
+    #             return -ll
+            
+    #         # Minimize the objective wrt all params
+    #         # The gradients for all params but the emission params for state should be zero
+    #         params, losses = run_sgd(_objective,
+    #                              self.unconstrained_params,
+    #                              (batch_emissions, batch_posteriors, batch_covariates),
+    #                              optimizer=optimizer,
+    #                              num_epochs=num_sgd_epochs_per_mstep)
+    #         self.unconstrained_params = params
+
+    #     # Choose one point at random to seed the first state
+    #     k1, key = jr.split(key, 2)
+    #     idx = jr.randint(k1, num_timesteps)
+    #     smoothed_probs = jnp.zeros((num_timesteps, self.num_states))
+    #     smoothed_probs = smoothed_probs.at[idx, 0] = 1.0
+    #     dummy_posterior = HMMPosterior(marginal_loglik=0.0, 
+    #         filtered_probs=None, 
+    #         None, smoothed_probs, )
+
 
     def fit_em(self, batch_emissions, num_iters=50, mstep_kwargs=dict(), **batch_covariates):
         """Fit this HMM with Expectation-Maximization (EM).
