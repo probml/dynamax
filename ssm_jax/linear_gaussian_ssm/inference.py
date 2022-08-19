@@ -220,7 +220,7 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
     return ll, states
 
 
-def lgssm_smoother(params, emissions, inputs):
+def lgssm_smoother(params, emissions, inputs=None):
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
