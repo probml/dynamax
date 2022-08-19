@@ -25,15 +25,15 @@ class LinearGaussianSSMMLE(LinearGaussianSSM):
         initial_mean=None,
         initial_covariance=None,
         dynamics_input_weights=None,
-        dynamics_bias_indicator=False,
+        dynamics_bias=False,
         emission_input_weights=None,
-        emission_bias_indicator=False
+        emission_bias=False
     ):
         super().__init__(dynamics_matrix, dynamics_covariance, 
                          emission_matrix, emission_covariance,
                          initial_mean,    initial_covariance,
-                         dynamics_input_weights, dynamics_bias_indicator, 
-                         emission_input_weights, emission_bias_indicator)
+                         dynamics_input_weights, dynamics_bias, 
+                         emission_input_weights, emission_bias)
         
     ### Expectation-maximization (EM) code
     def e_step(self, batch_emissions, batch_inputs=None):
@@ -46,7 +46,7 @@ class LinearGaussianSSMMLE(LinearGaussianSSM):
 
         def _single_e_step(emissions, inputs):
             # Run the smoother to get posterior expectations
-            posterior = lgssm_smoother(LGSSMParams(), emissions, inputs)
+            posterior = lgssm_smoother(self, emissions, inputs)
 
             # shorthand
             Ex = posterior.smoothed_means
@@ -125,5 +125,5 @@ class LinearGaussianSSMMLE(LinearGaussianSSM):
                    emission_matrix = H,
                    emission_input_weights = D,
                    emission_covariance = R,
-                   dynamics_bias_indicator=dynamics_bias_indicator,
-                   emission_bias_indicator=emission_bias_indicator)
+                   dynamics_bias=dynamics_bias,
+                   emission_bias=emission_bias)
