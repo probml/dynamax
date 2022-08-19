@@ -5,7 +5,7 @@ from jax.tree_util import register_pytree_node_class
 
 from distrax import MultivariateNormalFullCovariance as MVN
 
-from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, LGSSMParams
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother
 from ssm_jax.utils import PSDToRealBijector
 
 
@@ -64,7 +64,7 @@ class LinearGaussianSSM:
         self.dynamics_bias = default(dynamics_bias, jnp.zeros(self.state_dim))
         self.emission_input_weights = default(emission_input_weights, jnp.zeros((self.emission_dim, self.input_dim)))
         self.emission_bias = default(emission_bias, jnp.zeros(self.emission_dim))
-        
+
         # Check shapes
         assert self.initial_mean.shape == (self.state_dim,)
         assert self.initial_covariance.shape == (self.state_dim, self.state_dim)
@@ -128,7 +128,7 @@ class LinearGaussianSSM:
 
         # Run the sampler
         keys = jr.split(key, num_timesteps)
-        _, (states, emissions) = lax.scan(_step, init_state, (keys, inputs_dynamics, inputs_emission))
+        _, (states, emissions) = lax.scan(_step, init_state, (keys, inputs))
         return states, emissions
 
     def log_prob(self, states, emissions, inputs=None):
