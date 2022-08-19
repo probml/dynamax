@@ -7,3 +7,4 @@ __pycache__/
 *.jpg
 *.pdf
 *-dot
+*.DS_Store
