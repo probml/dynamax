@@ -117,7 +117,7 @@ def _condition_on(m, P, H, D, d, R, u, y):
     return mu_cond, Sigma_cond
 
 
-def lgssm_filter(params, emissions, inputs_dynamics=None, inputs_emission=None):
+def lgssm_filter(params, emissions, inputs=None):
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
 
@@ -133,14 +133,7 @@ def lgssm_filter(params, emissions, inputs_dynamics=None, inputs_emission=None):
             filtered_covariances (T, D_hid, D_hid)
     """
     num_timesteps = len(emissions)
-    
-    if inputs_dynamics is None and inputs_emission is None:
-        inputs_dynamics = jnp.zeros((num_timesteps, 0)) 
-        inputs_emission = jnp.zeros((num_timesteps, 0))
-    elif inputs_dynamics is None:
-        inputs_dynamics = inputs_emission
-    elif inputs_emission is None:
-        inputs_emission = inputs_dynamics
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
@@ -154,18 +147,17 @@ def lgssm_filter(params, emissions, inputs_dynamics=None, inputs_emission=None):
         D = _get_params(params.emission_input_weights, 2, t)
         d = _get_params(params.emission_bias, 1, t)
         R = _get_params(params.emission_covariance, 2, t)
-        u_dynamics = inputs_dynamics[t]
-        u_emission = inputs_emission[t]
+        u = inputs[t]
         y = emissions[t]
 
         # Update the log likelihood
-        ll += MVN(H @ pred_mean + D @ u_emission + d, H @ pred_cov @ H.T + R).log_prob(y)
+        ll += MVN(H @ pred_mean + D @ u + d, H @ pred_cov @ H.T + R).log_prob(y)
 
         # Condition on this emission
-        filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, H, D, d, R, u_emission, y)
+        filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, H, D, d, R, u, y)
 
         # Predict the next state
-        pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, F, B, b, Q, u_dynamics)
+        pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, F, B, b, Q, u)
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
@@ -175,7 +167,7 @@ def lgssm_filter(params, emissions, inputs_dynamics=None, inputs_emission=None):
     return LGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def lgssm_posterior_sample(rng, params, emissions, inputs_dynamics=None, inputs_emission=None):
+def lgssm_posterior_sample(rng, params, emissions, inputs=None):
     """Run forward-filtering, backward-sampling to draw samples of
         x_{1:T} | y_{1:T}, u_{1:T}.
 
@@ -190,17 +182,10 @@ def lgssm_posterior_sample(rng, params, emissions, inputs_dynamics=None, inputs_
         states (T,D_hid): samples from the posterior distribution on latent states.
     """
     num_timesteps = len(emissions)
-    
-    if inputs_dynamics is None and inputs_emission is None:
-        inputs_dynamics = jnp.zeros((num_timesteps, 0)) 
-        inputs_emission = jnp.zeros((num_timesteps, 0))
-    elif inputs_dynamics is None:
-        inputs_dynamics = inputs_emission
-    elif inputs_emission is None:
-        inputs_emission = inputs_dynamics
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     # Run the Kalman filter
-    filtered_posterior = lgssm_filter(params, emissions, inputs_dynamics, inputs_emission)
+    filtered_posterior = lgssm_filter(params, emissions, inputs)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Sample backward in time
@@ -213,10 +198,10 @@ def lgssm_posterior_sample(rng, params, emissions, inputs_dynamics=None, inputs_
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
         Q = _get_params(params.dynamics_covariance, 2, t)
-        u_dynamics = inputs_dynamics[t]
+        u = inputs[t]
 
         # Condition on next state
-        smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F, B, b, Q, u_dynamics, next_state)
+        smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F, B, b, Q, u, next_state)
         state = MVN(smoothed_mean, smoothed_cov).sample(seed=rng)
         return state, state
 
@@ -235,7 +220,7 @@ def lgssm_posterior_sample(rng, params, emissions, inputs_dynamics=None, inputs_
     return ll, states
 
 
-def lgssm_smoother(params, emissions, inputs_dynamics=None, inputs_emission=None):
+def lgssm_smoother(params, emissions, inputs):
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -250,17 +235,10 @@ def lgssm_smoother(params, emissions, inputs_dynamics=None, inputs_emission=None
             filtered and smoothed posterior distributions.
     """
     num_timesteps = len(emissions)
-    
-    if inputs_dynamics is None and inputs_emission is None:
-        inputs_dynamics = jnp.zeros((num_timesteps, 0)) 
-        inputs_emission = jnp.zeros((num_timesteps, 0))
-    elif inputs_dynamics is None:
-        inputs_dynamics = inputs_emission
-    elif inputs_emission is None:
-        inputs_emission = inputs_dynamics
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     # Run the Kalman filter
-    filtered_posterior = lgssm_filter(params, emissions, inputs_dynamics, inputs_emission)
+    filtered_posterior = lgssm_filter(params, emissions, inputs)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Run the smoother backward in time
@@ -274,14 +252,14 @@ def lgssm_smoother(params, emissions, inputs_dynamics=None, inputs_emission=None
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
         Q = _get_params(params.dynamics_covariance, 2, t)
-        u_dynamics = inputs_dynamics[t]
+        u = inputs[t]
 
         # This is like the Kalman gain but in reverse
         # See Eq 8.11 of Saarka's "Bayesian Filtering and Smoothing"
         G = jnp.linalg.solve(Q + F @ filtered_cov @ F.T, F @ filtered_cov).T
 
         # Compute the smoothed mean and covariance
-        smoothed_mean = filtered_mean + G @ (smoothed_mean_next - F @ filtered_mean - B @ u_dynamics - b)
+        smoothed_mean = filtered_mean + G @ (smoothed_mean_next - F @ filtered_mean - B @ u - b)
         smoothed_cov = filtered_cov + G @ (smoothed_cov_next - F @ filtered_cov @ F.T - Q) @ G.T
 
         # Compute the smoothed expectation of x_t x_{t+1}^T
