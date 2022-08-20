@@ -1,11 +1,15 @@
+from functools import partial
+
 from jax import numpy as jnp
 from jax import random as jr
-from jax import lax
-from jax.tree_util import register_pytree_node_class
+from jax import lax, vmap, jit
+from jax.tree_util import tree_map, register_pytree_node_class
+
+from tqdm.auto import trange
 
 from distrax import MultivariateNormalFullCovariance as MVN
 
-from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, LGSSMParams
 from ssm_jax.utils import PSDToRealBijector
 
 
@@ -49,7 +53,9 @@ class LinearGaussianSSM:
         dynamics_input_dim = dynamics_input_weights.shape[1] if dynamics_input_weights is not None else 0
         emission_input_dim = emission_input_weights.shape[1] if emission_input_weights is not None else 0
         self.input_dim = max(dynamics_input_dim, emission_input_dim)
-
+        self._db_indicator = dynamics_bias is not None
+        self._eb_indicator = emission_bias is not None
+        
         # Save required args
         self.dynamics_matrix = dynamics_matrix
         self.dynamics_covariance = dynamics_covariance
@@ -75,6 +81,13 @@ class LinearGaussianSSM:
         assert self.emission_input_weights.shape[-2:] == (self.emission_dim, self.input_dim)
         assert self.emission_bias.shape[-1:] == (self.emission_dim,)
         assert self.emission_covariance.shape == (self.emission_dim, self.emission_dim)
+        
+        # this list of keys is used to indicate variables of the model, 
+        # and can be removed after introducing the Parameter class, 
+        # just as the base SSM class in the hmm parts
+        self.param_keys = ["initial_mean", "initial_covariance",
+                           "dynamics_matrix", "dynamics_input_weights", "dynamics_bias", "dynamics_covariance",
+                           "emission_matrix", "emission_input_weights", "emission_bias", "emission_covariance"]
 
     @classmethod
     def random_initialization(cls, key, state_dim, emission_dim, input_dim=0):
@@ -188,6 +201,18 @@ class LinearGaussianSSM:
             PSDToRealBijector.forward(self.emission_covariance),
         )
 
+    @property
+    def params(self):
+        # Find all parameters
+        params = [self.__dict__[key] for key in self.param_keys]
+        return params
+
+    @params.setter
+    def params(self, values):
+        assert len(self.param_keys) == len(values)
+        for key, value in zip(self.param_keys, values):
+            self.__dict__[key] = value
+    
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params, hypers):
         initial_mean = unconstrained_params[0]
@@ -212,6 +237,124 @@ class LinearGaussianSSM:
             emission_input_weights=emission_input_weights,
             emission_bias=emission_bias
         )
+        
+    ### Expectation-maximization (EM) code
+    def e_step(self, batch_emissions, batch_inputs=None):
+        """The E-step computes sums of expected sufficient statistics under the
+        posterior. In the generic case, we simply return the posterior itself.
+        """
+        num_batches, num_timesteps = batch_emissions.shape[:2]
+        if batch_inputs is None:
+            batch_inputs = jnp.zeros((num_batches, num_timesteps, 0))
+
+        def _single_e_step(emissions, inputs):
+            # Run the smoother to get posterior expectations
+            posterior = lgssm_smoother(self, emissions, inputs)
+
+            # shorthand
+            Ex = posterior.smoothed_means
+            Exp = posterior.smoothed_means[:-1]
+            Exn = posterior.smoothed_means[1:]
+            Vx = posterior.smoothed_covariances
+            Vxp = posterior.smoothed_covariances[:-1]
+            Vxn = posterior.smoothed_covariances[1:]
+            Expxn = posterior.smoothed_cross_covariances
+            # Append bias to the inputs
+            inputs = jnp.concatenate((inputs, jnp.ones((num_timesteps, 1))), axis=1)
+            up = inputs[:-1]
+            u = inputs
+            y = emissions
+
+            # expected sufficient statistics for the initial distribution
+            Ex0 = posterior.smoothed_means[0]
+            Ex0x0T = posterior.smoothed_covariances[0] + jnp.outer(Ex0, Ex0)
+            init_stats = (Ex0, Ex0x0T, 1)
+
+            # expected sufficient statistics for the dynamics distribution
+            # let zp[t] = [x[t], u[t]] for t = 0...T-2
+            # let xn[t] = x[t+1]          for t = 0...T-2
+            sum_zpzpT = jnp.block([[Exp.T @ Exp, Exp.T @ up],
+                                   [ up.T @ Exp,  up.T @ up]])
+            sum_zpzpT = sum_zpzpT.at[: self.state_dim, : self.state_dim].add(Vxp.sum(0))
+            sum_zpxnT = jnp.block([[Expxn.sum(0)], [up.T @ Exn]])
+            sum_xnxnT = Vxn.sum(0) + Exn.T @ Exn
+            dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps - 1)
+            if not self._db_indicator:
+                dynamics_stats = (sum_zpzpT[:-1, :-1], sum_zpxnT[:-1,:], sum_xnxnT, num_timesteps - 1)
+
+            # more expected sufficient statistics for the emissions
+            # let z[t] = [x[t], u[t]] for t = 0...T-1
+            sum_zzT = jnp.block([[Ex.T @ Ex,  Ex.T @ u],
+                                 [ u.T @ Ex,   u.T @ u]])
+            sum_zzT = sum_zzT.at[: self.state_dim, : self.state_dim].add(Vx.sum(0))
+            sum_zyT = jnp.block([[Ex.T @ y], [u.T @ y]])
+            sum_yyT = emissions.T @ emissions
+            emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
+            if not self._eb_indicator:
+                emission_stats = (sum_zzT[:-1, :-1], sum_zyT[:-1,:], sum_yyT, num_timesteps)
+
+            return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
+
+        # TODO: what's the best way to vectorize/parallelize this?
+        return vmap(_single_e_step)(batch_emissions, batch_inputs)
+    
+    def m_step(self, batch_stats):
+        def fit_linear_regression(ExxT, ExyT, EyyT, N):
+            # Solve a linear regression given sufficient statistics
+            W = jnp.linalg.solve(ExxT, ExyT).T
+            Sigma = (EyyT - W @ ExyT - ExyT.T @ W.T + W @ ExxT @ W.T) / N
+            return W, Sigma
+
+        # Sum the statistics across all batches
+        stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
+        init_stats, dynamics_stats, emission_stats = stats
+
+        # initial distribution
+        sum_x0, sum_x0x0T, N = init_stats
+        S = (sum_x0x0T - jnp.outer(sum_x0, sum_x0)) / N
+        m = sum_x0 / N
+
+        # dynamics distribution
+        FB, Q = fit_linear_regression(*dynamics_stats)
+        F = FB[:, :self.state_dim]
+        B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
+            else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
+
+        # emission distribution
+        HD, R = fit_linear_regression(*emission_stats)
+        H = HD[:, :self.state_dim]
+        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
+            else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
+        
+        self.dynamics_matrix = F
+        self.dynamics_covariance = Q
+        self.emission_matrix = H
+        self.emission_covariance = R
+        self.initial_mean = m
+        self.initial_covariance = S
+        self.dynamics_input_weights = B
+        self.dynamics_bias = b
+        self.emission_input_weights = D
+        self.emission_bias = d
+    
+    def fit_em(self, batch_emissions, num_iters=50):
+        @jit
+        def em_step(_params):
+            self.params = _params
+            posterior_stats, marginal_loglikes = self.e_step(batch_emissions)
+            self.m_step(posterior_stats)     
+            _params = self.params
+            return _params, marginal_loglikes.sum()
+
+        log_probs = []
+        _params = self.params
+        
+        for _ in trange(num_iters):
+            _params, marginal_loglik = em_step(_params)
+            log_probs.append(marginal_loglik)
+        
+        self.params = _params
+        return jnp.array(log_probs)
 
     @property
     def hyperparams(self):
@@ -227,3 +370,4 @@ class LinearGaussianSSM:
     @classmethod
     def tree_unflatten(cls, aux_data, children):
         return cls.from_unconstrained_params(children, aux_data)
+    
