@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
 
 
-def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False):
+def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, method='MLE'):
     keys = map(jr.PRNGKey, count())
 
     true_model = LinearGaussianSSM.random_initialization(next(keys), state_dim, emission_dim)
-    true_states, emissions = true_model.sample(next(keys), num_timesteps)
+    true_states, emissions = true_model.sample(next(keys), num_timesteps, method=method)
 
     if not test_mode:
         # Plot the true states and emissions
