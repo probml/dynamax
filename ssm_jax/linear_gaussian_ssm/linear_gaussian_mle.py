@@ -25,9 +25,9 @@ class LinearGaussianSSMMLE(LinearGaussianSSM):
         initial_mean=None,
         initial_covariance=None,
         dynamics_input_weights=None,
-        dynamics_bias=False,
+        dynamics_bias=None,
         emission_input_weights=None,
-        emission_bias=False
+        emission_bias=None
     ):
         super().__init__(dynamics_matrix, dynamics_covariance, 
                          emission_matrix, emission_covariance,
@@ -35,6 +35,9 @@ class LinearGaussianSSMMLE(LinearGaussianSSM):
                          dynamics_input_weights, dynamics_bias, 
                          emission_input_weights, emission_bias)
         
+        self.dynamics_bias_indicator = dynamics_bias is not None
+        self.emission_bias_indicator = emission_bias is not None
+
     ### Expectation-maximization (EM) code
     def e_step(self, batch_emissions, batch_inputs=None):
         """The E-step computes sums of expected sufficient statistics under the
@@ -56,6 +59,8 @@ class LinearGaussianSSMMLE(LinearGaussianSSM):
             Vxp = posterior.smoothed_covariances[:-1]
             Vxn = posterior.smoothed_covariances[1:]
             Expxn = posterior.smoothed_cross_covariances
+            # Append bias to the inputs
+            inputs = jnp.concatenate((inputs, jnp.ones((num_timesteps, 1))), axis=1)
             up = inputs[:-1]
             u = inputs
             y = emissions
@@ -74,6 +79,8 @@ class LinearGaussianSSMMLE(LinearGaussianSSM):
             sum_zpxnT = jnp.block([[Expxn.sum(0)], [up.T @ Exn]])
             sum_xnxnT = Vxn.sum(0) + Exn.T @ Exn
             dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps - 1)
+            if not self.dynamics_bias_indicator:
+                dynamics_stats = (sum_zpzpT[:-1, :-1], sum_zpxnT[:-1,:], sum_xnxnT, num_timesteps - 1)
 
             # more expected sufficient statistics for the emissions
             # let z[t] = [x[t], u[t]] for t = 0...T-1
@@ -83,6 +90,8 @@ class LinearGaussianSSMMLE(LinearGaussianSSM):
             sum_zyT = jnp.block([[Ex.T @ y], [u.T @ y]])
             sum_yyT = emissions.T @ emissions
             emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
+            if not self.emission_bias_indicator:
+                emission_stats = (sum_zzT[:-1, :-1], sum_zyT[:-1,:], sum_yyT, num_timesteps)
 
             return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
@@ -110,20 +119,20 @@ class LinearGaussianSSMMLE(LinearGaussianSSM):
         # dynamics distribution
         FB, Q = fit_linear_regression(*dynamics_stats)
         F = FB[:, :dim]
-        B = FB[:, dim:-1] if dynamics_bias_indicator else FB[:,dim:] 
+        B, b = (FB[:, dim:-1], FB[:, -1]) if dynamics_bias_indicator else (FB[:,dim:], None)
 
         # emission distribution
         HD, R = fit_linear_regression(*emission_stats)
         H = HD[:, :dim]
-        D = HD[:, dim:-1] if emission_bias_indicator else HD[:,dim:]
+        D, d = (HD[:, dim:-1], HD[:,-1]) if emission_bias_indicator else (HD[:,dim:], None)
         
-        return cls(initial_mean = m,
-                   initial_covariance = S,
-                   dynamics_matrix = F,
-                   dynamics_input_weights = B,
+        return cls(dynamics_matrix = F,
                    dynamics_covariance = Q,
                    emission_matrix = H,
-                   emission_input_weights = D,
                    emission_covariance = R,
-                   dynamics_bias=dynamics_bias,
-                   emission_bias=emission_bias)
+                   initial_mean = m,
+                   initial_covariance = S,
+                   dynamics_input_weights = B,
+                   dynamics_bias=b,
+                   emission_input_weights = D,
+                   emission_bias=d)
