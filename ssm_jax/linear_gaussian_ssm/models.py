@@ -1,9 +1,7 @@
-from functools import partial
-
 from jax import numpy as jnp
 from jax import random as jr
-from jax import lax, vmap
-from jax.tree_util import register_pytree_node_class, tree_map
+from jax import lax
+from jax.tree_util import register_pytree_node_class
 
 from distrax import MultivariateNormalFullCovariance as MVN
 
@@ -80,29 +78,24 @@ class LinearGaussianSSM:
 
     @classmethod
     def random_initialization(cls, key, state_dim, emission_dim, input_dim=0):
-        k1, k2, k3 = jr.split(key, num=3)
         m1 = jnp.zeros(state_dim)
         Q1 = jnp.eye(state_dim)
         # TODO: Sample a random rotation matrix
-        A = 0.99 * jnp.eye(state_dim)
+        F = 0.99 * jnp.eye(state_dim)
         B = jnp.zeros((state_dim, input_dim))
-        b = jnp.zeros(state_dim)
         Q = 0.1 * jnp.eye(state_dim)
-        C = jr.normal(k2, (emission_dim, state_dim))
+        H = jr.normal(key, (emission_dim, state_dim))
         D = jnp.zeros((emission_dim, input_dim))
-        d = jr.normal(k3, (emission_dim,))
         R = 0.1 * jnp.eye(emission_dim)
         return cls(
-            dynamics_matrix=A,
+            dynamics_matrix=F,
             dynamics_covariance=Q,
-            emission_matrix=C,
+            emission_matrix=H,
             emission_covariance=R,
             initial_mean=m1,
             initial_covariance=Q1,
             dynamics_input_weights=B,
-            dynamics_bias=b,
-            emission_input_weights=D,
-            emission_bias=d,
+            emission_input_weights=D
         )
 
     def sample(self, key, num_timesteps, inputs=None):
@@ -110,11 +103,11 @@ class LinearGaussianSSM:
             inputs = jnp.zeros((num_timesteps, 0))
 
         # Shorthand for parameters
-        A = self.dynamics_matrix
+        F = self.dynamics_matrix
         B = self.dynamics_input_weights
         b = self.dynamics_bias
         Q = self.dynamics_covariance
-        C = self.emission_matrix
+        H = self.emission_matrix
         D = self.emission_input_weights
         d = self.emission_bias
         R = self.emission_covariance
@@ -125,8 +118,8 @@ class LinearGaussianSSM:
 
             # Sample data and next state
             key1, key2 = jr.split(key, 2)
-            emission = MVN(C @ state + D @ u + d, R).sample(seed=key1)
-            next_state = MVN(A @ state + B @ u + b, Q).sample(seed=key2)
+            emission = MVN(H @ state + D @ u + d, R).sample(seed=key1)
+            next_state = MVN(F @ state + B @ u + b, Q).sample(seed=key2)
             return next_state, (state, emission)
 
         # Initialize
@@ -217,7 +210,7 @@ class LinearGaussianSSM:
             dynamics_input_weights=dynamics_input_weights,
             dynamics_bias=dynamics_bias,
             emission_input_weights=emission_input_weights,
-            emission_bias=emission_bias,
+            emission_bias=emission_bias
         )
 
     @property
