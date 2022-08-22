@@ -7,7 +7,7 @@ from ssm_jax.nonlinear_gaussian_ssm.inference_test import lgssm_to_nlgssm, rando
 
 
 # Helper functions
-_all_close = lambda x, y: jnp.allclose(x, y, rtol=1e-3)
+_all_close = lambda x, y: jnp.allclose(x, y, atol=1e-1)
 
 
 def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
