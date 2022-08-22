@@ -124,17 +124,23 @@ def gauss_chain_bp(gauss_chain_pots, obs):
     init_carry = info_multiply(prior_pot, init_local_evidence_pot)
 
     def _forward_step(carry, x):
-        prev_bel = carry
+        """Gaussian chain belief propagation forward step.
+
+        Carry forward filtered beliefs p(x_{t-1}|y_{1:t-1}) and combine with latent
+         potential, phi(x_{t-1}, x_t) and local evidence from observation, y_t,
+         to calculate filtered belief at current step p(x_t|y_{1:t}).
+        """
+        prev_filtered_bel = carry
         latent_pot, local_evidence_pot, y = x
 
         # Calculate latent message
-        latent_pot = pair_cpot_absorb_message(latent_pot, prev_bel, message_var=1)
+        latent_pot = pair_cpot_absorb_message(latent_pot, prev_filtered_bel, message_var=1)
         latent_message = pair_cpot_marginalize(latent_pot, marginalize_onto=2)
 
         # Combine messages
-        bel = info_multiply(latent_message, local_evidence_pot)
+        filtered_bel = info_multiply(latent_message, local_evidence_pot)
 
-        return bel, (bel, latent_message)
+        return filtered_bel, (filtered_bel, latent_message)
 
     # Message pass forwards along chain
     _, (filtered_bels, forward_messages) = lax.scan(
@@ -148,17 +154,23 @@ def gauss_chain_bp(gauss_chain_pots, obs):
     filtered_bels_rest = jax.tree_map(lambda a: a[:-1], filtered_bels)
 
     def _backward_step(carry, x):
-        prev_bel = carry
-        bel, message_up, latent_pot = x
+        """Gaussian chain belief propagation backward step.
+
+        Carry backward smoothed beliefs p(x_t|y_{1:T}) and combine with latent
+         potential, phi(x_{t-1}, x_t) to calculate smoothed belief at t-1
+         p(x_{t-1}|y_{1:T}).
+        """
+        smoothed_bel_present = carry
+        filtered_bel_past, message_from_past, latent_pot_past_present = x
 
         # Divide out forward message
-        bel_minus_message_up = info_divide(prev_bel, message_up)
+        bel_minus_message_from_past = info_divide(smoothed_bel_present, message_from_past)
         # Absorb into joint potential
-        latent_pot = pair_cpot_absorb_message(latent_pot, bel_minus_message_up, message_var=2)
-        message_down = pair_cpot_marginalize(latent_pot, marginalize_onto=1)
+        latent_pot_past_present = pair_cpot_absorb_message(latent_pot_past_present, bel_minus_message_from_past, message_var=2)
+        message_to_past = pair_cpot_marginalize(latent_pot_past_present, marginalize_onto=1)
 
-        bel = info_multiply(bel, message_down)
-        return bel, bel
+        smoothed_bel_past = info_multiply(filtered_bel_past, message_to_past)
+        return smoothed_bel_past, smoothed_bel_past
 
     # Message pass back along chain
     _, smoothed_bels = lax.scan(
