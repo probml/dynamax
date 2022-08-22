@@ -11,7 +11,7 @@ def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, metho
     keys = map(jr.PRNGKey, count())
 
     true_model = LinearGaussianSSM.random_initialization(next(keys), state_dim, emission_dim)
-    true_states, emissions = true_model.sample(next(keys), num_timesteps, method=method)
+    true_states, emissions = true_model.sample(next(keys), num_timesteps)
 
     if not test_mode:
         # Plot the true states and emissions
@@ -27,7 +27,7 @@ def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, metho
     # Fit an LGSSM with EM
     num_iters = 50
     test_model = LinearGaussianSSM.random_initialization(next(keys), state_dim, emission_dim)
-    marginal_lls = test_model.fit_em(jnp.array([emissions]), num_iters=num_iters)
+    marginal_lls = test_model.fit_em(jnp.array([emissions]), num_iters=num_iters, method=method)
 
     assert jnp.all(jnp.diff(marginal_lls) > -1e-4)
 

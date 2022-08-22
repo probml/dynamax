@@ -10,6 +10,8 @@ from tqdm.auto import trange
 from distrax import MultivariateNormalFullCovariance as MVN
 
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother
+from ssm_jax.distributions import NormalInverseWishart as NIW, \
+    MatrixNormalInverseWishart as MNIW, niw_posterior_update, mniw_posterior_update
 from ssm_jax.utils import PSDToRealBijector
 
 
@@ -48,6 +50,7 @@ class LinearGaussianSSM:
         dynamics_bias=None,
         emission_input_weights=None,
         emission_bias=None,
+        priors = None
     ):
         self.emission_dim, self.state_dim = _get_shape(emission_matrix, 2)
         dynamics_input_dim = dynamics_input_weights.shape[1] if dynamics_input_weights is not None else 0
@@ -71,6 +74,38 @@ class LinearGaussianSSM:
         self.emission_input_weights = default(emission_input_weights, jnp.zeros((self.emission_dim, self.input_dim)))
         self.emission_bias = default(emission_bias, jnp.zeros(self.emission_dim))
 
+        # Initialize prior distributions 
+        if priors is None:
+            self.initial_prior = self.dynamics_prior = self.emission_prior = None
+        else: 
+            self.initial_prior, self.dynamics_prior, self.emission_prior = priors
+            
+        if self.initial_prior is None:
+            self.initial_prior = NIW(loc=self.initial_mean,
+                                     mean_concentration=1.,
+                                     df=self.state_dim,
+                                     scale=jnp.eye(self.state_dim))
+            
+        if self.dynamics_prior is None:
+            loc_d = self._join_matrix(self.dynamics_matrix, 
+                                      self.dynamics_input_weights, 
+                                      self.dynamics_bias,
+                                      self._db_indicator)
+            self.dynamics_prior = MNIW(loc=loc_d, 
+                                       col_precision=jnp.eye(loc_d.shape[1]),
+                                       df=self.state_dim, 
+                                       scale=jnp.eye(self.state_dim))
+            
+        if self.emission_prior is None:
+            loc_e = self._join_matrix(self.emission_matrix,
+                                      self.emission_input_weights,
+                                      self.emission_bias,
+                                      self._eb_indicator)
+            self.emission_prior = MNIW(loc=loc_e, 
+                                       col_precision=jnp.eye(loc_e.shape[1]),
+                                       df=self.emission_dim, 
+                                       scale=jnp.eye(self.emission_dim))
+
         # Check shapes
         assert self.initial_mean.shape == (self.state_dim,)
         assert self.initial_covariance.shape == (self.state_dim, self.state_dim)
@@ -82,9 +117,8 @@ class LinearGaussianSSM:
         assert self.emission_bias.shape[-1:] == (self.emission_dim,)
         assert self.emission_covariance.shape == (self.emission_dim, self.emission_dim)
         
-        # this list of keys is used to indicate variables of the model, 
-        # and can be removed after introducing the Parameter class, 
-        # just as the base SSM class in the hmm parts
+        # This list of keys is used to indicate variables of the model, and is not needed 
+        # after introducing the Parameter class, similar to the base SSM class in the hmm part
         self.param_keys = ["initial_mean", "initial_covariance",
                            "dynamics_matrix", "dynamics_input_weights", "dynamics_bias", "dynamics_covariance",
                            "emission_matrix", "emission_input_weights", "emission_bias", "emission_covariance"]
@@ -172,6 +206,22 @@ class LinearGaussianSSM:
             .log_prob(emissions)
             .sum()
         )
+        return lp
+
+    def log_prior(self):
+        d_matrix = self._join_matrix(self.dynamics_matrix, 
+                                     self.dynamics_input_weights, 
+                                     self.dynamics_bias,
+                                     self._db_indicator)
+        e_matrix = self._join_matrix(self.emission_matrix, 
+                                     self.emission_input_weights, 
+                                     self.emission_bias,
+                                     self._eb_indicator)
+        
+        lp = self.initial_prior.log_prob((self.initial_covariance, self.initial_mean))
+        lp += self.dynamics_prior.log_prob((self.dynamics_covariance, d_matrix))
+        lp += self.emission_prior.log_prob((self.emission_covariance, e_matrix))
+        
         return lp
 
     def marginal_log_prob(self, emissions, inputs=None):
@@ -336,8 +386,50 @@ class LinearGaussianSSM:
         self.dynamics_bias = b
         self.emission_input_weights = D
         self.emission_bias = d
-    
-    def fit_em(self, batch_emissions, num_iters=50):
+
+    def map_step(self, batch_stats):
+        """The maxinum a posterior estimate of the parameters of the model,
+           using MatrixNormalInverseWishart prior for (Q, [F, B]) and (R, (H, D)),
+           and NormalInverseWishart prior for (initial_covariance, initial_mean)
+
+        Args:
+            batch_stats: 
+        """
+        # Sum the statistics across all batches 
+        _stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
+        init_stats, dynamics_stats, emission_stats = _stats
+        
+        # Initial posterior distribution 
+        initial_posterior = niw_posterior_update(self.initial_prior, init_stats)
+        S, m = initial_posterior.mode()
+
+        # Dynamics posterior distribution
+        dynamics_posterior = mniw_posterior_update(self.dynamics_prior, dynamics_stats)
+        Q, FB = dynamics_posterior.mode()
+        F = FB[:, :self.state_dim]
+        B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
+            else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
+
+        # Emission posterior distribution
+        emission_posterior = mniw_posterior_update(self.emission_prior, emission_stats)
+        R, HD = emission_posterior.mode()
+        H = HD[:, :self.state_dim]
+        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
+            else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
+        
+        self.dynamics_matrix = F
+        self.dynamics_covariance = Q
+        self.emission_matrix = H
+        self.emission_covariance = R
+        self.initial_mean = m
+        self.initial_covariance = S
+        self.dynamics_input_weights = B
+        self.dynamics_bias = b
+        self.emission_input_weights = D
+        self.emission_bias = d
+
+    def fit_em(self, batch_emissions, num_iters=50, method='MAP'):
+        assert method in {'MAP', 'MLE'}
         @jit
         def em_step(_params):
             self.params = _params
@@ -346,11 +438,19 @@ class LinearGaussianSSM:
             _params = self.params
             return _params, marginal_loglikes.sum()
 
+        def emap_step(_params):
+            self.params = _params
+            log_pri = self.log_prior()
+            posterior_stats, marginal_loglikes = self.e_step(batch_emissions)
+            self.map_step(posterior_stats)     
+            _params = self.params
+            return _params, log_pri + marginal_loglikes.sum()
+
         log_probs = []
         _params = self.params
         
         for _ in trange(num_iters):
-            _params, marginal_loglik = em_step(_params)
+            _params, marginal_loglik = em_step(_params) if method=='MLE' else emap_step(_params)
             log_probs.append(marginal_loglik)
         
         self.params = _params
@@ -370,4 +470,10 @@ class LinearGaussianSSM:
     @classmethod
     def tree_unflatten(cls, aux_data, children):
         return cls.from_unconstrained_params(children, aux_data)
+    
+    def _join_matrix(self, F, B, b, indicator):
+        if not indicator:
+            return jnp.concatenate((F, B), axis=1)
+        else:
+            return jnp.concatenate((F, B, b[:,None]), axis=1)
     
