@@ -114,33 +114,31 @@ def gauss_chain_bp(gauss_chain_pots, obs):
     """
     prior_pot, latent_pots, emission_pots = gauss_chain_pots.to_tuple()
 
-    # Extract first emission  potential
-    init_emission_pot = jax.tree_map(lambda a: a[0], emission_pots)
-    emission_pots_rest = jax.tree_map(lambda a: a[1:], emission_pots)
+    local_evidence_pots = vmap(partial(pair_cpot_condition, obs_var=2))(emission_pots, obs)
+
+    # Extract first local evidence potential
+    init_local_evidence_pot = jax.tree_map(lambda a: a[0], local_evidence_pots)
+    local_evidence_pots_rest = jax.tree_map(lambda a: a[1:], local_evidence_pots)
 
     # Combine first emission message with prior
-    init_emission_message = pair_cpot_condition(init_emission_pot, obs[0], obs_var=2)
-    init_carry = info_multiply(prior_pot, init_emission_message)
+    init_carry = info_multiply(prior_pot, init_local_evidence_pot)
 
     def _forward_step(carry, x):
         prev_bel = carry
-        latent_pot, emission_pot, y = x
+        latent_pot, local_evidence_pot, y = x
 
         # Calculate latent message
         latent_pot = pair_cpot_absorb_message(latent_pot, prev_bel, message_var=1)
         latent_message = pair_cpot_marginalize(latent_pot, marginalize_onto=2)
 
-        # Calculate emission message
-        emission_message = pair_cpot_condition(emission_pot, y, obs_var=2)
-
         # Combine messages
-        bel = info_multiply(latent_message, emission_message)
+        bel = info_multiply(latent_message, local_evidence_pot)
 
         return bel, (bel, latent_message)
 
     # Message pass forwards along chain
     _, (filtered_bels, forward_messages) = lax.scan(
-        _forward_step, init_carry, (latent_pots, emission_pots_rest, obs[1:])
+        _forward_step, init_carry, (latent_pots, local_evidence_pots_rest, obs[1:])
     )
     # Append first belief
     filtered_bels = jax.tree_map(lambda h, t: jnp.row_stack((h[None, ...], t)), init_carry, filtered_bels)
