@@ -22,6 +22,7 @@ def test_clg_potential():
     # Condition on z
     K_cond, h_cond = info_condition(Kyy, Kzy.T, hy, z)
 
-    # TODO: get this comment right.
+    # Check that conditioning phi(z,y) on z returns the same parameters as 
+    #  explicitly calculating linear conditional.
     assert _all_close(Lambda, K_cond)
     assert _all_close(Lambda @ (A @ z + offset), h_cond)
