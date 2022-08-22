@@ -5,6 +5,8 @@ from ssm_jax.bp.gauss_chain import gauss_chain_potentials_from_lgssm, gauss_chai
 from ssm_jax.linear_gaussian_ssm.info_inference import lgssm_info_smoother
 from ssm_jax.linear_gaussian_ssm.info_inference_test import build_lgssm_moment_and_info_form
 
+_all_close = lambda x,y: jnp.allclose(x,y,rtol=1e-3, atol=1e-3)
+
 def test_gauss_chain_bp():
     """Test that Gaussian chain belief propagation gets the same results as 
      information form RTS smoother."""
@@ -19,13 +21,12 @@ def test_gauss_chain_bp():
 
     lgssm_info_posterior = lgssm_info_smoother(lgssm_info, y, inputs)
 
-    prior_pot, chain_pots = gauss_chain_potentials_from_lgssm(lgssm_info, inputs)
+    chain_pots = gauss_chain_potentials_from_lgssm(lgssm_info, inputs)
 
-    bels = gauss_chain_bp(chain_pots, prior_pot, y)
-    Ks, hs = bels
+    smoothed_bels = gauss_chain_bp(chain_pots, y)
+    Ks, hs = smoothed_bels
 
-    assert jnp.allclose(lgssm_info_posterior.smoothed_precisions,Ks,
-                       rtol=1e-3)
-    assert jnp.allclose(lgssm_info_posterior.smoothed_etas,hs,
-                       rtol=1e-3)
+    assert _all_close(lgssm_info_posterior.smoothed_precisions,Ks)
+    assert _all_close(lgssm_info_posterior.smoothed_etas,hs)
+                    
 

@@ -3,13 +3,13 @@ import chex
 import jax
 from jax import vmap, lax, jit
 from jax import numpy as jnp
-from ssm_jax.bp.gauss_bp import (
+from ssm_jax.bp.gauss_bp_utils import (
     potential_from_conditional_linear_gaussian,
     pair_cpot_condition,
-    pair_cpot_marginalise,
+    pair_cpot_marginalize,
     pair_cpot_absorb_message,
     info_multiply,
-    info_divide
+    info_divide,
 )
 
 
@@ -25,7 +25,11 @@ class GaussianChainPotentials:
       instance in temporal models. This means that the potential parameters can be
       stacked as rows for and used with `jax.vmap` and `jax.lax.scan`.
 
-      lambda_pots: A tuple containing the parameters for each pairwise latent
+    Attributes:
+      prior_pot: A tuple containg the parameters for the prior potential over
+                  the first latent state (K, h).
+
+      latent_pots: A tuple containing the parameters for each pairwise latent
                     clique potential - ((K11, K12, K22),(h1, h2)). The ith row
                     of each array contains parameters for the clique containing
                     the pair of latent states at times (i, i+1).
@@ -43,39 +47,52 @@ class GaussianChainPotentials:
                          h2 - (T, D_obs)
     """
 
+    prior_pot: chex.Array
     latent_pots: chex.Array
     obs_pots: chex.Array
 
 
-def gauss_chain_potentials_from_lgssm(lgssm_params, inputs):
+def gauss_chain_potentials_from_lgssm(lgssm_params, inputs, T=None):
     """Construct pairwise latent and emission clique potentials from model.
 
     Args:
         lgssm_params: an LGSSMInfoParams instance.
-        inputs: (T,D_in): array of inputs.
+        inputs (T,D_in): array of inputs.
+        T (int): number of timesteps to to unroll the lgssm, only used if
+                  `inputs=None`.
 
     Returns:
         prior_pot: A tuple of parameters representing the prior potential,
                     (Lambda0, eta0)
     """
+    if inputs is None:
+        if T is not None:
+            D_in = lgssm_params.dynamics_input_weights.shape[1]
+            inputs = jnp.zeros((T, D_in))
+        else:
+            raise ValueError("One of `inputs` or `T` must not be None.")
+
     B, b = lgssm_params.dynamics_input_weights, lgssm_params.dynamics_bias
     D, d = lgssm_params.emission_input_weights, lgssm_params.emission_bias
     latent_net_inputs = vmap(jnp.dot, (None, 0))(B, inputs) + b
     emission_net_inputs = vmap(jnp.dot, (None, 0))(D, inputs) + d
 
-    F, Q_prec = lgssm_params.dynamics_matrix, lgssm_params.dynamics_precision
-    H, R_prec = lgssm_params.emission_matrix, lgssm_params.emission_precision
-    latent_pots = vmap(potential_from_conditional_linear_gaussian, (None, 0, None))(F, latent_net_inputs[:-1], Q_prec)
-    emission_pots = vmap(potential_from_conditional_linear_gaussian, (None, 0, None))(H, emission_net_inputs, R_prec)
-    gauss_chain_potentials = GaussianChainPotentials(latent_pots=latent_pots, obs_pots=emission_pots)
-
     Lambda0, mu0 = lgssm_params.initial_precision, lgssm_params.initial_mean
     prior_pot = (Lambda0, Lambda0 @ mu0)
 
-    return prior_pot, gauss_chain_potentials
+    F, Q_prec = lgssm_params.dynamics_matrix, lgssm_params.dynamics_precision
+    latent_pots = vmap(potential_from_conditional_linear_gaussian, (None, 0, None))(F, latent_net_inputs[:-1], Q_prec)
+
+    H, R_prec = lgssm_params.emission_matrix, lgssm_params.emission_precision
+    emission_pots = vmap(potential_from_conditional_linear_gaussian, (None, 0, None))(H, emission_net_inputs, R_prec)
+
+    gauss_chain_potentials = GaussianChainPotentials(
+        prior_pot=prior_pot, latent_pots=latent_pots, obs_pots=emission_pots
+    )
+    return gauss_chain_potentials
 
 
-def gauss_chain_bp(gauss_chain_pots, prior_pot, obs):
+def gauss_chain_bp(gauss_chain_pots, obs):
     """Belief propagation on a Gaussian chain.
 
     Calculate the canonical parameters for the marginal probability of latent
@@ -83,20 +100,19 @@ def gauss_chain_bp(gauss_chain_pots, prior_pot, obs):
       p(x_t | y_{1:T}).
 
     Args:
-        gauss_chain_pots: GaussianChainPotentials object containing pairwise
-                            potentials for the latent and observed variables.
-        prior_pot: parameters of the prior potential for the first state in
-                    the chain, (Lambda0, eta0).
+        gauss_chain_pots: GaussianChainPotentials object containing the prior
+                           potential for the first latent state and pairwise
+                           potentials for the latent and observed variables.
         obs (T,D_obs): Array containing the observations.
 
     Returns:
-        bels_down: canonical parameters of marginal distribution of each latent 
-                    state condition on all observations, (K_down, h_down) with
-                    shapes,
-                       K_down (T, D_hid, D_hid)
-                       h_down (T, D_hid).
+        smoothed_bels: canonical parameters of marginal distribution of each latent
+                        state condition on all observations, (K_smoothed, h_smoothed) with
+                        shapes,
+                           K_smoothed (T, D_hid, D_hid)
+                           h_smoothed (T, D_hid).
     """
-    latent_pots, emission_pots = gauss_chain_pots.to_tuple()
+    prior_pot, latent_pots, emission_pots = gauss_chain_pots.to_tuple()
 
     # Extract first emission  potential
     init_emission_pot = jax.tree_map(lambda a: a[0], emission_pots)
@@ -112,7 +128,7 @@ def gauss_chain_bp(gauss_chain_pots, prior_pot, obs):
 
         # Calculate latent message
         latent_pot = pair_cpot_absorb_message(latent_pot, prev_bel, message_var=1)
-        latent_message = pair_cpot_marginalise(latent_pot, marg_var=2)
+        latent_message = pair_cpot_marginalize(latent_pot, marginalize_onto=2)
 
         # Calculate emission message
         emission_message = pair_cpot_condition(emission_pot, y, obs_var=2)
@@ -123,13 +139,15 @@ def gauss_chain_bp(gauss_chain_pots, prior_pot, obs):
         return bel, (bel, latent_message)
 
     # Message pass forwards along chain
-    _, (bels, messages) = lax.scan(_forward_step, init_carry, (latent_pots, emission_pots_rest, obs[1:]))
+    _, (filtered_bels, forward_messages) = lax.scan(
+        _forward_step, init_carry, (latent_pots, emission_pots_rest, obs[1:])
+    )
     # Append first belief
-    bels_up = jax.tree_map(lambda h, t: jnp.row_stack((h[None, ...], t)), init_carry, bels)
+    filtered_bels = jax.tree_map(lambda h, t: jnp.row_stack((h[None, ...], t)), init_carry, filtered_bels)
 
     # Extract final belief
-    init_carry = jax.tree_map(lambda a: a[-1], bels_up)
-    bels_rest = jax.tree_map(lambda a: a[:-1], bels_up)
+    init_carry = jax.tree_map(lambda a: a[-1], filtered_bels)
+    filtered_bels_rest = jax.tree_map(lambda a: a[:-1], filtered_bels)
 
     def _backward_step(carry, x):
         prev_bel = carry
@@ -139,14 +157,16 @@ def gauss_chain_bp(gauss_chain_pots, prior_pot, obs):
         bel_minus_message_up = info_divide(prev_bel, message_up)
         # Absorb into joint potential
         latent_pot = pair_cpot_absorb_message(latent_pot, bel_minus_message_up, message_var=2)
-        message_down = pair_cpot_marginalise(latent_pot, marg_var=1)
+        message_down = pair_cpot_marginalize(latent_pot, marginalize_onto=1)
 
         bel = info_multiply(bel, message_down)
         return bel, bel
 
     # Message pass back along chain
-    _, bels_down = lax.scan(_backward_step, init_carry, (bels_rest, messages, latent_pots), reverse=True)
+    _, smoothed_bels = lax.scan(
+        _backward_step, init_carry, (filtered_bels_rest, forward_messages, latent_pots), reverse=True
+    )
     # Append final belief
-    bels_down = jax.tree_map(lambda h, t: jnp.row_stack((h, t[None, ...])), bels_down, init_carry)
+    smoothed_bels = jax.tree_map(lambda h, t: jnp.row_stack((h, t[None, ...])), smoothed_bels, init_carry)
 
-    return bels_down
+    return smoothed_bels

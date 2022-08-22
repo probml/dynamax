@@ -4,61 +4,15 @@ from jax import numpy as jnp
 from jax.tree_util import tree_map
 
 
-def block_split(A, idx):
-    """Split square matrix A into four blocks at `idx`
-
-    For example splitting
-        [[0, 1, 2],
-         [3, 4, 5],
-         [6, 7 ,8]]
-    at idx = 2 produces:
-        ([[0,1],[3,4]],
-         [[2],[5]],
-         [[6,7]],
-         [[8]]).
-
-    Args:
-        A (D, D): array.
-        idx: int.
-    Returns:
-        A11 (dim1, dim1)
-        A12 (dim2, dim1)
-        A21 (dim1, dim2)
-        A22 (dim2, dim2)
-       where `dim1 + dim2 == D` and `dim2 = D - idx`.
-    """
-    split_array = jnp.array([idx])
-    vblocks = jnp.vsplit(A, split_array)
-    # [leaf for tree in forest for leaf in tree]
-    blocks = [block for vblock in vblocks for block in jnp.hsplit(vblock, split_array)]
-    # Can also do:
-    #   blocks = tree_map(lambda arr: jnp.hsplit(arr,split_array),vblocks)
-    # followed by a tree_flatten
-    return blocks
-
-
-def block_join(A11, A12, A21, A22):
-    return jnp.block([[A11, A12], [A21, A22]])
-
-
-def block_rev(A, idx):
-    blocks = block_split(A, idx)
-    return block_join(*blocks[::-1])
-
-
-def vec_swap(a, idx):
-    return jnp.concatenate((a[idx:], a[:idx]))
-
-
-def info_marginalise(K_blocks, hs):
-    """Calculate the parameters of marginalised MVN.
+def info_marginalize(Kxx, Kxy, Kyy, hx, hy):
+    """Calculate the parameters of marginalized MVN.
 
     For x, y joint distributed as
         p(x, y) = Nc(x,y| h, K),
     the marginal distribution of x is given by:
         p(y) = \int p(x, y) dx = Nc(y | hy_marg, Ky_marg)
     where,
-        hy_marg = h2 - Kyx Kxx^{-1} h1
+        hy_marg = hy - Kyx Kxx^{-1} hx
         Ky_marg = Kyy - Kyx Kxx^{-1} Kxy
 
     Args:
@@ -73,8 +27,6 @@ def info_marginalise(K_blocks, hs):
         Ky_marg (dim_y, dim_y): marginal precision matrix.
         hy_marg (dim_y,1): marginal precision weighted mean.
     """
-    Kxx, Kxy, Kyy = K_blocks
-    hx, hy = hs
     G = jnp.linalg.solve(Kxx, Kxy)
     Ky_marg = Kyy - Kxy.T @ G
     hy_marg = hy - G.T @ hx
@@ -99,50 +51,84 @@ def info_condition(Kxx, Kxy, hx, y):
     return Kxx, hx - Kxy @ y
 
 
-def potential_from_conditional_linear_gaussian(A, u, Lambda):
-    """Express a conditional linear gaussian as a potential in canonical form.
+def potential_from_conditional_linear_gaussian(A, offset, Lambda):
+    """Express a conditional linear Gaussian as a potential in canonical form.
 
-    p(y|z) = N(y | Az + u, Lambda^{-1})
+    p(y|z) = N(y | Az + offset, Lambda^{-1})
            \prop exp( -0.5(y z)^T K (y z) + (y z)^T h )
     where,
         K = (Lambda; -Lambda A,  -A.T Lambda; A.T Lambda A)
-        h = (Lambda u, -A.T Lambda u)
+        h = (Lambda offset, -A.T Lambda offset)
 
     Args:
-        A (dim1, dim2)
-        u (dim1,1)
-        Lambda (dim1, dim1)
+        A (dim_y, dim_z)
+        offset (dim_y,1)
+        Lambda (dim_y, dim_y)
     Returns:
-        K (dim1 + dim2, dim1 + dim2)
-        h (dim1 + dim2,1)
+        K (dim_z + dim_y, dim_z + dim_y)
+        h (dim_z + dim_y,1)
     """
     Kzy = -A.T @ Lambda
     Kzz = -Kzy @ A
     Kyy = Lambda
-    hy = Lambda @ u
+    hy = Lambda @ offset
     hz = -A.T @ hy
     return (Kzz, Kzy, Kyy), (hz, hy)
 
 
 def info_multiply(params1, params2):
-    """Calculate parameters resulting from multiplying gaussians."""
+    """Calculate parameters resulting from multiplying Gaussians potentials.
+
+    As all the resultant parameters are the sum of the parameters of the two
+     potentials being multiplied, then `params1` and `params2` can be any 
+     PyTree of potential parameters as long as the corresponding parameters 
+     of the two input potentials occupy the same leaves of the PyTree.
+
+    For example, 
+        phi(K1,h2) * phi(K2, h2) = phi(K1 + K2, h1 + h2)
+
+    Args:
+        params1: PyTree of potential parameters.
+        params2: PyTree of potential parameters with the same tree structure
+                  as `params1`.
+
+    Returns:
+        params_out: PyTree of resultant potential parameters.
+    """
     return tree_map(lambda a, b: a + b, params1, params2)
 
 
 def info_divide(params1, params2):
-    """Calculate parameters resulting from dividing gaussians."""
+    """Calculate parameters resulting from dividing Gaussian potentials.
+
+    As all the resultant parameters are the difference between the parameters 
+     of the two potentials being divided, then `params1` and `params2` can be
+     any PyTree of potential parameters as long as the corresponding parameters 
+     of the two input potentials occupy the same leaves of the PyTree.
+
+    For example, 
+        phi(K1,h2) / phi(K2, h2) = phi(K1 - K2, h1 - h2)
+
+    Args:
+        params1: PyTree of potential parameters.
+        params2: PyTree of potential parameters with the same tree structure
+                  as `params1`.
+
+    Returns:
+        params_out: PyTree of resultant potential parameters.
+    """
     return tree_map(lambda a, b: a - b, params1, params2)
 
 
 @partial(jit, static_argnums=2)
 def pair_cpot_condition(cpot, obs, obs_var):
-    """Convenience function for conditioning gaussian potentials involving two
+    """Convenience function for conditioning Gaussian potentials involving two
      variables.
 
     Args:
         cpot: canonical parameters of the potential, stored as nested tuples
                 of the form,
-                  ((K11, K12, K22), (h1, h1)).
+                  ((K11, K12, K22), (h1, h2)).
         obs: observation.
         obs_var (int): the label of the variable being condition on.
 
@@ -160,32 +146,32 @@ def pair_cpot_condition(cpot, obs, obs_var):
 
 
 @partial(jit, static_argnums=1)
-def pair_cpot_marginalise(cpot, marg_var):
-    """Convenience function for marginalising gaussian potentials involving two
+def pair_cpot_marginalize(cpot, marginalize_onto):
+    """Convenience function for marginalizing Gaussian potentials involving two
      variables.
 
     Args:
         cpot: canonical parameters of the potential, stored as nested tuples
                 of the form,
-                  ((K11, K12, K22), (h1, h1)).
-        marg_var (int): the label of the output marginal variable.
+                  ((K11, K12, K22), (h1, h2)).
+        marginalize_onto (int): the label of the output marginal variable.
 
     Returns:
         marg_pot: canonical parameters of the marginal potential,
                     (K_marg, h_marg).
     """
-    if marg_var == 1:
-        (K11, K12, K22), (h1, h2) = cpot
-        return info_marginalise((K22, K12.T, K11), (h2, h1))
-    elif marg_var == 2:
-        return info_marginalise(*cpot)
+    (K11, K12, K22), (h1, h2) = cpot
+    if marginalize_onto == 1:
+        return info_marginalize(K22, K12.T, K11, h2, h1)
+    elif marginalize_onto == 2:
+        return info_marginalize(K11, K12, K22, h1, h2)
     else:
         raise ValueError("marg_var must take a value of either 1 or 2.")
 
 
 @partial(jit, static_argnums=2)
 def pair_cpot_absorb_message(cpot, message, message_var):
-    """Convenience function for absorbing a message into a gaussain potential
+    """Convenience function for absorbing a message into a Gaussain potential
      involving two variables.
 
     Args:
