@@ -428,12 +428,12 @@ class LinearGaussianSSM:
         self.emission_input_weights = D
         self.emission_bias = d
 
-    def fit_em(self, batch_emissions, num_iters=50, method='MAP'):
+    def fit_em(self, batch_emissions, batch_inputs=None, num_iters=50, method='MAP'):
         assert method in {'MAP', 'MLE'}
         @jit
         def em_step(_params):
             self.params = _params
-            posterior_stats, marginal_loglikes = self.e_step(batch_emissions)
+            posterior_stats, marginal_loglikes = self.e_step(batch_emissions, batch_inputs)
             self.m_step(posterior_stats)     
             _params = self.params
             return _params, marginal_loglikes.sum()
@@ -441,7 +441,7 @@ class LinearGaussianSSM:
         def emap_step(_params):
             self.params = _params
             log_pri = self.log_prior()
-            posterior_stats, marginal_loglikes = self.e_step(batch_emissions)
+            posterior_stats, marginal_loglikes = self.e_step(batch_emissions, batch_inputs)
             self.map_step(posterior_stats)     
             _params = self.params
             return _params, log_pri + marginal_loglikes.sum()
