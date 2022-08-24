@@ -7,7 +7,7 @@ from ssm_jax.hmm.models.base import StandardHMM
 
 
 @register_pytree_node_class
-class CategoricalRegressionHMM(StandardHMM):
+class LogisticRegressionHMM(StandardHMM):
 
     def __init__(self,
                  initial_probabilities,
@@ -32,12 +32,12 @@ class CategoricalRegressionHMM(StandardHMM):
         self._emission_biases = Parameter(emission_biases)
 
     @classmethod
-    def random_initialization(cls, key, num_states, num_classes, feature_dim):
+    def random_initialization(cls, key, num_states, feature_dim):
         key1, key2, key3, key4 = jr.split(key, 4)
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
-        emission_matrices = jr.normal(key3, (num_states, num_classes, feature_dim))
-        emission_biases = jr.normal(key4, (num_states, num_classes))
+        emission_matrices = jr.normal(key3, (num_states, feature_dim))
+        emission_biases = jr.normal(key4, (num_states,))
         return cls(initial_probs, transition_matrix, emission_matrices, emission_biases)
 
     # Properties to get various parameters of the model
@@ -49,10 +49,6 @@ class CategoricalRegressionHMM(StandardHMM):
     def emission_biases(self):
         return self._emission_biases
 
-    @property
-    def num_classes(self):
-        return self.emission_probs.value.shape[2]
-
     def emission_distribution(self, state, **covariates):
         logits = self._emission_matrices.value[state] @ covariates['features'] + self._emission_biases.value[state]
-        return tfd.Categorical(logits=logits)
+        return tfd.Bernoulli(logits=logits)

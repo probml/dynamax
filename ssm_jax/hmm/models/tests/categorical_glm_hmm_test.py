@@ -29,3 +29,10 @@ class TestCategoricalGLMHMM:
         state_sequence, emissions = hmm.sample(key2, num_timesteps, features=features)
         assert len(emissions) == len(state_sequence) == num_timesteps
         assert len(jnp.unique(emissions)) == self.num_classes
+
+    def test_fit(self, key=jr.PRNGKey(0), num_timesteps=1000):
+        key1, key2 = jr.split(key, 2)
+        hmm = new_hmm()
+        features = jr.normal(key1, (num_timesteps, self.num_features))
+        state_sequence, emissions = hmm.sample(key2, num_timesteps, features=features)
+        lps = hmm.fit_em(emissions[None, ...], num_iters=2, features=features[None, ...])
