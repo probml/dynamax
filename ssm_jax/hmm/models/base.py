@@ -342,7 +342,7 @@ class StandardHMM(BaseHMM):
 
         self.initial_probs.freeze()
         self.transition_matrix.freeze()
-        # TODO: Check whether parameters for the emission distribution are frozen or not before updating
+
         self._m_step_emissions(batch_emissions, batch_posteriors, **generic_mstep_kwargs, **batch_covariates)
 
         if not is_initial_probs_frozen:
