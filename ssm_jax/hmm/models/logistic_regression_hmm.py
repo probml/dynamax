@@ -54,8 +54,10 @@ class LogisticRegressionHMM(StandardHMM):
         return self._emission_biases
 
     def log_prior(self):
-        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
-        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
+        lp = 0.0
+        if self.num_states > 1:
+            lp += tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
+            lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
         lp += tfd.Normal(0, self._emnission_matrices_variance.value).log_prob(self.emission_matrices.value).sum()
         return lp
 

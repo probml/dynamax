@@ -291,11 +291,19 @@ class StandardHMM(BaseHMM):
         if self.initial_probs.is_frozen:
             return
 
+        if self.num_states == 1:
+            self.initial_probs.value = jnp.array([1.0])
+            return
+
         post = tfd.Dirichlet(self._initial_probs_concentration.value + batch_posteriors.initial_probs.sum(axis=0))
         self._initial_probs.value = post.mode()
 
     def _m_step_transition_matrix(self, batch_emissions, batch_posteriors, **batch_covariates):
         if self.transition_matrix.is_frozen:
+            return
+
+        if self.num_states == 1:
+            self.transition_matrix.value = jnp.array([[1.0]])
             return
 
         post = tfd.Dirichlet(self._transition_matrix_concentration.value + batch_posteriors.trans_probs.sum(axis=0))
