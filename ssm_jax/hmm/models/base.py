@@ -154,7 +154,7 @@ class BaseHMM(SSM):
                                  num_epochs=num_sgd_epochs_per_mstep)
         self.unconstrained_params = params
 
-    def fit_em(self, batch_emissions, num_iters=50, mstep_kwargs=dict(), **batch_covariates):
+    def fit_em(self, batch_emissions, num_iters=50, mstep_kwargs=dict(), verbose=True, **batch_covariates):
         """Fit this HMM with Expectation-Maximization (EM).
         Args:
             batch_emissions (_type_): _description_
@@ -173,7 +173,8 @@ class BaseHMM(SSM):
 
         log_probs = []
         params = self.unconstrained_params
-        for _ in trange(num_iters):
+        pbar = trange(num_iters) if verbose else range(num_iters)
+        for _ in pbar:
             params, lp = em_step(params)
             log_probs.append(lp)
 
