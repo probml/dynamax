@@ -173,11 +173,6 @@ class GaussianMixtureHMM(StandardHMM):
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
         lp += tfd.Dirichlet(self._emission_mixture_weights_concentration.value).log_prob(
             self.emission_mixture_weights.value).sum()
-        print(self._emission_prior_mean.value.shape,
-              self._emission_prior_mean_concentration.value.shape,
-                   self._emission_prior_df.value.shape,
-                   self._emission_prior_scale.value.shape,
-                   self._emission_means.value, self._emission_covs.value.shape)
         lp += vmap(lambda mu, sigma: vmap(lambda mu0, conc0, df0, scale0, mu, sigma: NormalInverseWishart(
                    mu0, conc0, df0, scale0).log_prob((sigma, mu)))(self._emission_prior_mean.value,
                                                                    self._emission_prior_mean_concentration.value,
