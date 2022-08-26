@@ -58,49 +58,61 @@ class GaussianMixtureHMM(StandardHMM):
                  emission_prior_mean=0.,
                  emission_prior_mean_concentration=1e-4,
                  emission_prior_extra_df=1e-4,
-                 emission_prior_covariance_matrices_scale=0.1):
+                 emission_prior_scale=0.1):
 
         super().__init__(initial_probabilities,
                          transition_matrix,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
-        self._emission_mixture_weights = Parameter(weights, bijector=tfb.Invert(tfb.SoftmaxCentered()))
+        self._emission_mixture_weights = Parameter(weights,
+                                                   bijector=tfb.Invert(tfb.SoftmaxCentered()))
         self._emission_means = Parameter(emission_means)
-        self._emission_covs = Parameter(emission_covariance_matrices, bijector=PSDToRealBijector)
+        self._emission_covs = Parameter(emission_covariance_matrices,
+                                        bijector=PSDToRealBijector)
 
         num_states, num_components, emission_dim = emission_means.shape
 
-        _emission_mixture_weights_concentration = emission_mixture_weights_concentration * jnp.ones(
-            (num_components,)) if isinstance(emission_mixture_weights_concentration,
-                                             float) else emission_mixture_weights_concentration
+        if isinstance(emission_mixture_weights_concentration, float):
+            _emission_mixture_weights_concentration = emission_mixture_weights_concentration * jnp.ones((num_components,))
+        else:
+            _emission_mixture_weights_concentration = emission_mixture_weights_concentration
         assert _emission_mixture_weights_concentration.shape == (num_components,)
         self._emission_mixture_weights_concentration = Parameter(_emission_mixture_weights_concentration,
                                                                  is_frozen=True,
                                                                  bijector=tfb.Invert(tfb.Softplus()))
-
-        _emission_prior_mean = emission_prior_mean * jnp.ones(
-            (num_components, emission_dim)) if isinstance(emission_prior_mean, float) else emission_prior_mean
+        if isinstance(emission_prior_mean, float):
+            _emission_prior_mean = emission_prior_mean * jnp.ones((num_components, emission_dim))
+        else:
+            _emission_prior_mean = emission_prior_mean
         assert _emission_prior_mean.shape == (num_components, emission_dim)
-        self._emission_prior_mean = Parameter(_emission_prior_mean, is_frozen=True)
+        self._emission_prior_mean = Parameter(_emission_prior_mean,
+                                              is_frozen=True)
 
-        _emission_prior_mean_concentration = emission_prior_mean_concentration * jnp.ones(
-            (num_components,)) if isinstance(emission_prior_mean_concentration,
-                                             float) else emission_prior_mean_concentration
+        if isinstance(emission_prior_mean_concentration, float):
+            _emission_prior_mean_concentration = emission_prior_mean_concentration * jnp.ones((num_components,))
+        else:
+            _emission_prior_mean_concentration = emission_prior_mean_concentration
         assert _emission_prior_mean_concentration.shape == (num_components,)
-        self._emission_prior_mean_concentration = Parameter(_emission_prior_mean_concentration, is_frozen=True)
+        self._emission_prior_mean_concentration = Parameter(_emission_prior_mean_concentration,
+                                                            is_frozen=True)
 
-        _emission_prior_covariance_matrices_df = emission_dim + emission_prior_extra_df * jnp.ones(
-            (num_components,)) if isinstance(emission_prior_extra_df, float) else emission_dim + emission_prior_extra_df
-        assert _emission_prior_covariance_matrices_df.shape == (num_components,)
-        self._emission_prior_covariance_matrices_df = Parameter(_emission_prior_covariance_matrices_df, is_frozen=True)
+        if isinstance(emission_prior_extra_df, float):
+            _emission_prior_df = emission_dim + emission_prior_extra_df * jnp.ones((num_components,))
+        else:
+            _emission_prior_df = emission_dim + emission_prior_extra_df
+        assert _emission_prior_df.shape == (num_components,)
+        self._emission_prior_df = Parameter(_emission_prior_df, is_frozen=True)
 
-        _emission_prior_covariance_matrices_scale = emission_prior_covariance_matrices_scale * jnp.ones(
-            (num_components, emission_dim, emission_dim)) if isinstance(
-                emission_prior_covariance_matrices_scale, float) else emission_prior_covariance_matrices_scale
-        assert _emission_prior_covariance_matrices_scale.shape == (num_components, emission_dim, emission_dim)
-        self._emission_prior_covariance_matrices_scale = Parameter(_emission_prior_covariance_matrices_scale,
-                                                                   is_frozen=True)
+        if isinstance(emission_prior_scale, float):
+            _emission_prior_scale = emission_prior_scale * jnp.eye(emission_dim) * jnp.ones((num_components,
+                                                                                             emission_dim,
+                                                                                             emission_dim))
+        else:
+            _emission_prior_scale = emission_prior_scale
+        assert _emission_prior_scale.shape == (num_components, emission_dim, emission_dim)
+        self._emission_prior_scale = Parameter(_emission_prior_scale,
+                                               is_frozen=True)
 
     @classmethod
     def random_initialization(cls, key, num_states, num_components, emission_dim, emissions=None):
@@ -108,13 +120,12 @@ class GaussianMixtureHMM(StandardHMM):
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
         emission_mixture_weights = jr.dirichlet(key3, jnp.ones(num_components), shape=(num_states,))
+        
         if emissions is None:
             emission_means = jr.normal(key4, (num_states, num_components, emission_dim))
         else:
-            
             main_kmeans = KMeans(n_clusters=num_states,
                                  random_state=42)
-            
             covariance_matrix = None
             labels = main_kmeans.fit_predict(emissions)
             main_centroid = np.mean(main_kmeans.cluster_centers_, axis=0)
@@ -132,11 +143,11 @@ class GaussianMixtureHMM(StandardHMM):
                     m_cluster = jr.multivariate_normal(key4, main_centroid, cov=covariance_matrix, size=num_components)
                     emission_means.append(m_cluster)
             emission_means = jnp.vstack(emission_means)
+        
         emission_covs = jnp.eye(emission_dim) * jnp.ones((num_states, num_components, emission_dim, emission_dim))
         return cls(initial_probs, transition_matrix, emission_mixture_weights, emission_means, emission_covs)
 
     # Properties to get various parameters of the model
-
     @property
     def emission_mixture_weights(self):
         return self._emission_mixture_weights
@@ -150,20 +161,33 @@ class GaussianMixtureHMM(StandardHMM):
         return self._emission_covs
 
     def emission_distribution(self, state):
-        return tfd.MixtureSameFamily(
-            mixture_distribution=tfd.Categorical(probs=self._emission_mixture_weights.value[state]),
-            components_distribution=tfd.MultivariateNormalFullCovariance(
-                loc=self._emission_means.value[state], covariance_matrix=self._emission_covs.value[state]))
+        return tfd.MixtureSameFamily(mixture_distribution=tfd.Categorical(
+                                        probs=self._emission_mixture_weights.value[state]),
+                                     components_distribution=tfd.MultivariateNormalFullCovariance(
+                                        loc=self._emission_means.value[state],
+                                        covariance_matrix=self._emission_covs.value[state]
+                                    ))
 
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
         lp += tfd.Dirichlet(self._emission_mixture_weights_concentration.value).log_prob(
             self.emission_mixture_weights.value).sum()
+        print(self._emission_prior_mean.value.shape,
+              self._emission_prior_mean_concentration.value.shape,
+                   self._emission_prior_df.value.shape,
+                   self._emission_prior_scale.value.shape,
+                   self._emission_means.value, self._emission_covs.value.shape)
+        lp += vmap(lambda mu, sigma: vmap(lambda mu0, conc0, df0, scale0, mu, sigma: NormalInverseWishart(
+                   mu0, conc0, df0, scale0).log_prob((sigma, mu)))(self._emission_prior_mean.value,
+                                                                   self._emission_prior_mean_concentration.value,
+                                                                   self._emission_prior_df.value,
+                                                                   self._emission_prior_scale.value,
+                                                                   mu,
+                                                                   sigma))(self._emission_means.value, self._emission_covs.value).sum()
         return lp
 
     # Expectation-maximization (EM) code
-
     def e_step(self, batch_emissions):
 
         def _single_e_step(emissions):
@@ -177,10 +201,10 @@ class GaussianMixtureHMM(StandardHMM):
 
             def prob_fn(x):
                 logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalFullCovariance(
-                    loc=mus, covariance_matrix=sigmas).log_prob(x) + jnp.log(weights))(
-                        self._emission_means.value, self._emission_covs.value, self._emission_mixture_weights.value)
+                                    loc=mus, covariance_matrix=sigmas).log_prob(x) + jnp.log(weights))(self._emission_means.value,
+                                                                                                       self._emission_covs.value,
+                                                                                                       self._emission_mixture_weights.value)
                 logprobs = logprobs - logsumexp(logprobs, axis=-1, keepdims=True)
-
                 return jnp.exp(logprobs)
 
             prob_denses = vmap(prob_fn)(emissions)
@@ -202,17 +226,25 @@ class GaussianMixtureHMM(StandardHMM):
 
     def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
-
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         def _single_m_step(Sx, SxxT, N):
 
             def posterior_mode(loc, mean_concentration, df, scale, *stats):
-                niw_prior = NormalInverseWishart(loc=loc, mean_concentration=mean_concentration, df=df, scale=scale)
+                niw_prior = NormalInverseWishart(loc=loc,
+                                                 mean_concentration=mean_concentration,
+                                                 df=df,
+                                                 scale=scale)
                 return niw_posterior_update(niw_prior, stats).mode()
 
             nu_post = self._emission_mixture_weights_concentration.value + N
-            return tfd.Dirichlet(nu_post).mode(), *vmap(posterior_mode)(self._emission_prior_mean.value, self._emission_prior_mean_concentration.value, self._emission_prior_covariance_matrices_df.value, self._emission_prior_covariance_matrices_scale.value, Sx, SxxT, N)
+            return tfd.Dirichlet(nu_post).mode(), *vmap(posterior_mode)(self._emission_prior_mean.value,
+                                                                        self._emission_prior_mean_concentration.value,
+                                                                        self._emission_prior_df.value,
+                                                                        self._emission_prior_scale.value,
+                                                                        Sx,
+                                                                        SxxT,
+                                                                        N)
 
         emission_mixture_weights, covariance_matrices, means = vmap(_single_m_step)(stats.Sx, stats.SxxT, stats.N)
         self._emission_mixture_weights.value = emission_mixture_weights

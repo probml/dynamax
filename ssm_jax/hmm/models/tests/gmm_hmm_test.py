@@ -37,5 +37,5 @@ def test_fit(key=jr.PRNGKey(0), num_states=4, num_mix=3, emission_dim=2, n_sampl
 
     # Mess up the parameters and see if we can re-learn them.
     hmm = GaussianMixtureHMM.random_initialization(key1, num_states, num_mix, emission_dim)
-    lps = hmm.fit_em(emissions[None, ...], 10)
+    lps = hmm.fit_em(emissions[None, ...])
     assert monotonically_increasing(lps)
