@@ -212,10 +212,7 @@ class GaussianMixtureHMM(StandardHMM):
                 return niw_posterior_update(niw_prior, stats).mode()
 
             nu_post = self._emission_mixture_weights_concentration.value + N
-            return tfd.Dirichlet(nu_post).mode(), *vmap(posterior_mode)(
-                self._emission_prior_mean.value, self._emission_prior_mean_concentration.value,
-                self._emission_prior_covariance_matrices_df.value, self._emission_prior_covariance_matrices_scale.value,
-                Sx, SxxT, N)
+            return tfd.Dirichlet(nu_post).mode(), *vmap(posterior_mode)(self._emission_prior_mean.value, self._emission_prior_mean_concentration.value, self._emission_prior_covariance_matrices_df.value, self._emission_prior_covariance_matrices_scale.value, Sx, SxxT, N)
 
         emission_mixture_weights, covariance_matrices, means = vmap(_single_m_step)(stats.Sx, stats.SxxT, stats.N)
         self._emission_mixture_weights.value = emission_mixture_weights
