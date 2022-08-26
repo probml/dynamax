@@ -115,38 +115,109 @@ class GaussianMixtureHMM(StandardHMM):
                                                is_frozen=True)
 
     @classmethod
-    def random_initialization(cls, key, num_states, num_components, emission_dim, emissions=None):
+    def random_initialization(cls, key, num_states, num_components, emission_dim):
         key1, key2, key3, key4 = jr.split(key, 4)
         initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
         emission_mixture_weights = jr.dirichlet(key3, jnp.ones(num_components), shape=(num_states,))
-        
-        if emissions is None:
-            emission_means = jr.normal(key4, (num_states, num_components, emission_dim))
-        else:
-            main_kmeans = KMeans(n_clusters=num_states,
-                                 random_state=42)
-            covariance_matrix = None
-            labels = main_kmeans.fit_predict(emissions)
-            main_centroid = np.mean(main_kmeans.cluster_centers_, axis=0)
-            emission_means = []
-            for label in range(num_states):
-                kmeans = KMeans(n_clusters=num_states, random_state=label)
-                cluster = emissions[jnp.where(labels == label)]
-                if cluster.shape[0] >= num_components:
-                    kmeans.fit(np.array(cluster))
-                    emission_means.append(jnp.array(kmeans.cluster_centers_))
-                else:
-                    if covariance_matrix is None:
-                        covariance_matrix = jnp.cov(emissions.T) + 1e-6 * jnp.eye(emission_dim)
-                    key4, key = jr.split(key)
-                    m_cluster = jr.multivariate_normal(key4, main_centroid, cov=covariance_matrix, size=num_components)
-                    emission_means.append(m_cluster)
-            emission_means = jnp.vstack(emission_means)
-        
+        emission_means = jr.normal(key4, (num_states, num_components, emission_dim))
         emission_covs = jnp.eye(emission_dim) * jnp.ones((num_states, num_components, emission_dim, emission_dim))
         return cls(initial_probs, transition_matrix, emission_mixture_weights, emission_means, emission_covs)
 
+    @classmethod
+    def kmeans_initialization(cls, key, num_states, num_components, emission_dim, emissions):
+        key0, key1 = jr.split(key)
+        hmm = GaussianMixtureHMM.random_initialization(key0,
+                                                       num_states,
+                                                       num_components,
+                                                       emission_dim)  
+        # https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py#L876
+        main_kmeans = KMeans(n_clusters=num_states,
+                             random_state=42)
+        covariance_matrix = None
+        labels = main_kmeans.fit_predict(emissions)
+        main_centroid = jnp.mean(main_kmeans.cluster_centers_, axis=0)
+        emission_means = []
+        keys = jr.split(key1, num_states)
+
+        for label, key in enumerate(keys):
+            cluster = emissions[jnp.where(labels == label)]
+            needed = num_components
+            centers = None
+        
+            if len(cluster):
+                kmeans = KMeans(n_clusters=min(num_components, len(cluster)),
+                                random_state=label)
+                kmeans.fit(np.array(cluster))
+                centers = jnp.array(kmeans.cluster_centers_)
+                needed = num_components - len(centers)
+   
+            if needed:
+                if covariance_matrix is None:
+                    covariance_matrix = jnp.cov(emissions.T) + 1e-6 * jnp.eye(emission_dim)
+                random_centers = jr.multivariate_normal(key,
+                                                        main_centroid,
+                                                        cov=covariance_matrix,
+                                                        shape=(needed,))
+                if centers is None:
+                    emission_means.append(random_centers)
+                else:
+                    emission_means.append(jnp.vstack([centers, random_centers]))
+            else:
+                emission_means.append(centers)
+
+        emission_means = jnp.array(emission_means)
+        hmm._emission_means.value = emission_means
+        return hmm
+
+    @classmethod
+    def kmeans_plusplus_initialization(cls, key, num_states, num_components, emission_dim, emissions):
+        key0, key1 = jr.split(key)
+        hmm = GaussianMixtureHMM.random_initialization(key0,
+                                                       num_states,
+                                                       num_components,
+                                                       emission_dim)  
+        
+        centers, labels = kmeans_plusplus(np.array(emissions),
+                                          n_clusters=num_states,
+                                          random_state=42)
+        
+        main_centroid = jnp.mean(centers, axis=0)
+        covariance_matrix = None
+
+        emission_means = []
+        keys = jr.split(key1, num_states)
+
+        for label, key in enumerate(keys):
+            cluster = emissions[jnp.where(labels == label)]
+            needed = num_components
+            centers = None
+            
+            if len(cluster):
+                centers, _ = kmeans_plusplus(cluster,
+                                             n_clusters=min(num_components, len(cluster)),
+                                             random_state=label)
+                centers = jnp.array(centers)
+                needed = num_components - len(centers)
+  
+            if needed:
+                if covariance_matrix is None:
+                    covariance_matrix = jnp.cov(emissions.T) + 1e-6 * jnp.eye(emission_dim)
+                random_centers = jr.multivariate_normal(key,
+                                                        main_centroid,
+                                                        cov=covariance_matrix,
+                                                        shape=(needed,))
+                if centers is None:
+                    emission_means.append(random_centers)
+                else:
+                    emission_means.append(jnp.vstack([centers, random_centers]))
+            else:
+                emission_means.append(centers)
+        
+        emission_means = jnp.array(emission_means)
+        hmm._emission_means.value = emission_means
+        return hmm
+    
     # Properties to get various parameters of the model
     @property
     def emission_mixture_weights(self):
