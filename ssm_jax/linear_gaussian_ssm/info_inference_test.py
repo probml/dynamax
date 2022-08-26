@@ -23,9 +23,9 @@ def info_to_moment_form(etas, Lambdas):
     return means, covs
 
 
-class TestInfoFilteringAndSmoothing:
-    """Test information form filtering and smoothing by comparing it to moment
-    form.
+def build_lgssm_moment_and_info_form():
+    """Construct example LinearGaussianSSM and equivalent LGSSMInfoParams 
+    object for testing.
     """
 
     delta = 1.0
@@ -79,10 +79,20 @@ class TestInfoFilteringAndSmoothing:
         emission_input_weights=D,
         emission_bias=d,
     )
+    return lgssm, lgssm_info
+
+
+class TestInfoFilteringAndSmoothing:
+    """Test information form filtering and smoothing by comparing it to moment
+    form.
+    """
+
+    lgssm, lgssm_info = build_lgssm_moment_and_info_form()
 
     # Sample data from model.
     key = jr.PRNGKey(111)
     num_timesteps = 15
+    input_size = lgssm.dynamics_input_weights.shape[1]
     inputs = jnp.zeros((num_timesteps, input_size))
     x, y = lgssm.sample(key, num_timesteps, inputs)
 
