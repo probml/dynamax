@@ -387,49 +387,7 @@ class LinearGaussianSSM:
         self.emission_input_weights = D
         self.emission_bias = d
 
-    def map_step(self, batch_stats):
-        """The maxinum a posterior estimate of the parameters of the model,
-           using MatrixNormalInverseWishart prior for (Q, [F, B]) and (R, (H, D)),
-           and NormalInverseWishart prior for (initial_covariance, initial_mean)
-
-        Args:
-            batch_stats: 
-        """
-        # Sum the statistics across all batches 
-        _stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
-        init_stats, dynamics_stats, emission_stats = _stats
-        
-        # Initial posterior distribution 
-        initial_posterior = niw_posterior_update(self.initial_prior, init_stats)
-        S, m = initial_posterior.mode()
-
-        # Dynamics posterior distribution
-        dynamics_posterior = mniw_posterior_update(self.dynamics_prior, dynamics_stats)
-        Q, FB = dynamics_posterior.mode()
-        F = FB[:, :self.state_dim]
-        B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
-            else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
-
-        # Emission posterior distribution
-        emission_posterior = mniw_posterior_update(self.emission_prior, emission_stats)
-        R, HD = emission_posterior.mode()
-        H = HD[:, :self.state_dim]
-        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
-            else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
-        
-        self.dynamics_matrix = F
-        self.dynamics_covariance = Q
-        self.emission_matrix = H
-        self.emission_covariance = R
-        self.initial_mean = m
-        self.initial_covariance = S
-        self.dynamics_input_weights = B
-        self.dynamics_bias = b
-        self.emission_input_weights = D
-        self.emission_bias = d
-
-    def fit_em(self, batch_emissions, batch_inputs=None, num_iters=50, method='MAP'):
-        assert method in {'MAP', 'MLE'}
+    def fit_em(self, batch_emissions, batch_inputs=None, num_iters=50, method='MLE'):
         @jit
         def em_step(_params):
             self.params = _params
@@ -438,19 +396,11 @@ class LinearGaussianSSM:
             _params = self.params
             return _params, marginal_loglikes.sum()
 
-        def emap_step(_params):
-            self.params = _params
-            log_pri = self.log_prior()
-            posterior_stats, marginal_loglikes = self.e_step(batch_emissions, batch_inputs)
-            self.map_step(posterior_stats)     
-            _params = self.params
-            return _params, log_pri + marginal_loglikes.sum()
-
         log_probs = []
         _params = self.params
         
         for _ in trange(num_iters):
-            _params, marginal_loglik = em_step(_params) if method=='MLE' else emap_step(_params)
+            _params, marginal_loglik = em_step(_params) 
             log_probs.append(marginal_loglik)
         
         self.params = _params
