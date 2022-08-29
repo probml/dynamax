@@ -3,10 +3,13 @@ from abc import abstractmethod
 
 import jax.numpy as jnp
 import jax.random as jr
+import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from jax import lax
+from jax import lax, vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
+
+from ssm_jax.optimize import run_sgd
 
 
 @register_pytree_node_class
@@ -168,6 +171,51 @@ class SSM(ABC):
         items = sorted(self.__dict__.items())
         hyper_values = [val for key, val in items if (not isinstance(Parameter) or val.is_frozen)]
         return hyper_values
+    
+    def fit_sgd(self,
+                batch_emissions,
+                optimizer=optax.adam(1e-3),
+                batch_size=1,
+                num_epochs=50,
+                shuffle=False,
+                key=jr.PRNGKey(0),
+                **batch_covariates):
+        """
+        Fit this HMM by running SGD on the marginal log likelihood.
+        Note that batch_emissions is initially of shape (N,T)
+        where N is the number of independent sequences and
+        T is the length of a sequence. Then, a random susbet with shape (B, T)
+        of entire sequence, not time steps, is sampled at each step where B is
+        batch size.
+        Args:
+            batch_emissions (chex.Array): Independent sequences.
+            optmizer (optax.Optimizer): Optimizer.
+            batch_size (int): Number of sequences used at each update step.
+            num_epochs (int): Iterations made through entire dataset.
+            shuffle (bool): Indicates whether to shuffle minibatches.
+            key (chex.PRNGKey): RNG key to shuffle minibatches.
+        Returns:
+            losses: Output of loss_fn stored at each step.
+        """
+        def _loss_fn(params, minibatch_emissions, **minibatch_covariates):
+            """Default objective function."""
+            self.unconstrained_params = params
+            scale = len(batch_emissions) / len(minibatch_emissions)
+            minibatch_lls = vmap(self.marginal_log_prob)(minibatch_emissions, **minibatch_covariates)
+            lp = self.log_prior() + minibatch_lls.sum() * scale
+            return -lp / batch_emissions.size
+
+        params, losses = run_sgd(_loss_fn,
+                                 self.unconstrained_params,
+                                 batch_emissions,
+                                 optimizer=optimizer,
+                                 batch_size=batch_size,
+                                 num_epochs=num_epochs,
+                                 shuffle=shuffle,
+                                 key=key,
+                                 **batch_covariates)
+        self.unconstrained_params = params
+        return losses
 
     # Generic implementation of tree_flatten and unflatten. This assumes that
     # the Parameters are all valid JAX PyTree nodes.
