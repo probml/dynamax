@@ -65,16 +65,15 @@ class GaussianMixtureHMM(StandardHMM):
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
-        self._emission_mixture_weights = Parameter(weights,
-                                                   bijector=tfb.Invert(tfb.SoftmaxCentered()))
+        self._emission_mixture_weights = Parameter(weights, bijector=tfb.Invert(tfb.SoftmaxCentered()))
         self._emission_means = Parameter(emission_means)
-        self._emission_covs = Parameter(emission_covariance_matrices,
-                                        bijector=PSDToRealBijector)
+        self._emission_covs = Parameter(emission_covariance_matrices, bijector=PSDToRealBijector)
 
         num_states, num_components, emission_dim = emission_means.shape
 
         if isinstance(emission_mixture_weights_concentration, float):
-            _emission_mixture_weights_concentration = emission_mixture_weights_concentration * jnp.ones((num_components,))
+            _emission_mixture_weights_concentration = emission_mixture_weights_concentration * jnp.ones(
+                (num_components,))
         else:
             _emission_mixture_weights_concentration = emission_mixture_weights_concentration
         assert _emission_mixture_weights_concentration.shape == (num_components,)
@@ -86,16 +85,14 @@ class GaussianMixtureHMM(StandardHMM):
         else:
             _emission_prior_mean = emission_prior_mean
         assert _emission_prior_mean.shape == (num_components, emission_dim)
-        self._emission_prior_mean = Parameter(_emission_prior_mean,
-                                              is_frozen=True)
+        self._emission_prior_mean = Parameter(_emission_prior_mean, is_frozen=True)
 
         if isinstance(emission_prior_mean_concentration, float):
             _emission_prior_mean_concentration = emission_prior_mean_concentration * jnp.ones((num_components,))
         else:
             _emission_prior_mean_concentration = emission_prior_mean_concentration
         assert _emission_prior_mean_concentration.shape == (num_components,)
-        self._emission_prior_mean_concentration = Parameter(_emission_prior_mean_concentration,
-                                                            is_frozen=True)
+        self._emission_prior_mean_concentration = Parameter(_emission_prior_mean_concentration, is_frozen=True)
 
         if isinstance(emission_prior_extra_df, float):
             _emission_prior_df = emission_dim + emission_prior_extra_df * jnp.ones((num_components,))
@@ -105,14 +102,12 @@ class GaussianMixtureHMM(StandardHMM):
         self._emission_prior_df = Parameter(_emission_prior_df, is_frozen=True)
 
         if isinstance(emission_prior_scale, float):
-            _emission_prior_scale = emission_prior_scale * jnp.eye(emission_dim) * jnp.ones((num_components,
-                                                                                             emission_dim,
-                                                                                             emission_dim))
+            _emission_prior_scale = emission_prior_scale * jnp.eye(emission_dim) * jnp.ones(
+                (num_components, emission_dim, emission_dim))
         else:
             _emission_prior_scale = emission_prior_scale
         assert _emission_prior_scale.shape == (num_components, emission_dim, emission_dim)
-        self._emission_prior_scale = Parameter(_emission_prior_scale,
-                                               is_frozen=True)
+        self._emission_prior_scale = Parameter(_emission_prior_scale, is_frozen=True)
 
     @classmethod
     def random_initialization(cls, key, num_states, num_components, emission_dim):
@@ -127,13 +122,9 @@ class GaussianMixtureHMM(StandardHMM):
     @classmethod
     def kmeans_initialization(cls, key, num_states, num_components, emission_dim, emissions):
         key0, key1 = jr.split(key)
-        hmm = GaussianMixtureHMM.random_initialization(key0,
-                                                       num_states,
-                                                       num_components,
-                                                       emission_dim)  
+        hmm = GaussianMixtureHMM.random_initialization(key0, num_states, num_components, emission_dim)
         # https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py#L876
-        main_kmeans = KMeans(n_clusters=num_states,
-                             random_state=42)
+        main_kmeans = KMeans(n_clusters=num_states, random_state=42)
         covariance_matrix = None
         labels = main_kmeans.fit_predict(emissions)
         main_centroid = jnp.mean(main_kmeans.cluster_centers_, axis=0)
@@ -144,21 +135,17 @@ class GaussianMixtureHMM(StandardHMM):
             cluster = emissions[jnp.where(labels == label)]
             needed = num_components
             centers = None
-        
+
             if len(cluster):
-                kmeans = KMeans(n_clusters=min(num_components, len(cluster)),
-                                random_state=label)
+                kmeans = KMeans(n_clusters=min(num_components, len(cluster)), random_state=label)
                 kmeans.fit(np.array(cluster))
                 centers = jnp.array(kmeans.cluster_centers_)
                 needed = num_components - len(centers)
-   
+
             if needed:
                 if covariance_matrix is None:
                     covariance_matrix = jnp.cov(emissions.T) + 1e-6 * jnp.eye(emission_dim)
-                random_centers = jr.multivariate_normal(key,
-                                                        main_centroid,
-                                                        cov=covariance_matrix,
-                                                        shape=(needed,))
+                random_centers = jr.multivariate_normal(key, main_centroid, cov=covariance_matrix, shape=(needed,))
                 if centers is None:
                     emission_means.append(random_centers)
                 else:
@@ -173,15 +160,10 @@ class GaussianMixtureHMM(StandardHMM):
     @classmethod
     def kmeans_plusplus_initialization(cls, key, num_states, num_components, emission_dim, emissions):
         key0, key1 = jr.split(key)
-        hmm = GaussianMixtureHMM.random_initialization(key0,
-                                                       num_states,
-                                                       num_components,
-                                                       emission_dim)  
-        
-        centers, labels = kmeans_plusplus(np.array(emissions),
-                                          n_clusters=num_states,
-                                          random_state=42)
-        
+        hmm = GaussianMixtureHMM.random_initialization(key0, num_states, num_components, emission_dim)
+
+        centers, labels = kmeans_plusplus(np.array(emissions), n_clusters=num_states, random_state=42)
+
         main_centroid = jnp.mean(centers, axis=0)
         covariance_matrix = None
 
@@ -192,32 +174,27 @@ class GaussianMixtureHMM(StandardHMM):
             cluster = emissions[jnp.where(labels == label)]
             needed = num_components
             centers = None
-            
+
             if len(cluster):
-                centers, _ = kmeans_plusplus(cluster,
-                                             n_clusters=min(num_components, len(cluster)),
-                                             random_state=label)
+                centers, _ = kmeans_plusplus(cluster, n_clusters=min(num_components, len(cluster)), random_state=label)
                 centers = jnp.array(centers)
                 needed = num_components - len(centers)
-  
+
             if needed:
                 if covariance_matrix is None:
                     covariance_matrix = jnp.cov(emissions.T) + 1e-6 * jnp.eye(emission_dim)
-                random_centers = jr.multivariate_normal(key,
-                                                        main_centroid,
-                                                        cov=covariance_matrix,
-                                                        shape=(needed,))
+                random_centers = jr.multivariate_normal(key, main_centroid, cov=covariance_matrix, shape=(needed,))
                 if centers is None:
                     emission_means.append(random_centers)
                 else:
                     emission_means.append(jnp.vstack([centers, random_centers]))
             else:
                 emission_means.append(centers)
-        
+
         emission_means = jnp.array(emission_means)
         hmm._emission_means.value = emission_means
         return hmm
-    
+
     # Properties to get various parameters of the model
     @property
     def emission_mixture_weights(self):
@@ -232,12 +209,10 @@ class GaussianMixtureHMM(StandardHMM):
         return self._emission_covs
 
     def emission_distribution(self, state):
-        return tfd.MixtureSameFamily(mixture_distribution=tfd.Categorical(
-                                        probs=self._emission_mixture_weights.value[state]),
-                                     components_distribution=tfd.MultivariateNormalFullCovariance(
-                                        loc=self._emission_means.value[state],
-                                        covariance_matrix=self._emission_covs.value[state]
-                                    ))
+        return tfd.MixtureSameFamily(
+            mixture_distribution=tfd.Categorical(probs=self._emission_mixture_weights.value[state]),
+            components_distribution=tfd.MultivariateNormalFullCovariance(
+                loc=self._emission_means.value[state], covariance_matrix=self._emission_covs.value[state]))
 
     def log_prior(self):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
@@ -245,12 +220,10 @@ class GaussianMixtureHMM(StandardHMM):
         lp += tfd.Dirichlet(self._emission_mixture_weights_concentration.value).log_prob(
             self.emission_mixture_weights.value).sum()
         lp += vmap(lambda mu, sigma: vmap(lambda mu0, conc0, df0, scale0, mu, sigma: NormalInverseWishart(
-                   mu0, conc0, df0, scale0).log_prob((sigma, mu)))(self._emission_prior_mean.value,
-                                                                   self._emission_prior_mean_concentration.value,
-                                                                   self._emission_prior_df.value,
-                                                                   self._emission_prior_scale.value,
-                                                                   mu,
-                                                                   sigma))(self._emission_means.value, self._emission_covs.value).sum()
+            mu0, conc0, df0, scale0).log_prob((sigma, mu)))
+                   (self._emission_prior_mean.value, self._emission_prior_mean_concentration.value, self.
+                    _emission_prior_df.value, self._emission_prior_scale.value, mu, sigma))(
+                        self._emission_means.value, self._emission_covs.value).sum()
         return lp
 
     # Expectation-maximization (EM) code
@@ -267,9 +240,8 @@ class GaussianMixtureHMM(StandardHMM):
 
             def prob_fn(x):
                 logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalFullCovariance(
-                                    loc=mus, covariance_matrix=sigmas).log_prob(x) + jnp.log(weights))(self._emission_means.value,
-                                                                                                       self._emission_covs.value,
-                                                                                                       self._emission_mixture_weights.value)
+                    loc=mus, covariance_matrix=sigmas).log_prob(x) + jnp.log(weights))(
+                        self._emission_means.value, self._emission_covs.value, self._emission_mixture_weights.value)
                 logprobs = logprobs - logsumexp(logprobs, axis=-1, keepdims=True)
                 return jnp.exp(logprobs)
 
@@ -297,20 +269,17 @@ class GaussianMixtureHMM(StandardHMM):
         def _single_m_step(Sx, SxxT, N):
 
             def posterior_mode(loc, mean_concentration, df, scale, *stats):
-                niw_prior = NormalInverseWishart(loc=loc,
-                                                 mean_concentration=mean_concentration,
-                                                 df=df,
-                                                 scale=scale)
+                niw_prior = NormalInverseWishart(loc=loc, mean_concentration=mean_concentration, df=df, scale=scale)
                 return niw_posterior_update(niw_prior, stats).mode()
 
             nu_post = self._emission_mixture_weights_concentration.value + N
-            return tfd.Dirichlet(nu_post).mode(), *vmap(posterior_mode)(self._emission_prior_mean.value,
-                                                                        self._emission_prior_mean_concentration.value,
-                                                                        self._emission_prior_df.value,
-                                                                        self._emission_prior_scale.value,
-                                                                        Sx,
-                                                                        SxxT,
-                                                                        N)
+            emission_mixture_weights = tfd.Dirichlet(nu_post).mode()
+            covariance_matrices, means = vmap(posterior_mode)(self._emission_prior_mean.value,
+                                                              self._emission_prior_mean_concentration.value,
+                                                              self._emission_prior_df.value,
+                                                              self._emission_prior_scale.value, Sx, SxxT, N)
+
+            return emission_mixture_weights, covariance_matrices, means
 
         emission_mixture_weights, covariance_matrices, means = vmap(_single_m_step)(stats.Sx, stats.SxxT, stats.N)
         self._emission_mixture_weights.value = emission_mixture_weights
