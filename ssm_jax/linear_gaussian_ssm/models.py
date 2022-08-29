@@ -83,10 +83,6 @@ class LinearGaussianSSM(SSM):
         self._dynamics_bias = Parameter(dynamics_bias)
         self._emission_input_weights = Parameter(emission_input_weights)
         self._emission_bias = Parameter(emission_bias) 
-        
-        self.param_keys = ["_initial_mean", "_initial_covariance",
-                           "_dynamics_matrix", "_dynamics_input_weights", "_dynamics_bias", "_dynamics_covariance",
-                           "_emission_matrix", "_emission_input_weights", "_emission_bias", "_emission_covariance"]
 
         # Initialize prior distributions 
         if priors is None:
@@ -130,6 +126,10 @@ class LinearGaussianSSM(SSM):
         assert self.emission_input_weights.shape[-2:] == (self.emission_dim, self.input_dim)
         assert self.emission_bias.shape[-1:] == (self.emission_dim,)
         assert self.emission_covariance.shape == (self.emission_dim, self.emission_dim)
+        
+        self.param_keys = ["_initial_mean", "_initial_covariance",
+                           "_dynamics_matrix", "_dynamics_input_weights", "_dynamics_bias", "_dynamics_covariance",
+                           "_emission_matrix", "_emission_input_weights", "_emission_bias", "_emission_covariance"]
 
     @classmethod
     def random_initialization(cls, key, state_dim, emission_dim, input_dim=0):
