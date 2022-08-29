@@ -200,15 +200,15 @@ class LinearGaussianSSM(SSM):
         return MVN(self.initial_mean, self.initial_covariance)
     
     def transition_distribution(self, state, **covariates):
-        if input not in covariates:
-            input = jnp.zeros(self.input_dim)
-        return MVN(self.dynamics_matrix @ state + self.dynamics_input_weights @ input + self.dynamics_bias,
+        if 'inputs' not in covariates:
+            inputs = jnp.zeros(self.input_dim)
+        return MVN(self.dynamics_matrix @ state + self.dynamics_input_weights @ inputs + self.dynamics_bias,
                    self.dynamics_covariance)
     
     def emission_distribution(self, state, **covariates):
-        if input not in covariates:
-            input = jnp.zeros(self.input_dim)
-        return MVN(self.emission_matrix @ state + self.emission_input_weights @ input + self.emission_bias,
+        if 'inputs' not in covariates:
+            inputs = jnp.zeros(self.input_dim)
+        return MVN(self.emission_matrix @ state + self.emission_input_weights @ inputs + self.emission_bias,
                    self.emission_covariance)
 
     def log_prior(self):
