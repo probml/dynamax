@@ -6,7 +6,6 @@ from jax import random as jr
 from jax import lax, vmap, jit
 from jax.tree_util import tree_map, register_pytree_node_class
 
-import blackjax
 from distrax import MultivariateNormalFullCovariance as MVN
 
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother
