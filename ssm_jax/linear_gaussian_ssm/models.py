@@ -196,19 +196,17 @@ class LinearGaussianSSM(SSM):
     def emission_covariance(self):
         return self._emission_covariance.value
     
-    def initial_distribution(self):
+    def initial_distribution(self, **covariates):
         return MVN(self.initial_mean, self.initial_covariance)
     
     def transition_distribution(self, state, **covariates):
-        if 'inputs' not in covariates:
-            inputs = jnp.zeros(self.input_dim)
-        return MVN(self.dynamics_matrix @ state + self.dynamics_input_weights @ inputs + self.dynamics_bias,
+        input = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
+        return MVN(self.dynamics_matrix @ state + self.dynamics_input_weights @ input + self.dynamics_bias,
                    self.dynamics_covariance)
     
     def emission_distribution(self, state, **covariates):
-        if 'inputs' not in covariates:
-            inputs = jnp.zeros(self.input_dim)
-        return MVN(self.emission_matrix @ state + self.emission_input_weights @ inputs + self.emission_bias,
+        input = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
+        return MVN(self.emission_matrix @ state + self.emission_input_weights @ input + self.emission_bias,
                    self.emission_covariance)
 
     def log_prior(self):
