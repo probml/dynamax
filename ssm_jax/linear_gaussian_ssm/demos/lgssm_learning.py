@@ -33,7 +33,7 @@ def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, metho
     elif method in ['MLE', 'MAP']:
         marginal_lls = test_model.fit_em(jnp.array([emissions]), num_iters=num_iters, method=method)
 
-    #assert jnp.all(jnp.diff(marginal_lls) > -1e-4)
+    assert jnp.all(jnp.diff(marginal_lls) > -1e-4)
 
     if not test_mode:
         plt.figure()
