@@ -16,7 +16,6 @@ from ssm_jax.utils import PSDToRealBijector
 from ssm_jax.abstractions import SSM, Parameter
 
 
-
 _get_shape = lambda x, dim: x.shape[1:] if x.ndim == dim + 1 else x.shape
 
 @register_pytree_node_class
@@ -92,7 +91,7 @@ class LinearGaussianSSM(SSM):
         if self.initial_prior is None:
             self.initial_prior = NIW(loc=self.initial_mean,
                                      mean_concentration=1.,
-                                     df=self.state_dim,
+                                     df=self.state_dim + 0.1,
                                      scale=jnp.eye(self.state_dim))
             
         if self.dynamics_prior is None:
@@ -102,7 +101,7 @@ class LinearGaussianSSM(SSM):
                                       self._db_indicator)
             self.dynamics_prior = MNIW(loc=loc_d, 
                                        col_precision=jnp.eye(loc_d.shape[1]),
-                                       df=self.state_dim, 
+                                       df=self.state_dim + 0.1, 
                                        scale=jnp.eye(self.state_dim))
             
         if self.emission_prior is None:
@@ -112,7 +111,7 @@ class LinearGaussianSSM(SSM):
                                       self._eb_indicator)
             self.emission_prior = MNIW(loc=loc_e, 
                                        col_precision=jnp.eye(loc_e.shape[1]),
-                                       df=self.emission_dim, 
+                                       df=self.emission_dim + 0.1, 
                                        scale=jnp.eye(self.emission_dim))
 
         # Check shapes
@@ -339,7 +338,7 @@ class LinearGaussianSSM(SSM):
         # TODO: what's the best way to vectorize/parallelize this?
         return vmap(_single_e_step)(batch_emissions, batch_inputs)
     
-    def m_step(self, batch_stats):
+    def m_step(self, batch_stats, method='MLE'):
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
             W = jnp.linalg.solve(ExxT, ExyT).T
@@ -350,23 +349,43 @@ class LinearGaussianSSM(SSM):
         stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
         init_stats, dynamics_stats, emission_stats = stats
 
-        # initial distribution
-        sum_x0, sum_x0x0T, N = init_stats
-        S = (sum_x0x0T - jnp.outer(sum_x0, sum_x0)) / N
-        m = sum_x0 / N
+        if method=='MLE':
+            # Parameters of the initial state
+            sum_x0, sum_x0x0T, N = init_stats
+            S = (sum_x0x0T - jnp.outer(sum_x0, sum_x0)) / N
+            m = sum_x0 / N
+            
+            # Parameters of the dynamics model
+            FB, Q = fit_linear_regression(*dynamics_stats)
+            F = FB[:, :self.state_dim]
+            B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
+                else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
+                
+            # Parameters of the emission model
+            HD, R = fit_linear_regression(*emission_stats)
+            H = HD[:, :self.state_dim]
+            D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
+                else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
+                
+        elif method=='MAP':
+            # Parameters of the initial state
+            initial_posterior = niw_posterior_update(self.initial_prior, init_stats)
+            S, m = initial_posterior.mode()
 
-        # dynamics distribution
-        FB, Q = fit_linear_regression(*dynamics_stats)
-        F = FB[:, :self.state_dim]
-        B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
-            else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
+            # Parameters of the dynamics model
+            dynamics_posterior = mniw_posterior_update(self.dynamics_prior, dynamics_stats)
+            Q, FB = dynamics_posterior.mode()
+            F = FB[:, :self.state_dim]
+            B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
+                else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
 
-        # emission distribution
-        HD, R = fit_linear_regression(*emission_stats)
-        H = HD[:, :self.state_dim]
-        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
-            else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
-        
+            # Parameters of the emission model
+            emission_posterior = mniw_posterior_update(self.emission_prior, emission_stats)
+            R, HD = emission_posterior.mode()
+            H = HD[:, :self.state_dim]
+            D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
+                else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
+                
         self._initial_mean.value = m
         self._initial_covariance.value = S
         self._dynamics_matrix.value = F
@@ -385,7 +404,7 @@ class LinearGaussianSSM(SSM):
         def em_step(_params):
             self.params = _params
             posterior_stats, marginal_loglikes = self.e_step(batch_emissions, batch_inputs)
-            self.m_step(posterior_stats)     
+            self.m_step(posterior_stats, method=method)     
             _params = self.params
             return _params, marginal_loglikes.sum()
 
