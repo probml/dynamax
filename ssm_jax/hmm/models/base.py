@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 import jax.numpy as jnp
 import jax.random as jr
+from jax import value_and_grad
 import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
@@ -136,7 +137,7 @@ class BaseHMM(SSM):
             minibatch_lps = vmap(_single_expected_log_joint)(minibatch_emissions, minibatch_posteriors,
                                                              **minibatch_covariates)
             expected_log_joint = log_prior + minibatch_lps.sum() * scale
-            return -expected_log_joint / batch_emissions.size
+            return -expected_log_joint / tree_leaves(batch_emissions)[0].size
 
         # Minimize the negative expected log joint with SGD
         params, losses = run_sgd(neg_expected_log_joint,
@@ -145,7 +146,7 @@ class BaseHMM(SSM):
                                  num_epochs=num_sgd_epochs_per_mstep)
         self.unconstrained_params = params
 
-    def fit_em(self, batch_emissions, num_iters=50, mstep_kwargs=dict(), **batch_covariates):
+    def fit_em(self, batch_emissions, num_iters=50, mstep_kwargs=dict(), verbose=True, **batch_covariates):
         """Fit this HMM with Expectation-Maximization (EM).
         Args:
             batch_emissions (_type_): _description_
@@ -164,58 +165,13 @@ class BaseHMM(SSM):
 
         log_probs = []
         params = self.unconstrained_params
-        for _ in trange(num_iters):
+        pbar = trange(num_iters) if verbose else range(num_iters)
+        for _ in pbar:
             params, lp = em_step(params)
             log_probs.append(lp)
 
         self.unconstrained_params = params
         return jnp.array(log_probs)
-
-    def fit_sgd(self,
-                batch_emissions,
-                optimizer=optax.adam(1e-3),
-                batch_size=1,
-                num_epochs=50,
-                shuffle=False,
-                key=jr.PRNGKey(0),
-                **batch_covariates):
-        """
-        Fit this HMM by running SGD on the marginal log likelihood.
-        Note that batch_emissions is initially of shape (N,T)
-        where N is the number of independent sequences and
-        T is the length of a sequence. Then, a random susbet with shape (B, T)
-        of entire sequence, not time steps, is sampled at each step where B is
-        batch size.
-        Args:
-            batch_emissions (chex.Array): Independent sequences.
-            optmizer (optax.Optimizer): Optimizer.
-            batch_size (int): Number of sequences used at each update step.
-            num_epochs (int): Iterations made through entire dataset.
-            shuffle (bool): Indicates whether to shuffle minibatches.
-            key (chex.PRNGKey): RNG key to shuffle minibatches.
-        Returns:
-            losses: Output of loss_fn stored at each step.
-        """
-
-        def _loss_fn(params, minibatch_emissions, **minibatch_covariates):
-            """Default objective function."""
-            self.unconstrained_params = params
-            scale = len(batch_emissions) / len(minibatch_emissions)
-            minibatch_lls = vmap(self.marginal_log_prob)(minibatch_emissions, **minibatch_covariates)
-            lp = self.log_prior() + minibatch_lls.sum() * scale
-            return -lp / batch_emissions.size
-
-        params, losses = run_sgd(_loss_fn,
-                                 self.unconstrained_params,
-                                 batch_emissions,
-                                 optimizer=optimizer,
-                                 batch_size=batch_size,
-                                 num_epochs=num_epochs,
-                                 shuffle=shuffle,
-                                 key=key,
-                                 **batch_covariates)
-        self.unconstrained_params = params
-        return losses
 
 
 class StandardHMM(BaseHMM):
@@ -284,10 +240,24 @@ class StandardHMM(BaseHMM):
         return {}
 
     def _m_step_initial_probs(self, batch_emissions, batch_posteriors, **batch_covariates):
+        if self.initial_probs.is_frozen:
+            return
+
+        if self.num_states == 1:
+            self.initial_probs.value = jnp.array([1.0])
+            return
+
         post = tfd.Dirichlet(self._initial_probs_concentration.value + batch_posteriors.initial_probs.sum(axis=0))
         self._initial_probs.value = post.mode()
 
     def _m_step_transition_matrix(self, batch_emissions, batch_posteriors, **batch_covariates):
+        if self.transition_matrix.is_frozen:
+            return
+
+        if self.num_states == 1:
+            self.transition_matrix.value = jnp.array([[1.0]])
+            return
+
         post = tfd.Dirichlet(self._transition_matrix_concentration.value + batch_posteriors.trans_probs.sum(axis=0))
         self._transition_matrix.value = post.mode()
 
@@ -298,9 +268,14 @@ class StandardHMM(BaseHMM):
                           num_mstep_iters=50,
                           **batch_covariates):
 
-        def neg_expected_log_joint(params, minibatch):
-            minibatch_emissions, minibatch_posteriors, minibatch_covariates = minibatch
-            scale = len(batch_emissions) / len(minibatch_emissions)
+        # Freeze initial and transition distribution parameters
+        is_initial_probs_frozen = self.initial_probs.is_frozen
+        is_transition_matrix_frozen = self.transition_matrix.is_frozen
+        self.initial_probs.freeze()
+        self.transition_matrix.freeze()
+
+        # Define the objective
+        def neg_expected_log_joint(params):
             self.unconstrained_params = params
 
             def _single_expected_log_like(emissions, posterior, **covariates):
@@ -311,17 +286,35 @@ class StandardHMM(BaseHMM):
                 return lp
 
             log_prior = self.log_prior()
-            minibatch_ells = vmap(_single_expected_log_like)(minibatch_emissions, minibatch_posteriors,
-                                                             **minibatch_covariates)
-            expected_log_joint = log_prior + minibatch_ells.sum() * scale
-            return -expected_log_joint / batch_emissions.size
+            batch_ells = vmap(_single_expected_log_like)(
+                batch_emissions, batch_posteriors, **batch_covariates)
+            expected_log_joint = log_prior + batch_ells.sum()
+            return -expected_log_joint / tree_leaves(batch_emissions)[0].size
 
-        # Minimize the negative expected log joint with SGD
-        params, losses = run_sgd(neg_expected_log_joint,
-                                 self.unconstrained_params, (batch_emissions, batch_posteriors, batch_covariates),
-                                 optimizer=optimizer,
-                                 num_epochs=num_mstep_iters)
+        # Minimize the negative expected log joint with gradient descent
+        loss_grad_fn = value_and_grad(neg_expected_log_joint)
+        initial_params = self.unconstrained_params
+        opt_state = optimizer.init(initial_params)
+
+        # One step of the algorithm
+        def train_step(carry, args):
+            params, opt_state = carry
+            loss, grads = loss_grad_fn(params)
+            updates, opt_state = optimizer.update(grads, opt_state)
+            params = optax.apply_updates(params, updates)
+            return (params, opt_state), loss
+
+        # Run the optimizer
+        initial_carry =  (initial_params, opt_state)
+        (params, _), losses = lax.scan(train_step, initial_carry, None, length=num_mstep_iters)
         self.unconstrained_params = params
+
+        # Restore the initial and transition matrix freeze state
+        if not is_initial_probs_frozen:
+            self.initial_probs.unfreeze()
+
+        if not is_transition_matrix_frozen:
+            self.transition_matrix.unfreeze()
 
     def m_step(self,
                batch_emissions,
@@ -331,7 +324,6 @@ class StandardHMM(BaseHMM):
                    num_mstep_iters=50,
                ),
                **batch_covariates):
-
         is_initial_probs_frozen = self.initial_probs.is_frozen
         is_transition_matrix_frozen = self.transition_matrix.is_frozen
 

@@ -9,7 +9,8 @@ from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import Parameter
-from ssm_jax.distributions import NormalInverseWishart, niw_posterior_update
+from ssm_jax.distributions import NormalInverseWishart
+from ssm_jax.distributions import niw_posterior_update
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import ExponentialFamilyHMM
@@ -172,10 +173,10 @@ class GaussianHMM(ExponentialFamilyHMM):
                                          mean_concentration=self._emission_prior_conc.value,
                                          df=self._emission_prior_df.value,
                                          scale=self._emission_prior_scale.value)
-        
+
         # Find the posterior parameters of the NIW distribution
         def _single_m_step(sum_w, sum_x, sum_xxT):
-            niw_posterior = niw_posterior_update(niw_prior, (sum_xxT, sum_x, sum_w))
+            niw_posterior = niw_posterior_update(niw_prior, (sum_x, sum_xxT, sum_w))
             return niw_posterior.mode()
 
         covs, means = vmap(_single_m_step)(stats.sum_w, stats.sum_x, stats.sum_xxT)

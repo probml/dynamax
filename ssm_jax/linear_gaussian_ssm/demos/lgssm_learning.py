@@ -1,4 +1,3 @@
-from jax import jit
 import jax.numpy as jnp
 import jax.random as jr
 from jax import jit
@@ -6,10 +5,9 @@ from itertools import count
 import matplotlib.pyplot as plt
 
 from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
-from ssm_jax.linear_gaussian_ssm.learning import lgssm_fit_em
 
 
-def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False):
+def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, method='MLE'):
     keys = map(jr.PRNGKey, count())
 
     true_model = LinearGaussianSSM.random_initialization(next(keys), state_dim, emission_dim)
@@ -29,7 +27,7 @@ def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False):
     # Fit an LGSSM with EM
     num_iters = 50
     test_model = LinearGaussianSSM.random_initialization(next(keys), state_dim, emission_dim)
-    test_model, marginal_lls = lgssm_fit_em(test_model, jnp.array([emissions]), num_iters=num_iters)
+    marginal_lls = test_model.fit_em(jnp.array([emissions]), num_iters=num_iters, method=method)
 
     assert jnp.all(jnp.diff(marginal_lls) > -1e-4)
 

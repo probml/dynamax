@@ -31,14 +31,14 @@ if __name__ == "__main__":
     # Compute the most likely states
     most_likely_states = test_hmm.most_likely_states(emissions, features=features)
     # flip states (with current random seed, learned states are permuted)
-    permuted_states = 1 - most_likely_states 
+    permuted_states = 1 - most_likely_states
 
     # Predict the emissions given the true states
     As = test_hmm.emission_matrices.value[most_likely_states]
     bs = test_hmm.emission_biases.value[most_likely_states]
     predictions = vmap(lambda x, A, b: A @ x + b)(features, As, bs)
     predictions = jnp.argmax(predictions, axis=1)
-    
+
     offsets = 3 * jnp.arange(emission_dim)
     plt.imshow(permuted_states[None, :],
                extent=(0, num_timesteps, -3, 3 * emission_dim),
