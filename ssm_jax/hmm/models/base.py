@@ -144,7 +144,7 @@ class BaseHMM(SSM):
             minibatch_lps = vmap(_single_expected_log_joint)(
                 minibatch_emissions, minibatch_posteriors, **minibatch_covariates)
             expected_log_joint = log_prior + minibatch_lps.sum() * scale
-            return -expected_log_joint / batch_emissions.size
+            return -expected_log_joint / tree_leaves(batch_emissions)[0].size
 
         # Minimize the negative expected log joint with SGD
         params, losses = run_sgd(neg_expected_log_joint,
@@ -293,7 +293,7 @@ class StandardHMM(BaseHMM):
             batch_ells = vmap(_single_expected_log_like)(
                 batch_emissions, batch_posteriors, **batch_covariates)
             expected_log_joint = log_prior + batch_ells.sum()
-            return -expected_log_joint / batch_emissions.size
+            return -expected_log_joint / tree_leaves(batch_emissions)[0].size
 
         # Minimize the negative expected log joint with gradient descent
         loss_grad_fn = value_and_grad(neg_expected_log_joint)
