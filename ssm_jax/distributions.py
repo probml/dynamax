@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 from jax import vmap
 from jax.scipy.linalg import solve_triangular
+from numpy import int32
 from tensorflow_probability.substrates import jax as tfp
 
 tfd = tfp.distributions
@@ -279,9 +280,10 @@ def niw_posterior_update(niw_prior, sufficient_stats):
     df_pos = df_pri + N
     scale_pos = scale_pri + SxxT \
         + precision_pri*jnp.outer(loc_pri, loc_pri) - precision_pos*jnp.outer(loc_pos, loc_pos)
-
-    return NormalInverseWishart(loc=loc_pos, mean_concentration=precision_pos, df=int(df_pos), scale=scale_pos)
-
+    return NormalInverseWishart(loc=loc_pos, 
+                                mean_concentration=precision_pos, 
+                                df=df_pos, 
+                                scale=scale_pos)
 
 def mniw_posterior_update(mniw_prior, sufficient_stats):
     """Update the MatrixNormalInverseWishart (MNIW) distribution using sufficient statistics   
@@ -303,10 +305,11 @@ def mniw_posterior_update(mniw_prior, sufficient_stats):
     V_pos = Sxx
     nu_pos = nu_pri + N
     Psi_pos = Psi_pri + Syy - M_pos @ Sxy
-
-    return MatrixNormalInverseWishart(loc=M_pos, col_precision=V_pos, df=int(nu_pos), scale=Psi_pos)
-
-
+    return MatrixNormalInverseWishart(loc=M_pos, 
+                                      col_precision=V_pos, 
+                                      df=nu_pos, 
+                                      scale=Psi_pos)
+    
 def iw_posterior_update(iw_prior, sufficient_stats):
     """Update the InverseWishart (IW) distribution using sufficient statistics
     
@@ -322,9 +325,8 @@ def iw_posterior_update(iw_prior, sufficient_stats):
     # compute parameters of the posterior distribution
     df_pos = df_pri + N
     scale_pos = scale_pri + SxxT
-
-    return InverseWishart(df=int(df_pos), scale=scale_pos)
-
+    return InverseWishart(df=df_pos, 
+                          scale=scale_pos)
 
 class NormalInverseGamma(tfd.JointDistributionSequential):
 

@@ -144,7 +144,7 @@ class BaseHMM(SSM):
             minibatch_lps = vmap(_single_expected_log_joint)(
                 minibatch_emissions, minibatch_posteriors, **minibatch_covariates)
             expected_log_joint = log_prior + minibatch_lps.sum() * scale
-            return -expected_log_joint / batch_emissions.size
+            return -expected_log_joint / tree_leaves(batch_emissions)[0].size
 
         # Minimize the negative expected log joint with SGD
         params, losses = run_sgd(neg_expected_log_joint,
@@ -180,51 +180,6 @@ class BaseHMM(SSM):
 
         self.unconstrained_params = params
         return jnp.array(log_probs)
-
-    def fit_sgd(self,
-                batch_emissions,
-                optimizer=optax.adam(1e-3),
-                batch_size=1,
-                num_epochs=50,
-                shuffle=False,
-                key=jr.PRNGKey(0),
-                **batch_covariates):
-        """
-        Fit this HMM by running SGD on the marginal log likelihood.
-        Note that batch_emissions is initially of shape (N,T)
-        where N is the number of independent sequences and
-        T is the length of a sequence. Then, a random susbet with shape (B, T)
-        of entire sequence, not time steps, is sampled at each step where B is
-        batch size.
-        Args:
-            batch_emissions (chex.Array): Independent sequences.
-            optmizer (optax.Optimizer): Optimizer.
-            batch_size (int): Number of sequences used at each update step.
-            num_epochs (int): Iterations made through entire dataset.
-            shuffle (bool): Indicates whether to shuffle minibatches.
-            key (chex.PRNGKey): RNG key to shuffle minibatches.
-        Returns:
-            losses: Output of loss_fn stored at each step.
-        """
-        def _loss_fn(params, minibatch_emissions, **minibatch_covariates):
-            """Default objective function."""
-            self.unconstrained_params = params
-            scale = len(batch_emissions) / len(minibatch_emissions)
-            minibatch_lls = vmap(self.marginal_log_prob)(minibatch_emissions, **minibatch_covariates)
-            lp = self.log_prior() + minibatch_lls.sum() * scale
-            return -lp / batch_emissions.size
-
-        params, losses = run_sgd(_loss_fn,
-                                 self.unconstrained_params,
-                                 batch_emissions,
-                                 optimizer=optimizer,
-                                 batch_size=batch_size,
-                                 num_epochs=num_epochs,
-                                 shuffle=shuffle,
-                                 key=key,
-                                 **batch_covariates)
-        self.unconstrained_params = params
-        return losses
 
 
 class StandardHMM(BaseHMM):
@@ -338,7 +293,7 @@ class StandardHMM(BaseHMM):
             batch_ells = vmap(_single_expected_log_like)(
                 batch_emissions, batch_posteriors, **batch_covariates)
             expected_log_joint = log_prior + batch_ells.sum()
-            return -expected_log_joint / batch_emissions.size
+            return -expected_log_joint / tree_leaves(batch_emissions)[0].size
 
         # Minimize the negative expected log joint with gradient descent
         loss_grad_fn = value_and_grad(neg_expected_log_joint)
