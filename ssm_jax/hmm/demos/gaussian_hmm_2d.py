@@ -83,19 +83,22 @@ def plot_hmm_posterior(true_states, posterior, perm=None, plot_timesteps=None, p
     if plot_mode:
         most_likely_states = jnp.argmax(posterior.smoothed_probs[:, perm], axis=-1)
         axs[1].imshow(most_likely_states[None, :],
-                  aspect="auto",
-                  interpolation="none",
-                  cmap=CMAP,
-                  vmin=0,
-                  vmax=len(COLORS) - 1,
-                  alpha=1)
+                      aspect="auto",
+                      interpolation="none",
+                      cmap=CMAP,
+                      vmin=0,
+                      vmax=len(COLORS) - 1,
+                      alpha=1)
         axs[1].set_yticks([])
         axs[1].set_title("mode of expected states")
-        
+
     else:
-        axs[1].imshow(posterior.smoothed_probs[:, perm].T,
-                      aspect="auto", interpolation="none", cmap="Greys",
-                      vmin=0, vmax=1)
+        axs[1].imshow(posterior.smoothed_probs[:, perm].T.reshape((-1, len(posterior.smoothed_probs))),
+                      aspect="auto",
+                      interpolation="none",
+                      cmap="Greys",
+                      vmin=0,
+                      vmax=1)
         axs[1].set_title("expected states")
 
     axs[1].set_ylabel("state")
