@@ -90,11 +90,11 @@ class TestInfoFilteringAndSmoothing:
     lgssm, lgssm_info = build_lgssm_moment_and_info_form()
 
     # Sample data from model.
-    key = jr.PRNGKey(111)
+    key = jr.PRNGKey(0)
     num_timesteps = 15
     input_size = lgssm.dynamics_input_weights.shape[1]
     inputs = jnp.zeros((num_timesteps, input_size))
-    x, y = lgssm.sample(key, num_timesteps, inputs)
+    x, y = lgssm.sample(key, num_timesteps, inputs=inputs)
 
     lgssm_moment_posterior = lgssm.smoother(y, inputs)
     lgssm_info_posterior = lgssm_info_smoother(lgssm_info, y, inputs)

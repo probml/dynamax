@@ -17,7 +17,7 @@ def test_gauss_chain_bp():
     num_timesteps = 15
     input_size = lgssm.dynamics_input_weights.shape[1]
     inputs = jnp.zeros((num_timesteps, input_size))
-    z, y = lgssm.sample(key, num_timesteps, inputs)
+    z, y = lgssm.sample(key, num_timesteps, inputs=inputs)
 
     lgssm_info_posterior = lgssm_info_smoother(lgssm_info, y, inputs)
 
