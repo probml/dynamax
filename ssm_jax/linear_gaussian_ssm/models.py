@@ -350,41 +350,30 @@ class LinearGaussianSSM(SSM):
         init_stats, dynamics_stats, emission_stats = stats
 
         if method=='MLE':
-            # Parameters of the initial state
+            # Perform MLE estimation jointly
             sum_x0, sum_x0x0T, N = init_stats
             S = (sum_x0x0T - jnp.outer(sum_x0, sum_x0)) / N
             m = sum_x0 / N
-            
-            # Parameters of the dynamics model
-            FB, Q = fit_linear_regression(*dynamics_stats)
-            F = FB[:, :self.state_dim]
-            B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
-                else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
-                
-            # Parameters of the emission model
+            FB, Q = fit_linear_regression(*dynamics_stats)   
             HD, R = fit_linear_regression(*emission_stats)
-            H = HD[:, :self.state_dim]
-            D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
-                else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
                 
         elif method=='MAP':
-            # Parameters of the initial state
+            # Perform MAP estimation jointly
             initial_posterior = niw_posterior_update(self.initial_prior, init_stats)
             S, m = initial_posterior.mode()
-
-            # Parameters of the dynamics model
             dynamics_posterior = mniw_posterior_update(self.dynamics_prior, dynamics_stats)
             Q, FB = dynamics_posterior.mode()
-            F = FB[:, :self.state_dim]
-            B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
-                else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
-
-            # Parameters of the emission model
             emission_posterior = mniw_posterior_update(self.emission_prior, emission_stats)
             R, HD = emission_posterior.mode()
-            H = HD[:, :self.state_dim]
-            D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
-                else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
+        
+        # Update individual parameters
+        F = FB[:, :self.state_dim]
+        B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
+            else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
+            
+        H = HD[:, :self.state_dim]
+        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
+            else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
                 
         self._initial_mean.value = m
         self._initial_covariance.value = S
