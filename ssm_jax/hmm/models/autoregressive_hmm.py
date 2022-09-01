@@ -6,17 +6,17 @@ from ssm_jax.hmm.models.linreg_hmm import LinearRegressionHMM
 from jax import vmap, lax, tree_map
 
 class LinearAutoregressiveHMM(LinearRegressionHMM):
-    """A linear autoregressive HMM (ARHMM) is a special case of a 
+    """A linear autoregressive HMM (ARHMM) is a special case of a
     linear regression HMM where the covariates (i.e. features)
     are functions of the past emissions.
     """
 
-    def __init__(self, 
-        initial_probabilities, 
-        transition_matrix, 
-        emission_matrices, 
-        emission_biases, 
-        emission_covariance_matrices, 
+    def __init__(self,
+        initial_probabilities,
+        transition_matrix,
+        emission_matrices,
+        emission_biases,
+        emission_covariance_matrices,
         initial_probs_concentration=1.1,
         transition_matrix_concentration=1.1):
 
@@ -30,16 +30,16 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
             initial_probabilities,
             transition_matrix,
             emission_matrices,
-            emission_biases, 
-            emission_covariance_matrices, 
+            emission_biases,
+            emission_covariance_matrices,
             initial_probs_concentration=initial_probs_concentration,
             transition_matrix_concentration=transition_matrix_concentration)
-        
+
     @property
     def num_lags(self):
         return self._num_lags
 
-    @property 
+    @property
     def emission_dim(self):
         return self._emission_dim
 
@@ -57,13 +57,11 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
         emission_covs = jnp.tile(jnp.eye(emission_dim), (num_states, 1, 1))
         return cls(initial_probs, transition_matrix, emission_matrices, emission_biases, emission_covs)
 
-    
-
     def sample(self, key, num_timesteps, prev_emissions=None):
         """
         """
         if prev_emissions is None:
-            # Default to zeros 
+            # Default to zeros
             prev_emissions = jnp.zeros((self.num_lags, self.emission_dim))
 
 
@@ -96,5 +94,3 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
         # Flatten the previous emissions into a vector
         prev_emissions = jnp.reshape(prev_emissions, (num_timesteps, -1))
         return states, emissions, prev_emissions
-
-
