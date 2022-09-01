@@ -65,7 +65,8 @@ class GaussianMixtureDiagHMM(StandardHMM):
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
-        self._emission_mixture_weights = Parameter(weights, bijector=tfb.Invert(tfb.SoftmaxCentered()))
+        self._emission_mixture_weights = Parameter(weights,
+                                                   bijector=tfb.Invert(tfb.SoftmaxCentered()))
         self._emission_means = Parameter(emission_means)
         self._emission_cov_diag_factors = Parameter(emission_cov_diag_factors,
                                                     bijector=tfb.Invert(tfb.SoftmaxCentered()))
@@ -78,9 +79,10 @@ class GaussianMixtureDiagHMM(StandardHMM):
         else:
             _emission_mixture_weights_concentration = emission_mixture_weights_concentration
         assert _emission_mixture_weights_concentration.shape == (num_components,)
-        self._emission_mixture_weights_concentration = Parameter(_emission_mixture_weights_concentration,
-                                                                 is_frozen=True,
-                                                                 bijector=tfb.Invert(tfb.Softplus()))
+        self._emission_mixture_weights_concentration = Parameter(
+            _emission_mixture_weights_concentration,
+            is_frozen=True,
+            bijector=tfb.Invert(tfb.Softplus()))
         if isinstance(emission_prior_mean, float):
             _emission_prior_mean = emission_prior_mean * jnp.ones((num_components, emission_dim))
         else:
@@ -89,11 +91,13 @@ class GaussianMixtureDiagHMM(StandardHMM):
         self._emission_prior_mean = Parameter(_emission_prior_mean, is_frozen=True)
 
         if isinstance(emission_prior_mean_concentration, float):
-            _emission_prior_mean_concentration = emission_prior_mean_concentration * jnp.ones((num_components,))
+            _emission_prior_mean_concentration = emission_prior_mean_concentration * jnp.ones(
+                (num_components,))
         else:
             _emission_prior_mean_concentration = emission_prior_mean_concentration
         assert _emission_prior_mean_concentration.shape == (num_components,)
-        self._emission_prior_mean_concentration = Parameter(_emission_prior_mean_concentration, is_frozen=True)
+        self._emission_prior_mean_concentration = Parameter(_emission_prior_mean_concentration,
+                                                            is_frozen=True)
 
         if isinstance(emission_prior_shape, float):
             _emission_prior_shape = emission_prior_shape * jnp.ones((num_components,))
@@ -136,19 +140,29 @@ class GaussianMixtureDiagHMM(StandardHMM):
     def emission_distribution(self, state):
         return tfd.MixtureSameFamily(
             mixture_distribution=tfd.Categorical(probs=self._emission_mixture_weights.value[state]),
-            components_distribution=tfd.MultivariateNormalDiag(loc=self._emission_means.value[state],
-                                                               scale_diag=self._emission_cov_diag_factors.value[state]))
+            components_distribution=tfd.MultivariateNormalDiag(
+                loc=self._emission_means.value[state],
+                scale_diag=self._emission_cov_diag_factors.value[state]))
 
     def log_prior(self):
-        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
-        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
+        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(
+            self.initial_probs.value)
+        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(
+            self.transition_matrix.value).sum()
         lp += tfd.Dirichlet(self._emission_mixture_weights_concentration.value).log_prob(
             self.emission_mixture_weights.value).sum()
-        lp += vmap(lambda mu, sigma: vmap(lambda mu0, conc0, shape0, scale0, mu, sigma: NormalInverseGamma(
-            mu0, conc0, shape0, scale0).log_prob((sigma, mu)))
-                   (self._emission_prior_mean.value, self._emission_prior_mean_concentration.value, self.
-                    _emission_prior_shape.value, self._emission_prior_scale.value, mu, sigma))(
-                        self._emission_means.value, self._emission_cov_diag_factors.value).sum()
+        # We follow the following steps because parameters of Normal Inverse Gamma prior
+        # are the same for each state of HMM whereas means and diagonal entities are
+        # stored together:
+        # First, vmap over mean and diagonal entities of each state
+        # Then, vmap over prior hyperparameters as well as mean and diagonal entities of
+        # each mixture component
+        lp += vmap(
+            lambda mu, sigma: vmap(lambda mu0, conc0, shape0, scale0, mu, sigma: NormalInverseGamma(
+                mu0, conc0, shape0, scale0).log_prob((sigma, mu)))
+            (self._emission_prior_mean.value, self._emission_prior_mean_concentration.value, self.
+             _emission_prior_shape.value, self._emission_prior_scale.value, mu, sigma))(
+                 self._emission_means.value, self._emission_cov_diag_factors.value).sum()
         return lp
 
     # Expectation-maximization (EM) code
@@ -156,7 +170,8 @@ class GaussianMixtureDiagHMM(StandardHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
+            posterior = hmm_smoother(self._compute_initial_probs(),
+                                     self._compute_transition_matrices(),
                                      self._compute_conditional_logliks(emissions))
 
             # Compute the initial state and transition probabilities
@@ -164,10 +179,10 @@ class GaussianMixtureDiagHMM(StandardHMM):
             trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
 
             def prob_fn(x):
-                logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalDiag(loc=mus, scale_diag=sigmas).
-                                log_prob(x) + jnp.log(weights))(self._emission_means.value,
-                                                                self._emission_cov_diag_factors.value,
-                                                                self._emission_mixture_weights.value)
+                logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalDiag(
+                    loc=mus, scale_diag=sigmas).log_prob(x) + jnp.log(weights))(
+                        self._emission_means.value, self._emission_cov_diag_factors.value,
+                        self._emission_mixture_weights.value)
                 logprobs = logprobs - logsumexp(logprobs, axis=-1, keepdims=True)
                 return jnp.exp(logprobs)
 
@@ -195,19 +210,28 @@ class GaussianMixtureDiagHMM(StandardHMM):
         def _single_m_step(Sx, SxxT, N):
 
             def posterior_mode(loc, mean_concentration, shape, scale, *stats):
+                # See the section 3.2.3.3 of Probabilistic Machine Learning: Advanced Topics
+                # https://probml.github.io/pml-book/book2.html
                 nig_prior = NormalInverseGamma(loc, mean_concentration, shape, scale)
                 return nig_posterior_update(nig_prior, stats).mode()
 
+            # Update emission weights once for each mixture component
             nu_post = self._emission_mixture_weights_concentration.value + N
             mixture_weights = tfd.Dirichlet(nu_post).mode()
-            cov_diag_factors, means = vmap(posterior_mode)(self._emission_prior_mean.value,
-                                                           self._emission_prior_mean_concentration.value,
-                                                           self._emission_prior_shape.value,
-                                                           self._emission_prior_scale.value, Sx, SxxT, N)
+            # Update diagonal entities of covariance matrices and means of the emission distribution
+            # of each mixture component in parallel. Note that the first dimension of all sufficient
+            # statistics is equal to number of mixture components of GMM.
+            cov_diag_factors, means = vmap(posterior_mode)(
+                self._emission_prior_mean.value, self._emission_prior_mean_concentration.value,
+                self._emission_prior_shape.value, self._emission_prior_scale.value, Sx, SxxT, N)
 
             return mixture_weights, cov_diag_factors, means
 
-        mixture_weights, cov_diag_factors, means = vmap(_single_m_step)(stats.Sx, stats.SxxT, stats.N)
+        # Compute mixture weights, diagonal factors of covariance matrices and means
+        # for each state in parallel. Note that the first dimension of all sufficient
+        # statistics is equal to number of states of HMM.
+        mixture_weights, cov_diag_factors, means = vmap(_single_m_step)(stats.Sx, stats.SxxT,
+                                                                        stats.N)
         self._emission_mixture_weights.value = mixture_weights
         self._emission_cov_diag_factors.value = cov_diag_factors
         self._emission_means.value = means
