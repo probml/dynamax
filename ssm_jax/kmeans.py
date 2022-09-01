@@ -70,7 +70,8 @@ def kmeans_plusplus_initialization(key, X, num_clusters, num_local_trials=None):
         distance_to_candidates = vmap(lambda x, y: euclidean_distance_square(x[None, ...], y),
                                       in_axes=(0, None))(X[candidate_ids], X)
         # update closest distances squared and potential for each candidate
-        distance_to_candidates = vmap(jnp.minimum, in_axes=(0, None))(distance_to_candidates, distances)
+        distance_to_candidates = vmap(jnp.minimum, in_axes=(0, None))(distance_to_candidates,
+                                                                      distances)
 
         # Decide which candidate is the best
         best_candidate = jnp.argmin(jnp.sum(distance_to_candidates, axis=-1))
@@ -91,8 +92,14 @@ def kmeans_plusplus_initialization(key, X, num_clusters, num_local_trials=None):
     return centers
 
 
-@partial(jit, static_argnums=(2,))
-def kmeans(key, X, num_clusters, max_iter=50, threshold=1e-5, initial_centroids=None):
+@partial(jit, static_argnums=(1,))
+def kmeans(X,
+           num_clusters,
+           max_iter=50,
+           threshold=1e-4,
+           initial_centroids=None,
+           num_init_iterations=1,
+           key=jr.PRNGKey(0)):
     # https://colab.research.google.com/drive/1AwS4haUx6swF82w3nXr6QKhajdF8aSvA#scrollTo=XUaIhb7TmtGo
     num_clusters = min(len(X), num_clusters)
 
@@ -108,7 +115,8 @@ def kmeans(key, X, num_clusters, max_iter=50, threshold=1e-5, initial_centroids=
         new_centroids = jnp.sum(
             jnp.where(
                 # axes: (data points, clusters, data dimension)
-                assignment[:, jnp.newaxis, jnp.newaxis] == jnp.arange(num_clusters)[jnp.newaxis, :, jnp.newaxis],
+                assignment[:, jnp.newaxis, jnp.newaxis] == jnp.arange(num_clusters)[jnp.newaxis, :,
+                                                                                    jnp.newaxis],
                 X[:, jnp.newaxis, :],
                 0.,
             ),
@@ -119,9 +127,14 @@ def kmeans(key, X, num_clusters, max_iter=50, threshold=1e-5, initial_centroids=
 
     # Run one iteration to initialize distortions
     if initial_centroids is None:
-        initial_state = improve_centroids((jr.choice(key, X), jnp.inf, None, 0))
-    else:
-        initial_state = (initial_centroids, jnp.inf, None, 0)
+        initial_centroids = jr.choice(key, X)
+
+    def init_centroids(state, i):
+        state = improve_centroids(state)
+        return state, None
+
+    initial_state, _ = lax.scan(init_centroids, (initial_centroids, jnp.inf, 0, 0),
+                                jnp.arange(num_init_iterations))
 
     # Iterate until convergence
     centroids, distortions, *_ = lax.while_loop(
