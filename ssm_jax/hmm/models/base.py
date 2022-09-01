@@ -16,7 +16,6 @@ from jax import vmap
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
 from ssm_jax.abstractions import Parameter
-from ssm_jax.hmm.inference import HMMPosterior
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
@@ -154,7 +153,6 @@ class BaseHMM(SSM):
                                  optimizer=optimizer,
                                  num_epochs=num_sgd_epochs_per_mstep)
         self.unconstrained_params = params
-
 
     def fit_em(self, batch_emissions, num_iters=50, mstep_kwargs=dict(), verbose=True, **batch_covariates):
         """Fit this HMM with Expectation-Maximization (EM).
