@@ -108,8 +108,10 @@ def kmeans(X,
         assignment, distortions = find_closest_cluster(X, prev_centroids)
 
         # Clip to change 0/0 later to 0/1
-        counts = ((assignment[jnp.newaxis, :] == jnp.arange(num_clusters)[:, jnp.newaxis]).sum(
-            axis=1, keepdims=True).clip(a_min=1.))
+        counts = jnp.clip(
+            (assignment[jnp.newaxis, :] == jnp.arange(num_clusters)[:, jnp.newaxis]).sum(
+                axis=1, keepdims=True),
+            a_min=1.)
 
         # Sum over points in a centroid by zeroing others out
         new_centroids = jnp.sum(
