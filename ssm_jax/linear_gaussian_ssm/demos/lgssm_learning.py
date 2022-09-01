@@ -1,4 +1,3 @@
-from jax import jit
 import jax.numpy as jnp
 import jax.random as jr
 from jax import jit
@@ -6,10 +5,9 @@ from itertools import count
 import matplotlib.pyplot as plt
 
 from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
-from ssm_jax.linear_gaussian_ssm.learning import lgssm_fit_em
 
 
-def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False):
+def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, method='MLE'):
     keys = map(jr.PRNGKey, count())
 
     true_model = LinearGaussianSSM.random_initialization(next(keys), state_dim, emission_dim)
@@ -27,18 +25,28 @@ def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False):
         axs[1].set_xlim(0, num_timesteps - 1)
 
     # Fit an LGSSM with EM
-    num_iters = 50
+    num_iters = 100
     test_model = LinearGaussianSSM.random_initialization(next(keys), state_dim, emission_dim)
-    test_model, marginal_lls = lgssm_fit_em(test_model, jnp.array([emissions]), num_iters=num_iters)
+    if method=='SGD':
+        neg_marginal_lls = test_model.fit_sgd(jnp.array([emissions]), num_epochs=num_iters*30)
+        marginal_lls = -neg_marginal_lls * emissions.size
+    elif method in ['MLE', 'MAP']:
+        marginal_lls = test_model.fit_em(jnp.array([emissions]), num_iters=num_iters, method=method)
 
     assert jnp.all(jnp.diff(marginal_lls) > -1e-4)
 
     if not test_mode:
         plt.figure()
-        plt.plot(marginal_lls[1:], label="estimated")
-        plt.plot(true_model.marginal_log_prob(emissions) * jnp.ones(num_iters - 1), "k:", label="true")
         plt.xlabel("iteration")
-        plt.ylabel("marginal log likelihood")
+        if method=='SGD':
+            plt.plot(marginal_lls[1:], label="estimated")
+            plt.plot((true_model.log_prior()+true_model.marginal_log_prob(emissions))\
+                * jnp.ones(num_iters*30 - 1), "k:", label="true")
+            plt.ylabel("marginal joint probability")
+        if method in ['MLE', 'MAP']:
+            plt.plot(marginal_lls[1:], label="estimated")
+            plt.plot(true_model.marginal_log_prob(emissions) * jnp.ones(num_iters - 1), "k:", label="true")
+            plt.ylabel("marginal log likelihood")
         plt.legend()
 
     # Compute predicted emissions
@@ -71,4 +79,11 @@ def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False):
 
 
 if __name__ == "__main__":
-    main()
+    print("Learning parameters via MLE:")
+    main(method='MLE')
+    
+    print("Learning parameters via MAP:")
+    main(method='MAP')
+    
+    print("Learning parameters via SGD:")
+    main(method='SGD')
