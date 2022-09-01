@@ -69,9 +69,9 @@ def test_kmeans_plusplus_initialization(key=jr.PRNGKey(0), num_states=4, num_mix
 
 def test_sample(key=jr.PRNGKey(0), num_states=4, num_mix=3, emission_dim=2, num_timesteps=100):
     init_key, sample_key = jr.split(key)
-    h = GaussianMixtureHMM.random_initialization(init_key, num_states, num_mix, emission_dim)
+    hmm = GaussianMixtureHMM.random_initialization(init_key, num_states, num_mix, emission_dim)
 
-    states, emissions = h.sample(sample_key, num_timesteps)
+    states, emissions = hmm.sample(sample_key, num_timesteps)
     assert emissions.shape == (num_timesteps, emission_dim)
     assert len(states) == num_timesteps
 
