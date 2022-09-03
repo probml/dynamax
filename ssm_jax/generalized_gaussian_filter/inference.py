@@ -1,6 +1,6 @@
 from jax import numpy as jnp
 from jax import lax
-from distrax import MultivariateNormalFullCovariance as MVN
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from ssm_jax.generalized_gaussian_filter.containers import GGSSMPosterior
 
 
@@ -18,7 +18,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
             mu_pred = gev(f, m, P)
                     = \int f(x_t, u) N(x_t | m, P) dx_t
             Sigma_pred = gev((f - mu_pred)(f - mu_pred)^T, m, P) + Q
-                       = \int (f(x_t, u) - mu_pred)(f(x_t, u) - mu_pred)^T 
+                       = \int (f(x_t, u) - mu_pred)(f(x_t, u) - mu_pred)^T
                            N(x_t | m, P)dx_t + Q
 
     Args:
@@ -86,7 +86,7 @@ def _condition_on(m, P, h, R, u, y, g_ev, g_cov):
 
 def general_gaussian_filter(params, emissions, inputs=None):
     num_timesteps = len(emissions)
-    
+
     # Process dynamics and emission functions to take in control inputs
     f, h = params.dynamics_function, params.emission_function
     f, h = (_process_fn(fn, inputs) for fn in (f, h))
@@ -113,7 +113,7 @@ def general_gaussian_filter(params, emissions, inputs=None):
         pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, u, g_ev, g_cov)
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
-    
+
     # Run the general Gaussian filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
