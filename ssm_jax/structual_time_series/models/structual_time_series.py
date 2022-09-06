@@ -6,7 +6,7 @@ import tensorflow_probability as tfp
 from distrax import MultivariateNormalFullCovariance as MVN
 from ssm_jax.distributions import InverseWishart as IW
 from ssm_jax.distributions import MatrixNormalPrecision as MN
-from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm_sts import LinearGaussianSTS
+from ssm_jax.structual_time_series.models.structual_time_series_ssm import StructualTimeSeriesSSM
 
 tfd = tfp.distributions
 
@@ -84,7 +84,7 @@ class StructualTimeSeries():
                 self.initial_state_priors.extend(component.initial_state_prior)
                 self.transition_covariance_priors.extend(component.transition_covariance_prior)
 
-    def as_linear_gaussian_ssm(self):
+    def as_ssm(self):
         """Formulate the STS model as a linear Gaussian state space model:
 
         p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
@@ -96,13 +96,15 @@ class StructualTimeSeries():
         the regression coefficient matrix B is also unknown random matrix
         if the STS model includes an regression component
         """
-        lgssm = LinearGaussianSTS(self.transition_matrices, self.observation_matrices,
-                                  self.initial_state_priors, self.transition_covariance_priors,
-                                  self.observation_covariance, self.observation_covariance_prior,
-                                  self.observation_regression_weights_prior)
-        return lgssm
+        sts_ssm = StructualTimeSeriesSSM(self.transition_matrices, self.observation_matrices,
+                                         self.initial_state_priors,
+                                         self.transition_covariance_priors,
+                                         self.observation_covariance,
+                                         self.observation_covariance_prior,
+                                         self.observation_regression_weights_prior)
+        return sts_ssm
 
-    def posterior_inference(self, key, sample_size, observed_time_series, inputs=None):
+    def fit_hmc(self, key, sample_size, observed_time_series, inputs=None):
         """Sampling parameters of the STS model from their posterior distributions.
 
         Parameters of the STS model includes:
@@ -110,31 +112,31 @@ class StructualTimeSeries():
             covariance matrix of observation,
             regression coefficient matrix (if the model has inputs and a regression component)
         """
-        lgssm = self.as_linear_gaussian_ssm()
-        samps_lgssm_params = lgssm.fit_hmc(key, sample_size, observed_time_series, inputs)
+        sts_ssm = self.as_ssm()
+        samps_lgssm_params = sts_ssm.fit_hmc(key, sample_size, observed_time_series, inputs)
         return samps_lgssm_params
 
     def sample(self, key, num_timesteps, inputs=None):
         """Given parameters, sample latent states and corresponding observed time series.
         """
-        lgssm_model = self.as_linear_gaussian_ssm()
-        states, timeseries = lgssm_model.sample(key, num_timesteps, inputs)
+        sts_ssm = self.as_ssm()
+        states, timeseries = sts_ssm.sample(key, num_timesteps, inputs)
         component_states = self._split_joint_states(states)
         return component_states, timeseries
 
     def marginal_log_prob(self, emissions, inputs=None):
-        lgssm_model = self.as_linear_gaussian_ssm()
-        return lgssm_model.marginal_log_prob(emissions, inputs)
+        sts_ssm = self.as_ssm()
+        return sts_ssm.marginal_log_prob(emissions, inputs)
 
     def filter(self, emissions, inputs=None):
-        lgssm_model = self.as_linear_gaussian_ssm()
-        states = lgssm_model.filter(emissions, inputs)
+        sts_ssm = self.as_ssm()
+        states = sts_ssm.filter(emissions, inputs)
         component_states = self._split_joint_states(states)
         return component_states
 
     def smoother(self, emissions, inputs=None):
-        lgssm_model = self.as_linear_gaussian_ssm()
-        states = lgssm_model.smoother(emissions, inputs)
+        sts_ssm = self.as_ssm()
+        states = sts_ssm.smoother(emissions, inputs)
         component_states = self._split_joint_states(states)
         return component_states
 
