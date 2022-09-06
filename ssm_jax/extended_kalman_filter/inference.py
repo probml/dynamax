@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from jax import lax
 from jax import jacfwd
-from distrax import MultivariateNormalFullCovariance as MVN
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from ssm_jax.nonlinear_gaussian_ssm.containers import NLGSSMPosterior
 
 
@@ -79,7 +79,7 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
 
 
 def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
-    """Run an (iterated) extended Kalman filter to produce the 
+    """Run an (iterated) extended Kalman filter to produce the
     marginal likelihood and filtered state estimates.
 
     Args:
