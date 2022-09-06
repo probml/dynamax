@@ -1,8 +1,21 @@
-import pytest
-
 import jax.numpy as jnp
 import jax.random as jr
-from ssm_jax.distributions import InverseWishart, NormalInverseWishart, MatrixNormalPrecision, MatrixNormalInverseWishart
+import numpy as np
+import pytest
+from jax import tree_map
+from jax.scipy.stats import norm
+from scipy.stats import invgamma
+from tensorflow_probability.substrates import jax as tfp
+
+from ssm_jax.distributions import InverseWishart
+from ssm_jax.distributions import MatrixNormalInverseWishart
+from ssm_jax.distributions import MatrixNormalPrecision
+from ssm_jax.distributions import NormalInverseGamma
+from ssm_jax.distributions import NormalInverseWishart
+
+tfd = tfp.distributions
+tfb = tfp.bijectors
+
 
 def test_inverse_wishart_mode(df=7.0, dim=3, scale_factor=3.0):
     scale = scale_factor * jnp.eye(dim)
@@ -49,10 +62,9 @@ def test_normal_inverse_wishart_mode(loc=0., mean_conc=1.0, df=7.0, dim=3, scale
 def test_normal_inverse_wishart_mode_batch(loc=0., mean_conc=1.0, df=7.0, dim=3, scale_factor=3.0, batch_size=10):
     loc = loc * jnp.ones(dim)
     scale = scale_factor * jnp.eye(dim)
-    niw = NormalInverseWishart(loc[None, ...].repeat(batch_size, axis=0),
-                               mean_conc,
-                               df,
-                               scale[None, ...].repeat(batch_size, axis=0))
+    niw = NormalInverseWishart(loc[None, ...].repeat(batch_size, axis=0), mean_conc, df, scale[None,
+                                                                                               ...].repeat(batch_size,
+                                                                                                           axis=0))
     Sigma, mu = niw.mode()
     assert Sigma.shape == (batch_size, dim, dim)
     assert mu.shape == (batch_size, dim)
@@ -72,12 +84,12 @@ def test_normal_inverse_wishart_log_prob(loc=0., mean_conc=1.0, df=7.0, dim=3, s
     assert jnp.all(jnp.isfinite(lps))
 
 
-def test_matrix_normal_log_prob(loc=jnp.ones((2,3)), row_cov=jnp.eye(2), col_precision=jnp.eye(3), n_samples=2):
+def test_matrix_normal_log_prob(loc=jnp.ones((2, 3)), row_cov=jnp.eye(2), col_precision=jnp.eye(3), n_samples=2):
     """
     Evaluate the MN log prob using scipy.stats functions
     """
     from scipy.stats import matrix_normal
-    
+
     mn = MatrixNormalPrecision(loc, row_cov, col_precision)
     mn_samples = mn.sample(seed=jr.PRNGKey(0), sample_shape=n_samples)
     mn_probs = mn.prob(mn_samples)
@@ -87,20 +99,63 @@ def test_matrix_normal_log_prob(loc=jnp.ones((2,3)), row_cov=jnp.eye(2), col_pre
     assert jnp.allclose(jnp.array(mn_probs), jnp.exp(lps))
 
 
-def test_matrix_normal_inverse_wishart_log_prob(loc=jnp.ones((2,3)), col_precision=jnp.eye(3), df=3, scale=jnp.eye(2), n_samples=2):
+def test_matrix_normal_inverse_wishart_log_prob(
+        loc=jnp.ones((2, 3)), col_precision=jnp.eye(3), df=3, scale=jnp.eye(2), n_samples=2):
     """
     Evaluate the MNIW log prob using scipy.stats functions
     """
-    from scipy.stats import invwishart, matrix_normal
-    
+    from scipy.stats import invwishart
+    from scipy.stats import matrix_normal
+
     mniw = MatrixNormalInverseWishart(loc, col_precision, df, scale)
     Sigma_samples, Matrix_samples = mniw.sample(seed=jr.PRNGKey(0), sample_shape=n_samples)
     mniw_probs = mniw.prob((Sigma_samples, Matrix_samples))
     mniw_log_probs = mniw.log_prob((Sigma_samples, Matrix_samples))
-    
-    lp_iw = invwishart.logpdf(jnp.transpose(Sigma_samples, (1,2,0)), df, scale)
+
+    lp_iw = invwishart.logpdf(jnp.transpose(Sigma_samples, (1, 2, 0)), df, scale)
     lp_mn = jnp.array([matrix_normal.logpdf(m, loc, sigma, jnp.linalg.inv(col_precision)) \
                        for m, sigma in zip(Matrix_samples, Sigma_samples)])
-    
-    assert jnp.allclose(mniw_log_probs, lp_iw+lp_mn)
-    assert jnp.allclose(mniw_probs, jnp.exp(lp_iw+lp_mn))
+
+    assert jnp.allclose(mniw_log_probs, lp_iw + lp_mn)
+    assert jnp.allclose(mniw_probs, jnp.exp(lp_iw + lp_mn))
+
+
+def test_normal_inverse_gamma_vs_normal_inv_wishart(
+        key=jr.PRNGKey(0), loc=0.0, mean_conc=1.0, concentration=7.0, scale=3.0):
+
+    nig = NormalInverseGamma(loc, mean_conc, concentration, scale)
+
+    loc = loc * jnp.ones((1, 1))
+    scale = scale * jnp.ones((1, 1))
+    niw = NormalInverseWishart(loc, mean_conc, 2 * concentration, 2 * scale)
+
+    niw_sigma_samples, niw_mu_samples = niw.sample(seed=key, sample_shape=(1,))
+
+    nig_log_probs = nig.log_prob((jnp.squeeze(niw_sigma_samples, axis=-1), niw_mu_samples))
+    nig_probs = nig.prob((jnp.squeeze(niw_sigma_samples, axis=-1), niw_mu_samples))
+
+    niw_log_probs = niw.log_prob((niw_sigma_samples, niw_mu_samples))
+    niw_probs = niw.prob((niw_sigma_samples, niw_mu_samples))
+
+    assert jnp.allclose(nig_log_probs, niw_log_probs, atol=1e-3)
+    assert jnp.allclose(nig_probs, niw_probs, atol=1e-3)
+    assert all(tree_map(lambda x, y: jnp.allclose(jnp.array(x), jnp.array(y)), niw.mode(), nig.mode()))
+
+
+def test_normal_inverse_gamma_log_prob(
+        key=jr.PRNGKey(0), loc=0.0, mean_conc=1.0, concentration=7.0, scale=3.0, n_samples=10):
+
+    nig = NormalInverseGamma(loc, mean_conc, concentration, scale)
+
+    variance, mean = nig.sample(seed=key, sample_shape=(n_samples,))
+
+    log_prob = tfd.Normal(loc, jnp.sqrt(variance / mean_conc)).log_prob(mean)
+    log_prob += tfd.InverseGamma(concentration, scale).log_prob(variance)
+
+    scipy_log_prob = norm.logpdf(mean, loc, jnp.sqrt(variance / mean_conc))
+    scipy_log_prob += invgamma.logpdf(np.array(variance), concentration, scale=scale)
+
+    nig_log_prob = nig.log_prob((variance, mean))
+
+    assert jnp.allclose(nig_log_prob, log_prob)
+    assert jnp.allclose(nig_log_prob, scipy_log_prob, atol=1e-3)

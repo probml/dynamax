@@ -358,8 +358,8 @@ class ExponentialFamilyHMM(StandardHMM):
         learning rate which decreases by 5% at each epoch.
 
         Args:
-            emissions_generator (torch.data.utils.Dataloader): Iterable over the
-                emissions dataset; auto-shuffles batches after each epoch.
+            emissions_generator: Iterable over the emissions dataset;
+                auto-shuffles batches after each epoch.
             total_emissions (int): Total number of emissions that the generator
                 will load. Used to scale the minibatch statistics.
             schedule (optax schedule, Callable: int -> [0, 1]): Learning rate
