@@ -1,10 +1,6 @@
-from typing import Any
-from typing import Optional
-
 import jax.numpy as jnp
 from jax import vmap
 from jax.scipy.linalg import solve_triangular
-from numpy import int32
 from tensorflow_probability.substrates import jax as tfp
 
 tfd = tfp.distributions
@@ -283,10 +279,9 @@ def niw_posterior_update(niw_prior, sufficient_stats):
     df_pos = df_pri + N
     scale_pos = scale_pri + SxxT \
         + precision_pri*jnp.outer(loc_pri, loc_pri) - precision_pos*jnp.outer(loc_pos, loc_pos)
-    return NormalInverseWishart(loc=loc_pos, 
-                                mean_concentration=precision_pos, 
-                                df=df_pos, 
-                                scale=scale_pos)
+
+    return NormalInverseWishart(loc=loc_pos, mean_concentration=precision_pos, df=df_pos, scale=scale_pos)
+
 
 def mniw_posterior_update(mniw_prior, sufficient_stats):
     """Update the MatrixNormalInverseWishart distribution using sufficient statistics   
@@ -307,12 +302,10 @@ def mniw_posterior_update(mniw_prior, sufficient_stats):
     M_pos = jnp.linalg.solve(Sxx, Sxy).T
     V_pos = Sxx
     nu_pos = nu_pri + N
-    Psi_pos = Psi_pri + Syy - M_pos @ Sxy 
-    return MatrixNormalInverseWishart(loc=M_pos, 
-                                      col_precision=V_pos, 
-                                      df=nu_pos, 
-                                      scale=Psi_pos)
-    
+    Psi_pos = Psi_pri + Syy - M_pos @ Sxy
+
+    return MatrixNormalInverseWishart(loc=M_pos, col_precision=V_pos, df=nu_pos, scale=Psi_pos)
+
 
 def iw_posterior_update(iw_prior, sufficient_stats):
     """Update the InverseWishart distribution using sufficient statistics
@@ -329,5 +322,84 @@ def iw_posterior_update(iw_prior, sufficient_stats):
     # compute parameters of the posterior distribution
     df_pos = df_pri + N
     scale_pos = scale_pri + SxxT
-    return InverseWishart(df=df_pos, 
-                          scale=scale_pos)
+
+    return InverseWishart(df=df_pos, scale=scale_pos)
+
+
+class NormalInverseGamma(tfd.JointDistributionSequential):
+
+    def __init__(self, loc, mean_concentration, concentration, scale):
+        """
+        A normal inverse gamma (NIG) distribution.
+        """
+        self._loc = loc
+        self._mean_concentration = mean_concentration
+        self._concentration = concentration
+        self._scale = scale
+
+        super(NormalInverseGamma, self).__init__([
+            tfd.InverseGamma(concentration, scale),
+            lambda sigma: tfd.Normal(loc, jnp.sqrt(sigma / mean_concentration)),
+        ])
+
+        self._parameters = dict(loc=loc,
+                                mean_concentration=mean_concentration,
+                                concentration=concentration,
+                                scale=scale)
+
+    @property
+    def loc(self):
+        return self._loc
+
+    @property
+    def mean_concentration(self):
+        return self._mean_concentration
+
+    @property
+    def concentration(self):
+        return self._concentration
+
+    @property
+    def scale(self):
+        return self._scale
+
+    def _mode(self):
+        r"""Solve for the mode. Recall,
+        ..math::
+            p(\mu, \sigma^2) \propto
+                \mathrm{N}(\mu | \mu_0, \sigma^2 / \kappa_0) \times
+                \mathrm{IG}(\Sigma | \alpha_0, \beta_0)
+        The optimal mean is :math:`\mu^* = \mu_0`. Substituting this in,
+        ..math::
+            p(\mu^*, \sigma^2) \propto IG(\sigma^2 | \alpha_0 + 0.5, \beta_0)
+        and the mode of this inverse gamma distribution is at
+        ..math::
+            (\sigma^2)* = \beta_0 / (\alpha_0 + 1.5)
+        """
+        return self._scale / (self._concentration + 1.5), self._loc
+
+
+def nig_posterior_update(nig_prior, sufficient_stats):
+    """Update the normal inverse gamma (NIG) distribution using sufficient statistics
+    
+    Returns:
+        posterior NIG distribution
+    """
+    # extract parameters of the prior distribution
+    prior_loc, prior_precision, prior_df, prior_scale = nig_prior.parameters.values()
+
+    # unpack the sufficient statistics
+    sum_x, sum_x2, n = sufficient_stats
+
+    # compute parameters of the posterior distribution
+    posterior_precision = prior_precision + n
+    posterior_df = prior_df + n / 2
+    posterior_loc = (prior_precision * prior_loc + sum_x) / posterior_precision
+
+    posterior_scale = prior_scale + 0.5 * (sum_x2 + prior_precision * jnp.square(prior_loc) -
+                                           posterior_precision * jnp.square(posterior_loc))
+
+    return NormalInverseGamma(loc=posterior_loc,
+                              mean_concentration=posterior_precision,
+                              concentration=posterior_df,
+                              scale=posterior_scale)
