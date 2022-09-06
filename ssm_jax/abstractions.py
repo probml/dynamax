@@ -5,7 +5,8 @@ import jax.numpy as jnp
 import jax.random as jr
 import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from jax import lax, vmap
+from jax import lax
+from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
 
@@ -171,7 +172,7 @@ class SSM(ABC):
         items = sorted(self.__dict__.items())
         hyper_values = [val for key, val in items if (not isinstance(Parameter) or val.is_frozen)]
         return hyper_values
-    
+
     def fit_sgd(self,
                 batch_emissions,
                 optimizer=optax.adam(1e-3),

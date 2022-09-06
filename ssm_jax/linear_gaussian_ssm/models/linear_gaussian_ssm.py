@@ -1,5 +1,6 @@
 from functools import partial
 
+import blackjax
 from distrax import MultivariateNormalFullCovariance as MVN
 from jax import jit
 from jax import numpy as jnp
@@ -9,14 +10,15 @@ from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
 from ssm_jax.abstractions import Parameter
-from ssm_jax.distributions import MatrixNormalInverseWishart as MNIW
-from ssm_jax.distributions import NormalInverseWishart as NIW
-from ssm_jax.distributions import mniw_posterior_update
-from ssm_jax.distributions import niw_posterior_update
+from ssm_jax.distributions import InverseWishart
+from ssm_jax.distributions import MatrixNormalPrecision as MN
+from ssm_jax.linear_gaussian_ssm.inference import LGSSMParams
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_smoother
 from ssm_jax.utils import PSDToRealBijector
 from tqdm.auto import trange
+
+# from itertools import count
 
 
 def _get_shape(x, dim):
@@ -29,7 +31,7 @@ class LinearGaussianSSM(SSM):
     Linear Gaussian State Space Model is defined as follows:
     p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
     p(y_t | z_t) = N(y_t | H_t z_t + D_t u_t + d_t, R_t)
-    p(z_1) = N(z_1 | mu_{1|0}, Sigma_{1|0})
+    p(z_1) = N(z_1 | m, S)
     where z_t = hidden, y_t = observed, u_t = inputs,
     dynamics_matrix = F
     dynamics_covariance = Q
@@ -55,7 +57,7 @@ class LinearGaussianSSM(SSM):
                  dynamics_bias=None,
                  emission_input_weights=None,
                  emission_bias=None,
-                 priors=None):
+                 **kw_priors):
         self.emission_dim, self.state_dim = _get_shape(emission_matrix, 2)
         dynamics_input_dim = dynamics_input_weights.shape[
             1] if dynamics_input_weights is not None else 0
@@ -91,54 +93,62 @@ class LinearGaussianSSM(SSM):
         self._emission_bias = Parameter(emission_bias)
 
         # Initialize prior distributions
-        if priors is None:
-            self.initial_prior = self.dynamics_prior = self.emission_prior = None
-        else:
-            self.initial_prior, self.dynamics_prior, self.emission_prior = priors
+        def default_prior(arg, default):
+            return kw_priors[arg] if arg in kw_priors else default
 
-        if self.initial_prior is None:
-            self.initial_prior = NIW(loc=self.initial_mean,
-                                     mean_concentration=1.,
-                                     df=self.state_dim + 0.1,
-                                     scale=jnp.eye(self.state_dim))
+        self.initial_mean_prior = default_prior(
+            'initial_mean_prior',
+            MVN(loc=jnp.zeros(self.state_dim), covariance_matrix=jnp.eye(self.state_dim)))
+        self.initial_covariance_prior = default_prior(
+            'initial_covariance_prior',
+            InverseWishart(df=self.state_dim + 0.1, scale=jnp.eye(self.state_dim)))
 
-        if self.dynamics_prior is None:
-            loc_d = self._join_matrix(self.dynamics_matrix, self.dynamics_input_weights,
-                                      self.dynamics_bias, self._db_indicator)
-            self.dynamics_prior = MNIW(loc=loc_d,
-                                       col_precision=jnp.eye(loc_d.shape[1]),
-                                       df=self.state_dim + 0.1,
-                                       scale=jnp.eye(self.state_dim))
+        self.dynamics_matrix_prior = default_prior(
+            'dynamics_matrix_prior',
+            MN(loc=dynamics_matrix,
+               row_covariance=jnp.eye(self.state_dim),
+               col_precision=jnp.eye(self.state_dim)))
+        self.dynamics_input_weights_prior = default_prior(
+            'dynamics_input_weights_prior',
+            MN(loc=dynamics_input_weights,
+               row_covariance=jnp.eye(self.state_dim),
+               col_precision=jnp.eye(dynamics_input_dim)))
+        self.dynamics_covariance_prior = default_prior(
+            'dynamics_covariance_prior',
+            InverseWishart(df=self.state_dim + 0.1, scale=jnp.eye(self.state_dim)))
+        self.dynamics_bias_prior = MVN(loc=dynamics_bias, covariance_matrix=jnp.eye(self.state_dim))
 
-        if self.emission_prior is None:
-            loc_e = self._join_matrix(self.emission_matrix, self.emission_input_weights,
-                                      self.emission_bias, self._eb_indicator)
-            self.emission_prior = MNIW(loc=loc_e,
-                                       col_precision=jnp.eye(loc_e.shape[1]),
-                                       df=self.emission_dim + 0.1,
-                                       scale=jnp.eye(self.emission_dim))
+        self.emission_matrix_prior = default_prior(
+            'emission_matrix_prior',
+            MN(loc=emission_matrix,
+               row_covariance=jnp.eye(self.emission_dim),
+               col_precision=jnp.eye(self.state_dim)))
+        self.emission_input_weights_prior = default_prior(
+            'emission_input_weights_prior',
+            MN(loc=emission_input_weights,
+               row_covariance=jnp.eye(self.emission_dim),
+               col_precision=jnp.eye(emission_input_dim)))
+        self.emission_covariance_prior = default_prior(
+            'emission_covariance_prior',
+            InverseWishart(df=self.emission_dim + 0.1, scale=jnp.eye(self.emission_dim)))
+        self.emission_bias_prior = MVN(loc=emission_bias,
+                                       covariance_matrix=jnp.eye(self.emission_dim))
 
         # Check shapes
-        assert self.initial_mean.shape == (self.state_dim,)
-        assert self.initial_covariance.shape == (self.state_dim, self.state_dim)
-        assert self.dynamics_matrix.shape[-2:] == (self.state_dim, self.state_dim)
-        assert self.dynamics_input_weights.shape[-2:] == (self.state_dim, self.input_dim)
-        assert self.dynamics_bias.shape[-1:] == (self.state_dim,)
-        assert self.dynamics_covariance.shape == (self.state_dim, self.state_dim)
-        assert self.emission_input_weights.shape[-2:] == (self.emission_dim, self.input_dim)
-        assert self.emission_bias.shape[-1:] == (self.emission_dim,)
-        assert self.emission_covariance.shape == (self.emission_dim, self.emission_dim)
-
-        self.param_keys = [
-            "_initial_mean", "_initial_covariance", "_dynamics_matrix", "_dynamics_input_weights",
-            "_dynamics_bias", "_dynamics_covariance", "_emission_matrix", "_emission_input_weights",
-            "_emission_bias", "_emission_covariance"
-        ]
+        assert self._initial_mean.value.shape == (self.state_dim,)
+        assert self._initial_covariance.value.shape == (self.state_dim, self.state_dim)
+        assert self._dynamics_matrix.value.shape[-2:] == (self.state_dim, self.state_dim)
+        assert self._dynamics_input_weights.value.shape[-2:] == (self.state_dim, self.input_dim)
+        assert self._dynamics_bias.value.shape[-1:] == (self.state_dim,)
+        assert self._dynamics_covariance.value.shape == (self.state_dim, self.state_dim)
+        assert self._emission_input_weights.value.shape[-2:] == (self.emission_dim, self.input_dim)
+        assert self._emission_bias.value.shape[-1:] == (self.emission_dim,)
+        assert self._emission_covariance.value.shape == (self.emission_dim, self.emission_dim)
 
     @classmethod
     def random_initialization(cls, key, state_dim, emission_dim, input_dim=0):
-        m1 = jnp.zeros(state_dim)
-        Q1 = jnp.eye(state_dim)
+        m = jnp.zeros(state_dim)
+        S = jnp.eye(state_dim)
         # TODO: Sample a random rotation matrix
         F = 0.99 * jnp.eye(state_dim)
         B = jnp.zeros((state_dim, input_dim))
@@ -150,8 +160,8 @@ class LinearGaussianSSM(SSM):
                    dynamics_covariance=Q,
                    emission_matrix=H,
                    emission_covariance=R,
-                   initial_mean=m1,
-                   initial_covariance=Q1,
+                   initial_mean=m,
+                   initial_covariance=S,
                    dynamics_input_weights=B,
                    emission_input_weights=D)
 
@@ -159,101 +169,127 @@ class LinearGaussianSSM(SSM):
     # Parameters of initial state
     @property
     def initial_mean(self):
-        return self._initial_mean.value
+        return self._initial_mean
 
     @property
     def initial_covariance(self):
-        return self._initial_covariance.value
+        return self._initial_covariance
 
     # Parameters of dynamics model
     @property
     def dynamics_matrix(self):
-        return self._dynamics_matrix.value
+        return self._dynamics_matrix
 
     @property
     def dynamics_input_weights(self):
-        return self._dynamics_input_weights.value
+        return self._dynamics_input_weights
 
     @property
     def dynamics_bias(self):
-        return self._dynamics_bias.value
+        return self._dynamics_bias
 
     @property
     def dynamics_covariance(self):
-        return self._dynamics_covariance.value
+        return self._dynamics_covariance
 
     # Parameters of emission model
     @property
     def emission_matrix(self):
-        return self._emission_matrix.value
+        return self._emission_matrix
 
     @property
     def emission_input_weights(self):
-        return self._emission_input_weights.value
+        return self._emission_input_weights
 
     @property
     def emission_bias(self):
-        return self._emission_bias.value
+        return self._emission_bias
 
     @property
     def emission_covariance(self):
-        return self._emission_covariance.value
+        return self._emission_covariance
 
     def initial_distribution(self, **covariates):
-        return MVN(self.initial_mean, self.initial_covariance)
+        return MVN(self.initial_mean.value, self.initial_covariance.value)
 
     def transition_distribution(self, state, **covariates):
         input = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
         return MVN(
-            self.dynamics_matrix @ state + self.dynamics_input_weights @ input + self.dynamics_bias,
-            self.dynamics_covariance)
+            self.dynamics_matrix.value @ state + self.dynamics_input_weights.value @ input +
+            self.dynamics_bias.value, self.dynamics_covariance.value)
 
     def emission_distribution(self, state, **covariates):
         input = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
         return MVN(
-            self.emission_matrix @ state + self.emission_input_weights @ input + self.emission_bias,
-            self.emission_covariance)
+            self.emission_matrix.value @ state + self.emission_input_weights.value @ input +
+            self.emission_bias.value, self.emission_covariance.value)
+
+    @property
+    def params(self):
+        return LGSSMParams(initial_mean=self.initial_mean.value,
+                           initial_covariance=self.initial_covariance.value,
+                           dynamics_matrix=self.dynamics_matrix.value,
+                           dynamics_input_weights=self.dynamics_input_weights.value,
+                           dynamics_bias=self.dynamics_bias.value,
+                           dynamics_covariance=self.dynamics_covariance.value,
+                           emission_matrix=self.emission_matrix.value,
+                           emission_input_weights=self.emission_input_weights.value,
+                           emission_bias=self.emission_bias.value,
+                           emission_covariance=self.emission_covariance.value)
+
+    @params.setter
+    def params(self, new_param):
+        assert isinstance(new_param, LGSSMParams)
+        self._initial_mean.value = new_param.initial_mean
+        self._initial_covariance.value = new_param.initial_covariance
+        self._dynamics_matrix.value = new_param.dynamics_matrix
+        self._dynamics_input_weights.value = new_param.dynamics_input_weights
+        self._dynamics_bias.value = new_param.dynamics_bias
+        self._dynamics_covariance.value = new_param.dynamics_covariance
+        self._emission_matrix.value = new_param.emission_matrix
+        self._emission_input_weights.value = new_param.emission_input_weights
+        self._emission_bias.value = new_param.emission_bias
+        self._emission_covariance.value = new_param.emission_covariance
 
     def log_prior(self):
         """Return the log prior probability of any model parameters.
         Returns:
             lp (Scalar): log prior probability.
         """
-        d_matrix = self._join_matrix(self.dynamics_matrix, self.dynamics_input_weights,
-                                     self.dynamics_bias, self._db_indicator)
-        e_matrix = self._join_matrix(self.emission_matrix, self.emission_input_weights,
-                                     self.emission_bias, self._eb_indicator)
-        # Compute log probs
-        lp = self.initial_prior.log_prob((self.initial_covariance, self.initial_mean))
-        lp += self.dynamics_prior.log_prob((self.dynamics_covariance, d_matrix))
-        lp += self.emission_prior.log_prob((self.emission_covariance, e_matrix))
+        # log prior of the initial state
+        lp = self.initial_mean_prior.log_prob(self.initial_mean.value)
+        lp += self.initial_covariance_prior.log_prob(self.initial_covariance.value)
+
+        # log prior of the dynamics model
+        lp += self.dynamics_matrix_prior.log_prob(self.dynamics_matrix.value)
+        lp += self.dynamics_input_weights_prior.log_prob(self.dynamics_input_weights.value)
+        lp += self.dynamics_covariance_prior.log_prob(self.dynamics_covariance.value)
+
+        # log prior of the emission model
+        lp += self.emission_matrix_prior.log_prob(self.emission_matrix.value)
+        lp += self.emission_input_weights_prior.log_prob(self.emission_input_weights.value)
+        lp += self.emission_covariance_prior.log_prob(self.emission_covariance.value)
+
+        # log prior of bias (if needed)
+        if self._db_indicator:
+            lp += self.dynamics_bias_prior.log_prob(self.dynamics_bias.value)
+        if self._eb_indicator:
+            lp += self.emission_bias_prior.log_prob(self.emission_bias.value)
+
         return lp
 
     def marginal_log_prob(self, emissions, inputs=None):
         """Compute log marginal likelihood of observations."""
-        filtered_posterior = lgssm_filter(self, emissions, inputs)
+        filtered_posterior = lgssm_filter(self.params, emissions, inputs)
         return filtered_posterior.marginal_loglik
 
     def filter(self, emissions, inputs=None):
         """Compute filtering distribution."""
-        return lgssm_filter(self, emissions, inputs)
+        return lgssm_filter(self.params, emissions, inputs)
 
     def smoother(self, emissions, inputs=None):
         """Compute smoothing distribution."""
-        return lgssm_smoother(self, emissions, inputs)
-
-    # TODO: currently the set params does not support frozen
-    @property
-    def params(self):
-        # Find all parameters
-        params = [self.__dict__[key].value for key in self.param_keys]
-        return params
-
-    @params.setter
-    def params(self, values):
-        assert len(self.param_keys) == len(values)
-        for key, value in zip(self.param_keys, values):
-            self.__dict__[key].value = value
+        return lgssm_smoother(self.params, emissions, inputs)
 
     @classmethod
     def from_unconstrained_params(cls, unconstrained_params):
@@ -289,7 +325,7 @@ class LinearGaussianSSM(SSM):
 
         def _single_e_step(emissions, inputs):
             # Run the smoother to get posterior expectations
-            posterior = lgssm_smoother(self, emissions, inputs)
+            posterior = lgssm_smoother(self.params, emissions, inputs)
 
             # shorthand
             Ex = posterior.smoothed_means
@@ -337,7 +373,7 @@ class LinearGaussianSSM(SSM):
         # TODO: what's the best way to vectorize/parallelize this?
         return vmap(_single_e_step)(batch_emissions, batch_inputs)
 
-    def m_step(self, batch_stats, method='MLE'):
+    def m_step(self, batch_stats):
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
@@ -349,44 +385,33 @@ class LinearGaussianSSM(SSM):
         stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
         init_stats, dynamics_stats, emission_stats = stats
 
-        if method == 'MLE':
-            # Perform MLE estimation jointly
-            sum_x0, sum_x0x0T, N = init_stats
-            S = (sum_x0x0T - jnp.outer(sum_x0, sum_x0)) / N
-            m = sum_x0 / N
-            FB, Q = fit_linear_regression(*dynamics_stats)
-            HD, R = fit_linear_regression(*emission_stats)
+        # Perform MLE estimation jointly
+        sum_x0, sum_x0x0T, N = init_stats
+        S = (sum_x0x0T - jnp.outer(sum_x0, sum_x0)) / N
+        m = sum_x0 / N
 
-        elif method == 'MAP':
-            # Perform MAP estimation jointly
-            initial_posterior = niw_posterior_update(self.initial_prior, init_stats)
-            S, m = initial_posterior.mode()
-            dynamics_posterior = mniw_posterior_update(self.dynamics_prior, dynamics_stats)
-            Q, FB = dynamics_posterior.mode()
-            emission_posterior = mniw_posterior_update(self.emission_prior, emission_stats)
-            R, HD = emission_posterior.mode()
-
-        # Update individual parameters
+        FB, Q = fit_linear_regression(*dynamics_stats)
         F = FB[:, :self.state_dim]
         B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
             else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
 
+        HD, R = fit_linear_regression(*emission_stats)
         H = HD[:, :self.state_dim]
         D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
             else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
 
-        self._initial_mean.value = m
-        self._initial_covariance.value = S
-        self._dynamics_matrix.value = F
-        self._dynamics_input_weights.value = B
-        self._dynamics_bias.value = b
-        self._dynamics_covariance.value = Q
-        self._emission_matrix.value = H
-        self._emission_input_weights.value = D
-        self._emission_bias.value = d
-        self._emission_covariance.value = R
+        return LGSSMParams(initial_mean=m,
+                           initial_covariance=S,
+                           dynamics_matrix=F,
+                           dynamics_input_weights=B,
+                           dynamics_bias=b,
+                           dynamics_covariance=Q,
+                           emission_matrix=H,
+                           emission_input_weights=D,
+                           emission_bias=d,
+                           emission_covariance=R)
 
-    def fit_em(self, batch_emissions, batch_inputs=None, num_iters=50, method='MLE'):
+    def fit_em(self, batch_emissions, batch_inputs=None, num_iters=50):
         """Fit this HMM with Expectation-Maximization (EM).
         """
 
@@ -394,9 +419,8 @@ class LinearGaussianSSM(SSM):
         def em_step(_params):
             self.params = _params
             posterior_stats, marginal_loglikes = self.e_step(batch_emissions, batch_inputs)
-            self.m_step(posterior_stats, method=method)
-            _params = self.params
-            return _params, marginal_loglikes.sum()
+            new_param = self.m_step(posterior_stats)
+            return new_param, marginal_loglikes.sum()
 
         log_probs = []
         _params = self.params
@@ -408,15 +432,56 @@ class LinearGaussianSSM(SSM):
         self.params = _params
         return jnp.array(log_probs)
 
-    def _join_matrix(self, F, B, b, indicator):
-        """Join the transition matrix and weight matrix so that they can be inferred jointly.
+    def fit_hmc(self,
+                key,
+                sample_size,
+                batch_emissions,
+                batch_inputs=None,
+                warmup_steps=500,
+                num_integration_steps=30):
+        """Sample parameters of the model using HMC."""
 
-        If indicator=True,
-        the bias vector b is added to the last column of the [F, B] matrix,
-        otherwise,
-        there is NO bias term, and F, B are joint.
-        """
-        if not indicator:
-            return jnp.concatenate((F, B), axis=1)
-        else:
-            return jnp.concatenate((F, B, b[:, None]), axis=1)
+        # The log likelihood that the HMC samples from
+        def _logprob(hmc_position, batch_emissions=batch_emissions, batch_inputs=batch_inputs):
+            self.unconstrained_params = hmc_position
+            batch_lls = vmap(self.marginal_log_prob)(batch_emissions, batch_inputs)
+            lp = self.log_prior() + batch_lls.sum()
+            return lp
+
+        # Initialize the HMC sampler using window_adaptation
+        hmc_initial_position = self.unconstrained_params
+        warmup = blackjax.window_adaptation(blackjax.hmc,
+                                            _logprob,
+                                            num_steps=warmup_steps,
+                                            num_integration_steps=num_integration_steps)
+        hmc_initial_state, hmc_kernel, _ = warmup.run(key, hmc_initial_position)
+        hmc_kernel = jit(hmc_kernel)
+
+        @jit
+        def one_step(current_state, rng_key):
+            next_state, _ = hmc_kernel(rng_key, current_state)
+            return next_state
+
+        # Start sampling
+        keys = iter(jr.split(key, sample_size))
+        param_samples = []
+        current_state = hmc_initial_state
+        for _ in trange(sample_size):
+            current_state = one_step(current_state, next(keys))
+            param_samples.append(current_state.position)
+
+        return self._to_complete_parameters(param_samples)
+
+    def _to_complete_parameters(self, unconstrained_params):
+        items = sorted(self.__dict__.items())
+        names = [key for key, prm in items if isinstance(prm, Parameter) and not prm.is_frozen]
+
+        @jit
+        def join_params(unconstrained_parameter):
+            current_params = self.params
+            for i in range(len(unconstrained_parameter)):
+                value = getattr(self, names[i]).bijector.inverse(unconstrained_parameter[i])
+                setattr(current_params, names[i][1:], value)
+            return current_params
+
+        return [join_params(param) for param in unconstrained_params]
