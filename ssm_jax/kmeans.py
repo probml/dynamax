@@ -123,7 +123,7 @@ def kmeans(X,
 
     # Run one iteration to initialize distortions
     if initial_centroids is None:
-        initial_centroids = jr.choice(key, X)
+        initial_centroids = jr.choice(key, X, shape=(num_clusters,))
 
     def init_centroids(state, i):
         state = improve_centroids(state)
