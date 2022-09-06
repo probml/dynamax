@@ -23,7 +23,7 @@ class TestGaussianHMMWithDiagonalCovars:
         assert hmm.emission_means.value.shape == (self.num_states, self.emission_dim)
         assert hmm._emission_cov_diag_factors.value.shape == (self.num_states, self.emission_dim)
 
-    def test_fit(self, key=jr.PRNGKey(0), num_timesteps=100):
+    def test_fit(self, key=jr.PRNGKey(0), num_timesteps=10):
 
         state_sequence, emissions = self.true_hmm.sample(key, num_timesteps)
         hmm = MultivariateNormalDiagHMM.random_initialization(key, self.num_states, self.emission_dim)
