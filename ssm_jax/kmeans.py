@@ -11,8 +11,8 @@ def find_closest_cluster(X, centroids):
 
     def assign(x):
         distances = vmap(jnp.linalg.norm)(centroids - x)
-        min_distance = jnp.min(distances)
         label = jnp.argmin(distances)
+        min_distance = distances[label]
         return label, min_distance
 
     return vmap(assign)(X)
