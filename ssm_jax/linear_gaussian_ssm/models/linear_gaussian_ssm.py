@@ -2,23 +2,15 @@ from functools import partial
 
 import blackjax
 from distrax import MultivariateNormalFullCovariance as MVN
-from jax import jit
+from jax import jit, vmap
 from jax import numpy as jnp
 from jax import random as jr
-from jax import vmap
-from jax.tree_util import register_pytree_node_class
-from jax.tree_util import tree_map
-from ssm_jax.abstractions import SSM
-from ssm_jax.abstractions import Parameter
-from ssm_jax.distributions import InverseWishart
-from ssm_jax.distributions import MatrixNormalPrecision as MN
-from ssm_jax.linear_gaussian_ssm.inference import LGSSMParams
-from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter
-from ssm_jax.linear_gaussian_ssm.inference import lgssm_smoother
+from jax.tree_util import register_pytree_node_class, tree_map
+from ssm_jax.abstractions import SSM, Parameter
+from ssm_jax.distributions import InverseWishart, MatrixNormalPrecision as MN
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, LGSSMParams
 from ssm_jax.utils import PSDToRealBijector
 from tqdm.auto import trange
-
-# from itertools import count
 
 
 def _get_shape(x, dim):
@@ -470,9 +462,13 @@ class LinearGaussianSSM(SSM):
             current_state = one_step(current_state, next(keys))
             param_samples.append(current_state.position)
 
+        # Return list of full parameters, each is an instance of LGSSMParams
         return self._to_complete_parameters(param_samples)
 
     def _to_complete_parameters(self, unconstrained_params):
+        """Transform samples of subset of unconstrained params to samples of complete params,
+        each is an instance of LGSSMParams
+        """
         items = sorted(self.__dict__.items())
         names = [key for key, prm in items if isinstance(prm, Parameter) and not prm.is_frozen]
 
