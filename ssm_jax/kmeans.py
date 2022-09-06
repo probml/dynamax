@@ -109,17 +109,15 @@ def kmeans(X,
 
         # Clip to change 0/0 later to 0/1
         counts = jnp.clip(
-            (assignment[jnp.newaxis, :] == jnp.arange(num_clusters)[:, jnp.newaxis]).sum(
-                axis=1, keepdims=True),
+            (assignment[None, :] == jnp.arange(num_clusters)[:, None]).sum(axis=1, keepdims=True),
             a_min=1.)
 
         # Sum over points in a centroid by zeroing others out
         new_centroids = jnp.sum(
             jnp.where(
                 # axes: (data points, clusters, data dimension)
-                assignment[:, jnp.newaxis, jnp.newaxis] == jnp.arange(num_clusters)[jnp.newaxis, :,
-                                                                                    jnp.newaxis],
-                X[:, jnp.newaxis, :],
+                assignment[:, None, None] == jnp.arange(num_clusters)[None, :, None],
+                X[:, None, :],
                 0.,
             ),
             axis=0,
