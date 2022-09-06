@@ -2,6 +2,7 @@ from functools import partial
 
 import jax.numpy as jnp
 import jax.random as jr
+import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import jit
 from jax import lax
 from jax import vmap
@@ -62,9 +63,9 @@ def kmeans_plusplus_initialization(key, X, num_clusters, num_local_trials=None):
     def find_center(carry, i):
         distances, key = carry
         key0, key1 = jr.split(key)
-        current_pot = distances.sum()
-        random_values = jr.uniform(key0, shape=(num_local_trials,)) * current_pot
-        candidate_ids = jnp.searchsorted(jnp.cumsum(distances), random_values)
+        candidate_ids = tfd.Categorical(logits=jnp.log(distances)).sample(
+            seed=key0, sample_shape=(num_local_trials,))
+
         # XXX: numerical imprecision can result in a candidate_id out of range
         candidate_ids = jnp.clip(candidate_ids, a_max=num_samples - 1)
 
