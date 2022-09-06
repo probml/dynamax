@@ -35,10 +35,9 @@ def _kmeans_plusplus(key, X, n_clusters, x_squared_norms, n_local_trials=None):
                                            squared=True)
     current_pot = closest_dist_sq.sum()
 
-    keys = jr.split(key1, n_clusters - 1)
-
     for c in range(1, n_clusters):
-        rand_vals = np.array(jr.uniform(keys[c - 1], shape=(n_local_trials,)) * current_pot)
+        key0, key1 = jr.split(key1)
+        rand_vals = np.array(jr.uniform(key0, shape=(n_local_trials,)) * current_pot)
         candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq), rand_vals)
         np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
 

@@ -59,9 +59,11 @@ def kmeans_plusplus_initialization(key, X, num_clusters, num_local_trials=None):
     initial_distances = euclidean_distance_square(X, initial_center)
 
     # Pick the remaining n_clusters-1 points
-    def find_center(distances, key):
+    def find_center(carry, i):
+        distances, key = carry
+        key0, key1 = jr.split(key)
         current_pot = distances.sum()
-        random_values = jr.uniform(key, shape=(num_local_trials,)) * current_pot
+        random_values = jr.uniform(key0, shape=(num_local_trials,)) * current_pot
         candidate_ids = jnp.searchsorted(jnp.cumsum(distances), random_values)
         # XXX: numerical imprecision can result in a candidate_id out of range
         candidate_ids = jnp.clip(candidate_ids, a_max=num_samples - 1)
@@ -78,16 +80,9 @@ def kmeans_plusplus_initialization(key, X, num_clusters, num_local_trials=None):
         distances = distance_to_candidates[best_candidate]
         candidate_id = candidate_ids[best_candidate]
 
-        return distances, X[candidate_id]
+        return (distances, key1), X[candidate_id]
 
-    if num_clusters == 1:
-        return initial_center
-    elif num_clusters == 2:
-        keys = jr.split(key1)[:1]
-    else:
-        keys = jr.split(key1, num_clusters - 1)
-
-    _, centers = lax.scan(find_center, initial_distances, keys)
+    _, centers = lax.scan(find_center, (initial_distances, key1), None, length=num_clusters - 1)
     centers = jnp.vstack([initial_center, centers])
     return centers
 
