@@ -1,13 +1,12 @@
 from jax import numpy as jnp
 from jax import random as jr
-from jax import lax, vmap
-from jax.tree_util import register_pytree_node_class, tree_map
+from jax import lax
+from jax.tree_util import register_pytree_node_class
 
-from distrax import MultivariateNormalFullCovariance as MVN
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
 from ssm_jax.extended_kalman_filter.inference import extended_kalman_filter
 from ssm_jax.unscented_kalman_filter.inference import unscented_kalman_filter
-from ssm_jax.utils import PSDToRealBijector
 
 
 @register_pytree_node_class
@@ -96,7 +95,7 @@ class NonLinearGaussianSSM:
 
     def ekf_filter(self, emissions, inputs=None):
         return extended_kalman_filter(self, emissions, inputs)
-    
+
     def ukf_filter(self, emissions, hyperparams, inputs=None):
         return unscented_kalman_filter(self, emissions, hyperparams, inputs)
 

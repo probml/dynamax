@@ -2,8 +2,7 @@ from jax import numpy as jnp
 from jax import random as jr
 from jax import lax, vmap
 from jax.tree_util import register_pytree_node_class, tree_map
-
-from distrax import MultivariateNormalFullCovariance as MVN
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
 from ssm_jax.generalized_gaussian_filter.inference import general_gaussian_filter
 

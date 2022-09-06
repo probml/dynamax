@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
-from distrax import MultivariateNormalFullCovariance as MVN
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 import chex
 
 

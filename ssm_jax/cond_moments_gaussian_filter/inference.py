@@ -1,6 +1,6 @@
 from jax import numpy as jnp
 from jax import lax
-from distrax import MultivariateNormalFullCovariance as MVN
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from ssm_jax.cond_moments_gaussian_filter.containers import CMGFPosterior
 
 
@@ -18,7 +18,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
             mu_pred = gev(f, m, P)
                     = \int f(x_t, u) N(x_t | m, P) dx_t
             Sigma_pred = gev((f - mu_pred)(f - mu_pred)^T, m, P) + Q
-                       = \int (f(x_t, u) - mu_pred)(f(x_t, u) - mu_pred)^T 
+                       = \int (f(x_t, u) - mu_pred)(f(x_t, u) - mu_pred)^T
                            N(x_t | m, P)dx_t + Q
 
     Args:
@@ -115,8 +115,8 @@ def statistical_linear_regression(mu, Sigma, m, S, C):
     Returns:
         A (D_obs, D_hid): _description_
         b (D_obs):
-        Omega (D_obs, D_obs): 
-    """    
+        Omega (D_obs, D_obs):
+    """
     A = jnp.linalg.solve(Sigma.T, C).T
     b = m - A @ mu
     Omega = S - A @ Sigma @ A.T
@@ -124,7 +124,7 @@ def statistical_linear_regression(mu, Sigma, m, S, C):
 
 
 def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=None):
-    """Run an (iterated) conditional moments Gaussian filter to produce the 
+    """Run an (iterated) conditional moments Gaussian filter to produce the
     marginal likelihood and filtered state estimates.
 
     Args:
@@ -140,7 +140,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
             filtered_covariances (T, D_hid, D_hid)
     """
     num_timesteps = len(emissions)
-    
+
     # Process dynamics function and conditional emission moments to take in control inputs
     f = params.dynamics_function
     m_Y, Var_Y = params.emission_mean_function, params.emission_var_function
@@ -167,7 +167,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
         pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, u, g_ev, g_cov)
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
-    
+
     # Run the general linearization filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
