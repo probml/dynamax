@@ -5,8 +5,7 @@ import jax.numpy as jnp
 import jax.random as jr
 import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from jax import lax
-from jax import vmap
+from jax import lax, vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
 
