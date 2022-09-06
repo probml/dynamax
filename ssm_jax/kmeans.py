@@ -76,9 +76,9 @@ def kmeans_plusplus_initialization(key, X, num_clusters, num_local_trials=None):
         # Decide which candidate is the best
         best_candidate = jnp.argmin(jnp.sum(distance_to_candidates, axis=-1))
         distances = distance_to_candidates[best_candidate]
-        best_candidate = candidate_ids[best_candidate]
+        candidate_id = candidate_ids[best_candidate]
 
-        return distances, X[best_candidate]
+        return distances, X[candidate_id]
 
     if num_clusters == 1:
         return initial_center
