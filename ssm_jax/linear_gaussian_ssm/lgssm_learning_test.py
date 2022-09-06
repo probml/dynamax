@@ -1,9 +1,7 @@
+from itertools import count
+
 import jax.numpy as jnp
 import jax.random as jr
-from jax import jit
-from itertools import count
-import matplotlib.pyplot as plt
-
 from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
 
 
@@ -20,6 +18,7 @@ def lgssm_test(state_dim=2, emission_dim=10, num_timesteps=100, method='MLE'):
 
     assert jnp.all(jnp.diff(marginal_lls) > -1e-4)
 
+
 if __name__ == "__main__":
 
     print("Test the MLE estimation with EM algorithm ... ")
@@ -29,4 +28,3 @@ if __name__ == "__main__":
     print("Test the MAP estimation with EMAP algorithm ... ")
     lgssm_test(method='MAP')
     print("Test of EMAP algorithm completed.")
-
