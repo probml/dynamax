@@ -6,7 +6,7 @@ from jax import random as jr
 from matplotlib import pyplot as plt
 
 from ssm_jax.plotting import plot_lgssm_posterior
-from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 
 
 def kf_spiral():

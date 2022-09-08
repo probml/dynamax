@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 from functools import partial
 
 from ssm_jax.plotting import plot_lgssm_posterior
-from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_smoother
 
 
