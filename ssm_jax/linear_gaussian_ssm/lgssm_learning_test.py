@@ -2,7 +2,7 @@ from itertools import count
 
 import jax.numpy as jnp
 import jax.random as jr
-from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 
 
 def lgssm_test(state_dim=2, emission_dim=10, num_timesteps=100, method='MLE'):
