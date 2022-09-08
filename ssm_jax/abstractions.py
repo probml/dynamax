@@ -171,7 +171,7 @@ class SSM(ABC):
         items = sorted(self.__dict__.items())
         hyper_values = [val for key, val in items if (not isinstance(Parameter) or val.is_frozen)]
         return hyper_values
-
+    
     def fit_sgd(self,
                 batch_emissions,
                 optimizer=optax.adam(1e-3),
