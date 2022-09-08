@@ -92,7 +92,7 @@ class TestInfoFilteringAndSmoothing:
     # Sample data from model.
     key = jr.PRNGKey(0)
     num_timesteps = 15
-    input_size = lgssm.dynamics_input_weights.shape[1]
+    input_size = lgssm.dynamics_input_weights.value.shape[1]
     inputs = jnp.zeros((num_timesteps, input_size))
     x, y = lgssm.sample(key, num_timesteps, inputs=inputs)
 
