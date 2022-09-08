@@ -1,7 +1,6 @@
 from functools import partial
+from tqdm.auto import trange
 
-from distrax import MultivariateNormalFullCovariance as MVN
-from jax import jit
 from jax import numpy as jnp
 from jax import random as jr
 from jax import vmap, jit
@@ -14,12 +13,10 @@ from ssm_jax.distributions import NormalInverseWishart as NIW
 from ssm_jax.distributions import MatrixNormalInverseWishart as MNIW
 from ssm_jax.distributions import niw_posterior_update, mniw_posterior_update
 from ssm_jax.utils import PSDToRealBijector
-from tqdm.auto import trange
+from ssm_jax.abstractions import SSM, Parameter
 
 
-def _get_shape(x, dim):
-    return x.shape[1:] if x.ndim == dim + 1 else x.shape
-
+_get_shape = lambda x, dim: x.shape[1:] if x.ndim == dim + 1 else x.shape
 
 @register_pytree_node_class
 class LinearGaussianSSM(SSM):
@@ -42,23 +39,23 @@ class LinearGaussianSSM(SSM):
     emission_bias = d
     """
 
-    def __init__(self,
-                 dynamics_matrix,
-                 dynamics_covariance,
-                 emission_matrix,
-                 emission_covariance,
-                 initial_mean=None,
-                 initial_covariance=None,
-                 dynamics_input_weights=None,
-                 dynamics_bias=None,
-                 emission_input_weights=None,
-                 emission_bias=None,
-                 priors=None):
+    def __init__(
+        self,
+        dynamics_matrix,
+        dynamics_covariance,
+        emission_matrix,
+        emission_covariance,
+        initial_mean=None,
+        initial_covariance=None,
+        dynamics_input_weights=None,
+        dynamics_bias=None,
+        emission_input_weights=None,
+        emission_bias=None,
+        priors = None
+    ):
         self.emission_dim, self.state_dim = _get_shape(emission_matrix, 2)
-        dynamics_input_dim = dynamics_input_weights.shape[
-            1] if dynamics_input_weights is not None else 0
-        emission_input_dim = emission_input_weights.shape[
-            1] if emission_input_weights is not None else 0
+        dynamics_input_dim = dynamics_input_weights.shape[1] if dynamics_input_weights is not None else 0
+        emission_input_dim = emission_input_weights.shape[1] if emission_input_weights is not None else 0
         self.input_dim = max(dynamics_input_dim, emission_input_dim)
         self._db_indicator = dynamics_bias is not None
         self._eb_indicator = emission_bias is not None
@@ -68,11 +65,9 @@ class LinearGaussianSSM(SSM):
 
         initial_mean = default(initial_mean, jnp.zeros(self.state_dim))
         initial_covariance = default(initial_covariance, jnp.eye(self.state_dim))
-        dynamics_input_weights = default(dynamics_input_weights,
-                                         jnp.zeros((self.state_dim, self.input_dim)))
+        dynamics_input_weights = default(dynamics_input_weights, jnp.zeros((self.state_dim, self.input_dim)))
         dynamics_bias = default(dynamics_bias, jnp.zeros(self.state_dim))
-        emission_input_weights = default(emission_input_weights,
-                                         jnp.zeros((self.emission_dim, self.input_dim)))
+        emission_input_weights = default(emission_input_weights, jnp.zeros((self.emission_dim, self.input_dim)))
         emission_bias = default(emission_bias, jnp.zeros(self.emission_dim))
 
         # Save args
@@ -145,14 +140,16 @@ class LinearGaussianSSM(SSM):
         H = jr.normal(key, (emission_dim, state_dim))
         D = jnp.zeros((emission_dim, input_dim))
         R = 0.1 * jnp.eye(emission_dim)
-        return cls(dynamics_matrix=F,
-                   dynamics_covariance=Q,
-                   emission_matrix=H,
-                   emission_covariance=R,
-                   initial_mean=m1,
-                   initial_covariance=Q1,
-                   dynamics_input_weights=B,
-                   emission_input_weights=D)
+        return cls(
+            dynamics_matrix=F,
+            dynamics_covariance=Q,
+            emission_matrix=H,
+            emission_covariance=R,
+            initial_mean=m1,
+            initial_covariance=Q1,
+            dynamics_input_weights=B,
+            emission_input_weights=D
+        )
 
     # Properties to get various parameters of the model
     # Parameters of initial state
@@ -203,15 +200,13 @@ class LinearGaussianSSM(SSM):
 
     def transition_distribution(self, state, **covariates):
         input = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
-        return MVN(
-            self.dynamics_matrix @ state + self.dynamics_input_weights @ input + self.dynamics_bias,
-            self.dynamics_covariance)
+        return MVN(self.dynamics_matrix @ state + self.dynamics_input_weights @ input + self.dynamics_bias,
+                   self.dynamics_covariance)
 
     def emission_distribution(self, state, **covariates):
         input = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
-        return MVN(
-            self.emission_matrix @ state + self.emission_input_weights @ input + self.emission_bias,
-            self.emission_covariance)
+        return MVN(self.emission_matrix @ state + self.emission_input_weights @ input + self.emission_bias,
+                   self.emission_covariance)
 
     def log_prior(self):
         """Return the log prior probability of any model parameters.
@@ -259,7 +254,7 @@ class LinearGaussianSSM(SSM):
             self.__dict__[key].value = value
 
     @classmethod
-    def from_unconstrained_params(cls, unconstrained_params):
+    def from_unconstrained_params(cls, unconstrained_params, hypers):
         initial_mean = unconstrained_params[0]
         initial_covariance = PSDToRealBijector.inverse(unconstrained_params[1])
         dynamics_matrix = unconstrained_params[2]
@@ -270,19 +265,20 @@ class LinearGaussianSSM(SSM):
         emission_input_weights = unconstrained_params[7]
         emission_bias = unconstrained_params[8]
         emission_covariance = PSDToRealBijector.inverse(unconstrained_params[9])
+        return cls(
+            dynamics_matrix=dynamics_matrix,
+            dynamics_covariance=dynamics_covariance,
+            emission_matrix=emission_matrix,
+            emission_covariance=emission_covariance,
+            initial_mean=initial_mean,
+            initial_covariance=initial_covariance,
+            dynamics_input_weights=dynamics_input_weights,
+            dynamics_bias=dynamics_bias,
+            emission_input_weights=emission_input_weights,
+            emission_bias=emission_bias
+        )
 
-        return cls(dynamics_matrix=dynamics_matrix,
-                   dynamics_covariance=dynamics_covariance,
-                   emission_matrix=emission_matrix,
-                   emission_covariance=emission_covariance,
-                   initial_mean=initial_mean,
-                   initial_covariance=initial_covariance,
-                   dynamics_input_weights=dynamics_input_weights,
-                   dynamics_bias=dynamics_bias,
-                   emission_input_weights=emission_input_weights,
-                   emission_bias=emission_bias)
-
-    # Expectation-maximization (EM) code
+    ### Expectation-maximization (EM) code
     def e_step(self, batch_emissions, batch_inputs=None):
         """The E-step computes sums of expected sufficient statistics under the
         posterior. In the generic case, we simply return the posterior itself.
@@ -317,24 +313,25 @@ class LinearGaussianSSM(SSM):
             # expected sufficient statistics for the dynamics distribution
             # let zp[t] = [x[t], u[t]] for t = 0...T-2
             # let xn[t] = x[t+1]          for t = 0...T-2
-            sum_zpzpT = jnp.block([[Exp.T @ Exp, Exp.T @ up], [up.T @ Exp, up.T @ up]])
-            sum_zpzpT = sum_zpzpT.at[:self.state_dim, :self.state_dim].add(Vxp.sum(0))
+            sum_zpzpT = jnp.block([[Exp.T @ Exp, Exp.T @ up],
+                                   [ up.T @ Exp,  up.T @ up]])
+            sum_zpzpT = sum_zpzpT.at[: self.state_dim, : self.state_dim].add(Vxp.sum(0))
             sum_zpxnT = jnp.block([[Expxn.sum(0)], [up.T @ Exn]])
             sum_xnxnT = Vxn.sum(0) + Exn.T @ Exn
             dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps - 1)
             if not self._db_indicator:
-                dynamics_stats = (sum_zpzpT[:-1, :-1], sum_zpxnT[:-1, :], sum_xnxnT,
-                                  num_timesteps - 1)
+                dynamics_stats = (sum_zpzpT[:-1, :-1], sum_zpxnT[:-1,:], sum_xnxnT, num_timesteps - 1)
 
             # more expected sufficient statistics for the emissions
             # let z[t] = [x[t], u[t]] for t = 0...T-1
-            sum_zzT = jnp.block([[Ex.T @ Ex, Ex.T @ u], [u.T @ Ex, u.T @ u]])
-            sum_zzT = sum_zzT.at[:self.state_dim, :self.state_dim].add(Vx.sum(0))
+            sum_zzT = jnp.block([[Ex.T @ Ex,  Ex.T @ u],
+                                 [ u.T @ Ex,   u.T @ u]])
+            sum_zzT = sum_zzT.at[: self.state_dim, : self.state_dim].add(Vx.sum(0))
             sum_zyT = jnp.block([[Ex.T @ y], [u.T @ y]])
             sum_yyT = emissions.T @ emissions
             emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
             if not self._eb_indicator:
-                emission_stats = (sum_zzT[:-1, :-1], sum_zyT[:-1, :], sum_yyT, num_timesteps)
+                emission_stats = (sum_zzT[:-1, :-1], sum_zyT[:-1,:], sum_yyT, num_timesteps)
 
             return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
@@ -342,7 +339,6 @@ class LinearGaussianSSM(SSM):
         return vmap(_single_e_step)(batch_emissions, batch_inputs)
 
     def m_step(self, batch_stats, method='MLE'):
-
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
             W = jnp.linalg.solve(ExxT, ExyT).T
@@ -353,7 +349,7 @@ class LinearGaussianSSM(SSM):
         stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
         init_stats, dynamics_stats, emission_stats = stats
 
-        if method == 'MLE':
+        if method=='MLE':
             # Perform MLE estimation jointly
             sum_x0, sum_x0x0T, N = init_stats
             S = (sum_x0x0T - jnp.outer(sum_x0, sum_x0)) / N
@@ -361,7 +357,7 @@ class LinearGaussianSSM(SSM):
             FB, Q = fit_linear_regression(*dynamics_stats)
             HD, R = fit_linear_regression(*emission_stats)
 
-        elif method == 'MAP':
+        elif method=='MAP':
             # Perform MAP estimation jointly
             initial_posterior = niw_posterior_update(self.initial_prior, init_stats)
             S, m = initial_posterior.mode()
@@ -393,7 +389,6 @@ class LinearGaussianSSM(SSM):
     def fit_em(self, batch_emissions, batch_inputs=None, num_iters=50, method='MLE'):
         """Fit this HMM with Expectation-Maximization (EM).
         """
-
         @jit
         def em_step(_params):
             self.params = _params
@@ -423,4 +418,4 @@ class LinearGaussianSSM(SSM):
         if not indicator:
             return jnp.concatenate((F, B), axis=1)
         else:
-            return jnp.concatenate((F, B, b[:, None]), axis=1)
+            return jnp.concatenate((F, B, b[:,None]), axis=1)
