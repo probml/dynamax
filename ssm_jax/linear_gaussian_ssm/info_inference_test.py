@@ -2,7 +2,7 @@ from jax import vmap
 from jax import numpy as jnp
 from jax import random as jr
 
-from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 from ssm_jax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_filter
 from ssm_jax.linear_gaussian_ssm.info_inference import LGSSMInfoParams, lgssm_info_filter, lgssm_info_smoother
 
