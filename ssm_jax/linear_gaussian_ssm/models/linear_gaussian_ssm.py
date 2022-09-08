@@ -1,7 +1,7 @@
 from functools import partial
 
 import blackjax
-from distrax import MultivariateNormalFullCovariance as MVN
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jax import jit, vmap
 from jax import numpy as jnp
 from jax import random as jr
