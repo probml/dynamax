@@ -1,7 +1,6 @@
 from functools import partial
 
 import blackjax
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jax import jit, vmap
 from jax import numpy as jnp
 from jax import random as jr
@@ -10,6 +9,7 @@ from ssm_jax.abstractions import SSM, Parameter
 from ssm_jax.distributions import InverseWishart, MatrixNormalPrecision as MN
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, LGSSMParams
 from ssm_jax.utils import PSDToRealBijector
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from tqdm.auto import trange
 
 
