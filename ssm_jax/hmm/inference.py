@@ -73,13 +73,14 @@ def _predict(probs, A):
     return A.T @ probs
 
 
-def hmm_filter(initial_distribution, transition_matrix, log_likelihoods):
+def hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transition_fn = None):
     """Forwards filtering.
 
     Args:
         initial_distribution(k): prob(hid(1)=k)
         transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
         log_likelihoods(t,k): p(obs(t) | hid(t)=k)
+        transition_fn(t): returns K*K transition matrix for step t (default None)
 
     Returns: HMMPosterior object (smoothed_probs=None)
     """
