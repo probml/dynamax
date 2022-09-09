@@ -2,7 +2,7 @@ from jax import vmap
 from jax import numpy as jnp
 from jax import random as jr
 
-from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 from ssm_jax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_filter
 from ssm_jax.linear_gaussian_ssm.info_inference import LGSSMInfoParams, lgssm_info_filter, lgssm_info_smoother
 
@@ -92,7 +92,7 @@ class TestInfoFilteringAndSmoothing:
     # Sample data from model.
     key = jr.PRNGKey(0)
     num_timesteps = 15
-    input_size = lgssm.dynamics_input_weights.shape[1]
+    input_size = lgssm.dynamics_input_weights.value.shape[1]
     inputs = jnp.zeros((num_timesteps, input_size))
     x, y = lgssm.sample(key, num_timesteps, inputs=inputs)
 

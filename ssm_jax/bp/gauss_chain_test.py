@@ -15,7 +15,7 @@ def test_gauss_chain_bp():
 
     key = jr.PRNGKey(111)
     num_timesteps = 15
-    input_size = lgssm.dynamics_input_weights.shape[1]
+    input_size = lgssm.dynamics_input_weights.value.shape[1]
     inputs = jnp.zeros((num_timesteps, input_size))
     z, y = lgssm.sample(key, num_timesteps, inputs=inputs)
 

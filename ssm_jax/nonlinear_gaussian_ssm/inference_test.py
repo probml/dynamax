@@ -1,7 +1,7 @@
 import jax.random as jr
 import jax.numpy as jnp
 
-from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 from ssm_jax.nonlinear_gaussian_ssm.models import NonLinearGaussianSSM
 
 

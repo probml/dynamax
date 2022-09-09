@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import tensorflow_probability.substrates.jax.distributions as tfd
 
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_posterior_sample
-from ssm_jax.linear_gaussian_ssm.models import LinearGaussianSSM
+from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 
 
 def lgssm_ssm_jax_to_tfp(num_timesteps, lgssm):
