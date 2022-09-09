@@ -90,7 +90,11 @@ def hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transit
         log_normalizer, predicted_probs = carry
 
         # Get parameters for time t
-        A = _get_params(transition_matrix, 2, t)
+        if transition_fn is not None:
+          A = transition_fn(t)
+        else:
+          A = transition_matrix
+        #A = _get_params(transition_matrix, 2, t)
         ll = log_likelihoods[t]
 
         filtered_probs, log_norm = _condition_on(predicted_probs, ll)
