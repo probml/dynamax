@@ -4,51 +4,10 @@ from abc import abstractmethod
 import jax.numpy as jnp
 import jax.random as jr
 import optax
-import tensorflow_probability.substrates.jax.bijectors as tfb
 from jax import lax, vmap
-from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
 
 from ssm_jax.optimize import run_sgd
-
-
-@register_pytree_node_class
-class Parameter:
-    """A lightweight wrapper for parameters of a model. It combines the `value`
-    (a JAX PyTree) with a flag `is_frozen` (bool) to specify whether or not
-    the parameter should be updated during model learning, as well as a `bijector`
-    (tensorflow_probability.bijectors.Bijector) to map the parameter to/from an
-    unconstrained space.
-    """
-
-    def __init__(self, value, is_frozen=False, bijector=None, prior=None):
-        self.value = value
-        self.is_frozen = is_frozen
-        self.bijector = bijector if bijector is not None else tfb.Identity()
-
-    def __repr__(self):
-        return f"Parameter(value={self.value}, " \
-               f"is_frozen={self.is_frozen}, " \
-               f"bijector={self.bijector})"
-
-    @property
-    def unconstrained_value(self):
-        return self.bijector(self.value)
-
-    def freeze(self):
-        self.is_frozen = True
-
-    def unfreeze(self):
-        self.is_frozen = False
-
-    def tree_flatten(self):
-        children = (self.value,)
-        aux_data = self.is_frozen, self.bijector
-        return children, aux_data
-
-    @classmethod
-    def tree_unflatten(cls, aux_data, children):
-        return cls(children[0], *aux_data)
 
 
 class SSM(ABC):
@@ -61,7 +20,7 @@ class SSM(ABC):
     """
 
     @abstractmethod
-    def initial_distribution(self, **covariates):
+    def initial_distribution(self, params, **covariates):
         """Return an initial distribution over latent states.
         Returns:
             dist (tfd.Distribution): distribution over initial latent state.
@@ -69,7 +28,7 @@ class SSM(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def transition_distribution(self, state, **covariates):
+    def transition_distribution(self, params, state, **covariates):
         """Return a distribution over next latent state given current state.
         Args:
             state (PyTree): current latent state
@@ -79,7 +38,7 @@ class SSM(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def emission_distribution(self, state, **covariates):
+    def emission_distribution(self, params, state, **covariates):
         """Return a distribution over emissions given current state.
         Args:
             state (PyTree): current latent state.
@@ -88,7 +47,7 @@ class SSM(ABC):
         """
         raise NotImplementedError
 
-    def sample(self, key, num_timesteps, **covariates):
+    def sample(self, params, key, num_timesteps, **covariates):
         """Sample a sequence of latent states and emissions.
         Args:
             key: rng key
@@ -98,15 +57,15 @@ class SSM(ABC):
         def _step(prev_state, args):
             key, covariate = args
             key1, key2 = jr.split(key, 2)
-            state = self.transition_distribution(prev_state, **covariate).sample(seed=key2)
-            emission = self.emission_distribution(state, **covariate).sample(seed=key1)
+            state = self.transition_distribution(params, prev_state, **covariate).sample(seed=key2)
+            emission = self.emission_distribution(params, state, **covariate).sample(seed=key1)
             return state, (state, emission)
 
         # Sample the initial state
         key1, key2, key = jr.split(key, 3)
         initial_covariate = tree_map(lambda x: x[0], covariates)
-        initial_state = self.initial_distribution(**initial_covariate).sample(seed=key1)
-        initial_emission = self.emission_distribution(initial_state, **initial_covariate).sample(seed=key2)
+        initial_state = self.initial_distribution(params, **initial_covariate).sample(seed=key1)
+        initial_emission = self.emission_distribution(params, initial_state, **initial_covariate).sample(seed=key2)
 
         # Sample the remaining emissions and states
         next_keys = jr.split(key, num_timesteps - 1)
@@ -119,22 +78,22 @@ class SSM(ABC):
         emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
         return states, emissions
 
-    def log_prob(self, states, emissions, **covariates):
+    def log_prob(self, params, states, emissions, **covariates):
         """Compute the log joint probability of the states and observations"""
 
         def _step(carry, args):
             lp, prev_state = carry
             state, emission, covariate = args
-            lp += self.transition_distribution(prev_state, **covariate).log_prob(state)
-            lp += self.emission_distribution(state, **covariate).log_prob(emission)
+            lp += self.transition_distribution(params, prev_state, **covariate).log_prob(state)
+            lp += self.emission_distribution(params, state, **covariate).log_prob(emission)
             return (lp, state), None
 
         # Compute log prob of initial time step
         initial_state = tree_map(lambda x: x[0], states)
         initial_emission = tree_map(lambda x: x[0], emissions)
         initial_covariate = tree_map(lambda x: x[0], covariates)
-        lp = self.initial_distribution(**initial_covariate).log_prob(initial_state)
-        lp += self.emission_distribution(initial_state, **initial_covariate).log_prob(initial_emission)
+        lp = self.initial_distribution(params, **initial_covariate).log_prob(initial_state)
+        lp += self.emission_distribution(params, initial_state, **initial_covariate).log_prob(initial_emission)
 
         # Scan over remaining time steps
         next_states = tree_map(lambda x: x[1:], states)
@@ -143,36 +102,16 @@ class SSM(ABC):
         (lp, _), _ = lax.scan(_step, (lp, initial_state), (next_states, next_emissions, next_covariates))
         return lp
 
-    def log_prior(self):
+    def log_prior(self, params):
         """Return the log prior probability of any model parameters.
         Returns:
             lp (Scalar): log prior probability.
         """
         return 0.0
 
-    @property
-    def unconstrained_params(self):
-        # Find all parameters and convert to unconstrained
-        items = sorted(self.__dict__.items())
-        params = [prm.unconstrained_value for key, prm in items if isinstance(prm, Parameter) and not prm.is_frozen]
-        return params
-
-    @unconstrained_params.setter
-    def unconstrained_params(self, values):
-        items = sorted(self.__dict__.items())
-        params = [val for key, val in items if isinstance(val, Parameter) and not val.is_frozen]
-        assert len(params) == len(values)
-        for param, value in zip(params, values):
-            param.value = param.bijector.inverse(value)
-
-    @property
-    def hyperparams(self):
-        """Helper property to get a PyTree of model hyperparameters."""
-        items = sorted(self.__dict__.items())
-        hyper_values = [val for key, val in items if (not isinstance(Parameter) or val.is_frozen)]
-        return hyper_values
-    
     def fit_sgd(self,
+                params,
+                param_properties,
                 batch_emissions,
                 optimizer=optax.adam(1e-3),
                 batch_size=1,
@@ -197,6 +136,8 @@ class SSM(ABC):
         Returns:
             losses: Output of loss_fn stored at each step.
         """
+        raise NotImplementedError("Need to fix this up!")
+
         def _loss_fn(params, minibatch_emissions, **minibatch_covariates):
             """Default objective function."""
             self.unconstrained_params = params
@@ -217,22 +158,3 @@ class SSM(ABC):
         self.unconstrained_params = params
         return losses
 
-    # Generic implementation of tree_flatten and unflatten. This assumes that
-    # the Parameters are all valid JAX PyTree nodes.
-    def tree_flatten(self):
-        items = sorted(self.__dict__.items())
-        param_values = [val for key, val in items if isinstance(val, Parameter)]
-        param_names = [key for key, val in items if isinstance(val, Parameter)]
-        hyper_values = [val for key, val in items if not isinstance(val, Parameter)]
-        hyper_names = [key for key, val in items if not isinstance(val, Parameter)]
-        return param_values, (param_names, hyper_names, hyper_values)
-
-    @classmethod
-    def tree_unflatten(cls, aux_data, param_values):
-        param_names, hyper_names, hyper_values = aux_data
-        obj = object.__new__(cls)
-        for name, value in zip(param_names, param_values):
-            setattr(obj, name, value)
-        for name, value in zip(hyper_names, hyper_values):
-            setattr(obj, name, value)
-        return obj
