@@ -13,7 +13,7 @@ def kf_spiral():
     delta = 1.0
     F = jnp.array([[0.1, 1.1, delta, 0], [-1, 1, 0, delta], [0, 0, 0.1, 0], [0, 0, 0, 0.1]])
 
-    H = jnp.array([[1, 0, 0, 0], [0, 1, 0, 0]])
+    H = jnp.array([[1., 0, 0, 0], [0, 1, 0, 0]])
 
     state_size, _ = F.shape
     observation_size, _ = H.shape
