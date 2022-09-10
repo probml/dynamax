@@ -62,7 +62,7 @@ def test_kalman_filter(num_timesteps=5, seed=0):
         emission_covariance=R,
     )
 
-    tfp_lgssm = lgssm_ssm_jax_to_tfp(num_timesteps, lgssm)
+    tfp_lgssm = lgssm_ssm_jax_to_tfp(num_timesteps, lgssm.params)
 
     ### Sample data ###
     key = jr.PRNGKey(seed)
@@ -80,4 +80,3 @@ def test_kalman_filter(num_timesteps=5, seed=0):
     assert jnp.allclose(ssm_posterior.smoothed_means, tfp_smoothed_means, rtol=1e-2)
     assert jnp.allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs, rtol=1e-2)
     assert jnp.allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
-
