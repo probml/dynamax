@@ -14,7 +14,6 @@ from ssm_jax.hmm.models.base import ExponentialFamilyHMM
 
 @chex.dataclass
 class PoissonHMMSuffStats:
-    # Wrapper for sufficient statistics of a BernoulliHMM
     marginal_loglik: chex.Scalar
     initial_probs: chex.Array
     trans_probs: chex.Array
