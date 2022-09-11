@@ -7,7 +7,6 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map
 from jax import vmap
-from jax.tree_util import register_pytree_node_class
 from ssm_jax.parameters import ParameterProperties
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
@@ -23,7 +22,6 @@ class BernoulliHMMSuffStats:
     sum_1mx: chex.Array
 
 
-@register_pytree_node_class
 class BernoulliHMM(ExponentialFamilyHMM):
 
     def __init__(self,
@@ -43,13 +41,9 @@ class BernoulliHMM(ExponentialFamilyHMM):
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
-        self._emission_dim = emission_dim
-        self._emission_prior_concentration0 = emission_prior_concentration0
-        self._emission_prior_concentration1 = emission_prior_concentration1
-
-    @property
-    def emission_dim(self):
-        return self._emission_dim
+        self.emission_dim = emission_dim
+        self.emission_prior_concentration0 = emission_prior_concentration0
+        self.emission_prior_concentration1 = emission_prior_concentration1
 
     def random_initialization(self, key):
         key1, key2, key3 = jr.split(key, 3)
@@ -81,10 +75,13 @@ class BernoulliHMM(ExponentialFamilyHMM):
         )
 
     def log_prior(self, params):
-        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
-        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
-        lp += tfd.Beta(self._emission_prior_concentration1.value,
-                       self._emission_prior_concentration0.value).log_prob(params['emissions']['probs']).sum()
+        lp = tfd.Dirichlet(self.initial_probs_concentration.value).log_prob(
+            self.initial_probs.value)
+        lp += tfd.Dirichlet(self.transition_matrix_concentration.value).log_prob(
+            self.transition_matrix.value).sum()
+        lp += tfd.Beta(self.emission_prior_concentration1.value,
+                       self.emission_prior_concentration0.value).log_prob(
+                           params['emissions']['probs']).sum()
         return lp
 
     def e_step(self, params, batch_emissions):
