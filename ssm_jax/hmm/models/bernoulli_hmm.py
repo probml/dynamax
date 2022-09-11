@@ -121,5 +121,4 @@ class BernoulliHMM(ExponentialFamilyHMM):
         params['emissions']['probs'] = tfd.Beta(
             self._emission_prior_concentration1.value + stats.sum_x,
             self._emission_prior_concentration0.value + stats.sum_1mx).mode()
-
         return params

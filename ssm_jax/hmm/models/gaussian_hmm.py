@@ -8,7 +8,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
-from ssm_jax.abstractions import Parameter
+from ssm_jax.parameters import ParameterProperties
 from ssm_jax.distributions import NormalInverseWishart
 from ssm_jax.distributions import niw_posterior_update
 from ssm_jax.hmm.inference import compute_transition_probs
@@ -32,10 +32,8 @@ class GaussianHMMSuffStats:
 class GaussianHMM(ExponentialFamilyHMM):
 
     def __init__(self,
-                 initial_probabilities,
-                 transition_matrix,
-                 emission_means,
-                 emission_covariance_matrices,
+                 num_states,
+                 emission_dim,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
                  emission_prior_mean=0.0,
@@ -50,68 +48,43 @@ class GaussianHMM(ExponentialFamilyHMM):
             emission_means (_type_): _description_
             emission_covariance_matrices (_type_): _description_
         """
-        super().__init__(initial_probabilities,
-                         transition_matrix,
+        super().__init__(num_states,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
+        self.emission_dim = emission_dim
+        self.emission_prior_mean = emission_prior_mean * jnp.ones(emission_dim)
+        self.emission_prior_conc = emission_prior_concentration
+        self.emission_prior_scale = emission_prior_scale if jnp.ndim(emission_prior_scale) == 2 \
+                else emission_prior_scale * jnp.eye(emission_dim)
+        self.emission_prior_df = emission_dim + emission_prior_extra_df
 
-        self._emission_means = Parameter(emission_means)
-        self._emission_covs = Parameter(emission_covariance_matrices, bijector=PSDToRealBijector)
-
-        dim = emission_means.shape[-1]
-        self._emission_prior_mean = Parameter(emission_prior_mean * jnp.ones(dim), is_frozen=True)
-        self._emission_prior_conc = Parameter(emission_prior_concentration,
-                                              is_frozen=True,
-                                              bijector=tfb.Invert(tfb.Softplus()))
-        self._emission_prior_scale = Parameter(
-            emission_prior_scale if jnp.ndim(emission_prior_scale) == 2 \
-                else emission_prior_scale * jnp.eye(dim),
-            is_frozen=True,
-            bijector=PSDToRealBijector)
-        self._emission_prior_df = Parameter(dim + emission_prior_extra_df,
-                                            is_frozen=True,
-                                            bijector=tfb.Invert(tfb.Softplus()))
-
-    @classmethod
-    def random_initialization(cls, key, num_states, emission_dim):
+    def random_initialization(self, key):
         key1, key2, key3 = jr.split(key, 3)
-        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
-        emission_means = jr.normal(key3, (num_states, emission_dim))
-        emission_covs = jnp.tile(jnp.eye(emission_dim), (num_states, 1, 1))
-        return cls(initial_probs, transition_matrix, emission_means, emission_covs)
+        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
+        emission_means = jr.normal(key3, (self.num_states, self.emission_dim))
+        emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, 1, 1))
+        params = dict(
+            initial=dict(probs=initial_probs),
+            transitions=dict(transition_matrix=transition_matrix),
+            emissions=dict(means=emission_means, covs=emission_covs))
+        param_props = dict(
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
+            emissions=dict(means=ParameterProperties(), covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))))
+        return  params, param_props
 
-    # Properties to get various parameters of the model
-    @property
-    def emission_means(self):
-        return self._emission_means
+    def emission_distribution(self, params, state):
+        return tfd.MultivariateNormalFullCovariance(
+            params['emissions']['means'][state], params['emissions']['covs'][state])
 
-    @property
-    def emission_covariance_matrices(self):
-        return self._emission_covs
-
-    def emission_distribution(self, state):
-        return tfd.MultivariateNormalFullCovariance(self._emission_means.value[state], self._emission_covs.value[state])
-
-    @property
-    def suff_stats_event_shape(self):
-        """Return dataclass containing 'event_shape' of each sufficient statistic."""
-        return GaussianHMMSuffStats(
-            marginal_loglik=(),
-            initial_probs=(self.num_states,),
-            trans_probs=(self.num_states, self.num_states),
-            sum_w=(self.num_states,),
-            sum_x=(self.num_states, self.num_obs),
-            sum_xxT=(self.num_states, self.num_obs, self.num_obs),
-        )
-
-    def log_prior(self):
-        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
-        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
-
-        lp += NormalInverseWishart(self._emission_prior_mean.value, self._emission_prior_conc.value,
-                                   self._emission_prior_df.value, self._emission_prior_scale.value).log_prob(
-                                       (self.emission_covariance_matrices.value, self.emission_means.value)).sum()
+    def log_prior(self, params):
+        lp = tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['initial']['probs'])
+        lp += tfd.Dirichlet(self.transition_matrix_concentration).log_prob(
+            params['transitions']['transition_matrix']).sum()
+        lp += NormalInverseWishart(self.emission_prior_mean, self.emission_prior_conc,
+                                   self.emission_prior_df, self.emission_prior_scale).log_prob(
+            (params['emissions']['covs'], params['emissions']['means'])).sum()
         return lp
 
     def _zeros_like_suff_stats(self):
@@ -132,7 +105,6 @@ class GaussianHMM(ExponentialFamilyHMM):
         posterior. In the Gaussian case, this these are the first two
         moments of the data
         """
-
         def _single_e_step(emissions):
             # Run the smoother
             posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
@@ -158,17 +130,17 @@ class GaussianHMM(ExponentialFamilyHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # The expected log joint is equal to the log prob of a normal inverse
         # Wishart distribution, up to additive factors. Find this NIW distribution
         # take its mode.
-        niw_prior = NormalInverseWishart(loc=self._emission_prior_mean.value,
-                                         mean_concentration=self._emission_prior_conc.value,
-                                         df=self._emission_prior_df.value,
-                                         scale=self._emission_prior_scale.value)
+        niw_prior = NormalInverseWishart(loc=self.emission_prior_mean,
+                                         mean_concentration=self.emission_prior_conc,
+                                         df=self.emission_prior_df,
+                                         scale=self.emission_prior_scale)
 
         # Find the posterior parameters of the NIW distribution
         def _single_m_step(sum_w, sum_x, sum_xxT):
@@ -176,5 +148,6 @@ class GaussianHMM(ExponentialFamilyHMM):
             return niw_posterior.mode()
 
         covs, means = vmap(_single_m_step)(stats.sum_w, stats.sum_x, stats.sum_xxT)
-        self.emission_covariance_matrices.value = covs
-        self.emission_means.value = means
+        params['emissions']['covs'] = covs
+        params['emissions']['means'] = means
+        return params

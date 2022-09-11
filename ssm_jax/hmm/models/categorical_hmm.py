@@ -121,3 +121,4 @@ class CategoricalHMM(ExponentialFamilyHMM):
         # Then maximize the expected log probability as a fn of model parameters
         params['emissions']['probs'] = tfd.Dirichlet(
             self._emission_prior_concentration.value +stats.sum_x).mode()
+        return params
