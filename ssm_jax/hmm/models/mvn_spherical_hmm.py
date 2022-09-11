@@ -2,66 +2,53 @@ import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-from ssm_jax.abstractions import Parameter
+from ssm_jax.parameters import ParameterProperties
 from ssm_jax.hmm.models.base import StandardHMM
 
 
 class MultivariateNormalSphericalHMM(StandardHMM):
 
     def __init__(self,
-                 initial_probabilities,
-                 transition_matrix,
-                 emission_means,
-                 emission_cov_diag_factors,
+                 num_states,
+                 emission_dim,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
-                 emission_cov_diag_factors_concentration=1.1,
-                 emission_cov_diag_factors_rate=1.1):
+                 emission_var_concentration=1.1,
+                 emission_var_rate=1.1):
 
-        ndim = jnp.ndim(emission_cov_diag_factors)
-        assert ndim == 1 or ndim == 2 and emission_cov_diag_factors.shape[1] == 1
+        super().__init__(num_states,
+                         initial_probs_concentration=initial_probs_concentration,
+                         transition_matrix_concentration=transition_matrix_concentration)
 
-        super().__init__(initial_probabilities, transition_matrix, initial_probs_concentration,
-                         transition_matrix_concentration)
-        self._emission_means = Parameter(emission_means)
-        self._emission_cov_diag_factors = Parameter(emission_cov_diag_factors, bijector=tfb.Invert(tfb.Softplus()))
+        self.emission_dim = emission_dim
+        self.emission_var_concentration = emission_var_concentration
+        self.emission_var_rate = emission_var_rate
 
-        # The hyperparameters of the prior
-        self._emission_cov_diag_factors_concentration = Parameter(emission_cov_diag_factors_concentration *
-                                                                  jnp.ones(self.num_states),
-                                                                  is_frozen=True,
-                                                                  bijector=tfb.Invert(tfb.Softplus()))
-        self._emission_cov_diag_factors_rate = Parameter(emission_cov_diag_factors_rate * jnp.ones(self.num_states),
-                                                         is_frozen=True,
-                                                         bijector=tfb.Invert(tfb.Softplus()))
-
-    @classmethod
-    def random_initialization(cls, key, num_states, emission_dim):
+    def random_initialization(self, key):
         key1, key2, key3, key4, key5 = jr.split(key, 5)
-        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
-        emission_means = jr.normal(key3, (num_states, emission_dim))
-        emission_cov_diag_factors = jr.exponential(key4, (num_states, 1))
-        return cls(initial_probs, transition_matrix, emission_means, emission_cov_diag_factors)
+        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
+        emission_means = jr.normal(key3, (self.num_states, self.emission_dim))
+        emission_scales = jr.exponential(key4, (self.num_states, 1))
+        params = dict(
+            initial=dict(probs=initial_probs),
+            transitions=dict(transition_matrix=transition_matrix),
+            emissions=dict(means=emission_means, scales=emission_scales))
+        param_props = dict(
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
+            emissions=dict(means=ParameterProperties(), scales=ParameterProperties(constrainer=tfb.Softplus())))
+        return  params, param_props
 
-    # Properties to get various parameters of the model
-    @property
-    def emission_means(self):
-        return self._emission_means
+    def emission_distribution(self, params, state):
+        dim = self.emission_dim
+        return tfd.MultivariateNormalDiag(params['emissions']['means'][state],
+                                          params['emissions']['scales'][state] * jnp.ones((dim,)))
 
-    @property
-    def emission_cov_diag_factors(self):
-        return self._emission_cov_diag_factors
-
-    def emission_distribution(self, state):
-        dim = self._emission_means.value.shape[-1]
-        return tfd.MultivariateNormalDiag(self._emission_means.value[state],
-                                          self._emission_cov_diag_factors.value[state] * jnp.ones((dim,)))
-
-    def log_prior(self):
-        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
-        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
-        lp += (tfd.Gamma(self._emission_cov_diag_factors_concentration.value,
-                         self._emission_cov_diag_factors_rate.value).log_prob(self._emission_cov_diag_factors.value) *
-               self.num_obs).sum()
+    def log_prior(self, params):
+        lp = tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['initial']['probs'])
+        lp += tfd.Dirichlet(self.transition_matrix_concentration).log_prob(
+            params['transitions']['transition_matrix']).sum()
+        lp += tfd.Gamma(self.emission_var_concentration.value,
+                         self.emission_var_rate.value).log_prob(params['emissions']['scales']**2).sum()
         return lp
