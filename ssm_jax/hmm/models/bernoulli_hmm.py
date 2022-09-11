@@ -8,7 +8,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map
 from jax import vmap
 from jax.tree_util import register_pytree_node_class
-from ssm_jax.abstractions import Parameter
+from ssm_jax.parameters import ParameterProperties
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import ExponentialFamilyHMM
@@ -22,13 +22,13 @@ class BernoulliHMMSuffStats:
     sum_x: chex.Array
     sum_1mx: chex.Array
 
+
 @register_pytree_node_class
 class BernoulliHMM(ExponentialFamilyHMM):
 
     def __init__(self,
-                 initial_probabilities,
-                 transition_matrix,
-                 emission_probs,
+                 num_states,
+                 emission_dim,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
                  emission_prior_concentration1=1.1,
@@ -39,32 +39,35 @@ class BernoulliHMM(ExponentialFamilyHMM):
             transition_matrix (_type_): _description_
             emission_probs (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix,
+        super().__init__(num_states,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
-        self._emission_prior_concentration0 = Parameter(emission_prior_concentration0,
-                                                        is_frozen=True,
-                                                        bijector=tfb.Invert(tfb.Softplus()))
-        self._emission_prior_concentration1 = Parameter(emission_prior_concentration1,
-                                                        is_frozen=True,
-                                                        bijector=tfb.Invert(tfb.Softplus()))
-        self._emission_probs = Parameter(emission_probs, bijector=tfb.Invert(tfb.Sigmoid()))
-
-    @classmethod
-    def random_initialization(cls, key, num_states, emission_dim):
-        key1, key2, key3 = jr.split(key, 3)
-        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
-        emission_probs = jr.uniform(key3, (num_states, emission_dim))
-        return cls(initial_probs, transition_matrix, emission_probs)
+        self._emission_dim = emission_dim
+        self._emission_prior_concentration0 = emission_prior_concentration0
+        self._emission_prior_concentration1 = emission_prior_concentration1
 
     @property
-    def emission_probs(self):
-        return self._emission_probs
+    def emission_dim(self):
+        return self._emission_dim
 
-    def emission_distribution(self, state):
-        return tfd.Independent(tfd.Bernoulli(probs=self._emission_probs.value[state]),
+    def random_initialization(self, key):
+        key1, key2, key3 = jr.split(key, 3)
+        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
+        emission_probs = jr.uniform(key3, (self.num_states, self.emission_dim))
+        params = dict(
+            initial=dict(probs=initial_probs),
+            transitions=dict(transition_matrix=transition_matrix),
+            emissions=dict(probs=emission_probs))
+        param_props = dict(
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
+            emissions=dict(probs=ParameterProperties(constrainer=tfb.Sigmoid())))
+        return  params, param_props
+
+    def emission_distribution(self, params, state):
+        return tfd.Independent(tfd.Bernoulli(probs=params['emissions']['probs'][state]),
                                reinterpreted_batch_ndims=1)
 
     def _zeros_like_suff_stats(self):
@@ -77,14 +80,14 @@ class BernoulliHMM(ExponentialFamilyHMM):
             sum_1mx         = jnp.zeros((self.num_states, self.num_obs)),
         )
 
-    def log_prior(self):
+    def log_prior(self, params):
         lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
         lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
         lp += tfd.Beta(self._emission_prior_concentration1.value,
-                         self._emission_prior_concentration0.value).log_prob(self._emission_probs.value).sum()
+                       self._emission_prior_concentration0.value).log_prob(params['emissions']['probs']).sum()
         return lp
 
-    def e_step(self, batch_emissions):
+    def e_step(self, params, batch_emissions):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
         moments of the data
@@ -92,9 +95,9 @@ class BernoulliHMM(ExponentialFamilyHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(),
-                                     self._compute_transition_matrices(),
-                                     self._compute_conditional_logliks(emissions))
+            posterior = hmm_smoother(self._compute_initial_probs(params),
+                                     self._compute_transition_matrices(params),
+                                     self._compute_conditional_logliks(params, emissions))
 
             # Compute the initial state and transition probabilities
             trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
@@ -115,11 +118,13 @@ class BernoulliHMM(ExponentialFamilyHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Then maximize the expected log probability as a fn of model parameters
-        self._emission_probs.value = tfd.Beta(
+        params['emissions']['probs'] = tfd.Beta(
             self._emission_prior_concentration1.value + stats.sum_x,
             self._emission_prior_concentration0.value + stats.sum_1mx).mode()
+
+        return params

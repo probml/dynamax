@@ -4,7 +4,6 @@ from copy import deepcopy
 import jax.numpy as jnp
 from jax import value_and_grad
 import optax
-import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import jit
 from jax import lax
