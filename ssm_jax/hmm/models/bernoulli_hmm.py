@@ -75,13 +75,11 @@ class BernoulliHMM(ExponentialFamilyHMM):
         )
 
     def log_prior(self, params):
-        lp = tfd.Dirichlet(self.initial_probs_concentration.value).log_prob(
-            self.initial_probs.value)
-        lp += tfd.Dirichlet(self.transition_matrix_concentration.value).log_prob(
-            self.transition_matrix.value).sum()
-        lp += tfd.Beta(self.emission_prior_concentration1.value,
-                       self.emission_prior_concentration0.value).log_prob(
-                           params['emissions']['probs']).sum()
+        lp = tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['initial']['probs'])
+        lp += tfd.Dirichlet(self.transition_matrix_concentration).log_prob(
+            params['transitions']['transition_matrix']).sum()
+        lp += tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0).log_prob(
+            params['emissions']['probs']).sum()
         return lp
 
     def e_step(self, params, batch_emissions):
