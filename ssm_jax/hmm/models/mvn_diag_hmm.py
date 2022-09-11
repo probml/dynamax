@@ -6,7 +6,7 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import tree_map
 from jax import vmap
-from ssm_jax.abstractions import Parameter
+from ssm_jax.parameters import ParameterProperties
 from ssm_jax.distributions import NormalInverseGamma
 from ssm_jax.distributions import nig_posterior_update
 from ssm_jax.hmm.inference import compute_transition_probs
@@ -18,10 +18,8 @@ from ssm_jax.hmm.models.gaussian_hmm import GaussianHMMSuffStats
 class MultivariateNormalDiagHMM(StandardHMM):
 
     def __init__(self,
-                 initial_probabilities,
-                 transition_matrix,
-                 emission_means,
-                 emission_cov_diag_factors,
+                 num_states,
+                 emission_dim,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
                  emission_prior_mean=0.0,
@@ -29,68 +27,60 @@ class MultivariateNormalDiagHMM(StandardHMM):
                  emission_prior_scale=1e-4,
                  emission_prior_extra_df=0.1):
 
-        super().__init__(initial_probabilities, transition_matrix, initial_probs_concentration,
-                         transition_matrix_concentration)
-        self._emission_means = Parameter(emission_means)
-        self._emission_cov_diag_factors = Parameter(emission_cov_diag_factors, bijector=tfb.Invert(tfb.Softplus()))
+        super().__init__(num_states,
+                         initial_probs_concentration=initial_probs_concentration,
+                         transition_matrix_concentration=transition_matrix_concentration)
+        self.emission_dim = emission_dim
 
-        dim = emission_means.shape[-1]
-        self._emission_prior_mean = Parameter(emission_prior_mean * jnp.ones(dim), is_frozen=True)
-        self._emission_prior_conc = Parameter(emission_prior_concentration,
-                                              is_frozen=True,
-                                              bijector=tfb.Invert(tfb.Softplus()))
-        self._emission_prior_scale = Parameter(
-            emission_prior_scale * jnp.ones(dim) if isinstance(emission_prior_scale, float) else emission_prior_scale,
-            is_frozen=True,
-            bijector=tfb.Invert(tfb.Softplus()))
-        self._emission_prior_df = Parameter(dim + emission_prior_extra_df,
-                                            is_frozen=True,
-                                            bijector=tfb.Invert(tfb.Softplus()))
+        self.emission_prior_mean = emission_prior_mean * jnp.ones(emission_dim)
+        self.emission_prior_conc = emission_prior_concentration
+        self.emission_prior_scale = emission_prior_scale * jnp.ones(emission_dim) \
+            if isinstance(emission_prior_scale, float) else emission_prior_scale
+        self.emission_prior_df = emission_dim + emission_prior_extra_df
 
-    @classmethod
-    def random_initialization(cls, key, num_states, emission_dim):
+    def random_initialization(self, key):
         key1, key2, key3, key4 = jr.split(key, 4)
-        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
-        emission_means = jr.normal(key3, (num_states, emission_dim))
-        emission_covs = jr.exponential(key4, (num_states, emission_dim))
-        return cls(initial_probs, transition_matrix, emission_means, emission_covs)
+        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
+        emission_means = jr.normal(key3, (self.num_states, self.emission_dim))
+        emission_scale_diags = jr.exponential(key4, (self.num_states, self.emission_dim))
+        params = dict(
+            initial=dict(probs=initial_probs),
+            transitions=dict(transition_matrix=transition_matrix),
+            emissions=dict(means=emission_means, scale_diags=emission_scale_diags))
+        param_props = dict(
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
+            emissions=dict(means=ParameterProperties(), scale_diags=ParameterProperties(constrainer=tfb.Softplus())))
+        return  params, param_props
 
-    # Properties to get various parameters of the model
-    @property
-    def emission_means(self):
-        return self._emission_means
+    def emission_distribution(self, params, state):
+        return tfd.MultivariateNormalDiag(params['emissions']['means'][state],
+                                          params['emissions']['scale_diags'][state])
 
-    @property
-    def emission_cov_diag_factors(self):
-        return self._emission_cov_diag_factors
-
-    def emission_distribution(self, state):
-        print(self._emission_means.value[state].shape, self._emission_cov_diag_factors.value[state].shape)
-        return tfd.MultivariateNormalDiag(self._emission_means.value[state],
-                                          self._emission_cov_diag_factors.value[state])
-
-    def log_prior(self):
-        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
-        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
+    def log_prior(self, params):
+        lp = tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['initial']['probs'])
+        lp += tfd.Dirichlet(self.transition_matrix_concentration).log_prob(
+            params['transitions']['transition_matrix']).sum()
         lp += NormalInverseGamma(
-            self._emission_prior_mean.value,
-            self._emission_prior_conc.value,
-            self._emission_prior_df.value,
-            self._emission_prior_scale.value,
-        ).log_prob((self._emission_cov_diag_factors.value, self.emission_means.value)).sum()
+            self.emission_prior_mean,
+            self.emission_prior_conc,
+            self.emission_prior_df,
+            self.emission_prior_scale,
+        ).log_prob((params['emissions']['scale_diags'], params['emissions']['means'])).sum()
         return lp
 
     # Expectation-maximization (EM) code
-    def e_step(self, batch_emissions):
+    def e_step(self, params, batch_emissions):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
-                                     self._compute_conditional_logliks(emissions))
+            posterior = hmm_smoother(self._compute_initial_probs(params),
+                                     self._compute_transition_matrices(params),
+                                     self._compute_conditional_logliks(params, emissions))
 
             # Compute the initial state and transition probabilities
-            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
+            trans_probs = compute_transition_probs(params['transitions']['transition_matrix'], posterior)
 
             # Compute the expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
@@ -109,14 +99,14 @@ class MultivariateNormalDiagHMM(StandardHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
-        nig_prior = NormalInverseGamma(loc=self._emission_prior_mean.value,
-                                       mean_concentration=self._emission_prior_conc.value,
-                                       concentration=self._emission_prior_df.value,
-                                       scale=self._emission_prior_scale.value)
+        nig_prior = NormalInverseGamma(loc=self.emission_prior_mean,
+                                       mean_concentration=self.emission_prior_conc,
+                                       concentration=self.emission_prior_df,
+                                       scale=self.emission_prior_scale)
 
         # The expected log joint is equal to the log prob of a normal inverse
         # gamma distribution, up to additive factors. Find this NIG distribution
@@ -126,6 +116,7 @@ class MultivariateNormalDiagHMM(StandardHMM):
             posterior = nig_posterior_update(nig_prior, stats)
             return posterior.mode()
 
-        covs, means = vmap(_single_m_step)(stats.sum_x, stats.sum_xxT, stats.sum_w)
-        self._emission_cov_diag_factors.value = covs
-        self.emission_means.value = means
+        vars, means = vmap(_single_m_step)(stats.sum_x, stats.sum_xxT, stats.sum_w)
+        params['emissions']['scale_diags'] = jnp.sqrt(vars)
+        params['emissions']['means'] = means
+        return params
