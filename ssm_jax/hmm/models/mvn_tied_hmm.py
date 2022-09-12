@@ -8,7 +8,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
 from jax.tree_util import tree_map
 from ssm_jax.parameters import ParameterProperties
-from ssm_jax.distributions import NormalInverseWishart, InverseWishart
+from ssm_jax.distributions import InverseWishart
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import ExponentialFamilyHMM
@@ -17,14 +17,12 @@ from ssm_jax.utils import PSDToRealBijector
 
 @chex.dataclass
 class MultivariateNormalTiedHMMSuffStats:
-    # Wrapper for sufficient statistics of a GaussianHMM
     marginal_loglik: chex.Scalar
     initial_probs: chex.Array
     trans_probs: chex.Array
     sum_w: chex.Array
     sum_x: chex.Array
     sum_xxT: chex.Array
-
 
 
 class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
