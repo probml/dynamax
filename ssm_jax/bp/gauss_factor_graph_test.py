@@ -88,7 +88,7 @@ def test_gauss_factor_graph_lgssm():
 
     key = jr.PRNGKey(111)
     num_timesteps = 5 # Fewer timesteps so that we can run fewer iterations.
-    input_size = lgssm.dynamics_input_weights.shape[1]
+    input_size = lgssm.dynamics_input_weights.value.shape[1]
     inputs = jnp.zeros((num_timesteps, input_size))
     _, y = lgssm.sample(key, num_timesteps, inputs)
 
