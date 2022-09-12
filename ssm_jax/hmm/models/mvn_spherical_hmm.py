@@ -25,7 +25,7 @@ class MultivariateNormalSphericalHMM(StandardHMM):
         self.emission_var_rate = emission_var_rate
 
     def random_initialization(self, key):
-        key1, key2, key3, key4, key5 = jr.split(key, 5)
+        key1, key2, key3, key4 = jr.split(key, 4)
         initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
         emission_means = jr.normal(key3, (self.num_states, self.emission_dim))
