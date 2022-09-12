@@ -71,7 +71,7 @@ class MultivariateNormalDiagHMM(StandardHMM):
         return lp
 
     # Expectation-maximization (EM) code
-    def e_step(self, params, batch_emissions):
+    def e_step(self, params, batch_emissions, **batch_covariates):
 
         def _single_e_step(emissions):
             # Run the smoother

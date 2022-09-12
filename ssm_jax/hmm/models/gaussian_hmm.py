@@ -100,7 +100,7 @@ class GaussianHMM(ExponentialFamilyHMM):
         )
 
     # Expectation-maximization (EM) code
-    def e_step(self, batch_emissions):
+    def e_step(self, params, batch_emissions, **batch_covariates):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
         moments of the data
