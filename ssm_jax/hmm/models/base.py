@@ -365,14 +365,7 @@ class ExponentialFamilyHMM(StandardHMM):
                 schedule; defaults to exponential schedule.
             num_epochs (int): Num of iterations made through the entire dataset.
         Returns:
-            expected_log_prob (chex.Array): Mean expected log prob of each epoch.
-
-        TODO Any way to take a weighted average of rolling stats (in addition
-             to the convex combination) given the number of emissions we see
-             with each new minibatch? This would allow us to remove the
-             `total_emissions` variable, and avoid errors in math in calculating
-             total number of emissions (which could get tricky esp. with
-             variable batch sizes.)
+            expected_log_prob (chex.Array): Expected log prob of each minibatch.
         """
 
         num_batches = len(emissions_generator)
@@ -390,7 +383,7 @@ class ExponentialFamilyHMM(StandardHMM):
         assert learning_rates[0] == 1.0, "Learning rate must start at 1."
         learning_rates = learning_rates.reshape(num_epochs, num_batches)
 
-        @jit
+        # @jit
         def minibatch_em_step(carry, inputs):
             params, rolling_stats = carry
             minibatch_emissions, learn_rate = inputs
@@ -411,26 +404,24 @@ class ExponentialFamilyHMM(StandardHMM):
             # Add a batch dimension and call M-step
             batched_rolling_stats = tree_map(lambda x: jnp.expand_dims(x, axis=0), rolling_stats)
             self.m_step(minibatch_emissions, batched_rolling_stats)
-
             return (self.unconstrained_params, rolling_stats), expected_lp
 
         # Initialize and train
-        expected_log_probs = []
+        expected_log_probs = jnp.empty((0, len(emissions_generator)))
         params = self.unconstrained_params
         rolling_stats = self._zeros_like_suff_stats()
         for epoch in trange(num_epochs):
-
-            _expected_lps = 0.
+            _expected_lps = []
             for minibatch, minibatch_emissions in enumerate(emissions_generator):
                 (params, rolling_stats), expected_lp = minibatch_em_step(
                     (params, rolling_stats),
                     (minibatch_emissions, learning_rates[epoch][minibatch]),
                 )
-                _expected_lps += expected_lp
+                _expected_lps.append(expected_lp)
 
             # Save epoch mean of expected log probs
-            expected_log_probs.append(_expected_lps / num_batches)
+            expected_log_probs = jnp.vstack([expected_log_probs, jnp.asarray(_expected_lps)])
 
         # Update self with fitted params
         self.unconstrained_params = params
-        return jnp.array(expected_log_probs)
+        return jnp.asarray(expected_log_probs)
