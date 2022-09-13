@@ -20,7 +20,7 @@ class CMGFParams:
     dynamics_function: Callable
     dynamics_covariance: chex.Array
     emission_mean_function: Callable
-    emission_var_function: Callable
+    emission_cov_function: Callable
     gaussian_expectation: Callable
     gaussian_cross_covariance: Callable
 
