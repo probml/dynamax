@@ -364,8 +364,10 @@ class ExponentialFamilyHMM(StandardHMM):
             schedule (optax schedule, Callable: int -> [0, 1]): Learning rate
                 schedule; defaults to exponential schedule.
             num_epochs (int): Num of iterations made through the entire dataset.
+        
         Returns:
-            expected_log_prob (chex.Array): Expected log prob of each minibatch.
+            expected_log_prob (chex.Array): Expected log prob of each minibatch,
+                shaped as a 2d array with dimensions (num_epochs, num_minibatches).
         """
 
         num_batches = len(emissions_generator)
@@ -383,7 +385,7 @@ class ExponentialFamilyHMM(StandardHMM):
         assert learning_rates[0] == 1.0, "Learning rate must start at 1."
         learning_rates = learning_rates.reshape(num_epochs, num_batches)
 
-        # @jit
+        @jit
         def minibatch_em_step(carry, inputs):
             params, rolling_stats = carry
             minibatch_emissions, learn_rate = inputs
@@ -419,7 +421,7 @@ class ExponentialFamilyHMM(StandardHMM):
                 )
                 _expected_lps.append(expected_lp)
 
-            # Save epoch mean of expected log probs
+            # Save expected log probs
             expected_log_probs = jnp.vstack([expected_log_probs, jnp.asarray(_expected_lps)])
 
         # Update self with fitted params
