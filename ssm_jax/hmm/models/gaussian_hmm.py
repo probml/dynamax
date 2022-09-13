@@ -176,5 +176,6 @@ class GaussianHMM(ExponentialFamilyHMM):
             return niw_posterior.mode()
 
         covs, means = vmap(_single_m_step)(stats.sum_w, stats.sum_x, stats.sum_xxT)
-        self.emission_covariance_matrices.value = covs
+        dim = covs.shape[-1]
+        self.emission_covariance_matrices.value = covs + jnp.eye(dim) * 1e-5
         self.emission_means.value = means
