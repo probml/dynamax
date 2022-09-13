@@ -12,7 +12,18 @@ from ssm_jax.utils import PSDToRealBijector
 import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from tqdm.auto import trange
+from ssm_jax.new_parameters import to_unconstrained, from_unconstrained, ParameterProperties
 
+
+StructuralTimeSeriesSSM(component_transition_matrices,
+                        component_observation_matrices,
+                        component_initial_state_priors,
+                        component_transition_covariances,
+                        component_transition_covariance_priors,
+                        observation_covariance,
+                        observation_covariance_prior,
+                        observation_regression_weights,
+                        observation_regression_weights_prior)
 
 class StructuralTimeSeriesSSM(SSM):
     """Formulate the structual time series(STS) model into a LinearGaussianSSM model,
@@ -27,23 +38,21 @@ class StructuralTimeSeriesSSM(SSM):
                  component_transition_matrices,
                  component_observation_matrices,
                  component_initial_state_priors,
+                 component_transition_covariances,
                  component_transition_covariance_priors,
                  observation_covariance,
                  observation_covariance_prior,
+                 observation_regression_weights,
                  observation_regression_weights_prior=None):
 
         # Set parameters for the initial state of the LinearGaussianSSM model
-        self.initial_mean = jnp.array([
-            initial_state_prior.mode() for initial_state_prior in component_initial_state_priors
-        ]).flatten()
-
-        self.initial_covariance = jsp.linalg.block_diag(*[
-            initial_state_prior.covariance()
-            for initial_state_prior in component_initial_state_priors
-        ])
+        self.initial_mean = jnp.array(
+            [init_pri.mode() for init_pri in component_initial_state_priors.values()]).flatten()
+        self.initial_covariance = jsp.linalg.block_diag(
+            *[init_pri.covariance() for init_pri in component_initial_state_priors.values()])
 
         # Set parameters of the dynamics model of the LinearGaussainSSM model
-        self.dynamics_matrix = jsp.linalg.block_diag(*component_transition_matrices)
+        self.dynamics_matrix = jsp.linalg.block_diag(*component_transition_matrices.values())
         self.state_dim = self.dynamics_matrix.shape[-1]
         self.dynamics_input_weights = jnp.zeros((self.state_dim, 0))
         self.dynamics_bias = jnp.zeros(self.state_dim)
@@ -195,3 +204,11 @@ class StructuralTimeSeriesSSM(SSM):
             return current_params
 
         return [join_params(param) for param in unconstrained_params]
+
+
+def ssm_to_sts(lgssm_params):
+    sts_emission_covariance = lgssm_params.emission_covariance
+    sts_dynamics_covariance = lgssm_params.dynamics_covariance
+    sts_params = {"observation_covariance": sts_emission_covariance,
+                  "transition_covariances": sts_dynamics_covariance}
+    return sts_params
