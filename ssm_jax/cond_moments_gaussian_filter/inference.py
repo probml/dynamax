@@ -1,7 +1,7 @@
 from jax import numpy as jnp
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from ssm_jax.cond_moments_gaussian_filter.containers import CMGFPosterior
+from ssm_jax.containers import GSSMPosterior
 
 
 # Helper functions
@@ -134,7 +134,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
         inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: CMGFPosterior instance containing,
+        filtered_posterior: GSSMPosterior instance containing,
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
@@ -171,7 +171,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
     # Run the general linearization filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return CMGFPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, inputs=None):
@@ -184,7 +184,7 @@ def iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, 
         inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: CMGFPosterior instance containing,
+        filtered_posterior: GSSMPosterior instance containing,
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
@@ -204,7 +204,7 @@ def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=
         inputs (T,D_in): array of inputs.
 
     Returns:
-        nlgssm_posterior: CMGFPosterior instance containing properties of
+        nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
     num_timesteps = len(emissions)
@@ -249,7 +249,7 @@ def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    return CMGFPosterior(
+    return GSSMPosterior(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
@@ -268,7 +268,7 @@ def iterated_conditional_moments_gaussian_smoother(params, emissions, num_iter=1
         inputs (T,D_in): array of inputs.
 
     Returns:
-        nlgssm_posterior: CMGFPosterior instance containing properties of
+        nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
     def _step(carry, _):
