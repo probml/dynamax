@@ -2,7 +2,7 @@ import jax.numpy as jnp
 from jax import lax
 from jax import jacfwd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from ssm_jax.nonlinear_gaussian_ssm.containers import NLGSSMPosterior
+from ssm_jax.containers import GSSMPosterior
 
 
 # Helper functions
@@ -89,7 +89,7 @@ def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
         inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: LGSSMPosterior instance containing,
+        filtered_posterior: GSSMPosterior instance containing,
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
@@ -125,7 +125,7 @@ def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
     # Run the extended Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return NLGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def iterated_extended_kalman_filter(params, emissions, num_iter=2, inputs=None):
@@ -138,7 +138,7 @@ def iterated_extended_kalman_filter(params, emissions, num_iter=2, inputs=None):
         inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: LGSSMPosterior instance containing,
+        filtered_posterior: GSSMPosterior instance containing,
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
@@ -153,12 +153,12 @@ def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=
     Args:
         params: an NLGSSMParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
-        filtered_posterior (NLGSSMPosterior): filtered posterior to use for smoothing.
+        filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.
             If None, the smoother computes the filtered posterior directly.
         inputs (T,D_in): array of inputs.
 
     Returns:
-        nlgssm_posterior: LGSSMPosterior instance containing properties of
+        nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
     num_timesteps = len(emissions)
@@ -204,7 +204,7 @@ def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    return NLGSSMPosterior(
+    return GSSMPosterior(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
@@ -223,7 +223,7 @@ def iterated_extended_kalman_smoother(params, emissions, num_iter=2, inputs=None
         inputs (T,D_in): array of inputs.
 
     Returns:
-        nlgssm_posterior: LGSSMPosterior instance containing properties of
+        nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
 
