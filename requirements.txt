@@ -2,7 +2,7 @@ jax
 jaxlib
 optax
 chex
-tensorflow_probability
+tensorflow_probability == 0.17.0
 matplotlib
 seaborn
 tqdm
