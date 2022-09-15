@@ -54,7 +54,7 @@ class StructuralTimeSeriesSSM(SSM):
         dynamics_unc_cov_priors = OrderedDict()
         for c in component_transition_covariance_priors.keys():
             dynamics_covariance_props[c] = ParameterProperties(
-                trainable=True, constrainer=PSDToRealBijector)
+                trainable=True, constrainer=tfb.Invert(PSDToRealBijector))
             dynamics_unc_cov_priors[c] = tfd.TransformedDistribution(
                 distribution=component_transition_covariance_priors[c],
                 bijector=PSDToRealBijector)
@@ -75,7 +75,7 @@ class StructuralTimeSeriesSSM(SSM):
             emission_input_weights_prior = None
         self.emission_bias = jnp.zeros(self.emission_dim)
         emission_covariance_props = ParameterProperties(
-            trainable=True, constrainer=PSDToRealBijector)
+            trainable=True, constrainer=tfb.Invert(PSDToRealBijector))
         emission_unc_cov_prior = tfd.TransformedDistribution(
             distribution=observation_covariance_prior, bijector=PSDToRealBijector)
 
@@ -85,7 +85,7 @@ class StructuralTimeSeriesSSM(SSM):
                        'input_weights': emission_input_weights}
 
         self.param_props = {'dynamics_covariances': dynamics_covariance_props,
-                            'emission_covariances': emission_covariance_props,
+                            'emission_covariance': emission_covariance_props,
                             'input_weights': emission_input_weights_props}
 
         self.priors = {'dynamics_covariances': component_transition_covariance_priors,
@@ -132,7 +132,7 @@ class StructuralTimeSeriesSSM(SSM):
         return lp
 
     def to_lgssm_params(self, params):
-        dyn_cov = jsp.linalg.block_diag(*params['dynamics_covariance'].values())
+        dyn_cov = jsp.linalg.block_diag(*params['dynamics_covariances'].values())
         spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
         dynamics_covariance = spars_matrix @ dyn_cov @ spars_matrix.T
         emission_covariance = params['emission_covariance']
@@ -167,16 +167,18 @@ class StructuralTimeSeriesSSM(SSM):
                 batch_inputs=None,
                 warmup_steps=500,
                 num_integration_steps=30):
+        unc_params = self.unc_params
 
-        def logprob(unc_params):
+        def logprob(trainable_unc_params):
+            unc_params.update(trainable_unc_params)
             log_pri = self.log_unc_prior(unc_params)
-            params = from_unconstrained(unc_params)
+            params = from_unconstrained(trainable_unc_params, fixed_params, self.param_props)
             batch_lls = vmap(self.marginal_log_prob)(batch_emissions, batch_inputs, params)
             lp = log_pri + batch_lls.sum()
             return lp
 
         # Initialize the HMC sampler using window_adaptations
-        hmc_initial_position = to_unconstrained(self.params)
+        hmc_initial_position, fixed_params = to_unconstrained(self.params, self.param_props)
         warmup = blackjax.window_adaptation(blackjax.hmc,
                                             logprob,
                                             num_steps=warmup_steps,
@@ -194,7 +196,19 @@ class StructuralTimeSeriesSSM(SSM):
         current_state = hmc_initial_state
         for _ in trange(sample_size):
             current_state, unc_sample = _step(current_state, next(keys))
-            sample = from_unconstrained(unc_sample)
+            sample = from_unconstrained(unc_sample, fixed_params, self.param_props)
             param_samples.append(sample)
 
         return param_samples
+
+    @property
+    def unc_params(self):
+        unc_ems_cov = self.param_props['emission_covariance'].constrainer.inverse(
+            self.params['emission_covariance'])
+        unc_dyn_cov = OrderedDict()
+        for k, v in self.params['dynamics_covariances'].items():
+            unc_dyn_cov[k] = self.param_props['dynamics_covariances'][k].constrainer.inverse(v)
+        unc_params = {'dynamics_covariances': unc_dyn_cov,
+                      'emission_covariance': unc_ems_cov,
+                      'input_weights': self.params['input_weights']}
+        return unc_params

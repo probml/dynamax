@@ -52,7 +52,7 @@ class StructuralTimeSeries():
 
         _dim = observed_timeseries.shape
         self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
-        obs_scale = jnp.std(observed_timeseries, axis=0).mean()
+        obs_var = jnp.var(jnp.diff(observed_timeseries, axis=0), axis=0)
         self.name = name
 
         # Save parameters of the STS model:
@@ -65,7 +65,7 @@ class StructuralTimeSeries():
         if observation_covariance is not None:
             self.observation_covariance = observation_covariance
         else:
-            self.observation_covariance = jnp.eye(self.dim_obs) * obs_scale**2
+            self.observation_covariance = jnp.diag(obs_var)
         self.observation_covariance_prior = _set_prior(
             observation_covariance_prior, IW(df=self.dim_obs, scale=jnp.eye(self.dim_obs)))
         self.observation_regression_weights = None
@@ -404,9 +404,10 @@ class Seasonal(STSLatentComponent):
 
     @property
     def initial_state_prior(self):
-        initial_loc = jnp.array([self.initial_effect_prior.mean()]*self.num_seasons).flatten()
+        c = self.num_seasons - 1
+        initial_loc = jnp.array([self.initial_effect_prior.mean()]*c).flatten()
         initial_cov = jsp.linalg.block_diag(
-            *([self.initial_effect_prior.covariance()]*self.num_seasons))
+            *([self.initial_effect_prior.covariance()]*c))
         initial_pri = MVN(loc=initial_loc, covariance_matrix=initial_cov)
         return {'seasonal': initial_pri}
 
