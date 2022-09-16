@@ -148,14 +148,14 @@ class SSM(ABC):
             return -lp / batch_emissions.size
 
         unc_params, losses = run_sgd(_loss_fn,
-                                 curr_unc_params
-                                 batch_emissions,
-                                 optimizer=optimizer,
-                                 batch_size=batch_size,
-                                 num_epochs=num_epochs,
-                                 shuffle=shuffle,
-                                 key=key,
-                                 **batch_covariates)
+                                     curr_unc_params,
+                                     batch_emissions,
+                                     optimizer=optimizer,
+                                     batch_size=batch_size,
+                                     num_epochs=num_epochs,
+                                     shuffle=shuffle,
+                                     key=key,
+                                     **batch_covariates)
 
         params = from_unconstrained(unc_params, fixed_params, param_props)
         return params, losses
