@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+from functools import partial
 
 import jax.numpy as jnp
 import jax.random as jr
@@ -8,7 +9,7 @@ from jax import lax, vmap
 from jax.tree_util import tree_map
 
 from ssm_jax.optimize import run_sgd
-
+from ssm_jax.parameters import to_unconstrained, from_unconstrained
 
 class SSM(ABC):
     """A base class for state space models. Such models consist of parameters, which
@@ -110,8 +111,8 @@ class SSM(ABC):
         return 0.0
 
     def fit_sgd(self,
-                params,
-                param_properties,
+                curr_params,
+                param_props,
                 batch_emissions,
                 optimizer=optax.adam(1e-3),
                 batch_size=1,
@@ -136,18 +137,18 @@ class SSM(ABC):
         Returns:
             losses: Output of loss_fn stored at each step.
         """
-        raise NotImplementedError("Need to fix this up!")
+        curr_unc_params, fixed_params = to_unconstrained(curr_params, param_props)
 
-        def _loss_fn(params, minibatch_emissions, **minibatch_covariates):
+        def _loss_fn(unc_params, minibatch_emissions, **minibatch_covariates):
             """Default objective function."""
-            self.unconstrained_params = params
+            params = from_unconstrained(unc_params, fixed_params, param_props)
             scale = len(batch_emissions) / len(minibatch_emissions)
-            minibatch_lls = vmap(self.marginal_log_prob)(minibatch_emissions, **minibatch_covariates)
-            lp = self.log_prior() + minibatch_lls.sum() * scale
+            minibatch_lls = vmap(partial(self.marginal_log_prob, params))(minibatch_emissions, **minibatch_covariates)
+            lp = self.log_prior(params) + minibatch_lls.sum() * scale
             return -lp / batch_emissions.size
 
-        params, losses = run_sgd(_loss_fn,
-                                 self.unconstrained_params,
+        unc_params, losses = run_sgd(_loss_fn,
+                                 curr_unc_params
                                  batch_emissions,
                                  optimizer=optimizer,
                                  batch_size=batch_size,
@@ -155,6 +156,6 @@ class SSM(ABC):
                                  shuffle=shuffle,
                                  key=key,
                                  **batch_covariates)
-        self.unconstrained_params = params
-        return losses
 
+        params = from_unconstrained(unc_params, fixed_params, param_props)
+        return params, losses
