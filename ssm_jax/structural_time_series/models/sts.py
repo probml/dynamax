@@ -109,7 +109,7 @@ class StructuralTimeSeries():
                                           self.observation_regression_weights_prior)
         return sts_ssm
 
-    def fit_hmc(self, key, sample_size, observed_time_series, inputs=None):
+    def fit_hmc(self, key, sample_size, batch_observed_time_series, batch_inputs=None):
         """Sampling parameters of the STS model from their posterior distributions.
 
         Parameters of the STS model includes:
@@ -118,7 +118,7 @@ class StructuralTimeSeries():
             regression coefficient matrix (if the model has inputs and a regression component)
         """
         sts_ssm = self.as_ssm()
-        param_samps = sts_ssm.fit_hmc(key, sample_size, observed_time_series, inputs)
+        param_samps = sts_ssm.fit_hmc(key, sample_size, batch_observed_time_series, batch_inputs)
         return param_samps
 
     def forecast(self,
