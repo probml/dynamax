@@ -107,7 +107,8 @@ class StructuralTimeSeriesSSM(SSM):
         return MVN(self.dynamics_matrix @ state, dynamics_covariance)
 
     def emission_distribution(self, state, **covariates):
-        input = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
+        input = covariates['inputs'] if 'inputs' in covariates and covariates['inputs'] is not None\
+            else jnp.zeros(self.params['input_weights'].shape[-1])
         return MVN(self.emission_matrix @ state + self.params['input_weights'] @ input,
                    self.params['emission_covariance'])
 

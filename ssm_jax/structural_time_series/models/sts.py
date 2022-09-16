@@ -126,14 +126,19 @@ class StructuralTimeSeries():
                  observed_time_series,
                  sts_params,
                  num_steps_forecast,
-                 inputs=None,
-                 include_observation_noise=True):
-        starting_state_prior = MVN()
+                 inputs=None):
+        # Set the new initial_state_prior to be at the last observation
+        starting_state_priors = OrderedDict()
+        for k, v in self.initial_state_priors.items():
+            d_component = len(v.loc)
+            loc = jnp.tile(observed_time_series[-1], int(d_component/self.dim_obs))
+            covariance_matrix = jnp.eye(d_component)*1e-4
+            starting_state_priors[k] = MVN(loc, covariance_matrix)
 
         def _single_sample(sts_params):
             sts_ssm = StructuralTimeSeriesSSM(self.transition_matrices,
                                               self.observation_matrices,
-                                              starting_state_prior,
+                                              starting_state_priors,
                                               sts_params['dynamics_covariances'],
                                               self.transition_covariance_priors,
                                               sts_params['emission_covariance'],
@@ -141,12 +146,11 @@ class StructuralTimeSeries():
                                               self.cov_spars_matrices,
                                               sts_params['input_weights'],
                                               self.observation_regression_weights_prior)
-            state_samp, emission_samp = sts_ssm.sample(
-                self, key, num_steps_forecast, inputs=inputs)
-            return state_samp, emission_samp
+            state_samp, emission_samp = sts_ssm.sample(key, num_steps_forecast, inputs=inputs)
+            return emission_samp
 
-        state_samples, emission_samples = vmap(_single_sample)(sts_params)
-        return state_samples, emission_samples
+        ts_samples = map(_single_sample)(sts_params)
+        return ts_samples
 
     def sample(self, key, num_timesteps, inputs=None):
         """Given parameters, sample latent states and corresponding observed time series.
