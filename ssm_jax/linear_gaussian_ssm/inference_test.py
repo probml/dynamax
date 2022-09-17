@@ -1,13 +1,8 @@
-from functools import partial
-
 from jax import random as jr
 from jax import numpy as jnp
 from jax import vmap
 
-import matplotlib.pyplot as plt
-
 import tensorflow_probability.substrates.jax.distributions as tfd
-
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_posterior_sample
 from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 
@@ -62,7 +57,7 @@ def test_kalman_filter(num_timesteps=5, seed=0):
         emission_covariance=R,
     )
 
-    tfp_lgssm = lgssm_ssm_jax_to_tfp(num_timesteps, lgssm.params)
+    tfp_lgssm = lgssm_ssm_jax_to_tfp(num_timesteps, lgssm._make_inference_args)
 
     ### Sample data ###
     key = jr.PRNGKey(seed)

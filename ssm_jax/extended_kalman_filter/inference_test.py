@@ -14,9 +14,9 @@ def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
     lgssm, _, emissions = random_args(key=key, num_timesteps=num_timesteps, linear=True)
 
     # Run standard Kalman filter
-    kf_post = lgssm_filter(lgssm.params, emissions)
+    kf_post = lgssm_filter(lgssm._make_inference_args, emissions)
     # Run extended Kalman filter
-    ekf_post = extended_kalman_filter(lgssm_to_nlgssm(lgssm.params), emissions)
+    ekf_post = extended_kalman_filter(lgssm_to_nlgssm(lgssm._make_inference_args), emissions)
 
     # Compare filter results
     assert _all_close(kf_post.marginal_loglik, ekf_post.marginal_loglik)
@@ -41,9 +41,9 @@ def test_extended_kalman_smoother_linear(key=0, num_timesteps=15):
     lgssm, _, emissions = random_args(key=key, num_timesteps=num_timesteps, linear=True)
 
     # Run standard Kalman smoother
-    kf_post = lgssm_smoother(lgssm.params, emissions)
+    kf_post = lgssm_smoother(lgssm._make_inference_args, emissions)
     # Run extended Kalman filter
-    ekf_post = extended_kalman_smoother(lgssm_to_nlgssm(lgssm.params), emissions)
+    ekf_post = extended_kalman_smoother(lgssm_to_nlgssm(lgssm._make_inference_args), emissions)
 
     # Compare smoother results
     assert _all_close(kf_post.smoothed_means, ekf_post.smoothed_means)

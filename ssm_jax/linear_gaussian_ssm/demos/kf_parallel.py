@@ -47,7 +47,7 @@ def kf_parallel():
 
     xs, ys = vmap(lambda key: lgssm.sample(key, num_timesteps))(keys)
 
-    lgssm_posteriors = vmap(partial(lgssm_smoother, lgssm.params))(ys)
+    lgssm_posteriors = vmap(partial(lgssm_smoother, lgssm._make_inference_args))(ys)
 
     return xs, ys, lgssm_posteriors
 

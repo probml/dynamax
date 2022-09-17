@@ -1,12 +1,15 @@
 from abc import ABC
 from abc import abstractmethod
 from functools import partial
+from tqdm.auto import trange
 
 import jax.numpy as jnp
 import jax.random as jr
 import optax
-from jax import lax, vmap
+from jax import jit, lax, vmap
 from jax.tree_util import tree_map
+
+import blackjax
 
 from ssm_jax.optimize import run_sgd
 from ssm_jax.parameters import to_unconstrained, from_unconstrained
@@ -110,6 +113,25 @@ class SSM(ABC):
         """
         return 0.0
 
+    def fit_em(self, initial_params, param_props, batch_emissions, batch_inputs=None, num_iters=50, verbose=True):
+        """Fit this HMM with Expectation-Maximization (EM).
+        """
+        @jit
+        def em_step(params):
+            posterior_stats, marginal_loglikes = self.e_step(params, batch_emissions, batch_inputs)
+            lp = self.log_prior(params) + marginal_loglikes.sum()
+            params = self.m_step(params, param_props, posterior_stats)
+            return params, lp
+
+        log_probs = []
+        params = initial_params
+        pbar = trange(num_iters) if verbose else range(num_iters)
+        for _ in pbar:
+            params, marginal_loglik = em_step(params)
+            log_probs.append(marginal_loglik)
+
+        return jnp.array(log_probs)
+
     def fit_sgd(self,
                 curr_params,
                 param_props,
@@ -159,3 +181,42 @@ class SSM(ABC):
 
         params = from_unconstrained(unc_params, fixed_params, param_props)
         return params, losses
+
+    def fit_hmc(self,
+                initial_params,
+                param_props,
+                key,
+                num_samples,
+                batch_emissions,
+                batch_inputs=None,
+                warmup_steps=500,
+                num_integration_steps=30):
+        """Sample parameters of the model using HMC."""
+
+        initial_unc_params, fixed_params = to_unconstrained(initial_params, param_props)
+
+        # The log likelihood that the HMC samples from
+        def _logprob(unc_params):
+            params = from_unconstrained(unc_params, fixed_params, param_props)
+            batch_lls = vmap(partial(self.marginal_log_prob, params))(batch_emissions, batch_inputs)
+            lp = self.log_prior() + batch_lls.sum()
+            # TODO Correct for the log determinant of the jacobian
+            return lp
+
+        # Initialize the HMC sampler using window_adaptation
+        warmup = blackjax.window_adaptation(blackjax.hmc,
+                                            _logprob,
+                                            num_steps=warmup_steps,
+                                            num_integration_steps=num_integration_steps)
+        hmc_initial_state, hmc_kernel, _ = warmup.run(key, initial_unc_params)
+
+        def hmc_step(hmc_state, rng_key):
+            next_hmc_state, _ = hmc_kernel(rng_key, hmc_state)
+            return next_hmc_state, hmc_state.position
+
+        # Start sampling
+        _, unc_param_samples = lax.scan(hmc_step, hmc_initial_state, jr.split(key, num_samples))
+
+        # Convert back into full parameters
+        return vmap(from_unconstrained, in_axes=(0, None, None))(
+            unc_param_samples, fixed_params, param_props)

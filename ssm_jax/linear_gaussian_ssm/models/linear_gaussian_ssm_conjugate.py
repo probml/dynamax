@@ -138,18 +138,18 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
 
             @jit
             def emap_step(_params):
-                self.params = _params
+                self._make_inference_args = _params
                 posterior_stats, marginal_loglikes = self.e_step(batch_emissions, batch_inputs)
                 new_param = self.map_step(posterior_stats)
                 return new_param, marginal_loglikes.sum()
 
             log_probs = []
-            _params = self.params
+            _params = self._make_inference_args
             for _ in trange(num_iters):
                 _params, marginal_loglik = emap_step(_params)
                 log_probs.append(marginal_loglik)
 
-            self.params = _params
+            self._make_inference_args = _params
             return jnp.array(log_probs)
 
     def fit_blocked_gibbs(self, key, sample_size, emissions, inputs=None):
@@ -229,9 +229,9 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         def one_sample(_params, rng):
             rngs = jr.split(rng, 2)
             # Sample latent states
-            self.params = _params
+            self._make_inference_args = _params
             l_prior = self.log_prior()
-            ll, states = lgssm_posterior_sample(rngs[0], self.params, emissions, inputs)
+            ll, states = lgssm_posterior_sample(rngs[0], self._make_inference_args, emissions, inputs)
             log_probs = l_prior + ll
             # Sample parameters
             _stats = sufficient_stats_from_sample(states)
@@ -241,7 +241,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         log_probs = []
         sample_of_params = []
         keys = iter(jr.split(key, sample_size))
-        current_params = self.params
+        current_params = self._make_inference_args
         for _ in trange(sample_size):
             sample_of_params.append(current_params)
             current_params, loglik = one_sample(current_params, next(keys))
