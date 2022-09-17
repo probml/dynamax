@@ -114,11 +114,11 @@ class CategoricalHMM(ExponentialFamilyHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, params, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Then maximize the expected log probability as a fn of model parameters
         params['emissions']['probs'] = tfd.Dirichlet(
-            self._emission_prior_concentration.value +stats.sum_x).mode()
+            self.emission_prior_concentration + stats.sum_x).mode()
         return params
