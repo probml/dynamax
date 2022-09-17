@@ -112,7 +112,7 @@ class PoissonHMM(ExponentialFamilyHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, params, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
@@ -120,3 +120,4 @@ class PoissonHMM(ExponentialFamilyHMM):
         post_concentration = self.emission_prior_concentration + stats.sum_x
         post_rate = self.emission_prior_rate + stats.sum_w
         params['emissions']['rates'] = tfd.Gamma(post_concentration, post_rate).mode()
+        return params
