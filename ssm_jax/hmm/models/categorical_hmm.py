@@ -57,7 +57,7 @@ class CategoricalHMM(ExponentialFamilyHMM):
             transitions=dict(transition_matrix=transition_matrix),
             emissions=dict(probs=emission_probs))
         param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
             transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
             emissions=dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered())))
         return  params, param_props

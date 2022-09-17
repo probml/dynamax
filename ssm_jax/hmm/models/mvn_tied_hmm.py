@@ -66,7 +66,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
             transitions=dict(transition_matrix=transition_matrix),
             emissions=dict(means=emission_means, covariance=emission_cov))
         param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
             transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
             emissions=dict(means=ParameterProperties(), covariance=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))))
         return  params, param_props

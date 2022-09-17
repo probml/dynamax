@@ -82,7 +82,7 @@ class GaussianMixtureDiagHMM(StandardHMM):
             transitions=dict(transition_matrix=transition_matrix),
             emissions=dict(weights=emission_weights, means=emission_means, scale_diags=emission_scale_diags))
         param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
             transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
             emissions=dict(weights=ParameterProperties(constrainer=tfb.SoftmaxCentered()),
                            means=ParameterProperties(),

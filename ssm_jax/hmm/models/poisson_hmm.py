@@ -54,7 +54,7 @@ class PoissonHMM(ExponentialFamilyHMM):
             transitions=dict(transition_matrix=transition_matrix),
             emissions=dict(rates=emission_rates))
         param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
             transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
             emissions=dict(rates=ParameterProperties(constrainer=tfb.Softplus())))
         return  params, param_props

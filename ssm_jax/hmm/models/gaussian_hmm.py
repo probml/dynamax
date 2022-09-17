@@ -67,7 +67,7 @@ class GaussianHMM(ExponentialFamilyHMM):
             transitions=dict(transition_matrix=transition_matrix),
             emissions=dict(means=emission_means, covs=emission_covs))
         param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
             transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
             emissions=dict(means=ParameterProperties(), covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))))
         return  params, param_props

@@ -39,7 +39,7 @@ class LogisticRegressionHMM(StandardHMM):
             transitions=dict(transition_matrix=transition_matrix),
             emissions=dict(weights=emission_weights, biases=emission_biases))
         param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
             transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
             emissions=dict(weights=ParameterProperties(), biases=ParameterProperties()))
         return  params, param_props
