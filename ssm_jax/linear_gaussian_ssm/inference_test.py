@@ -3,7 +3,6 @@ from jax import numpy as jnp
 from jax import vmap
 
 import tensorflow_probability.substrates.jax.distributions as tfd
-from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_posterior_sample
 from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 
 

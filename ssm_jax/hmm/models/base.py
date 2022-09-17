@@ -2,26 +2,21 @@ from abc import abstractmethod
 from copy import deepcopy
 
 import jax.numpy as jnp
-from jax import value_and_grad
+from jax import jit, lax, value_and_grad, vmap
+from jax.tree_util import tree_map, tree_leaves
+
 import optax
 import tensorflow_probability.substrates.jax.distributions as tfd
-from jax import jit
-from jax import lax
-from jax import tree_leaves
-from jax import tree_map
-from jax import vmap
 
-from jax import vmap
-from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
-from ssm_jax.parameters import to_unconstrained
-from ssm_jax.parameters import from_unconstrained
+from ssm_jax.parameters import to_unconstrained, from_unconstrained
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_filter
 from ssm_jax.hmm.inference import hmm_posterior_mode
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.inference import hmm_two_filter_smoother
 from ssm_jax.optimize import run_sgd
+
 from tqdm.auto import trange
 
 
@@ -264,7 +259,9 @@ class StandardHMM(BaseHMM):
 
         # freeze the initial and transition parameters
         temp_param_props = deepcopy(param_props)
-        for props in temp_param_props['initial'].values() + temp_param_props['transitions'].values():
+        for props in temp_param_props['initial'].values():
+            props.trainable = False
+        for props in temp_param_props['transitions'].values():
             props.trainable = False
 
         # Extract the remaining unconstrained params, which should only be for the emissions.
