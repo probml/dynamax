@@ -86,7 +86,7 @@ class GaussianHMM(ExponentialFamilyHMM):
         return lp
 
     def _zeros_like_suff_stats(self):
-        dim = self.num_obs
+        dim = self.emission_dim
         num_states = self.num_states
         return GaussianHMMSuffStats(
             marginal_loglik=0.0,
@@ -105,11 +105,12 @@ class GaussianHMM(ExponentialFamilyHMM):
         """
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
-                                     self._compute_conditional_logliks(emissions))
+            posterior = hmm_smoother(self._compute_initial_probs(params),
+                                     self._compute_transition_matrices(params),
+                                     self._compute_conditional_logliks(params, emissions))
 
             # Compute the initial state and transition probabilities
-            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
+            trans_probs = compute_transition_probs(params["transitions"]["transition_matrix"], posterior)
 
             # Compute the expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
@@ -128,7 +129,7 @@ class GaussianHMM(ExponentialFamilyHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, params, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 

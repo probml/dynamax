@@ -30,10 +30,6 @@ class BaseHMM(SSM):
     def num_states(self):
         return self._num_states
 
-    @property
-    def num_obs(self):
-        return self.emission_distribution(0).event_shape[0]
-
     # Three helper functions to compute the initial probabilities,
     # transition matrix (or matrices), and conditional log likelihoods.
     # These are the args to the HMM inference functions, and they can
@@ -329,7 +325,7 @@ class ExponentialFamilyHMM(StandardHMM):
     def _zeros_like_suff_stats(self):
         raise NotImplementedError
 
-    def fit_stochastic_em(self, initial_params, param_props, emissions_generator, total_emissions, schedule=None, num_epochs=50):
+    def fit_stochastic_em(self, initial_params, param_props, emissions_generator, schedule=None, num_epochs=50):
         """
         Fit this HMM by running Stochastic Expectation-Maximization.
         Assuming the original dataset consists of N independent sequences of
@@ -384,7 +380,7 @@ class ExponentialFamilyHMM(StandardHMM):
             minibatch_stats = self.e_step(params, minibatch_emissions)
 
             # Scale the stats as if they came from the whole dataset
-            scale = total_emissions / len(minibatch_emissions.reshape(-1, self.num_obs))
+            scale = num_batches
             scaled_minibatch_stats = tree_map(lambda x: jnp.sum(x, axis=0) * scale, minibatch_stats)
             expected_lp = self.log_prior(params) + scaled_minibatch_stats.marginal_loglik
 
@@ -394,11 +390,12 @@ class ExponentialFamilyHMM(StandardHMM):
 
             # Add a batch dimension and call M-step
             batched_rolling_stats = tree_map(lambda x: jnp.expand_dims(x, axis=0), rolling_stats)
-            params = self.m_step(params, minibatch_emissions, batched_rolling_stats)
+            params = self.m_step(params, param_props, minibatch_emissions, batched_rolling_stats)
 
             return (params, rolling_stats), expected_lp
 
         # Initialize and train
+        params = initial_params
         expected_log_probs = []
         rolling_stats = self._zeros_like_suff_stats()
         for epoch in trange(num_epochs):

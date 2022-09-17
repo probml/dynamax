@@ -44,13 +44,13 @@ class MultinomialHMM(StandardHMM):
         self.emission_dim = emission_dim
         self.num_classes = num_classes
         self.num_trials = num_trials
-        self._emission_prior_concentration = emission_prior_concentration * jnp.ones(num_classes)
+        self.emission_prior_concentration = emission_prior_concentration * jnp.ones(num_classes)
 
     def random_initialization(self, key):
         key1, key2, key3 = jr.split(key, 3)
         initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
         transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
-        emission_probs = jr.dirichlet(key3, jnp.ones(self.num_classes), (self.num_states, self.num_emissions))
+        emission_probs = jr.dirichlet(key3, jnp.ones(self.num_classes), (self.num_states, self.emission_dim))
         params = dict(
             initial=dict(probs=initial_probs),
             transitions=dict(transition_matrix=transition_matrix),
@@ -103,9 +103,10 @@ class MultinomialHMM(StandardHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, params, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Then maximize the expected log probability as a fn of model parameters
         params['emissions']['probs'] = tfd.Dirichlet(self.emission_prior_concentration + stats.sum_x).mode()
+        return params

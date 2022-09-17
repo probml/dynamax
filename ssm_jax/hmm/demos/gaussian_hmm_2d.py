@@ -9,14 +9,14 @@ from ssm_jax.plotting import COLORS
 from ssm_jax.plotting import white_to_color_cmap
 
 
-def plot_gaussian_hmm(hmm, emissions, states, ttl="Emission Distributions"):
+def plot_gaussian_hmm(hmm, params, emissions, states, ttl="Emission Distributions"):
     lim = 0.85 * abs(emissions).max()
     XX, YY = jnp.meshgrid(jnp.linspace(-lim, lim, 100), jnp.linspace(-lim, lim, 100))
     grid = jnp.column_stack((XX.ravel(), YY.ravel()))
 
     plt.figure()
     for k in range(hmm.num_states):
-        lls = hmm.emission_distribution(k).log_prob(grid)
+        lls = hmm.emission_distribution(params, k).log_prob(grid)
         plt.contour(XX, YY, jnp.exp(lls).reshape(XX.shape), cmap=white_to_color_cmap(COLORS[k]))
         plt.plot(emissions[states == k, 0], emissions[states == k, 1], "o", mfc=COLORS[k], mec="none", ms=3, alpha=0.5)
 
@@ -28,9 +28,9 @@ def plot_gaussian_hmm(hmm, emissions, states, ttl="Emission Distributions"):
     return plt.gcf()
 
 
-def plot_gaussian_hmm_data(hmm, emissions, states, xlim=None):
+def plot_gaussian_hmm_data(hmm, params, emissions, states, xlim=None):
     num_timesteps = len(emissions)
-    emission_dim = hmm.num_obs
+    emission_dim = hmm.emission_dim
 
     # Plot the data superimposed on the generating state sequence
     plt.figure()
@@ -46,7 +46,7 @@ def plot_gaussian_hmm_data(hmm, emissions, states, xlim=None):
         alpha=1,
     )
 
-    means = hmm.emission_means.value[states]
+    means = params["emissions"]["means"][states]
     for d in range(emission_dim):
         plt.plot(emissions[:, d] + lim * d, "-k")
         plt.plot(means[:, d] + lim * d, ":k")
@@ -111,17 +111,19 @@ def plot_hmm_posterior(true_states, posterior, perm=None, plot_timesteps=None, p
 
 def make_hmm(num_states=5, emission_dim=2):
     # Specify parameters of the HMM
-    initial_probs = jnp.ones(num_states) / num_states
-    transition_matrix = 0.95 * jnp.eye(num_states) + 0.05 * jnp.roll(jnp.eye(num_states), 1, axis=1)
-    emission_means = jnp.column_stack([
-        jnp.cos(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
-        jnp.sin(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
-        jnp.zeros((num_states, emission_dim - 2)),
-    ])
-    emission_covs = jnp.tile(0.1**2 * jnp.eye(emission_dim), (num_states, 1, 1))
-
-    true_hmm = GaussianHMM(initial_probs, transition_matrix, emission_means, emission_covs)
-    return true_hmm
+    params = dict(
+        initial=dict(probs=jnp.ones(num_states) / num_states),
+        transitions=dict(transition_matrix=0.95 * jnp.eye(num_states) + 0.05 * jnp.roll(jnp.eye(num_states), 1, axis=1)),
+        emissions=dict(
+            means=jnp.column_stack([
+                jnp.cos(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
+                jnp.sin(jnp.linspace(0, 2 * jnp.pi, num_states + 1))[:-1],
+                jnp.zeros((num_states, emission_dim - 2)),
+                ]),
+            covs=jnp.tile(0.1**2 * jnp.eye(emission_dim), (num_states, 1, 1)))
+    )
+    true_hmm = GaussianHMM(num_states, emission_dim)
+    return true_hmm, params
 
 
 def plot_results(true_hmm, emissions, true_states, plot_timesteps):
