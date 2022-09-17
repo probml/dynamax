@@ -3,26 +3,26 @@ from functools import partial
 import chex
 import jax.numpy as jnp
 import jax.random as jr
-import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
-from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
-from ssm_jax.abstractions import Parameter
+from tensorflow_probability.substrates import jax as tfp
+
 from ssm_jax.hmm.inference import compute_transition_probs
 from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import StandardHMM
+from ssm_jax.parameters import ParameterProperties
 from ssm_jax.utils import PSDToRealBijector
 
+tfd = tfp.distributions
+tfb = tfp.bijectors
 
-@register_pytree_node_class
+
 class LinearRegressionHMM(StandardHMM):
 
     def __init__(self,
-                 initial_probabilities,
-                 transition_matrix,
-                 emission_matrices,
-                 emission_biases,
-                 emission_covariance_matrices,
+                 num_states,
+                 feature_dim,
+                 emission_dim,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1
                  ):
@@ -35,36 +35,29 @@ class LinearRegressionHMM(StandardHMM):
             emission_biases (_type_): _description_
             emission_covariance_matrices (_type_): _description_
         """
-        super().__init__(initial_probabilities, transition_matrix,
+        super().__init__(num_states,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
+        self.feature_dim = feature_dim
+        self.emission_dim = emission_dim
 
-        self._emission_matrices = Parameter(emission_matrices)
-        self._emission_biases = Parameter(emission_biases)
-        self._emission_covs = Parameter(emission_covariance_matrices, bijector=PSDToRealBijector)
-
-    @classmethod
-    def random_initialization(cls, key, num_states, emission_dim, feature_dim):
+    def random_initialization(self, key):
         key1, key2, key3, key4 = jr.split(key, 4)
-        initial_probs = jr.dirichlet(key1, jnp.ones(num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(num_states), (num_states,))
-        emission_matrices = jr.normal(key3, (num_states, emission_dim, feature_dim))
-        emission_biases = jr.normal(key4, (num_states, emission_dim))
-        emission_covs = jnp.tile(jnp.eye(emission_dim), (num_states, 1, 1))
-        return cls(initial_probs, transition_matrix, emission_matrices, emission_biases, emission_covs)
+        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
+        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
+        emission_weights = jr.normal(key3, (self.num_states, self.emission_dim, self.feature_dim))
+        emission_biases = jr.normal(key4, (self.num_states, self.emission_dim))
+        emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, 1, 1))
 
-    # Properties to get various parameters of the model
-    @property
-    def emission_matrices(self):
-        return self._emission_matrices
-
-    @property
-    def emission_biases(self):
-        return self._emission_biases
-
-    @property
-    def emission_covariance_matrices(self):
-        return self._emission_covs
+        params = dict(
+            initial=dict(probs=initial_probs),
+            transitions=dict(transition_matrix=transition_matrix),
+            emissions=dict(weights=emission_weights, biases=emission_biases, covs=emission_covs))
+        param_props = dict(
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
+            emissions=dict(weights=ParameterProperties(), biases=ParameterProperties(), covs=tfb.Invert(PSDToRealBijector)))
+        return params, param_props
 
     def emission_distribution(self, state, **covariates):
         prediction = self._emission_matrices.value[state] @ covariates['features'] + self._emission_biases.value[state]

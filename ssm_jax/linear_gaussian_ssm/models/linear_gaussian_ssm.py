@@ -36,7 +36,6 @@ class LinearGaussianSSM(SSM):
     emission_input_matrix = D
     emission_bias = d
     """
-
     def __init__(self,
                  state_dim,
                  emission_dim,

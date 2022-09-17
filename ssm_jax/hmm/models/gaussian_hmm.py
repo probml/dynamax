@@ -6,7 +6,6 @@ import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
-from jax.tree_util import register_pytree_node_class
 from jax.tree_util import tree_map
 from ssm_jax.parameters import ParameterProperties
 from ssm_jax.distributions import NormalInverseWishart
@@ -28,7 +27,6 @@ class GaussianHMMSuffStats:
     sum_xxT: chex.Array
 
 
-@register_pytree_node_class
 class GaussianHMM(ExponentialFamilyHMM):
 
     def __init__(self,

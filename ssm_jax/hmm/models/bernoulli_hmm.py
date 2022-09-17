@@ -55,7 +55,7 @@ class BernoulliHMM(ExponentialFamilyHMM):
             transitions=dict(transition_matrix=transition_matrix),
             emissions=dict(probs=emission_probs))
         param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Sotfplus())),
+            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
             transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
             emissions=dict(probs=ParameterProperties(constrainer=tfb.Sigmoid())))
         return  params, param_props
@@ -95,7 +95,7 @@ class BernoulliHMM(ExponentialFamilyHMM):
                                      self._compute_conditional_logliks(params, emissions))
 
             # Compute the initial state and transition probabilities
-            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
+            trans_probs = compute_transition_probs(params["transitions"]["transition_matrix"], posterior)
 
             # Compute the expected sufficient statistics
             sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs, jnp.where(jnp.isnan(emissions), 0, emissions))
@@ -113,12 +113,12 @@ class BernoulliHMM(ExponentialFamilyHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, params, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
         # Then maximize the expected log probability as a fn of model parameters
         params['emissions']['probs'] = tfd.Beta(
-            self._emission_prior_concentration1.value + stats.sum_x,
-            self._emission_prior_concentration0.value + stats.sum_1mx).mode()
+            self.emission_prior_concentration1 + stats.sum_x,
+            self.emission_prior_concentration0 + stats.sum_1mx).mode()
         return params

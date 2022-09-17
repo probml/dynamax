@@ -6,7 +6,6 @@ import jax.random as jr
 import numpy as np
 import pytest
 from jax import vmap
-from jax.tree_util import register_pytree_node_class
 from ssm_jax.hmm.models.base import BaseHMM
 from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
 from ssm_jax.hmm.models.tests.test_utils import monotonically_increasing
@@ -109,7 +108,6 @@ class TestCategoricalHMM:
         lps1 = hmm1.fit_em(emissions[None, ...])
 
         # Make a CategoricalHMM that defaults to the BaseHMM EM algorithm
-        @register_pytree_node_class
         class DummyCategoricalHMM(CategoricalHMM):
             e_step = BaseHMM.e_step
             m_step = BaseHMM.m_step

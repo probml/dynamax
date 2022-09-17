@@ -234,10 +234,10 @@ class StandardHMM(BaseHMM):
             return
 
         if self.num_states == 1:
-            self.initial_probs.value = jnp.array([1.0])
+            params['initial']['probs'] = jnp.array([1.0])
             return
 
-        post = tfd.Dirichlet(self._initial_probs_concentration.value + batch_posteriors.initial_probs.sum(axis=0))
+        post = tfd.Dirichlet(self.initial_probs_concentration + batch_posteriors.initial_probs.sum(axis=0))
         params['initial']['probs'] = post.mode()
         return params
 
@@ -246,10 +246,10 @@ class StandardHMM(BaseHMM):
             return
 
         if self.num_states == 1:
-            self.transition_matrix.value = jnp.array([[1.0]])
+            params['transitions']['transition_matrix'] = jnp.array([[1.0]])
             return
 
-        post = tfd.Dirichlet(self._transition_matrix_concentration.value + batch_posteriors.trans_probs.sum(axis=0))
+        post = tfd.Dirichlet(self.transition_matrix_concentration + batch_posteriors.trans_probs.sum(axis=0))
         params['transitions']['transition_matrix'] = post.mode()
         return params
 
