@@ -59,18 +59,20 @@ class LinearRegressionHMM(StandardHMM):
             emissions=dict(weights=ParameterProperties(), biases=ParameterProperties(), covs=tfb.Invert(PSDToRealBijector)))
         return params, param_props
 
-    def emission_distribution(self, state, **covariates):
-        prediction = self._emission_matrices.value[state] @ covariates['features'] + self._emission_biases.value[state]
-        return tfd.MultivariateNormalFullCovariance(prediction, self._emission_covs.value[state])
+    def emission_distribution(self, params, state, **covariates):
+        prediction = params["emissions"]["weights"][state] @ covariates['features']
+        prediction +=  params["emissions"]["biases"][state]
+        return tfd.MultivariateNormalFullCovariance(prediction, params["emissions"]["covs"][state])
 
-    def log_prior(self):
-        lp = tfd.Dirichlet(self._initial_probs_concentration.value).log_prob(self.initial_probs.value)
-        lp += tfd.Dirichlet(self._transition_matrix_concentration.value).log_prob(self.transition_matrix.value).sum()
+    def log_prior(self, params):
+        lp = tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['initial']['probs'])
+        lp += tfd.Dirichlet(self.transition_matrix_concentration).log_prob(
+            params['transitions']['transition_matrix']).sum()
         # TODO: Add MatrixNormalInverseWishart prior
         return lp
 
     # Expectation-maximization (EM) code
-    def e_step(self, batch_emissions, **batch_covariates):
+    def e_step(self, params, batch_emissions, **batch_covariates):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
         moments of the data
@@ -92,12 +94,12 @@ class LinearRegressionHMM(StandardHMM):
         def _single_e_step(emissions, **covariates):
             features = covariates['features']
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(),
-                                     self._compute_transition_matrices(),
-                                     self._compute_conditional_logliks(emissions, features=features))
+            posterior = hmm_smoother(self._compute_initial_probs(params),
+                                     self._compute_transition_matrices(params),
+                                     self._compute_conditional_logliks(params, emissions, features=features))
 
             # Compute the initial state and transition probabilities
-            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
+            trans_probs = compute_transition_probs(params["transitions"]["transition_matrix"], posterior)
 
             # Compute the expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
@@ -121,7 +123,7 @@ class LinearRegressionHMM(StandardHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions, **batch_covariates)
 
-    def _m_step_emissions(self, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
@@ -143,6 +145,7 @@ class LinearRegressionHMM(StandardHMM):
             return Ab[:, :-1], Ab[:, -1], Sigma
 
         As, bs, Sigmas = vmap(_single_m_step)(stats.sum_w, stats.sum_x, stats.sum_y, stats.sum_xxT, stats.sum_xyT, stats.sum_yyT)
-        self.emission_matrices.value = As
-        self.emission_biases.value = bs
-        self.emission_covariance_matrices.value = Sigmas
+        params["emissions"]["weights"] = As
+        params["emissions"]["biases"] = bs
+        params["emissions"]["covs"] = Sigmas
+        return params
