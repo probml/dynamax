@@ -19,4 +19,4 @@ def test_gaussian():
 
 
 def test_poisson_hmm_earthquakes():
-    poisson_hmm_earthquakes.main(test_mode=True)
+    poisson_hmm_earthquakes.main(test_mode=True, num_repeats=2, num_iters=2, min_states=2, max_states=3)
