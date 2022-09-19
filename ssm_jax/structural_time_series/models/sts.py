@@ -3,7 +3,7 @@ from abc import abstractmethod
 from collections import OrderedDict
 import jax.numpy as jnp
 import jax.scipy as jsp
-from jax import vmap
+from jax import vmap, jit
 from ssm_jax.distributions import InverseWishart as IW
 from ssm_jax.distributions import MatrixNormalPrecision as MN
 from ssm_jax.structural_time_series.models.sts_ssm import StructuralTimeSeriesSSM
@@ -121,36 +121,38 @@ class StructuralTimeSeries():
         param_samps = sts_ssm.fit_hmc(key, sample_size, batch_observed_time_series, batch_inputs)
         return param_samps
 
-    def forecast(self,
-                 key,
-                 observed_time_series,
-                 sts_params,
-                 num_steps_forecast,
-                 inputs=None):
-        # Set the new initial_state_prior to be at the last observation
-        starting_state_priors = OrderedDict()
-        for k, v in self.initial_state_priors.items():
-            d_component = len(v.loc)
-            loc = jnp.tile(observed_time_series[-1], int(d_component/self.dim_obs))
-            covariance_matrix = jnp.eye(d_component)*1e-4
-            starting_state_priors[k] = MVN(loc, covariance_matrix)
+    # def forecast(self,
+    #              key,
+    #              observed_time_series,
+    #              sts_params,
+    #              num_forecast_steps,
+    #              inputs=None):
+    #     # Set the new initial_state_prior to be at the last observation
+    #     starting_state_priors = OrderedDict()
+    #     for k, v in self.initial_state_priors.items():
+    #         d_component = len(v.loc)
+    #         loc = jnp.tile(observed_time_series[-1], int(d_component/self.dim_obs))
+    #         loc = v.loc * observed_time_series[-1]
+    #         covariance_matrix = jnp.eye(d_component)*1e-4
+    #         starting_state_priors[k] = MVN(loc, covariance_matrix)
 
-        def _single_sample(sts_params):
-            sts_ssm = StructuralTimeSeriesSSM(self.transition_matrices,
-                                              self.observation_matrices,
-                                              starting_state_priors,
-                                              sts_params['dynamics_covariances'],
-                                              self.transition_covariance_priors,
-                                              sts_params['emission_covariance'],
-                                              self.observation_covariance_prior,
-                                              self.cov_spars_matrices,
-                                              sts_params['input_weights'],
-                                              self.observation_regression_weights_prior)
-            state_samp, emission_samp = sts_ssm.sample(key, num_steps_forecast, inputs=inputs)
-            return emission_samp
+    #     @jit
+    #     def _single_sample(sts_param):
+    #         sts_ssm = StructuralTimeSeriesSSM(self.transition_matrices,
+    #                                           self.observation_matrices,
+    #                                           starting_state_priors,
+    #                                           sts_param['dynamics_covariances'],
+    #                                           self.transition_covariance_priors,
+    #                                           sts_param['emission_covariance'],
+    #                                           self.observation_covariance_prior,
+    #                                           self.cov_spars_matrices,
+    #                                           sts_param['input_weights'],
+    #                                           self.observation_regression_weights_prior)
+    #         state_samp, emission_samp = sts_ssm.sample(key, num_forecast_steps, inputs=inputs)
+    #         return emission_samp
 
-        ts_samples = map(_single_sample)(sts_params)
-        return ts_samples
+    #     ts_samples = jnp.array(list(map(_single_sample, sts_params)))
+    #     return ts_samples
 
     def sample(self, key, num_timesteps, inputs=None):
         """Given parameters, sample latent states and corresponding observed time series.
@@ -175,6 +177,33 @@ class StructuralTimeSeries():
         states = sts_ssm.smoother(emissions, inputs)
         component_states = self._split_joint_states(states)
         return component_states
+
+    def forecast(self,
+                 key,
+                 observed_time_series,
+                 sts_params,
+                 num_forecast_steps,
+                 inputs=None):
+        # Set the new initial_state_prior to be at the last observation
+        @jit
+        def _single_sample(sts_param):
+            sts_ssm = StructuralTimeSeriesSSM(self.transition_matrices,
+                                              self.observation_matrices,
+                                              self.initial_state_priors,
+                                              sts_param['dynamics_covariances'],
+                                              self.transition_covariance_priors,
+                                              sts_param['emission_covariance'],
+                                              self.observation_covariance_prior,
+                                              self.cov_spars_matrices,
+                                              sts_param['input_weights'],
+                                              self.observation_regression_weights_prior)
+            # emission_samp = sts_ssm.forecast(key, observed_time_series, num_forecast_steps, inputs=inputs)
+            # return emission_samp
+            means, covs = sts_ssm.forecast(key, observed_time_series, num_forecast_steps, inputs=inputs)
+            return means
+
+        ts_samples = jnp.array(list(map(_single_sample, sts_params)))
+        return ts_samples
 
 
 ######################################

@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import jax.random as jr
 import jax.scipy as jsp
 from jax import jit
-from jax import vmap
+from jax import vmap, lax
 from ssm_jax.abstractions import SSM
 from ssm_jax.linear_gaussian_ssm.inference import LGSSMParams
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter
@@ -16,6 +16,8 @@ from ssm_jax.structural_time_series.new_parameters import (
     to_unconstrained, from_unconstrained, ParameterProperties)
 import tensorflow_probability as tfp
 tfb = tfp.bijectors
+from jax.tree_util import register_pytree_node_class
+from jax.tree_util import tree_map
 
 
 class StructuralTimeSeriesSSM(SSM):
@@ -95,22 +97,6 @@ class StructuralTimeSeriesSSM(SSM):
         self.unc_priors = {'dynamics_covariances': dynamics_unc_cov_priors,
                            'emission_covariance': emission_unc_cov_prior,
                            'input_weights': emission_input_weights_prior}
-
-    # Set component distributions of SSM
-    def initial_distribution(self, **covariates):
-        return MVN(self.initial_mean, self.initial_covariance)
-
-    def transition_distribution(self, state, **covariates):
-        covariance = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
-        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
-        dynamics_covariance = spars_matrix @ covariance @ spars_matrix.T
-        return MVN(self.dynamics_matrix @ state, dynamics_covariance)
-
-    def emission_distribution(self, state, **covariates):
-        input = covariates['inputs'] if 'inputs' in covariates and covariates['inputs'] is not None\
-            else jnp.zeros(self.params['input_weights'].shape[-1])
-        return MVN(self.emission_matrix @ state + self.params['input_weights'] @ input,
-                   self.params['emission_covariance'])
 
     def log_prior(self):
         lp = jnp.array([cov_prior.log_prob(cov) for cov, cov_prior in
@@ -213,3 +199,132 @@ class StructuralTimeSeriesSSM(SSM):
                       'emission_covariance': unc_ems_cov,
                       'input_weights': self.params['input_weights']}
         return unc_params
+
+    # Set component distributions of SSM
+    def initial_distribution(self, **covariates):
+        return MVN(self.initial_mean, self.initial_covariance)
+
+    def transition_distribution(self, state, **covariates):
+        covariance = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
+        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
+        dynamics_covariance = spars_matrix @ covariance @ spars_matrix.T
+        return MVN(self.dynamics_matrix @ state, dynamics_covariance)
+
+    def emission_distribution(self, state, **covariates):
+        input = covariates['inputs'] if 'inputs' in covariates and covariates['inputs'] is not None\
+            else jnp.zeros(self.params['input_weights'].shape[-1])
+        return MVN(self.emission_matrix @ state + self.params['input_weights'] @ input,
+                   self.params['emission_covariance'])
+
+    def sample(self, key, num_timesteps, **covariates):
+        """Sample a sequence of latent states and emissions.
+        Args:
+            key: rng key
+            num_timesteps: length of sequence to generate
+        """
+        covariance = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
+        _d = covariance.shape[0]
+        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
+
+        def _step(prev_state, args):
+            key, covariate = args
+            key1, key2 = jr.split(key, 2)
+            # state = self.transition_distribution(prev_state, **covariate).sample(seed=key2)
+            state = prev_state + spars_matrix @ MVN(jnp.zeros(_d), covariance).sample(seed=key2)
+            emission = self.emission_distribution(state, **covariate).sample(seed=key1)
+            return state, (state, emission)
+
+        # Sample the initial state
+        key1, key2, key = jr.split(key, 3)
+        initial_covariate = tree_map(lambda x: x[0], covariates)
+        initial_state = self.initial_distribution(**initial_covariate).sample(seed=key1)
+        initial_emission = self.emission_distribution(initial_state, **initial_covariate).sample(seed=key2)
+
+        # Sample the remaining emissions and states
+        next_keys = jr.split(key, num_timesteps - 1)
+        next_covariates = tree_map(lambda x: x[1:], covariates)
+        _, (next_states, next_emissions) = lax.scan(_step, initial_state, (next_keys, next_covariates))
+
+        # Concatenate the initial state and emission with the following ones
+        expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
+        states = tree_map(expand_and_cat, initial_state, next_states)
+        emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
+        return states, emissions
+
+    def filter(self, emissions, inputs=None):
+        sts_ssm = self.as_ssm()
+        states = sts_ssm.filter(emissions, inputs)
+        component_states = self._split_joint_states(states)
+        return component_states
+
+    # def forecast(self,
+    #              key,
+    #              observed_time_series,
+    #              num_forecast_steps,
+    #              inputs=None):
+    #     lgssm_params = self.to_lgssm_params(self.params)
+    #     filtered_posterior = lgssm_filter(lgssm_params, observed_time_series, inputs)
+    #     filtered_mean = filtered_posterior.filtered_means
+    #     filtered_cov = filtered_posterior.filtered_covariances
+
+    #     covariance = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
+    #     _d = covariance.shape[0]
+    #     spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
+
+    #     initial_distribution = MVN(self.dynamics_matrix @ filtered_mean[-1],
+    #                                self.dynamics_matrix @ filtered_cov[-1] @ self.dynamics_matrix.T
+    #                                + spars_matrix @ covariance @ spars_matrix.T)
+
+    #     def _step(prev_state, key):
+    #         key1, key2 = jr.split(key, 2)
+    #         # state = self.transition_distribution(prev_state, **covariate).sample(seed=key2)
+    #         state = self.dynamics_matrix @ prev_state\
+    #             + spars_matrix @ MVN(jnp.zeros(_d), covariance).sample(seed=key2)
+    #         emission = self.emission_distribution(state).sample(seed=key1)
+    #         return state, (state, emission)
+
+    #     # Sample the initial state
+    #     key1, key2, key = jr.split(key, 3)
+    #     initial_state = initial_distribution.sample(seed=key1)
+    #     initial_emission = self.emission_distribution(initial_state).sample(seed=key2)
+
+    #     # Sample the remaining emissions and states
+    #     next_keys = jr.split(key, num_forecast_steps - 1)
+    #     _, (next_states, next_emissions) = lax.scan(_step, initial_state, next_keys)
+
+    #     # Concatenate the initial state and emission with the following ones
+    #     expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
+    #     states = tree_map(expand_and_cat, initial_state, next_states)
+    #     emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
+    #     return emissions
+
+    def forecast(self,
+                 key,
+                 observed_time_series,
+                 num_forecast_steps,
+                 inputs=None):
+        lgssm_params = self.to_lgssm_params(self.params)
+        filtered_posterior = lgssm_filter(lgssm_params, observed_time_series, inputs)
+        filtered_mean = filtered_posterior.filtered_means
+        filtered_cov = filtered_posterior.filtered_covariances
+
+        covariance = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
+        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
+        cov = spars_matrix @ covariance @ spars_matrix.T
+
+        initial_mean = self.dynamics_matrix @ filtered_mean[-1]
+        initial_cov = self.dynamics_matrix @ filtered_cov[-1] @ self.dynamics_matrix.T + cov
+
+        def _step(prev_params, _=None):
+            prev_mean, prev_cov = prev_params
+            next_mean = self.dynamics_matrix @ prev_mean
+            next_cov = self.dynamics_matrix @ prev_cov @ self.dynamics_matrix.T + cov
+            marginal_cov = self.emission_matrix @ next_cov @ self.emission_matrix.T\
+                + self.params['emission_covariance']
+            return (next_mean, next_cov), (self.emission_matrix @ next_mean, marginal_cov)
+
+        # Sample the initial state
+        initial_params = (initial_mean, initial_cov)
+        _, (next_mean, next_cov) = lax.scan(_step, initial_params, None, length=num_forecast_steps)
+
+        return next_mean, next_cov
