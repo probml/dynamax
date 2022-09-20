@@ -52,7 +52,7 @@ class StructuralTimeSeries():
 
         _dim = observed_timeseries.shape
         self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
-        obs_var = jnp.var(jnp.diff(observed_timeseries, axis=0), axis=0)
+        obs_scale = jnp.std(jnp.abs(jnp.diff(observed_timeseries, axis=0)), axis=0).mean()
         self.name = name
 
         # Save parameters of the STS model:
@@ -65,9 +65,10 @@ class StructuralTimeSeries():
         if observation_covariance is not None:
             self.observation_covariance = observation_covariance
         else:
-            self.observation_covariance = jnp.diag(obs_var)
+            self.observation_covariance = 1e-4*obs_scale**2*jnp.eye(self.dim_obs)
         self.observation_covariance_prior = _set_prior(
-            observation_covariance_prior, IW(df=self.dim_obs, scale=jnp.eye(self.dim_obs)))
+            observation_covariance_prior,
+            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
         self.observation_regression_weights = None
         self.observation_regression_weights_prior = None
 
@@ -109,7 +110,8 @@ class StructuralTimeSeries():
                                           self.observation_regression_weights_prior)
         return sts_ssm
 
-    def fit_hmc(self, key, sample_size, batch_observed_time_series, batch_inputs=None):
+    def fit_hmc(self, key, sample_size, batch_observed_time_series, batch_inputs=None,
+                warmup_steps=500, num_integration_steps=30):
         """Sampling parameters of the STS model from their posterior distributions.
 
         Parameters of the STS model includes:
@@ -118,41 +120,9 @@ class StructuralTimeSeries():
             regression coefficient matrix (if the model has inputs and a regression component)
         """
         sts_ssm = self.as_ssm()
-        param_samps = sts_ssm.fit_hmc(key, sample_size, batch_observed_time_series, batch_inputs)
+        param_samps = sts_ssm.fit_hmc(key, sample_size, batch_observed_time_series, batch_inputs,
+                                      warmup_steps, num_integration_steps)
         return param_samps
-
-    # def forecast(self,
-    #              key,
-    #              observed_time_series,
-    #              sts_params,
-    #              num_forecast_steps,
-    #              inputs=None):
-    #     # Set the new initial_state_prior to be at the last observation
-    #     starting_state_priors = OrderedDict()
-    #     for k, v in self.initial_state_priors.items():
-    #         d_component = len(v.loc)
-    #         loc = jnp.tile(observed_time_series[-1], int(d_component/self.dim_obs))
-    #         loc = v.loc * observed_time_series[-1]
-    #         covariance_matrix = jnp.eye(d_component)*1e-4
-    #         starting_state_priors[k] = MVN(loc, covariance_matrix)
-
-    #     @jit
-    #     def _single_sample(sts_param):
-    #         sts_ssm = StructuralTimeSeriesSSM(self.transition_matrices,
-    #                                           self.observation_matrices,
-    #                                           starting_state_priors,
-    #                                           sts_param['dynamics_covariances'],
-    #                                           self.transition_covariance_priors,
-    #                                           sts_param['emission_covariance'],
-    #                                           self.observation_covariance_prior,
-    #                                           self.cov_spars_matrices,
-    #                                           sts_param['input_weights'],
-    #                                           self.observation_regression_weights_prior)
-    #         state_samp, emission_samp = sts_ssm.sample(key, num_forecast_steps, inputs=inputs)
-    #         return emission_samp
-
-    #     ts_samples = jnp.array(list(map(_single_sample, sts_params)))
-    #     return ts_samples
 
     def sample(self, key, num_timesteps, inputs=None):
         """Given parameters, sample latent states and corresponding observed time series.
@@ -200,9 +170,9 @@ class StructuralTimeSeries():
             # emission_samp = sts_ssm.forecast(key, observed_time_series, num_forecast_steps, inputs=inputs)
             # return emission_samp
             means, covs = sts_ssm.forecast(key, observed_time_series, num_forecast_steps, inputs=inputs)
-            return means
+            return [means, covs]
 
-        ts_samples = jnp.array(list(map(_single_sample, sts_params)))
+        ts_samples = list(map(_single_sample, sts_params))
         return ts_samples
 
 
@@ -275,7 +245,7 @@ class LocalLinearTrend(STSLatentComponent):
         if observed_timeseries is not None:
             _dim = observed_timeseries.shape
             self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
-            obs_scale = jnp.std(observed_timeseries, axis=0).mean()
+            obs_scale = jnp.std(jnp.abs(jnp.diff(observed_timeseries, axis=0)), axis=0).mean()
             obs_init = observed_timeseries[0].mean()
         else:
             self.dim_obs = dim_observed_timeseries
@@ -286,10 +256,12 @@ class LocalLinearTrend(STSLatentComponent):
 
         # Initialize the prior using the observed time series if a prior is not specified
         self.level_covariance_prior = _set_prior(
-            level_covariance_prior, IW(df=self.dim_obs, scale=obs_scale*jnp.eye(self.dim_obs)))
+            level_covariance_prior,
+            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
 
         self.slope_covariance_prior = _set_prior(
-            slope_covariance_prior, IW(df=self.dim_obs, scale=5.*jnp.eye(self.dim_obs)))
+            slope_covariance_prior,
+            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
 
         self.initial_level_prior = _set_prior(
             initial_level_prior,
@@ -399,8 +371,10 @@ class Seasonal(STSLatentComponent):
         if observed_timeseries is not None:
             _dim = observed_timeseries.shape
             self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
+            obs_scale = jnp.std(jnp.abs(jnp.diff(observed_timeseries, axis=0)), axis=0).mean()
         else:
             self.dim_obs = dim_observed_timeseries
+            obs_scale = 1.
 
         self.num_seasons = num_seasons
         self.num_steps_per_season = num_steps_per_season
@@ -408,10 +382,12 @@ class Seasonal(STSLatentComponent):
 
         self.initial_effect_prior = _set_prior(
             initial_effect_prior,
-            MVN(loc=jnp.zeros(self.dim_obs), covariance_matrix=jnp.eye(self.dim_obs)))
+            MVN(loc=jnp.zeros(self.dim_obs),
+                covariance_matrix=obs_scale**2*jnp.eye(self.dim_obs)))
 
         self.drift_covariance_prior = _set_prior(
-            drift_covariance_prior, IW(df=self.dim_obs+0.1, scale=jnp.eye(self.dim_obs)))
+            drift_covariance_prior,
+            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
 
     @property
     def transition_matrix(self):

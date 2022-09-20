@@ -216,87 +216,40 @@ class StructuralTimeSeriesSSM(SSM):
         return MVN(self.emission_matrix @ state + self.params['input_weights'] @ input,
                    self.params['emission_covariance'])
 
-    def sample(self, key, num_timesteps, **covariates):
-        """Sample a sequence of latent states and emissions.
-        Args:
-            key: rng key
-            num_timesteps: length of sequence to generate
-        """
-        covariance = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
-        _d = covariance.shape[0]
-        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
-
-        def _step(prev_state, args):
-            key, covariate = args
-            key1, key2 = jr.split(key, 2)
-            # state = self.transition_distribution(prev_state, **covariate).sample(seed=key2)
-            state = prev_state + spars_matrix @ MVN(jnp.zeros(_d), covariance).sample(seed=key2)
-            emission = self.emission_distribution(state, **covariate).sample(seed=key1)
-            return state, (state, emission)
-
-        # Sample the initial state
-        key1, key2, key = jr.split(key, 3)
-        initial_covariate = tree_map(lambda x: x[0], covariates)
-        initial_state = self.initial_distribution(**initial_covariate).sample(seed=key1)
-        initial_emission = self.emission_distribution(initial_state, **initial_covariate).sample(seed=key2)
-
-        # Sample the remaining emissions and states
-        next_keys = jr.split(key, num_timesteps - 1)
-        next_covariates = tree_map(lambda x: x[1:], covariates)
-        _, (next_states, next_emissions) = lax.scan(_step, initial_state, (next_keys, next_covariates))
-
-        # Concatenate the initial state and emission with the following ones
-        expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
-        states = tree_map(expand_and_cat, initial_state, next_states)
-        emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
-        return states, emissions
-
-    def filter(self, emissions, inputs=None):
-        sts_ssm = self.as_ssm()
-        states = sts_ssm.filter(emissions, inputs)
-        component_states = self._split_joint_states(states)
-        return component_states
-
-    # def forecast(self,
-    #              key,
-    #              observed_time_series,
-    #              num_forecast_steps,
-    #              inputs=None):
-    #     lgssm_params = self.to_lgssm_params(self.params)
-    #     filtered_posterior = lgssm_filter(lgssm_params, observed_time_series, inputs)
-    #     filtered_mean = filtered_posterior.filtered_means
-    #     filtered_cov = filtered_posterior.filtered_covariances
-
+    # def sample(self, key, num_timesteps, **covariates):
+    #     """Sample a sequence of latent states and emissions.
+    #     Args:
+    #         key: rng key
+    #         num_timesteps: length of sequence to generate
+    #     """
     #     covariance = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
     #     _d = covariance.shape[0]
     #     spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
 
-    #     initial_distribution = MVN(self.dynamics_matrix @ filtered_mean[-1],
-    #                                self.dynamics_matrix @ filtered_cov[-1] @ self.dynamics_matrix.T
-    #                                + spars_matrix @ covariance @ spars_matrix.T)
-
-    #     def _step(prev_state, key):
+    #     def _step(prev_state, args):
+    #         key, covariate = args
     #         key1, key2 = jr.split(key, 2)
     #         # state = self.transition_distribution(prev_state, **covariate).sample(seed=key2)
-    #         state = self.dynamics_matrix @ prev_state\
-    #             + spars_matrix @ MVN(jnp.zeros(_d), covariance).sample(seed=key2)
-    #         emission = self.emission_distribution(state).sample(seed=key1)
+    #         state = prev_state + spars_matrix @ MVN(jnp.zeros(_d), covariance).sample(seed=key2)
+    #         emission = self.emission_distribution(state, **covariate).sample(seed=key1)
     #         return state, (state, emission)
 
     #     # Sample the initial state
     #     key1, key2, key = jr.split(key, 3)
-    #     initial_state = initial_distribution.sample(seed=key1)
-    #     initial_emission = self.emission_distribution(initial_state).sample(seed=key2)
+    #     initial_covariate = tree_map(lambda x: x[0], covariates)
+    #     initial_state = self.initial_distribution(**initial_covariate).sample(seed=key1)
+    #     initial_emission = self.emission_distribution(initial_state, **initial_covariate).sample(seed=key2)
 
     #     # Sample the remaining emissions and states
-    #     next_keys = jr.split(key, num_forecast_steps - 1)
-    #     _, (next_states, next_emissions) = lax.scan(_step, initial_state, next_keys)
+    #     next_keys = jr.split(key, num_timesteps - 1)
+    #     next_covariates = tree_map(lambda x: x[1:], covariates)
+    #     _, (next_states, next_emissions) = lax.scan(_step, initial_state, (next_keys, next_covariates))
 
     #     # Concatenate the initial state and emission with the following ones
     #     expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
     #     states = tree_map(expand_and_cat, initial_state, next_states)
     #     emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
-    #     return emissions
+    #     return states, emissions
 
     def forecast(self,
                  key,
