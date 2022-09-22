@@ -167,13 +167,11 @@ class StructuralTimeSeries():
                                               self.cov_spars_matrices,
                                               sts_param['input_weights'],
                                               self.observation_regression_weights_prior)
-            # emission_samp = sts_ssm.forecast(key, observed_time_series, num_forecast_steps, inputs=inputs)
-            # return emission_samp
-            means, covs = sts_ssm.forecast(key, observed_time_series, num_forecast_steps, inputs=inputs)
+            means, covs = sts_ssm.forecast(key, observed_time_series, num_forecast_steps, inputs)
             return [means, covs]
 
-        ts_samples = list(map(_single_sample, sts_params))
-        return ts_samples
+        ts_samples = vmap(_single_sample)(sts_params)
+        return {'means': ts_samples[0], 'covariances': ts_samples[1]}
 
 
 ######################################

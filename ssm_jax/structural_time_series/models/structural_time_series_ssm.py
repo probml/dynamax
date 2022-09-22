@@ -1,23 +1,20 @@
 import blackjax
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
+from jax import jit, lax, vmap
 import jax.numpy as jnp
 import jax.random as jr
 import jax.scipy as jsp
-from jax import jit
-from jax import vmap, lax
+from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
-from ssm_jax.linear_gaussian_ssm.inference import LGSSMParams
-from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter
-from ssm_jax.utils import PSDToRealBijector
-import tensorflow_probability.substrates.jax.distributions as tfd
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from tqdm.auto import trange
+from ssm_jax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_filter
 from ssm_jax.structural_time_series.new_parameters import (
     to_unconstrained, from_unconstrained, ParameterProperties)
+from ssm_jax.utils import PSDToRealBijector
 import tensorflow_probability as tfp
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+from tqdm.auto import trange
+
 tfb = tfp.bijectors
-from jax.tree_util import register_pytree_node_class
-from jax.tree_util import tree_map
 
 
 class StructuralTimeSeriesSSM(SSM):
@@ -53,13 +50,9 @@ class StructuralTimeSeriesSSM(SSM):
         self.dynamics_input_weights = jnp.zeros((self.state_dim, 0))
         self.dynamics_bias = jnp.zeros(self.state_dim)
         dynamics_covariance_props = OrderedDict()
-        dynamics_unc_cov_priors = OrderedDict()
         for c in component_transition_covariance_priors.keys():
             dynamics_covariance_props[c] = ParameterProperties(
                 trainable=True, constrainer=tfb.Invert(PSDToRealBijector))
-            dynamics_unc_cov_priors[c] = tfd.TransformedDistribution(
-                distribution=component_transition_covariance_priors[c],
-                bijector=PSDToRealBijector)
         self.spars_matrix = cov_spars_matrices
 
         # Set parameters of the emission model of the LinearGaussianSSM model
@@ -78,8 +71,6 @@ class StructuralTimeSeriesSSM(SSM):
         self.emission_bias = jnp.zeros(self.emission_dim)
         emission_covariance_props = ParameterProperties(
             trainable=True, constrainer=tfb.Invert(PSDToRealBijector))
-        emission_unc_cov_prior = tfd.TransformedDistribution(
-            distribution=observation_covariance_prior, bijector=PSDToRealBijector)
 
         # Parameters, their properties, and priors of the SSM model
         self.params = {'dynamics_covariances': component_transition_covariances,
@@ -94,28 +85,14 @@ class StructuralTimeSeriesSSM(SSM):
                        'emission_covariance': observation_covariance_prior,
                        'input_weights': emission_input_weights_prior}
 
-        self.unc_priors = {'dynamics_covariances': dynamics_unc_cov_priors,
-                           'emission_covariance': emission_unc_cov_prior,
-                           'input_weights': emission_input_weights_prior}
-
-    def log_prior(self):
+    def log_prior(self, params):
         lp = jnp.array([cov_prior.log_prob(cov) for cov, cov_prior in
-                        zip(self.params['dynamics_covariances'].values(),
+                        zip(params['dynamics_covariances'].values(),
                             self.priors['dynamics_covariances'].values())]).sum()
         # log prior of the emission model
-        lp += self.priors['emission_covariance'].log_prob(self.params['emission_covariance'])
-        if self.params['input_weights']:
-            lp += self.priors['input_weights'].log_prob(self.params['input_weights'])
-        return lp
-
-    def log_unc_prior(self, unc_params):
-        lp = jnp.array([unc_cov_prior.log_prob(unc_cov) for unc_cov, unc_cov_prior in
-                        zip(unc_params['dynamics_covariances'].values(),
-                            self.unc_priors['dynamics_covariances'].values())]).sum()
-        # log prior of the emission model
-        lp += self.unc_priors['emission_covariance'].log_prob(unc_params['emission_covariance'])
-        if unc_params['input_weights']:
-            lp += self.unc_priors['input_weights'].log_prob(unc_params['input_weights'])
+        lp += self.priors['emission_covariance'].log_prob(params['emission_covariance'])
+        if params['input_weights']:
+            lp += self.priors['input_weights'].log_prob(params['input_weights'])
         return lp
 
     def to_lgssm_params(self, params):
@@ -154,12 +131,11 @@ class StructuralTimeSeriesSSM(SSM):
                 batch_inputs=None,
                 warmup_steps=500,
                 num_integration_steps=30):
-        unc_params = self.unc_params
 
         def logprob(trainable_unc_params):
-            unc_params.update(trainable_unc_params)
-            log_pri = self.log_unc_prior(unc_params)
-            params = from_unconstrained(trainable_unc_params, fixed_params, self.param_props)
+            params, log_det_jacobian = from_unconstrained(
+                trainable_unc_params, fixed_params, self.param_props)
+            log_pri = self.log_prior(params) + log_det_jacobian
             batch_lls = vmap(self.marginal_log_prob)(batch_emissions, batch_inputs, params)
             lp = log_pri + batch_lls.sum()
             return lp
@@ -183,32 +159,22 @@ class StructuralTimeSeriesSSM(SSM):
         current_state = hmc_initial_state
         for _ in trange(sample_size):
             current_state, unc_sample = _step(current_state, next(keys))
-            sample = from_unconstrained(unc_sample, fixed_params, self.param_props)
+            sample, _ = from_unconstrained(unc_sample, fixed_params, self.param_props)
             param_samples.append(sample)
 
+        param_samples = tree_map(lambda x, *y: jnp.array([x] + [i for i in y]),
+                                 param_samples[0], *param_samples[1:])
         return param_samples
-
-    @property
-    def unc_params(self):
-        unc_ems_cov = self.param_props['emission_covariance'].constrainer.inverse(
-            self.params['emission_covariance'])
-        unc_dyn_cov = OrderedDict()
-        for k, v in self.params['dynamics_covariances'].items():
-            unc_dyn_cov[k] = self.param_props['dynamics_covariances'][k].constrainer.inverse(v)
-        unc_params = {'dynamics_covariances': unc_dyn_cov,
-                      'emission_covariance': unc_ems_cov,
-                      'input_weights': self.params['input_weights']}
-        return unc_params
 
     # Set component distributions of SSM
     def initial_distribution(self, **covariates):
         return MVN(self.initial_mean, self.initial_covariance)
 
     def transition_distribution(self, state, **covariates):
-        covariance = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
-        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
-        dynamics_covariance = spars_matrix @ covariance @ spars_matrix.T
-        return MVN(self.dynamics_matrix @ state, dynamics_covariance)
+        """Not implemented because tfp.distribution does not allow
+        multivariate normal distribution with singular convariance matrix.
+        """
+        raise NotImplementedError
 
     def emission_distribution(self, state, **covariates):
         input = covariates['inputs'] if 'inputs' in covariates and covariates['inputs'] is not None\
@@ -280,6 +246,6 @@ class StructuralTimeSeriesSSM(SSM):
 
         # Sample the initial state
         initial_params = (initial_mean, initial_cov)
-        _, (next_mean, next_cov) = lax.scan(_step, initial_params, None, length=num_forecast_steps)
+        _, (means, covs) = lax.scan(_step, initial_params, None, length=num_forecast_steps)
 
-        return next_mean, next_cov
+        return means, covs
