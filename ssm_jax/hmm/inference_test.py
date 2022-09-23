@@ -1,9 +1,10 @@
+import pytest
 import itertools as it
-
 import jax.numpy as jnp
 import jax.random as jr
-import pytest
 import ssm_jax.hmm.inference as core
+import ssm_jax.hmm.parallel_inference as parallel
+
 from jax.scipy.special import logsumexp
 import numpy as np
 
@@ -277,3 +278,31 @@ def test_hmm_non_stationary(key=0, num_timesteps=10, num_states=5, scale=1):
     ll2, sample2 = core.hmm_posterior_sample(key, initial_probs, None, log_lkhds, trans_mat_callable)
     assert jnp.allclose(ll, ll2)
     assert jnp.allclose(sample, sample2)
+
+
+def test_parallel_filter(key=0, num_timesteps=100, num_states=3):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    initial_probs, transition_matrix, log_likelihoods = \
+        random_hmm_args(key, num_timesteps, num_states)
+
+    posterior = core.hmm_filter(initial_probs, transition_matrix, log_likelihoods)
+    posterior2 = parallel.hmm_filter(initial_probs, transition_matrix, log_likelihoods)
+    assert jnp.allclose(posterior.marginal_loglik / num_timesteps,
+                        posterior2.marginal_loglik / num_timesteps, atol=1e-3)
+
+    assert jnp.allclose(posterior.filtered_probs, posterior2.filtered_probs, atol=1e-1)
+    assert jnp.allclose(posterior.predicted_probs, posterior2.predicted_probs, atol=1e-1)
+
+
+def test_parallel_smoother(key=0, num_timesteps=100, num_states=3):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    initial_probs, transition_matrix, log_likelihoods = \
+        random_hmm_args(key, num_timesteps, num_states)
+
+    posterior = core.hmm_smoother(initial_probs, transition_matrix, log_likelihoods)
+    posterior2 = parallel.hmm_smoother(initial_probs, transition_matrix, log_likelihoods)
+    assert jnp.allclose(posterior.smoothed_probs, posterior2.smoothed_probs, atol=1e-1)
