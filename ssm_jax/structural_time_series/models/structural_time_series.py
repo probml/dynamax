@@ -110,6 +110,48 @@ class StructuralTimeSeries():
                                           self.observation_regression_weights_prior)
         return sts_ssm
 
+    def sample(self, key, num_timesteps, inputs=None):
+        """Given parameters, sample latent states and corresponding observed time series.
+        """
+        sts_ssm = self.as_ssm()
+        states, timeseries = sts_ssm.sample(key, num_timesteps, inputs)
+        component_states = self._split_joint_states(states)
+        return component_states, timeseries
+
+    def marginal_log_prob(self, observed_time_series, inputs=None):
+        sts_ssm = self.as_ssm()
+        return sts_ssm.marginal_log_prob(observed_time_series, inputs)
+
+    def filter(self, observed_time_series, inputs=None):
+        sts_ssm = self.as_ssm()
+        means, covariances = sts_ssm.filter(observed_time_series, inputs)
+        component_states = self._split_joint_states(means)
+        return component_states
+
+    def smoother(self, observed_time_series, inputs=None):
+        sts_ssm = self.as_ssm()
+        states = sts_ssm.smoother(observed_time_series, inputs)
+        component_states = self._split_joint_states(states)
+        return component_states
+
+    def posterior_sample(self, key, observed_time_series, sts_params, inputs=None):
+        @jit
+        def _single_sample(sts_param):
+            sts_ssm = StructuralTimeSeriesSSM(self.transition_matrices,
+                                              self.observation_matrices,
+                                              self.initial_state_priors,
+                                              sts_param['dynamics_covariances'],
+                                              self.transition_covariance_priors,
+                                              sts_param['emission_covariance'],
+                                              self.observation_covariance_prior,
+                                              self.cov_spars_matrices,
+                                              sts_param['input_weights'],
+                                              self.observation_regression_weights_prior)
+            obs = sts_ssm.posterior_sample(key, observed_time_series, inputs)
+            return obs
+        ts_samples = vmap(_single_sample)(sts_params)
+        return ts_samples
+
     def fit_hmc(self, key, sample_size, batch_observed_time_series, batch_inputs=None,
                 warmup_steps=500, num_integration_steps=30):
         """Sampling parameters of the STS model from their posterior distributions.
@@ -124,36 +166,7 @@ class StructuralTimeSeries():
                                       warmup_steps, num_integration_steps)
         return param_samps
 
-    def sample(self, key, num_timesteps, inputs=None):
-        """Given parameters, sample latent states and corresponding observed time series.
-        """
-        sts_ssm = self.as_ssm()
-        states, timeseries = sts_ssm.sample(key, num_timesteps, inputs)
-        component_states = self._split_joint_states(states)
-        return component_states, timeseries
-
-    def marginal_log_prob(self, emissions, inputs=None):
-        sts_ssm = self.as_ssm()
-        return sts_ssm.marginal_log_prob(emissions, inputs)
-
-    def filter(self, emissions, inputs=None):
-        sts_ssm = self.as_ssm()
-        states = sts_ssm.filter(emissions, inputs)
-        component_states = self._split_joint_states(states)
-        return component_states
-
-    def smoother(self, emissions, inputs=None):
-        sts_ssm = self.as_ssm()
-        states = sts_ssm.smoother(emissions, inputs)
-        component_states = self._split_joint_states(states)
-        return component_states
-
-    def forecast(self,
-                 key,
-                 observed_time_series,
-                 sts_params,
-                 num_forecast_steps,
-                 inputs=None):
+    def forecast(self, observed_time_series, sts_params, num_forecast_steps, inputs=None):
         # Set the new initial_state_prior to be at the last observation
         @jit
         def _single_sample(sts_param):
@@ -167,7 +180,7 @@ class StructuralTimeSeries():
                                               self.cov_spars_matrices,
                                               sts_param['input_weights'],
                                               self.observation_regression_weights_prior)
-            means, covs = sts_ssm.forecast(key, observed_time_series, num_forecast_steps, inputs)
+            means, covs = sts_ssm.forecast(observed_time_series, num_forecast_steps, inputs)
             return [means, covs]
 
         ts_samples = vmap(_single_sample)(sts_params)

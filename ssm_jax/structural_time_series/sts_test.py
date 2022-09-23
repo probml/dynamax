@@ -29,7 +29,7 @@ def test_sts_fit_hmc(key=jr.PRNGKey(0),
     # Fit the model using HMC
     parameter_samples = model.fit_hmc(key, sample_size, batch_observed_time_series,
                                       batch_inputs=None, warmup_steps=500, num_integration_steps=30)
-    predicts = model.forecast(key, observed_time_series, parameter_samples, num_forecast_steps)
+    predicts = model.forecast(observed_time_series, parameter_samples, num_forecast_steps)
 
     pred_means = predicts['means']
     pred_scales = jnp.sqrt(jnp.squeeze(predicts['covariances']))
