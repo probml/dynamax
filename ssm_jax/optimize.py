@@ -28,8 +28,7 @@ def run_sgd(loss_fn,
             batch_size=1,
             num_epochs=50,
             shuffle=False,
-            key=jr.PRNGKey(0),
-            **batch_covariates):
+            key=jr.PRNGKey(0)):
     """
     Note that batch_emissions is initially of shape (N,T)
     where N is the number of independent sequences and
@@ -52,11 +51,12 @@ def run_sgd(loss_fn,
         losses: Output of loss_fn stored at each step.
     """
     opt_state = optimizer.init(params)
-    num_complete_batches, leftover = jnp.divmod(len(dataset), batch_size)
+    num_batches = _get_dataset_len(dataset)
+    num_complete_batches, leftover = jnp.divmod(num_batches, batch_size)
     num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
     loss_grad_fn = value_and_grad(loss_fn)
 
-    if batch_size >= _get_dataset_len(dataset):
+    if batch_size >= num_batches:
         shuffle = False
 
     def train_step(carry, key):

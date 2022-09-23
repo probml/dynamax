@@ -161,23 +161,24 @@ class SSM(ABC):
         """
         curr_unc_params, fixed_params = to_unconstrained(curr_params, param_props)
 
-        def _loss_fn(unc_params, minibatch_emissions, **minibatch_covariates):
+        def _loss_fn(unc_params, minibatch):
             """Default objective function."""
             params = from_unconstrained(unc_params, fixed_params, param_props)
+            minibatch_emissions, minibatch_covariates = minibatch
             scale = len(batch_emissions) / len(minibatch_emissions)
             minibatch_lls = vmap(partial(self.marginal_log_prob, params))(minibatch_emissions, **minibatch_covariates)
             lp = self.log_prior(params) + minibatch_lls.sum() * scale
             return -lp / batch_emissions.size
 
+        dataset = (batch_emissions, batch_covariates)
         unc_params, losses = run_sgd(_loss_fn,
                                      curr_unc_params,
-                                     batch_emissions,
+                                     dataset,
                                      optimizer=optimizer,
                                      batch_size=batch_size,
                                      num_epochs=num_epochs,
                                      shuffle=shuffle,
-                                     key=key,
-                                     **batch_covariates)
+                                     key=key)
 
         params = from_unconstrained(unc_params, fixed_params, param_props)
         return params, losses

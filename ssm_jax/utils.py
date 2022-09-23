@@ -41,7 +41,7 @@ def pad_sequences(observations, valid_lens, pad_val=0):
 
 
 def monotonically_increasing(x, atol=0):
-    return jnp.all(jnp.diff(x) > -atol)
+    return jnp.all(jnp.diff(x) >= -atol)
 
 def add_batch_dim(pytree):
     return tree_map(partial(jnp.expand_dims, axis=0), pytree)
