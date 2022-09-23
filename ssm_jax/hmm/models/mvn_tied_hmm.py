@@ -64,11 +64,11 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         params = dict(
             initial=dict(probs=initial_probs),
             transitions=dict(transition_matrix=transition_matrix),
-            emissions=dict(means=emission_means, covariance=emission_cov))
+            emissions=dict(means=emission_means, cov=emission_cov))
         param_props = dict(
             initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
             transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-            emissions=dict(means=ParameterProperties(), covariance=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))))
+            emissions=dict(means=ParameterProperties(), cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))))
         return  params, param_props
 
     def emission_distribution(self, params, state):
@@ -111,7 +111,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         )
 
     # Expectation-maximization (EM) code
-    def e_step(self, batch_emissions):
+    def e_step(self, params, batch_emissions, **batch_covariates):
         """The E-step computes expected sufficient statistics under the
         posterior. In the Gaussian case, this these are the first two
         moments of the data
@@ -119,12 +119,13 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(), self._compute_transition_matrices(),
-                                     self._compute_conditional_logliks(emissions))
+            posterior = hmm_smoother(self._compute_initial_probs(params),
+                                     self._compute_transition_matrices(params),
+                                     self._compute_conditional_logliks(params, emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
-            trans_probs = compute_transition_probs(self.transition_matrix.value, posterior)
+            trans_probs = compute_transition_probs(params["transitions"]["transition_matrix"], posterior)
 
             # Compute the expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
@@ -147,3 +148,4 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         params['emissions']['means'] = stats.sum_x / stats.sum_w[:, None]
         params['emissions']['cov'] = 1 / stats.sum_w.sum() * (
             stats.sum_xxT - jnp.einsum("ki,kj->kij", stats.sum_x, stats.sum_x) / stats.sum_w[:, None, None]).sum(axis=0)
+        return params

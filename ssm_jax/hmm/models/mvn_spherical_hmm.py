@@ -49,6 +49,6 @@ class MultivariateNormalSphericalHMM(StandardHMM):
         lp = tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['initial']['probs'])
         lp += tfd.Dirichlet(self.transition_matrix_concentration).log_prob(
             params['transitions']['transition_matrix']).sum()
-        lp += tfd.Gamma(self.emission_var_concentration.value,
-                         self.emission_var_rate.value).log_prob(params['emissions']['scales']**2).sum()
+        lp += tfd.Gamma(self.emission_var_concentration,
+                         self.emission_var_rate).log_prob(params['emissions']['scales']**2).sum()
         return lp

@@ -85,7 +85,7 @@ class MultivariateNormalDiagHMM(StandardHMM):
             # Compute the expected sufficient statistics
             sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
             sum_x = jnp.einsum("tk,ti->ki", posterior.smoothed_probs, emissions)
-            sum_x2 = jnp.einsum("tk,ti,ti->ki", posterior.smoothed_probs, emissions, emissions)
+            sum_x2 = jnp.einsum("tk,ti->ki", posterior.smoothed_probs, emissions**2)
 
             # TODO: might need to normalize x_sum and xxT_sum for numerical stability
             stats = GaussianHMMSuffStats(marginal_loglik=posterior.marginal_loglik,
@@ -99,7 +99,7 @@ class MultivariateNormalDiagHMM(StandardHMM):
         # Map the E step calculations over batches
         return vmap(_single_e_step)(batch_emissions)
 
-    def _m_step_emissions(self, params, batch_emissions, batch_posteriors, **kwargs):
+    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 

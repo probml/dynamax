@@ -1,7 +1,9 @@
+from functools import partial
 import jax.numpy as jnp
-import tensorflow_probability.substrates.jax.bijectors as tfb
 from jax import jit
 from jax import vmap
+from jax.tree_util import tree_map
+import tensorflow_probability.substrates.jax.bijectors as tfb
 
 # From https://www.tensorflow.org/probability/examples/
 # TensorFlow_Probability_Case_Study_Covariance_Estimation
@@ -40,3 +42,6 @@ def pad_sequences(observations, valid_lens, pad_val=0):
 
 def monotonically_increasing(x, atol=0):
     return jnp.all(jnp.diff(x) > -atol)
+
+def add_batch_dim(pytree):
+    return tree_map(partial(jnp.expand_dims, axis=0), pytree)

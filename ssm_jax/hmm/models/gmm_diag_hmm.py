@@ -23,7 +23,7 @@ class GMMDiagHMMSuffStats:
     trans_probs: chex.Array
     N: chex.Array
     Sx: chex.Array
-    SxxT: chex.Array
+    Sxsq: chex.Array
 
 
 class GaussianMixtureDiagHMM(StandardHMM):
@@ -111,9 +111,9 @@ class GaussianMixtureDiagHMM(StandardHMM):
 
         def _single_e_step(emissions):
             # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(),
-                                     self._compute_transition_matrices(),
-                                     self._compute_conditional_logliks(emissions))
+            posterior = hmm_smoother(self._compute_initial_probs(params),
+                                     self._compute_transition_matrices(params),
+                                     self._compute_conditional_logliks(params, emissions))
 
             # Compute the initial state and transition probabilities
             initial_probs = posterior.smoothed_probs[0]
@@ -131,7 +131,7 @@ class GaussianMixtureDiagHMM(StandardHMM):
             prob_denses = vmap(prob_fn)(emissions)
             N = jnp.einsum("tk,tkm->tkm", posterior.smoothed_probs, prob_denses)
             Sx = jnp.einsum("tkm,tn->kmn", N, emissions)
-            SxxT = jnp.einsum("tkm,tn,tn->kmn", N, emissions, emissions)
+            Sxsq = jnp.einsum("tkm,tn,tn->kmn", N, emissions, emissions)
             N = N.sum(axis=0)
 
             stats = GMMDiagHMMSuffStats(marginal_loglik=posterior.marginal_loglik,
@@ -139,7 +139,7 @@ class GaussianMixtureDiagHMM(StandardHMM):
                                         trans_probs=trans_probs,
                                         N=N,
                                         Sx=Sx,
-                                        SxxT=SxxT)
+                                        Sxsq=Sxsq)
             return stats
 
         # Map the E step calculations over batches
@@ -149,26 +149,26 @@ class GaussianMixtureDiagHMM(StandardHMM):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
 
-        def _single_m_step(Sx, SxxT, N):
-            # Update emission weights once for each mixture component
+        nig_prior = NormalInverseGamma(
+            self.emission_prior_mean, self.emission_prior_mean_concentration,
+            self.emission_prior_shape, self.emission_prior_scale)
+
+        def _single_m_step(Sx, Sxsq, N):
+            """Update the parameters for one discrete state"""
+            # Update the component probabilities (i.e. weights)
             nu_post = self.emission_prior_weights_concentration + N
             mixture_weights = tfd.Dirichlet(nu_post).mode()
 
-            # Update diagonal entities of covariance matrices and means of the emission distribution
-            # of each mixture component in parallel. Note that the first dimension of all sufficient
-            # statistics is equal to number of mixture components of GMM.
-            nig_prior = NormalInverseGamma(
-                self.emission_prior_mean, self.emission_prior_mean_concentration,
-                self.emission_prior_shape, self.emission_prior_scale)
-            var_diags, means = nig_posterior_update(nig_prior, (Sx, SxxT, N)).mode()
+            # Update the mean and variances for each component
+            var_diags, means = vmap(lambda stats: nig_posterior_update(nig_prior, stats).mode())((Sx, Sxsq, N))
             scale_diags = jnp.sqrt(var_diags)
-
             return mixture_weights, means, scale_diags
 
         # Compute mixture weights, diagonal factors of covariance matrices and means
         # for each state in parallel. Note that the first dimension of all sufficient
         # statistics is equal to number of states of HMM.
-        weights, means, scale_diags = vmap(_single_m_step)(stats.Sx, stats.SxxT, stats.N)
+        weights, means, scale_diags = vmap(_single_m_step)(stats.Sx, stats.Sxsq, stats.N)
         params['emissions']['weights'] = weights
         params['emissions']['means'] = means
         params['emissions']['scale_diags'] = scale_diags
+        return params

@@ -56,7 +56,7 @@ class LinearRegressionHMM(StandardHMM):
         param_props = dict(
             initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
             transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-            emissions=dict(weights=ParameterProperties(), biases=ParameterProperties(), covs=tfb.Invert(PSDToRealBijector)))
+            emissions=dict(weights=ParameterProperties(), biases=ParameterProperties(), covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))))
         return params, param_props
 
     def emission_distribution(self, params, state, **covariates):
