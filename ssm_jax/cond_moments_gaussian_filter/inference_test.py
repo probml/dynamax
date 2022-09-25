@@ -23,7 +23,7 @@ def test_ekf(key=0, num_timesteps=15):
         dynamics_function = nlgssm.dynamics_function,
         dynamics_covariance = nlgssm.dynamics_covariance,
         emission_mean_function = nlgssm.emission_function,
-        emission_var_function = lambda x: nlgssm.emission_covariance,
+        emission_cov_function = lambda x: nlgssm.emission_covariance,
     )
     ggf_post = conditional_moments_gaussian_smoother(ekf_params, emissions)
 
@@ -48,7 +48,7 @@ def test_ukf(key=1, num_timesteps=15):
         dynamics_function = nlgssm.dynamics_function,
         dynamics_covariance = nlgssm.dynamics_covariance,
         emission_mean_function = nlgssm.emission_function,
-        emission_var_function = lambda x: nlgssm.emission_covariance,
+        emission_cov_function = lambda x: nlgssm.emission_covariance,
     )
     ggf_post = conditional_moments_gaussian_smoother(ukf_params, emissions)
 

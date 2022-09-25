@@ -2,7 +2,7 @@ import jax.numpy as jnp
 from jax import lax
 from jax import vmap
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from ssm_jax.nonlinear_gaussian_ssm.containers import NLGSSMPosterior
+from ssm_jax.containers import GSSMPosterior
 import chex
 
 
@@ -186,7 +186,7 @@ def unscented_kalman_filter(params, emissions, hyperparams, inputs=None):
     # Run the UKF
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return NLGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def unscented_kalman_smoother(params, emissions, hyperparams, inputs=None):
@@ -199,7 +199,7 @@ def unscented_kalman_smoother(params, emissions, hyperparams, inputs=None):
         inputs (T,D_in): array of inputs.
 
     Returns:
-        nlgssm_posterior: NLGSSMPosterior instance containing properties of
+        nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
     num_timesteps = len(emissions)
@@ -248,7 +248,7 @@ def unscented_kalman_smoother(params, emissions, hyperparams, inputs=None):
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    return NLGSSMPosterior(
+    return GSSMPosterior(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,

@@ -74,3 +74,5 @@ def test_kalman_filter(num_timesteps=5, seed=0):
     assert jnp.allclose(ssm_posterior.smoothed_means, tfp_smoothed_means, rtol=1e-2)
     assert jnp.allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs, rtol=1e-2)
     assert jnp.allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
+
+test_kalman_filter()
