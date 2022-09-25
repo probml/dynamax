@@ -6,7 +6,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 
 
-def lgssm_ssm_jax_to_tfp(num_timesteps, lgssm):
+def lgssm_ssm_jax_to_tfp(num_timesteps, params):
     """Create a Tensorflow Probability `LinearGaussianStateSpaceModel` object
      from an ssm_jax `LinearGaussianSSM`.
 
@@ -14,15 +14,15 @@ def lgssm_ssm_jax_to_tfp(num_timesteps, lgssm):
         num_timesteps: int, the number of timesteps.
         lgssm: LinearGaussianSSM or LGSSMParams object.
     """
-    dynamics_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=lgssm.dynamics_covariance)
-    emission_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=lgssm.emission_covariance)
-    initial_dist = tfd.MultivariateNormalFullCovariance(lgssm.initial_mean, lgssm.initial_covariance)
+    dynamics_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params['dynamics']['cov'])
+    emission_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params['emissions']['cov'])
+    initial_dist = tfd.MultivariateNormalFullCovariance(params['initial']['mean'], params['initial']['cov'])
 
     tfp_lgssm = tfd.LinearGaussianStateSpaceModel(
         num_timesteps,
-        lgssm.dynamics_matrix,
+        params['dynamics']['weights'],
         dynamics_noise_dist,
-        lgssm.emission_matrix,
+        params['emissions']['weights'],
         emission_noise_dist,
         initial_dist,
     )

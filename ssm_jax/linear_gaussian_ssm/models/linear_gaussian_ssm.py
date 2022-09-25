@@ -3,7 +3,7 @@ from jax import numpy as jnp
 from jax import random as jr
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
-from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, LGSSMParams
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample, LGSSMParams
 from ssm_jax.parameters import ParameterProperties
 from ssm_jax.utils import PSDToRealBijector
 import  tensorflow_probability.substrates.jax as tfp
@@ -124,6 +124,10 @@ class LinearGaussianSSM(SSM):
     def smoother(self, params, emissions, inputs=None):
         """Compute smoothing distribution."""
         return lgssm_smoother(self._make_inference_args(params), emissions, inputs)
+
+    def posterior_sample(self, params, key, emissions, inputs=None):
+        _, sample = lgssm_posterior_sample(key, self._make_inference_args(params), emissions, inputs)
+        return sample
 
     # Expectation-maximization (EM) code
     def e_step(self, params, emissions, inputs=None):
