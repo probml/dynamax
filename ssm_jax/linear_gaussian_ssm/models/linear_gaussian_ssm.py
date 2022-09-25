@@ -1,11 +1,8 @@
 from functools import partial
-
-from jax import vmap
 from jax import numpy as jnp
 from jax import random as jr
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
-from ssm_jax.distributions import InverseWishart, MatrixNormalPrecision as MN
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, LGSSMParams
 from ssm_jax.parameters import ParameterProperties
 from ssm_jax.utils import PSDToRealBijector
@@ -40,59 +37,12 @@ class LinearGaussianSSM(SSM):
                  emission_dim,
                  input_dim=0,
                  has_dynamics_bias=True,
-                 has_emissions_bias=True,
-                 **kw_priors):
+                 has_emissions_bias=True):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
         self.input_dim = input_dim
         self.has_dynamics_bias = has_dynamics_bias
         self.has_emission_bias = has_emissions_bias
-
-        # Initialize prior distributions
-        def default_prior(arg, default):
-            return kw_priors[arg] if arg in kw_priors else default
-
-        self.initial_mean_prior = default_prior(
-            'initial_mean_prior',
-            MVN(loc=jnp.zeros(self.state_dim), covariance_matrix=jnp.eye(self.state_dim)))
-        self.initial_covariance_prior = default_prior(
-            'initial_covariance_prior',
-            InverseWishart(df=self.state_dim + 0.1, scale=jnp.eye(self.state_dim)))
-
-        self.dynamics_matrix_prior = default_prior(
-            'dynamics_matrix_prior',
-            MN(loc=jnp.eye(state_dim),
-               row_covariance=jnp.eye(self.state_dim),
-               col_precision=jnp.eye(self.state_dim)))
-        self.dynamics_input_weights_prior = default_prior(
-            'dynamics_input_weights_prior',
-            MN(loc=jnp.zeros((state_dim, input_dim)),
-               row_covariance=jnp.eye(self.state_dim),
-               col_precision=jnp.eye(input_dim)))
-        self.dynamics_covariance_prior = default_prior(
-            'dynamics_covariance_prior',
-            InverseWishart(df=self.state_dim + 0.1, scale=jnp.eye(self.state_dim)))
-
-        if has_dynamics_bias:
-            self.dynamics_bias_prior = MVN(loc=jnp.zeros(state_dim), covariance_matrix=jnp.eye(self.state_dim))
-
-        self.emission_matrix_prior = default_prior(
-            'emission_matrix_prior',
-            MN(loc=jnp.zeros((emission_dim, state_dim)),
-               row_covariance=jnp.eye(self.emission_dim),
-               col_precision=jnp.eye(self.state_dim)))
-        self.emission_input_weights_prior = default_prior(
-            'emission_input_weights_prior',
-            MN(loc=jnp.zeros((emission_dim, input_dim)),
-               row_covariance=jnp.eye(self.emission_dim),
-               col_precision=jnp.eye(input_dim)))
-        self.emission_covariance_prior = default_prior(
-            'emission_covariance_prior',
-            InverseWishart(df=self.emission_dim + 0.1, scale=jnp.eye(self.emission_dim)))
-
-        if has_emissions_bias:
-            self.emission_bias_prior = MVN(loc=jnp.zeros(emission_dim),
-                                           covariance_matrix=jnp.eye(self.emission_dim))
 
     def random_initialization(self, key):
         m = jnp.zeros(self.state_dim)
@@ -132,15 +82,15 @@ class LinearGaussianSSM(SSM):
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
     def transition_distribution(self, params, state, **covariates):
-        input = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
+        inputs = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
         return MVN(
-            params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ input +
+            params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs +
             params["dynamics"]["bias"], params["dynamics"]["cov"])
 
     def emission_distribution(self, params, state, **covariates):
-        input = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
+        inputs = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
         return MVN(
-            params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ input +
+            params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs +
             params["emissions"]["bias"], params["emissions"]["cov"])
 
     def _make_inference_args(self, params):
@@ -160,27 +110,7 @@ class LinearGaussianSSM(SSM):
         Returns:
             lp (Scalar): log prior probability.
         """
-        # log prior of the initial state
-        lp = self.initial_mean_prior.log_prob(params["initial"]["mean"])
-        lp += self.initial_covariance_prior.log_prob(params["initial"]["cov"])
-
-        # log prior of the dynamics model
-        lp += self.dynamics_matrix_prior.log_prob(params["dynamics"]["weights"])
-        lp += self.dynamics_input_weights_prior.log_prob(params["dynamics"]["input_weights"])
-        lp += self.dynamics_covariance_prior.log_prob(params["dynamics"]["cov"])
-
-        # log prior of the emission model
-        lp += self.emission_matrix_prior.log_prob(params["emissions"]["weights"])
-        lp += self.emission_input_weights_prior.log_prob(params["emissions"]["input_weights"])
-        lp += self.emission_covariance_prior.log_prob(params["emissions"]["cov"])
-
-        # log prior of bias (if needed)
-        if self.has_dynamics_bias:
-            lp += self.dynamics_bias_prior.log_prob(params["dynamics"]["bias"])
-        if self.has_emission_bias:
-            lp += self.emission_bias_prior.log_prob(params["emissions"]["bias"])
-
-        return lp
+        return 0.0
 
     def marginal_log_prob(self, params, emissions, inputs=None):
         """Compute log marginal likelihood of observations."""
@@ -196,65 +126,62 @@ class LinearGaussianSSM(SSM):
         return lgssm_smoother(self._make_inference_args(params), emissions, inputs)
 
     # Expectation-maximization (EM) code
-    def e_step(self, params, batch_emissions, batch_inputs=None):
+    def e_step(self, params, emissions, inputs=None):
         """The E-step computes sums of expected sufficient statistics under the
         posterior. In the generic case, we simply return the posterior itself.
         """
-        num_batches, num_timesteps = batch_emissions.shape[:2]
-        if batch_inputs is None:
-            batch_inputs = jnp.zeros((num_batches, num_timesteps, 0))
+        num_timesteps = emissions.shape[0]
+        if inputs is None:
+            inputs = jnp.zeros((num_timesteps, 0))
 
-        def _single_e_step(emissions, inputs):
-            # Run the smoother to get posterior expectations
-            posterior = lgssm_smoother(self._make_inference_args(params), emissions, inputs)
+        # Run the smoother to get posterior expectations
+        posterior = lgssm_smoother(self._make_inference_args(params), emissions, inputs)
 
-            # shorthand
-            Ex = posterior.smoothed_means
-            Exp = posterior.smoothed_means[:-1]
-            Exn = posterior.smoothed_means[1:]
-            Vx = posterior.smoothed_covariances
-            Vxp = posterior.smoothed_covariances[:-1]
-            Vxn = posterior.smoothed_covariances[1:]
-            Expxn = posterior.smoothed_cross_covariances
-            # Append bias to the inputs
-            inputs = jnp.concatenate((inputs, jnp.ones((num_timesteps, 1))), axis=1)
-            up = inputs[:-1]
-            u = inputs
-            y = emissions
+        # shorthand
+        Ex = posterior.smoothed_means
+        Exp = posterior.smoothed_means[:-1]
+        Exn = posterior.smoothed_means[1:]
+        Vx = posterior.smoothed_covariances
+        Vxp = posterior.smoothed_covariances[:-1]
+        Vxn = posterior.smoothed_covariances[1:]
+        Expxn = posterior.smoothed_cross_covariances
 
-            # expected sufficient statistics for the initial distribution
-            Ex0 = posterior.smoothed_means[0]
-            Ex0x0T = posterior.smoothed_covariances[0] + jnp.outer(Ex0, Ex0)
-            init_stats = (Ex0, Ex0x0T, 1)
+        # Append bias to the inputs
+        inputs = jnp.concatenate((inputs, jnp.ones((num_timesteps, 1))), axis=1)
+        up = inputs[:-1]
+        u = inputs
+        y = emissions
 
-            # expected sufficient statistics for the dynamics distribution
-            # let zp[t] = [x[t], u[t]] for t = 0...T-2
-            # let xn[t] = x[t+1]          for t = 0...T-2
-            sum_zpzpT = jnp.block([[Exp.T @ Exp, Exp.T @ up], [up.T @ Exp, up.T @ up]])
-            sum_zpzpT = sum_zpzpT.at[:self.state_dim, :self.state_dim].add(Vxp.sum(0))
-            sum_zpxnT = jnp.block([[Expxn.sum(0)], [up.T @ Exn]])
-            sum_xnxnT = Vxn.sum(0) + Exn.T @ Exn
-            dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps - 1)
-            if not self.has_dynamics_bias:
-                dynamics_stats = (sum_zpzpT[:-1, :-1], sum_zpxnT[:-1, :], sum_xnxnT,
-                                  num_timesteps - 1)
+        # expected sufficient statistics for the initial distribution
+        Ex0 = posterior.smoothed_means[0]
+        Ex0x0T = posterior.smoothed_covariances[0] + jnp.outer(Ex0, Ex0)
+        init_stats = (Ex0, Ex0x0T, 1)
 
-            # more expected sufficient statistics for the emissions
-            # let z[t] = [x[t], u[t]] for t = 0...T-1
-            sum_zzT = jnp.block([[Ex.T @ Ex, Ex.T @ u], [u.T @ Ex, u.T @ u]])
-            sum_zzT = sum_zzT.at[:self.state_dim, :self.state_dim].add(Vx.sum(0))
-            sum_zyT = jnp.block([[Ex.T @ y], [u.T @ y]])
-            sum_yyT = emissions.T @ emissions
-            emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
-            if not self.has_emission_bias:
-                emission_stats = (sum_zzT[:-1, :-1], sum_zyT[:-1, :], sum_yyT, num_timesteps)
+        # expected sufficient statistics for the dynamics distribution
+        # let zp[t] = [x[t], u[t]] for t = 0...T-2
+        # let xn[t] = x[t+1]          for t = 0...T-2
+        sum_zpzpT = jnp.block([[Exp.T @ Exp, Exp.T @ up], [up.T @ Exp, up.T @ up]])
+        sum_zpzpT = sum_zpzpT.at[:self.state_dim, :self.state_dim].add(Vxp.sum(0))
+        sum_zpxnT = jnp.block([[Expxn.sum(0)], [up.T @ Exn]])
+        sum_xnxnT = Vxn.sum(0) + Exn.T @ Exn
+        dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps - 1)
+        if not self.has_dynamics_bias:
+            dynamics_stats = (sum_zpzpT[:-1, :-1], sum_zpxnT[:-1, :], sum_xnxnT,
+                                num_timesteps - 1)
 
-            return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
+        # more expected sufficient statistics for the emissions
+        # let z[t] = [x[t], u[t]] for t = 0...T-1
+        sum_zzT = jnp.block([[Ex.T @ Ex, Ex.T @ u], [u.T @ Ex, u.T @ u]])
+        sum_zzT = sum_zzT.at[:self.state_dim, :self.state_dim].add(Vx.sum(0))
+        sum_zyT = jnp.block([[Ex.T @ y], [u.T @ y]])
+        sum_yyT = emissions.T @ emissions
+        emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
+        if not self.has_emission_bias:
+            emission_stats = (sum_zzT[:-1, :-1], sum_zyT[:-1, :], sum_yyT, num_timesteps)
 
-        # TODO: what's the best way to vectorize/parallelize this?
-        return vmap(_single_e_step)(batch_emissions, batch_inputs)
+        return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
-    def m_step(self, curr_params, param_props, batch_stats):
+    def m_step(self, curr_params, param_props, batch_emissions, batch_stats, **batch_covariates):
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
