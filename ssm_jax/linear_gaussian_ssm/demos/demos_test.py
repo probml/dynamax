@@ -20,5 +20,5 @@ def test_kf_linreg_demo():
 
 
 def test_lgssm_learning_demo():
-    lgssm_learning.main(test_mode=True, method='MLE')
-    lgssm_learning.main(test_mode=True, method='ConjugateMAP')
+    lgssm_learning.main(test_mode=True, method='EM')
+    lgssm_learning.main(test_mode=True, method='SGD')

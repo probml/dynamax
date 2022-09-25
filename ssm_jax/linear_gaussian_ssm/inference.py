@@ -110,11 +110,44 @@ def _condition_on(m, P, H, D, d, R, u, y):
     # Compute the Kalman gain
     S = R + H @ P @ H.T
     K = jnp.linalg.solve(S, H @ P).T
-    dim = m.shape[-1]
-    ImKH = jnp.eye(dim) - K @ H
     Sigma_cond = P - K @ S @ K.T
     mu_cond = m + K @ (y - D @ u - d - H @ m)
     return mu_cond, Sigma_cond
+
+
+def lgssm_sample(rng, params, num_timesteps, inputs=None):
+    """Sample states and emissions from an LGSSM.
+
+    Args:
+        params (_type_): _description_
+        num_timesteps (_type_): _description_
+        inputs (_type_, optional): _description_. Defaults to None.
+    """
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
+
+    init_key, rng = jr.split(rng)
+    initial_state = MVN(params.initial_mean, params.initial_covariance).sample(seed=init_key)
+
+    def _step(carry, t):
+        rng, state = carry
+        emission_rng, state_rng, rng = jr.split(rng, 3)
+        # Shorthand: get parameters and inputs for time index t
+        F = _get_params(params.dynamics_matrix, 2, t)
+        B = _get_params(params.dynamics_input_weights, 2, t)
+        b = _get_params(params.dynamics_bias, 1, t)
+        Q = _get_params(params.dynamics_covariance, 2, t)
+        H = _get_params(params.emission_matrix, 2, t)
+        D = _get_params(params.emission_input_weights, 2, t)
+        d = _get_params(params.emission_bias, 1, t)
+        R = _get_params(params.emission_covariance, 2, t)
+        u = inputs[t]
+
+        emission = MVN(H @ state + D @ u + d, R).sample(seed=emission_rng)
+        next_state = MVN(F @ state + B @ u + b, Q).sample(seed=state_rng)
+        return (rng, next_state), (state, emission)
+
+    _, (states, emissions) = lax.scan(_step, (rng, initial_state), jnp.arange(num_timesteps))
+    return states, emissions
 
 
 def lgssm_filter(params, emissions, inputs=None):
