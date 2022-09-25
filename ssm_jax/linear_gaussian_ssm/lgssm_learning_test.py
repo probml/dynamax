@@ -9,6 +9,7 @@ NUM_TIMESTEPS = 100
 
 CONFIGS = [
     (models.LinearGaussianSSM, dict(state_dim=2, emission_dim=10), dict()),
+    (models.LinearGaussianConjugateSSM, dict(state_dim=2, emission_dim=10), dict()),
 ]
 
 @pytest.mark.parametrize(["cls", "kwargs", "covariates"], CONFIGS)
