@@ -5,7 +5,7 @@ import pytest
 import scipy.sparse as sp
 import tensorflow_probability.substrates.jax.distributions as tfd
 from sklearn.cluster import KMeans
-from sklearn.metrics.pairwise import _euclidean_distances
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils.extmath import row_norms
 
 from ssm_jax.kmeans import kmeans
@@ -29,7 +29,7 @@ def _kmeans_plusplus(key, X, n_clusters, x_squared_norms, n_local_trials=None):
     else:
         centers[0] = initial_center
 
-    closest_dist_sq = _euclidean_distances(centers[0, np.newaxis],
+    closest_dist_sq = euclidean_distances(centers[0, np.newaxis],
                                            X,
                                            Y_norm_squared=x_squared_norms,
                                            squared=True)
@@ -38,7 +38,7 @@ def _kmeans_plusplus(key, X, n_clusters, x_squared_norms, n_local_trials=None):
         key0, key1 = jr.split(key1)
         candidate_ids = tfd.Categorical(logits=jnp.log(jnp.squeeze(closest_dist_sq))).sample(
             seed=key0, sample_shape=(n_local_trials,))
-        distance_to_candidates = _euclidean_distances(X[candidate_ids, :],
+        distance_to_candidates = euclidean_distances(X[candidate_ids, :],
                                                       X,
                                                       Y_norm_squared=x_squared_norms,
                                                       squared=True)
