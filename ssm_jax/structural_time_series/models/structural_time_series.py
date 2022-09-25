@@ -7,10 +7,7 @@ from jax import vmap, jit
 from ssm_jax.distributions import InverseWishart as IW
 from ssm_jax.distributions import MatrixNormalPrecision as MN
 from ssm_jax.structural_time_series.models.structural_time_series_ssm import StructuralTimeSeriesSSM
-import tensorflow_probability as tfp
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-
-tfd = tfp.distributions
 
 
 def _set_prior(input_prior, default_prior):
@@ -75,7 +72,6 @@ class StructuralTimeSeries():
         # Aggregate components
         for c in components:
             if isinstance(c, LinearRegression):
-                self.observation_design_matrix = c.design_matrix
                 self.observation_regression_weights = c.weights_prior.mode()
                 self.observation_regression_weights_prior = c.weights_prior
             elif isinstance(c, STSLatentComponent):
@@ -115,8 +111,7 @@ class StructuralTimeSeries():
         """
         sts_ssm = self.as_ssm()
         states, timeseries = sts_ssm.sample(key, num_timesteps, inputs)
-        component_states = self._split_joint_states(states)
-        return component_states, timeseries
+        return timeseries
 
     def marginal_log_prob(self, observed_time_series, inputs=None):
         sts_ssm = self.as_ssm()
@@ -125,14 +120,12 @@ class StructuralTimeSeries():
     def filter(self, observed_time_series, inputs=None):
         sts_ssm = self.as_ssm()
         means, covariances = sts_ssm.filter(observed_time_series, inputs)
-        component_states = self._split_joint_states(means)
-        return component_states
+        return means
 
     def smoother(self, observed_time_series, inputs=None):
         sts_ssm = self.as_ssm()
-        states = sts_ssm.smoother(observed_time_series, inputs)
-        component_states = self._split_joint_states(states)
-        return component_states
+        means = sts_ssm.smoother(observed_time_series, inputs)
+        return means
 
     def posterior_sample(self, key, observed_time_series, sts_params, inputs=None):
         @jit
@@ -147,10 +140,10 @@ class StructuralTimeSeries():
                                               self.cov_spars_matrices,
                                               sts_param['input_weights'],
                                               self.observation_regression_weights_prior)
-            obs = sts_ssm.posterior_sample(key, observed_time_series, inputs)
-            return obs
-        ts_samples = vmap(_single_sample)(sts_params)
-        return ts_samples
+            ts_means, ts = sts_ssm.posterior_sample(key, observed_time_series, inputs)
+            return [ts_means, ts]
+        samples = vmap(_single_sample)(sts_params)
+        return {'means': samples[0], 'observations': samples[1]}
 
     def fit_hmc(self, key, sample_size, batch_observed_time_series, batch_inputs=None,
                 warmup_steps=500, num_integration_steps=30):
@@ -166,7 +159,8 @@ class StructuralTimeSeries():
                                       warmup_steps, num_integration_steps)
         return param_samps
 
-    def forecast(self, observed_time_series, sts_params, num_forecast_steps, inputs=None):
+    def forecast(self, key, observed_time_series, sts_params, num_forecast_steps,
+                 past_inputs=None, forecast_inputs=None):
         # Set the new initial_state_prior to be at the last observation
         @jit
         def _single_sample(sts_param):
@@ -178,13 +172,14 @@ class StructuralTimeSeries():
                                               sts_param['emission_covariance'],
                                               self.observation_covariance_prior,
                                               self.cov_spars_matrices,
-                                              sts_param['input_weights'],
+                                              sts_param['regression_weights'],
                                               self.observation_regression_weights_prior)
-            means, covs = sts_ssm.forecast(observed_time_series, num_forecast_steps, inputs)
-            return [means, covs]
+            means, covs, ts = sts_ssm.forecast(key, observed_time_series, num_forecast_steps,
+                                               past_inputs, forecast_inputs)
+            return [means, covs, ts]
 
-        ts_samples = vmap(_single_sample)(sts_params)
-        return {'means': ts_samples[0], 'covariances': ts_samples[1]}
+        samples = vmap(_single_sample)(sts_params)
+        return {'means': samples[0], 'covariances': samples[1], 'observations': samples[2]}
 
 
 ######################################
@@ -320,37 +315,25 @@ class LocalLinearTrend(STSLatentComponent):
 class LinearRegression():
     """The static regression component of the structual time series (STS) model
 
-    if add_bias:
-        reg_t = weights @ input_t + bias
-    else:
-        reg_t = weights @ input_t
-
-    The matrix 'weights' has a MatrixNormal prior
-
     Args:
         weights_prior: MatrixNormal prior for the weight matrix
-        dim_input: Number of explanatory variables (excluding the bias term)
-        add_bias (bool): Whether or not to include a bias term in the linear regression model
-        dim_observed_time_series: Dimension of the observed time series
+        weights_shape: Dimension of the observed time series
         name (str): Name of the component in the STS model
     """
 
     def __init__(self,
-                 design_matrix,
+                 weights_shape,
                  weights_prior=None,
-                 dim_observed_timeseries=1,
                  name='LinearRegression'):
-        self.dim_obs = dim_observed_timeseries
-        self.dim_input = design_matrix.shape[-1]
+        self.dim_obs, self.dim_inputs = weights_shape
         self.component_name = name
 
         # Initialize the prior distribution for weights
         if weights_prior is None:
-            weights_prior = MN(loc=jnp.zeros((self.dim_obs, self.dim_input)),
+            weights_prior = MN(loc=jnp.zeros(weights_shape),
                                row_covariance=jnp.eye(self.dim_obs),
-                               col_precision=jnp.eye(self.dim_input))
+                               col_precision=jnp.eye(self.dim_inputs))
 
-        self.design_matrix = design_matrix
         self.weights_prior = weights_prior
 
 
