@@ -11,11 +11,9 @@ from ssm_jax.linear_gaussian_ssm.inference import (
 from ssm_jax.structural_time_series.new_parameters import (
     to_unconstrained, from_unconstrained, log_det_jac_constrain, ParameterProperties)
 from ssm_jax.utils import PSDToRealBijector
-import tensorflow_probability as tfp
+import tensorflow_probability.substrates.jax.bijectors as tfb
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from tqdm.auto import trange
-
-tfb = tfp.bijectors
 
 
 class StructuralTimeSeriesSSM(SSM):
@@ -68,12 +66,12 @@ class StructuralTimeSeriesSSM(SSM):
         if observation_regression_weights is not None:
             emission_input_weights = observation_regression_weights
             emission_input_weights_props = ParameterProperties(
-                trainable=True, constrainer=tfb.Identity)
+                trainable=True, constrainer=tfb.Identity())
             emission_input_weights_prior = observation_regression_weights_prior
         else:
             emission_input_weights = jnp.zeros((self.emission_dim, 0))
             emission_input_weights_props = ParameterProperties(
-                trainable=False, constrainer=tfb.Identity)
+                trainable=False, constrainer=tfb.Identity())
             emission_input_weights_prior = None
         self.emission_bias = jnp.zeros(self.emission_dim)
         emission_covariance_props = ParameterProperties(
@@ -98,7 +96,7 @@ class StructuralTimeSeriesSSM(SSM):
                             self.priors['dynamics_covariances'].values())]).sum()
         # log prior of the emission model
         lp += self.priors['emission_covariance'].log_prob(params['emission_covariance'])
-        if params['regression_weights']:
+        if params['regression_weights'].size > 0:
             lp += self.priors['regression_weights'].log_prob(params['regression_weights'])
         return lp
 

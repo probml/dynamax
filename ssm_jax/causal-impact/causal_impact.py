@@ -53,8 +53,8 @@ class CausalImpact():
         print(msg)
 
 
-def causal_impact(observed_timeseries, pre_period, post_period,
-                  sts_model=None, inputs=None, confidence_level=0.95,
+def causal_impact(observed_timeseries, intervention_time,
+                  inputs=None, sts_model=None, confidence_level=0.95,
                   key=jr.PRNGKey(0), sample_size=200):
     """Inferring the causal impact of an intervention on a time series,
     given the observed timeseries before and after the intervention.
@@ -62,43 +62,56 @@ def causal_impact(observed_timeseries, pre_period, post_period,
     The causal effect is obtained by conditioned on, and only on, the observations,
     with parameters and latent states integrated out.
 
-    Args:
-        observed_timeseries (_type_): _description_
-        pre_period (_type_): _description_
-        post_period (_type_): _description_
-        sts_model (_type_, optional): _description_. Defaults to None.
-        input (_type_, optional): _description_. Defaults to None.
-
     Returns:
         An object of the CausalImpact class
     """
-    num_timesteps = observed_timeseries.shape[0]
-    assert num_timesteps == post_period[1] - post_period[0] + pre_period[1] - pre_period[0],\
-        "The length of observed time series must equal to the sum of the length of \
-         the pre-intervention period and the length of the post intervention period."
+    key1, key2, key3 = jr.split(key, 3)
+    num_timesteps, dim_obs = observed_timeseries.shape
+
+    # Split the data into pre-intervention period and post-intervention period
+    timeseries_pre = observed_timeseries[:intervention_time]
+    timeseries_pos = observed_timeseries[intervention_time:]
+
+    if inputs is not None:
+        dim_inputs = inputs.shape[-1]
+        # The number of time steps of input must equal to that of observed time_series.
+        inputs_pre = inputs[:intervention_time]
+        inputs_pos = inputs[intervention_time:]
 
     # Construct a STS model with only local linear trend by default
     if sts_model is None:
         local_linear_trend = sts.LocalLinearTrend(observed_timeseries=observed_timeseries)
-        sts_model = sts.StructuralTimeSeries(components=[local_linear_trend],
-                                             observed_timeseries=observed_timeseries)
+        if inputs is None:
+            sts_model = sts.StructuralTimeSeries(components=[local_linear_trend],
+                                                 observed_timeseries=observed_timeseries)
+        else:
+            linear_regression = sts.LinearRegression(weights_shape=(dim_obs, dim_inputs))
+            sts_model = sts.StructuralTimeSeries(components=[local_linear_trend, linear_regression],
+                                                 observed_timeseries=observed_timeseries)
 
-    # Split the data into pre-intervention period and post-intervention period
-    timeseries_pre = observed_timeseries[pre_period[0]:pre_period[1]]
-    timeseries_pos = observed_timeseries[post_period[0]:post_period[1]]
-
+    # Fit the STS model, sample from the past and forecast.
     if inputs is not None:
-        # The number of time steps of input must equal to that of observed time_series.
-        input_pre = inputs[pre_period[0]:pre_period[1]]
-        input_pos = inputs[post_period[0]:post_period[1]]
+        # Model fitting
+        print('Fit the model using HMC...')
+        params_posterior_samples = sts_model.fit_hmc(
+            key1, sample_size, jnp.array([timeseries_pre]), jnp.array([inputs_pre]))
+        print("Model fitting completed.")
+        # Sample from the past and forecast
+        samples_pre = sts_model.posterior_sample(
+            key2, timeseries_pre, params_posterior_samples, inputs_pre)
+        samples_pos = sts_model.forecast(
+            key3, timeseries_pre, params_posterior_samples, timeseries_pos.shape[0],
+            inputs_pre, inputs_pos)
+    else:
+        # Model fitting
+        print('Fit the model using HMC...')
+        params_posterior_samples = sts_model.fit_hmc(key1, sample_size, jnp.array([timeseries_pre]))
+        print("Model fitting completed.")
+        # Sample from the past and forecast
+        samples_pre = sts_model.posterior_sample(key2, timeseries_pre, params_posterior_samples)
+        samples_pos = sts_model.forecast(
+            key3, timeseries_pre, params_posterior_samples, timeseries_pos.shape[0])
 
-    # Posterior inference of the parameters
-    params_posterior_samples = sts_model.hmc(
-        key, sample_size, jnp.array([timeseries_pre]), jnp.array([input_pre]))
-
-    # Predict the counterfactual observation, as well as the pre-intervention sample
-    samples_pre = sts_model.posterior_sample(params_posterior_samples, input_pre)
-    samples_pos = sts_model.forecast(params_posterior_samples, timeseries_pos, input_pos)
     forecast_means = jnp.concatenate((samples_pre['means'], samples_pos['means']), aixs=1)
     forecast_observations = jnp.concatenate(
         (samples_pre['obvervations'], samples_pos['observations']), aixs=1)
