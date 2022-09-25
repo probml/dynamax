@@ -2,7 +2,7 @@ from functools import partial
 import jax.numpy as jnp
 from jax import jit
 from jax import vmap
-from jax.tree_util import tree_map, tree_leaves
+from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
 # From https://www.tensorflow.org/probability/examples/
@@ -43,11 +43,20 @@ def pad_sequences(observations, valid_lens, pad_val=0):
 def monotonically_increasing(x, atol=0):
     return jnp.all(jnp.diff(x) >= -atol)
 
+
 def add_batch_dim(pytree):
     return tree_map(partial(jnp.expand_dims, axis=0), pytree)
+
 
 def pytree_len(pytree):
     return len(tree_leaves(pytree)[0])
 
+
 def pytree_sum(pytree, axis=None, keepdims=None, where=None):
     return tree_map(partial(jnp.sum, axis=axis, keepdims=keepdims, where=where), pytree)
+
+
+def pytree_stack(pytrees):
+    _, treedef = tree_flatten(pytrees[0])
+    leaves = [tree_leaves(tree) for tree in pytrees]
+    return tree_unflatten(treedef, [jnp.stack(vals) for vals in zip(*leaves)])

@@ -1,6 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 from functools import partial
+from warnings import warn
 from tqdm.auto import trange
 
 import jax.numpy as jnp
@@ -13,6 +14,8 @@ import blackjax
 
 from ssm_jax.optimize import run_sgd
 from ssm_jax.parameters import to_unconstrained, from_unconstrained
+from ssm_jax.utils import pytree_stack
+
 
 class SSM(ABC):
     """A base class for state space models. Such models consist of parameters, which
@@ -188,18 +191,19 @@ class SSM(ABC):
                 key,
                 num_samples,
                 batch_emissions,
-                batch_inputs=None,
-                warmup_steps=500,
-                num_integration_steps=30):
+                warmup_steps=100,
+                num_integration_steps=30,
+                verbose=True,
+                **batch_covariates):
         """Sample parameters of the model using HMC."""
-
         initial_unc_params, fixed_params = to_unconstrained(initial_params, param_props)
 
         # The log likelihood that the HMC samples from
+        warn("HMC is not currently computing logdets of the constrainer jacobians!")
         def _logprob(unc_params):
             params = from_unconstrained(unc_params, fixed_params, param_props)
-            batch_lls = vmap(partial(self.marginal_log_prob, params))(batch_emissions, batch_inputs)
-            lp = self.log_prior() + batch_lls.sum()
+            batch_lls = vmap(partial(self.marginal_log_prob, params))(batch_emissions, **batch_covariates)
+            lp = self.log_prior(params) + batch_lls.sum()
             # TODO Correct for the log determinant of the jacobian
             return lp
 
@@ -207,16 +211,27 @@ class SSM(ABC):
         warmup = blackjax.window_adaptation(blackjax.hmc,
                                             _logprob,
                                             num_steps=warmup_steps,
-                                            num_integration_steps=num_integration_steps)
-        hmc_initial_state, hmc_kernel, _ = warmup.run(key, initial_unc_params)
+                                            num_integration_steps=num_integration_steps,
+                                            progress_bar=verbose)
+        init_key, key = jr.split(key)
+        hmc_initial_state, hmc_kernel, _ = warmup.run(init_key, initial_unc_params)
 
-        def hmc_step(hmc_state, rng_key):
-            next_hmc_state, _ = hmc_kernel(rng_key, hmc_state)
-            return next_hmc_state, hmc_state.position
+        @jit
+        def hmc_step(hmc_state, step_key):
+            next_hmc_state, _ = hmc_kernel(step_key, hmc_state)
+            params = from_unconstrained(hmc_state.position, fixed_params, param_props)
+            return next_hmc_state, params
 
         # Start sampling
-        _, unc_param_samples = lax.scan(hmc_step, hmc_initial_state, jr.split(key, num_samples))
+        log_probs = []
+        samples = []
+        hmc_state = hmc_initial_state
+        pbar = trange(num_samples) if verbose else range(num_samples)
+        for _ in pbar:
+            step_key, key = jr.split(key)
+            hmc_state, params = hmc_step(hmc_state, step_key)
+            log_probs.append(-hmc_state.potential_energy)
+            samples.append(params)
 
-        # Convert back into full parameters
-        return vmap(from_unconstrained, in_axes=(0, None, None))(
-            unc_param_samples, fixed_params, param_props)
+        # Combine the samples into a single pytree
+        return pytree_stack(samples), jnp.array(log_probs)
