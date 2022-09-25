@@ -1,24 +1,9 @@
-from functools import partial
-
-import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-from jax import tree_map
-from jax import vmap
 from ssm_jax.parameters import ParameterProperties
-from ssm_jax.hmm.inference import compute_transition_probs
-from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import ExponentialFamilyHMM
-
-@chex.dataclass
-class PoissonHMMSuffStats:
-    marginal_loglik: chex.Scalar
-    initial_probs: chex.Array
-    trans_probs: chex.Array
-    sum_w: chex.Array
-    sum_x: chex.Array
 
 
 class PoissonHMM(ExponentialFamilyHMM):
@@ -44,19 +29,10 @@ class PoissonHMM(ExponentialFamilyHMM):
         self.emission_prior_concentration = emission_prior_concentration
         self.emission_prior_rate = emission_prior_rate
 
-    def random_initialization(self, key):
-        key1, key2, key3 = jr.split(key, 3)
-        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
-        emission_rates = jr.exponential(key3, (self.num_states, self.emission_dim))
-        params = dict(
-            initial=dict(probs=initial_probs),
-            transitions=dict(transition_matrix=transition_matrix),
-            emissions=dict(rates=emission_rates))
-        param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
-            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-            emissions=dict(rates=ParameterProperties(constrainer=tfb.Softplus())))
+    def _initialize_emissions(self, key):
+        emission_rates = jr.exponential(key, (self.num_states, self.emission_dim))
+        params = dict(rates=emission_rates)
+        param_props = dict(rates=ParameterProperties(constrainer=tfb.Softplus()))
         return  params, param_props
 
     def emission_distribution(self, params, state):
@@ -65,59 +41,25 @@ class PoissonHMM(ExponentialFamilyHMM):
 
     def _zeros_like_suff_stats(self):
         """Return dataclass containing 'event_shape' of each sufficient statistic."""
-        return PoissonHMMSuffStats(
-            marginal_loglik = 0.0,
-            initial_probs   = jnp.zeros((self.num_states,)),
-            trans_probs     = jnp.zeros((self.num_states, self.num_states)),
-            sum_w           = jnp.zeros((self.num_states, 1)),
-            sum_x           = jnp.zeros((self.num_states, self.num_obs)),
+        return dict(
+            sum_w=jnp.zeros((self.num_states, 1)),
+            sum_x=jnp.zeros((self.num_states, self.emission_dim)),
         )
 
     def log_prior(self, params):
-        lp = tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['initial']['probs'])
-        lp += tfd.Dirichlet(self.transition_matrix_concentration).log_prob(
-            params['transitions']['transition_matrix']).sum()
+        lp = super().log_prior(params)
         lp += tfd.Gamma(self.emission_prior_concentration, self.emission_prior_rate).log_prob(
             params['emissions']['rates']).sum()
         return lp
 
-    def e_step(self, params, batch_emissions):
-        """The E-step computes expected sufficient statistics under the
-        posterior. In the Gaussian case, this these are the first two
-        moments of the data
-        """
-        def _single_e_step(emissions):
-            # Run the smoother
-            posterior = hmm_smoother(params['initial']['probs'],
-                                     params['transitions']['transition_matrix'],
-                                     self._compute_conditional_logliks(params, emissions))
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+        sum_w = jnp.einsum("tk->k", expected_states)[:, None]
+        sum_x = jnp.einsum("tk, ti->ki", expected_states, emissions)
+        return dict(sum_w=sum_w, sum_x=sum_x)
 
-            # Compute the initial state and transition probabilities
-            trans_probs = compute_transition_probs(params['transitions']['transition_matrix'], posterior)
-
-            # Compute the expected sufficient statistics
-            sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)[:, None]
-            sum_x = jnp.einsum("tk, ti->ki", posterior.smoothed_probs, emissions)
-
-            # Pack into a dataclass
-            stats = PoissonHMMSuffStats(
-                marginal_loglik=posterior.marginal_loglik,
-                initial_probs=posterior.initial_probs,
-                trans_probs=trans_probs,
-                sum_w=sum_w,
-                sum_x=sum_x,
-            )
-            return stats
-
-        # Map the E step calculations over batches
-        return vmap(_single_e_step)(batch_emissions)
-
-    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
-        # Sum the statistics across all batches
-        stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
-
-        # Then maximize the expected log probability as a fn of model parameters
-        post_concentration = self.emission_prior_concentration + stats.sum_x
-        post_rate = self.emission_prior_rate + stats.sum_w
-        params['emissions']['rates'] = tfd.Gamma(post_concentration, post_rate).mode()
+    def _m_step_emissions(self, params, param_props, emission_stats):
+        if param_props['emissions']['rates'].trainable:
+            post_concentration = self.emission_prior_concentration + emission_stats['sum_x']
+            post_rate = self.emission_prior_rate + emission_stats['sum_w']
+            params['emissions']['rates'] = tfd.Gamma(post_concentration, post_rate).mode()
         return params

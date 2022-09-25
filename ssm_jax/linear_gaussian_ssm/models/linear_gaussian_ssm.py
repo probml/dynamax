@@ -3,7 +3,7 @@ from functools import partial
 from jax import vmap
 from jax import numpy as jnp
 from jax import random as jr
-from jax.tree_util import register_pytree_node_class, tree_map
+from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
 from ssm_jax.distributions import InverseWishart, MatrixNormalPrecision as MN
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, LGSSMParams
@@ -16,7 +16,6 @@ tfd = tfp.distributions
 tfb = tfp.bijectors
 
 
-@register_pytree_node_class
 class LinearGaussianSSM(SSM):
     """
     Linear Gaussian State Space Model is defined as follows:
@@ -47,7 +46,7 @@ class LinearGaussianSSM(SSM):
         self.emission_dim = emission_dim
         self.input_dim = input_dim
         self.has_dynamics_bias = has_dynamics_bias
-        self.has_emissions_bias = has_emissions_bias
+        self.has_emission_bias = has_emissions_bias
 
         # Initialize prior distributions
         def default_prior(arg, default):
@@ -105,7 +104,7 @@ class LinearGaussianSSM(SSM):
         Q = 0.1 * jnp.eye(self.state_dim)
         H = jr.normal(key, (self.emission_dim, self.state_dim))
         D = jnp.zeros((self.emission_dim, self.input_dim))
-        d = jnp.zeros((self.emission_dim,)) if self.has_emissions_bias else None
+        d = jnp.zeros((self.emission_dim,)) if self.has_emission_bias else None
         R = 0.1 * jnp.eye(self.emission_dim)
 
         params = dict(
@@ -178,7 +177,7 @@ class LinearGaussianSSM(SSM):
         # log prior of bias (if needed)
         if self.has_dynamics_bias:
             lp += self.dynamics_bias_prior.log_prob(params["dynamics"]["bias"])
-        if self.has_emissions_bias:
+        if self.has_emission_bias:
             lp += self.emission_bias_prior.log_prob(params["emissions"]["bias"])
 
         return lp
@@ -236,7 +235,7 @@ class LinearGaussianSSM(SSM):
             sum_zpxnT = jnp.block([[Expxn.sum(0)], [up.T @ Exn]])
             sum_xnxnT = Vxn.sum(0) + Exn.T @ Exn
             dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps - 1)
-            if not self._db_indicator:
+            if not self.has_dynamics_bias:
                 dynamics_stats = (sum_zpzpT[:-1, :-1], sum_zpxnT[:-1, :], sum_xnxnT,
                                   num_timesteps - 1)
 
@@ -279,7 +278,7 @@ class LinearGaussianSSM(SSM):
 
         HD, R = fit_linear_regression(*emission_stats)
         H = HD[:, :self.state_dim]
-        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
+        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emission_bias \
             else (HD[:, self.state_dim:], None)
 
         return dict(

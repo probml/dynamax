@@ -113,14 +113,14 @@ class SSM(ABC):
         """
         return 0.0
 
-    def fit_em(self, initial_params, param_props, batch_emissions, batch_inputs=None, num_iters=50, verbose=True):
+    def fit_em(self, initial_params, param_props, batch_emissions, num_iters=50, verbose=True, **batch_covariates):
         """Fit this HMM with Expectation-Maximization (EM).
         """
         @jit
         def em_step(params):
-            posterior_stats, marginal_loglikes = self.e_step(params, batch_emissions, batch_inputs)
-            lp = self.log_prior(params) + marginal_loglikes.sum()
-            params = self.m_step(params, param_props, posterior_stats)
+            batch_posteriors, lls = vmap(partial(self.e_step, params))(batch_emissions, **batch_covariates)
+            lp = self.log_prior(params) + lls.sum()
+            params = self.m_step(params, param_props, batch_emissions, batch_posteriors, **batch_covariates)
             return params, lp
 
         log_probs = []
@@ -129,8 +129,7 @@ class SSM(ABC):
         for _ in pbar:
             params, marginal_loglik = em_step(params)
             log_probs.append(marginal_loglik)
-
-        return jnp.array(log_probs)
+        return params, jnp.array(log_probs)
 
     def fit_sgd(self,
                 curr_params,

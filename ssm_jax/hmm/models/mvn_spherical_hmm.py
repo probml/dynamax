@@ -24,20 +24,12 @@ class MultivariateNormalSphericalHMM(StandardHMM):
         self.emission_var_concentration = emission_var_concentration
         self.emission_var_rate = emission_var_rate
 
-    def random_initialization(self, key):
-        key1, key2, key3, key4 = jr.split(key, 4)
-        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
-        emission_means = jr.normal(key3, (self.num_states, self.emission_dim))
-        emission_scales = jr.exponential(key4, (self.num_states, 1))
-        params = dict(
-            initial=dict(probs=initial_probs),
-            transitions=dict(transition_matrix=transition_matrix),
-            emissions=dict(means=emission_means, scales=emission_scales))
-        param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
-            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-            emissions=dict(means=ParameterProperties(), scales=ParameterProperties(constrainer=tfb.Softplus())))
+    def _initialize_emissions(self, key):
+        key1, key2 = jr.split(key, 2)
+        emission_means = jr.normal(key1, (self.num_states, self.emission_dim))
+        emission_scales = jr.exponential(key2, (self.num_states, 1))
+        params = dict(means=emission_means, scales=emission_scales)
+        param_props = dict(means=ParameterProperties(), scales=ParameterProperties(constrainer=tfb.Softplus()))
         return  params, param_props
 
     def emission_distribution(self, params, state):
@@ -46,9 +38,7 @@ class MultivariateNormalSphericalHMM(StandardHMM):
                                           params['emissions']['scales'][state] * jnp.ones((dim,)))
 
     def log_prior(self, params):
-        lp = tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['initial']['probs'])
-        lp += tfd.Dirichlet(self.transition_matrix_concentration).log_prob(
-            params['transitions']['transition_matrix']).sum()
+        lp = super().log_prior(params)
         lp += tfd.Gamma(self.emission_var_concentration,
-                         self.emission_var_rate).log_prob(params['emissions']['scales']**2).sum()
+                        self.emission_var_rate).log_prob(params['emissions']['scales']**2).sum()
         return lp

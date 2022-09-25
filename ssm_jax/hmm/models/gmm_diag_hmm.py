@@ -1,32 +1,16 @@
-from functools import partial
-
-import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-from jax import tree_map
 from jax import vmap
 from jax.scipy.special import logsumexp
 from ssm_jax.parameters import ParameterProperties
 from ssm_jax.distributions import NormalInverseGamma
 from ssm_jax.distributions import nig_posterior_update
-from ssm_jax.hmm.inference import compute_transition_probs
-from ssm_jax.hmm.inference import hmm_smoother
-from ssm_jax.hmm.models.base import StandardHMM
+from ssm_jax.hmm.models.base import ExponentialFamilyHMM
 
 
-@chex.dataclass
-class GMMDiagHMMSuffStats:
-    marginal_loglik: chex.Scalar
-    initial_probs: chex.Array
-    trans_probs: chex.Array
-    N: chex.Array
-    Sx: chex.Array
-    Sxsq: chex.Array
-
-
-class GaussianMixtureDiagHMM(StandardHMM):
+class GaussianMixtureDiagHMM(ExponentialFamilyHMM):
     """
     Hidden Markov Model with Gaussian mixture emissions where covariance matrices are diagonal.
     Attributes
@@ -69,24 +53,18 @@ class GaussianMixtureDiagHMM(StandardHMM):
         self.emission_prior_shape = emission_prior_shape
         self.emission_prior_scale = emission_prior_scale
 
-    def random_initialization(self, key):
-        key1, key2, key3, key4 = jr.split(key, 4)
-        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
-        emission_weights = jr.dirichlet(key3, jnp.ones(self.num_components), shape=(self.num_states,))
-        emission_means = jr.normal(key4, (self.num_states, self.num_components, self.emission_dim))
+    def _initialize_emissions(self, key):
+        key1, key2 = jr.split(key, 2)
+        emission_weights = jr.dirichlet(key1, jnp.ones(self.num_components), shape=(self.num_states,))
+        emission_means = jr.normal(key2, (self.num_states, self.num_components, self.emission_dim))
         emission_scale_diags = jnp.ones((self.num_states, self.num_components, self.emission_dim))
 
-        params = dict(
-            initial=dict(probs=initial_probs),
-            transitions=dict(transition_matrix=transition_matrix),
-            emissions=dict(weights=emission_weights, means=emission_means, scale_diags=emission_scale_diags))
-        param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
-            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-            emissions=dict(weights=ParameterProperties(constrainer=tfb.SoftmaxCentered()),
+        params = dict(weights=emission_weights,
+                      means=emission_means,
+                      scale_diags=emission_scale_diags)
+        param_props = dict(weights=ParameterProperties(constrainer=tfb.SoftmaxCentered()),
                            means=ParameterProperties(),
-                           scale_diags=ParameterProperties(constrainer=tfb.Softplus())))
+                           scale_diags=ParameterProperties(constrainer=tfb.Softplus()))
         return  params, param_props
 
     def emission_distribution(self, params, state):
@@ -107,47 +85,33 @@ class GaussianMixtureDiagHMM(StandardHMM):
         return lp
 
     # Expectation-maximization (EM) code
-    def e_step(self, params, batch_emissions, **batch_covariates):
+    def _zeros_like_suff_stats(self):
+        return dict(N=jnp.zeros((self.num_states, self.num_components)),
+                    Sx=jnp.zeros((self.num_states, self.num_components, self.emission_dim)),
+                    Sxsq=jnp.zeros((self.num_states, self.num_components, self.emission_dim)))
 
-        def _single_e_step(emissions):
-            # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(params),
-                                     self._compute_transition_matrices(params),
-                                     self._compute_conditional_logliks(params, emissions))
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
 
-            # Compute the initial state and transition probabilities
-            initial_probs = posterior.smoothed_probs[0]
-            trans_probs = compute_transition_probs(params['transitions']['transition_matrix'], posterior)
+        # Evaluate the posterior probability of each discrete class
+        def prob_fn(x):
+            logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalDiag(
+                loc=mus, scale_diag=sigmas).log_prob(x) + jnp.log(weights))(
+                    params['emissions']['means'], params['emissions']['scale_diags'],
+                    params['emissions']['weights'])
+            logprobs = logprobs - logsumexp(logprobs, axis=-1, keepdims=True)
+            return jnp.exp(logprobs)
 
-            # Evaluate the posterior probability of each discrete class
-            def prob_fn(x):
-                logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalDiag(
-                    loc=mus, scale_diag=sigmas).log_prob(x) + jnp.log(weights))(
-                        params['emissions']['means'], params['emissions']['scale_diags'],
-                        params['emissions']['weights'])
-                logprobs = logprobs - logsumexp(logprobs, axis=-1, keepdims=True)
-                return jnp.exp(logprobs)
+        prob_denses = vmap(prob_fn)(emissions)
+        weights = jnp.einsum("tk,tkm->tkm", expected_states, prob_denses)
+        Sx = jnp.einsum("tkm,tn->kmn", weights, emissions)
+        Sxsq = jnp.einsum("tkm,tn,tn->kmn", weights, emissions, emissions)
+        N = weights.sum(axis=0)
+        return dict(N=N, Sx=Sx, Sxsq=Sxsq)
 
-            prob_denses = vmap(prob_fn)(emissions)
-            N = jnp.einsum("tk,tkm->tkm", posterior.smoothed_probs, prob_denses)
-            Sx = jnp.einsum("tkm,tn->kmn", N, emissions)
-            Sxsq = jnp.einsum("tkm,tn,tn->kmn", N, emissions, emissions)
-            N = N.sum(axis=0)
-
-            stats = GMMDiagHMMSuffStats(marginal_loglik=posterior.marginal_loglik,
-                                        initial_probs=initial_probs,
-                                        trans_probs=trans_probs,
-                                        N=N,
-                                        Sx=Sx,
-                                        Sxsq=Sxsq)
-            return stats
-
-        # Map the E step calculations over batches
-        return vmap(_single_e_step)(batch_emissions)
-
-    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
-        # Sum the statistics across all batches
-        stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
+    def _m_step_emissions(self, params, param_props, emission_stats):
+        assert param_props['emissions']['weights'].trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
+        assert param_props['emissions']['means'].trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
+        assert param_props['emissions']['scale_diags'].trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
 
         nig_prior = NormalInverseGamma(
             self.emission_prior_mean, self.emission_prior_mean_concentration,
@@ -167,7 +131,8 @@ class GaussianMixtureDiagHMM(StandardHMM):
         # Compute mixture weights, diagonal factors of covariance matrices and means
         # for each state in parallel. Note that the first dimension of all sufficient
         # statistics is equal to number of states of HMM.
-        weights, means, scale_diags = vmap(_single_m_step)(stats.Sx, stats.Sxsq, stats.N)
+        weights, means, scale_diags = vmap(_single_m_step)(
+            emission_stats['Sx'], emission_stats['Sxsq'], emission_stats['N'])
         params['emissions']['weights'] = weights
         params['emissions']['means'] = means
         params['emissions']['scale_diags'] = scale_diags

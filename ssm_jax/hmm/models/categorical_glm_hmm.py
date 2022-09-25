@@ -27,21 +27,13 @@ class CategoricalRegressionHMM(StandardHMM):
         self.num_classes = num_classes
         self.feature_dim = feature_dim
 
-    def random_initialization(self, key):
-        key1, key2, key3, key4 = jr.split(key, 4)
-        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
-        emission_weights = jr.normal(key3, (self.num_states, self.num_classes, self.feature_dim))
-        emission_biases = jr.normal(key4, (self.num_states, self.num_classes))
+    def _initialize_emissions(self, key):
+        key1, key2 = jr.split(key, 2)
+        emission_weights = jr.normal(key1, (self.num_states, self.num_classes, self.feature_dim))
+        emission_biases = jr.normal(key2, (self.num_states, self.num_classes))
 
-        params = dict(
-            initial=dict(probs=initial_probs),
-            transitions=dict(transition_matrix=transition_matrix),
-            emissions=dict(weights=emission_weights, biases=emission_biases))
-        param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
-            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-            emissions=dict(weights=ParameterProperties(), biases=ParameterProperties()))
+        params = dict(weights=emission_weights, biases=emission_biases)
+        param_props = dict(weights=ParameterProperties(), biases=ParameterProperties())
         return  params, param_props
 
     def emission_distribution(self, params, state, **covariates):

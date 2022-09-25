@@ -1,6 +1,3 @@
-from functools import partial
-
-import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
@@ -9,20 +6,8 @@ from jax import vmap
 from jax.tree_util import tree_map
 from ssm_jax.parameters import ParameterProperties
 from ssm_jax.distributions import InverseWishart
-from ssm_jax.hmm.inference import compute_transition_probs
-from ssm_jax.hmm.inference import hmm_smoother
 from ssm_jax.hmm.models.base import ExponentialFamilyHMM
 from ssm_jax.utils import PSDToRealBijector
-
-
-@chex.dataclass
-class MultivariateNormalTiedHMMSuffStats:
-    marginal_loglik: chex.Scalar
-    initial_probs: chex.Array
-    trans_probs: chex.Array
-    sum_w: chex.Array
-    sum_x: chex.Array
-    sum_xxT: chex.Array
 
 
 class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
@@ -54,43 +39,20 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
             else emission_prior_scale * jnp.eye(emission_dim)
         self.emission_prior_df = emission_dim + emission_prior_extra_df
 
-    def random_initialization(self, key):
-        key1, key2, key3 = jr.split(key, 3)
-        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
-        emission_means = jr.normal(key3, (self.num_states, self.emission_dim))
+    def _initialize_emissions(self, key):
+        emission_means = jr.normal(key, (self.num_states, self.emission_dim))
         emission_cov = jnp.eye(self.emission_dim)
 
-        params = dict(
-            initial=dict(probs=initial_probs),
-            transitions=dict(transition_matrix=transition_matrix),
-            emissions=dict(means=emission_means, cov=emission_cov))
-        param_props = dict(
-            initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
-            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-            emissions=dict(means=ParameterProperties(), cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))))
+        params = dict(means=emission_means, cov=emission_cov)
+        param_props = dict(means=ParameterProperties(), cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return  params, param_props
 
     def emission_distribution(self, params, state):
         return tfd.MultivariateNormalFullCovariance(
             params['emissions']['means'][state], params['emissions']['cov'])
 
-    @property
-    def suff_stats_event_shape(self):
-        """Return dataclass containing 'event_shape' of each sufficient statistic."""
-        return MultivariateNormalTiedHMMSuffStats(
-            marginal_loglik=(),
-            initial_probs=(self.num_states,),
-            trans_probs=(self.num_states, self.num_states),
-            sum_w=(self.num_states,),
-            sum_x=(self.num_states, self.num_obs),
-            sum_xxT=(self.num_obs, self.num_obs),
-        )
-
     def log_prior(self, params):
-        lp = tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['initial']['probs'])
-        lp += tfd.Dirichlet(self.transition_matrix_concentration).log_prob(
-            params['transitions']['transition_matrix']).sum()
+        lp = super().log_prior(params)
         lp += InverseWishart(self.emission_prior_df, self.emission_prior_scale).log_prob(
             params['emissions']['cov'])
         lp += tfd.MultivariateNormalFullCovariance(
@@ -101,51 +63,25 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
     def _zeros_like_suff_stats(self):
         dim = self.num_obs
         num_states = self.num_states
-        return MultivariateNormalTiedHMMSuffStats(
-            marginal_loglik=0.0,
-            initial_probs=jnp.zeros((num_states,)),
-            trans_probs=jnp.zeros((num_states, num_states)),
+        return dict(
             sum_w=jnp.zeros((num_states,)),
             sum_x=jnp.zeros((num_states, dim)),
             sum_xxT=jnp.zeros((num_states, dim, dim)),
         )
 
     # Expectation-maximization (EM) code
-    def e_step(self, params, batch_emissions, **batch_covariates):
-        """The E-step computes expected sufficient statistics under the
-        posterior. In the Gaussian case, this these are the first two
-        moments of the data
-        """
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+        sum_w = jnp.einsum("tk->k", expected_states)
+        sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
+        sum_xxT = jnp.einsum("tk,ti,tj->kij", expected_states, emissions, emissions)
+        stats = dict(sum_w=sum_w, sum_x=sum_x, sum_xxT=sum_xxT)
+        return stats
 
-        def _single_e_step(emissions):
-            # Run the smoother
-            posterior = hmm_smoother(self._compute_initial_probs(params),
-                                     self._compute_transition_matrices(params),
-                                     self._compute_conditional_logliks(params, emissions))
-
-            # Compute the initial state and transition probabilities
-            initial_probs = posterior.smoothed_probs[0]
-            trans_probs = compute_transition_probs(params["transitions"]["transition_matrix"], posterior)
-
-            # Compute the expected sufficient statistics
-            sum_w = jnp.einsum("tk->k", posterior.smoothed_probs)
-            sum_x = jnp.einsum("tk,ti->ki", posterior.smoothed_probs, emissions)
-            sum_xxT = jnp.einsum("tk,ti,tj->kij", posterior.smoothed_probs, emissions, emissions)
-            stats = MultivariateNormalTiedHMMSuffStats(marginal_loglik=posterior.marginal_loglik,
-                                                       initial_probs=initial_probs,
-                                                       trans_probs=trans_probs,
-                                                       sum_w=sum_w,
-                                                       sum_x=sum_x,
-                                                       sum_xxT=sum_xxT)
-            return stats
-
-        # Map the E step calculations over batches
-        return vmap(_single_e_step)(batch_emissions)
-
-    def _m_step_emissions(self, params, param_props, batch_emissions, batch_posteriors, **kwargs):
-        # Sum the statistics across all batches
-        stats = tree_map(partial(jnp.sum, axis=0), batch_posteriors)
-        params['emissions']['means'] = stats.sum_x / stats.sum_w[:, None]
-        params['emissions']['cov'] = 1 / stats.sum_w.sum() * (
-            stats.sum_xxT - jnp.einsum("ki,kj->kij", stats.sum_x, stats.sum_x) / stats.sum_w[:, None, None]).sum(axis=0)
+    def _m_step_emissions(self, params, param_props, emission_stats):
+        sum_w = emission_stats['sum_w']
+        sum_x = emission_stats['sum_x']
+        sum_xxT = emission_stats['sum_xxT']
+        params['emissions']['means'] = sum_x / sum_w[:, None]
+        params['emissions']['cov'] = (1 / sum_w.sum()) * (
+            sum_xxT - jnp.einsum("ki,kj->kij", sum_x, sum_x) / sum_w[:, None, None]).sum(axis=0)
         return params

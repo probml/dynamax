@@ -2,11 +2,8 @@ import jax.numpy as jnp
 import jax.random as jr
 import optax
 from jax import lax, value_and_grad
-from jax.tree_util import tree_map, tree_leaves
-
-
-def _get_dataset_len(dataset):
-    return len(tree_leaves(dataset)[0])
+from jax.tree_util import tree_map
+from ssm_jax.utils import pytree_len
 
 
 def sample_minibatches(key, dataset, batch_size, shuffle):
@@ -16,10 +13,11 @@ def sample_minibatches(key, dataset, batch_size, shuffle):
         within jit'd code. This is likely because the generator internally
         updates a state with each yield (which doesn't play well with jit).
     """
-    n_data = _get_dataset_len(dataset)
+    n_data = pytree_len(dataset)
     perm = jnp.where(shuffle, jr.permutation(key, n_data), jnp.arange(n_data))
     for idx in range(0, n_data, batch_size):
         yield tree_map(lambda x: x[perm[idx:min(idx + batch_size, n_data)]], dataset)
+
 
 def run_sgd(loss_fn,
             params,
@@ -51,7 +49,7 @@ def run_sgd(loss_fn,
         losses: Output of loss_fn stored at each step.
     """
     opt_state = optimizer.init(params)
-    num_batches = _get_dataset_len(dataset)
+    num_batches = pytree_len(dataset)
     num_complete_batches, leftover = jnp.divmod(num_batches, batch_size)
     num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
     loss_grad_fn = value_and_grad(loss_fn)

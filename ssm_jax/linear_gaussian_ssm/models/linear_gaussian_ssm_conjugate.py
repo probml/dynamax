@@ -3,7 +3,7 @@ from functools import partial
 import jax.random as jr
 from jax import jit
 from jax import numpy as jnp
-from jax.tree_util import register_pytree_node_class, tree_map
+from jax.tree_util import tree_map
 from ssm_jax.distributions import MatrixNormalInverseWishart as MNIW
 from ssm_jax.distributions import NormalInverseWishart as NIW
 from ssm_jax.distributions import mniw_posterior_update, niw_posterior_update
@@ -12,7 +12,6 @@ from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussia
 from tqdm.auto import trange
 
 
-@register_pytree_node_class
 class LinearGaussianConjugateSSM(LinearGaussianSSM):
     """
     Linear Gaussian State Space Model with conjugate priors for model parameters,

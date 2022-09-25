@@ -2,7 +2,7 @@ from functools import partial
 import jax.numpy as jnp
 from jax import jit
 from jax import vmap
-from jax.tree_util import tree_map
+from jax.tree_util import tree_map, tree_leaves
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
 # From https://www.tensorflow.org/probability/examples/
@@ -45,3 +45,9 @@ def monotonically_increasing(x, atol=0):
 
 def add_batch_dim(pytree):
     return tree_map(partial(jnp.expand_dims, axis=0), pytree)
+
+def pytree_len(pytree):
+    return len(tree_leaves(pytree)[0])
+
+def pytree_sum(pytree, axis=None, keepdims=None, where=None):
+    return tree_map(partial(jnp.sum, axis=axis, keepdims=keepdims, where=where), pytree)
