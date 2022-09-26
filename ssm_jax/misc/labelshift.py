@@ -7,10 +7,9 @@ from functools import partial
 from collections import namedtuple
 
 import sklearn
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.linear_model import LogisticRegression
-from sklearn import preprocessing
 
 import jax
 import jax.random as jr
@@ -250,45 +249,25 @@ def em(Xtarget, init_dist, lik_fn, niter=10, pseudo_counts=np.zeros(4), verbose=
   return target_dist
 
 
+
 class Estimator:
-    def __init__(self):
-        pass
-
-    def fit_source(self, X, mix_labels):
-        pass
-
-    def fit_target(self, X, jm=None):
-        pass
-
-    def predict_source(self, xs):
-        pass
-
-    def predict_target(self, xs):
-        pass
-
-class Estimator_EM(Estimator):
-    def __init__(self, max_classifier_iter=500, max_em_iter=5, prior_strength=0.01):
+    def __init__(self, max_classifier_iter=500):
         self.prior_source = None
         self.prior_target = None
         self.lik_fn = lambda m, xs: self.likelihood_from_classifier(m, xs)
         self.max_classifier_iter = max_classifier_iter
-        self.max_em_iter = max_em_iter
-        self.prior_strength = prior_strength
         self.classifier = Pipeline([
             ('standardscaler', StandardScaler()),
             ('poly', PolynomialFeatures(degree=2)), 
             ('logreg', LogisticRegression(random_state=0, max_iter=self.max_classifier_iter))])
 
-    def fit_source(self, X, mix_labels):
+    def fit_source(self, X, mix_labels, jm=None, key=None):
         self.classifier.fit(X, mix_labels)
         probs = self.classifier.predict_proba(X) # (n,m)
         self.prior_source = np.mean(probs, axis=0)
 
-    def fit_target(self, X, jm=None): # jm is the true target joint model, for cheating
-        nmix = 4
-        self.prior_target = em(X, self.prior_source, self.lik_fn,
-            self.max_em_iter, self.prior_strength * np.ones(nmix))
-
+    def fit_target(self, X, jm=None): 
+        pass # details depend on the method
 
     def likelihood_from_classifier(self, m, xs):
         # return p(n) = p_s(x(n) | m) = p_s(m|x) p_s(x) / p_s(m) propto p_s(m|x) / p_s(m)
@@ -306,25 +285,50 @@ class Estimator_EM(Estimator):
         class_post = compute_class_post(mix_post)
         return mix_post, class_post
 
+class Estimator_EM(Estimator):
+    def __init__(self,  max_classifier_iter=500, max_em_iter=5, prior_strength=0.01):
+        super().__init__(max_classifier_iter)
+        self.max_em_iter = max_em_iter
+        self.prior_strength = prior_strength
 
-class Estimator_True_Prior(Estimator_EM):
+    def fit_target(self, X, jm=None): 
+        nmix = 4
+        self.prior_target = em(X, self.prior_source, self.lik_fn,
+            self.max_em_iter, self.prior_strength * np.ones(nmix))
+
+
+class Estimator_True_Prior(Estimator):
     def __init__(self):
         super().__init__()
     
-    def fit_target(self, X, joint_target): # cheat by setting prior target to truth instead of using EM
-        self.prior_target = joint_target.prior
+    def fit_target(self, X, jm_target): # cheat by setting prior target to truth instead of using EM
+        self.prior_target = jm_target.prior
 
 
-class Estimator_Unadapted(Estimator_EM):
+class Estimator_Unadapted(Estimator):
     def __init__(self):
         super().__init__()
-    
-    def fit_target(self, X, joint_target): 
-        pass
     
     def predict_target(self, xs): # use source model
         return self.predict_source(xs)
 
+
+class Estimator_Unadapted_UnifSource(Estimator):
+    def __init__(self):
+        super().__init__()
+    
+    def fit_source(self, X_source, mix_labels_source, jm_source, key):
+        # generate a new set of training data from a uniform version of the source
+        pm_source = PriorModel(0.5)
+        lm = jm_source.lik_model
+        jm_source = JointModel(lm, pm_source)
+        X_train_unif, mix_train_unif = jm_source.sample(key,  500)
+        self.classifier.fit(X_train_unif, mix_train_unif)
+        probs = self.classifier.predict_proba(X_train_unif) # (n,m)
+        self.prior_source = np.mean(probs, axis=0)
+
+    def predict_target(self, xs): # use source model
+        return self.predict_source(xs)
 
 #### Evaluation
 
@@ -337,7 +341,8 @@ def evaluate_shift(key, lm, rho_source, rho_targets, model,
     pm_source = PriorModel(rho_source)
     jm_source = JointModel(lm, pm_source)
     X_train_source, mix_train_source = jm_source.sample(key,  ntrain_source)
-    model.fit_source(X_train_source, mix_train_source)
+    # we pass in the true jm_sourcet as a backdoor for oracles
+    model.fit_source(X_train_source, mix_train_source, jm_source, key)
 
     xs, x1, x2 = make_xgrid(npoints = 100)
     ndomains = len(rho_targets)
@@ -358,3 +363,40 @@ def evaluate_shift(key, lm, rho_source, rho_targets, model,
         loss_per_domain[i] = err
     return loss_per_domain
 
+def run_expt(rho_source=0.3, ntrials=3, sf=3):
+    rho_targets = np.linspace(0.1, 0.9, num=9)
+    lm = LikModel(b=1, sf=sf)
+
+    key = jr.PRNGKey(420)
+    keys = jr.split(key, ntrials)
+    ndomains = len(rho_targets)
+
+    methods = {
+        'EM': Estimator_EM(),
+        'TruePrior': Estimator_True_Prior(),
+        'SourceUnadapted': Estimator_Unadapted(),
+        'UnifSourceUnadapted': Estimator_Unadapted_UnifSource()
+    }
+
+    nmethods = len(methods)
+    losses = {}
+    losses_mean = {}
+    losses_std = {}
+    for name, estimator in methods.items():
+        print(name)
+        losses_per_trial =  np.zeros((ndomains, ntrials))
+        for i in range(ntrials):
+            losses_per_trial[:, i] =  evaluate_shift(keys[i], lm, rho_source, rho_targets,  estimator)
+        losses[name] = losses_per_trial
+        losses_mean[name] = np.mean(losses_per_trial, axis=1)
+        losses_std[name] = np.std(losses_per_trial, axis=1)
+
+
+    plt.figure()
+    for name in methods.keys():
+        plt.errorbar(rho_targets, losses_mean[name], yerr=losses_std[name], marker='o', label=name)
+    plt.xlabel('correlation')
+    plt.ylabel('L1 error of class 1')
+    plt.title(r'Source $\rho={:0.1f}, sf={:0.1f}$'.format(rho_source, lm.sf))
+    plt.legend()
+    plt.axvline(x=rho_source);
