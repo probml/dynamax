@@ -64,9 +64,10 @@ def plot_gaussian_hmm_data(hmm, params, emissions, states, xlim=None):
     return plt.gcf()
 
 
-def plot_hmm_posterior(true_states, params, posterior, perm=None, plot_timesteps=None, plot_mode=False):
+def plot_hmm_posterior(true_states, posterior, perm=None, plot_timesteps=None, plot_mode=False):
     if plot_timesteps is None:
         plot_timesteps = len(true_states)
+
     fig, axs = plt.subplots(2, 1, sharex=True)
     axs[0].imshow(true_states[None, :],
                   aspect="auto",
@@ -80,6 +81,7 @@ def plot_hmm_posterior(true_states, params, posterior, perm=None, plot_timesteps
 
     if perm is None:
         perm = jnp.arange(posterior.smoothed_probs.shape[-1])
+
     if plot_mode:
         most_likely_states = jnp.argmax(posterior.smoothed_probs[:, perm], axis=-1)
         axs[1].imshow(most_likely_states[None, :],
@@ -93,7 +95,7 @@ def plot_hmm_posterior(true_states, params, posterior, perm=None, plot_timesteps
         axs[1].set_title("mode of expected states")
 
     else:
-        axs[1].imshow(posterior.smoothed_probs[:, perm].T.reshape((-1, len(posterior.smoothed_probs))),
+        axs[1].imshow(posterior.smoothed_probs[:, perm].T,
                       aspect="auto",
                       interpolation="none",
                       cmap="Greys",
