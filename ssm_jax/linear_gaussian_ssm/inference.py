@@ -3,6 +3,7 @@ import jax.random as jr
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 import chex
+from ssm_jax.containers import GSSMPosterior
 
 
 @chex.dataclass
@@ -23,32 +24,6 @@ class LGSSMParams:
     emission_input_weights: chex.Array
     emission_bias: chex.Array
     emission_covariance: chex.Array
-
-
-@chex.dataclass
-class LGSSMPosterior:
-    """Simple wrapper for properties of an LGSSM posterior distribution.
-
-    Attributes:
-            marginal_loglik: marginal log likelihood of the data
-            filtered_means: (T,D_hid) array,
-                E[x_t | y_{1:t}, u_{1:t}].
-            filtered_covariances: (T,D_hid,D_hid) array,
-                Cov[x_t | y_{1:t}, u_{1:t}].
-            smoothed_means: (T,D_hid) array,
-                E[x_t | y_{1:T}, u_{1:T}].
-            smoothed_covs: (T,D_hid,D_hid) array of smoothed marginal covariances,
-                Cov[x_t | y_{1:T}, u_{1:T}].
-            smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
-                E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
-    """
-
-    marginal_loglik: chex.Scalar = None
-    filtered_means: chex.Array = None
-    filtered_covariances: chex.Array = None
-    smoothed_means: chex.Array = None
-    smoothed_covariances: chex.Array = None
-    smoothed_cross_covariances: chex.Array = None
 
 
 # Helper functions
@@ -160,7 +135,7 @@ def lgssm_filter(params, emissions, inputs=None):
         inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: LGSSMPosterior instance containing,
+        filtered_posterior: GSSMPosterior instance containing,
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
@@ -197,7 +172,7 @@ def lgssm_filter(params, emissions, inputs=None):
     # Run the Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return LGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def lgssm_posterior_sample(rng, params, emissions, inputs=None):
@@ -264,7 +239,7 @@ def lgssm_smoother(params, emissions, inputs=None):
         inputs (T,D_in): array of inputs.
 
     Returns:
-        lgssm_posterior: LGSSMPosterior instance containing properites of
+        lgssm_posterior: GSSMPosterior instance containing properites of
             filtered and smoothed posterior distributions.
     """
     num_timesteps = len(emissions)
@@ -309,7 +284,7 @@ def lgssm_smoother(params, emissions, inputs=None):
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
     smoothed_cross = smoothed_cross[::-1]
-    return LGSSMPosterior(
+    return GSSMPosterior(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,

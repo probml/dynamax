@@ -9,6 +9,11 @@ tfb = tfp.bijectors
 
 class InverseWishart(tfd.TransformedDistribution):
 
+    def __new__(cls, *args, **kwargs):
+        # Patch for tfp 0.18.0. 
+        # See https://github.com/tensorflow/probability/issues/1617
+        return tfd.Distribution.__new__(cls)
+
     def __init__(self, df, scale):
         """Implementation of an inverse Wishart distribution as a transformation of
         a Wishart distribution. This distribution is defined by a scalar degrees of
@@ -100,6 +105,10 @@ class InverseWishart(tfd.TransformedDistribution):
 
 
 class NormalInverseWishart(tfd.JointDistributionSequential):
+    def __new__(cls, *args, **kwargs):
+        # Patch for tfp 0.18.0. 
+        # See https://github.com/tensorflow/probability/issues/1617
+        return tfd.Distribution.__new__(cls)
 
     def __init__(self, loc, mean_concentration, df, scale):
         """
@@ -161,6 +170,11 @@ class NormalInverseWishart(tfd.JointDistributionSequential):
 
 class MatrixNormalPrecision(tfd.TransformedDistribution):
 
+    def __new__(cls, *args, **kwargs):
+        # Patch for tfp 0.18.0. 
+        # See https://github.com/tensorflow/probability/issues/1617
+        return tfd.Distribution.__new__(cls)
+
     def __init__(self, loc, row_covariance, col_precision):
         """A matrix normal distribution
 
@@ -213,7 +227,11 @@ class MatrixNormalPrecision(tfd.TransformedDistribution):
 
 
 class MatrixNormalInverseWishart(tfd.JointDistributionSequential):
-
+    def __new__(cls, *args, **kwargs):
+        # Patch for tfp 0.18.0. 
+        # See https://github.com/tensorflow/probability/issues/1617
+        return tfd.Distribution.__new__(cls)
+        
     def __init__(self, loc, col_precision, df, scale):
         """A matrix normal inverse Wishart (MNIW) distribution
 

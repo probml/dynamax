@@ -18,7 +18,7 @@ import flax.linen as nn
 from jax.flatten_util import ravel_pytree
 from jax import vmap
 
-from ssm_jax.nonlinear_gaussian_ssm.containers import NLGSSMParams, NLGSSMPosterior
+from ssm_jax.nonlinear_gaussian_ssm.containers import NLGSSMParams
 from ssm_jax.extended_kalman_filter.inference import extended_kalman_filter
 
 
@@ -154,7 +154,7 @@ def main():
     )
 
     # Run EKF on training set to train MLP
-    ekf_post = extended_kalman_filter(ekf_params, emissions, inputs)
+    ekf_post = extended_kalman_filter(ekf_params, emissions, inputs=inputs)
     w_means, w_covs = ekf_post.filtered_means, ekf_post.filtered_covariances
 
     # Plot predictions

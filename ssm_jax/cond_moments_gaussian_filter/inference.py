@@ -1,7 +1,7 @@
 from jax import numpy as jnp
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from ssm_jax.cond_moments_gaussian_filter.containers import CMGFPosterior
+from ssm_jax.containers import GSSMPosterior
 
 
 # Helper functions
@@ -43,7 +43,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
     return mu_pred, Sigma_pred, cross_pred
 
 
-def _condition_on(m, P, y_cond_mean, y_cond_var, u, y, g_ev, g_cov, num_iter):
+def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
     """Condition a Gaussian potential on a new observation with arbitrary
        likelihood with given functions for conditional moments and make a
        Gaussian approximation.
@@ -63,7 +63,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_var, u, y, g_ev, g_cov, num_iter):
         m (D_hid,): prior mean.
         P (D_hid,D_hid): prior covariance.
         y_cond_mean (Callable): conditional emission mean function.
-        y_cond_var (Callable): conditional emission variance function.
+        y_cond_cov (Callable): conditional emission covariance function.
         u (D_in,): inputs.
         y (D_obs,): observation.
         g_ev (Callable): Gaussian expectation value function.
@@ -76,13 +76,13 @@ def _condition_on(m, P, y_cond_mean, y_cond_var, u, y, g_ev, g_cov, num_iter):
         Sigma_cond (D_hid,D_hid): conditioned covariance.
     """
     m_Y = lambda x: y_cond_mean(x, u)
-    Var_Y = lambda x: y_cond_var(x, u)
+    Cov_Y = lambda x: y_cond_cov(x, u)
     identity_fn = lambda x: x
 
     def _step(carry, _):
         prior_mean, prior_cov = carry
         yhat = g_ev(m_Y, prior_mean, prior_cov)
-        S = g_ev(Var_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
+        S = g_ev(Cov_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
         log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
         C = g_cov(identity_fn, m_Y, prior_mean, prior_cov)
         K = jnp.linalg.solve(S, C.T).T
@@ -134,7 +134,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
         inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: CMGFPosterior instance containing,
+        filtered_posterior: GSSMPosterior instance containing,
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
@@ -143,8 +143,8 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
 
     # Process dynamics function and conditional emission moments to take in control inputs
     f = params.dynamics_function
-    m_Y, Var_Y = params.emission_mean_function, params.emission_var_function
-    f, m_Y, Var_Y  = (_process_fn(fn, inputs) for fn in (f, m_Y, Var_Y))
+    m_Y, Cov_Y = params.emission_mean_function, params.emission_cov_function
+    f, m_Y, Cov_Y  = (_process_fn(fn, inputs) for fn in (f, m_Y, Cov_Y))
     inputs = _process_input(inputs, num_timesteps)
 
     # Gaussian expectation value function
@@ -160,7 +160,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
         y = emissions[t]
 
         # Condition on the emission
-        log_likelihood, filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, m_Y, Var_Y, u, y, g_ev, g_cov, num_iter)
+        log_likelihood, filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, m_Y, Cov_Y, u, y, g_ev, g_cov, num_iter)
         ll += log_likelihood
 
         # Predict the next state
@@ -171,7 +171,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
     # Run the general linearization filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return CMGFPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, inputs=None):
@@ -184,7 +184,7 @@ def iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, 
         inputs (T,D_in): array of inputs.
 
     Returns:
-        filtered_posterior: CMGFPosterior instance containing,
+        filtered_posterior: GSSMPosterior instance containing,
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
@@ -204,7 +204,7 @@ def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=
         inputs (T,D_in): array of inputs.
 
     Returns:
-        nlgssm_posterior: CMGFPosterior instance containing properties of
+        nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
     num_timesteps = len(emissions)
@@ -249,7 +249,7 @@ def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    return CMGFPosterior(
+    return GSSMPosterior(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
@@ -268,7 +268,7 @@ def iterated_conditional_moments_gaussian_smoother(params, emissions, num_iter=1
         inputs (T,D_in): array of inputs.
 
     Returns:
-        nlgssm_posterior: CMGFPosterior instance containing properties of
+        nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
     """
     def _step(carry, _):

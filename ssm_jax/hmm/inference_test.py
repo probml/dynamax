@@ -1,11 +1,12 @@
+import pytest
 import itertools as it
-
 import jax.numpy as jnp
 import jax.random as jr
-import pytest
 import ssm_jax.hmm.inference as core
-from jax.scipy.special import logsumexp
+import ssm_jax.hmm.parallel_inference as parallel
 
+from jax.scipy.special import logsumexp
+import numpy as np
 
 def big_log_joint(initial_probs, transition_matrix, log_likelihoods):
     """Compute the big log joint probability array
@@ -39,6 +40,20 @@ def random_hmm_args(key, num_timesteps, num_states, scale=1.0):
     log_likelihoods = scale * jr.normal(k3, (num_timesteps, num_states))
     return initial_probs, transition_matrix, log_likelihoods
 
+def random_hmm_args_nonstationary(key, num_timesteps, num_states, scale=1.0):
+    k1, k2, k3 = jr.split(key, 3)
+    initial_probs = jr.uniform(k1, (num_states,))
+    initial_probs /= initial_probs.sum()
+    log_likelihoods = scale * jr.normal(k3, (num_timesteps, num_states))
+
+    # we use numpy so we can assign to the matrix.
+    # Then we convert to jnp.
+    trans_mat = np.zeros((num_timesteps, num_states, num_states))
+    for t in range(num_timesteps):
+      A = jr.uniform(k2, (num_states, num_states))
+      A /= A.sum(1, keepdims=True)
+      trans_mat[t] = A
+    return initial_probs, jnp.array(trans_mat), log_likelihoods
 
 def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
     if isinstance(key, int):
@@ -207,7 +222,7 @@ def test_hmm_posterior_mode(key=0, num_timesteps=5, num_states=2):
 
     args = random_hmm_args(key, num_timesteps, num_states)
 
-    # Run the HMM smoother
+    # Run Viterbi
     mode = core.hmm_posterior_mode(*args)
 
     # Compare log_normalizer to manually computed entries and find the mode
@@ -229,3 +244,65 @@ def test_hmm_smoother_stability(key=0, num_timesteps=10000, num_states=100, scal
 
     assert jnp.all(jnp.isfinite(posterior.smoothed_probs))
     assert jnp.allclose(posterior.smoothed_probs.sum(1), 1.0)
+
+def test_hmm_non_stationary(key=0, num_timesteps=10, num_states=5, scale=1):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    initial_probs, transition_matrices, log_lkhds= random_hmm_args_nonstationary(key, num_timesteps, num_states)
+    assert jnp.shape(transition_matrices)[0] == num_timesteps
+    assert jnp.shape(transition_matrices)[1] == num_states
+
+    def trans_mat_callable(t):
+        return transition_matrices[t]
+
+    # Run the HMM filter with a 3d list of transition matrices and a callable
+    post = core.hmm_filter(initial_probs, transition_matrices, log_lkhds)
+    post2 = core.hmm_filter(initial_probs, None, log_lkhds, trans_mat_callable)
+    assert jnp.allclose(post.marginal_loglik, post2.marginal_loglik, atol=1e-4)
+    assert jnp.allclose(post.filtered_probs, post2.filtered_probs, atol=1e-4)
+
+    # Run the HMM smoother with a 3d list of transition matrices and a callable
+    post = core.hmm_smoother(initial_probs, transition_matrices, log_lkhds)
+    post2 = core.hmm_smoother(initial_probs, None, log_lkhds, trans_mat_callable)
+    assert jnp.allclose(post.smoothed_probs, post2.smoothed_probs, atol=1e-4)
+
+    # Run Viterbi
+    mode = core.hmm_posterior_mode(initial_probs, transition_matrices, log_lkhds)
+    mode2 = core.hmm_posterior_mode(initial_probs, None, log_lkhds, trans_mat_callable)
+    assert jnp.allclose(mode, mode2)
+
+    # Draw a single sample path
+    key = jr.PRNGKey(0)
+    ll, sample = core.hmm_posterior_sample(key, initial_probs, transition_matrices, log_lkhds)
+    ll2, sample2 = core.hmm_posterior_sample(key, initial_probs, None, log_lkhds, trans_mat_callable)
+    assert jnp.allclose(ll, ll2)
+    assert jnp.allclose(sample, sample2)
+
+
+def test_parallel_filter(key=0, num_timesteps=100, num_states=3):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    initial_probs, transition_matrix, log_likelihoods = \
+        random_hmm_args(key, num_timesteps, num_states)
+
+    posterior = core.hmm_filter(initial_probs, transition_matrix, log_likelihoods)
+    posterior2 = parallel.hmm_filter(initial_probs, transition_matrix, log_likelihoods)
+    assert jnp.allclose(posterior.marginal_loglik / num_timesteps,
+                        posterior2.marginal_loglik / num_timesteps, atol=1e-3)
+
+    assert jnp.allclose(posterior.filtered_probs, posterior2.filtered_probs, atol=1e-1)
+    assert jnp.allclose(posterior.predicted_probs, posterior2.predicted_probs, atol=1e-1)
+
+
+def test_parallel_smoother(key=0, num_timesteps=100, num_states=3):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    initial_probs, transition_matrix, log_likelihoods = \
+        random_hmm_args(key, num_timesteps, num_states)
+
+    posterior = core.hmm_smoother(initial_probs, transition_matrix, log_likelihoods)
+    posterior2 = parallel.hmm_smoother(initial_probs, transition_matrix, log_likelihoods)
+    assert jnp.allclose(posterior.smoothed_probs, posterior2.smoothed_probs, atol=1e-1)

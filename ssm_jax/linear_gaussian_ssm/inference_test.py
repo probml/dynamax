@@ -31,41 +31,32 @@ def lgssm_ssm_jax_to_tfp(num_timesteps, params):
 
 
 def test_kalman_filter(num_timesteps=5, seed=0):
-
-    delta = 1.0
-    F = jnp.array([[1, 0, delta, 0], [0, 1, 0, delta], [0, 0, 1, 0], [0, 0, 0, 1]])
-
-    H = jnp.array([[1.0, 0, 0, 0], [0, 1.0, 0, 0]])
-
-    state_size, _ = F.shape
-    observation_size, _ = H.shape
-
-    Q = jnp.eye(state_size) * 0.001
-    R = jnp.eye(observation_size) * 1.0
-
-    # Prior parameter distribution
-    mu0 = jnp.array([8.0, 10.0, 1.0, 0.0])
-    Sigma0 = jnp.eye(state_size) * 0.1
-
-    lgssm = LinearGaussianSSM(
-        initial_mean=mu0,
-        initial_covariance=Sigma0,
-        dynamics_matrix=F,
-        dynamics_covariance=Q,
-        emission_matrix=H,
-        emission_covariance=R,
-    )
-
-    tfp_lgssm = lgssm_ssm_jax_to_tfp(num_timesteps, lgssm._make_inference_args)
-
-    ### Sample data ###
     key = jr.PRNGKey(seed)
-    states, emissions = lgssm.sample(key, num_timesteps)
+    init_key, sample_key = jr.split(key)
 
-    # ssm_jax posteriors
-    ssm_posterior = lgssm.smoother(emissions)
+    state_dim = 4
+    emission_dim = 2
+    delta = 1.0
+
+    lgssm = LinearGaussianSSM(state_dim, emission_dim)
+    params, _ = lgssm.random_initialization(init_key)
+    params['initial']['mean'] = jnp.array([8.0, 10.0, 1.0, 0.0])
+    params['initial']['cov'] = jnp.eye(state_dim) * 0.1
+    params['dynamics']['weights'] = jnp.array([[1, 0, delta, 0],
+                                               [0, 1, 0, delta],
+                                               [0, 0, 1, 0],
+                                               [0, 0, 0, 1]])
+    params['dynamics']['cov'] = jnp.eye(state_dim) * 0.001
+    params['emissions']['weights'] = jnp.array([[1.0, 0, 0, 0],
+                                                [0, 1.0, 0, 0]])
+    params['emissions']['cov'] = jnp.eye(emission_dim) * 1.0
+
+    # Sample data and compute posterior
+    _, emissions = lgssm.sample(params, sample_key, num_timesteps)
+    ssm_posterior = lgssm.smoother(params, emissions)
 
     # TensorFlow Probability posteriors
+    tfp_lgssm = lgssm_ssm_jax_to_tfp(num_timesteps, params)
     tfp_lls, tfp_filtered_means, tfp_filtered_covs, *_ = tfp_lgssm.forward_filter(emissions)
     tfp_smoothed_means, tfp_smoothed_covs = tfp_lgssm.posterior_marginals(emissions)
 
