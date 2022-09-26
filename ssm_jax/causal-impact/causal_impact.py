@@ -9,12 +9,13 @@ import ssm_jax.structural_time_series.models.structural_time_series as sts
 class CausalImpact():
     """A wrapper of help functions of the causal impact
     """
-    def __init__(self, sts_model, predict, causal_impact, observed_timeseries):
+    def __init__(self, sts_model, intervention_time, predict, causal_impact, observed_timeseries):
         """
         Args:
             sts_model    : an object of the StructualTimeSeries class
             causal_impact: a dict returned by the function 'causal impact'
         """
+        self.intervention_time = intervention_time
         self.sts_model = sts_model
         self.predict_point = predict['pointwise']
         self.predict_interval = predict['interval']
@@ -27,29 +28,34 @@ class CausalImpact():
         """
         x = jnp.arange(self.timeseries.shape[0])
         fig, (ax1, ax2, ax3) = plt.subplots(
-            3, 1, figsize=(5, 2.7), sharex=True, layout='constrained')
+            3, 1, figsize=(9, 6), sharex=True, layout='constrained')
 
         # Plot the original obvervation and the counterfactual predict
-        ax1.plot(x, self.timeseries)
-        ax1.plot(x, self.predict_point)
-        ax1.fill_btween(x, self.predict_interval[0], self.predict_interval[1])
+        ax1.plot(x, self.timeseries, color='black', lw=2, label='Observation')
+        ax1.plot(x, self.predict_point, linestyle='dashed', color='blue', lw=2, label='Prediction')
+        ax1.fill_between(x, self.predict_interval[0], self.predict_interval[1],
+                         color='blue', alpha=0.2)
+        ax1.axvline(x=self.intervention_time, linestyle='dashed', color='gray', lw=2)
         ax1.set_title('Original time series')
 
         # Plot the pointwise causal impact
-        ax2.plot(x, self.impact_point[0])
-        ax2.plot(x, self.impact_point[1], self.impact_point[2])
+        ax2.plot(x, self.impact_point[0], linestyle='dashed', color='blue')
+        ax2.fill_between(x, self.impact_point[1][0], self.impact_point[1][1],
+                         color='blue', alpha=0.2)
+        ax2.axvline(x=self.intervention_time, linestyle='dashed', color='gray', lw=2)
         ax2.set_title('Poinwise causal impact')
 
         # Plot the cumulative causal impact
-        ax3.plot(x, self.impact_cumulat[0])
-        ax3.plot(x, self.impact_cumulat[1], self.impact_cumulat[2])
+        ax3.plot(x, self.impact_cumulat[0], linestyle='dashed', color='blue')
+        ax3.fill_between(x, self.impact_cumulat[1][0], self.impact_cumulat[1][1],
+                         color='blue', alpha=0.2)
+        ax3.axvline(x=self.intervention_time, linestyle='dashed', color='gray', lw=2)
         ax3.set_title('Cumulative causal impact')
 
         plt.show()
 
     def summary(self):
         msg = "The posterior causl effect"
-
         print(msg)
 
 
@@ -93,8 +99,7 @@ def causal_impact(observed_timeseries, intervention_time,
     if inputs is not None:
         # Model fitting
         print('Fit the model using HMC...')
-        params_posterior_samples = sts_model.fit_hmc(
-            key1, sample_size, jnp.array([timeseries_pre]), jnp.array([inputs_pre]))
+        params_posterior_samples = sts_model.fit_hmc(key1, sample_size, timeseries_pre, inputs_pre)
         print("Model fitting completed.")
         # Sample from the past and forecast
         samples_pre = sts_model.posterior_sample(
@@ -105,35 +110,40 @@ def causal_impact(observed_timeseries, intervention_time,
     else:
         # Model fitting
         print('Fit the model using HMC...')
-        params_posterior_samples = sts_model.fit_hmc(key1, sample_size, jnp.array([timeseries_pre]))
+        params_posterior_samples = sts_model.fit_hmc(key1, sample_size, timeseries_pre)
         print("Model fitting completed.")
         # Sample from the past and forecast
         samples_pre = sts_model.posterior_sample(key2, timeseries_pre, params_posterior_samples)
         samples_pos = sts_model.forecast(
             key3, timeseries_pre, params_posterior_samples, timeseries_pos.shape[0])
 
-    forecast_means = jnp.concatenate((samples_pre['means'], samples_pos['means']), aixs=1)
+    # forecast_means = jnp.concatenate((samples_pre['means'], samples_pos['means']), axis=1).squeeze()
     forecast_observations = jnp.concatenate(
-        (samples_pre['obvervations'], samples_pos['observations']), aixs=1)
+        (samples_pre['observations'], samples_pos['observations']), axis=1).squeeze()
 
     confidence_bounds = jnp.quantile(
-        forecast_observations, (0.5 - confidence_level/2., 0.5 + confidence_level/2.), axis=0)
-    predict_point = forecast_means.mean(axis=0)
+        forecast_observations,
+        jnp.array([0.5 - confidence_level/2., 0.5 + confidence_level/2.]),
+        axis=0)
+    predict_point = forecast_observations.mean(axis=0)
     predict_interval_upper = confidence_bounds[0]
     predict_interval_lower = confidence_bounds[1]
 
     cum_predict_point = jnp.cumsum(predict_point)
     cum_confidence_bounds = jnp.quantile(
-        forecast_observations.cumsum(axis=1), (0.5-confidence_level/2., 0.5+confidence_level/2.), axis=0)
+        forecast_observations.cumsum(axis=1),
+        jnp.array([0.5-confidence_level/2., 0.5+confidence_level/2.]),
+        axis=0
+        )
     cum_predict_interval_upper = cum_confidence_bounds[0]
     cum_predict_interval_lower = cum_confidence_bounds[1]
 
     # Evaluate the causal impact
-    impact_point = observed_timeseries - predict_point
-    impact_interval_lower = observed_timeseries - predict_interval_upper
-    impact_interval_upper = observed_timeseries - predict_interval_lower
+    impact_point = observed_timeseries.squeeze() - predict_point
+    impact_interval_lower = observed_timeseries.squeeze() - predict_interval_upper
+    impact_interval_upper = observed_timeseries.squeeze() - predict_interval_lower
 
-    cum_timeseries = jnp.cumsum(observed_timeseries)
+    cum_timeseries = jnp.cumsum(observed_timeseries.squeeze())
     cum_impact_point = cum_timeseries - cum_predict_point
     cum_impact_interval_lower = cum_timeseries - cum_predict_interval_upper
     cum_impact_interval_upper = cum_timeseries - cum_predict_interval_lower
@@ -144,4 +154,4 @@ def causal_impact(observed_timeseries, intervention_time,
     predict = {'pointwise': predict_point,
                'interval': confidence_bounds}
 
-    return CausalImpact(sts_model, predict, impact, observed_timeseries)
+    return CausalImpact(sts_model, intervention_time, predict, impact, observed_timeseries)

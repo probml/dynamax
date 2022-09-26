@@ -1,6 +1,6 @@
 import blackjax
 from collections import OrderedDict
-from jax import jit, lax, vmap
+from jax import jit, lax
 import jax.numpy as jnp
 import jax.random as jr
 import jax.scipy as jsp
@@ -52,7 +52,6 @@ class StructuralTimeSeriesSSM(SSM):
         # Set parameters of the dynamics model of the LinearGaussainSSM model
         self.dynamics_matrix = jsp.linalg.block_diag(*component_transition_matrices.values())
         self.state_dim = self.dynamics_matrix.shape[-1]
-        self.dynamics_input_weights = jnp.zeros((self.state_dim, 0))
         self.dynamics_bias = jnp.zeros(self.state_dim)
         dynamics_covariance_props = OrderedDict()
         for c in component_transition_covariance_priors.keys():
@@ -65,13 +64,16 @@ class StructuralTimeSeriesSSM(SSM):
         self.emission_dim = self.emission_matrix.shape[0]
         if observation_regression_weights is not None:
             emission_input_weights = observation_regression_weights
+            shape_in = emission_input_weights.shape
+            size_in = emission_input_weights.size
             emission_input_weights_props = ParameterProperties(
-                trainable=True, constrainer=tfb.Identity())
+                trainable=True,
+                constrainer=tfb.Reshape(event_shape_out=shape_in, event_shape_in=(size_in,))
+                )
             emission_input_weights_prior = observation_regression_weights_prior
         else:
             emission_input_weights = jnp.zeros((self.emission_dim, 0))
-            emission_input_weights_props = ParameterProperties(
-                trainable=False, constrainer=tfb.Identity())
+            emission_input_weights_props = ParameterProperties(trainable=False)
             emission_input_weights_prior = None
         self.emission_bias = jnp.zeros(self.emission_dim)
         emission_covariance_props = ParameterProperties(
@@ -155,10 +157,11 @@ class StructuralTimeSeriesSSM(SSM):
         spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
         obs_cov = params['emission_covariance']
         emission_input_weights = params['regression_weights']
+        input_dim = emission_input_weights.shape[-1]
         return LGSSMParams(initial_mean=self.initial_mean,
                            initial_covariance=self.initial_covariance,
                            dynamics_matrix=self.dynamics_matrix,
-                           dynamics_input_weights=self.dynamics_input_weights,
+                           dynamics_input_weights=jnp.zeros((self.state_dim, input_dim)),
                            dynamics_bias=self.dynamics_bias,
                            dynamics_covariance=spars_cov,
                            emission_matrix=self.emission_matrix,
@@ -202,8 +205,8 @@ class StructuralTimeSeriesSSM(SSM):
     def fit_hmc(self,
                 key,
                 sample_size,
-                batch_emissions,
-                batch_inputs=None,
+                emissions,
+                inputs=None,
                 warmup_steps=500,
                 num_integration_steps=30):
 
@@ -211,7 +214,7 @@ class StructuralTimeSeriesSSM(SSM):
             params = from_unconstrained(trainable_unc_params, fixed_params, self.param_props)
             log_det_jac = log_det_jac_constrain(trainable_unc_params, fixed_params, self.param_props)
             log_pri = self.log_prior(params) + log_det_jac
-            batch_lls = vmap(self.marginal_log_prob)(batch_emissions, batch_inputs, params)
+            batch_lls = self.marginal_log_prob(emissions, inputs, params)
             lp = log_pri + batch_lls.sum()
             return lp
 

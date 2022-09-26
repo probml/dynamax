@@ -138,14 +138,14 @@ class StructuralTimeSeries():
                                               sts_param['emission_covariance'],
                                               self.observation_covariance_prior,
                                               self.cov_spars_matrices,
-                                              sts_param['input_weights'],
+                                              sts_param['regression_weights'],
                                               self.observation_regression_weights_prior)
             ts_means, ts = sts_ssm.posterior_sample(key, observed_time_series, inputs)
             return [ts_means, ts]
         samples = vmap(_single_sample)(sts_params)
         return {'means': samples[0], 'observations': samples[1]}
 
-    def fit_hmc(self, key, sample_size, batch_observed_time_series, batch_inputs=None,
+    def fit_hmc(self, key, sample_size, observed_time_series, inputs=None,
                 warmup_steps=500, num_integration_steps=30):
         """Sampling parameters of the STS model from their posterior distributions.
 
@@ -155,7 +155,7 @@ class StructuralTimeSeries():
             regression coefficient matrix (if the model has inputs and a regression component)
         """
         sts_ssm = self.as_ssm()
-        param_samps = sts_ssm.fit_hmc(key, sample_size, batch_observed_time_series, batch_inputs,
+        param_samps = sts_ssm.fit_hmc(key, sample_size, observed_time_series, inputs,
                                       warmup_steps, num_integration_steps)
         return param_samps
 
