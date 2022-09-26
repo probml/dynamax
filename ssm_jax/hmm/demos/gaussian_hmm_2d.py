@@ -64,7 +64,7 @@ def plot_gaussian_hmm_data(hmm, params, emissions, states, xlim=None):
     return plt.gcf()
 
 
-def plot_hmm_posterior(true_states, posterior, perm=None, plot_timesteps=None, plot_mode=False):
+def plot_hmm_posterior(true_states, params, posterior, perm=None, plot_timesteps=None, plot_mode=False):
     if plot_timesteps is None:
         plot_timesteps = len(true_states)
     fig, axs = plt.subplots(2, 1, sharex=True)
@@ -126,22 +126,22 @@ def make_hmm(num_states=5, emission_dim=2):
     return true_hmm, params
 
 
-def plot_results(true_hmm, emissions, true_states, plot_timesteps):
+def plot_results(true_hmm, params, emissions, true_states, plot_timesteps):
     dict_figures = {}
-    print("log joint prob:    ", true_hmm.log_prob(true_states, emissions))
-    print("log marginal prob: ", true_hmm.marginal_log_prob(emissions))
-    fig = plot_gaussian_hmm(true_hmm, emissions, true_states, "Generating HMM")
+    print("log joint prob:    ", true_hmm.log_prob(params, true_states, emissions))
+    print("log marginal prob: ", true_hmm.marginal_log_prob(params, emissions))
+    fig = plot_gaussian_hmm(true_hmm, params, emissions, true_states, "Generating HMM")
     dict_figures["hmm_gauss_2d_emissions"] = fig
-    plot_gaussian_hmm_data(true_hmm, emissions, true_states, xlim=(0, plot_timesteps))
+    plot_gaussian_hmm_data(true_hmm, params, emissions, true_states, xlim=(0, plot_timesteps))
     dict_figures["hmm_gauss_2d_trace"] = fig
     return dict_figures
 
 
 def main(num_timesteps=2000, plot_timesteps=200, test_mode=False):
-    true_hmm = make_hmm()
-    true_states, emissions = true_hmm.sample(jr.PRNGKey(0), num_timesteps)
+    true_hmm, params = make_hmm()
+    true_states, emissions = true_hmm.sample(params, jr.PRNGKey(0), num_timesteps)
     if not test_mode:
-        dict_figures = plot_results(true_hmm, emissions, true_states, plot_timesteps)
+        dict_figures = plot_results(true_hmm, params, emissions, true_states, plot_timesteps)
         plt.show()
 
 
