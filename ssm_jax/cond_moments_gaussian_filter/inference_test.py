@@ -17,12 +17,12 @@ def test_ekf(key=0, num_timesteps=15):
     ekf_post = extended_kalman_smoother(nlgssm_args, emissions)
     # Run EKF as a GGF
     ekf_params = EKFParams(
-        initial_mean = nlgssm_args.initial_mean,
-        initial_covariance = nlgssm_args.initial_covariance,
-        dynamics_function = nlgssm_args.dynamics_function,
-        dynamics_covariance = nlgssm_args.dynamics_covariance,
-        emission_mean_function = nlgssm_args.emission_function,
-        emission_var_function = lambda x: nlgssm_args.emission_covariance,
+        initial_mean=nlgssm_args.initial_mean,
+        initial_covariance=nlgssm_args.initial_covariance,
+        dynamics_function=nlgssm_args.dynamics_function,
+        dynamics_covariance=nlgssm_args.dynamics_covariance,
+        emission_mean_function=nlgssm_args.emission_function,
+        emission_cov_function=lambda x: nlgssm_args.emission_covariance,
     )
     ggf_post = conditional_moments_gaussian_smoother(ekf_params, emissions)
 
@@ -42,12 +42,12 @@ def test_ukf(key=1, num_timesteps=15):
     ukf_post = unscented_kalman_smoother(nlgssm_args, emissions, hyperparams)
     # Run UKF as GGF
     ukf_params = UKFParams(
-        initial_mean = nlgssm_args.initial_mean,
-        initial_covariance = nlgssm_args.initial_covariance,
-        dynamics_function = nlgssm_args.dynamics_function,
-        dynamics_covariance = nlgssm_args.dynamics_covariance,
-        emission_mean_function = nlgssm_args.emission_function,
-        emission_var_function = lambda x: nlgssm_args.emission_covariance,
+        initial_mean=nlgssm_args.initial_mean,
+        initial_covariance=nlgssm_args.initial_covariance,
+        dynamics_function=nlgssm_args.dynamics_function,
+        dynamics_covariance=nlgssm_args.dynamics_covariance,
+        emission_mean_function=nlgssm_args.emission_function,
+        emission_cov_function=lambda x: nlgssm_args.emission_covariance,
     )
     ggf_post = conditional_moments_gaussian_smoother(ukf_params, emissions)
 
