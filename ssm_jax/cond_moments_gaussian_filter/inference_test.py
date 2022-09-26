@@ -4,26 +4,25 @@ from ssm_jax.cond_moments_gaussian_filter.inference import conditional_moments_g
 from ssm_jax.cond_moments_gaussian_filter.containers import EKFParams, UKFParams
 from ssm_jax.extended_kalman_filter.inference import extended_kalman_smoother
 from ssm_jax.unscented_kalman_filter.inference import unscented_kalman_smoother, UKFHyperParams
-from ssm_jax.nonlinear_gaussian_ssm.inference_test import random_args
-
+from ssm_jax.nonlinear_gaussian_ssm.inference_test import random_nlgssm_args
 
 # Helper functions
 _all_close = lambda x, y: jnp.allclose(x, y, rtol=1e-3)
 
 
 def test_ekf(key=0, num_timesteps=15):
-    nlgssm, _, emissions = random_args(key=key, num_timesteps=num_timesteps, linear=False)
+    nlgssm_args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run EKF from ssm_jax.ekf
-    ekf_post = extended_kalman_smoother(nlgssm, emissions)
+    ekf_post = extended_kalman_smoother(nlgssm_args, emissions)
     # Run EKF as a GGF
     ekf_params = EKFParams(
-        initial_mean = nlgssm.initial_mean,
-        initial_covariance = nlgssm.initial_covariance,
-        dynamics_function = nlgssm.dynamics_function,
-        dynamics_covariance = nlgssm.dynamics_covariance,
-        emission_mean_function = nlgssm.emission_function,
-        emission_var_function = lambda x: nlgssm.emission_covariance,
+        initial_mean = nlgssm_args.initial_mean,
+        initial_covariance = nlgssm_args.initial_covariance,
+        dynamics_function = nlgssm_args.dynamics_function,
+        dynamics_covariance = nlgssm_args.dynamics_covariance,
+        emission_mean_function = nlgssm_args.emission_function,
+        emission_var_function = lambda x: nlgssm_args.emission_covariance,
     )
     ggf_post = conditional_moments_gaussian_smoother(ekf_params, emissions)
 
@@ -36,19 +35,19 @@ def test_ekf(key=0, num_timesteps=15):
 
 
 def test_ukf(key=1, num_timesteps=15):
-    nlgssm, _, emissions = random_args(key=key, num_timesteps=num_timesteps, linear=False)
+    nlgssm_args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
     hyperparams = UKFHyperParams()
 
     # Run UKF from ssm_jax.ukf
-    ukf_post = unscented_kalman_smoother(nlgssm, emissions, hyperparams)
+    ukf_post = unscented_kalman_smoother(nlgssm_args, emissions, hyperparams)
     # Run UKF as GGF
     ukf_params = UKFParams(
-        initial_mean = nlgssm.initial_mean,
-        initial_covariance = nlgssm.initial_covariance,
-        dynamics_function = nlgssm.dynamics_function,
-        dynamics_covariance = nlgssm.dynamics_covariance,
-        emission_mean_function = nlgssm.emission_function,
-        emission_var_function = lambda x: nlgssm.emission_covariance,
+        initial_mean = nlgssm_args.initial_mean,
+        initial_covariance = nlgssm_args.initial_covariance,
+        dynamics_function = nlgssm_args.dynamics_function,
+        dynamics_covariance = nlgssm_args.dynamics_covariance,
+        emission_mean_function = nlgssm_args.emission_function,
+        emission_var_function = lambda x: nlgssm_args.emission_covariance,
     )
     ggf_post = conditional_moments_gaussian_smoother(ukf_params, emissions)
 

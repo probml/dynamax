@@ -187,7 +187,7 @@ def uks(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
         P_sm = P_p + G @ (P_k - P_pred) @ G.T
 
         return (m_sm, P_sm), (m_sm, P_sm)
-    
+
     # Find 2n+1 sigma points
     def compute_sigmas(m, P, n, lamb):
         disc = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(P)
