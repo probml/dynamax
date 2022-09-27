@@ -48,15 +48,23 @@ def from_unconstrained(unc_params, fixed_params, param_props):
             in their natural (constrained) form.
     """
     params = dict()
-    log_det_jac = 0
     for k, v in unc_params.items():
         if isinstance(v, dict):
-            params[k], ldj_inc = from_unconstrained(unc_params[k], fixed_params[k], param_props[k])
-            log_det_jac += ldj_inc
+            params[k] = from_unconstrained(unc_params[k], fixed_params[k], param_props[k])
         else:
             params[k] = param_props[k].constrainer(v)
-            log_det_jac += param_props[k].constrainer.forward_log_det_jacobian(v)
     for k, v in fixed_params.items():
         if not isinstance(v, dict):
             params[k] = v
-    return params, log_det_jac
+    return params
+
+
+def log_det_jac_constrain(unc_params, fixed_params, param_props):
+    log_det_jac = 0
+    for k, v in unc_params.items():
+        if isinstance(v, dict):
+            ldj_inc = log_det_jac_constrain(unc_params[k], fixed_params[k], param_props[k])
+            log_det_jac += ldj_inc
+        else:
+            log_det_jac += param_props[k].constrainer.forward_log_det_jacobian(v)
+    return log_det_jac

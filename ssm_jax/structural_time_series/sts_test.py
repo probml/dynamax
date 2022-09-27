@@ -19,16 +19,14 @@ def test_sts_fit_hmc(key=jr.PRNGKey(0),
                      observed_time_series=co2_by_month_training_data,
                      future_observations=co2_by_month[-num_forecast_steps:],
                      sample_size=100):
-    batch_observed_time_series = jnp.array([observed_time_series])
-
     # Define a STS model
     trend = sts.LocalLinearTrend(observed_timeseries=co2_by_month_training_data)
     seasonal = sts.Seasonal(num_seasons=12, observed_timeseries=co2_by_month_training_data)
     model = sts.StructuralTimeSeries([trend, seasonal], observed_timeseries=co2_by_month_training_data)
 
     # Fit the model using HMC
-    parameter_samples = model.fit_hmc(key, sample_size, batch_observed_time_series,
-                                      batch_inputs=None, warmup_steps=500, num_integration_steps=30)
+    parameter_samples = model.fit_hmc(key, sample_size, observed_time_series,
+                                      inputs=None, warmup_steps=500, num_integration_steps=30)
     predicts = model.forecast(key, observed_time_series, parameter_samples, num_forecast_steps)
 
     pred_means = predicts['means']
