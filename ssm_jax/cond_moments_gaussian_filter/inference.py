@@ -1,13 +1,16 @@
 from jax import numpy as jnp
 from jax import lax
+from jax import jacfwd
+from jax.tree_util import tree_map, tree_reduce
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from ssm_jax.containers import GSSMPosterior
+from ssm_jax.containers import DecoupleParams, GSSMPosterior
 
 
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
 _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
+_jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
 
 
 def _predict(m, P, f, Q, u, g_ev, g_cov):
@@ -96,6 +99,62 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
     return lls[0], mu_cond, Sigma_cond
 
 
+def _decoupled_condition_on(m, P, decouple_params, y_cond_mean, y_cond_cov, u, y, num_iter):
+    """Given decouple_params that describe how the parameters are decoupled,
+       condition a Gaussian potential on a new observation
+    Args:
+        m (D_hid,): prior mean.
+        P (D_hid,D_hid): prior covariance.
+        decouple_params: a DecoupleParams instance
+        y_cond_mean (Callable): conditional emission mean function.
+        y_cond_cov (Callable): conditional emission covariance function.
+        u (D_in,): inputs.
+        y (D_obs,): observation.
+        num_iter (int): number of re-linearizations around posterior for update step.
+
+    Returns:
+        log_likelihood (Scalar): prediction log likelihood for observation y
+        mu_cond (D_hid,): conditioned mean.
+        Sigma_cond (D_hid,D_hid): conditioned covariance.
+    """
+    m_Y = lambda x: y_cond_mean(x, u)
+    Cov_Y = lambda x: y_cond_cov(x, u)
+
+    decouple_fn, recouple_fn = decouple_params.decouple_fn, decouple_params.recouple_fn
+    decouple_cov_fn, recouple_cov_fn = decouple_params.decouple_cov_fn, decouple_params.recouple_cov_fn
+    decouple_jac_fn = decouple_params.decouple_jac_fn
+    
+    def _step(carry, _):
+        prior_means, prior_covs = carry
+        prior_mean = recouple_fn(prior_means)
+        yhat = jnp.atleast_1d(m_Y(prior_mean))
+
+        # Compute and decouple Jacobian
+        H = _jacfwd_2d(m_Y, prior_mean)
+        Hs = decouple_jac_fn(H)
+
+        # Compute intermediate parameters
+        S = jnp.atleast_1d(Cov_Y(prior_mean)) + \
+            tree_reduce(lambda a, b: a+b, tree_map(lambda hh, pp: hh @ pp @ hh.T, Hs, Ps))
+        log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
+        Ks = tree_map(lambda hh, pp: jnp.linalg.solve(S, hh @ pp.T).T, Hs, Ps)
+
+        # Compute posterior parameters
+        posterior_means = tree_map(lambda mm, dd: mm + dd, prior_means, 
+                                   tree_map(lambda kk: kk @ (y - yhat), Ks))
+        posterior_covs = tree_map(lambda pp, kk, hh: pp - kk @ hh @ pp, prior_covs, Ks, Hs)
+        return (posterior_means, posterior_covs), log_likelihood
+
+    # Decouple parameters before iteration
+    ms, Ps = decouple_fn(m), decouple_cov_fn(P)
+    carry = (ms, Ps)
+    # Iterate re-linearization over posterior mean and covariance
+    (mus_cond, Sigmas_cond), lls = lax.scan(_step, carry, jnp.arange(num_iter))
+    mu_cond, Sigma_cond = recouple_fn(mus_cond), recouple_cov_fn(Sigmas_cond)
+
+    return lls[0], mu_cond, Sigma_cond
+
+
 def statistical_linear_regression(mu, Sigma, m, S, C):
     """Return moment-matching affine coefficients and approximation noise variance
     given joint moments.
@@ -161,6 +220,60 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
 
         # Condition on the emission
         log_likelihood, filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, m_Y, Cov_Y, u, y, g_ev, g_cov, num_iter)
+        ll += log_likelihood
+
+        # Predict the next state
+        pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, u, g_ev, g_cov)
+
+        return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
+
+    # Run the general linearization filter
+    carry = (0.0, params.initial_mean, params.initial_covariance)
+    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+
+
+def decoupled_extended_conditional_moments_gaussian_filter(params, decouple_params, emissions, num_iter=1, inputs=None):
+    """Given decouple_params that describe how the parameters are decoupled,
+    run an (iterated) conditional moments Gaussian filter for to produce the
+    marginal likelihood and filtered state estimates.
+
+    Args:
+        params: a CMGFParams instance (or object with the same fields)
+        decouple_params: a DecoupleParams instance
+        emissions (T,D_hid): array of observations.
+        num_iter (int): number of linearizations around prior/posterior for update step.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        filtered_posterior: GSSMPosterior instance containing,
+            marginal_log_lik
+            filtered_means (T, D_hid)
+            filtered_covariances (T, D_hid, D_hid)
+    """
+    num_timesteps = len(emissions)
+
+    # Process dynamics function and conditional emission moments to take in control inputs
+    f = params.dynamics_function
+    m_Y, Cov_Y = params.emission_mean_function, params.emission_cov_function
+    f, m_Y, Cov_Y  = (_process_fn(fn, inputs) for fn in (f, m_Y, Cov_Y))
+    inputs = _process_input(inputs, num_timesteps)
+
+    # Gaussian expectation value function
+    g_ev = params.gaussian_expectation
+    g_cov = params.gaussian_cross_covariance
+
+    def _step(carry, t):
+        ll, pred_mean, pred_cov = carry
+
+        # Get parameters and inputs for time index t
+        Q = _get_params(params.dynamics_covariance, 2, t)
+        u = inputs[t]
+        y = emissions[t]
+
+        # Condition on the emission
+        log_likelihood, filtered_mean, filtered_cov = _decoupled_condition_on(pred_mean, pred_cov, decouple_params, 
+                                                                              m_Y, Cov_Y, u, y, num_iter)
         ll += log_likelihood
 
         # Predict the next state

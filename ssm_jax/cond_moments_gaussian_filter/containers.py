@@ -12,6 +12,17 @@ import chex
 _jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
 
 @chex.dataclass
+class DecoupleParams:
+    """Lightweight container for CMGF parameters.
+    """
+    decouple_fn: Callable
+    recouple_fn: Callable
+    decouple_cov_fn: Callable
+    recouple_cov_fn: Callable
+    decouple_jac_fn: Callable
+
+
+@chex.dataclass
 class CMGFParams:
     """Lightweight container for CMGF parameters.
     """
