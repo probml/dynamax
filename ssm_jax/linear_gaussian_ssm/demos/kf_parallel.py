@@ -2,53 +2,40 @@
 #  ssm_jax where `jax.vmap` is used to map smoothing over multiple samples.
 #
 #  Note the use of `lgssm_smoother()` rather than `LinearGaussianSSM.smoother()`
-
 from jax import numpy as jnp
 from jax import random as jr
 from jax import vmap
 from matplotlib import pyplot as plt
 
-from functools import partial
-
 from ssm_jax.plotting import plot_lgssm_posterior
 from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
-from ssm_jax.linear_gaussian_ssm.inference import lgssm_smoother
 
 
 def kf_parallel():
+    state_dim = 4
+    emission_dim = 2
     delta = 1.0
-    F = jnp.array([[1, 0, delta, 0], [0, 1, 0, delta], [0, 0, 1, 0], [0, 0, 0, 1]])
 
-    H = jnp.array([[1.0, 0, 0, 0], [0, 1.0, 0, 0]])
-
-    state_size, _ = F.shape
-    observation_size, _ = H.shape
-
-    Q = jnp.eye(state_size) * 0.001
-    R = jnp.eye(observation_size) * 1.0
-
-    # Prior parameter distribution
-    mu0 = jnp.array([8, 10, 1, 0]).astype(float)
-    Sigma0 = jnp.eye(state_size) * 0.1
-
-    lgssm = LinearGaussianSSM(
-        initial_mean=mu0,
-        initial_covariance=Sigma0,
-        dynamics_matrix=F,
-        dynamics_covariance=Q,
-        emission_matrix=H,
-        emission_covariance=R,
-    )
+    lgssm = LinearGaussianSSM(state_dim, emission_dim)
+    params, _ = lgssm.random_initialization(jr.PRNGKey(0))
+    params['initial']['mean'] = jnp.array([8.0, 10.0, 1.0, 0.0])
+    params['initial']['cov'] = jnp.eye(state_dim) * 0.1
+    params['dynamics']['weights'] = jnp.array([[1, 0, delta, 0],
+                                               [0, 1, 0, delta],
+                                               [0, 0, 1, 0],
+                                               [0, 0, 0, 1]])
+    params['dynamics']['cov'] = jnp.eye(state_dim) * 0.001
+    params['emissions']['weights'] = jnp.array([[1.0, 0, 0, 0],
+                                                [0, 1.0, 0, 0]])
+    params['emissions']['cov'] = jnp.eye(emission_dim) * 1.0
 
     num_timesteps = 15
     num_samples = 4
     key = jr.PRNGKey(310)
     keys = jr.split(key, num_samples)
+    xs, ys = vmap(lambda key: lgssm.sample(params, key, num_timesteps))(keys)
 
-    xs, ys = vmap(lambda key: lgssm.sample(key, num_timesteps))(keys)
-
-    lgssm_posteriors = vmap(partial(lgssm_smoother, lgssm.params))(ys)
-
+    lgssm_posteriors = vmap(lambda y: lgssm.smoother(params, y))(ys)
     return xs, ys, lgssm_posteriors
 
 
