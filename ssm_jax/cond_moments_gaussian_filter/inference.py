@@ -3,7 +3,7 @@ from jax import lax
 from jax import jacfwd
 from jax.tree_util import tree_map, tree_reduce
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from ssm_jax.containers import DecoupleParams, GSSMPosterior
+from ssm_jax.containers import GSSMPosterior
 
 
 # Helper functions
