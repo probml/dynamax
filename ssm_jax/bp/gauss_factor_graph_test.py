@@ -17,6 +17,7 @@ from ssm_jax.bp.gauss_factor_graph import (GaussianVariableNode,
                                            calculate_all_beliefs,
                                            make_canonical_factor)
 
+from ssm_jax.linear_gaussian_ssm.inference import lgssm_sample
 from ssm_jax.linear_gaussian_ssm.info_inference import lgssm_info_smoother
 from ssm_jax.linear_gaussian_ssm.info_inference_test import build_lgssm_moment_and_info_form
 
@@ -73,7 +74,7 @@ def factor_graph_from_lgssm(lgssm_params, inputs, obs, T=None):
         """Incorporate local evidence potential into Gaussian variable."""
         prior_plus_pot = info_multiply(var.prior, pot)
         return GaussianVariableNode(var.varID, var.dim, prior_plus_pot)
-    
+
     latent_vars = [incorporate_local_evidence(var,pot) for var, pot in zip(latent_vars, local_evidence_pots)]
 
     fg = make_factor_graph(latent_vars, latent_factors)
@@ -81,16 +82,16 @@ def factor_graph_from_lgssm(lgssm_params, inputs, obs, T=None):
     return fg
 
 def test_gauss_factor_graph_lgssm():
-    """Test that Gaussian chain belief propagation gets the same results as 
+    """Test that Gaussian chain belief propagation gets the same results as
      information form RTS smoother."""
 
     lgssm, lgssm_info = build_lgssm_moment_and_info_form()
 
     key = jr.PRNGKey(111)
     num_timesteps = 5 # Fewer timesteps so that we can run fewer iterations.
-    input_size = lgssm.dynamics_input_weights.value.shape[1]
+    input_size = lgssm.dynamics_input_weights.shape[1]
     inputs = jnp.zeros((num_timesteps, input_size))
-    _, y = lgssm.sample(key, num_timesteps, inputs=inputs)
+    _, y = lgssm_sample(key, lgssm, num_timesteps, inputs=inputs)
 
     lgssm_info_posterior = lgssm_info_smoother(lgssm_info, y, inputs)
 
@@ -101,7 +102,7 @@ def test_gauss_factor_graph_lgssm():
     for _ in range(num_timesteps):
         messages = update_all_messages(fg,messages)
 
-    # Calculate final beliefs 
+    # Calculate final beliefs
     final_beliefs = calculate_all_beliefs(fg,messages)
     fg_etas = jnp.vstack([cpot.eta for cpot in final_beliefs.values()])
     fg_Lambdas = jnp.stack([cpot.Lambda for cpot in final_beliefs.values()])
@@ -140,14 +141,14 @@ def test_tree_factor_graph():
     key, subkey = jr.split(key)
     A4 = jr.normal(subkey,(dim,dim))
     Sigma4_cond = covs[3]
-    mu4 = A4 @ mu3 
+    mu4 = A4 @ mu3
     Sigma4 = Sigma4_cond + A4 @ Sigma3 @ A4.T
 
     # x_5 | x_3 ~ N(x_5 | A_5 x_3, Sigma_{5|4})
     key, subkey = jr.split(key)
     A5 = jr.normal(subkey,(dim,dim))
     Sigma5_cond = covs[4]
-    mu5 = A5 @ mu3 
+    mu5 = A5 @ mu3
     Sigma5 = Sigma5_cond + A5 @ Sigma3 @ A5.T
 
     ### Construct variables and factors in Canonical Form ###
@@ -207,4 +208,4 @@ def test_tree_factor_graph():
 
     # Compare to moment form marginals.
     assert jnp.allclose(fg_means,means,rtol=1e-2,atol=1e-2)
-    assert jnp.allclose(fg_covs,covs,rtol=1e-2,atol=1e-2) 
+    assert jnp.allclose(fg_covs,covs,rtol=1e-2,atol=1e-2)

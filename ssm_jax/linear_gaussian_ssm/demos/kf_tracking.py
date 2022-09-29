@@ -1,7 +1,5 @@
 # This demo provides a basic example of Kalman filtering and
 #  smoothing with ssm_jax.
-
-import numpy as np
 from jax import numpy as jnp
 from jax import random as jr
 from matplotlib import pyplot as plt
@@ -11,39 +9,27 @@ from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussia
 
 
 def kf_tracking():
+    state_dim = 4
+    emission_dim = 2
     delta = 1.0
-    F = jnp.array([[1.0, 0, delta, 0], [0, 1.0, 0, delta], [0, 0, 1.0, 0], [0, 0, 0, 1.0]])
 
-    H = jnp.array([[1.0, 0, 0, 0], [0, 1.0, 0, 0]])
+    lgssm = LinearGaussianSSM(state_dim, emission_dim)
+    params, _ = lgssm.random_initialization(jr.PRNGKey(0))
+    params['initial']['mean'] = jnp.array([8.0, 10.0, 1.0, 0.0])
+    params['initial']['cov'] = jnp.eye(state_dim) * 0.1
+    params['dynamics']['weights'] = jnp.array([[1, 0, delta, 0],
+                                               [0, 1, 0, delta],
+                                               [0, 0, 1, 0],
+                                               [0, 0, 0, 1]])
+    params['dynamics']['cov'] = jnp.eye(state_dim) * 0.001
+    params['emissions']['weights'] = jnp.array([[1.0, 0, 0, 0],
+                                                [0, 1.0, 0, 0]])
+    params['emissions']['cov'] = jnp.eye(emission_dim) * 1.0
 
-    state_size, _ = F.shape
-    observation_size, _ = H.shape
-
-    Q = jnp.eye(state_size) * 0.001
-    R = jnp.eye(observation_size) * 1.0
-
-    # Prior parameter distribution
-    mu0 = jnp.array([8.0, 10.0, 1.0, 0.0])
-    Sigma0 = jnp.eye(state_size) * 0.1
-    print('prior sigma', Sigma0)
-
-    lgssm = LinearGaussianSSM(
-        initial_mean=mu0,
-        initial_covariance=Sigma0,
-        dynamics_matrix=F,
-        dynamics_covariance=Q,
-        emission_matrix=H,
-        emission_covariance=R,
-    )
-
-    # Sample data from model.
-    key = jr.PRNGKey(111)
     num_timesteps = 15
-    x, y = lgssm.sample(key, num_timesteps)
-
-    # Calculate filtered and smoothed posterior values.
-    lgssm_posterior = lgssm.smoother(y)
-
+    key = jr.PRNGKey(310)
+    x, y = lgssm.sample(params, key, num_timesteps)
+    lgssm_posterior = lgssm.smoother(params, y)
     return x, y, lgssm_posterior
 
 

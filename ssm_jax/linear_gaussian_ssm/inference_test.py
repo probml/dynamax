@@ -1,18 +1,12 @@
-from functools import partial
-
 from jax import random as jr
 from jax import numpy as jnp
 from jax import vmap
 
-import matplotlib.pyplot as plt
-
 import tensorflow_probability.substrates.jax.distributions as tfd
-
-from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_posterior_sample
 from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
 
 
-def lgssm_ssm_jax_to_tfp(num_timesteps, lgssm):
+def lgssm_ssm_jax_to_tfp(num_timesteps, params):
     """Create a Tensorflow Probability `LinearGaussianStateSpaceModel` object
      from an ssm_jax `LinearGaussianSSM`.
 
@@ -20,15 +14,15 @@ def lgssm_ssm_jax_to_tfp(num_timesteps, lgssm):
         num_timesteps: int, the number of timesteps.
         lgssm: LinearGaussianSSM or LGSSMParams object.
     """
-    dynamics_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=lgssm.dynamics_covariance)
-    emission_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=lgssm.emission_covariance)
-    initial_dist = tfd.MultivariateNormalFullCovariance(lgssm.initial_mean, lgssm.initial_covariance)
+    dynamics_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params['dynamics']['cov'])
+    emission_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params['emissions']['cov'])
+    initial_dist = tfd.MultivariateNormalFullCovariance(params['initial']['mean'], params['initial']['cov'])
 
     tfp_lgssm = tfd.LinearGaussianStateSpaceModel(
         num_timesteps,
-        lgssm.dynamics_matrix,
+        params['dynamics']['weights'],
         dynamics_noise_dist,
-        lgssm.emission_matrix,
+        params['emissions']['weights'],
         emission_noise_dist,
         initial_dist,
     )
@@ -37,41 +31,32 @@ def lgssm_ssm_jax_to_tfp(num_timesteps, lgssm):
 
 
 def test_kalman_filter(num_timesteps=5, seed=0):
-
-    delta = 1.0
-    F = jnp.array([[1, 0, delta, 0], [0, 1, 0, delta], [0, 0, 1, 0], [0, 0, 0, 1]])
-
-    H = jnp.array([[1.0, 0, 0, 0], [0, 1.0, 0, 0]])
-
-    state_size, _ = F.shape
-    observation_size, _ = H.shape
-
-    Q = jnp.eye(state_size) * 0.001
-    R = jnp.eye(observation_size) * 1.0
-
-    # Prior parameter distribution
-    mu0 = jnp.array([8.0, 10.0, 1.0, 0.0])
-    Sigma0 = jnp.eye(state_size) * 0.1
-
-    lgssm = LinearGaussianSSM(
-        initial_mean=mu0,
-        initial_covariance=Sigma0,
-        dynamics_matrix=F,
-        dynamics_covariance=Q,
-        emission_matrix=H,
-        emission_covariance=R,
-    )
-
-    tfp_lgssm = lgssm_ssm_jax_to_tfp(num_timesteps, lgssm.params)
-
-    ### Sample data ###
     key = jr.PRNGKey(seed)
-    states, emissions = lgssm.sample(key, num_timesteps)
+    init_key, sample_key = jr.split(key)
 
-    # ssm_jax posteriors
-    ssm_posterior = lgssm.smoother(emissions)
+    state_dim = 4
+    emission_dim = 2
+    delta = 1.0
+
+    lgssm = LinearGaussianSSM(state_dim, emission_dim)
+    params, _ = lgssm.random_initialization(init_key)
+    params['initial']['mean'] = jnp.array([8.0, 10.0, 1.0, 0.0])
+    params['initial']['cov'] = jnp.eye(state_dim) * 0.1
+    params['dynamics']['weights'] = jnp.array([[1, 0, delta, 0],
+                                               [0, 1, 0, delta],
+                                               [0, 0, 1, 0],
+                                               [0, 0, 0, 1]])
+    params['dynamics']['cov'] = jnp.eye(state_dim) * 0.001
+    params['emissions']['weights'] = jnp.array([[1.0, 0, 0, 0],
+                                                [0, 1.0, 0, 0]])
+    params['emissions']['cov'] = jnp.eye(emission_dim) * 1.0
+
+    # Sample data and compute posterior
+    _, emissions = lgssm.sample(params, sample_key, num_timesteps)
+    ssm_posterior = lgssm.smoother(params, emissions)
 
     # TensorFlow Probability posteriors
+    tfp_lgssm = lgssm_ssm_jax_to_tfp(num_timesteps, params)
     tfp_lls, tfp_filtered_means, tfp_filtered_covs, *_ = tfp_lgssm.forward_filter(emissions)
     tfp_smoothed_means, tfp_smoothed_covs = tfp_lgssm.posterior_marginals(emissions)
 
@@ -80,5 +65,3 @@ def test_kalman_filter(num_timesteps=5, seed=0):
     assert jnp.allclose(ssm_posterior.smoothed_means, tfp_smoothed_means, rtol=1e-2)
     assert jnp.allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs, rtol=1e-2)
     assert jnp.allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
-
-test_kalman_filter()

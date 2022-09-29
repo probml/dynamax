@@ -6,12 +6,12 @@ import matplotlib.pyplot as plt
 from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm_conjugate import LinearGaussianConjugateSSM
 
 
-def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, method='MLE'):
+def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, method='EM'):
     keys = map(jr.PRNGKey, count())
 
-    true_model = LinearGaussianConjugateSSM.random_initialization(next(keys), state_dim,
-                                                                  emission_dim)
-    true_states, emissions = true_model.sample(next(keys), num_timesteps)
+    true_model = LinearGaussianConjugateSSM(state_dim, emission_dim)
+    true_params, param_props = true_model.random_initialization(next(keys))
+    true_states, emissions = true_model.sample(true_params, next(keys), num_timesteps)
 
     if not test_mode:
         # Plot the true states and emissions
@@ -26,44 +26,46 @@ def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, metho
 
     # Fit an LGSSM with EM
     num_iters = 100
-    test_model = LinearGaussianConjugateSSM.random_initialization(next(keys), state_dim,
-                                                                  emission_dim)
-    if method == 'SGD':
-        neg_marginal_lls = test_model.fit_sgd(jnp.array([emissions]), num_epochs=num_iters * 30)
-        marginal_lls = -neg_marginal_lls * emissions.size
-    elif method == 'MLE':
-        marginal_lls = test_model.fit_em(jnp.array([emissions]), num_iters=num_iters, method='MLE')
-    elif method == 'ConjugateMAP':
-        marginal_lls = test_model.fit_em(jnp.array([emissions]), num_iters=num_iters, method='MAP')
+    test_model = LinearGaussianConjugateSSM(state_dim, emission_dim)
+    test_params, param_props = test_model.random_initialization(next(keys))
 
-    assert jnp.all(jnp.diff(marginal_lls) > -1e-4)
+    if method == 'SGD':
+        test_params, neg_marginal_lls = test_model.fit_sgd(test_params, param_props, jnp.array([emissions]), num_epochs=num_iters * 30)
+        marginal_lls = -neg_marginal_lls * emissions.size
+
+    elif method == 'EM':
+        test_params, marginal_lls = test_model.fit_em(test_params, param_props, jnp.array([emissions]), num_iters=num_iters)
+        assert jnp.all(jnp.diff(marginal_lls) > -1e-4)
+
+    else:
+        raise Exception("Invalid method {}".format(method))
 
     if not test_mode:
         plt.figure()
         plt.xlabel("iteration")
         if method == 'SGD':
-            plt.plot(marginal_lls[1:], label="estimated")
-            plt.plot((true_model.log_prior() + true_model.marginal_log_prob(emissions)) *
+            plt.plot(marginal_lls, label="estimated")
+            plt.plot((true_model.log_prior() + true_model.marginal_log_prob(true_params, emissions)) *
                      jnp.ones(num_iters * 30 - 1),
                      "k:",
                      label="true")
             plt.ylabel("marginal joint probability")
-        if method in ['MLE', 'ConjugateMAP']:
-            plt.plot(marginal_lls[1:], label="estimated")
-            plt.plot(true_model.marginal_log_prob(emissions) * jnp.ones(num_iters - 1),
+        if method == 'EM':
+            plt.plot(marginal_lls, label="estimated")
+            plt.plot(true_model.marginal_log_prob(true_params, emissions) * jnp.ones(num_iters - 1),
                      "k:",
                      label="true")
             plt.ylabel("marginal log likelihood")
         plt.legend()
 
     # Compute predicted emissions
-    posterior = test_model.smoother(emissions)
-    smoothed_emissions = posterior.smoothed_means @ test_model.emission_matrix.value.T \
-        + test_model.emission_bias.value
-    smoothed_emissions_cov = (test_model.emission_matrix.value
+    posterior = test_model.smoother(test_params, emissions)
+    smoothed_emissions = posterior.smoothed_means @ test_params['emissions']['weights'].T \
+        + test_params['emissions']['bias']
+    smoothed_emissions_cov = (test_params['emissions']['weights']
                               @ posterior.smoothed_covariances
-                              @ test_model.emission_matrix.value.T
-                              + test_model.emission_covariance.value)
+                              @ test_params['emissions']['weights'].T
+                              + test_params['emissions']['cov'])
     smoothed_emissions_std = jnp.sqrt(
         jnp.array([smoothed_emissions_cov[:, i, i] for i in range(emission_dim)]))
 
@@ -89,11 +91,8 @@ def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, metho
 
 
 if __name__ == "__main__":
-    print("Learning parameters via MLE:")
-    main(method='MLE')
+    print("Learning parameters via EM:")
+    main(method='EM', test_mode=False)
 
-    print("Learning parameters via ConjugateMAP:")
-    main(method='ConjugateMAP')
-
-    print("Learning parameters via SGD:")
-    main(method='SGD')
+    # print("Learning parameters via SGD:")
+    # main(method='SGD')

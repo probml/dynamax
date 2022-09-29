@@ -2,8 +2,7 @@ from jax import vmap
 from jax import numpy as jnp
 from jax import random as jr
 
-from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
-from ssm_jax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_filter
+from ssm_jax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_smoother, lgssm_filter
 from ssm_jax.linear_gaussian_ssm.info_inference import LGSSMInfoParams, lgssm_info_filter, lgssm_info_smoother
 
 
@@ -24,7 +23,7 @@ def info_to_moment_form(etas, Lambdas):
 
 
 def build_lgssm_moment_and_info_form():
-    """Construct example LinearGaussianSSM and equivalent LGSSMInfoParams 
+    """Construct example LinearGaussianSSM and equivalent LGSSMInfoParams
     object for testing.
     """
 
@@ -53,7 +52,7 @@ def build_lgssm_moment_and_info_form():
     Lambda0 = jnp.linalg.inv(Sigma0)
 
     # Construct LGSSM
-    lgssm = LinearGaussianSSM(
+    lgssm = LGSSMParams(
         initial_mean=mu0,
         initial_covariance=Sigma0,
         dynamics_matrix=F,
@@ -92,11 +91,12 @@ class TestInfoFilteringAndSmoothing:
     # Sample data from model.
     key = jr.PRNGKey(0)
     num_timesteps = 15
-    input_size = lgssm.dynamics_input_weights.value.shape[1]
+    input_size = lgssm.dynamics_input_weights.shape[1]
     inputs = jnp.zeros((num_timesteps, input_size))
-    x, y = lgssm.sample(key, num_timesteps, inputs=inputs)
 
-    lgssm_moment_posterior = lgssm.smoother(y, inputs)
+    y = jr.normal(key, (num_timesteps, 2))
+
+    lgssm_moment_posterior = lgssm_smoother(lgssm, y, inputs)
     lgssm_info_posterior = lgssm_info_smoother(lgssm_info, y, inputs)
 
     info_filtered_means, info_filtered_covs = info_to_moment_form(

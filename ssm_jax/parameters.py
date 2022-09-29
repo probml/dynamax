@@ -1,6 +1,7 @@
+from copy import deepcopy
+
 import chex
 import tensorflow_probability.substrates.jax.bijectors as tfb
-
 
 @chex.dataclass
 class ParameterProperties:
@@ -9,11 +10,12 @@ class ParameterProperties:
 
 
 def to_unconstrained(params, param_props):
-    """Extract the unconstrained parameter values from a dictionary of Parameters.
+    """Extract the trainable parameters and convert to unconstrained, then return
+    unconstrained parameters and fixed parameters.
 
     Args:
         params (dict): (nested) dictionary whose leaf values are DeviceArrays
-        params (dict): matching (nested) dictionary whose leaf values are ParameterProperties
+        param_props (dict): matching (nested) dictionary whose leaf values are ParameterProperties
 
     Returns:
         unc_params (dict): (nested) dictionary whose values are the
@@ -41,30 +43,16 @@ def from_unconstrained(unc_params, fixed_params, param_props):
     Args:
         unc_params (dict): (nested) dictionary whose leaf values are DeviceArrays
         fixed_params (dict): (nested) dictionary whose leaf values are DeviceArrays
-        param_propss (dict): matching (nested) dictionary whose leaf values are ParameterProperties
+        param_props (dict): matching (nested) dictionary whose leaf values are ParameterProperties
 
     Returns:
         params (dict): combined dictionary of unconstrained and fixed parameters
             in their natural (constrained) form.
     """
-    params = dict()
+    params = deepcopy(fixed_params)
     for k, v in unc_params.items():
         if isinstance(v, dict):
             params[k] = from_unconstrained(unc_params[k], fixed_params[k], param_props[k])
         else:
             params[k] = param_props[k].constrainer(v)
-    for k, v in fixed_params.items():
-        if not isinstance(v, dict):
-            params[k] = v
     return params
-
-
-def log_det_jac_constrain(unc_params, fixed_params, param_props):
-    log_det_jac = 0
-    for k, v in unc_params.items():
-        if isinstance(v, dict):
-            ldj_inc = log_det_jac_constrain(unc_params[k], fixed_params[k], param_props[k])
-            log_det_jac += ldj_inc
-        else:
-            log_det_jac += param_props[k].constrainer.forward_log_det_jacobian(v)
-    return log_det_jac
