@@ -1,40 +1,42 @@
+from collections import OrderedDict
+import jax.numpy as jnp
+import jax.scipy as jsp
+from jax import vmap, jit, lax
+from ssm_jax.distributions import InverseWishart as IW
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+import blackjax
+import jax.random as jr
+from jax.tree_util import tree_map
+from ssm_jax.abstractions import SSM
+from ssm_jax.linear_gaussian_ssm.inference import (
+    LGSSMParams, lgssm_filter, lgssm_smoother, lgssm_posterior_sample)
+from ssm_jax.structural_time_series.new_parameters import (
+    to_unconstrained, from_unconstrained, log_det_jac_constrain, ParameterProperties)
+from ssm_jax.utils import PSDToRealBijector
+import tensorflow_probability.substrates.jax.bijectors as tfb
+from tqdm.auto import trange
+
+
+def _set_prior(input_prior, default_prior):
+    return input_prior if input_prior is not None else default_prior
+
 
 class StructuralTimeSeries():
-    """The class of the Bayesian structural time series (STS) model
-
-    The STS model is defined by a pair of equations relating
-    a time series observation y_t to
-    a vector of latent state z_t:
-
-    y_t     = H_t @ z_t + D_t @ u_t + N(0, R_t)
-    z_{t+1} = F_t @ z_t + N(0, Q_t)
-
-    H_t: fixed emission matrix
-    D_t: random matrix of regression coefficients
-    F_t: fixed dynamics matrix
-    R_t: random covariance matrix of the observation noise
-    Q_t: random covariance matrix of the latent state
-
-    Construct a structural time series (STS) model from a list of components
-
-    Args:
-        components: list of components
-        observation_covariance:
-        observation_covariance_prior: InverseWishart prior for the observation covariance matrix
-        observed_timeseries: has shape (batch_size, timesteps, dim_observed_timeseries)
-        name (str): name of the STS model
-    """
 
     def __init__(self,
                  components,
                  observed_timeseries,
+                 observation_distribution_family='Gaussian',
                  observation_covariance=None,
                  observation_covariance_prior=None,
                  name='StructuralTimeSeries'):
 
+        assert observation_distribution_family in ['Gaussian', 'Poisson']
+
         _dim = observed_timeseries.shape
         self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
         obs_scale = jnp.std(jnp.abs(jnp.diff(observed_timeseries, axis=0)), axis=0).mean()
+        self.observation_distribution_family = observation_distribution_family
         self.name = name
 
         # Save parameters of the STS model:
@@ -44,13 +46,17 @@ class StructuralTimeSeries():
         self.transition_covariance_priors = OrderedDict()
         self.cov_spars_matrices = OrderedDict()
         self.observation_matrices = OrderedDict()
-        if observation_covariance is not None:
-            self.observation_covariance = observation_covariance
-        else:
-            self.observation_covariance = 1e-4*obs_scale**2*jnp.eye(self.dim_obs)
-        self.observation_covariance_prior = _set_prior(
-            observation_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
+
+        if observation_distribution_family == 'Gaussian':
+            self.observation_covariance_prior = _set_prior(
+                observation_covariance_prior,
+                IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs))
+                )
+            if observation_covariance is not None:
+                self.observation_covariance = observation_covariance
+            else:
+                self.observation_covariance = 1e-4*obs_scale**2*jnp.eye(self.dim_obs)
+
         self.observation_regression_weights = None
         self.observation_regression_weights_prior = None
 
@@ -88,29 +94,9 @@ class StructuralTimeSeries():
                                           self.observation_covariance_prior,
                                           self.cov_spars_matrices,
                                           self.observation_regression_weights,
-                                          self.observation_regression_weights_prior)
+                                          self.observation_regression_weights_prior,
+                                          self.observation_distribution_family)
         return sts_ssm
-
-    def sample(self, key, num_timesteps, inputs=None):
-        """Given parameters, sample latent states and corresponding observed time series.
-        """
-        sts_ssm = self.as_ssm()
-        states, timeseries = sts_ssm.sample(key, num_timesteps, inputs)
-        return timeseries
-
-    def marginal_log_prob(self, observed_time_series, inputs=None):
-        sts_ssm = self.as_ssm()
-        return sts_ssm.marginal_log_prob(observed_time_series, inputs)
-
-    def filter(self, observed_time_series, inputs=None):
-        sts_ssm = self.as_ssm()
-        means, covariances = sts_ssm.filter(observed_time_series, inputs)
-        return means
-
-    def smoother(self, observed_time_series, inputs=None):
-        sts_ssm = self.as_ssm()
-        means = sts_ssm.smoother(observed_time_series, inputs)
-        return means
 
     def posterior_sample(self, key, observed_time_series, sts_params, inputs=None):
         @jit
@@ -124,7 +110,8 @@ class StructuralTimeSeries():
                                               self.observation_covariance_prior,
                                               self.cov_spars_matrices,
                                               sts_param['regression_weights'],
-                                              self.observation_regression_weights_prior)
+                                              self.observation_regression_weights_prior,
+                                              self.observation_distribution_family)
             ts_means, ts = sts_ssm.posterior_sample(key, observed_time_series, inputs)
             return [ts_means, ts]
         samples = vmap(_single_sample)(sts_params)
@@ -158,7 +145,8 @@ class StructuralTimeSeries():
                                               self.observation_covariance_prior,
                                               self.cov_spars_matrices,
                                               sts_param['regression_weights'],
-                                              self.observation_regression_weights_prior)
+                                              self.observation_regression_weights_prior,
+                                              self.observation_distribution_family)
             means, covs, ts = sts_ssm.forecast(key, observed_time_series, num_forecast_steps,
                                                past_inputs, forecast_inputs)
             return [means, covs, ts]
@@ -167,269 +155,9 @@ class StructuralTimeSeries():
         return {'means': samples[0], 'covariances': samples[1], 'observations': samples[2]}
 
 
-######################################
-#    Classes of components of STS    #
-######################################
-
-
-class STSLatentComponent(ABC):
-
-    @property
-    @abstractmethod
-    def transition_matrix(self):
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def observation_matrix(self):
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def transition_covariance(self):
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def transition_covariance_prior(self):
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def initial_state_prior(self):
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def cov_spars_matrix(self):
-        raise NotImplementedError
-
-
-class LocalLinearTrend(STSLatentComponent):
-    """The local linear trend component of the structual time series (STS) model
-
-    level[t+1] = level[t] + slope[t] + N(0, level_covariance)
-    slope[t+1] = slope[t] + N(0, slope_covariance)
-
-    The latent state is [level, slope].
-
-    Args:
-        level_covariance_prior: A tfd.Distribution instance, an InverseWishart prior by default
-        slope_covariance_prior: A tfd.Distribution instance, an InverseWishart prior by default
-        initial_level_prior: A tfd.Distribution prior for the level part of the initial state,
-                             a MultivariateNormal by default
-        initial_slope_prior: A tfd.Distribution prior for the slope part of the initial state,
-                             a MultivariateNormal by default
-        observed_time_series: has shape (batch_size, timesteps, dim_observed_timeseries)
-        dim_observed_time_series: dimension of the observed time series
-        name (str):               name of the component in the STS model
-    """
-
-    def __init__(self,
-                 level_covariance_prior=None,
-                 slope_covariance_prior=None,
-                 initial_level_prior=None,
-                 initial_slope_prior=None,
-                 observed_timeseries=None,
-                 dim_observed_timeseries=1,
-                 name='LocalLinearTrend'):
-        if observed_timeseries is not None:
-            _dim = observed_timeseries.shape
-            self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
-            obs_scale = jnp.std(jnp.abs(jnp.diff(observed_timeseries, axis=0)), axis=0).mean()
-            obs_init = observed_timeseries[0].mean()
-        else:
-            self.dim_obs = dim_observed_timeseries
-            obs_scale = 1.
-            obs_init = 0.
-
-        self.component_name = name
-
-        # Initialize the prior using the observed time series if a prior is not specified
-        self.level_covariance_prior = _set_prior(
-            level_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
-
-        self.slope_covariance_prior = _set_prior(
-            slope_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
-
-        self.initial_level_prior = _set_prior(
-            initial_level_prior,
-            MVN(loc=obs_init * jnp.ones(self.dim_obs),
-                covariance_matrix=obs_scale*jnp.eye(self.dim_obs)))
-        assert isinstance(self.initial_level_prior, MVN)
-
-        self.initial_slope_prior = _set_prior(
-            initial_slope_prior,
-            MVN(loc=jnp.zeros(self.dim_obs), covariance_matrix=jnp.eye(self.dim_obs)))
-        assert isinstance(self.initial_slope_prior, MVN)
-
-    @property
-    def transition_matrix(self):
-        return {self.component_name:
-                jnp.block([[jnp.eye(self.dim_obs), jnp.eye(self.dim_obs)],
-                           [jnp.zeros((self.dim_obs, self.dim_obs)), jnp.eye(self.dim_obs)]])}
-
-    @property
-    def observation_matrix(self):
-        return {self.component_name:
-                jnp.block([jnp.eye(self.dim_obs), jnp.zeros((self.dim_obs, self.dim_obs))])}
-
-    @property
-    def transition_covariance(self):
-        return OrderedDict({'local_linear_level': self.level_covariance_prior.mode(),
-                            'local_linear_slope': self.slope_covariance_prior.mode()})
-
-    @property
-    def transition_covariance_prior(self):
-        return OrderedDict({'local_linear_level': self.level_covariance_prior,
-                            'local_linear_slope': self.slope_covariance_prior})
-
-    @property
-    def initial_state_prior(self):
-        return OrderedDict({'local_linear_level': self.initial_level_prior,
-                            'local_linear_slope': self.initial_slope_prior})
-
-    @property
-    def cov_spars_matrix(self):
-        return OrderedDict({'local_linear_level': jnp.eye(self.dim_obs),
-                            'local_linear_slope': jnp.eye(self.dim_obs)})
-
-
-class LinearRegression():
-    """The static regression component of the structual time series (STS) model
-
-    Args:
-        weights_prior: MatrixNormal prior for the weight matrix
-        weights_shape: Dimension of the observed time series
-        name (str): Name of the component in the STS model
-    """
-
-    def __init__(self,
-                 weights_shape,
-                 weights_prior=None,
-                 name='LinearRegression'):
-        self.dim_obs, self.dim_inputs = weights_shape
-        self.component_name = name
-
-        # Initialize the prior distribution for weights
-        if weights_prior is None:
-            weights_prior = MN(loc=jnp.zeros(weights_shape),
-                               row_covariance=jnp.eye(self.dim_obs),
-                               col_precision=jnp.eye(self.dim_inputs))
-
-        self.weights_prior = weights_prior
-
-
-class Seasonal(STSLatentComponent):
-    """The seasonal component of the structual time series (STS) model
-    Since on average sum_{j=0}^{num_seasons-1}s_{t+1-j} = 0 for any t,
-    the seasonal effect (random) for next time step is:
-
-    s_{t+1} = - sum_{j=1}^{num_seasons-1} s_{t+1-j} + N(0, drift_covariance)
-
-    Args:
-        num_seasons (int): number of seasons (assuming number of steps per season is 1)
-        num_steps_per_season:
-        drift_covariance_prior: InverseWishart prior for drift_covariance
-        initial_effect_prior: MultivariateNormal prior for initial_effect
-        observed_time_series: has shape (batch_size, timesteps, dim_observed_timeseries)
-        dim_observed_time_series: dimension of the observed time series
-        name (str): name of the component in the STS model
-    """
-
-    def __init__(self,
-                 num_seasons,
-                 num_steps_per_season=1,
-                 drift_covariance_prior=None,
-                 initial_effect_prior=None,
-                 observed_timeseries=None,
-                 dim_observed_timeseries=1,
-                 name='Seasonal'):
-        if observed_timeseries is not None:
-            _dim = observed_timeseries.shape
-            self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
-            obs_scale = jnp.std(jnp.abs(jnp.diff(observed_timeseries, axis=0)), axis=0).mean()
-        else:
-            self.dim_obs = dim_observed_timeseries
-            obs_scale = 1.
-
-        self.num_seasons = num_seasons
-        self.num_steps_per_season = num_steps_per_season
-        self.component_name = name
-
-        self.initial_effect_prior = _set_prior(
-            initial_effect_prior,
-            MVN(loc=jnp.zeros(self.dim_obs),
-                covariance_matrix=obs_scale**2*jnp.eye(self.dim_obs)))
-
-        self.drift_covariance_prior = _set_prior(
-            drift_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
-
-    @property
-    def transition_matrix(self):
-        # TODO: allow num_steps_per_season > 1 or be a list of integers
-        return {self.component_name:
-                jnp.block([[jnp.kron(-jnp.ones(self.num_seasons-1), jnp.eye(self.dim_obs))],
-                           [jnp.eye((self.num_seasons-2)*self.dim_obs),
-                            jnp.zeros(((self.num_seasons-2)*self.dim_obs, self.dim_obs))]])}
-
-    @property
-    def observation_matrix(self):
-        return {self.component_name:
-                jnp.block([jnp.eye(self.dim_obs),
-                           jnp.zeros((self.dim_obs, (self.num_seasons-2)*self.dim_obs))])}
-
-    @property
-    def transition_covariance(self):
-        return {'seasonal': self.drift_covariance_prior.mode()}
-
-    @property
-    def transition_covariance_prior(self):
-        return {'seasonal': self.drift_covariance_prior}
-
-    @property
-    def initial_state_prior(self):
-        c = self.num_seasons - 1
-        initial_loc = jnp.array([self.initial_effect_prior.mean()]*c).flatten()
-        initial_cov = jsp.linalg.block_diag(
-            *([self.initial_effect_prior.covariance()]*c))
-        initial_pri = MVN(loc=initial_loc, covariance_matrix=initial_cov)
-        return {'seasonal': initial_pri}
-
-    @property
-    def cov_spars_matrix(self):
-        return {'seasonal': jnp.concatenate(
-                    (
-                        jnp.eye(self.dim_obs),
-                        jnp.zeros((self.dim_obs*(self.num_seasons-2), self.dim_obs)),
-                    ),
-                    axis=0)
-                }
-
-
 ##########################
 # Learning and inference #
 ##########################
-
-import blackjax
-from collections import OrderedDict
-from jax import jit, lax
-import jax.numpy as jnp
-import jax.random as jr
-import jax.scipy as jsp
-from jax.tree_util import tree_map
-from ssm_jax.abstractions import SSM
-from ssm_jax.linear_gaussian_ssm.inference import (
-    LGSSMParams, lgssm_filter, lgssm_smoother, lgssm_posterior_sample)
-from ssm_jax.structural_time_series.new_parameters import (
-    to_unconstrained, from_unconstrained, log_det_jac_constrain, ParameterProperties)
-from ssm_jax.utils import PSDToRealBijector
-import tensorflow_probability.substrates.jax.bijectors as tfb
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from tqdm.auto import trange
 
 
 class StructuralTimeSeriesSSM(SSM):
@@ -457,7 +185,8 @@ class StructuralTimeSeriesSSM(SSM):
                  observation_covariance_prior,
                  cov_spars_matrices,
                  observation_regression_weights=None,
-                 observation_regression_weights_prior=None):
+                 observation_regression_weights_prior=None,
+                 observation_distribution_family='Gaussian'):
 
         # Set parameters for the initial state of the LinearGaussianSSM model
         self.initial_mean = jnp.concatenate(
