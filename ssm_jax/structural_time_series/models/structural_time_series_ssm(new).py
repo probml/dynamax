@@ -6,6 +6,9 @@ import jax.random as jr
 import jax.scipy as jsp
 from jax.tree_util import tree_map
 from ssm_jax.abstractions import SSM
+from ssm_jax.cond_moments_gaussian_filter.containers import EKFParams
+from ssm_jax.cond_moments_gaussian_filter.inference import (
+    iterated_conditional_moments_gaussian_filter as cmgf,)
 from ssm_jax.linear_gaussian_ssm.inference import (
     LGSSMParams, lgssm_filter, lgssm_smoother, lgssm_posterior_sample
     )
@@ -15,8 +18,7 @@ from ssm_jax.structural_time_series.new_parameters import (
 from ssm_jax.utils import PSDToRealBijector
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from tensorflow_probability.substrates.jax.distributions import (
-    MultivariateNormalFullCovariance as MVN,
-    Poisson as Poisson
+    MultivariateNormalFullCovariance as MVN, Poisson
     )
 from tqdm.auto import trange
 
@@ -154,24 +156,23 @@ class StructuralTimeSeriesSSM(SSM):
         """Compute log marginal likelihood of observations."""
         if params is None:
             # Compute marginal log prob using current parameter
-            lgssm_params = self._to_ssm_params(self.params)
+            ssm_params = self._to_ssm_params(self.params)
         else:
             # Compute marginal log prob using given parameter
-            lgssm_params = self._to_ssm_params(params)
+            ssm_params = self._to_ssm_params(params)
 
-        filtered_posterior = self.ssm_filter(lgssm_params, emissions, inputs)
-
+        filtered_posterior = self._ssm_filter(params=ssm_params, emissions=emissions, inputs=inputs)
         return filtered_posterior.marginal_loglik
 
-    # def filter(self, emissions, inputs=None):
-    #     lgssm_params = self._to_ssm_params(self.params)
-    #     filtered_posterior = lgssm_filter(lgssm_params, emissions, inputs)
-    #     return filtered_posterior.filtered_means, filtered_posterior.filtered_covariances
+    def filter(self, emissions, inputs=None):
+        lgssm_params = self._to_ssm_params(self.params)
+        filtered_posterior = lgssm_filter(lgssm_params, emissions, inputs)
+        return filtered_posterior.filtered_means, filtered_posterior.filtered_covariances
 
-    # def smoother(self, emissions, inputs=None):
-    #     lgssm_params = self._to_ssm_params(self.params)
-    #     smoothed_posterior = self.ssm_smoother(lgssm_params, emissions, inputs)
-    #     return smoothed_posterior.smoothed_means, smoothed_posterior.smoothed_covariances
+    def smoother(self, emissions, inputs=None):
+        lgssm_params = self._to_ssm_params(self.params)
+        smoothed_posterior = self.ssm_smoother(lgssm_params, emissions, inputs)
+        return smoothed_posterior.smoothed_means, smoothed_posterior.smoothed_covariances
 
     def posterior_sample(self, key, observed_time_series, inputs=None):
         num_timesteps, dim_obs = observed_time_series.shape
@@ -348,18 +349,6 @@ class GaussianSSM(StructuralTimeSeriesSSM):
                            emission_bias=self.emission_bias,
                            emission_covariance=obs_cov)
 
-    def marginal_log_prob(self, emissions, inputs=None, params=None):
-        """Compute log marginal likelihood of observations."""
-        if params is None:
-            # Compute marginal log prob using current parameter
-            lgssm_params = self._to_lgssm_params(self.params)
-        else:
-            # Compute marginal log prob using given parameter
-            lgssm_params = self._to_lgssm_params(params)
-
-        filtered_posterior = lgssm_filter(lgssm_params, emissions, inputs)
-        return filtered_posterior.marginal_loglik
-
     def filter(self, emissions, inputs=None):
         lgssm_params = self._to_lgssm_params(self.params)
         filtered_posterior = lgssm_filter(lgssm_params, emissions, inputs)
@@ -528,18 +517,6 @@ class PoissonSSM(StructuralTimeSeriesSSM):
                            emission_bias=self.emission_bias,
                            emission_covariance=obs_cov)
 
-    def marginal_log_prob(self, emissions, inputs=None, params=None):
-        """Compute log marginal likelihood of observations."""
-        if params is None:
-            # Compute marginal log prob using current parameter
-            lgssm_params = self._to_lgssm_params(self.params)
-        else:
-            # Compute marginal log prob using given parameter
-            lgssm_params = self._to_lgssm_params(params)
-
-        filtered_posterior = lgssm_filter(lgssm_params, emissions, inputs)
-        return filtered_posterior.marginal_loglik
-
     def filter(self, emissions, inputs=None):
         lgssm_params = self._to_lgssm_params(self.params)
         filtered_posterior = lgssm_filter(lgssm_params, emissions, inputs)
@@ -650,3 +627,14 @@ class PoissonSSM(StructuralTimeSeriesSSM):
         _, (ts_means, ts_covs, ts) = lax.scan(_step, initial_params, (keys, forecast_inputs))
 
         return ts_means, ts_covs, ts
+
+
+#iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, inputs=None)
+# cmgf_ekf_params = EKFParams(
+#     initial_mean = jnp.zeros(state_dim),
+#     initial_covariance = jnp.eye(state_dim),
+#     dynamics_function = lambda z: random_rotation(state_dim, theta=jnp.pi/20) @ z,
+#     dynamics_covariance = 0.001 * jnp.eye(state_dim),
+#     emission_mean_function = lambda z: jnp.exp(poisson_weights @ z),
+#     emission_var_function = lambda z: jnp.diag(jnp.exp(poisson_weights @ z))
+# )
