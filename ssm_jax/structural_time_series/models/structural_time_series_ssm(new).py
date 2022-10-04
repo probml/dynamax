@@ -168,11 +168,11 @@ class _StructuralTimeSeriesSSM(SSM):
         num_timesteps, dim_obs = observed_time_series.shape
         if inputs is None:
             inputs = jnp.zeros((num_timesteps, 0))
-        obs_cov = self.params['emission_covariance']
         ssm_params = self._to_ssm_params(self.params)
-        ll, states = self.ssm_posterior_sample(key, ssm_params, observed_time_series, inputs)
-        # obs_means = states @ self.emission_matrix.T + inputs @ self.params['regression_weights'].T
-        # obs = obs_means + MVN(jnp.zeros(dim_obs), obs_cov).sample(seed=key, sample_shape=num_timesteps)
+        ll, states = self._ssm_posterior_sample(key, ssm_params, observed_time_series, inputs)
+        obs_means = states @ self.emission_matrix.T + inputs @ self.params['regression_weights'].T
+        obs_means = self._emission_constrainer(obs_means)
+        obs = self.emission_distribution.sample(seed=key, sample_shape=num_timesteps)
         return obs_means, obs
 
     def fit_hmc(self,
@@ -277,8 +277,12 @@ class _StructuralTimeSeriesSSM(SSM):
         """The smoother of the corresponding SSM model"""
         raise NotImplementedError
 
-    def _ssm_posterior():
+    def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
         """The posterior sampler of the corresponding SSM model"""
+        raise NotImplementedError
+
+    def _emission_constrainer(self, emission):
+        """Transform the state into the possibly constrained space."""
         raise NotImplementedError
 
 
@@ -338,17 +342,6 @@ class GaussianSSM(_StructuralTimeSeriesSSM):
                            emission_input_weights=emission_input_weights,
                            emission_bias=self.emission_bias,
                            emission_covariance=obs_cov)
-
-    def posterior_sample(self, key, observed_time_series, inputs=None):
-        num_timesteps, dim_obs = observed_time_series.shape
-        if inputs is None:
-            inputs = jnp.zeros((num_timesteps, 0))
-        obs_cov = self.params['emission_covariance']
-        lgssm_params = self._to_lgssm_params(self.params)
-        ll, states = lgssm_posterior_sample(key, lgssm_params, observed_time_series, inputs)
-        obs_means = states @ self.emission_matrix.T + inputs @ self.params['regression_weights'].T
-        obs = obs_means + MVN(jnp.zeros(dim_obs), obs_cov).sample(seed=key, sample_shape=num_timesteps)
-        return obs_means, obs
 
     def fit_hmc(self,
                 key,
@@ -496,17 +489,6 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
                            emission_input_weights=emission_input_weights,
                            emission_bias=self.emission_bias,
                            emission_covariance=obs_cov)
-
-    def posterior_sample(self, key, observed_time_series, inputs=None):
-        num_timesteps, dim_obs = observed_time_series.shape
-        if inputs is None:
-            inputs = jnp.zeros((num_timesteps, 0))
-        obs_cov = self.params['emission_covariance']
-        lgssm_params = self._to_lgssm_params(self.params)
-        ll, states = lgssm_posterior_sample(key, lgssm_params, observed_time_series, inputs)
-        obs_means = states @ self.emission_matrix.T + inputs @ self.params['regression_weights'].T
-        obs = obs_means + MVN(jnp.zeros(dim_obs), obs_cov).sample(seed=key, sample_shape=num_timesteps)
-        return obs_means, obs
 
     def fit_hmc(self,
                 key,
