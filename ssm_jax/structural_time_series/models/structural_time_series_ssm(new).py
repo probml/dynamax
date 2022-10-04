@@ -26,6 +26,7 @@ from tqdm.auto import trange
 class _StructuralTimeSeriesSSM(SSM):
     """Formulate the structual time series(STS) model into a LinearSSM model,
     which always have block-diagonal dynamics covariance matrix and fixed transition matrices.
+
     The covariance matrix of the latent dynamics model takes the form:
     R @ Q, where Q is a dense matrix (blockwise diagonal),
     and R is the sparsing matrix. For example,
@@ -283,8 +284,14 @@ class _StructuralTimeSeriesSSM(SSM):
         raise NotImplementedError
 
 
-class GaussianSSM(_StructuralTimeSeriesSSM):
+#####################################################################
+# SSM classes for STS model with specific observation distributions #
+#####################################################################
 
+
+class GaussianSSM(_StructuralTimeSeriesSSM):
+    """SSM classes for STS model where the observations follow multivariate normal distributions.
+    """
     def __init__(self,
                  component_transition_matrices,
                  component_observation_matrices,
@@ -368,7 +375,8 @@ class GaussianSSM(_StructuralTimeSeriesSSM):
 
 
 class PoissonSSM(_StructuralTimeSeriesSSM):
-
+    """SSM classes for STS model where the observations follow Poisson distributions.
+    """
     def __init__(self,
                  component_transition_matrices,
                  component_observation_matrices,
@@ -399,12 +407,17 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
 
     def _to_ssm_params(self, params):
         """Wrap the STS model into the form of the corresponding SSM model """
-        return EKFParams(initial_mean=jnp.zeros(state_dim),
-                         initial_covariance=jnp.eye(state_dim),
-                         dynamics_function=lambda z: random_rotation(state_dim, theta=jnp.pi/20) @ z,
-                         dynamics_covariance=0.001 * jnp.eye(state_dim),
-                         emission_mean_function=lambda z: jnp.exp(poisson_weights @ z),
-                         emission_var_function=lambda z: jnp.diag(jnp.exp(poisson_weights @ z)))
+        comp_cov = jsp.linalg.block_diag(*params['dynamics_covariances'].values())
+        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
+        spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
+        emission_mean = lambda z: self._emission_constrainer(self.emission_matrix @ z)
+        emission_var = lambda z: jnp.diag(self._emission_constrainer(self.emission_matrix @ z))
+        return EKFParams(initial_mean=self.initial_mean,
+                         initial_covariance=self.initial_covariance,
+                         dynamics_function=lambda z: self.dynamics_matrix @ z,
+                         dynamics_covariance=spars_cov,
+                         emission_mean_function=emission_mean,
+                         emission_var_function=emission_var)
 
     def _ssm_filter(self, params, emissions, inputs):
         """The filter of the corresponding SSM model"""
