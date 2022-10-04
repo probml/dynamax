@@ -185,7 +185,7 @@ class StructuralTimeSeries():
         if self.obs_family == 'Gaussian':
             samples = vmap(single_sample_gaussian)(sts_params)
         elif self.obs_family == 'Poisson':
-            samples = vmap(single_sample_poisson(sts_params))
+            samples = vmap(single_sample_poisson)(sts_params)
 
         return {'means': samples[0], 'observations': samples[1]}
 
@@ -196,6 +196,7 @@ class StructuralTimeSeries():
         Parameters of the STS model includes:
             covariance matrix of each component,
             regression coefficient matrix (if the model has inputs and a regression component)
+            covariance matrix of observations (if observations follow Gaussian distribution)
         """
         sts_ssm = self.as_ssm()
         param_samps = sts_ssm.fit_hmc(key, sample_size, observed_time_series, inputs,
@@ -239,7 +240,7 @@ class StructuralTimeSeries():
         if self.obs_family == 'Gaussian':
             forecasts = vmap(single_forecast_gaussian)(sts_params)
         elif self.obs_family == 'Poisson':
-            forecasts = vmap(single_forecast_poisson(sts_params))
+            forecasts = vmap(single_forecast_poisson)(sts_params)
 
         return {'means': forecasts[0], 'covariances': forecasts[1], 'observations': forecasts[2]}
 
