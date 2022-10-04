@@ -32,7 +32,8 @@ class MLP(nn.Module):
 
 
 class CMGFBinaryMLPEstimator(BaseEstimator, ClassifierMixin):
-    def __init__(self, params_, mlp_model_dims_, decouple_=False):
+    def __init__(self, params_, mlp_model_dims_, decouple_='None'):
+        assert decouple_ in ['None', 'by_node', 'by_param', 'fake']
         self.params_ = params_
         self.mlp_model_dims_ = mlp_model_dims_
         self.classes_ = jnp.arange(2)
@@ -57,10 +58,11 @@ class CMGFBinaryMLPEstimator(BaseEstimator, ClassifierMixin):
         decouple_params = generate_decouple_params(self.mlp_model_dims_)
 
         # Run CMGF to train MLP
-        if self.decouple_:
-            post = decoupled_extended_conditional_moments_gaussian_filter(cmgf_params, decouple_params, y, inputs=X)
-        else:
+        if self.decouple_ == 'None':
             post = conditional_moments_gaussian_filter(cmgf_params, y, inputs = X)
+        else:
+            decouple_params = generate_decouple_params(self.mlp_model_dims_, self.decouple_)
+            post = decoupled_extended_conditional_moments_gaussian_filter(cmgf_params, decouple_params, y, inputs=X)
 
         post_means, post_covs = post.filtered_means, post.filtered_covariances
         self.mean_, self.cov_ = post_means[-1], post_covs[-1]
@@ -108,7 +110,7 @@ def get_mlp_flattened_params(model_dims, key=0):
     return model, flat_params, unflatten_fn, apply_fn
 
 
-def decouple_flat_params(model_dims):
+def decouple_flat_params_by_node(model_dims):
     """_summary_
 
     Args:
@@ -172,7 +174,41 @@ def decouple_flat_params(model_dims):
     return decouple_fn, recouple_fn, decouple_cov_fn, recouple_cov_fn, decouple_jac_fn
 
 
-def generate_decouple_params(model_dims):
+def decouple_flat_params_by_param(model_dims):
+    num_params = 0
+    for layer in range(1, len(model_dims)):
+        num_prev, num_curr = model_dims[layer-1], model_dims[layer]
+        num_bias_params = num_curr
+        num_weight_params = num_prev * num_curr
+        num_params += num_weight_params + num_bias_params
+
+    decouple_fn = jit(lambda params: {i: jnp.atleast_1d(params[i]) for i in range(num_params)})
+    recouple_fn = jit(lambda p_tree: jnp.ravel(jnp.array(tree_leaves(p_tree))))
+    decouple_jac_fn = jit(lambda jac: {i: jnp.atleast_2d(jac[:,i]) for i in range(num_params)})
+    decouple_cov_fn = jit(lambda cov: {i: jnp.atleast_2d(cov[i,i]) for i in range(num_params)})
+    recouple_cov_fn = jit(lambda covs: block_diag(*tree_leaves(covs)))
+    
+    return decouple_fn, recouple_fn, decouple_cov_fn, recouple_cov_fn, decouple_jac_fn
+
+
+def decouple_flat_params_none(model_dims):
+    num_params = 0
+    for layer in range(1, len(model_dims)):
+        num_prev, num_curr = model_dims[layer-1], model_dims[layer]
+        num_bias_params = num_curr
+        num_weight_params = num_prev * num_curr
+        num_params += num_weight_params + num_bias_params
+
+    decouple_fn = lambda params: {0: params}
+    recouple_fn = lambda p_tree: p_tree[0]
+    decouple_jac_fn = lambda jac: {0: jac}
+    decouple_cov_fn = lambda cov: {0: cov}
+    recouple_cov_fn = lambda p_tree: p_tree[0]
+    
+    return decouple_fn, recouple_fn, decouple_cov_fn, recouple_cov_fn, decouple_jac_fn
+
+
+def generate_decouple_params(model_dims, decouple='by_node'):
     """_summary_
 
     Args:
@@ -180,14 +216,32 @@ def generate_decouple_params(model_dims):
 
     Returns:
         decouple_params: _description_
-    """    
-    decouple_params = DecoupleParams(
-        decouple_fn = decouple_flat_params(model_dims)[0],
-        recouple_fn = decouple_flat_params(model_dims)[1],
-        decouple_cov_fn = decouple_flat_params(model_dims)[2],
-        recouple_cov_fn = decouple_flat_params(model_dims)[3],
-        decouple_jac_fn = decouple_flat_params(model_dims)[4]
-    )
+    """
+    assert decouple in ['by_node', 'by_param', 'fake']
+    if decouple == 'by_node':
+        decouple_params = DecoupleParams(
+            decouple_fn = decouple_flat_params_by_node(model_dims)[0],
+            recouple_fn = decouple_flat_params_by_node(model_dims)[1],
+            decouple_cov_fn = decouple_flat_params_by_node(model_dims)[2],
+            recouple_cov_fn = decouple_flat_params_by_node(model_dims)[3],
+            decouple_jac_fn = decouple_flat_params_by_node(model_dims)[4]
+        )
+    elif decouple == 'by_param':
+        decouple_params = DecoupleParams(
+            decouple_fn = decouple_flat_params_by_param(model_dims)[0],
+            recouple_fn = decouple_flat_params_by_param(model_dims)[1],
+            decouple_cov_fn = decouple_flat_params_by_param(model_dims)[2],
+            recouple_cov_fn = decouple_flat_params_by_param(model_dims)[3],
+            decouple_jac_fn = decouple_flat_params_by_param(model_dims)[4]
+        )
+    else:
+        decouple_params = DecoupleParams(
+            decouple_fn = decouple_flat_params_none(model_dims)[0],
+            recouple_fn = decouple_flat_params_none(model_dims)[1],
+            decouple_cov_fn = decouple_flat_params_none(model_dims)[2],
+            recouple_cov_fn = decouple_flat_params_none(model_dims)[3],
+            decouple_jac_fn = decouple_flat_params_none(model_dims)[4]
+        )
     return decouple_params
 
 
@@ -232,11 +286,14 @@ def compare_performance(estimators, input_dim, data_size_grid):
 
 if __name__ == "__main__":
     # Define MLP architecture
-    input_dim, hidden_dims, output_dim = 2, [3, 3, 3, 3, 3, 3], 1
+    input_dim, hidden_dims, output_dim = 2, [15, 15], 1
     model_dims = [input_dim, *hidden_dims, output_dim]
 
     cmgf_est = CMGFBinaryMLPEstimator(EKFParams, model_dims)
-    d_cmgf_est = CMGFBinaryMLPEstimator(EKFParams, model_dims, True)
+    dfp_cmgf_est = CMGFBinaryMLPEstimator(EKFParams, model_dims, 'fake')
+    dbn_cmgf_est = CMGFBinaryMLPEstimator(EKFParams, model_dims, 'by_node')
+    dbp_cmgf_est = CMGFBinaryMLPEstimator(EKFParams, model_dims, 'by_param')
     
-    estimators = {'CMGF-EKF': cmgf_est, 'Decoupled CMGF-EKF': d_cmgf_est}
-    scores, times = compare_performance(estimators, input_dim, [1000, 10000, 50000, 100000, 500000])
+    estimators = {'CMGF-EKF': cmgf_est, 'Fake-Decoupled CMGF-EKF': dfp_cmgf_est,
+                  'Node-Decoupled CMGF-EKF': dbn_cmgf_est, 'Fully-Decoupled CMGF-EKF': dbp_cmgf_est}
+    scores, times = compare_performance(estimators, input_dim, [1000, 10000, 50000, 100000])
