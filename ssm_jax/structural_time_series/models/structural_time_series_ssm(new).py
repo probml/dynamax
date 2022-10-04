@@ -10,7 +10,7 @@ from ssm_jax.cond_moments_gaussian_filter.containers import EKFParams
 from ssm_jax.cond_moments_gaussian_filter.inference import (
     iterated_conditional_moments_gaussian_filter as cmgf,)
 from ssm_jax.linear_gaussian_ssm.inference import (
-    LGSSMParams, lgssm_filter, lgssm_smoother, lgssm_posterior_sample
+    LGSSMParams, lgssm_filter, lgssm_posterior_sample
     )
 from ssm_jax.structural_time_series.new_parameters import (
     to_unconstrained, from_unconstrained, log_det_jac_constrain, ParameterProperties
@@ -172,7 +172,8 @@ class _StructuralTimeSeriesSSM(SSM):
         ll, states = self._ssm_posterior_sample(key, ssm_params, observed_time_series, inputs)
         obs_means = states @ self.emission_matrix.T + inputs @ self.params['regression_weights'].T
         obs_means = self._emission_constrainer(obs_means)
-        obs = self.emission_distribution.sample(seed=key, sample_shape=num_timesteps)
+        obs = self.emission_distribution(states, inputs).sample(seed=key,
+                                                                sample_shape=num_timesteps)
         return obs_means, obs
 
     def fit_hmc(self,
@@ -225,15 +226,15 @@ class _StructuralTimeSeriesSSM(SSM):
             forecast_inputs = jnp.zeros((num_forecast_steps, 0))
         weights = self.params['regression_weights']
         comp_cov = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
-        # obs_cov = self.params['emission_covariance']
         spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
         spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
-        dim_obs = observed_time_series.shape[-1]
         dim_comp = comp_cov.shape[-1]
 
         # Filtering the observed time series to initialize the forecast
-        lgssm_params = self._to_lgssm_params(self.params)
-        filtered_posterior = lgssm_filter(lgssm_params, observed_time_series, past_inputs)
+        ssm_params = self._to_ssm_params(self.params)
+        filtered_posterior = self._ssm_filter(params=ssm_params,
+                                              emissions=observed_time_series,
+                                              inputs=past_inputs)
         filtered_mean = filtered_posterior.filtered_means
         filtered_cov = filtered_posterior.filtered_covariances
 
@@ -247,34 +248,30 @@ class _StructuralTimeSeriesSSM(SSM):
             prev_mean, prev_cov, prev_state = prev_params
 
             marginal_mean = self.emission_matrix @ prev_mean + weights @ forecast_input
-            # marginal_cov = self.emission_matrix @ prev_cov @ self.emission_matrix.T + obs_cov
-            # obs = self.emission_matrix @ prev_state + weights @ forecast_input\
-            #     + MVN(jnp.zeros(dim_obs), obs_cov).sample(seed=key2)
+            marginal_mean = self._emission_constrainer(marginal_mean)
+            emission_mean_cov = self.emission_matrix @ prev_cov @ self.emission_matrix.T
+            obs = self.emission_distribution(prev_state, forecast_input).sample(seed=key2)
 
             next_mean = self.dynamics_matrix @ prev_mean
             next_cov = self.dynamics_matrix @ prev_cov @ self.dynamics_matrix.T + spars_cov
             next_state = self.dynamics_matrix @ prev_state\
                 + spars_matrix @ MVN(jnp.zeros(dim_comp), comp_cov).sample(seed=key1)
 
-            return (next_mean, next_cov, next_state), (marginal_mean, marginal_cov, obs)
+            return (next_mean, next_cov, next_state), (marginal_mean, emission_mean_cov, obs)
 
         # Initialize
         keys = jr.split(key, num_forecast_steps)
         initial_params = (initial_mean, initial_cov, initial_state)
-        _, (ts_means, ts_covs, ts) = lax.scan(_step, initial_params, (keys, forecast_inputs))
+        _, (ts_means, ts_mean_covs, ts) = lax.scan(_step, initial_params, (keys, forecast_inputs))
 
-        return ts_means, ts_covs, ts
+        return ts_means, ts_mean_covs, ts
 
     def _to_ssm_params(self, params):
         """Wrap the STS model into the form of the corresponding SSM model """
         raise NotImplementedError
 
-    def _ssm_filter(self, params):
+    def _ssm_filter(self, params, emissions, inputs):
         """The filter of the corresponding SSM model"""
-        raise NotImplementedError
-
-    def _ssm_smoother(self, params):
-        """The smoother of the corresponding SSM model"""
         raise NotImplementedError
 
     def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
@@ -325,7 +322,16 @@ class GaussianSSM(_StructuralTimeSeriesSSM):
         return MVN(self.emission_matrix @ state + self.params['regression_weights'] @ inputs,
                    self.params['emission_covariance'])
 
-    def _to_lgssm_params(self, params):
+    def forecast(self, key, observed_time_series, num_forecast_steps,
+                 past_inputs=None, forecast_inputs=None):
+        ts_means, ts_mean_covs, ts = super().forecast(
+            key, observed_time_series, num_forecast_steps, past_inputs, forecast_inputs
+            )
+        ts_covs = ts_mean_covs + self.params['emission_covariance']
+        return ts_means, ts_covs, ts
+
+    def _to_ssm_params(self, params):
+        """Wrap the STS model into the form of the corresponding SSM model """
         comp_cov = jsp.linalg.block_diag(*params['dynamics_covariances'].values())
         spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
         spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
@@ -343,69 +349,25 @@ class GaussianSSM(_StructuralTimeSeriesSSM):
                            emission_bias=self.emission_bias,
                            emission_covariance=obs_cov)
 
-    def forecast(self, key, observed_time_series, num_forecast_steps,
-                 past_inputs=None, forecast_inputs=None):
-        """Forecast the time series"""
+    def _ssm_filter(self, params, emissions, inputs):
+        """The filter of the corresponding SSM model"""
+        return lgssm_filter(params=params, emissions=emissions, inputs=inputs)
 
-        if forecast_inputs is None:
-            forecast_inputs = jnp.zeros((num_forecast_steps, 0))
-        weights = self.params['regression_weights']
-        comp_cov = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
-        obs_cov = self.params['emission_covariance']
-        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
-        spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
-        dim_obs = observed_time_series.shape[-1]
-        dim_comp = comp_cov.shape[-1]
+    def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
+        """The posterior sampler of the corresponding SSM model"""
+        return lgssm_posterior_sample(rng=key,
+                                      params=ssm_params,
+                                      emissions=observed_time_series,
+                                      inputs=inputs)
 
-        # Filtering the observed time series to initialize the forecast
-        lgssm_params = self._to_lgssm_params(self.params)
-        filtered_posterior = lgssm_filter(lgssm_params, observed_time_series, past_inputs)
-        filtered_mean = filtered_posterior.filtered_means
-        filtered_cov = filtered_posterior.filtered_covariances
-
-        initial_mean = self.dynamics_matrix @ filtered_mean[-1]
-        initial_cov = self.dynamics_matrix @ filtered_cov[-1] @ self.dynamics_matrix.T + spars_cov
-        initial_state = MVN(initial_mean, initial_cov).sample(seed=key)
-
-        def _step(prev_params, args):
-            key, forecast_input = args
-            key1, key2 = jr.split(key)
-            prev_mean, prev_cov, prev_state = prev_params
-
-            marginal_mean = self.emission_matrix @ prev_mean + weights @ forecast_input
-            marginal_cov = self.emission_matrix @ prev_cov @ self.emission_matrix.T + obs_cov
-            obs = self.emission_matrix @ prev_state + weights @ forecast_input\
-                + MVN(jnp.zeros(dim_obs), obs_cov).sample(seed=key2)
-
-            next_mean = self.dynamics_matrix @ prev_mean
-            next_cov = self.dynamics_matrix @ prev_cov @ self.dynamics_matrix.T + spars_cov
-            next_state = self.dynamics_matrix @ prev_state\
-                + spars_matrix @ MVN(jnp.zeros(dim_comp), comp_cov).sample(seed=key1)
-
-            return (next_mean, next_cov, next_state), (marginal_mean, marginal_cov, obs)
-
-        # Initialize
-        keys = jr.split(key, num_forecast_steps)
-        initial_params = (initial_mean, initial_cov, initial_state)
-        _, (ts_means, ts_covs, ts) = lax.scan(_step, initial_params, (keys, forecast_inputs))
-
-        return ts_means, ts_covs, ts
+    def _emission_constrainer(self, emission):
+        """Transform the state into the possibly constrained space.
+           Use identity transformation when the observation distribution is MVN.
+        """
+        return emission
 
 
 class PoissonSSM(_StructuralTimeSeriesSSM):
-    """Formulate the structual time series(STS) model into a LinearGaussianSSM model,
-    which always have block-diagonal dynamics covariance matrix and fixed transition matrices.
-    The covariance matrix of the dynamics model takes the form:
-    R @ Q, where Q is a dense matrix (blockwise diagonal),
-    and R is the sparsing matrix. For example,
-    for an STS model for a 1-d time series with a local linear component
-    and a seasonal component with 4 seasons:
-                                        | 1, 0, 0 |
-                | v1,   0,  0 |         | 0, 1, 0 |
-            Q = |  0,  v2,  0 |,    R = | 0, 0, 1 |
-                |  0,   0, v3 |         | 0, 0, 0 |
-                                        | 0, 0, 0 |
-    """
 
     def __init__(self,
                  component_transition_matrices,
@@ -425,84 +387,36 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
     def emission_distribution(self, state, inputs=None):
         if inputs is None:
             inputs = jnp.array([0.])
-        # Use the exponential function transform the unconstrained rate
-        # to rate of the Poisson distribution
-        return Poisson(
-            log_rate=self.emission_matrix @ state + self.params['regression_weights'] @ inputs)
-
-    def _to_lgssm_params(self, params):
-        comp_cov = jsp.linalg.block_diag(*params['dynamics_covariances'].values())
-        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
-        spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
-        obs_cov = params['emission_covariance']
-        emission_input_weights = params['regression_weights']
-        input_dim = emission_input_weights.shape[-1]
-        return LGSSMParams(initial_mean=self.initial_mean,
-                           initial_covariance=self.initial_covariance,
-                           dynamics_matrix=self.dynamics_matrix,
-                           dynamics_input_weights=jnp.zeros((self.state_dim, input_dim)),
-                           dynamics_bias=self.dynamics_bias,
-                           dynamics_covariance=spars_cov,
-                           emission_matrix=self.emission_matrix,
-                           emission_input_weights=emission_input_weights,
-                           emission_bias=self.emission_bias,
-                           emission_covariance=obs_cov)
+        log_rate = self.emission_matrix @ state + self.params['regression_weights'] @ inputs
+        return Poisson(rate=self._emission_constrainer(log_rate))
 
     def forecast(self, key, observed_time_series, num_forecast_steps,
                  past_inputs=None, forecast_inputs=None):
-        """Forecast the time series"""
+        ts_means, ts_mean_covs, ts = super().forecast(
+            key, observed_time_series, num_forecast_steps, past_inputs, forecast_inputs
+            )
+        return ts_means, ts_means, ts
 
-        if forecast_inputs is None:
-            forecast_inputs = jnp.zeros((num_forecast_steps, 0))
-        weights = self.params['regression_weights']
-        comp_cov = jsp.linalg.block_diag(*self.params['dynamics_covariances'].values())
-        obs_cov = self.params['emission_covariance']
-        spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
-        spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
-        dim_obs = observed_time_series.shape[-1]
-        dim_comp = comp_cov.shape[-1]
+    def _to_ssm_params(self, params):
+        """Wrap the STS model into the form of the corresponding SSM model """
+        return EKFParams(initial_mean=jnp.zeros(state_dim),
+                         initial_covariance=jnp.eye(state_dim),
+                         dynamics_function=lambda z: random_rotation(state_dim, theta=jnp.pi/20) @ z,
+                         dynamics_covariance=0.001 * jnp.eye(state_dim),
+                         emission_mean_function=lambda z: jnp.exp(poisson_weights @ z),
+                         emission_var_function=lambda z: jnp.diag(jnp.exp(poisson_weights @ z)))
 
-        # Filtering the observed time series to initialize the forecast
-        lgssm_params = self._to_lgssm_params(self.params)
-        filtered_posterior = lgssm_filter(lgssm_params, observed_time_series, past_inputs)
-        filtered_mean = filtered_posterior.filtered_means
-        filtered_cov = filtered_posterior.filtered_covariances
+    def _ssm_filter(self, params, emissions, inputs):
+        """The filter of the corresponding SSM model"""
+        return cmgf(params=params, emissions=emissions, inputs=inputs, num_iter=2)
 
-        initial_mean = self.dynamics_matrix @ filtered_mean[-1]
-        initial_cov = self.dynamics_matrix @ filtered_cov[-1] @ self.dynamics_matrix.T + spars_cov
-        initial_state = MVN(initial_mean, initial_cov).sample(seed=key)
+    def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
+        """The posterior sampler of the corresponding SSM model"""
+        raise NotImplementedError
 
-        def _step(prev_params, args):
-            key, forecast_input = args
-            key1, key2 = jr.split(key)
-            prev_mean, prev_cov, prev_state = prev_params
-
-            marginal_mean = self.emission_matrix @ prev_mean + weights @ forecast_input
-            marginal_cov = self.emission_matrix @ prev_cov @ self.emission_matrix.T + obs_cov
-            obs = self.emission_matrix @ prev_state + weights @ forecast_input\
-                + MVN(jnp.zeros(dim_obs), obs_cov).sample(seed=key2)
-
-            next_mean = self.dynamics_matrix @ prev_mean
-            next_cov = self.dynamics_matrix @ prev_cov @ self.dynamics_matrix.T + spars_cov
-            next_state = self.dynamics_matrix @ prev_state\
-                + spars_matrix @ MVN(jnp.zeros(dim_comp), comp_cov).sample(seed=key1)
-
-            return (next_mean, next_cov, next_state), (marginal_mean, marginal_cov, obs)
-
-        # Initialize
-        keys = jr.split(key, num_forecast_steps)
-        initial_params = (initial_mean, initial_cov, initial_state)
-        _, (ts_means, ts_covs, ts) = lax.scan(_step, initial_params, (keys, forecast_inputs))
-
-        return ts_means, ts_covs, ts
-
-
-#iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, inputs=None)
-# cmgf_ekf_params = EKFParams(
-#     initial_mean = jnp.zeros(state_dim),
-#     initial_covariance = jnp.eye(state_dim),
-#     dynamics_function = lambda z: random_rotation(state_dim, theta=jnp.pi/20) @ z,
-#     dynamics_covariance = 0.001 * jnp.eye(state_dim),
-#     emission_mean_function = lambda z: jnp.exp(poisson_weights @ z),
-#     emission_var_function = lambda z: jnp.diag(jnp.exp(poisson_weights @ z))
-# )
+    def _emission_constrainer(self, emission):
+        """Transform the state into the possibly constrained space.
+        """
+        # Use the exponential function to transform the unconstrained rate
+        # to rate of the Poisson distribution
+        return jnp.exp(emission)
