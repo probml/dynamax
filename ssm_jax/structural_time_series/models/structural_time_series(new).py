@@ -141,16 +141,6 @@ class StructuralTimeSeries():
         sts_ssm = self.as_ssm()
         return sts_ssm.marginal_log_prob(observed_time_series, inputs)
 
-    def filter(self, observed_time_series, inputs=None):
-        sts_ssm = self.as_ssm()
-        means, covariances = sts_ssm.filter(observed_time_series, inputs)
-        return means
-
-    def smoother(self, observed_time_series, inputs=None):
-        sts_ssm = self.as_ssm()
-        means = sts_ssm.smoother(observed_time_series, inputs)
-        return means
-
     def posterior_sample(self, key, observed_time_series, sts_params, inputs=None):
         @jit
         def single_sample_poisson(sts_param):

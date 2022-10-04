@@ -23,8 +23,8 @@ from tensorflow_probability.substrates.jax.distributions import (
 from tqdm.auto import trange
 
 
-class StructuralTimeSeriesSSM(SSM):
-    """Formulate the structual time series(STS) model into a LinearGaussianSSM model,
+class _StructuralTimeSeriesSSM(SSM):
+    """Formulate the structual time series(STS) model into a LinearSSM model,
     which always have block-diagonal dynamics covariance matrix and fixed transition matrices.
     The covariance matrix of the latent dynamics model takes the form:
     R @ Q, where Q is a dense matrix (blockwise diagonal),
@@ -164,16 +164,6 @@ class StructuralTimeSeriesSSM(SSM):
         filtered_posterior = self._ssm_filter(params=ssm_params, emissions=emissions, inputs=inputs)
         return filtered_posterior.marginal_loglik
 
-    def filter(self, emissions, inputs=None):
-        lgssm_params = self._to_ssm_params(self.params)
-        filtered_posterior = lgssm_filter(lgssm_params, emissions, inputs)
-        return filtered_posterior.filtered_means, filtered_posterior.filtered_covariances
-
-    def smoother(self, emissions, inputs=None):
-        lgssm_params = self._to_ssm_params(self.params)
-        smoothed_posterior = self.ssm_smoother(lgssm_params, emissions, inputs)
-        return smoothed_posterior.smoothed_means, smoothed_posterior.smoothed_covariances
-
     def posterior_sample(self, key, observed_time_series, inputs=None):
         num_timesteps, dim_obs = observed_time_series.shape
         if inputs is None:
@@ -292,7 +282,7 @@ class StructuralTimeSeriesSSM(SSM):
         raise NotImplementedError
 
 
-class GaussianSSM(StructuralTimeSeriesSSM):
+class GaussianSSM(_StructuralTimeSeriesSSM):
 
     def __init__(self,
                  component_transition_matrices,
@@ -348,16 +338,6 @@ class GaussianSSM(StructuralTimeSeriesSSM):
                            emission_input_weights=emission_input_weights,
                            emission_bias=self.emission_bias,
                            emission_covariance=obs_cov)
-
-    def filter(self, emissions, inputs=None):
-        lgssm_params = self._to_lgssm_params(self.params)
-        filtered_posterior = lgssm_filter(lgssm_params, emissions, inputs)
-        return filtered_posterior.filtered_means, filtered_posterior.filtered_covariances
-
-    def smoother(self, emissions, inputs=None):
-        lgssm_params = self._to_lgssm_params(self.params)
-        smoothed_posterior = lgssm_smoother(lgssm_params, emissions, inputs)
-        return smoothed_posterior.smoothed_means, smoothed_posterior.smoothed_covariances
 
     def posterior_sample(self, key, observed_time_series, inputs=None):
         num_timesteps, dim_obs = observed_time_series.shape
@@ -461,7 +441,7 @@ class GaussianSSM(StructuralTimeSeriesSSM):
         return ts_means, ts_covs, ts
 
 
-class PoissonSSM(StructuralTimeSeriesSSM):
+class PoissonSSM(_StructuralTimeSeriesSSM):
     """Formulate the structual time series(STS) model into a LinearGaussianSSM model,
     which always have block-diagonal dynamics covariance matrix and fixed transition matrices.
     The covariance matrix of the dynamics model takes the form:
@@ -516,16 +496,6 @@ class PoissonSSM(StructuralTimeSeriesSSM):
                            emission_input_weights=emission_input_weights,
                            emission_bias=self.emission_bias,
                            emission_covariance=obs_cov)
-
-    def filter(self, emissions, inputs=None):
-        lgssm_params = self._to_lgssm_params(self.params)
-        filtered_posterior = lgssm_filter(lgssm_params, emissions, inputs)
-        return filtered_posterior.filtered_means, filtered_posterior.filtered_covariances
-
-    def smoother(self, emissions, inputs=None):
-        lgssm_params = self._to_lgssm_params(self.params)
-        smoothed_posterior = lgssm_smoother(lgssm_params, emissions, inputs)
-        return smoothed_posterior.smoothed_means, smoothed_posterior.smoothed_covariances
 
     def posterior_sample(self, key, observed_time_series, inputs=None):
         num_timesteps, dim_obs = observed_time_series.shape
