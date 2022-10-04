@@ -6,7 +6,7 @@ from ssm_jax.abstractions import SSM
 from ssm_jax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample, LGSSMParams
 from ssm_jax.parameters import ParameterProperties
 from ssm_jax.utils import PSDToRealBijector
-import  tensorflow_probability.substrates.jax as tfp
+import tensorflow_probability.substrates.jax as tfp
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
 tfd = tfp.distributions

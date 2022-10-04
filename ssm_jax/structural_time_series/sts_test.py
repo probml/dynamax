@@ -20,9 +20,11 @@ def test_sts_fit_hmc(key=jr.PRNGKey(0),
                      future_observations=co2_by_month[-num_forecast_steps:],
                      sample_size=100):
     # Define a STS model
-    trend = sts.LocalLinearTrend(observed_timeseries=co2_by_month_training_data)
-    seasonal = sts.Seasonal(num_seasons=12, observed_timeseries=co2_by_month_training_data)
-    model = sts.StructuralTimeSeries([trend, seasonal], observed_timeseries=co2_by_month_training_data)
+    trend = sts.LocalLinearTrend(observed_time_series=co2_by_month_training_data)
+    seasonal = sts.Seasonal(num_seasons=12, observed_time_series=co2_by_month_training_data)
+    model = sts.StructuralTimeSeries([trend, seasonal],
+                                     observation_distribution_family='Gaussian',
+                                     observed_time_series=co2_by_month_training_data)
 
     # Fit the model using HMC
     parameter_samples = model.fit_hmc(key, sample_size, observed_time_series,

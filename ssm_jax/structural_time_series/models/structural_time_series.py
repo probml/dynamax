@@ -6,7 +6,7 @@ import jax.scipy as jsp
 from jax import vmap, jit
 from ssm_jax.distributions import InverseWishart as IW
 from ssm_jax.distributions import MatrixNormalPrecision as MN
-from ssm_jax.structural_time_series.models.structural_time_series_ssm import StructuralTimeSeriesSSM
+from ssm_jax.structural_time_series.models.structural_time_series_ssm import GaussianSSM, PoissonSSM
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
 
@@ -21,7 +21,7 @@ class StructuralTimeSeries():
     a time series observation y_t to
     a vector of latent state z_t:
 
-    y_t     = H_t @ z_t + D_t @ u_t + N(0, R_t)
+    y_t     =
     z_{t+1} = F_t @ z_t + N(0, Q_t)
 
     H_t: fixed emission matrix
@@ -36,57 +36,69 @@ class StructuralTimeSeries():
         components: list of components
         observation_covariance:
         observation_covariance_prior: InverseWishart prior for the observation covariance matrix
-        observed_timeseries: has shape (batch_size, timesteps, dim_observed_timeseries)
+        observed_time_series: has shape (batch_size, timesteps, dim_observed_timeseries)
         name (str): name of the STS model
     """
 
     def __init__(self,
                  components,
-                 observed_timeseries,
+                 observed_time_series,
+                 observation_distribution_family='Gaussian',
                  observation_covariance=None,
                  observation_covariance_prior=None,
                  name='StructuralTimeSeries'):
 
-        _dim = observed_timeseries.shape
-        self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
-        obs_scale = jnp.std(jnp.abs(jnp.diff(observed_timeseries, axis=0)), axis=0).mean()
+        assert observation_distribution_family in ['Gaussian', 'Poisson']
+
+        self.dim_obs = 1 if len(observed_time_series.shape) == 1 else observed_time_series.shape[-1]
+        obs_scale = jnp.std(jnp.abs(jnp.diff(observed_time_series, axis=0)), axis=0).mean()
+        self.obs_family = observation_distribution_family
         self.name = name
+
+        if self.obs_family == 'Gaussian':
+            self.observation_covariance_prior = _set_prior(
+                observation_covariance_prior,
+                IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs))
+                )
+            if observation_covariance is not None:
+                self.observation_covariance = observation_covariance
+            else:
+                self.observation_covariance = 1e-4*obs_scale**2*jnp.eye(self.dim_obs)
 
         # Save parameters of the STS model:
         self.initial_state_priors = OrderedDict()
+
         self.transition_matrices = OrderedDict()
         self.transition_covariances = OrderedDict()
         self.transition_covariance_priors = OrderedDict()
         self.cov_spars_matrices = OrderedDict()
+
         self.observation_matrices = OrderedDict()
-        if observation_covariance is not None:
-            self.observation_covariance = observation_covariance
-        else:
-            self.observation_covariance = 1e-4*obs_scale**2*jnp.eye(self.dim_obs)
-        self.observation_covariance_prior = _set_prior(
-            observation_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
+
         self.observation_regression_weights = None
         self.observation_regression_weights_prior = None
 
         # Aggregate components
         for c in components:
-            if isinstance(c, LinearRegression):
-                self.observation_regression_weights = c.weights_prior.mode()
-                self.observation_regression_weights_prior = c.weights_prior
-            elif isinstance(c, STSLatentComponent):
-                self.transition_matrices.update(c.transition_matrix)
-                self.observation_matrices.update(c.observation_matrix)
+            if isinstance(c, STSLatentComponent):
                 self.initial_state_priors.update(c.initial_state_prior)
+
+                self.transition_matrices.update(c.transition_matrix)
                 self.transition_covariances.update(c.transition_covariance)
                 self.transition_covariance_priors.update(c.transition_covariance_prior)
                 self.cov_spars_matrices.update(c.cov_spars_matrix)
+
+                self.observation_matrices.update(c.observation_matrix)
+
+            elif isinstance(c, LinearRegression):
+                self.observation_regression_weights = c.weights_prior.mode()
+                self.observation_regression_weights_prior = c.weights_prior
 
     def as_ssm(self):
         """Formulate the STS model as a linear Gaussian state space model:
 
         p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
-        p(y_t | z_t) = N(y_t | H_t z_t, R_t)
+        p(y_t | z_t) =
         p(z_1) = N(z_1 | mu_{1|0}, Sigma_{1|0})
 
         F_t, H_t are fixed known matrices,
@@ -94,16 +106,28 @@ class StructuralTimeSeries():
         the regression coefficient matrix B is also unknown random matrix
         if the STS model includes an regression component
         """
-        sts_ssm = StructuralTimeSeriesSSM(self.transition_matrices,
-                                          self.observation_matrices,
-                                          self.initial_state_priors,
-                                          self.transition_covariances,
-                                          self.transition_covariance_priors,
-                                          self.observation_covariance,
-                                          self.observation_covariance_prior,
-                                          self.cov_spars_matrices,
-                                          self.observation_regression_weights,
-                                          self.observation_regression_weights_prior)
+        if self.obs_family == 'Gaussian':
+            sts_ssm = GaussianSSM(self.transition_matrices,
+                                  self.observation_matrices,
+                                  self.initial_state_priors,
+                                  self.transition_covariances,
+                                  self.transition_covariance_priors,
+                                  self.observation_covariance,
+                                  self.observation_covariance_prior,
+                                  self.cov_spars_matrices,
+                                  self.observation_regression_weights,
+                                  self.observation_regression_weights_prior
+                                  )
+        elif self.obs_family == 'Poisson':
+            sts_ssm = PoissonSSM(self.transition_matrices,
+                                 self.observation_matrices,
+                                 self.initial_state_priors,
+                                 self.transition_covariances,
+                                 self.transition_covariance_priors,
+                                 self.cov_spars_matrices,
+                                 self.observation_regression_weights,
+                                 self.observation_regression_weights_prior
+                                 )
         return sts_ssm
 
     def sample(self, key, num_timesteps, inputs=None):
@@ -117,32 +141,42 @@ class StructuralTimeSeries():
         sts_ssm = self.as_ssm()
         return sts_ssm.marginal_log_prob(observed_time_series, inputs)
 
-    def filter(self, observed_time_series, inputs=None):
-        sts_ssm = self.as_ssm()
-        means, covariances = sts_ssm.filter(observed_time_series, inputs)
-        return means
-
-    def smoother(self, observed_time_series, inputs=None):
-        sts_ssm = self.as_ssm()
-        means = sts_ssm.smoother(observed_time_series, inputs)
-        return means
-
     def posterior_sample(self, key, observed_time_series, sts_params, inputs=None):
         @jit
-        def _single_sample(sts_param):
-            sts_ssm = StructuralTimeSeriesSSM(self.transition_matrices,
-                                              self.observation_matrices,
-                                              self.initial_state_priors,
-                                              sts_param['dynamics_covariances'],
-                                              self.transition_covariance_priors,
-                                              sts_param['emission_covariance'],
-                                              self.observation_covariance_prior,
-                                              self.cov_spars_matrices,
-                                              sts_param['regression_weights'],
-                                              self.observation_regression_weights_prior)
+        def single_sample_poisson(sts_param):
+            sts_ssm = PoissonSSM(self.transition_matrices,
+                                 self.observation_matrices,
+                                 self.initial_state_priors,
+                                 sts_param['dynamics_covariances'],
+                                 self.transition_covariance_priors,
+                                 self.cov_spars_matrices,
+                                 sts_param['regression_weights'],
+                                 self.observation_regression_weights_prior
+                                 )
             ts_means, ts = sts_ssm.posterior_sample(key, observed_time_series, inputs)
             return [ts_means, ts]
-        samples = vmap(_single_sample)(sts_params)
+
+        @jit
+        def single_sample_gaussian(sts_param):
+            sts_ssm = GaussianSSM(self.transition_matrices,
+                                  self.observation_matrices,
+                                  self.initial_state_priors,
+                                  sts_param['dynamics_covariances'],
+                                  self.transition_covariance_priors,
+                                  sts_param['emission_covariance'],
+                                  self.observation_covariance_prior,
+                                  self.cov_spars_matrices,
+                                  sts_param['regression_weights'],
+                                  self.observation_regression_weights_prior
+                                  )
+            ts_means, ts = sts_ssm.posterior_sample(key, observed_time_series, inputs)
+            return [ts_means, ts]
+
+        if self.obs_family == 'Gaussian':
+            samples = vmap(single_sample_gaussian)(sts_params)
+        elif self.obs_family == 'Poisson':
+            samples = vmap(single_sample_poisson)(sts_params)
+
         return {'means': samples[0], 'observations': samples[1]}
 
     def fit_hmc(self, key, sample_size, observed_time_series, inputs=None,
@@ -151,8 +185,8 @@ class StructuralTimeSeries():
 
         Parameters of the STS model includes:
             covariance matrix of each component,
-            covariance matrix of observation,
             regression coefficient matrix (if the model has inputs and a regression component)
+            covariance matrix of observations (if observations follow Gaussian distribution)
         """
         sts_ssm = self.as_ssm()
         param_samps = sts_ssm.fit_hmc(key, sample_size, observed_time_series, inputs,
@@ -161,25 +195,44 @@ class StructuralTimeSeries():
 
     def forecast(self, key, observed_time_series, sts_params, num_forecast_steps,
                  past_inputs=None, forecast_inputs=None):
-        # Set the new initial_state_prior to be at the last observation
         @jit
-        def _single_sample(sts_param):
-            sts_ssm = StructuralTimeSeriesSSM(self.transition_matrices,
-                                              self.observation_matrices,
-                                              self.initial_state_priors,
-                                              sts_param['dynamics_covariances'],
-                                              self.transition_covariance_priors,
-                                              sts_param['emission_covariance'],
-                                              self.observation_covariance_prior,
-                                              self.cov_spars_matrices,
-                                              sts_param['regression_weights'],
-                                              self.observation_regression_weights_prior)
+        def single_forecast_gaussian(sts_param):
+            sts_ssm = GaussianSSM(self.transition_matrices,
+                                  self.observation_matrices,
+                                  self.initial_state_priors,
+                                  sts_param['dynamics_covariances'],
+                                  self.transition_covariance_priors,
+                                  sts_param['emission_covariance'],
+                                  self.observation_covariance_prior,
+                                  self.cov_spars_matrices,
+                                  sts_param['regression_weights'],
+                                  self.observation_regression_weights_prior
+                                  )
             means, covs, ts = sts_ssm.forecast(key, observed_time_series, num_forecast_steps,
                                                past_inputs, forecast_inputs)
             return [means, covs, ts]
 
-        samples = vmap(_single_sample)(sts_params)
-        return {'means': samples[0], 'covariances': samples[1], 'observations': samples[2]}
+        @jit
+        def single_forecast_poisson(sts_param):
+            sts_ssm = PoissonSSM(self.transition_matrices,
+                                 self.observation_matrices,
+                                 self.initial_state_priors,
+                                 sts_param['dynamics_covariances'],
+                                 self.transition_covariance_priors,
+                                 self.cov_spars_matrices,
+                                 sts_param['regression_weights'],
+                                 self.observation_regression_weights_prior
+                                 )
+            means, covs, ts = sts_ssm.forecast(key, observed_time_series, num_forecast_steps,
+                                               past_inputs, forecast_inputs)
+            return [means, covs, ts]
+
+        if self.obs_family == 'Gaussian':
+            forecasts = vmap(single_forecast_gaussian)(sts_params)
+        elif self.obs_family == 'Poisson':
+            forecasts = vmap(single_forecast_poisson)(sts_params)
+
+        return {'means': forecasts[0], 'covariances': forecasts[1], 'observations': forecasts[2]}
 
 
 ######################################
@@ -245,14 +298,14 @@ class LocalLinearTrend(STSLatentComponent):
                  slope_covariance_prior=None,
                  initial_level_prior=None,
                  initial_slope_prior=None,
-                 observed_timeseries=None,
+                 observed_time_series=None,
                  dim_observed_timeseries=1,
                  name='LocalLinearTrend'):
-        if observed_timeseries is not None:
-            _dim = observed_timeseries.shape
+        if observed_time_series is not None:
+            _dim = observed_time_series.shape
             self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
-            obs_scale = jnp.std(jnp.abs(jnp.diff(observed_timeseries, axis=0)), axis=0).mean()
-            obs_init = observed_timeseries[0].mean()
+            obs_scale = jnp.std(jnp.abs(jnp.diff(observed_time_series, axis=0)), axis=0).mean()
+            obs_init = observed_time_series[0].mean()
         else:
             self.dim_obs = dim_observed_timeseries
             obs_scale = 1.
@@ -359,13 +412,13 @@ class Seasonal(STSLatentComponent):
                  num_steps_per_season=1,
                  drift_covariance_prior=None,
                  initial_effect_prior=None,
-                 observed_timeseries=None,
+                 observed_time_series=None,
                  dim_observed_timeseries=1,
                  name='Seasonal'):
-        if observed_timeseries is not None:
-            _dim = observed_timeseries.shape
+        if observed_time_series is not None:
+            _dim = observed_time_series.shape
             self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
-            obs_scale = jnp.std(jnp.abs(jnp.diff(observed_timeseries, axis=0)), axis=0).mean()
+            obs_scale = jnp.std(jnp.abs(jnp.diff(observed_time_series, axis=0)), axis=0).mean()
         else:
             self.dim_obs = dim_observed_timeseries
             obs_scale = 1.
