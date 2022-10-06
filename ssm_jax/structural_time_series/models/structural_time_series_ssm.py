@@ -410,14 +410,14 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
         comp_cov = jsp.linalg.block_diag(*params['dynamics_covariances'].values())
         spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
         spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
-        emission_mean = lambda z: self._emission_constrainer(self.emission_matrix @ z)
-        emission_var = lambda z: jnp.diag(self._emission_constrainer(self.emission_matrix @ z))
         return EKFParams(initial_mean=self.initial_mean,
                          initial_covariance=self.initial_covariance,
                          dynamics_function=lambda z: self.dynamics_matrix @ z,
                          dynamics_covariance=spars_cov,
-                         emission_mean_function=emission_mean,
-                         emission_var_function=emission_var)
+                         emission_mean_function=
+                         lambda z: self._emission_constrainer(self.emission_matrix @ z),
+                         emission_cov_function=
+                         lambda z: jnp.diag(self._emission_constrainer(self.emission_matrix @ z)))
 
     def _ssm_filter(self, params, emissions, inputs):
         """The filter of the corresponding SSM model"""
@@ -425,7 +425,12 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
 
     def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
         """The posterior sampler of the corresponding SSM model"""
-        raise NotImplementedError
+        # TODO:
+        # Implement the real posteriror sample.
+        # Currently it simply returns the filtered means.
+        print('Currently the posterior_sample for STS model with Poisson likelihood\
+               simply returns the filtered means.')
+        return self._ssm_filter(ssm_params, observed_time_series, inputs)
 
     def _emission_constrainer(self, emission):
         """Transform the state into the possibly constrained space.

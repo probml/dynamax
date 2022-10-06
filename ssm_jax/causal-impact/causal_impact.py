@@ -59,9 +59,14 @@ class CausalImpact():
         print(msg)
 
 
-def causal_impact(observed_timeseries, intervention_time,
-                  inputs=None, sts_model=None, confidence_level=0.95,
-                  key=jr.PRNGKey(0), sample_size=200):
+def causal_impact(observed_timeseries,
+                  intervention_time,
+                  distribution_family,
+                  inputs=None,
+                  sts_model=None,
+                  confidence_level=0.95,
+                  key=jr.PRNGKey(0),
+                  sample_size=200):
     """Inferring the causal impact of an intervention on a time series,
     given the observed timeseries before and after the intervention.
 
@@ -71,6 +76,10 @@ def causal_impact(observed_timeseries, intervention_time,
     Returns:
         An object of the CausalImpact class
     """
+    assert distribution_family in ['Gaussian', 'Poisson']
+    if sts_model is not None:
+        assert distribution_family == sts_model.obs_family
+
     key1, key2, key3 = jr.split(key, 3)
     num_timesteps, dim_obs = observed_timeseries.shape
 
@@ -89,11 +98,13 @@ def causal_impact(observed_timeseries, intervention_time,
         local_linear_trend = sts.LocalLinearTrend(observed_timeseries=observed_timeseries)
         if inputs is None:
             sts_model = sts.StructuralTimeSeries(components=[local_linear_trend],
-                                                 observed_timeseries=observed_timeseries)
+                                                 observed_timeseries=observed_timeseries,
+                                                 observation_distribution_family=distribution_family)
         else:
             linear_regression = sts.LinearRegression(weights_shape=(dim_obs, dim_inputs))
             sts_model = sts.StructuralTimeSeries(components=[local_linear_trend, linear_regression],
-                                                 observed_timeseries=observed_timeseries)
+                                                 observed_timeseries=observed_timeseries,
+                                                 observation_distribution_family=distribution_family)
 
     # Fit the STS model, sample from the past and forecast.
     if inputs is not None:
