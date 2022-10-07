@@ -32,7 +32,7 @@ def test_sample_and_fit(cls, kwargs, covariates):
     params, param_props = hmm.random_initialization(key1)
     states, emissions = hmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS, **covariates)
     fitted_params, lps = hmm.fit_em(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_iters=10)
-    assert monotonically_increasing(lps, atol=1e-3)
+    assert monotonically_increasing(lps, atol=1e-3, rtol=1e-3)
     fitted_params, lps = hmm.fit_sgd(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_epochs=10)
 
 

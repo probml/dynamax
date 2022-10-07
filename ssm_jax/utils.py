@@ -40,8 +40,9 @@ def pad_sequences(observations, valid_lens, pad_val=0):
     return dataset
 
 
-def monotonically_increasing(x, atol=0):
-    return jnp.all(jnp.diff(x) >= -atol)
+def monotonically_increasing(x, atol=0, rtol=0):
+    thresh = atol + rtol*jnp.abs(x[:-1])
+    return jnp.all(jnp.diff(x) >= -thresh)
 
 
 def add_batch_dim(pytree):
