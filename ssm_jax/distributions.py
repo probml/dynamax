@@ -344,6 +344,11 @@ def iw_posterior_update(iw_prior, sufficient_stats):
 
 class NormalInverseGamma(tfd.JointDistributionSequential):
 
+    def __new__(cls, *args, **kwargs):
+        # Patch for tfp 0.18.0. 
+        # See https://github.com/tensorflow/probability/issues/1617
+        return tfd.Distribution.__new__(cls)
+
     def __init__(self, loc, mean_concentration, concentration, scale):
         """
         A normal inverse gamma (NIG) distribution.
