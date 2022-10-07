@@ -36,9 +36,9 @@ pip install -U 'black[jupyter]'
 
 Related libraries:
 
-- [murphy-lab/JSL](https://github.com/probml/JSL) 
-- [linderman-lab/ssm-jax](https://github.com/lindermanlab/ssm-jax)
-- [linderman-lab/ssm](https://github.com/lindermanlab/ssm) (numpy)
-- [sarkka-lab/parallel nonlinear smoothers](https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers) 
-- [Zheng Zhao's chirpgp](https://github.com/spdes/chirpgp)
-- 
+- [murphy-lab/pgm-jax](https://github.com/probml/pgm-jax): Factor graph lubrary
+- [murphy-lab/JSL](https://github.com/probml/JSL) : Deprecated library for SSMs
+- [linderman-lab/ssm-jax](https://github.com/lindermanlab/ssm-jax):  Deprecated library for SSMs
+- [linderman-lab/ssm](https://github.com/lindermanlab/ssm) (numpy):  Deprecated library for SSMs
+- [sarkka-lab/parallel nonlinear smoothers](https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers) : JAX code for nonlinear smoothers usign parallel scan
+
