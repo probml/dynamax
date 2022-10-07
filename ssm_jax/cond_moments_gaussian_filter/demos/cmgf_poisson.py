@@ -2,9 +2,10 @@
 # using Conditional-Moments Gaussian Filter (CMGF).
 # Authors: Peter G. Chang (@petergchang) and Collin Schlager (@schlagercollin)
 
+import warnings
+
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from tensorflow_probability.substrates.jax.distributions import Poisson as Pois
 import jax.numpy as jnp
@@ -15,24 +16,16 @@ from jax.tree_util import tree_map
 from ssm_jax.cond_moments_gaussian_filter.containers import EKFParams
 from ssm_jax.cond_moments_gaussian_filter.inference import conditional_moments_gaussian_smoother
 
-def plot_dynamics_2d(dynamics_matrix, bias_vector, mins=(-40,-40), maxs=(40,40), npts=20, axis=None, **kwargs):
-    assert dynamics_matrix.shape == (2, 2), "Must pass a 2 x 2 dynamics matrix to visualize."
-    assert len(bias_vector) == 2, "Bias vector must have length 2."
-
-    x_grid, y_grid = jnp.meshgrid(jnp.linspace(mins[0], maxs[0], npts), jnp.linspace(mins[1], maxs[1], npts))
-    xy_grid = jnp.column_stack((x_grid.ravel(), y_grid.ravel(), jnp.zeros((npts**2,0))))
-    dx = xy_grid.dot(dynamics_matrix.T) + bias_vector - xy_grid
-
-    if axis is not None:
-        q = axis.quiver(x_grid, y_grid, dx[:, 0], dx[:, 1], **kwargs)
-    else:
-        q = plt.quiver(x_grid, y_grid, dx[:, 0], dx[:, 1], **kwargs)
-
-    plt.gca().set_aspect(1.0)
-    return q
-
 
 def plot_states(states, num_steps, title, ax):
+    """Plot latent states.
+
+    Args:
+        states (DeviceArray): Time series data of latent states to plot.
+        num_steps (int): Number of steps of states to plot.
+        title (str): Title of the plot.
+        ax (axis): Matplotlib axis.
+    """    
     latent_dim = states.shape[-1]
     lim = abs(states).max()
     for d in range(latent_dim):
@@ -45,40 +38,68 @@ def plot_states(states, num_steps, title, ax):
 
 
 def plot_emissions_poisson(states, data):
+    """Plot batches of samples generated via Poisson likelihood.
+
+    Args:
+        states (DeviceArray): Latent states.
+        data (DeviceArray): Observations.
+    """    
     latent_dim = states.shape[-1]
     emissions_dim = data.shape[-1]
     num_steps = data.shape[0]
 
-    plt.figure(figsize=(8, 6))
-    gs = GridSpec(2, 1, height_ratios=(1, emissions_dim / latent_dim))
+    fig, axes = plt.subplots(
+        nrows=2, ncols=1,
+        gridspec_kw={'height_ratios': [1, emissions_dim / latent_dim]}
+    )
 
     # Plot the continuous latent states
     lim = abs(states).max()
-    plt.subplot(gs[0])
     for d in range(latent_dim):
-        plt.plot(states[:, d] + lim * d, "-")
-    plt.yticks(jnp.arange(latent_dim) * lim, ["$z_{}$".format(d + 1) for d in range(latent_dim)])
-    plt.xticks([])
-    plt.xlim(0, num_steps)
-    plt.title("Sampled Latent States")
+        axes[0].plot(states[:, d] + lim * d, "-")
+    axes[0].set_yticks(jnp.arange(latent_dim) * lim, ["$z_{}$".format(d + 1) for d in range(latent_dim)])
+    axes[0].set_xticks([])
+    axes[0].set_xlim(0, num_steps)
+    axes[0].set_title("Sampled Latent States")
 
     lim = abs(data).max()
-    plt.subplot(gs[1])
-    plt.imshow(data.T, aspect="auto", interpolation="none")
-    plt.xlabel("time")
-    plt.xlim(0, num_steps)
-    plt.yticks(ticks=jnp.arange(emissions_dim))
-    plt.ylabel("Emission dimension")
-
-    plt.title("Sampled Emissions (Counts / Time Bin)")
-    plt.tight_layout()
-
-    plt.colorbar()
-    plt.show()
+    im = axes[1].imshow(data.T, aspect="auto", interpolation="none")
+    axes[1].set_xlabel("time")
+    axes[1].set_xlim(0, num_steps)
+    axes[1].set_yticks(ticks=jnp.arange(emissions_dim))
+    axes[1].set_ylabel("Emission dimension")
+    axes[1].set_title("Sampled Emissions (Counts / Time Bin)")
+    plt.colorbar(im, ax=axes[1])
+    return fig
 
 
 def compare_dynamics(Ex, states, data, dynamics_weights, dynamics_bias):
-    fig, axs = plt.subplots(1, 2, figsize=(8, 4))
+    """Compare dynamics of states between posterior and ground truth values.
+
+    Args:
+        Ex (DeviceArray): Posterior means of latent states.
+        states (DeviceArray): Ground truth of latent states.
+        data (DeviceArray): Observations.
+        dynamics_weights (DeviceArray): Dynamics weights.
+        dynamics_bias (DeviceArray): Dynamics bias.
+    """    
+    def plot_dynamics_2d(dynamics_matrix, bias_vector, mins=(-40,-40), maxs=(40,40), npts=20, axis=None, **kwargs):
+        assert dynamics_matrix.shape == (2, 2), "Must pass a 2 x 2 dynamics matrix to visualize."
+        assert len(bias_vector) == 2, "Bias vector must have length 2."
+
+        x_grid, y_grid = jnp.meshgrid(jnp.linspace(mins[0], maxs[0], npts), jnp.linspace(mins[1], maxs[1], npts))
+        xy_grid = jnp.column_stack((x_grid.ravel(), y_grid.ravel(), jnp.zeros((npts**2,0))))
+        dx = xy_grid.dot(dynamics_matrix.T) + bias_vector - xy_grid
+
+        if axis is not None:
+            q = axis.quiver(x_grid, y_grid, dx[:, 0], dx[:, 1], **kwargs)
+        else:
+            q = plt.quiver(x_grid, y_grid, dx[:, 0], dx[:, 1], **kwargs)
+
+        plt.gca().set_aspect(1.0)
+        return q
+
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
 
     q = plot_dynamics_2d(
         dynamics_weights,
@@ -86,13 +107,13 @@ def compare_dynamics(Ex, states, data, dynamics_weights, dynamics_bias):
         mins=states.min(axis=0),
         maxs=states.max(axis=0),
         color="blue",
-        axis=axs[0],
+        axis=axes[0],
     )
-    axs[0].plot(states[:, 0], states[:, 1], lw=2)
-    axs[0].plot(states[0, 0], states[0, 1], "*r", markersize=10, label="$z_{init}$")
-    axs[0].set_xlabel("$z_1$")
-    axs[0].set_ylabel("$z_2$")
-    axs[0].set_title("True Latent States & Dynamics")
+    axes[0].plot(states[:, 0], states[:, 1], lw=2)
+    axes[0].plot(states[0, 0], states[0, 1], "*r", markersize=10, label="$z_{init}$")
+    axes[0].set_xlabel("$z_1$")
+    axes[0].set_ylabel("$z_2$")
+    axes[0].set_title("True Latent States & Dynamics")
 
     q = plot_dynamics_2d(
         dynamics_weights,
@@ -100,40 +121,60 @@ def compare_dynamics(Ex, states, data, dynamics_weights, dynamics_bias):
         mins=Ex.min(axis=0),
         maxs=Ex.max(axis=0),
         color="red",
-        axis=axs[1],
+        axis=axes[1],
     )
 
-    axs[1].plot(Ex[:, 0], Ex[:, 1], lw=2)
-    axs[1].plot(Ex[0, 0], Ex[0, 1], "*r", markersize=10, label="$z_{init}$")
-    axs[1].set_xlabel("$z_1$")
-    axs[1].set_ylabel("$z_2$")
-    axs[1].set_title("Inferred Latent States & Dynamics")
+    axes[1].plot(Ex[:, 0], Ex[:, 1], lw=2)
+    axes[1].plot(Ex[0, 0], Ex[0, 1], "*r", markersize=10, label="$z_{init}$")
+    axes[1].set_xlabel("$z_1$")
+    axes[1].set_ylabel("$z_2$")
+    axes[1].set_title("Inferred Latent States & Dynamics")
     plt.tight_layout()
+    return fig
 
 
-def compare_smoothened_predictions(Ey, Ey_true, Covy, data):
+def compare_smoothed_predictions(Ey, Ey_true, Covy, data):
+    """Compare smoothed predictions between posterior and ground truth values.
+
+    Args:
+        Ey (DeviceArray): Predicted observations using smoothed means.
+        Ey_true (DeviceArray): Predicted observations using ground truth latent states.
+        Covy (DeviceArray): Emission covariance.
+        data (DeviceArray): Ground truth observations.
+    """    
     data_dim = data.shape[-1]
 
-    plt.figure(figsize=(15, 6))
-    plt.plot(Ey_true + 10 * jnp.arange(data_dim))
-    plt.plot(Ey + 10 * jnp.arange(data_dim), "--k")
+    fig, ax = plt.subplots(figsize=(15, 6))
+    ax.plot(Ey_true + 10 * jnp.arange(data_dim))
+    ax.plot(Ey + 10 * jnp.arange(data_dim), "--k")
     for i in range(data_dim):
-        plt.fill_between(
+        ax.fill_between(
             jnp.arange(len(data)),
             10 * i + Ey[:, i] - 2 * jnp.sqrt(Covy[:, i, i]),
             10 * i + Ey[:, i] + 2 * jnp.sqrt(Covy[:, i, i]),
             color="k",
             alpha=0.25,
         )
-    plt.xlabel("time")
-    plt.ylabel("data and predictions (for each neuron)")
+    ax.set_xlabel("time")
+    ax.set_ylabel("data and predictions (for each neuron)")
 
-    plt.plot([0], "--k", label="Predicted")  # dummy trace for legend
-    plt.plot([0], "-k", label="True")
-    plt.legend(loc="upper right")
+    ax.plot([0], "--k", label="Predicted")  # dummy trace for legend
+    ax.plot([0], "-k", label="True")
+    ax.legend(loc="upper right")
+    return fig
 
 
 def random_rotation(dim, key=0, theta=None):
+    """Compute the weight of dynamics that corresponds to a random rotation of theta.
+
+    Args:
+        dim (int): Dimension of states that undergo rotation.
+        key (int, optional): Initial PRNG seed for jax.random. Defaults to 0.
+        theta (_type_, optional): Angle of rotation. Defaults to None.
+
+    Returns:
+        w (DeviceArray): Dynamics weight of random rotation.
+    """    
     if isinstance(key, int):
         key = jr.PRNGKey(key)
     
@@ -150,10 +191,25 @@ def random_rotation(dim, key=0, theta=None):
     out = jnp.eye(dim)
     out = out.at[:2, :2].set(rot)
     q = jnp.linalg.qr(jr.uniform(key2, shape=(dim, dim)))[0]
-    return q.dot(out).dot(q.T)
+    w = q.dot(out).dot(q.T)
+    return w
 
 
 def sample_poisson(params, poisson_weights, num_steps, num_trials, key=0):
+    """Sample states and emissions using Poisson likelihood. The states are
+    evolved according to the dynamics specified in params.
+
+    Args:
+        params (CMGFParams): CMGFParams object.
+        poisson_weights (DeviceArray): Poisson weights.
+        num_steps (int): Number of states/emissions to sample.
+        num_trials (int): Number of batches to sample.
+        key (int, optional): Initial PRNG seed for jax.random. Defaults to 0.
+
+    Returns:
+        states (DeviceArray): Sampled states.
+        emissions (DeviceArray): Observations using Poisson likelihood on sampled states.
+    """    
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -206,24 +262,34 @@ def main():
     num_steps, num_trials = 200, 3
     all_states, all_emissions = sample_poisson(cmgf_ekf_params, poisson_weights, num_steps, num_trials)
 
+    figs = {}
     # Plot batches of samples generated
-    plot_emissions_poisson(all_states[0], all_emissions[0])
+    figs['samples'] = plot_emissions_poisson(all_states[0], all_emissions[0])
 
     # Perform CMGF-EKF-Smoother Inference
     posts = vmap(conditional_moments_gaussian_smoother, (None, 0))(cmgf_ekf_params, all_emissions)
     fig, ax = plt.subplots(figsize=(10, 2.5))
     plot_states(posts.smoothed_means[0], num_steps, "CMGF-EKF-Inferred Latent States", ax)
-    for i in range(num_trials):
-        compare_dynamics(posts.smoothed_means[i], all_states[i], all_emissions[i],
-                        random_rotation(state_dim, theta=jnp.pi/20), jnp.zeros(state_dim))
+    figs['cmgf_latent_states'] = fig
 
-        compare_smoothened_predictions(
+    for i in range(num_trials):
+        fig_dyn = compare_dynamics(posts.smoothed_means[i], all_states[i], all_emissions[i],
+                               random_rotation(state_dim, theta=jnp.pi/20), jnp.zeros(state_dim))
+        figs[f'dynamics_comp_trial_{i}'] = fig_dyn
+
+        fig_pred = compare_smoothed_predictions(
             posts.smoothed_means[i] @ poisson_weights.T,
             all_states[i] @ poisson_weights.T,
             poisson_weights @ posts.smoothed_covariances[i] @ poisson_weights.T,
             all_emissions[i],
         )
+        figs['pred_comp_trial_{i}'] = fig_pred
 
+    return figs
 
 if __name__ == '__main__':
-    main()
+    with warnings.catch_warnings():
+        # Ignore tfp warnings
+        warnings.simplefilter("ignore")
+        figures = main()
+        plt.show()
