@@ -185,7 +185,7 @@ class _StructuralTimeSeriesSSM(SSM):
                 warmup_steps=500,
                 num_integration_steps=30):
 
-        def logprob(trainable_unc_params):
+        def unnorm_log_pos(trainable_unc_params):
             params = from_unconstrained(trainable_unc_params, fixed_params, self.param_props)
             log_det_jac = log_det_jac_constrain(trainable_unc_params, fixed_params, self.param_props)
             log_pri = self.log_prior(params) + log_det_jac
@@ -196,7 +196,7 @@ class _StructuralTimeSeriesSSM(SSM):
         # Initialize the HMC sampler using window_adaptations
         hmc_initial_position, fixed_params = to_unconstrained(self.params, self.param_props)
         warmup = blackjax.window_adaptation(blackjax.hmc,
-                                            logprob,
+                                            unnorm_log_pos,
                                             num_steps=warmup_steps,
                                             num_integration_steps=num_integration_steps)
         hmc_initial_state, hmc_kernel, _ = warmup.run(key, hmc_initial_position)
