@@ -1,25 +1,30 @@
 import blackjax
 from collections import OrderedDict
-from jax import jit, lax
+from jax import jit, lax, vmap
 import jax.numpy as jnp
 import jax.random as jr
 import jax.scipy as jsp
 from jax.tree_util import tree_map
+from jaxopt import LBFGS
 from ssm_jax.abstractions import SSM
 from ssm_jax.cond_moments_gaussian_filter.containers import EKFParams
 from ssm_jax.cond_moments_gaussian_filter.inference import (
     iterated_conditional_moments_gaussian_filter as cmgf,)
 from ssm_jax.linear_gaussian_ssm.inference import (
-    LGSSMParams, lgssm_filter, lgssm_posterior_sample
-    )
+    LGSSMParams,
+    lgssm_filter,
+    lgssm_posterior_sample)
 from ssm_jax.parameters import (
-    to_unconstrained, from_unconstrained, log_det_jac_constrain, ParameterProperties
-    )
+    to_unconstrained,
+    from_unconstrained,
+    log_det_jac_constrain,
+    ParameterProperties)
 from ssm_jax.utils import PSDToRealBijector
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from tensorflow_probability.substrates.jax.distributions import (
-    MultivariateNormalFullCovariance as MVN, Poisson
-    )
+    MultivariateNormalFullCovariance as MVN,
+    MultivariateNormalDiag as MVNDiag,
+    Poisson)
 from tqdm.auto import trange
 
 
@@ -218,6 +223,59 @@ class _StructuralTimeSeriesSSM(SSM):
         param_samples = tree_map(lambda x, *y: jnp.array([x] + [i for i in y]),
                                  param_samples[0], *param_samples[1:])
         return param_samples
+
+    def fit_vi(self, key, emissions, inputs=None, fixed_advi_sample_size=100):
+        """
+        ADVI approximate the posterior distribtuion p of unconstrained global parameters
+        with factorized multivatriate normal distribution:
+        q = \prod_{k=1}^{K} q_k(mu_k, sigma_k),
+        where K is dimension of p.
+
+        The hyper-parameters of q to be optimized over are (mu_k, log_sigma_k))_{k=1}^{K}.
+
+        The trick of reparameterization is employed to reduce the variance of SGD,
+        which is achieved by written KL(q || p) as expectation over standard normal distribution
+        so a sample from q is obstained by
+        s = z * exp(log_sigma_k) + mu_k,
+        where z is a sample from the standard multivarate normal distribtion.
+
+        This implementation of ADVI uses fixed samples from q during fitting, instead of
+        updating samples from q in each iteration, as in SGD.
+        So the second order fixed optimization algorithm L-BFGS is used.
+        """
+        standard_normal = MVNDiag(0)
+        samples = standard_normal(key, sample_shape=fixed_advi_sample_size)
+
+        def unnorm_log_pos(unc_params):
+            """Unnormalzied log posterior of global parameters."""
+
+            params = from_unconstrained(unc_params, fixed_params, self.param_props)
+            log_det_jac = log_det_jac_constrain(unc_params, fixed_params, self.param_props)
+            log_pri = self.log_prior(params) + log_det_jac
+            batch_lls = self.marginal_log_prob(emissions, inputs, params)
+            lp = log_pri + batch_lls.sum()
+            return lp
+
+        initial_params, fixed_params = to_unconstrained(self.params, self.param_props)
+
+        @jit
+        def _samp_elbo(unc_hyper_params, z):
+            """Evaluate ELBO at one sample from the approximate distribution q.
+            """
+            hyper_mus, hyper_log_sigmas = unc_hyper_params
+            unc_params = hyper_mus + z * jnp.exp(hyper_log_sigmas)
+            # With reparameterization, entropy of q evaluated at z is
+            # sum(hyper_log_sigma) plus some constant depending only on z.
+            q_entropy = -hyper_log_sigmas.sum()
+            return q_entropy - unnorm_log_pos(unc_params)
+
+        objective = lambda unc_hyper_params: -vmap(_samp_elbo, (None, 0))(unc_hyper_params, samples).sum()
+
+        lbfgs = LBFGS(fun=objective, tol=1e-3, stepsize=1e-3)
+        unc_param_fit, _info = lbfgs.run(initial_params)
+        param_fit = from_unconstrained(unc_param_fit, fixed_params, self.param_props)
+
+        return param_fit
 
     def forecast(self, key, observed_time_series, num_forecast_steps,
                  past_inputs=None, forecast_inputs=None):
