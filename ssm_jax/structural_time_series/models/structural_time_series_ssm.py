@@ -261,6 +261,7 @@ class _StructuralTimeSeriesSSM(SSM):
         std_samples = std_normal.sample(seed=key0, sample_shape=(M,))
         std_samples = vmap(unflatten, (None, 0))(params_structure, std_samples)
 
+        @jit
         def unnorm_log_pos(unc_params):
             """Unnormalzied log posterior of global parameters."""
 
@@ -291,7 +292,7 @@ class _StructuralTimeSeriesSSM(SSM):
         initial_vi_means = model_unc_params
         initial_vi_log_sigmas = unflatten(params_structure, jnp.zeros(vi_dim))
         initial_vi_params = (initial_vi_means, initial_vi_log_sigmas)
-        lbfgs = LBFGS(fun=objective, tol=1e-3, stepsize=1e-4)
+        lbfgs = LBFGS(maxiter=1000, fun=objective, tol=1e-3, stepsize=1e-4)
         (vi_means, vi_log_sigmas), _info = lbfgs.run(initial_vi_params)
 
         # Sample from the learned approximate posterior q
