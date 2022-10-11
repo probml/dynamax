@@ -13,7 +13,7 @@ import jax.random as jr
 from jax import lax, vmap
 from jax.tree_util import tree_map
 
-from ssm_jax.cond_moments_gaussian_filter.containers import EKFParams
+from ssm_jax.cond_moments_gaussian_filter.containers import EKFParams, GHKFParams
 from ssm_jax.cond_moments_gaussian_filter.inference import conditional_moments_gaussian_smoother
 
 
@@ -73,7 +73,7 @@ def plot_emissions_poisson(states, data):
     return fig
 
 
-def compare_dynamics(Ex, states, data, dynamics_weights, dynamics_bias):
+def compare_dynamics(Ex, states, data, dynamics_weights, dynamics_bias, filter_type=''):
     """Compare dynamics of states between posterior and ground truth values.
 
     Args:
@@ -128,12 +128,12 @@ def compare_dynamics(Ex, states, data, dynamics_weights, dynamics_bias):
     axes[1].plot(Ex[0, 0], Ex[0, 1], "*r", markersize=10, label="$z_{init}$")
     axes[1].set_xlabel("$z_1$")
     axes[1].set_ylabel("$z_2$")
-    axes[1].set_title("Inferred Latent States & Dynamics")
+    axes[1].set_title(f"{filter_type} Inferred Latent States & Dynamics")
     plt.tight_layout()
     return fig
 
 
-def compare_smoothed_predictions(Ey, Ey_true, Covy, data):
+def compare_smoothed_predictions(Ey, Ey_true, Covy, data, filter_type=''):
     """Compare smoothed predictions between posterior and ground truth values.
 
     Args:
@@ -157,6 +157,7 @@ def compare_smoothed_predictions(Ey, Ey_true, Covy, data):
         )
     ax.set_xlabel("time")
     ax.set_ylabel("data and predictions (for each neuron)")
+    ax.set_title(f'Comparison between {filter_type} smoothed posterior prediction and ground truth.')
 
     ax.plot([0], "--k", label="Predicted")  # dummy trace for legend
     ax.plot([0], "-k", label="True")
@@ -258,6 +259,17 @@ def main():
         emission_cov_function = lambda z: jnp.diag(jnp.exp(poisson_weights @ z))
     )
 
+    # Construct CMGF-GHKF parameters
+    cmgf_ghkf_params = GHKFParams(
+        initial_mean = cmgf_ekf_params.initial_mean,
+        initial_covariance = cmgf_ekf_params.initial_covariance,
+        dynamics_function = cmgf_ekf_params.dynamics_function,
+        dynamics_covariance = cmgf_ekf_params.dynamics_covariance,
+        emission_mean_function = cmgf_ekf_params.emission_mean_function,
+        emission_cov_function = cmgf_ekf_params.emission_cov_function,
+        # order = 5
+    )
+
     # Sample from random-rotation state dynamics and Poisson emissions
     num_steps, num_trials = 200, 3
     all_states, all_emissions = sample_poisson(cmgf_ekf_params, poisson_weights, num_steps, num_trials)
@@ -266,24 +278,26 @@ def main():
     # Plot batches of samples generated
     figs['samples'] = plot_emissions_poisson(all_states[0], all_emissions[0])
 
-    # Perform CMGF-EKF-Smoother Inference
-    posts = vmap(conditional_moments_gaussian_smoother, (None, 0))(cmgf_ekf_params, all_emissions)
-    fig, ax = plt.subplots(figsize=(10, 2.5))
-    plot_states(posts.smoothed_means[0], num_steps, "CMGF-EKF-Inferred Latent States", ax)
-    figs['cmgf_latent_states'] = fig
+    # Perform CMGF-Smoother Inference
+    for filter_type, params in {"CMGF-EKF": cmgf_ekf_params, "CMGF-GHKF": cmgf_ghkf_params}.items():
+        posts = vmap(conditional_moments_gaussian_smoother, (None, 0))(params, all_emissions)
+        fig, ax = plt.subplots(figsize=(10, 2.5))
+        plot_states(posts.smoothed_means[0], num_steps, f"{filter_type}-Inferred Latent States", ax)
+        figs[f'{filter_type.lower()}_latent_states'] = fig
 
-    for i in range(num_trials):
-        fig_dyn = compare_dynamics(posts.smoothed_means[i], all_states[i], all_emissions[i],
-                               random_rotation(state_dim, theta=jnp.pi/20), jnp.zeros(state_dim))
-        figs[f'dynamics_comp_trial_{i}'] = fig_dyn
+        for i in range(num_trials):
+            fig_dyn = compare_dynamics(posts.smoothed_means[i], all_states[i], all_emissions[i],
+                                random_rotation(state_dim, theta=jnp.pi/20), jnp.zeros(state_dim), filter_type)
+            figs[f'{filter_type.lower()}_dynamics_comp_trial_{i}'] = fig_dyn
 
-        fig_pred = compare_smoothed_predictions(
-            posts.smoothed_means[i] @ poisson_weights.T,
-            all_states[i] @ poisson_weights.T,
-            poisson_weights @ posts.smoothed_covariances[i] @ poisson_weights.T,
-            all_emissions[i],
-        )
-        figs['pred_comp_trial_{i}'] = fig_pred
+            fig_pred = compare_smoothed_predictions(
+                posts.smoothed_means[i] @ poisson_weights.T,
+                all_states[i] @ poisson_weights.T,
+                poisson_weights @ posts.smoothed_covariances[i] @ poisson_weights.T,
+                all_emissions[i],
+                filter_type
+            )
+            figs[f'{filter_type.lower()}_pred_comp_trial_{i}'] = fig_pred
 
     return figs
 
