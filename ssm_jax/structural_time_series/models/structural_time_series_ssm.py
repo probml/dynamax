@@ -18,6 +18,8 @@ from ssm_jax.parameters import (
     to_unconstrained,
     from_unconstrained,
     log_det_jac_constrain,
+    flatten,
+    unflatten,
     ParameterProperties)
 from ssm_jax.utils import PSDToRealBijector
 import tensorflow_probability.substrates.jax.bijectors as tfb
@@ -224,7 +226,7 @@ class _StructuralTimeSeriesSSM(SSM):
                                  param_samples[0], *param_samples[1:])
         return param_samples
 
-    def fit_vi(self, key, emissions, inputs=None, fixed_advi_sample_size=100):
+    def fit_vi(self, key, sample_size, emissions, inputs=None, M=100):
         """
         ADVI approximate the posterior distribtuion p of unconstrained global parameters
         with factorized multivatriate normal distribution:
@@ -242,9 +244,22 @@ class _StructuralTimeSeriesSSM(SSM):
         This implementation of ADVI uses fixed samples from q during fitting, instead of
         updating samples from q in each iteration, as in SGD.
         So the second order fixed optimization algorithm L-BFGS is used.
+
+        Args:
+            sample_size (int): number of samples to be returned from the fitted approxiamtion q.
+            M (int): number of fixed samples from q used in evaluation of ELBO.
+
+        Returns:
+            Samples from the approximate posterior q
         """
-        standard_normal = MVNDiag(0)
-        samples = standard_normal(key, sample_shape=fixed_advi_sample_size)
+        key0, key1 = jr.split(key)
+        model_unc_params, fixed_params = to_unconstrained(self.params, self.param_props)
+        params_flat, params_structure = flatten(model_unc_params)
+        vi_dim = len(params_flat)
+
+        std_normal = MVNDiag(jnp.zeros(vi_dim), jnp.ones(vi_dim))
+        std_samples = std_normal.sample(seed=key0, sample_shape=(M,))
+        std_samples = vmap(unflatten, (None, 0))(params_structure, std_samples)
 
         def unnorm_log_pos(unc_params):
             """Unnormalzied log posterior of global parameters."""
@@ -256,26 +271,39 @@ class _StructuralTimeSeriesSSM(SSM):
             lp = log_pri + batch_lls.sum()
             return lp
 
-        initial_params, fixed_params = to_unconstrained(self.params, self.param_props)
-
         @jit
-        def _samp_elbo(unc_hyper_params, z):
+        def _samp_elbo(vi_params, std_samp):
             """Evaluate ELBO at one sample from the approximate distribution q.
             """
-            hyper_mus, hyper_log_sigmas = unc_hyper_params
-            unc_params = hyper_mus + z * jnp.exp(hyper_log_sigmas)
+            vi_means, vi_log_sigmas = vi_params
+            # unc_params_flat = vi_means + std_samp * jnp.exp(vi_log_sigmas)
+            # unc_params = unflatten(params_structure, unc_params_flat)
             # With reparameterization, entropy of q evaluated at z is
             # sum(hyper_log_sigma) plus some constant depending only on z.
-            q_entropy = -hyper_log_sigmas.sum()
+            _params = tree_map(lambda x, log_sig: x * jnp.exp(log_sig), std_samp, vi_log_sigmas)
+            unc_params = tree_map(lambda x, mu: x + mu, _params, vi_means)
+            q_entropy = -flatten(vi_log_sigmas)[0].sum()
             return q_entropy - unnorm_log_pos(unc_params)
 
-        objective = lambda unc_hyper_params: -vmap(_samp_elbo, (None, 0))(unc_hyper_params, samples).sum()
+        objective = lambda x: -vmap(_samp_elbo, (None, 0))(x, std_samples).mean()
 
-        lbfgs = LBFGS(fun=objective, tol=1e-3, stepsize=1e-3)
-        unc_param_fit, _info = lbfgs.run(initial_params)
-        param_fit = from_unconstrained(unc_param_fit, fixed_params, self.param_props)
+        # Fit ADVI with LBFGS algorithm
+        initial_vi_means = model_unc_params
+        initial_vi_log_sigmas = unflatten(params_structure, jnp.zeros(vi_dim))
+        initial_vi_params = (initial_vi_means, initial_vi_log_sigmas)
+        lbfgs = LBFGS(fun=objective, tol=1e-3, stepsize=1e-4)
+        (vi_means, vi_log_sigmas), _info = lbfgs.run(initial_vi_params)
 
-        return param_fit
+        # Sample from the learned approximate posterior q
+        _samples = std_normal.sample(seed=key1, sample_shape=(sample_size,))
+        _vi_means = flatten(vi_means)[0]
+        _vi_log_sigmas = flatten(vi_log_sigmas)[0]
+        vi_samples_flat = _vi_means + _samples * jnp.exp(_vi_log_sigmas)
+        vi_unc_samples = vmap(unflatten, (None, 0))(params_structure, vi_samples_flat)
+        vi_samples = vmap(from_unconstrained, (0, None, None))(
+            vi_unc_samples, fixed_params, self.param_props)
+
+        return vi_samples
 
     def forecast(self, key, observed_time_series, num_forecast_steps,
                  past_inputs=None, forecast_inputs=None):
