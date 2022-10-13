@@ -58,12 +58,12 @@ class StructuralTimeSeries():
         if self.obs_family == 'Gaussian':
             self.observation_covariance_prior = _set_prior(
                 observation_covariance_prior,
-                IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs))
+                IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs))
                 )
             if observation_covariance is not None:
                 self.observation_covariance = observation_covariance
             else:
-                self.observation_covariance = 1e-4*obs_scale**2*jnp.eye(self.dim_obs)
+                self.observation_covariance = 1e-3*obs_scale**2*jnp.eye(self.dim_obs)
 
         # Save parameters of the STS model:
         self.initial_state_priors = OrderedDict()
@@ -181,7 +181,7 @@ class StructuralTimeSeries():
 
     def fit_hmc(self, key, sample_size, observed_time_series, inputs=None,
                 warmup_steps=500, num_integration_steps=30):
-        """Sampling parameters of the STS model from their posterior distributions.
+        """Sample parameters of the STS model from their posterior distributions.
 
         Parameters of the STS model includes:
             covariance matrix of each component,
@@ -191,6 +191,13 @@ class StructuralTimeSeries():
         sts_ssm = self.as_ssm()
         param_samps = sts_ssm.fit_hmc(key, sample_size, observed_time_series, inputs,
                                       warmup_steps, num_integration_steps)
+        return param_samps
+
+    def fit_vi(self, key, sample_size, observed_time_series, inputs=None, M=100):
+        """Sample parameters of the STS model from the approximate distribution fitted by ADVI.
+        """
+        sts_ssm = self.as_ssm()
+        param_samps = sts_ssm.fit_vi(key, sample_size, observed_time_series, inputs, M)
         return param_samps
 
     def forecast(self, key, observed_time_series, sts_params, num_forecast_steps,
@@ -316,11 +323,11 @@ class LocalLinearTrend(STSLatentComponent):
         # Initialize the prior using the observed time series if a prior is not specified
         self.level_covariance_prior = _set_prior(
             level_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
+            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
 
         self.slope_covariance_prior = _set_prior(
             slope_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
+            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
 
         self.initial_level_prior = _set_prior(
             initial_level_prior,
@@ -434,7 +441,7 @@ class Seasonal(STSLatentComponent):
 
         self.drift_covariance_prior = _set_prior(
             drift_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
+            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
 
     @property
     def transition_matrix(self):
