@@ -58,12 +58,12 @@ class StructuralTimeSeries():
         if self.obs_family == 'Gaussian':
             self.observation_covariance_prior = _set_prior(
                 observation_covariance_prior,
-                IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs))
+                IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs))
                 )
             if observation_covariance is not None:
                 self.observation_covariance = observation_covariance
             else:
-                self.observation_covariance = 1e-3*obs_scale**2*jnp.eye(self.dim_obs)
+                self.observation_covariance = 1e-4*obs_scale**2*jnp.eye(self.dim_obs)
 
         # Save parameters of the STS model:
         self.initial_state_priors = OrderedDict()
@@ -323,11 +323,11 @@ class LocalLinearTrend(STSLatentComponent):
         # Initialize the prior using the observed time series if a prior is not specified
         self.level_covariance_prior = _set_prior(
             level_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
+            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
 
         self.slope_covariance_prior = _set_prior(
             slope_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
+            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
 
         self.initial_level_prior = _set_prior(
             initial_level_prior,
@@ -441,7 +441,7 @@ class Seasonal(STSLatentComponent):
 
         self.drift_covariance_prior = _set_prior(
             drift_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
+            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
 
     @property
     def transition_matrix(self):

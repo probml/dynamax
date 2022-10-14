@@ -190,7 +190,7 @@ class _StructuralTimeSeriesSSM(SSM):
                 emissions,
                 inputs=None,
                 warmup_steps=500,
-                num_integration_steps=30):
+                num_integration_steps=20):
 
         def unnorm_log_pos(trainable_unc_params):
             params = from_unconstrained(trainable_unc_params, fixed_params, self.param_props)
@@ -283,8 +283,8 @@ class _StructuralTimeSeriesSSM(SSM):
             # sum(hyper_log_sigma) plus some constant depending only on z.
             _params = tree_map(lambda x, log_sig: x * jnp.exp(log_sig), std_samp, vi_log_sigmas)
             unc_params = tree_map(lambda x, mu: x + mu, _params, vi_means)
-            q_entropy = -flatten(vi_log_sigmas)[0].sum()
-            return q_entropy - unnorm_log_pos(unc_params)
+            q_entropy = flatten(vi_log_sigmas)[0].sum()
+            return q_entropy + unnorm_log_pos(unc_params)
 
         objective = lambda x: -vmap(_samp_elbo, (None, 0))(x, std_samples).mean()
 
@@ -292,7 +292,7 @@ class _StructuralTimeSeriesSSM(SSM):
         initial_vi_means = model_unc_params
         initial_vi_log_sigmas = unflatten(params_structure, jnp.zeros(vi_dim))
         initial_vi_params = (initial_vi_means, initial_vi_log_sigmas)
-        lbfgs = LBFGS(maxiter=1000, fun=objective, tol=1e-3, stepsize=1e-4, jit=True)
+        lbfgs = LBFGS(maxiter=1000, fun=objective, tol=1e-3, stepsize=1e-3, jit=True)
         (vi_means, vi_log_sigmas), _info = lbfgs.run(initial_vi_params)
 
         # Sample from the learned approximate posterior q
@@ -490,7 +490,9 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
         ts_means, ts_mean_covs, ts = super().forecast(
             key, observed_time_series, num_forecast_steps, past_inputs, forecast_inputs
             )
-        return ts_means, ts_means, ts
+        _sample = lambda r, key: Poisson(rate=r).sample(seed=key)
+        ts_samples = vmap(_sample)(ts_means, jr.split(key, num_forecast_steps))
+        return ts_samples, ts_means, ts
 
     def _to_ssm_params(self, params):
         """Wrap the STS model into the form of the corresponding SSM model """
