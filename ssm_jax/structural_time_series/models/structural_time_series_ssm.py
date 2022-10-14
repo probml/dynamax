@@ -1,25 +1,32 @@
 import blackjax
 from collections import OrderedDict
-from jax import jit, lax
+from jax import jit, lax, vmap
 import jax.numpy as jnp
 import jax.random as jr
 import jax.scipy as jsp
 from jax.tree_util import tree_map
+from jaxopt import LBFGS
 from ssm_jax.abstractions import SSM
 from ssm_jax.cond_moments_gaussian_filter.containers import EKFParams
 from ssm_jax.cond_moments_gaussian_filter.inference import (
     iterated_conditional_moments_gaussian_filter as cmgf,)
 from ssm_jax.linear_gaussian_ssm.inference import (
-    LGSSMParams, lgssm_filter, lgssm_posterior_sample
-    )
+    LGSSMParams,
+    lgssm_filter,
+    lgssm_posterior_sample)
 from ssm_jax.parameters import (
-    to_unconstrained, from_unconstrained, log_det_jac_constrain, ParameterProperties
-    )
+    to_unconstrained,
+    from_unconstrained,
+    log_det_jac_constrain,
+    flatten,
+    unflatten,
+    ParameterProperties)
 from ssm_jax.utils import PSDToRealBijector
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from tensorflow_probability.substrates.jax.distributions import (
-    MultivariateNormalFullCovariance as MVN, Poisson
-    )
+    MultivariateNormalFullCovariance as MVN,
+    MultivariateNormalDiag as MVNDiag,
+    Poisson)
 from tqdm.auto import trange
 
 
@@ -185,7 +192,7 @@ class _StructuralTimeSeriesSSM(SSM):
                 warmup_steps=500,
                 num_integration_steps=30):
 
-        def logprob(trainable_unc_params):
+        def unnorm_log_pos(trainable_unc_params):
             params = from_unconstrained(trainable_unc_params, fixed_params, self.param_props)
             log_det_jac = log_det_jac_constrain(trainable_unc_params, fixed_params, self.param_props)
             log_pri = self.log_prior(params) + log_det_jac
@@ -196,7 +203,7 @@ class _StructuralTimeSeriesSSM(SSM):
         # Initialize the HMC sampler using window_adaptations
         hmc_initial_position, fixed_params = to_unconstrained(self.params, self.param_props)
         warmup = blackjax.window_adaptation(blackjax.hmc,
-                                            logprob,
+                                            unnorm_log_pos,
                                             num_steps=warmup_steps,
                                             num_integration_steps=num_integration_steps)
         hmc_initial_state, hmc_kernel, _ = warmup.run(key, hmc_initial_position)
@@ -218,6 +225,86 @@ class _StructuralTimeSeriesSSM(SSM):
         param_samples = tree_map(lambda x, *y: jnp.array([x] + [i for i in y]),
                                  param_samples[0], *param_samples[1:])
         return param_samples
+
+    def fit_vi(self, key, sample_size, emissions, inputs=None, M=100):
+        """
+        ADVI approximate the posterior distribtuion p of unconstrained global parameters
+        with factorized multivatriate normal distribution:
+        q = \prod_{k=1}^{K} q_k(mu_k, sigma_k),
+        where K is dimension of p.
+
+        The hyper-parameters of q to be optimized over are (mu_k, log_sigma_k))_{k=1}^{K}.
+
+        The trick of reparameterization is employed to reduce the variance of SGD,
+        which is achieved by written KL(q || p) as expectation over standard normal distribution
+        so a sample from q is obstained by
+        s = z * exp(log_sigma_k) + mu_k,
+        where z is a sample from the standard multivarate normal distribtion.
+
+        This implementation of ADVI uses fixed samples from q during fitting, instead of
+        updating samples from q in each iteration, as in SGD.
+        So the second order fixed optimization algorithm L-BFGS is used.
+
+        Args:
+            sample_size (int): number of samples to be returned from the fitted approxiamtion q.
+            M (int): number of fixed samples from q used in evaluation of ELBO.
+
+        Returns:
+            Samples from the approximate posterior q
+        """
+        key0, key1 = jr.split(key)
+        model_unc_params, fixed_params = to_unconstrained(self.params, self.param_props)
+        params_flat, params_structure = flatten(model_unc_params)
+        vi_dim = len(params_flat)
+
+        std_normal = MVNDiag(jnp.zeros(vi_dim), jnp.ones(vi_dim))
+        std_samples = std_normal.sample(seed=key0, sample_shape=(M,))
+        std_samples = vmap(unflatten, (None, 0))(params_structure, std_samples)
+
+        @jit
+        def unnorm_log_pos(unc_params):
+            """Unnormalzied log posterior of global parameters."""
+
+            params = from_unconstrained(unc_params, fixed_params, self.param_props)
+            log_det_jac = log_det_jac_constrain(unc_params, fixed_params, self.param_props)
+            log_pri = self.log_prior(params) + log_det_jac
+            batch_lls = self.marginal_log_prob(emissions, inputs, params)
+            lp = log_pri + batch_lls.sum()
+            return lp
+
+        @jit
+        def _samp_elbo(vi_params, std_samp):
+            """Evaluate ELBO at one sample from the approximate distribution q.
+            """
+            vi_means, vi_log_sigmas = vi_params
+            # unc_params_flat = vi_means + std_samp * jnp.exp(vi_log_sigmas)
+            # unc_params = unflatten(params_structure, unc_params_flat)
+            # With reparameterization, entropy of q evaluated at z is
+            # sum(hyper_log_sigma) plus some constant depending only on z.
+            _params = tree_map(lambda x, log_sig: x * jnp.exp(log_sig), std_samp, vi_log_sigmas)
+            unc_params = tree_map(lambda x, mu: x + mu, _params, vi_means)
+            q_entropy = -flatten(vi_log_sigmas)[0].sum()
+            return q_entropy - unnorm_log_pos(unc_params)
+
+        objective = lambda x: -vmap(_samp_elbo, (None, 0))(x, std_samples).mean()
+
+        # Fit ADVI with LBFGS algorithm
+        initial_vi_means = model_unc_params
+        initial_vi_log_sigmas = unflatten(params_structure, jnp.zeros(vi_dim))
+        initial_vi_params = (initial_vi_means, initial_vi_log_sigmas)
+        lbfgs = LBFGS(maxiter=1000, fun=objective, tol=1e-3, stepsize=1e-4, jit=True)
+        (vi_means, vi_log_sigmas), _info = lbfgs.run(initial_vi_params)
+
+        # Sample from the learned approximate posterior q
+        _samples = std_normal.sample(seed=key1, sample_shape=(sample_size,))
+        _vi_means = flatten(vi_means)[0]
+        _vi_log_sigmas = flatten(vi_log_sigmas)[0]
+        vi_samples_flat = _vi_means + _samples * jnp.exp(_vi_log_sigmas)
+        vi_unc_samples = vmap(unflatten, (None, 0))(params_structure, vi_samples_flat)
+        vi_samples = vmap(from_unconstrained, (0, None, None))(
+            vi_unc_samples, fixed_params, self.param_props)
+
+        return vi_samples
 
     def forecast(self, key, observed_time_series, num_forecast_steps,
                  past_inputs=None, forecast_inputs=None):
@@ -410,14 +497,14 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
         comp_cov = jsp.linalg.block_diag(*params['dynamics_covariances'].values())
         spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
         spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
-        emission_mean = lambda z: self._emission_constrainer(self.emission_matrix @ z)
-        emission_var = lambda z: jnp.diag(self._emission_constrainer(self.emission_matrix @ z))
         return EKFParams(initial_mean=self.initial_mean,
                          initial_covariance=self.initial_covariance,
                          dynamics_function=lambda z: self.dynamics_matrix @ z,
                          dynamics_covariance=spars_cov,
-                         emission_mean_function=emission_mean,
-                         emission_var_function=emission_var)
+                         emission_mean_function=
+                         lambda z: self._emission_constrainer(self.emission_matrix @ z),
+                         emission_cov_function=
+                         lambda z: jnp.diag(self._emission_constrainer(self.emission_matrix @ z)))
 
     def _ssm_filter(self, params, emissions, inputs):
         """The filter of the corresponding SSM model"""
@@ -425,7 +512,12 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
 
     def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
         """The posterior sampler of the corresponding SSM model"""
-        raise NotImplementedError
+        # TODO:
+        # Implement the real posteriror sample.
+        # Currently it simply returns the filtered means.
+        print('Currently the posterior_sample for STS model with Poisson likelihood\
+               simply returns the filtered means.')
+        return self._ssm_filter(ssm_params, observed_time_series, inputs)
 
     def _emission_constrainer(self, emission):
         """Transform the state into the possibly constrained space.

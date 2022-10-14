@@ -1,7 +1,10 @@
 from copy import deepcopy
 
 import chex
+import jax.numpy as jnp
+from jax.tree_util import tree_flatten, tree_unflatten
 import tensorflow_probability.substrates.jax.bijectors as tfb
+
 
 @chex.dataclass
 class ParameterProperties:
@@ -59,6 +62,8 @@ def from_unconstrained(unc_params, fixed_params, param_props):
 
 
 def log_det_jac_constrain(unc_params, fixed_params, param_props):
+    """Log determinant of the Jacobian matrix evaluated at the unconstrained parameters.
+    """
     log_det_jac = 0
     for k, v in unc_params.items():
         if isinstance(v, dict):
@@ -67,3 +72,41 @@ def log_det_jac_constrain(unc_params, fixed_params, param_props):
         else:
             log_det_jac += param_props[k].constrainer.forward_log_det_jacobian(v)
     return log_det_jac
+
+
+def flatten(params):
+    """Flatten the (unconstrained) parameters to an 1-d numpy array.
+
+    Returns:
+        params_flat: flat parameters
+        structure (dict): structure information of parameters, used to unflatten the parameters.
+    """
+    # Flatten the tree of parameters into leaves
+    tree_flat, tree_structure = tree_flatten(params)
+    # Flatten leaves of the tree
+    array_shapes = [x.shape for x in tree_flat]
+    params_flat = jnp.concatenate([x.flatten() for x in tree_flat])
+
+    return params_flat, {'array_shapes': array_shapes, 'tree_structure': tree_structure}
+
+
+def unflatten(structure, params_flat):
+    """Unflatten the (unconstrained) parameters.
+
+    Args:
+        params_flat: flat parameters
+        structure (dict): structure information of parameters
+    Returns:
+        params: (unconstrained) parameters
+    """
+    array_shapes = structure['array_shapes']
+    tree_structure = structure['tree_structure']
+    # Restore leaves of the parameter tree, each leave is a numpy array
+    _sizes = jnp.cumsum(jnp.array([jnp.array(x).prod() for x in array_shapes]))
+    cum_sizes = jnp.concatenate([jnp.zeros(1), _sizes]).astype(int)
+    arrays = [params_flat[cum_sizes[i]:cum_sizes[i+1]].reshape(array_shapes[i])
+              for i in range(len(cum_sizes)-1)]
+    # Restore the tree of parameters
+    params = tree_unflatten(tree_structure, arrays)
+
+    return params
