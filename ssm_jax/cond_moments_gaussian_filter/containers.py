@@ -68,7 +68,7 @@ class UKFParams(SigmaPointParams):
         self.gaussian_cross_covariance = super()._gaussian_cross_covariance
 
     def _compute_weights_and_sigmas(self, m, P):
-        n = len(self.initial_mean)
+        n = len(m)
         lamb = self.alpha**2 * (n + self.kappa) - n
         # Compute weights
         factor = 1 / (2 * (n + lamb))
@@ -98,7 +98,7 @@ class GHKFParams(SigmaPointParams):
         self.gaussian_cross_covariance = super()._gaussian_cross_covariance
 
     def _compute_weights_and_sigmas(self, m, P):
-        n = len(self.initial_mean)
+        n = len(m)
         samples_1d, weights_1d = hermegauss(self.order)
         weights_1d /= weights_1d.sum()
         weights = jnp.prod(jnp.array(list(product(weights_1d, repeat=n))), axis=1)
