@@ -7,7 +7,7 @@ from ssm_jax.unscented_kalman_filter.inference import unscented_kalman_smoother,
 from ssm_jax.nonlinear_gaussian_ssm.inference_test import random_nlgssm_args
 
 # Helper functions
-_all_close = lambda x, y: jnp.allclose(x, y, rtol=1e-3)
+_all_close = lambda x, y: jnp.allclose(x, y, rtol=1e-2)
 
 
 def test_ekf(key=0, num_timesteps=15):
