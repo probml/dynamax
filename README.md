@@ -1,4 +1,5 @@
 # ssm-jax
+![Test Status](https://github.com/probml/ssm-jax/actions/workflows/workflow.yml/badge.svg?branch=main)
 
 State Space Models in JAX.
 
