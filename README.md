@@ -33,11 +33,13 @@ To install [black](https://black.readthedocs.io/en/stable/), do this (quotes are
 pip install -U 'black[jupyter]'
 ```
 
-Related JAX libraries:
+Related libraries:
 
 - [murphy-lab/pgm-jax](https://github.com/probml/pgm-jax): Factor graph library
 - [murphy-lab/JSL](https://github.com/probml/JSL) : Deprecated library for SSMs
 - [linderman-lab/ssm-jax](https://github.com/lindermanlab/ssm-jax):  Deprecated library for SSMs
-- [linderman-lab/ssm](https://github.com/lindermanlab/ssm) (numpy):  Deprecated library for SSMs
+- [linderman-lab/ssm](https://github.com/lindermanlab/ssm):  Old numpy, autograd, and numba library for SSMs
+- [mattjj/pyhsmm](https://github.com/mattjj/pyhsmm):  Numpy and cython library library for HMMs
+- [mattjj/pylds](https://github.com/mattjj/pylds):  Numpy and cython library library for linear dynamical systems
 - [sarkka-lab/parallel nonlinear smoothers](https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers) : Code for nonlinear smoothers usign parallel scan
 
