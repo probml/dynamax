@@ -65,8 +65,8 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
 
         self.emission_prior = default_prior(
             'emission_prior',
-            MNIW(loc=jnp.zeros((self.emission_dim, self.state_dim + self.input_dim + self.has_emission_bias)),
-                 col_precision=jnp.eye(self.state_dim + self.input_dim + self.has_emission_bias),
+            MNIW(loc=jnp.zeros((self.emission_dim, self.state_dim + self.input_dim + self.has_emissions_bias)),
+                 col_precision=jnp.eye(self.state_dim + self.input_dim + self.has_emissions_bias),
                  df=self.emission_dim + 0.1,
                  scale=jnp.eye(self.emission_dim)))
 
@@ -84,7 +84,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
                                             dynamics_bias))
         lp += self.dynamics_prior.log_prob((params['dynamics']['cov'], dynamics_matrix))
 
-        emission_bias = params['emissions']['bias'] if self.has_emission_bias else jnp.zeros((self.emission_dim, 0))
+        emission_bias = params['emissions']['bias'] if self.has_emissions_bias else jnp.zeros((self.emission_dim, 0))
         emission_matrix = jnp.column_stack((params['emissions']['weights'],
                                             params['emissions']['input_weights'],
                                             emission_bias))
@@ -109,7 +109,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         emission_posterior = mniw_posterior_update(self.emission_prior, emission_stats)
         R, HD = emission_posterior.mode()
         H = HD[:, :self.state_dim]
-        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emission_bias \
+        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
 
         return dict(

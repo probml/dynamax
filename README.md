@@ -3,7 +3,7 @@
 State Space Models in JAX.
 
 
-Authors: Peter Chang, Adrien Corenflos, Gerardo Duran-Martin,  Giles Harper-Donnelly, Aleyna Kara, Scott Linderman,  Kevin Murphy, Colin Schlager, et al.
+[List of contributors](https://github.com/probml/ssm-jax/graphs/contributors)
 
 MIT License. 2022
 
@@ -34,11 +34,11 @@ To install [black](https://black.readthedocs.io/en/stable/), do this (quotes are
 pip install -U 'black[jupyter]'
 ```
 
-Related libraries:
+Related JAX libraries:
 
-- [murphy-lab/JSL](https://github.com/probml/JSL) 
-- [linderman-lab/ssm-jax](https://github.com/lindermanlab/ssm-jax)
-- [linderman-lab/ssm](https://github.com/lindermanlab/ssm) (numpy)
-- [sarkka-lab/parallel nonlinear smoothers](https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers) 
-- [Zheng Zhao's chirpgp](https://github.com/spdes/chirpgp)
-- 
+- [murphy-lab/pgm-jax](https://github.com/probml/pgm-jax): Factor graph library
+- [murphy-lab/JSL](https://github.com/probml/JSL) : Deprecated library for SSMs
+- [linderman-lab/ssm-jax](https://github.com/lindermanlab/ssm-jax):  Deprecated library for SSMs
+- [linderman-lab/ssm](https://github.com/lindermanlab/ssm) (numpy):  Deprecated library for SSMs
+- [sarkka-lab/parallel nonlinear smoothers](https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers) : Code for nonlinear smoothers usign parallel scan
+

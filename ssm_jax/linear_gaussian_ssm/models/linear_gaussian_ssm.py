@@ -42,7 +42,7 @@ class LinearGaussianSSM(SSM):
         self.emission_dim = emission_dim
         self.input_dim = input_dim
         self.has_dynamics_bias = has_dynamics_bias
-        self.has_emission_bias = has_emissions_bias
+        self.has_emissions_bias = has_emissions_bias
 
     def random_initialization(self, key):
         m = jnp.zeros(self.state_dim)
@@ -54,7 +54,7 @@ class LinearGaussianSSM(SSM):
         Q = 0.1 * jnp.eye(self.state_dim)
         H = jr.normal(key, (self.emission_dim, self.state_dim))
         D = jnp.zeros((self.emission_dim, self.input_dim))
-        d = jnp.zeros((self.emission_dim,)) if self.has_emission_bias else None
+        d = jnp.zeros((self.emission_dim,)) if self.has_emissions_bias else None
         R = 0.1 * jnp.eye(self.emission_dim)
 
         params = dict(
@@ -83,26 +83,37 @@ class LinearGaussianSSM(SSM):
 
     def transition_distribution(self, params, state, **covariates):
         inputs = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
-        return MVN(
-            params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs +
-            params["dynamics"]["bias"], params["dynamics"]["cov"])
+        mean = params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs 
+        if self.has_dynamics_bias:
+            mean += params["dynamics"]["bias"]
+        return MVN(mean, params["dynamics"]["cov"])
 
     def emission_distribution(self, params, state, **covariates):
         inputs = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
-        return MVN(
-            params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs +
-            params["emissions"]["bias"], params["emissions"]["cov"])
+        mean = params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs 
+        if self.has_emissions_bias:
+            mean += params["emissions"]["bias"]
+        return MVN(mean, params["emissions"]["cov"])
+
+    def _zeros_if_none(self, x, dim):
+        if x is not None:
+            return x
+        else:
+            return jnp.zeros(dim)
 
     def _make_inference_args(self, params):
+        """Convert params dict to LGSSMParams container replacing Nones if necessary."""
+        dyn_bias = self._zeros_if_none(params["dynamics"]["bias"], self.state_dim)
+        ems_bias = self._zeros_if_none(params["emissions"]["bias"], self.emission_dim)
         return LGSSMParams(initial_mean=params["initial"]["mean"],
                            initial_covariance=params["initial"]["cov"],
                            dynamics_matrix=params["dynamics"]["weights"],
                            dynamics_input_weights=params["dynamics"]["input_weights"],
-                           dynamics_bias=params["dynamics"]["bias"],
+                           dynamics_bias=dyn_bias,
                            dynamics_covariance=params["dynamics"]["cov"],
                            emission_matrix=params["emissions"]["weights"],
                            emission_input_weights=params["emissions"]["input_weights"],
-                           emission_bias=params["emissions"]["bias"],
+                           emission_bias=ems_bias,
                            emission_covariance=params["emissions"]["cov"])
 
     def log_prior(self, params):
@@ -180,7 +191,7 @@ class LinearGaussianSSM(SSM):
         sum_zyT = jnp.block([[Ex.T @ y], [u.T @ y]])
         sum_yyT = emissions.T @ emissions
         emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
-        if not self.has_emission_bias:
+        if not self.has_emissions_bias:
             emission_stats = (sum_zzT[:-1, :-1], sum_zyT[:-1, :], sum_yyT, num_timesteps)
 
         return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
@@ -209,7 +220,7 @@ class LinearGaussianSSM(SSM):
 
         HD, R = fit_linear_regression(*emission_stats)
         H = HD[:, :self.state_dim]
-        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emission_bias \
+        D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], None)
 
         return dict(
