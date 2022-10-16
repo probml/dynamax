@@ -24,9 +24,7 @@ pytest ssm_jax/hmm/demos/demos_test.py
 
 To install in colab, do this
 ```
-!git clone https://github.com/probml/ssm-jax.git
-%cd ssm-jax
-!pip install -e .
+%pip install git+https://github.com/probml/ssm-jax.git
 ```
 
 To install [black](https://black.readthedocs.io/en/stable/), do this (quotes are mandatory for `zsh`)
