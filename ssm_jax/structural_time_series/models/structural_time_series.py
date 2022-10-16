@@ -2,6 +2,7 @@ from abc import ABC
 from abc import abstractmethod
 from collections import OrderedDict
 import jax.numpy as jnp
+import jax.random as jr
 import jax.scipy as jsp
 from jax import vmap, jit
 from ssm_jax.distributions import InverseWishart as IW
@@ -129,6 +130,89 @@ class StructuralTimeSeries():
                                  self.observation_regression_weights_prior
                                  )
         return sts_ssm
+
+    def decompose_by_component(self, observed_time_series, inputs=None,
+                               sts_params=None, num_post_samples=100, key=jr.PRNGKey(0)):
+        """Decompose the STS model into components and return the means and variances
+           of the marginal posterior of each component.
+
+           The marginal posterior of each component is obtained by averaging over
+           conditional posteriors of that component using Kalman smoother conditioned
+           on the sts_params. Each sts_params is a posterior sample of the STS model
+           conditioned on observed_time_series.
+
+           The marginal posterior mean and variance is computed using the formula
+           E[X] = E[E[X|Y]],
+           Var(Y) = E[Var(X|Y)] + Var[E[X|Y]],
+           which holds for any random variables X and Y.
+
+        Args:
+            observed_time_series (_type_): _description_
+            inputs (_type_, optional): _description_. Defaults to None.
+            sts_params (_type_, optional): Posteriror samples of STS parameters.
+                If not given, 'num_posterior_samples' of STS parameters will be
+                sampled using self.fit_hmc.
+            num_post_samples (int, optional): Number of posterior samples of STS
+                parameters to be sampled using self.fit_hmc if sts_params=None.
+
+        Returns:
+            component_dists: (OrderedDict) each item is a tuple of means and variances
+                              of one component.
+        """
+        component_dists = OrderedDict()
+
+        # Sample parameters from the posterior if parameters is not given
+        if sts_params is None:
+            sts_ssm = self.as_ssm()
+            sts_params = sts_ssm.fit_hmc(key, num_post_samples, observed_time_series, inputs)
+
+        @jit
+        def decomp_poisson(sts_param):
+            """Decompose one STS model if the observations follow Poisson distributions.
+            """
+            sts_ssm = PoissonSSM(self.transition_matrices,
+                                 self.observation_matrices,
+                                 self.initial_state_priors,
+                                 sts_param['dynamics_covariances'],
+                                 self.transition_covariance_priors,
+                                 self.cov_spars_matrices,
+                                 sts_param['regression_weights'],
+                                 self.observation_regression_weights_prior)
+            return sts_ssm.component_posterior(observed_time_series, inputs)
+
+        @jit
+        def decomp_gaussian(sts_param):
+            """Decompose one STS model if the observations follow Gaussian distributions.
+            """
+            sts_ssm = GaussianSSM(self.transition_matrices,
+                                  self.observation_matrices,
+                                  self.initial_state_priors,
+                                  sts_param['dynamics_covariances'],
+                                  self.transition_covariance_priors,
+                                  sts_param['emission_covariance'],
+                                  self.observation_covariance_prior,
+                                  self.cov_spars_matrices,
+                                  sts_param['regression_weights'],
+                                  self.observation_regression_weights_prior)
+            return sts_ssm.component_posterior(observed_time_series, inputs)
+
+        # Obtain the smoothed posterior for each component given the parameters
+        if self.obs_family == 'Gaussian':
+            component_conditional_pos = vmap(decomp_gaussian)(sts_params)
+        elif self.obs_family == 'Poisson':
+            component_conditional_pos = vmap(decomp_poisson)(sts_params)
+
+        # Obtain the marginal posterior
+        for c, pos in component_conditional_pos.items():
+            mus = pos[0]
+            vars = pos[1]
+            # Use the formula: E[X] = E[E[X|Y]]
+            mu_series = mus.mean(axis=0)
+            # Use the formula: Var(X) = E[Var(X|Y)] + Var(E[X|Y])
+            var_series = jnp.mean(vars, axis=0)[..., 0] + jnp.var(mus, axis=0)
+            component_dists[c] = (mu_series, var_series)
+
+        return component_dists
 
     def sample(self, key, num_timesteps, inputs=None):
         """Given parameters, sample latent states and corresponding observed time series.
