@@ -8,7 +8,7 @@ State Space Models in JAX.
 
 MIT License. 2022
 
-To run a specific demo, do something like this
+There are a bunch of demos in the form of python scripts and jupyter notebooks. 
 ```
 python ssm_jax/hmm/demos/gaussian_hmm_2d.py 
 ```
@@ -41,5 +41,5 @@ Related libraries:
 - [linderman-lab/ssm](https://github.com/lindermanlab/ssm):  Old numpy, autograd, and numba library for SSMs
 - [mattjj/pyhsmm](https://github.com/mattjj/pyhsmm):  Numpy and cython library library for HMMs
 - [mattjj/pylds](https://github.com/mattjj/pylds):  Numpy and cython library library for linear dynamical systems
-- [sarkka-lab/parallel nonlinear smoothers](https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers) : Code for nonlinear smoothers usign parallel scan
+- [sarkka-lab/parallel nonlinear smoothers](https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers) : Code for nonlinear smoothers using parallel scan
 
