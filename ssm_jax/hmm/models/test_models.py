@@ -83,6 +83,18 @@ def test_gmm_hmm_vs_gmm_diag_hmm(key=jr.PRNGKey(0), num_states=4, num_components
     assert jnp.allclose(states_full, states_diag)
 
 
+def test_sample_and_fit_arhmm():
+    arhmm = models.LinearAutoregressiveHMM(num_states=4, emission_dim=2, num_lags=1)
+    #key1, key2 = jr.split(jr.PRNGKey(int(datetime.now().timestamp())))
+    key1, key2 = jr.split(jr.PRNGKey(42))
+    params, param_props = arhmm.random_initialization(key1)
+    states, emissions = arhmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS)
+    covariates = dict(features=arhmm.compute_covariates(emissions))
+    fitted_params, lps = arhmm.fit_em(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_iters=10)
+    assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
+    fitted_params, lps = arhmm.fit_sgd(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_epochs=10)
+
+
 # def test_kmeans_initialization(key=jr.PRNGKey(0), num_states=4, num_mix=3, emission_dim=2, num_samples=1000):
 #     hmm = GaussianMixtureHMM.random_initialization(key, num_states, num_mix, emission_dim)
 #     key0, key1, key2 = jr.split(key, 3)

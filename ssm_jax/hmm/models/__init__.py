@@ -1,4 +1,5 @@
 from ssm_jax.hmm.models.base import BaseHMM, StandardHMM
+from ssm_jax.hmm.models.autoregressive_hmm import LinearAutoregressiveHMM
 from ssm_jax.hmm.models.bernoulli_hmm import BernoulliHMM
 from ssm_jax.hmm.models.categorical_glm_hmm import CategoricalRegressionHMM
 from ssm_jax.hmm.models.categorical_hmm import CategoricalHMM
