@@ -1,5 +1,6 @@
 from functools import partial
 import jax.numpy as jnp
+import jax.random as jr
 from jax import jit
 from jax import vmap
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
@@ -61,3 +62,29 @@ def pytree_stack(pytrees):
     _, treedef = tree_flatten(pytrees[0])
     leaves = [tree_leaves(tree) for tree in pytrees]
     return tree_unflatten(treedef, [jnp.stack(vals) for vals in zip(*leaves)])
+
+def random_rotation(seed, n, theta=None):
+    """Helper function to create a rotating linear system.
+    Args:
+        seed (jax.random.PRNGKey): JAX random seed.
+        n (int): Dimension of the rotation matrix.
+        theta (float, optional): If specified, this is the angle of the rotation, otherwise
+            a random angle sampled from a standard Gaussian scaled by ::math::`\pi / 2`. Defaults to None.
+    Returns:
+        [type]: [description]
+    """
+
+    key1, key2 = jr.split(seed)
+
+    if theta is None:
+        # Sample a random, slow rotation
+        theta = 0.5 * jnp.pi * jr.uniform(key1)
+
+    if n == 1:
+        return jr.uniform(key1) * jnp.eye(1)
+
+    rot = jnp.array([[jnp.cos(theta), -jnp.sin(theta)], [jnp.sin(theta), jnp.cos(theta)]])
+    out = jnp.eye(n)
+    out = out.at[:2, :2].set(rot)
+    q = jnp.linalg.qr(jr.uniform(key2, shape=(n, n)))[0]
+    return q.dot(out).dot(q.T)
