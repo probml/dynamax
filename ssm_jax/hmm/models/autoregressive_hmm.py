@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 import jax.random as jr
-from jax import vmap, lax, tree_map
+from jax import lax, tree_map
 
 from ssm_jax.hmm.models.linreg_hmm import LinearRegressionHMM
 from ssm_jax.parameters import ParameterProperties
@@ -51,14 +51,13 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
             # Default to zeros
             prev_emissions = jnp.zeros((self.num_lags, self.emission_dim))
 
-
         def _step(carry, key):
             prev_state, prev_emissions = carry
             key1, key2 = jr.split(key, 2)
             state = self.transition_distribution(params, prev_state).sample(seed=key2)
             emission = self.emission_distribution(params, state, features=jnp.ravel(prev_emissions)).sample(seed=key1)
             next_prev_emissions = jnp.row_stack([emission, prev_emissions[:-1]])
-            return (state, next_prev_emissions), (state, emission, prev_emissions)
+            return (state, next_prev_emissions), (state, emission)
 
         # Sample the initial state
         key1, key2, key = jr.split(key, 3)
@@ -68,17 +67,13 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
 
         # Sample the remaining emissions and states
         next_keys = jr.split(key, num_timesteps - 1)
-        _, (next_states, next_emissions, next_prev_emissions) = lax.scan(
+        _, (next_states, next_emissions) = lax.scan(
             _step, (initial_state, initial_prev_emissions), next_keys)
 
         # Concatenate the initial state and emission with the following ones
         expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
         states = tree_map(expand_and_cat, initial_state, next_states)
         emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
-        prev_emissions = tree_map(expand_and_cat, prev_emissions, next_prev_emissions)
-
-        # Flatten the previous emissions into a vector
-        prev_emissions = jnp.reshape(prev_emissions, (num_timesteps, -1))
         return states, emissions
 
     def compute_covariates(self, emissions, prev_emissions=None):
