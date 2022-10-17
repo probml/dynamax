@@ -9,10 +9,12 @@ from jaxopt import LBFGS
 from ssm_jax.abstractions import SSM
 from ssm_jax.cond_moments_gaussian_filter.containers import EKFParams
 from ssm_jax.cond_moments_gaussian_filter.inference import (
-    iterated_conditional_moments_gaussian_filter as cmgf,)
+    iterated_conditional_moments_gaussian_filter as cmgf_filt,
+    iterated_conditional_moments_gaussian_smoother as cmgf_smooth)
 from ssm_jax.linear_gaussian_ssm.inference import (
     LGSSMParams,
     lgssm_filter,
+    lgssm_smoother,
     lgssm_posterior_sample)
 from ssm_jax.parameters import (
     to_unconstrained,
@@ -74,6 +76,7 @@ class _StructuralTimeSeriesSSM(SSM):
         self.spars_matrix = cov_spars_matrices
 
         # Set parameters of the emission model of the LinearGaussianSSM model
+        self.component_emission_matrices = component_observation_matrices
         self.emission_matrix = jnp.concatenate(list(component_observation_matrices.values()), axis=1)
         self.emission_dim = self.emission_matrix.shape[0]
         if observation_regression_weights is not None:
@@ -184,13 +187,44 @@ class _StructuralTimeSeriesSSM(SSM):
                                                                 sample_shape=num_timesteps)
         return obs_means, obs
 
+    def component_posterior(self, emissions, inputs):
+        """Smoothing by component
+        """
+        # Compute the posterior of the joint SSM model
+        component_pos = OrderedDict()
+        ssm_params = self._to_ssm_params(self.params)
+        pos = self._ssm_smoother(ssm_params, emissions, inputs)
+        mu_pos = pos.smoothed_means
+        var_pos = pos.smoothed_covariances
+
+        # Decompose by component
+        _loc = 0
+        for c, emission_matrix in self.component_emission_matrices.items():
+            c_dim = emission_matrix.shape[-1]
+            c_mu = mu_pos[:, _loc:_loc+c_dim]
+            c_var = var_pos[:, _loc:_loc+c_dim, _loc:_loc+c_dim]
+            c_emission_mu = vmap(lambda s, m: m @ s, (0, None))(c_mu, emission_matrix)
+            c_emission_constrained_mu = self._emission_constrainer(c_emission_mu)
+            c_emission_var = vmap(lambda s, m: m @ s @ m.T, (0, None))(c_var, emission_matrix)
+            component_pos[c] = (c_emission_constrained_mu, c_emission_var)
+            _loc += c_dim
+
+        # Include the regression effect if the model has the regression component
+        if inputs is not None:
+            W = self.params['regression_weights']
+            regression_effect = vmap(lambda w, x: w @ x, (None, 0))(W, inputs)
+            # Given the regression weight, the regression effect is not random
+            component_pos['Regression'] = (regression_effect, jnp.zeros((inputs.shape[0], W.shape[0])))
+
+        return component_pos
+
     def fit_hmc(self,
                 key,
                 sample_size,
                 emissions,
                 inputs=None,
                 warmup_steps=500,
-                num_integration_steps=30):
+                num_integration_steps=20):
 
         def unnorm_log_pos(trainable_unc_params):
             params = from_unconstrained(trainable_unc_params, fixed_params, self.param_props)
@@ -283,8 +317,8 @@ class _StructuralTimeSeriesSSM(SSM):
             # sum(hyper_log_sigma) plus some constant depending only on z.
             _params = tree_map(lambda x, log_sig: x * jnp.exp(log_sig), std_samp, vi_log_sigmas)
             unc_params = tree_map(lambda x, mu: x + mu, _params, vi_means)
-            q_entropy = -flatten(vi_log_sigmas)[0].sum()
-            return q_entropy - unnorm_log_pos(unc_params)
+            q_entropy = flatten(vi_log_sigmas)[0].sum()
+            return q_entropy + unnorm_log_pos(unc_params)
 
         objective = lambda x: -vmap(_samp_elbo, (None, 0))(x, std_samples).mean()
 
@@ -292,7 +326,7 @@ class _StructuralTimeSeriesSSM(SSM):
         initial_vi_means = model_unc_params
         initial_vi_log_sigmas = unflatten(params_structure, jnp.zeros(vi_dim))
         initial_vi_params = (initial_vi_means, initial_vi_log_sigmas)
-        lbfgs = LBFGS(maxiter=1000, fun=objective, tol=1e-3, stepsize=1e-4, jit=True)
+        lbfgs = LBFGS(maxiter=1000, fun=objective, tol=1e-3, stepsize=1e-3, jit=True)
         (vi_means, vi_log_sigmas), _info = lbfgs.run(initial_vi_params)
 
         # Sample from the learned approximate posterior q
@@ -360,6 +394,10 @@ class _StructuralTimeSeriesSSM(SSM):
 
     def _ssm_filter(self, params, emissions, inputs):
         """The filter of the corresponding SSM model"""
+        raise NotImplementedError
+
+    def _ssm_smoother(self, params, emissions, inputs):
+        """The smoother of the corresponding SSM model"""
         raise NotImplementedError
 
     def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
@@ -447,6 +485,10 @@ class GaussianSSM(_StructuralTimeSeriesSSM):
         """The filter of the corresponding SSM model"""
         return lgssm_filter(params=params, emissions=emissions, inputs=inputs)
 
+    def _ssm_smoother(self, params, emissions, inputs):
+        """The filter of the corresponding SSM model"""
+        return lgssm_smoother(params=params, emissions=emissions, inputs=inputs)
+
     def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
         """The posterior sampler of the corresponding SSM model"""
         return lgssm_posterior_sample(rng=key,
@@ -490,7 +532,9 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
         ts_means, ts_mean_covs, ts = super().forecast(
             key, observed_time_series, num_forecast_steps, past_inputs, forecast_inputs
             )
-        return ts_means, ts_means, ts
+        _sample = lambda r, key: Poisson(rate=r).sample(seed=key)
+        ts_samples = vmap(_sample)(ts_means, jr.split(key, num_forecast_steps))
+        return ts_samples, ts_means, ts
 
     def _to_ssm_params(self, params):
         """Wrap the STS model into the form of the corresponding SSM model """
@@ -508,7 +552,11 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
 
     def _ssm_filter(self, params, emissions, inputs):
         """The filter of the corresponding SSM model"""
-        return cmgf(params=params, emissions=emissions, inputs=inputs, num_iter=2)
+        return cmgf_filt(params=params, emissions=emissions, inputs=inputs, num_iter=2)
+
+    def _ssm_smoother(self, params, emissions, inputs):
+        """The filter of the corresponding SSM model"""
+        return cmgf_smooth(params=params, emissions=emissions, inputs=inputs, num_iter=2)
 
     def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
         """The posterior sampler of the corresponding SSM model"""
