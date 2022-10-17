@@ -145,3 +145,15 @@ class GHKFParams(CMGFParams):
     order: chex.Scalar = 10
     gaussian_expectation: Callable = GHKFIntegrals(order=order).gaussian_expectation
     gaussian_cross_covariance: Callable = GHKFIntegrals(order=order).gaussian_cross_covariance
+
+
+@chex.dataclass
+class VDEKFParams:
+    """
+    Lightweight container for VDEKF Parameters.
+    """
+    initial_mean: chex.Array
+    initial_cov_diag: chex.Array
+    dynamics_cov_diag: chex.Array
+    emission_mean_function: Callable
+    emission_cov_function: Callable

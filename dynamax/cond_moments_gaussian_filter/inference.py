@@ -1,5 +1,6 @@
 from jax import numpy as jnp
 from jax import lax
+from jax import jacfwd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from dynamax.containers import GSSMPosterior
 
@@ -8,6 +9,7 @@ from dynamax.containers import GSSMPosterior
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
 _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
+_jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
 
 
 def _predict(m, P, f, Q, u, g_ev, g_cov):
@@ -96,6 +98,32 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
     return lls[0], mu_cond, Sigma_cond
 
 
+def _stationary_dynamics_variational_diagonal_predict(m, P_diag, Q_diag):
+    mu_pred = m
+    Sigma_pred = P_diag + Q_diag
+    return mu_pred, Sigma_pred
+
+
+def _variational_diagonal_ekf_condition_on(m, P_diag, y_cond_mean, y_cond_cov, u, y, num_iter):
+    m_Y = lambda x: y_cond_mean(x, u)
+    Cov_Y = lambda x: y_cond_cov(x, u)
+
+    def _step(carry, _):
+        prior_mean, prior_cov = carry
+        yhat = m_Y(prior_mean)
+        R = jnp.atleast_2d(Cov_Y(prior_mean))
+        R_inv = jnp.linalg.solve(R, jnp.eye(R.shape[0]))
+        H =  _jacfwd_2d(m_Y, prior_mean)
+        posterior_cov = 1/(1/prior_cov + ((H.T @ R_inv) * H.T).sum(-1))
+        posterior_mean = prior_mean + jnp.diag(posterior_cov) @ H.T @ R_inv @ (y - yhat)
+        return (posterior_mean, posterior_cov), _
+
+    # Iterate re-linearization over posterior mean and covariance
+    carry = (m, P_diag)
+    (mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter))
+    return mu_cond, Sigma_cond
+
+
 def statistical_linear_regression(mu, Sigma, m, S, C):
     """Return moment-matching affine coefficients and approximation noise variance
     given joint moments.
@@ -172,6 +200,36 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+
+
+def stationary_dynamics_variational_diagonal_extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
+    num_timesteps = len(emissions)
+
+    # Process conditional emission moments to take in control inputs
+    m_Y, Cov_Y = params.emission_mean_function, params.emission_cov_function
+    m_Y, Cov_Y  = (_process_fn(fn, inputs) for fn in (m_Y, Cov_Y))
+    inputs = _process_input(inputs, num_timesteps)
+
+    def _step(carry, t):
+        pred_mean, pred_cov_diag = carry
+
+        # Get parameters and inputs for time index t
+        Q_diag = _get_params(params.dynamics_cov_diag, 2, t)
+        u = inputs[t]
+        y = emissions[t]
+
+        # Condition on the emission
+        filtered_mean, filtered_cov_diag = _variational_diagonal_ekf_condition_on(pred_mean, pred_cov_diag, m_Y, Cov_Y, u, y, num_iter)
+
+        # Predict the next state
+        pred_mean, pred_cov_diag = _stationary_dynamics_variational_diagonal_predict(filtered_mean, filtered_cov_diag, Q_diag)
+
+        return (pred_mean, pred_cov_diag), (filtered_mean, filtered_cov_diag)
+
+    # Run the general linearization filter
+    carry = (params.initial_mean, params.initial_cov_diag)
+    _, (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    return GSSMPosterior(filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, inputs=None):
