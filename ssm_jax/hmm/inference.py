@@ -25,12 +25,11 @@ class HMMPosterior:
     filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
     predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
     smoothed_probs(t,k) = p(hidden(t)=k | obs(1:T))
+    initial_probs[i] = p(hidden(0)=i | obs(1:T))
 
     transition probabilities may be 2d or 3d with either
     trans_probs[i,j] = \sum_t p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
     trans_probs[t,i,j] = p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
-
-    initial_probs[i] = p(hidden(0)=i | obs(1:T))
     """
 
     marginal_loglik: chex.Scalar = None
