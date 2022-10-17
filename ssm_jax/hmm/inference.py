@@ -29,7 +29,7 @@ class HMMPosterior:
     transition probabilities may be 2d or 3d with either
     trans_probs[i,j] = \sum_t p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
     trans_probs[t,i,j] = p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
-    
+
     initial_probs[i] = p(hidden(0)=i | obs(1:T))
     """
 
@@ -39,7 +39,6 @@ class HMMPosterior:
     smoothed_probs: chex.Array = None
     initial_probs: chex.Array = None
     trans_probs: chex.Array = None
-    initial_probs: chex.Array = None
 
 
 def _normalize(u, axis=0, eps=1e-15):
@@ -279,7 +278,7 @@ def hmm_smoother(initial_distribution, transition_matrix, log_likelihoods, trans
     )
 
 
-@partial(jit, static_argnames=["transition_fn", "window_size"]) 
+@partial(jit, static_argnames=["transition_fn", "window_size"])
 def hmm_fixed_lag_smoother(initial_distribution, transition_matrix, log_likelihoods, window_size, transition_fn = None):
     """Compute the smoothed state probabilities using the fixed-lag smoother.
 
