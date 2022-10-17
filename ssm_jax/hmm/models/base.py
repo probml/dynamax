@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from copy import deepcopy
+from functools import partial
 import jax.numpy as jnp
 import jax.random as jr
 from jax import jit, lax, value_and_grad, vmap
@@ -405,12 +406,14 @@ class ExponentialFamilyHMM(StandardHMM):
             minibatch_emissions, learn_rate = inputs
 
             # Compute the sufficient stats given a minibatch of emissions
-            minibatch_stats = self.e_step(params, minibatch_emissions)
+            # TODO: Handle minibatch covariates
+            minibatch_stats, lls = vmap(partial(self.e_step, params))(minibatch_emissions)
+            # minibatch_stats, ll = self.e_step(params, minibatch_emissions)
 
             # Scale the stats as if they came from the whole dataset
             scale = num_batches
             scaled_minibatch_stats = tree_map(lambda x: jnp.sum(x, axis=0) * scale, minibatch_stats)
-            expected_lp = self.log_prior(params) + scaled_minibatch_stats.marginal_loglik
+            expected_lp = self.log_prior(params) + lls.sum() * scale
 
             # Incorporate these these stats into the rolling averaged stats
             rolling_stats = tree_map(lambda s0, s1: (1 - learn_rate) * s0 + learn_rate * s1, rolling_stats,

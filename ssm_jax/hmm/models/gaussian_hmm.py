@@ -59,11 +59,14 @@ class GaussianHMM(ExponentialFamilyHMM):
         return params, param_props
 
     def _zeros_like_suff_stats(self):
-        return dict(
+        initial_stats = jnp.zeros(self.num_states)
+        transition_stats = jnp.zeros((self.num_states, self.num_states))
+        emission_stats = dict(
             sum_w=jnp.zeros((self.num_states,)),
             sum_x=jnp.zeros((self.num_states, self.emission_dim)),
             sum_xxT=jnp.zeros((self.num_states, self.emission_dim, self.emission_dim)),
         )
+        return (initial_stats, transition_stats, emission_stats)
 
     def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
         return dict(
