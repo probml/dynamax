@@ -12,7 +12,7 @@ class GSSMPosterior:
                 Cov[x_t | y_{1:t}, u_{1:t}].
             smoothed_means: (T,D_hid) array,
                 E[x_t | y_{1:T}, u_{1:T}].
-            smoothed_covs: (T,D_hid,D_hid) array of smoothed marginal covariances,
+            smoothed_covariances: (T,D_hid,D_hid) array of smoothed marginal covariances,
                 Cov[x_t | y_{1:T}, u_{1:T}].
             smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
                 E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
