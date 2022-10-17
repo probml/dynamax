@@ -1,10 +1,10 @@
-# ssm-jax
-![Test Status](https://github.com/probml/ssm-jax/actions/workflows/workflow.yml/badge.svg?branch=main)
+# dynamax
+![Test Status](https://github.com/probml/dynamax/actions/workflows/workflow.yml/badge.svg?branch=main)
 
-State Space Models in JAX.
+Dynamic State Space Models in JAX.
 
 
-[List of contributors](https://github.com/probml/ssm-jax/graphs/contributors)
+[List of contributors](https://github.com/probml/dynamax/graphs/contributors)
 
 MIT License. 2022
 
@@ -25,7 +25,7 @@ pytest ssm_jax/hmm/demos/demos_test.py
 
 To install in colab, do this
 ```
-%pip install git+https://github.com/probml/ssm-jax.git
+%pip install git+https://github.com/probml/dynamax.git
 ```
 
 To install [black](https://black.readthedocs.io/en/stable/), do this (quotes are mandatory for `zsh`)
