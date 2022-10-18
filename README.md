@@ -10,17 +10,17 @@ MIT License. 2022
 
 There are a bunch of demos in the form of python scripts and jupyter notebooks. 
 ```
-python ssm_jax/hmm/demos/gaussian_hmm_2d.py 
+python dynamax/hmm/demos/gaussian_hmm_2d.py 
 ```
 
 To run all the tests, do this
 ```
-pytest ssm_jax
+pytest dynamax
 ```
 To run a specific test, do something like this
 ```
-pytest ssm_jax/hmm/inference_test.py
-pytest ssm_jax/hmm/demos/demos_test.py 
+pytest dynamax/hmm/inference_test.py
+pytest dynamax/hmm/demos/demos_test.py 
 ```
 
 To install in colab, do this
