@@ -1,2 +1,0 @@
-from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
-from ssm_jax.linear_gaussian_ssm.models.linear_gaussian_ssm_conjugate import LinearGaussianConjugateSSM
