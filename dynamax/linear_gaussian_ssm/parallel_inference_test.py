@@ -6,8 +6,11 @@ from dynamax.linear_gaussian_ssm.inference import lgssm_smoother as serial_lgssm
 from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_smoother as parallel_lgssm_smoother
 
 
-def test_parallel_kalman_smoother(num_timesteps=5, seed=0):
+class TestParallelLGSSMSmoother:
     """ Compare parallel and serial lgssm smoothing implementations."""
+    num_timesteps=5
+    seed=0
+
     dt = 0.1
     F = jnp.eye(4) + dt * jnp.eye(4, k=2)
     Q = 1. * jnp.kron(jnp.array([[dt**3/3, dt**2/2],
@@ -45,24 +48,26 @@ def test_parallel_kalman_smoother(num_timesteps=5, seed=0):
     serial_posterior = serial_lgssm_smoother(lgssm_params, emissions, inputs)
     parallel_posterior = parallel_lgssm_smoother(lgssm_params, emissions)
 
-    # There are some very slight discrepencies between filtered means at early timepoints, 
-    #  for the time being use the average absolute difference for testing purposes.
-    av_abs_filtered_mean_diff = jnp.abs(
-            serial_posterior.filtered_means - parallel_posterior.filtered_means
-            ).mean()
-    av_abs_filtered_cov_diff = jnp.abs(
-            serial_posterior.filtered_covariances - parallel_posterior.filtered_covariances
-            ).mean()
-    av_abs_smoothed_mean_diff = jnp.abs(
-            serial_posterior.smoothed_means - parallel_posterior.smoothed_means
-            ).mean()
-    av_abs_smoothed_cov_diff = jnp.abs(
-            serial_posterior.smoothed_covariances - parallel_posterior.smoothed_covariances
-            ).mean()
+    def test_filtered_means(self):
+        assert jnp.allclose(
+                self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means,
+                rtol=1e-3
+                )
 
-    thresh = 1e-2
+    def test_filtered_covariances(self):
+        assert jnp.allclose(
+                self.serial_posterior.filtered_covariances, self.parallel_posterior.filtered_covariances,
+                atol=1e-5,rtol=1e-3
+                )
 
-    assert av_abs_filtered_mean_diff < thresh
-    assert av_abs_filtered_cov_diff < thresh
-    assert av_abs_smoothed_mean_diff < thresh
-    assert av_abs_smoothed_cov_diff < thresh
+    def test_smoothed_means(self):
+        assert jnp.allclose(
+                self.serial_posterior.smoothed_means, self.parallel_posterior.smoothed_means,
+                rtol=1e-3
+                )
+
+    def test_smoothed_covariances(self):
+        assert jnp.allclose(
+                self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances,
+                atol=1e-5,rtol=1e-3
+                )
