@@ -13,9 +13,11 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax.flatten_util import ravel_pytree
 import flax.linen as nn
+from sklearn import datasets
+from sklearn import preprocessing
 
-from dynamax.cond_moments_gaussian_filter.containers import EKFParams
-from dynamax.cond_moments_gaussian_filter.inference import conditional_moments_gaussian_filter
+from dynamax.cond_moments_gaussian_filter.containers import VDEKFParams
+from dynamax.cond_moments_gaussian_filter.inference import stationary_dynamics_variational_diagonal_extended_kalman_filter
 
 def plot_posterior_predictive(ax, X, Y, title, Xspace=None, Zspace=None, cmap=cm.rainbow):
     """Plot the 2d posterior predictive distribution.
@@ -80,6 +82,14 @@ def generate_spiral_dataset(num_per_class=250, zero_var=1., one_var=1., shuffle=
         input, output = input[idx], output[idx]
 
     return input, output
+
+
+def generate_linearly_separable_dataset(num_per_class=250, key=1):
+    X, y = datasets.make_blobs(n_samples=500, centers=2, n_features=2, center_box=(0, 10), random_state=key)
+    scaler = preprocessing.StandardScaler()
+    X = jnp.array(scaler.fit_transform(X))
+    y = jnp.array(y.astype('float'))
+    return X, y
 
 
 def generate_input_grid(input):
@@ -172,9 +182,10 @@ def get_mlp_flattened_params(model_dims, key=0):
 
 def main():
     # Define MLP architecture
-    input_dim, hidden_dims, output_dim = 2, [30, 20, 30], 1
+    input_dim, hidden_dims, output_dim = 2, [50, 50], 1
     model_dims = [input_dim, *hidden_dims, output_dim]
     _, flat_params, _, apply_fn = get_mlp_flattened_params(model_dims)
+    print(flat_params.shape)
 
     figs = {}
     # Generate spiral dataset and plot
@@ -186,17 +197,18 @@ def main():
 
     # Run CMGF-EKF to train the MLP Classifier
     state_dim, emission_dim = flat_params.size, output_dim
-    sigmoid_fn = lambda w, x: jax.nn.sigmoid(apply_fn(w, x))
-    cmgf_ekf_params = EKFParams(
+    eps = 1e-4
+    sigmoid_fn = lambda w, x: jnp.clip(jax.nn.sigmoid(apply_fn(w, x)), eps, 1-eps) # Clip to prevent divergence
+    cmgf_ekf_params = VDEKFParams(
         initial_mean=flat_params,
-        initial_covariance=jnp.eye(state_dim),
-        dynamics_function=lambda w, _: w,
-        dynamics_covariance=jnp.eye(state_dim) * 1e-4,
+        initial_cov_diag=jnp.ones((state_dim,)) * 100,
+        dynamics_cov_diag=jnp.ones((state_dim,)) * 1e-2,
         emission_mean_function = lambda w, x: sigmoid_fn(w, x),
         emission_cov_function = lambda w, x: sigmoid_fn(w, x) * (1 - sigmoid_fn(w, x))
     )
-    cmgf_ekf_post = conditional_moments_gaussian_filter(cmgf_ekf_params, output, inputs=input)
+    cmgf_ekf_post = stationary_dynamics_variational_diagonal_extended_kalman_filter(cmgf_ekf_params, output, inputs=input)
     w_means, w_covs = cmgf_ekf_post.filtered_means, cmgf_ekf_post.filtered_covariances
+    print(w_covs[-1].max(), w_covs[-1].min())
 
     # Define grid on input space
     input_grid = generate_input_grid(input)
@@ -218,17 +230,17 @@ def main():
     plt.tight_layout()
     figs['cmgf_ekf_intermediate'] = fig
 
-    # Save training as .mp4 video
-    def animate(i):
-        ax.cla()
-        w_curr = w_means[i]
-        Zi = posterior_predictive_grid(input_grid, w_means[i], sigmoid_fn)
-        title = f'CMGF-EKF-MLP ({i+1}/500)'
-        plot_posterior_predictive(ax, input[:i+1], output[:i+1], title, input_grid, Zi)
-        return ax
-    fig, ax = plt.subplots(figsize=(6, 5))
-    anim = animation.FuncAnimation(fig, animate, frames=500, interval=50)
-    anim.save("cmgf_mlp_classifier.mp4", dpi=200, bitrate=-1, fps=24)
+    # # Save training as .mp4 video
+    # def animate(i):
+    #     ax.cla()
+    #     w_curr = w_means[i]
+    #     Zi = posterior_predictive_grid(input_grid, w_means[i], sigmoid_fn)
+    #     title = f'CMGF-EKF-MLP ({i+1}/500)'
+    #     plot_posterior_predictive(ax, input[:i+1], output[:i+1], title, input_grid, Zi)
+    #     return ax
+    # fig, ax = plt.subplots(figsize=(6, 5))
+    # anim = animation.FuncAnimation(fig, animate, frames=500, interval=50)
+    # anim.save("cmgf_mlp_classifier.mp4", dpi=200, bitrate=-1, fps=24)
 
     return figs
 
