@@ -277,6 +277,19 @@ class StructuralTimeSeries():
                                       warmup_steps, num_integration_steps)
         return param_samps
 
+    def fit_map(self, observed_time_series, inputs=None, key=jr.PRNGKey(0)):
+        """Maximum a posterior (MAP) estimator of parameters of the STS model
+        """
+        sts_ssm = self.as_ssm()
+        params, losses = sts_ssm.fit_sgd(curr_params, param_props, batch_emissions 
+                                         optimizer=optax.adam(1e-3), batch_size=1,
+                num_epochs=50,
+                shuffle=False,
+                key=key,
+                **batch_covariates)
+        map_parameter = sts_ssm.fit_sgd(observed_time_series, inputs)
+        return map_parameter
+
     def fit_vi(self, key, sample_size, observed_time_series, inputs=None, M=100):
         """Sample parameters of the STS model from the approximate distribution fitted by ADVI.
         """

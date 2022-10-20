@@ -23,7 +23,9 @@ from dynamax.parameters import (
     flatten,
     unflatten,
     ParameterProperties)
+from dynamax.optimize import run_sgd
 from dynamax.utils import PSDToRealBijector
+import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from tensorflow_probability.substrates.jax.distributions import (
     MultivariateNormalFullCovariance as MVN,
@@ -217,6 +219,61 @@ class _StructuralTimeSeriesSSM(SSM):
             component_pos['Regression'] = (regression_effect, jnp.zeros((inputs.shape[0], W.shape[0])))
 
         return component_pos
+
+    def fit_sgd(self,
+                curr_params,
+                param_props,
+                emissions,
+                inputs=None,
+                optimizer=optax.adam(1e-3),
+                key=jr.PRNGKey(0)):
+        """
+        Args:
+            batch_emissions (chex.Array): Independent sequences.
+            optmizer (optax.Optimizer): Optimizer.
+            batch_size (int): Number of sequences used at each update step.
+            num_epochs (int): Iterations made through entire dataset.
+            shuffle (bool): Indicates whether to shuffle minibatches.
+            key (chex.PRNGKey): RNG key to shuffle minibatches.
+        Returns:
+            losses: Output of loss_fn stored at each step.
+        """
+        curr_unc_params, fixed_params = to_unconstrained(curr_params, param_props)
+
+        def _loss_fn(unc_params, minibatch):
+            """Default objective function."""
+            params = from_unconstrained(unc_params, fixed_params, param_props)
+            minibatch_emissions, minibatch_covariates = minibatch
+            scale = len(batch_emissions) / len(minibatch_emissions)
+            minibatch_lls = vmap(partial(self.marginal_log_prob, params))(minibatch_emissions, **minibatch_covariates)
+            lp = self.log_prior(params) + minibatch_lls.sum() * scale
+            return -lp / batch_emissions.size
+
+        def neg_log_joint(trainable_unc_params, minibatch):
+            """Use negative log joint probability function as the loss function:
+
+            log p(params, emissions) = log p(unc_params) + log_det_jacobian(unc_params)
+                                       + log p(observations | params)
+
+            This is unnormalized posterior probability of parameters.
+            """
+            params = from_unconstrained(trainable_unc_params, fixed_params, self.param_props)
+            log_det_jac = log_det_jac_constrain(trainable_unc_params, fixed_params, self.param_props)
+            log_pri = self.log_prior(params) + log_det_jac
+            batch_lls = self.marginal_log_prob(emissions, inputs, params)
+            lp = log_pri + batch_lls.sum()
+            return -lp
+
+        dataset = (batch_emissions, batch_covariates)
+        unc_params, losses = run_sgd(_loss_fn,
+                                     curr_unc_params,
+                                     dataset,
+                                     optimizer=optimizer,
+                                     num_epochs=num_epochs,
+                                     key=key)
+
+        params = from_unconstrained(unc_params, fixed_params, param_props)
+        return params, losses
 
     def fit_hmc(self,
                 key,
