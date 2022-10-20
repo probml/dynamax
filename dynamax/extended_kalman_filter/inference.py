@@ -3,6 +3,7 @@ from jax import lax
 from jax import jacfwd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from dynamax.containers import GSSMPosterior
+from dynamax.distributions import MultiVariateNormal as MVN
 
 
 # Helper functions
@@ -78,7 +79,7 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
     return mu_cond, Sigma_cond
 
 
-def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
+def extended_kalman_filter(params, emissions, num_iter=1, inputs=None, likelihood_dist=MVN):
     """Run an (iterated) extended Kalman filter to produce the
     marginal likelihood and filtered state estimates.
 
@@ -87,6 +88,7 @@ def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
         emissions (T,D_hid): array of observations.
         num_iter (int): number of linearizations around posterior for update step.
         inputs (T,D_in): array of inputs.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood computation.
 
     Returns:
         filtered_posterior: GSSMPosterior instance containing,
@@ -112,7 +114,8 @@ def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
 
         # Update the log likelihood
         H_x = H(pred_mean, u)
-        ll += MVN(h(pred_mean, u), H_x @ pred_cov @ H_x.T + R).log_prob(jnp.atleast_1d(y))
+
+        ll += likelihood_dist(mean=h(pred_mean, u), cov=H_x @ pred_cov @ H_x.T + R).log_prob(jnp.atleast_1d(y))
 
         # Condition on this emission
         filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, h, H, R, u, y, num_iter)
@@ -128,7 +131,7 @@ def extended_kalman_filter(params, emissions, num_iter=1, inputs=None):
     return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def iterated_extended_kalman_filter(params, emissions, num_iter=2, inputs=None):
+def iterated_extended_kalman_filter(params, emissions, num_iter=2, inputs=None, likelihood_dist=MVN):
     """Run an iterated extended Kalman filter (IEKF).
 
     Args:
@@ -136,6 +139,7 @@ def iterated_extended_kalman_filter(params, emissions, num_iter=2, inputs=None):
         emissions (T,D_hid): array of observations.
         num_iter (int): number of linearizations around smoothed posterior.
         inputs (T,D_in): array of inputs.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood computation.
 
     Returns:
         filtered_posterior: GSSMPosterior instance containing,
@@ -143,11 +147,11 @@ def iterated_extended_kalman_filter(params, emissions, num_iter=2, inputs=None):
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
     """
-    filtered_posterior = extended_kalman_filter(params, emissions, num_iter, inputs)
+    filtered_posterior = extended_kalman_filter(params, emissions, num_iter, inputs, likelihood_dist)
     return filtered_posterior
 
 
-def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=None):
+def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=None, likelihood_dist=MVN):
     """Run an extended Kalman (RTS) smoother.
 
     Args:
@@ -156,6 +160,7 @@ def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=
         filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.
             If None, the smoother computes the filtered posterior directly.
         inputs (T,D_in): array of inputs.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood computation.
 
     Returns:
         nlgssm_posterior: GSSMPosterior instance containing properties of
@@ -165,7 +170,7 @@ def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=
 
     # Get filtered posterior
     if filtered_posterior is None:
-        filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs)
+        filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs, likelihood_dist=likelihood_dist)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Dynamics and emission functions and their Jacobians
@@ -213,7 +218,7 @@ def extended_kalman_smoother(params, emissions, filtered_posterior=None, inputs=
     )
 
 
-def iterated_extended_kalman_smoother(params, emissions, num_iter=2, inputs=None):
+def iterated_extended_kalman_smoother(params, emissions, num_iter=2, inputs=None, likelihood_dist=MVN):
     """Run an iterated extended Kalman smoother (IEKS).
 
     Args:
@@ -221,6 +226,7 @@ def iterated_extended_kalman_smoother(params, emissions, num_iter=2, inputs=None
         emissions (T,D_hid): array of observations.
         num_iter (int): number of re-linearizations around smoothed posterior.
         inputs (T,D_in): array of inputs.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood computation.
 
     Returns:
         nlgssm_posterior: GSSMPosterior instance containing properties of
@@ -230,7 +236,7 @@ def iterated_extended_kalman_smoother(params, emissions, num_iter=2, inputs=None
     def _step(carry, _):
         # Relinearize around smoothed posterior from previous iteration
         smoothed_prior = carry
-        smoothed_posterior = extended_kalman_smoother(params, emissions, smoothed_prior, inputs)
+        smoothed_posterior = extended_kalman_smoother(params, emissions, smoothed_prior, inputs, likelihood_dist)
         return smoothed_posterior, None
 
     smoothed_posterior, _ = lax.scan(_step, None, jnp.arange(num_iter))

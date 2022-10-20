@@ -6,7 +6,6 @@ from dynamax.containers import GSSMPosterior
 from dynamax.distributions import MultiVariateNormal as MVN
 
 
-
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
@@ -72,7 +71,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, li
         g_ev (Callable): Gaussian expectation value function.
         g_cov (Callable): Gaussian cross covariance function.
         num_iter (int): number of re-linearizations around posterior for update step.
-        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood computation.
 
      Returns:
         log_likelihood (Scalar): prediction log likelihood for observation y
@@ -136,7 +135,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
         emissions (T,D_hid): array of observations.
         num_iter (int): number of linearizations around prior/posterior for update step.
         inputs (T,D_in): array of inputs.
-        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood computation.
 
     Returns:
         filtered_posterior: GSSMPosterior instance containing,
