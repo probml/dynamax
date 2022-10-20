@@ -1,7 +1,10 @@
+import jax
 from jax import numpy as jnp
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from dynamax.containers import GSSMPosterior
+from dynamax.distributions import MultiVariateNormal as MVN
+
 
 
 # Helper functions
@@ -43,7 +46,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
     return mu_pred, Sigma_pred, cross_pred
 
 
-def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
+def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, likelihood_dist=MVN):
     """Condition a Gaussian potential on a new observation with arbitrary
        likelihood with given functions for conditional moments and make a
        Gaussian approximation.
@@ -69,6 +72,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
         g_ev (Callable): Gaussian expectation value function.
         g_cov (Callable): Gaussian cross covariance function.
         num_iter (int): number of re-linearizations around posterior for update step.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood.
 
      Returns:
         log_likelihood (Scalar): prediction log likelihood for observation y
@@ -83,7 +87,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
         prior_mean, prior_cov = carry
         yhat = g_ev(m_Y, prior_mean, prior_cov)
         S = g_ev(Cov_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
-        log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
+        log_likelihood = likelihood_dist(mean=yhat, cov=S).log_prob(jnp.atleast_1d(y)).sum()
         C = g_cov(identity_fn, m_Y, prior_mean, prior_cov)
         K = jnp.linalg.solve(S, C.T).T
         posterior_mean = prior_mean + K @ (y - yhat)
@@ -123,7 +127,7 @@ def statistical_linear_regression(mu, Sigma, m, S, C):
     return A, b, Omega
 
 
-def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=None):
+def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=None, likelihood_dist=MVN):
     """Run an (iterated) conditional moments Gaussian filter to produce the
     marginal likelihood and filtered state estimates.
 
@@ -132,6 +136,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
         emissions (T,D_hid): array of observations.
         num_iter (int): number of linearizations around prior/posterior for update step.
         inputs (T,D_in): array of inputs.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood.
 
     Returns:
         filtered_posterior: GSSMPosterior instance containing,
@@ -160,7 +165,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
         y = emissions[t]
 
         # Condition on the emission
-        log_likelihood, filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, m_Y, Cov_Y, u, y, g_ev, g_cov, num_iter)
+        log_likelihood, filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, m_Y, Cov_Y, u, y, g_ev, g_cov, num_iter, likelihood_dist)
         ll += log_likelihood
 
         # Predict the next state
@@ -174,7 +179,7 @@ def conditional_moments_gaussian_filter(params, emissions, num_iter=1, inputs=No
     return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, inputs=None):
+def iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, inputs=None, likelihood_dist=MVN):
     """Run an iterated conditional moments Gaussian filter.
 
     Args:
@@ -189,11 +194,11 @@ def iterated_conditional_moments_gaussian_filter(params, emissions, num_iter=2, 
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
     """
-    filtered_posterior = conditional_moments_gaussian_filter(params, emissions, num_iter, inputs)
+    filtered_posterior = conditional_moments_gaussian_filter(params, emissions, num_iter, inputs, likelihood_dist)
     return filtered_posterior
 
 
-def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=None, inputs=None):
+def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=None, inputs=None, likelihood_dist=MVN):
     """Run a conditional moments Gaussian smoother.
 
     Args:
@@ -211,7 +216,7 @@ def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=
 
     # Get filtered posterior
     if filtered_posterior is None:
-        filtered_posterior = conditional_moments_gaussian_filter(params, emissions, inputs=inputs)
+        filtered_posterior = conditional_moments_gaussian_filter(params, emissions, inputs=inputs, likelihood_dist=likelihood_dist)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Process dynamics function to take in control inputs
@@ -258,7 +263,7 @@ def conditional_moments_gaussian_smoother(params, emissions, filtered_posterior=
     )
 
 
-def iterated_conditional_moments_gaussian_smoother(params, emissions, num_iter=1, inputs=None):
+def iterated_conditional_moments_gaussian_smoother(params, emissions, num_iter=1, inputs=None, likelihood_dist=MVN):
     """Run an iterated conditional moments Gaussian smoother.
 
     Args:
@@ -274,7 +279,7 @@ def iterated_conditional_moments_gaussian_smoother(params, emissions, num_iter=1
     def _step(carry, _):
         # Relinearize around smoothed posterior from previous iteration
         smoothed_prior = carry
-        smoothed_posterior = conditional_moments_gaussian_smoother(params, emissions, smoothed_prior, inputs)
+        smoothed_posterior = conditional_moments_gaussian_smoother(params, emissions, smoothed_prior, inputs, likelihood_dist)
         return smoothed_posterior, None
 
     smoothed_posterior, _ = lax.scan(_step, None, jnp.arange(num_iter))

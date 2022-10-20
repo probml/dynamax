@@ -1,7 +1,10 @@
+from typing import Callable
+
 import jax.numpy as jnp
 from jax import vmap
 from jax.scipy.linalg import solve_triangular
 from tensorflow_probability.substrates import jax as tfp
+import chex
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -424,3 +427,28 @@ def nig_posterior_update(nig_prior, sufficient_stats):
                               mean_concentration=posterior_precision,
                               concentration=posterior_df,
                               scale=posterior_scale)
+
+
+###############################################################################
+
+@chex.dataclass
+class InferenceDistribution:
+    mean: chex.Array = None
+    cov: chex.Array = None
+    
+    def log_prob(self, obs):
+        raise NotImplementedError
+
+
+@chex.dataclass
+class MultiVariateNormal(InferenceDistribution):
+    def log_prob(self, obs):
+        mvn = tfd.MultivariateNormalFullCovariance(loc=self.mean, covariance_matrix=self.cov)
+        return mvn.log_prob(obs)
+
+
+@chex.dataclass
+class Poisson(InferenceDistribution):
+    def log_prob(self, obs):
+        pois = tfd.Poisson(rate=self.mean)
+        return pois.log_prob(obs)

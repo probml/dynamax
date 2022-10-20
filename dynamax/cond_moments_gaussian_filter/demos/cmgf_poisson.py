@@ -3,6 +3,7 @@
 # Authors: Peter G. Chang (@petergchang) and Collin Schlager (@schlagercollin)
 
 import warnings
+from functools import partial
 
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
@@ -15,6 +16,7 @@ from jax.tree_util import tree_map
 
 from dynamax.cond_moments_gaussian_filter.containers import EKFParams, GHKFParams
 from dynamax.cond_moments_gaussian_filter.inference import conditional_moments_gaussian_smoother
+from dynamax.distributions import Poisson, MultiVariateNormal
 
 
 def plot_states(states, num_steps, title, ax):
@@ -277,10 +279,12 @@ def main():
     figs = {}
     # Plot batches of samples generated
     figs['samples'] = plot_emissions_poisson(all_states[0], all_emissions[0])
+    poisson_cmgf_smoother = partial(conditional_moments_gaussian_smoother, likelihood_dist=Poisson)
 
     # Perform CMGF-Smoother Inference
     for filter_type, params in {"CMGF-EKF": cmgf_ekf_params, "CMGF-GHKF": cmgf_ghkf_params}.items():
-        posts = vmap(conditional_moments_gaussian_smoother, (None, 0))(params, all_emissions)
+        posts = vmap(poisson_cmgf_smoother, (None, 0))(params, all_emissions)
+        print(f'Log-likelihoods for {filter_type} are: {posts.marginal_loglik}')
         fig, ax = plt.subplots(figsize=(10, 2.5))
         plot_states(posts.smoothed_means[0], num_steps, f"{filter_type}-Inferred Latent States", ax)
         figs[f'{filter_type.lower()}_latent_states'] = fig
