@@ -430,9 +430,14 @@ def nig_posterior_update(nig_prior, sufficient_stats):
 
 
 ###############################################################################
+# Inference Marginal Log-likelihood Distributions
 
 @chex.dataclass
 class InferenceDistribution:
+    """
+    Lightweight wrapper for likelihood distributions using which to
+    compute marginal loglikelihood during inference.
+    """
     mean: chex.Array = None
     cov: chex.Array = None
     
@@ -442,6 +447,10 @@ class InferenceDistribution:
 
 @chex.dataclass
 class MultiVariateNormal(InferenceDistribution):
+    """
+    Lightweight wrapper for MultiVariateNormalFullCovariance distribution
+    to use for inference.
+    """
     def log_prob(self, obs):
         mvn = tfd.MultivariateNormalFullCovariance(loc=self.mean, covariance_matrix=self.cov)
         return mvn.log_prob(obs)
@@ -449,6 +458,9 @@ class MultiVariateNormal(InferenceDistribution):
 
 @chex.dataclass
 class Poisson(InferenceDistribution):
+    """
+    Lightweight wrapper for Poisson distribution to use for inference.
+    """
     def log_prob(self, obs):
         pois = tfd.Poisson(rate=self.mean)
         return pois.log_prob(obs)
