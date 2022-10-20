@@ -112,7 +112,7 @@ def _variational_diagonal_ekf_condition_on(m, P_diag, y_cond_mean, y_cond_cov, u
         prior_mean, prior_cov = carry
         yhat = m_Y(prior_mean)
         R = jnp.atleast_2d(Cov_Y(prior_mean))
-        R_inv = jnp.linalg.solve(R, jnp.eye(R.shape[0]))
+        R_inv = jnp.linalg.inv(R)
         H =  _jacfwd_2d(m_Y, prior_mean)
         posterior_cov = 1/(1/prior_cov + ((H.T @ R_inv) * H.T).sum(-1))
         posterior_mean = prior_mean + jnp.diag(posterior_cov) @ H.T @ R_inv @ (y - yhat)
@@ -214,7 +214,7 @@ def stationary_dynamics_variational_diagonal_extended_kalman_filter(params, emis
         pred_mean, pred_cov_diag = carry
 
         # Get parameters and inputs for time index t
-        Q_diag = _get_params(params.dynamics_cov_diag, 2, t)
+        Q_diag = _get_params(params.dynamics_cov_diag, 1, t)
         u = inputs[t]
         y = emissions[t]
 
