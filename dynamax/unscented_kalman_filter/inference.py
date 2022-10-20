@@ -1,10 +1,9 @@
 import jax.numpy as jnp
 from jax import lax
 from jax import vmap
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from dynamax.containers import GSSMPosterior
 import chex
-
+from dynamax.distributions import MultiVariateNormal as MVN
 
 @chex.dataclass
 class UKFHyperParams:
@@ -92,7 +91,7 @@ def _predict(m, P, f, Q, lamb, w_mean, w_cov, u):
     return m_pred, P_pred, P_cross
 
 
-def _condition_on(m, P, h, R, lamb, w_mean, w_cov, u, y):
+def _condition_on(m, P, h, R, lamb, w_mean, w_cov, u, y, likelihood_dist=MVN):
     """Condition a Gaussian potential on a new observation
 
     Args:
@@ -104,7 +103,8 @@ def _condition_on(m, P, h, R, lamb, w_mean, w_cov, u, y):
         w_mean (2*D_hid+1,): 2n+1 weights to compute predicted mean.
         w_cov (2*D_hid+1,): 2n+1 weights to compute predicted covariance.
         u (D_in,): inputs.
-        y (D_obs,): observation.black
+        y (D_obs,): observation.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood computation.
 
     Returns:
         ll (float): log-likelihood of observation
@@ -123,7 +123,7 @@ def _condition_on(m, P, h, R, lamb, w_mean, w_cov, u, y):
     pred_cross = jnp.tensordot(w_cov, _outer(sigmas_cond - m, sigmas_cond_prop - pred_mean), axes=1)
 
     # Compute log-likelihood of observation
-    ll = MVN(pred_mean, pred_cov).log_prob(y)
+    ll = likelihood_dist(mean=pred_mean, cov=pred_cov).log_prob(y)
 
     # Compute filtered mean and covariace
     K = jnp.linalg.solve(pred_cov, pred_cross.T).T  # Filter gain
@@ -132,7 +132,7 @@ def _condition_on(m, P, h, R, lamb, w_mean, w_cov, u, y):
     return ll, m_cond, P_cond
 
 
-def unscented_kalman_filter(params, emissions, hyperparams, inputs=None):
+def unscented_kalman_filter(params, emissions, hyperparams, inputs=None, likelihood_dist=MVN):
     """Run a unscented Kalman filter to produce the marginal likelihood and
     filtered state estimates.
 
@@ -141,6 +141,7 @@ def unscented_kalman_filter(params, emissions, hyperparams, inputs=None):
         emissions (T,D_hid): array of observations.
         hyperperams: a UKFHyperParams instance
         inputs (T,D_in): array of inputs.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood computation.
 
     Returns:
         filtered_posterior: ESSMPosterior instance containing,
@@ -172,7 +173,7 @@ def unscented_kalman_filter(params, emissions, hyperparams, inputs=None):
 
         # Condition on this emission
         log_likelihood, filtered_mean, filtered_cov = _condition_on(
-            pred_mean, pred_cov, h, R, lamb, w_mean, w_cov, u, y
+            pred_mean, pred_cov, h, R, lamb, w_mean, w_cov, u, y, likelihood_dist
         )
 
         # Update the log likelihood
@@ -189,7 +190,7 @@ def unscented_kalman_filter(params, emissions, hyperparams, inputs=None):
     return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def unscented_kalman_smoother(params, emissions, hyperparams, inputs=None):
+def unscented_kalman_smoother(params, emissions, hyperparams, inputs=None, likelihood_dist=MVN):
     """Run a unscented Kalman (RTS) smoother.
 
     Args:
@@ -197,6 +198,7 @@ def unscented_kalman_smoother(params, emissions, hyperparams, inputs=None):
         emissions (T,D_hid): array of observations.
         hyperperams: a UKFHyperParams instance
         inputs (T,D_in): array of inputs.
+        likelihood_dist: a distribution object defined in dynamax.distributions for likelihood computation.
 
     Returns:
         nlgssm_posterior: GSSMPosterior instance containing properties of
@@ -206,7 +208,7 @@ def unscented_kalman_smoother(params, emissions, hyperparams, inputs=None):
     state_dim = params.dynamics_covariance.shape[0]
 
     # Run the unscented Kalman filter
-    ukf_posterior = unscented_kalman_filter(params, emissions, hyperparams, inputs)
+    ukf_posterior = unscented_kalman_filter(params, emissions, hyperparams, inputs, likelihood_dist)
     ll, filtered_means, filtered_covs, *_ = ukf_posterior.to_tuple()
 
     # Compute lambda and weights from from hyperparameters
