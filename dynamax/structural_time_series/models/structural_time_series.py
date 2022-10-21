@@ -278,8 +278,8 @@ class StructuralTimeSeries():
                                       warmup_steps, num_integration_steps)
         return param_samps
 
-    def fit_mle(self, observed_time_series, inputs=None,
-                num_steps=1000, initial_params=None, key=jr.PRNGKey(0)):
+    def fit_mle(self, observed_time_series, inputs=None, num_steps=1000,
+                initial_params=None, optimizer=optax.adam(1e-1), key=jr.PRNGKey(0)):
         """Maximum likelihood estimate of parameters of the STS model
         """
         sts_ssm = self.as_ssm()
@@ -287,13 +287,13 @@ class StructuralTimeSeries():
         batch_emissions = jnp.array([observed_time_series])
         if inputs is not None:
             inputs = jnp.array([inputs])
-        if initial_params is None:
-            curr_params = sts_ssm.params
+        curr_params = sts_ssm.params if initial_params is None else initial_params
         param_props = sts_ssm.param_props
 
         optimal_params, losses = sts_ssm.fit_sgd(
             curr_params, param_props, batch_emissions, num_epochs=num_steps,
-            key=key, inputs=inputs, optimizer=optax.sgd(0.1, momentum=0.8))
+            key=key, inputs=inputs, optimizer=optimizer)
+
         return optimal_params, losses
 
     def fit_vi(self, key, sample_size, observed_time_series, inputs=None, M=100):
