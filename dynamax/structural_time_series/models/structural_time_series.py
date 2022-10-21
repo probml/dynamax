@@ -4,15 +4,13 @@ from collections import OrderedDict
 import jax.numpy as jnp
 import jax.random as jr
 import jax.scipy as jsp
-from jax.tree_util import tree_map
 from jax import vmap, jit
 from dynamax.distributions import InverseWishart as IW
 from dynamax.distributions import MatrixNormalPrecision as MN
 from dynamax.structural_time_series.models.structural_time_series_ssm import GaussianSSM, PoissonSSM
 import optax
-from tensorflow_probability.substrates.jax.distributions import (
-    MultivariateNormalFullCovariance as MVN,
-    MultivariateNormalDiag as MVNDiag)
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+
 
 def _set_prior(input_prior, default_prior):
     return input_prior if input_prior is not None else default_prior
