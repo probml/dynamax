@@ -9,9 +9,10 @@ from jax import vmap, jit
 from dynamax.distributions import InverseWishart as IW
 from dynamax.distributions import MatrixNormalPrecision as MN
 from dynamax.structural_time_series.models.structural_time_series_ssm import GaussianSSM, PoissonSSM
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-
 import optax
+from tensorflow_probability.substrates.jax.distributions import (
+    MultivariateNormalFullCovariance as MVN,
+    MultivariateNormalDiag as MVNDiag)
 
 def _set_prior(input_prior, default_prior):
     return input_prior if input_prior is not None else default_prior
@@ -502,7 +503,7 @@ class LinearRegression():
 
 
 class Seasonal(STSLatentComponent):
-    """The seasonal component of the structual time series (STS) model
+    """The (dummy) seasonal component of the structual time series (STS) model
     Since on average sum_{j=0}^{num_seasons-1}s_{t+1-j} = 0 for any t,
     the seasonal effect (random) for next time step is:
 
@@ -587,3 +588,99 @@ class Seasonal(STSLatentComponent):
                     ),
                     axis=0)
                 }
+
+
+class SeasonalTrig(STSLatentComponent):
+    """The trigonometric seasonal component of the structual time series (STS) model
+    (Current formulation only support 1-d observation case)
+
+    \gamma_t = \sum_{j=1}^{s/2} \gamma_{jt}
+    where
+    \gamma_{j, t+1} = \gamma_{jt} cos(\lambda_j) + \gamma*_{jt} sin(\lambda_j) + w_{jt}
+    \gamma*_{j, t+1} = -\gamma_{jt} sin(\lambda_j) + \gamma*_{jt} cos(\lambda_j) + w*_{jt}
+    for
+    j = 1, ..., [s/2], with 's' being the number of seasons
+
+    Args:
+        num_seasons (int): number of seasons (assuming number of steps per season is 1)
+        num_steps_per_season:
+        drift_variance_prior: InverseWishart prior for drift_covariance
+        initial_effect_prior: MultivariateNormal prior for initial_effect
+        observed_time_series: has shape (batch_size, timesteps, dim_observed_timeseries)
+        dim_observed_time_series: dimension of the observed time series
+        name (str): name of the component in the STS model
+    """
+
+    def __init__(self,
+                 num_seasons,
+                 num_steps_per_season=1,
+                 drift_covariance_prior=None,
+                 initial_effect_prior=None,
+                 observed_time_series=None,
+                 dim_observed_timeseries=1,
+                 name='TrigonometricSeasonal'):
+        if observed_time_series is not None:
+            _dim = observed_time_series.shape
+            self.dim_obs = 1 if len(_dim) == 1 else _dim[-1]
+            obs_scale = jnp.std(jnp.abs(jnp.diff(observed_time_series, axis=0)), axis=0).mean()
+        else:
+            self.dim_obs = dim_observed_timeseries
+            obs_scale = 1.
+
+        self.num_seasons = num_seasons
+        self.num_steps_per_season = num_steps_per_season
+        self.component_name = name
+
+        self.initial_effect_prior = _set_prior(
+            initial_effect_prior,
+            MVN(loc=jnp.zeros(self.dim_obs),
+                covariance_matrix=obs_scale**2*jnp.eye(self.dim_obs)))
+
+        self.drift_covariance_prior = _set_prior(
+            drift_covariance_prior,
+            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
+
+    @property
+    def transition_matrix(self):
+        num_pairs = int(jnp.floor(self.num_seasons/2.))
+        matrix = jnp.zeros((2*num_pairs, 2*num_pairs))
+        for j in 1 + jnp.arange(num_pairs):
+            lamb_j = (2*j * jnp.pi) / self.num_seasons
+            C = jnp.array([[jnp.cos(lamb_j), jnp.sin(lamb_j)],
+                           [-jnp.sin(lamb_j), jnp.cos(lamb_j)]])
+            matrix = matrix.at[2*(j-1):2*j, 2*(j-1):2*j].set(C)
+        if self.num_seasons % 2 == 0:
+            matrix = matrix[:-1, :-1]
+        return {self.component_name: matrix}
+
+    @property
+    def observation_matrix(self):
+        num_pairs = int(jnp.floor(self.num_seasons/2.))
+        matrix = jnp.tile(jnp.array([1, 0]), num_pairs)
+        if self.num_seasons % 2 == 0:
+            matrix = matrix[:-1]
+        return {self.component_name: matrix[None, :]}
+
+    @property
+    def transition_covariance(self):
+        # TODO: This formulation does not force all seasons have same drift variance
+        covs = {f'season_{j}': self.drift_covariance_prior.mode() for j in range(self.num_seasons-1)}
+        return OrderedDict(covs)
+
+    @property
+    def transition_covariance_prior(self):
+        cov_priors = {f'season_{j}': self.drift_covariance_prior for j in range(self.num_seasons)}
+        return OrderedDict(cov_priors)
+
+    @property
+    def initial_state_prior(self):
+        c = self.num_seasons - 1
+        initial_loc = jnp.array([self.initial_effect_prior.mean()]*c).flatten()
+        initial_cov = jsp.linalg.block_diag(
+            *([self.initial_effect_prior.covariance()]*c))
+        initial_pri = MVN(loc=initial_loc, covariance_matrix=initial_cov)
+        return {'trig_seasonal': initial_pri}
+
+    @property
+    def cov_spars_matrix(self):
+        return {'trig_seasonal': jnp.eye(self.num_seasons-1)}
