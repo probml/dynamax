@@ -12,3 +12,4 @@ blackjax
 myst-nb
 jupytext
 sphinx-book-theme
+pre-commit
