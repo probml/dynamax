@@ -4,12 +4,14 @@ from collections import OrderedDict
 import jax.numpy as jnp
 import jax.random as jr
 import jax.scipy as jsp
+from jax.tree_util import tree_map
 from jax import vmap, jit
 from dynamax.distributions import InverseWishart as IW
 from dynamax.distributions import MatrixNormalPrecision as MN
 from dynamax.structural_time_series.models.structural_time_series_ssm import GaussianSSM, PoissonSSM
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
+import optax
 
 def _set_prior(input_prior, default_prior):
     return input_prior if input_prior is not None else default_prior
@@ -59,12 +61,12 @@ class StructuralTimeSeries():
         if self.obs_family == 'Gaussian':
             self.observation_covariance_prior = _set_prior(
                 observation_covariance_prior,
-                IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs))
+                IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs))
                 )
             if observation_covariance is not None:
                 self.observation_covariance = observation_covariance
             else:
-                self.observation_covariance = 1e-4*obs_scale**2*jnp.eye(self.dim_obs)
+                self.observation_covariance = 1e-3*obs_scale**2*jnp.eye(self.dim_obs)
 
         # Save parameters of the STS model:
         self.initial_state_priors = OrderedDict()
@@ -223,7 +225,7 @@ class StructuralTimeSeries():
 
     def marginal_log_prob(self, observed_time_series, inputs=None):
         sts_ssm = self.as_ssm()
-        return sts_ssm.marginal_log_prob(observed_time_series, inputs)
+        return sts_ssm.marginal_log_prob(sts_ssm.params, observed_time_series, inputs)
 
     def posterior_sample(self, key, observed_time_series, sts_params, inputs=None):
         @jit
@@ -277,18 +279,23 @@ class StructuralTimeSeries():
                                       warmup_steps, num_integration_steps)
         return param_samps
 
-    def fit_map(self, observed_time_series, inputs=None, key=jr.PRNGKey(0)):
-        """Maximum a posterior (MAP) estimator of parameters of the STS model
+    def fit_mle(self, observed_time_series, inputs=None,
+                num_steps=1000, initial_params=None, key=jr.PRNGKey(0)):
+        """Maximum likelihood estimate of parameters of the STS model
         """
         sts_ssm = self.as_ssm()
-        params, losses = sts_ssm.fit_sgd(curr_params, param_props, batch_emissions 
-                                         optimizer=optax.adam(1e-3), batch_size=1,
-                num_epochs=50,
-                shuffle=False,
-                key=key,
-                **batch_covariates)
-        map_parameter = sts_ssm.fit_sgd(observed_time_series, inputs)
-        return map_parameter
+
+        batch_emissions = jnp.array([observed_time_series])
+        if inputs is not None:
+            inputs = jnp.array([inputs])
+        if initial_params is None:
+            curr_params = sts_ssm.params
+        param_props = sts_ssm.param_props
+
+        optimal_params, losses = sts_ssm.fit_sgd(
+            curr_params, param_props, batch_emissions, num_epochs=num_steps,
+            key=key, inputs=inputs, optimizer=optax.sgd(0.1, momentum=0.8))
+        return optimal_params, losses
 
     def fit_vi(self, key, sample_size, observed_time_series, inputs=None, M=100):
         """Sample parameters of the STS model from the approximate distribution fitted by ADVI.
@@ -420,11 +427,11 @@ class LocalLinearTrend(STSLatentComponent):
         # Initialize the prior using the observed time series if a prior is not specified
         self.level_covariance_prior = _set_prior(
             level_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
+            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
 
         self.slope_covariance_prior = _set_prior(
             slope_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
+            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
 
         self.initial_level_prior = _set_prior(
             initial_level_prior,
@@ -538,7 +545,7 @@ class Seasonal(STSLatentComponent):
 
         self.drift_covariance_prior = _set_prior(
             drift_covariance_prior,
-            IW(df=self.dim_obs, scale=1e-4*obs_scale**2*jnp.eye(self.dim_obs)))
+            IW(df=self.dim_obs, scale=1e-3*obs_scale**2*jnp.eye(self.dim_obs)))
 
     @property
     def transition_matrix(self):
