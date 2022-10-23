@@ -31,6 +31,10 @@ class MultinomialHMM(ExponentialFamilyHMM):
         self.num_trials = num_trials
         self.emission_prior_concentration = emission_prior_concentration * jnp.ones(num_classes)
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim, self.num_classes)
+
     def _initialize_emissions(self, key):
         emission_probs = jr.dirichlet(key, jnp.ones(self.num_classes), (self.num_states, self.emission_dim))
         params = dict(probs=emission_probs)

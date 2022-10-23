@@ -53,6 +53,10 @@ class GaussianMixtureDiagHMM(ExponentialFamilyHMM):
         self.emission_prior_shape = emission_prior_shape
         self.emission_prior_scale = emission_prior_scale
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
         emission_weights = jr.dirichlet(key1, jnp.ones(self.num_components), shape=(self.num_states,))

@@ -47,6 +47,10 @@ class GaussianMixtureHMM(ExponentialFamilyHMM):
         self.emission_prior_df = emission_dim + emission_prior_extra_df
         self.emission_prior_scale = emission_prior_scale * jnp.eye(emission_dim)
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
         weights = jr.dirichlet(key1, jnp.ones(self.num_components), shape=(self.num_states,))

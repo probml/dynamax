@@ -27,6 +27,14 @@ class CategoricalRegressionHMM(StandardHMM):
         self.num_classes = num_classes
         self.feature_dim = feature_dim
 
+    @property
+    def emission_shape(self):
+        return ()
+
+    @property
+    def covariates_shape(self):
+        return dict(features=(self.feature_dim,))
+
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
         emission_weights = jr.normal(key1, (self.num_states, self.num_classes, self.feature_dim))

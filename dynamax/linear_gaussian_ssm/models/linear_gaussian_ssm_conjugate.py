@@ -70,6 +70,14 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
                  df=self.emission_dim + 0.1,
                  scale=jnp.eye(self.emission_dim)))
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
+    @property
+    def covariates_shape(self):
+        return dict(inputs=(self.input_dim,)) if self.input_dim > 0 else dict()
+
     def log_prior(self, params):
         """Return the log prior probability of any model parameters.
         Returns:

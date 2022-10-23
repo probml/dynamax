@@ -39,6 +39,10 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
             else emission_prior_scale * jnp.eye(emission_dim)
         self.emission_prior_df = emission_dim + emission_prior_extra_df
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def _initialize_emissions(self, key):
         emission_means = jr.normal(key, (self.num_states, self.emission_dim))
         emission_cov = jnp.eye(self.emission_dim)

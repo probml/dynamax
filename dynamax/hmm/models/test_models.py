@@ -32,9 +32,9 @@ def test_sample_and_fit(cls, kwargs, covariates):
     key1, key2 = jr.split(jr.PRNGKey(42))
     params, param_props = hmm.random_initialization(key1)
     states, emissions = hmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS, **covariates)
-    fitted_params, lps = hmm.fit_em(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_iters=10)
+    fitted_params, lps = hmm.fit_em(params, param_props, emissions, **covariates, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
-    fitted_params, lps = hmm.fit_sgd(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_epochs=10)
+    fitted_params, lps = hmm.fit_sgd(params, param_props, emissions, **covariates, num_epochs=10)
 
 
 ## A few model-specific tests
@@ -90,9 +90,9 @@ def test_sample_and_fit_arhmm():
     params, param_props = arhmm.random_initialization(key1)
     states, emissions = arhmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS)
     covariates = dict(features=arhmm.compute_covariates(emissions))
-    fitted_params, lps = arhmm.fit_em(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_iters=10)
+    fitted_params, lps = arhmm.fit_em(params, param_props, emissions, **covariates, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
-    fitted_params, lps = arhmm.fit_sgd(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_epochs=10)
+    fitted_params, lps = arhmm.fit_sgd(params, param_props, emissions, **covariates, num_epochs=10)
 
 
 # def test_kmeans_initialization(key=jr.PRNGKey(0), num_states=4, num_mix=3, emission_dim=2, num_samples=1000):

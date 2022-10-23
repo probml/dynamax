@@ -34,6 +34,14 @@ class LinearRegressionHMM(ExponentialFamilyHMM):
         self.feature_dim = feature_dim
         self.emission_dim = emission_dim
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
+    @property
+    def covariates_shape(self):
+        return dict(features=(self.feature_dim,))
+
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
         emission_weights = jr.normal(key1, (self.num_states, self.emission_dim, self.feature_dim))

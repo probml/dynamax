@@ -39,6 +39,10 @@ class GaussianHMM(ExponentialFamilyHMM):
                 else emission_prior_scale * jnp.eye(emission_dim)
         self.emission_prior_df = emission_dim + emission_prior_extra_df
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def emission_distribution(self, params, state):
         return tfd.MultivariateNormalFullCovariance(
             params['emissions']['means'][state], params['emissions']['covs'][state])

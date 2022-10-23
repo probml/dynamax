@@ -74,6 +74,10 @@ class SimpleNonlinearSSM(SSM):
         self.dynamics_degree = dynamics_degree
         self.emission_degree = emission_degree
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def initial_distribution(self, params, **covariates):
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 

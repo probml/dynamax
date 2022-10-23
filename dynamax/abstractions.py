@@ -14,7 +14,7 @@ import blackjax
 
 from dynamax.optimize import run_sgd
 from dynamax.parameters import to_unconstrained, from_unconstrained
-from dynamax.utils import pytree_stack
+from dynamax.utils import pytree_stack, add_batch_dim
 
 
 class SSM(ABC):
@@ -53,6 +53,26 @@ class SSM(ABC):
             dist (tfd.Distribution): conditional distribution of current emission.
         """
         raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def emission_shape(self):
+        """Return a pytree matching the pytree of tuples specifying the shape(s)
+        of a single time step's emissions.
+
+        For example, a Gaussian HMM with D dimensional emissions would return (D,).
+        """
+        raise NotImplementedError
+
+    @property
+    def covariates_shape(self):
+        """Return a pytree matching the pytree of tuples specifying the shape(s)
+        of a single time step's covariates. Since covariates are passed as kwargs,
+        this must be a dictionary with keys for each covariate.
+
+        For example, a Gaussian HMM with D dimensional emissions would return (D,).
+        """
+        return dict()
 
     def sample(self, params, key, num_timesteps, **covariates):
         """Sample a sequence of latent states and emissions.
@@ -119,6 +139,10 @@ class SSM(ABC):
     def fit_em(self, initial_params, param_props, batch_emissions, num_iters=50, verbose=True, **batch_covariates):
         """Fit this HMM with Expectation-Maximization (EM).
         """
+        # Make sure the emissions and covariates have batch dimensions
+        batch_emissions = add_batch_dim(batch_emissions, self.emission_shape)
+        batch_covariates = add_batch_dim(batch_covariates, self.covariates_shape)
+
         @jit
         def em_step(params):
             batch_posteriors, lls = vmap(partial(self.e_step, params))(batch_emissions, **batch_covariates)
@@ -161,6 +185,10 @@ class SSM(ABC):
         Returns:
             losses: Output of loss_fn stored at each step.
         """
+        # Make sure the emissions and covariates have batch dimensions
+        batch_emissions = add_batch_dim(batch_emissions, self.emission_shape)
+        batch_covariates = add_batch_dim(batch_covariates, self.covariates_shape)
+
         curr_unc_params, fixed_params = to_unconstrained(curr_params, param_props)
 
         def _loss_fn(unc_params, minibatch):

@@ -25,12 +25,15 @@ class MultivariateNormalDiagHMM(ExponentialFamilyHMM):
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
         self.emission_dim = emission_dim
-
         self.emission_prior_mean = emission_prior_mean * jnp.ones(emission_dim)
         self.emission_prior_conc = emission_prior_concentration
         self.emission_prior_scale = emission_prior_scale * jnp.ones(emission_dim) \
             if isinstance(emission_prior_scale, float) else emission_prior_scale
         self.emission_prior_df = emission_dim + emission_prior_extra_df
+
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
 
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)

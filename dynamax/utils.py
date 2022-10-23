@@ -1,10 +1,11 @@
-from functools import partial
+from functools import partial, wraps
 import jax.numpy as jnp
 import jax.random as jr
 from jax import jit
 from jax import vmap
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
 import tensorflow_probability.substrates.jax.bijectors as tfb
+import inspect
 
 # From https://www.tensorflow.org/probability/examples/
 # TensorFlow_Probability_Case_Study_Covariance_Estimation
@@ -46,10 +47,6 @@ def monotonically_increasing(x, atol=0, rtol=0):
     return jnp.all(jnp.diff(x) >= -thresh)
 
 
-def add_batch_dim(pytree):
-    return tree_map(partial(jnp.expand_dims, axis=0), pytree)
-
-
 def pytree_len(pytree):
     return len(tree_leaves(pytree)[0])
 
@@ -88,3 +85,33 @@ def random_rotation(seed, n, theta=None):
     out = out.at[:2, :2].set(rot)
     q = jnp.linalg.qr(jr.uniform(key2, shape=(n, n)))[0]
     return q.dot(out).dot(q.T)
+
+
+def add_batch_dim(tree, instance_shapes):
+    """Add a batch dimension to an array, if necessary.
+
+    Args:
+        tree (_type_): PyTree whose leaves' shapes are either
+            (batch, length) + instance_shape or (length,) + instance_shape.
+            If the latter, this function adds a batch dimension of 1 to
+            each leaf node.
+
+        instance_shape (_type_): matching PyTree with tuple of integers specifying the shape
+            of one "instance" or entry in the array. where (-1)
+    """
+    def _expand_dim(x, shp):
+        ndim = len(shp)
+        assert x.ndim > ndim, "array does not match expected shape!"
+        assert all([d2 == -1 or (d1 == d2) for d1, d2 in zip(x.shape[-ndim:], shp)]), \
+            "array does not match expected shape!"
+
+        if x.ndim == ndim + 2:
+            # x already has a batch dim
+            return x
+        elif x.ndim == ndim + 1:
+            # x has a leading time dimension but no batch dim
+            return jnp.expand_dims(x, 0)
+        else:
+            raise Exception("array has too many dimensions!")
+
+    return tree_map(_expand_dim, tree, instance_shapes)

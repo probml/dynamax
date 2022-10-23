@@ -29,6 +29,10 @@ class PoissonHMM(ExponentialFamilyHMM):
         self.emission_prior_concentration = emission_prior_concentration
         self.emission_prior_rate = emission_prior_rate
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def _initialize_emissions(self, key):
         emission_rates = jr.exponential(key, (self.num_states, self.emission_dim))
         params = dict(rates=emission_rates)

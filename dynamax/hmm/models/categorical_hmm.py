@@ -30,6 +30,10 @@ class CategoricalHMM(ExponentialFamilyHMM):
         self.num_classes = num_classes
         self.emission_prior_concentration = emission_prior_concentration  * jnp.ones(num_classes)
 
+    @property
+    def emission_shape(self):
+        return (self.num_emissions,)
+
     def emission_distribution(self, params, state):
         return tfd.Independent(
             tfd.Categorical(probs=params['emissions']['probs'][state]),

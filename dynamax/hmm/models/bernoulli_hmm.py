@@ -29,6 +29,10 @@ class BernoulliHMM(ExponentialFamilyHMM):
         self.emission_prior_concentration0 = emission_prior_concentration0
         self.emission_prior_concentration1 = emission_prior_concentration1
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def emission_distribution(self, params, state):
         return tfd.Independent(tfd.Bernoulli(probs=params['emissions']['probs'][state]),
                                reinterpreted_batch_ndims=1)
