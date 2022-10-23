@@ -80,17 +80,12 @@ def kf_linreg(X, y, R, mu0, Sigma0, F, Q):
         initial_mean=mu0,
         initial_covariance=Sigma0,
         dynamics_matrix=F,
-        dynamics_input_weights=jnp.zeros((mu0.shape[0], 1)),  # no inputs
-        dynamics_bias=jnp.zeros(1),
         dynamics_covariance=Q,
         emission_matrix=X,
-        emission_input_weights=jnp.zeros(1),
-        emission_bias=jnp.zeros(1),
         emission_covariance=R,
     )
 
-    inputs = jnp.zeros((len(y), 1))
-    lgssm_posterior = lgssm_filter(lgssm, inputs, y)
+    lgssm_posterior = lgssm_filter(lgssm, y)
     return lgssm_posterior.filtered_means, lgssm_posterior.filtered_covariances
 
 

@@ -224,6 +224,10 @@ class SSM(ABC):
                 verbose=True,
                 **batch_covariates):
         """Sample parameters of the model using HMC."""
+        # Make sure the emissions and covariates have batch dimensions
+        batch_emissions = add_batch_dim(batch_emissions, self.emission_shape)
+        batch_covariates = add_batch_dim(batch_covariates, self.covariates_shape)
+
         initial_unc_params, fixed_params = to_unconstrained(initial_params, param_props)
 
         # The log likelihood that the HMC samples from
