@@ -14,7 +14,7 @@ import blackjax
 
 from dynamax.optimize import run_sgd
 from dynamax.parameters import to_unconstrained, from_unconstrained
-from dynamax.utils import pytree_stack, add_batch_dim
+from dynamax.utils import pytree_stack, ensure_array_has_batch_dim
 
 
 class SSM(ABC):
@@ -61,8 +61,12 @@ class SSM(ABC):
         of a single time step's emissions.
 
         For example, a Gaussian HMM with D dimensional emissions would return (D,).
+
+        NOTE: In contrast to `covariates_shape`, this will typically not be a
+        dictionary since emissions are passed as args, not kwargs.
         """
         raise NotImplementedError
+
 
     @property
     def covariates_shape(self):
@@ -72,7 +76,7 @@ class SSM(ABC):
 
         For example, a Gaussian HMM with D dimensional emissions would return (D,).
         """
-        return dict()
+        return dict()   # a dict since covariates are passed as kwargs.
 
     def sample(self, params, key, num_timesteps, **covariates):
         """Sample a sequence of latent states and emissions.
@@ -140,8 +144,8 @@ class SSM(ABC):
         """Fit this HMM with Expectation-Maximization (EM).
         """
         # Make sure the emissions and covariates have batch dimensions
-        batch_emissions = add_batch_dim(batch_emissions, self.emission_shape)
-        batch_covariates = add_batch_dim(batch_covariates, self.covariates_shape)
+        batch_emissions = ensure_array_has_batch_dim(batch_emissions, self.emission_shape)
+        batch_covariates = ensure_array_has_batch_dim(batch_covariates, self.covariates_shape)
 
         @jit
         def em_step(params):
@@ -186,8 +190,8 @@ class SSM(ABC):
             losses: Output of loss_fn stored at each step.
         """
         # Make sure the emissions and covariates have batch dimensions
-        batch_emissions = add_batch_dim(batch_emissions, self.emission_shape)
-        batch_covariates = add_batch_dim(batch_covariates, self.covariates_shape)
+        batch_emissions = ensure_array_has_batch_dim(batch_emissions, self.emission_shape)
+        batch_covariates = ensure_array_has_batch_dim(batch_covariates, self.covariates_shape)
 
         curr_unc_params, fixed_params = to_unconstrained(curr_params, param_props)
 
@@ -225,8 +229,8 @@ class SSM(ABC):
                 **batch_covariates):
         """Sample parameters of the model using HMC."""
         # Make sure the emissions and covariates have batch dimensions
-        batch_emissions = add_batch_dim(batch_emissions, self.emission_shape)
-        batch_covariates = add_batch_dim(batch_covariates, self.covariates_shape)
+        batch_emissions = ensure_array_has_batch_dim(batch_emissions, self.emission_shape)
+        batch_covariates = ensure_array_has_batch_dim(batch_covariates, self.covariates_shape)
 
         initial_unc_params, fixed_params = to_unconstrained(initial_params, param_props)
 

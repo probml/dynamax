@@ -87,8 +87,23 @@ def random_rotation(seed, n, theta=None):
     return q.dot(out).dot(q.T)
 
 
-def add_batch_dim(tree, instance_shapes):
-    """Add a batch dimension to an array, if necessary.
+def ensure_array_has_batch_dim(tree, instance_shapes):
+    """Add a batch dimension to a PyTree, if necessary.
+
+    Example: If `tree` is an array of shape (100, 2) and
+    `instance_shapes` is a tuple (2,), then the return
+    value is the array with an added batch dimension, with
+    shape (1, 100, 2).
+
+    Example: If `tree` is an array of shape (1,100, 2) and
+    `instance_shapes` is a tuple (2,), then the return
+    value is simply `tree`, since it already has a batch
+    dimension.
+
+    Example: If `tree = (A, B)` is a tuple of arrays with
+    `A.shape = (100,2)` `B.shape = (100,4)`, and
+    `instances_shapes = ((2,), (4,))`, then the return value
+    is equivalent to `(jnp.expand_dims(A, 0), jnp.expand_dims(B, 0))`.
 
     Args:
         tree (_type_): PyTree whose leaves' shapes are either
@@ -96,13 +111,14 @@ def add_batch_dim(tree, instance_shapes):
             If the latter, this function adds a batch dimension of 1 to
             each leaf node.
 
-        instance_shape (_type_): matching PyTree with tuple of integers specifying the shape
-            of one "instance" or entry in the array. where (-1)
+        instance_shape (_type_): matching PyTree where the "leaves" are
+            tuples of integers specifying the shape of one "instance" or
+            entry in the array.
     """
     def _expand_dim(x, shp):
         ndim = len(shp)
         assert x.ndim > ndim, "array does not match expected shape!"
-        assert all([d2 == -1 or (d1 == d2) for d1, d2 in zip(x.shape[-ndim:], shp)]), \
+        assert all([(d1 == d2) for d1, d2 in zip(x.shape[-ndim:], shp)]), \
             "array does not match expected shape!"
 
         if x.ndim == ndim + 2:

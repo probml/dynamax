@@ -3,7 +3,7 @@ from datetime import datetime
 import jax.numpy as jnp
 import jax.random as jr
 import dynamax.linear_gaussian_ssm.models as models
-from dynamax.utils import add_batch_dim, monotonically_increasing
+from dynamax.utils import ensure_array_has_batch_dim, monotonically_increasing
 
 NUM_TIMESTEPS = 100
 
