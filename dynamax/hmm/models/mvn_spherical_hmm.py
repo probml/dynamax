@@ -36,7 +36,7 @@ class MultivariateNormalSphericalHMM(StandardHMM):
         param_props = dict(means=ParameterProperties(), scales=ParameterProperties(constrainer=tfb.Softplus()))
         return  params, param_props
 
-    def emission_distribution(self, params, state):
+    def emission_distribution(self, params, state, covariates=None):
         dim = self.emission_dim
         return tfd.MultivariateNormalDiag(params['emissions']['means'][state],
                                           params['emissions']['scales'][state] * jnp.ones((dim,)))

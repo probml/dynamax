@@ -33,7 +33,7 @@ class CategoricalRegressionHMM(StandardHMM):
 
     @property
     def covariates_shape(self):
-        return dict(features=(self.feature_dim,))
+        return (self.feature_dim,)
 
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
@@ -44,7 +44,7 @@ class CategoricalRegressionHMM(StandardHMM):
         param_props = dict(weights=ParameterProperties(), biases=ParameterProperties())
         return  params, param_props
 
-    def emission_distribution(self, params, state, **covariates):
-        logits = params['emissions']['weights'][state] @ covariates['features']
+    def emission_distribution(self, params, state, covariates=None):
+        logits = params['emissions']['weights'][state] @ covariates
         logits += params['emissions']['biases'][state]
         return tfd.Categorical(logits=logits)

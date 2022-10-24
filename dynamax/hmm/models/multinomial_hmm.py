@@ -41,7 +41,7 @@ class MultinomialHMM(ExponentialFamilyHMM):
         param_props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return  params, param_props
 
-    def emission_distribution(self, params, state):
+    def emission_distribution(self, params, state, covariates=None):
         return tfd.Independent(tfd.Multinomial(self.num_trials, probs=params['emissions']['probs'][state]),
                                reinterpreted_batch_ndims=1)
 
@@ -54,7 +54,7 @@ class MultinomialHMM(ExponentialFamilyHMM):
     def _zeros_like_suff_stats(self):
         return dict(sum_x=jnp.zeros((self.num_states, self.emission_dim, self.num_classes)))
 
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
         return dict(sum_x=jnp.einsum("tk, tdi->kdi", expected_states, emissions))
 
     def _m_step_emissions(self, params, param_props, emission_stats):

@@ -39,7 +39,7 @@ class PoissonHMM(ExponentialFamilyHMM):
         param_props = dict(rates=ParameterProperties(constrainer=tfb.Softplus()))
         return  params, param_props
 
-    def emission_distribution(self, params, state):
+    def emission_distribution(self, params, state, covariates=None):
         return tfd.Independent(tfd.Poisson(rate=params['emissions']['rates'][state]),
                                reinterpreted_batch_ndims=1)
 
@@ -56,7 +56,7 @@ class PoissonHMM(ExponentialFamilyHMM):
             params['emissions']['rates']).sum()
         return lp
 
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
         sum_w = jnp.einsum("tk->k", expected_states)[:, None]
         sum_x = jnp.einsum("tk, ti->ki", expected_states, emissions)
         return dict(sum_w=sum_w, sum_x=sum_x)

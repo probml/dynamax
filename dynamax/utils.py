@@ -48,7 +48,10 @@ def monotonically_increasing(x, atol=0, rtol=0):
 
 
 def pytree_len(pytree):
-    return len(tree_leaves(pytree)[0])
+    if pytree is None:
+        return 0
+    else:
+        return len(tree_leaves(pytree)[0])
 
 
 def pytree_sum(pytree, axis=None, keepdims=None, where=None):

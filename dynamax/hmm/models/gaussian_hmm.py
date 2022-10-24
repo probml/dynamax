@@ -43,7 +43,7 @@ class GaussianHMM(ExponentialFamilyHMM):
     def emission_shape(self):
         return (self.emission_dim,)
 
-    def emission_distribution(self, params, state):
+    def emission_distribution(self, params, state, covariates=None):
         return tfd.MultivariateNormalFullCovariance(
             params['emissions']['means'][state], params['emissions']['covs'][state])
 
@@ -72,7 +72,7 @@ class GaussianHMM(ExponentialFamilyHMM):
         )
         return (initial_stats, transition_stats, emission_stats)
 
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
         return dict(
             sum_w=jnp.einsum("tk->k", expected_states),
             sum_x=jnp.einsum("tk,ti->ki", expected_states, emissions),

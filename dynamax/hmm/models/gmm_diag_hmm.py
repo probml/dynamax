@@ -71,7 +71,7 @@ class GaussianMixtureDiagHMM(ExponentialFamilyHMM):
                            scale_diags=ParameterProperties(constrainer=tfb.Softplus()))
         return  params, param_props
 
-    def emission_distribution(self, params, state):
+    def emission_distribution(self, params, state, covariates=None):
         return tfd.MixtureSameFamily(
             mixture_distribution=tfd.Categorical(probs=params['emissions']['weights'][state]),
             components_distribution=tfd.MultivariateNormalDiag(
@@ -94,7 +94,7 @@ class GaussianMixtureDiagHMM(ExponentialFamilyHMM):
                     Sx=jnp.zeros((self.num_states, self.num_components, self.emission_dim)),
                     Sxsq=jnp.zeros((self.num_states, self.num_components, self.emission_dim)))
 
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
 
         # Evaluate the posterior probability of each discrete class
         def prob_fn(x):

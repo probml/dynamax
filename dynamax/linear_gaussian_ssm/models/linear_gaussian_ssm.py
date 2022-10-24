@@ -87,18 +87,18 @@ class LinearGaussianSSM(SSM):
 
         return params, param_props
 
-    def initial_distribution(self, params, **covariates):
+    def initial_distribution(self, params, covariates=None):
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
-    def transition_distribution(self, params, state, **covariates):
-        inputs = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
+    def transition_distribution(self, params, state, covariates=None):
+        inputs = covariates if covariates is not None else jnp.zeros(self.input_dim)
         mean = params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs
         if self.has_dynamics_bias:
             mean += params["dynamics"]["bias"]
         return MVN(mean, params["dynamics"]["cov"])
 
-    def emission_distribution(self, params, state, **covariates):
-        inputs = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
+    def emission_distribution(self, params, state, covariates=None):
+        inputs = covariates if covariates is not None else jnp.zeros(self.input_dim)
         mean = params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs
         if self.has_emissions_bias:
             mean += params["emissions"]["bias"]
@@ -199,7 +199,7 @@ class LinearGaussianSSM(SSM):
 
         return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
-    def m_step(self, curr_params, param_props, batch_emissions, batch_stats, **batch_covariates):
+    def m_step(self, curr_params, param_props, batch_emissions, batch_stats, batch_covariates=None):
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics

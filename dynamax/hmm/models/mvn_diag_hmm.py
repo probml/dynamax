@@ -43,7 +43,7 @@ class MultivariateNormalDiagHMM(ExponentialFamilyHMM):
         param_props = dict(means=ParameterProperties(), scale_diags=ParameterProperties(constrainer=tfb.Softplus()))
         return  params, param_props
 
-    def emission_distribution(self, params, state):
+    def emission_distribution(self, params, state, covariates=None):
         return tfd.MultivariateNormalDiag(params['emissions']['means'][state],
                                           params['emissions']['scale_diags'][state])
 
@@ -62,7 +62,7 @@ class MultivariateNormalDiagHMM(ExponentialFamilyHMM):
                     sum_x=jnp.zeros((self.num_states, self.emission_dim)),
                     sum_xsq=jnp.zeros((self.num_states, self.emission_dim)))
 
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
         sum_xsq = jnp.einsum("tk,ti->ki", expected_states, emissions**2)

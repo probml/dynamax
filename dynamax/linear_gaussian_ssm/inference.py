@@ -31,7 +31,7 @@ class LGSSMParams:
 
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
-_default = lambda x, shape: x if x is not None else jnp.zeros(shape)
+_zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
 def _predict(m, S, F, B, b, Q, u):
     """Predict next mean and covariance under a linear Gaussian model
@@ -126,14 +126,14 @@ def preprocess_args(f):
         num_timesteps = len(emissions)
 
         # Default the inputs to zero
-        inputs = _default(inputs, (num_timesteps, 0))
+        inputs = _zeros_if_none(inputs, (num_timesteps, 0))
         input_dim = inputs.shape[-1]
 
         # Default other parameters to zero
-        dynamics_input_weights = _default(params.dynamics_input_weights, (state_dim, input_dim))
-        dynamics_bias = _default(params.dynamics_bias, (state_dim,))
-        emission_input_weights = _default(params.emission_input_weights, (emission_dim, input_dim))
-        emission_bias = _default(params.emission_bias, (emission_dim,))
+        dynamics_input_weights = _zeros_if_none(params.dynamics_input_weights, (state_dim, input_dim))
+        dynamics_bias = _zeros_if_none(params.dynamics_bias, (state_dim,))
+        emission_input_weights = _zeros_if_none(params.emission_input_weights, (emission_dim, input_dim))
+        emission_bias = _zeros_if_none(params.emission_bias, (emission_dim,))
 
         full_params = LGSSMParams(
             initial_mean=params.initial_mean,
