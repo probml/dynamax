@@ -28,13 +28,14 @@ author = 'Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Li
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "myst_nb"
+    "myst_nb",
+    # "myst_parser"
 ]
 
 source_suffix = {
     '.rst': 'restructuredtext',
-    '.ipynb': 'myst-nb',
     '.myst': 'myst-nb',
+    'ipynb': 'myst-nb'
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -59,6 +60,7 @@ myst_enable_extensions = [
     # "substitution",
 ]
 nb_execution_timeout = 600
+nb_execution_mode = "cache"
 
 # -- Options for HTML output -------------------------------------------------
 

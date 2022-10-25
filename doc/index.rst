@@ -5,89 +5,131 @@
 
 
 Welcome to DYNAMAX!
-===================================
+===================
 
-Dynamax is a library for probabiliistc state space models in [JAX](https://github.com/google/jax).
+Dynamax is a library for probabiliistc state space models in JAX_.
+It has code for simulating, performing inference in, and learning the
+parameters of state space models like:
+
+- Hidden Markov Models (HMMs)
+- Autoregressive Hidden Markov Models (AR-HMMs)
+- Linear Gaussian State Space Models (aka Linear Dynamical Systems)
+- Nonlinear Gaussian State Space Models
+
+Running the Inference Algorithms
+--------------------------------
+
+The core inference algorithms, like the forward-backward algorithm for HMMs,
+the Kalman filter and smoother for LGSSMs, and the extended and unscented
+Kalman filters for nonlinear SSMs, all have a functional programming interface.
+For example, the following code generates some noisy data and then smooths it
+with an LGSSM smoother (aka Kalman smoother).
+
+.. code-block:: python
+
+   from jax import jit, grad
+   import jax.numpy as jnp
+   import jax.random as jr
+   import matplotlib.pyplot as plt
+   from dynamax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_smoother
+
+   key = jr.PRNGKey(0)
+   state_dim = 1
+   emission_dim = 1
+   num_timesteps = 100
+
+   # Make some noisy data
+   times = jnp.arange(num_timesteps)
+   emissions = jnp.cos(2 * jnp.pi * times / 20)[:, None]
+   emissions += jr.normal(key, (num_timesteps, emission_dim))
+
+   # Specify the model parameters
+   params = LGSSMParams(
+      initial_mean=jnp.zeros(state_dim),
+      initial_covariance=jnp.eye(state_dim),
+      dynamics_matrix=jnp.eye(state_dim),
+      dynamics_covariance=0.5**2 * jnp.eye(state_dim),
+      emission_matrix=jnp.ones((emission_dim, state_dim)),
+      emission_covariance=jnp.eye(emission_dim),
+   )
+
+   # Run the LGSSM smoother (aka Kalman smoother)
+   lgssm_posterior = lgssm_smoother(params, emissions)
+
+The posterior is a dataclass with a number of fields, including the posterior mean and posterior marginal covariances.
+
+.. code-block:: python
+
+   print(lgssm_posterior.smoothed_means.shape)        # (100, 1)
+   print(lgssm_posterior.smoothed_covariances.shape)  # (100, 1, 1)
+   print(lgssm_posterior.marginal_loglik)             # -160.31303
+
+The inference algorithms are all written in JAX, so they support automatic
+differentiation and just-in-time compilation,
+
+.. code-block:: python
+
+   loss = lambda params: -lgssm_smoother(params, emissions).marginal_loglik
+   jit(grad(loss))(params)
+   # LGSSMParams(initial_mean=DeviceArray([-0.2507091], dtype=float32), initial_covariance=DeviceArray([[0.32818437]], dtype=float32), dynamics_matrix=DeviceArray([[47.33144]], dtype=float32), dynamics_covariance=DeviceArray([[-0.41595864]], dtype=float32), emission_matrix=DeviceArray([[0.4483896]], dtype=float32), emission_covariance=DeviceArray([[6.252903]], dtype=float32), dynamics_input_weights=None, dynamics_bias=None, emission_input_weights=None, emission_bias=None)
+
+Fitting Models
+--------------
 
 
+Installation and Testing
+------------------------
+
+To install locally,
+
+.. code-block:: console
+
+   git clone git@github.com:probml/dynamax.git
+   cd dynamax
+   pip install -e .
+
+To install in Colab, do this
+
+.. code-block:: pycon
+
+   %pip install git+https://github.com/probml/dynamax.git
 
 
-Core team: Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, Kevin Murphy.
+To run the tests,
 
-Other contributors: Adrien Corenflos, Gerardo Duran-Martin, Colin Schlager.
+.. code-block:: console
 
-[Full list of contributors](https://github.com/probml/dynamax/graphs/contributors)
+   pytest dynamax                         # Run all tests
+   pytest dynamax/hmm/inference_test.py   # Run a specific test
+   pytest -k lgssm                        # Run tests with lgssm in the name
 
-MIT License. 2022
 
-There are a bunch of demos in the form of python scripts and jupyter notebooks.
-```
-python dynamax/hmm/demos/gaussian_hmm_2d.py
-```
+Related Libraries
+-----------------
 
-To run all the tests, do this
-```
-pytest dynamax
-```
-To run a specific test, do something like this
-```
-pytest dynamax/hmm/inference_test.py
-pytest dynamax/hmm/demos/demos_test.py
-```
+- murphy-lab/pgm-jax_: Factor graph library
+- murphy-lab/JSL_: Deprecated library for SSMs
+- linderman-lab/ssm-jax_:  Deprecated library for SSMs
+- linderman-lab/ssm_:  Old numpy, autograd, and numba library for SSMs
+- mattjj/pyhsmm_:  Numpy and cython library library for HMMs
+- mattjj/pylds_:  Numpy and cython library library for linear dynamical systems
+- sarkka-lab/parallel-non-linear-gaussian-smoothers_: Code for nonlinear smoothers using parallel scan
 
-To install in colab, do this
-```
-%pip install git+https://github.com/probml/dynamax.git
-```
-
-To install [black](https://black.readthedocs.io/en/stable/), do this (quotes are mandatory for `zsh`)
-```
-pip install -U 'black[jupyter]'
-```
-
-Related libraries:
-
-- [murphy-lab/pgm-jax](https://github.com/probml/pgm-jax): Factor graph library
-- [murphy-lab/JSL](https://github.com/probml/JSL) : Deprecated library for SSMs
-- [linderman-lab/ssm-jax](https://github.com/lindermanlab/ssm-jax):  Deprecated library for SSMs
-- [linderman-lab/ssm](https://github.com/lindermanlab/ssm):  Old numpy, autograd, and numba library for SSMs
-- [mattjj/pyhsmm](https://github.com/mattjj/pyhsmm):  Numpy and cython library library for HMMs
-- [mattjj/pylds](https://github.com/mattjj/pylds):  Numpy and cython library library for linear dynamical systems
-- [sarkka-lab/parallel nonlinear smoothers](https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers) : Code for nonlinear smoothers using parallel scan
+.. _JAX: https://github.com/google/jax
+.. _pgm-jax: https://github.com/probml/pgm-jax
+.. _JSL: https://github.com/probml/JSL
+.. _ssm-jax: https://github.com/lindermanlab/ssm-jax
+.. _ssm: https://github.com/lindermanlab/ssm
+.. _pyhsmm: https://github.com/mattjj/pyhsmm
+.. _pylds: https://github.com/mattjj/pylds
+.. _parallel-non-linear-gaussian-smoothers: https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   notebooks/bernoulli_hmm_example
-   notebooks/casino_hmm
-   notebooks/casino_hmm_training
-   notebooks/gaussian_hmm_2d
-   notebooks/bach_chorales_hmm
-   notebooks/multinomial_hmm
-   notebooks/poisson_hmm_changepoint
-   notebooks/poisson_hmm_neurons
-   notebooks/autoregressive_hmm_demo.ipynb
-   notebooks/switching_linear_regression
-   notebooks/mvn_dplr_demo
-   notebooks/parallel_message_passing
-
-   notebooks/kf_linreg
-   notebooks/kf_tracking
-   notebooks/kf_spiral
-   notebooks/kf_parallel
-
-   notebooks/lgssm_blocked_gibbs
-   notebooks/lgssm_hmc
-   notebooks/lgssm_hmc_param_frozen
-
-   notebooks/pendulum
-   notebooks/ekf_pendulum
-   notebooks/ekf_spiral
-   notebooks/ekf_mlp
-   notebooks/ukf_pendulum
-   notebooks/ukf_spiral
+   notebooks/gaussian_hmm_2d.ipynb
 
 Indices and tables
 ==================

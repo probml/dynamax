@@ -10,12 +10,3 @@ repos:
         entry: jupytext --from ipynb --to md:myst --pre-commit
         pass_filenames: false
         language: python
-  -
-    repo: local
-    hooks:
-      -
-        id: unstage-ipynb
-        name: unstage-ipynb
-        entry: git reset HEAD **/*.ipynb
-        pass_filenames: false
-        language: system
