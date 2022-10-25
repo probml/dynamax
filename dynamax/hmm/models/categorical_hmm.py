@@ -30,7 +30,11 @@ class CategoricalHMM(ExponentialFamilyHMM):
         self.num_classes = num_classes
         self.emission_prior_concentration = emission_prior_concentration  * jnp.ones(num_classes)
 
-    def emission_distribution(self, params, state):
+    @property
+    def emission_shape(self):
+        return (self.num_emissions,)
+
+    def emission_distribution(self, params, state, covariates=None):
         return tfd.Independent(
             tfd.Categorical(probs=params['emissions']['probs'][state]),
             reinterpreted_batch_ndims=1)
@@ -51,7 +55,7 @@ class CategoricalHMM(ExponentialFamilyHMM):
         """Return dataclass containing 'event_shape' of each sufficient statistic."""
         return dict(sum_x=jnp.zeros((self.num_states, self.num_obs, self.num_classes)))
 
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
         x = one_hot(emissions, self.num_classes)
         return dict(sum_x=jnp.einsum("tk,tdi->kdi", expected_states, x))
 

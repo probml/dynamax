@@ -4,24 +4,24 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
 import dynamax.hmm.models as models
-from dynamax.utils import add_batch_dim, monotonically_increasing
+from dynamax.utils import ensure_array_has_batch_dim, monotonically_increasing
 
 NUM_TIMESTEPS = 100
 
 CONFIGS = [
-    (models.BernoulliHMM, dict(num_states=4, emission_dim=3), dict()),
-    (models.CategoricalHMM, dict(num_states=4, num_emissions=3, num_classes=5), dict()),
-    (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, feature_dim=5), dict(features=jnp.ones((NUM_TIMESTEPS, 5)))),
-    (models.GaussianHMM, dict(num_states=4, emission_dim=3), dict()),
-    (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), dict()),
-    (models.GaussianMixtureDiagHMM, dict(num_states=4, num_components=2, emission_dim=3), dict()),
-    (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, feature_dim=5), dict(features=jnp.ones((NUM_TIMESTEPS, 5)))),
-    (models.LogisticRegressionHMM, dict(num_states=4, feature_dim=5), dict(features=jnp.ones((NUM_TIMESTEPS, 5)))),
-    (models.MultivariateNormalDiagHMM, dict(num_states=4, emission_dim=3), dict()),
-    (models.MultivariateNormalSphericalHMM, dict(num_states=4, emission_dim=3), dict()),
-    #(models.MultivariateNormalTiedHMM, dict(num_states=4, emission_dim=3), dict()),
-    (models.MultinomialHMM, dict(num_states=4, emission_dim=3, num_classes=5, num_trials=10), dict()),
-    (models.PoissonHMM, dict(num_states=4, emission_dim=3), dict()),
+    (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
+    (models.CategoricalHMM, dict(num_states=4, num_emissions=3, num_classes=5), None),
+    (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.GaussianHMM, dict(num_states=4, emission_dim=3), None),
+    (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
+    (models.GaussianMixtureDiagHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
+    (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.LogisticRegressionHMM, dict(num_states=4, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.MultivariateNormalDiagHMM, dict(num_states=4, emission_dim=3), None),
+    (models.MultivariateNormalSphericalHMM, dict(num_states=4, emission_dim=3), None),
+    #(models.MultivariateNormalTiedHMM, dict(num_states=4, emission_dim=3), None),
+    (models.MultinomialHMM, dict(num_states=4, emission_dim=3, num_classes=5, num_trials=10), None),
+    (models.PoissonHMM, dict(num_states=4, emission_dim=3), None),
 ]
 
 
@@ -31,10 +31,10 @@ def test_sample_and_fit(cls, kwargs, covariates):
     #key1, key2 = jr.split(jr.PRNGKey(int(datetime.now().timestamp())))
     key1, key2 = jr.split(jr.PRNGKey(42))
     params, param_props = hmm.random_initialization(key1)
-    states, emissions = hmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS, **covariates)
-    fitted_params, lps = hmm.fit_em(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_iters=10)
+    states, emissions = hmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS, covariates=covariates)
+    fitted_params, lps = hmm.fit_em(params, param_props, emissions, covariates=covariates, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
-    fitted_params, lps = hmm.fit_sgd(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_epochs=10)
+    fitted_params, lps = hmm.fit_sgd(params, param_props, emissions, covariates=covariates, num_epochs=10)
 
 
 ## A few model-specific tests
@@ -89,10 +89,10 @@ def test_sample_and_fit_arhmm():
     key1, key2 = jr.split(jr.PRNGKey(42))
     params, param_props = arhmm.random_initialization(key1)
     states, emissions = arhmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS)
-    covariates = dict(features=arhmm.compute_covariates(emissions))
-    fitted_params, lps = arhmm.fit_em(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_iters=10)
+    covariates = arhmm.compute_covariates(emissions)
+    fitted_params, lps = arhmm.fit_em(params, param_props, emissions, covariates=covariates, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
-    fitted_params, lps = arhmm.fit_sgd(params, param_props, add_batch_dim(emissions), **add_batch_dim(covariates), num_epochs=10)
+    fitted_params, lps = arhmm.fit_sgd(params, param_props, emissions, covariates=covariates, num_epochs=10)
 
 
 # def test_kmeans_initialization(key=jr.PRNGKey(0), num_states=4, num_mix=3, emission_dim=2, num_samples=1000):

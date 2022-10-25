@@ -74,15 +74,19 @@ class SimpleNonlinearSSM(SSM):
         self.dynamics_degree = dynamics_degree
         self.emission_degree = emission_degree
 
-    def initial_distribution(self, params, **covariates):
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
+    def initial_distribution(self, params, covariates=None):
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
-    def transition_distribution(self, params, state, **covariates):
+    def transition_distribution(self, params, state, covariates=None):
         x = to_poly(state, self.dynamics_degree)
         mean = jnp.sin(params["dynamics"]["weights"] @ x)
         return MVN(mean, params["dynamics"]["cov"])
 
-    def emission_distribution(self, params, state, **covariates):
+    def emission_distribution(self, params, state, covariates=None):
         x = to_poly(state, self.emission_degree)
         mean = jnp.cos(params["emissions"]["weights"] @ x)
         return MVN(mean, params["emissions"]["cov"])

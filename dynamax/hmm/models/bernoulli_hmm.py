@@ -29,7 +29,15 @@ class BernoulliHMM(ExponentialFamilyHMM):
         self.emission_prior_concentration0 = emission_prior_concentration0
         self.emission_prior_concentration1 = emission_prior_concentration1
 
-    def emission_distribution(self, params, state):
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
+    def emission_distribution(self, params, state, covariates=None):
+        # This model assumes the emissions are a vector of conditionally independent
+        # Bernoulli observations. The `reinterpreted_batch_ndims` argument tells
+        # `tfd.Independent` that only the last dimension should be considered a "batch"
+        # of conditionally independent observations.
         return tfd.Independent(tfd.Bernoulli(probs=params['emissions']['probs'][state]),
                                reinterpreted_batch_ndims=1)
 
@@ -51,7 +59,7 @@ class BernoulliHMM(ExponentialFamilyHMM):
         sum_1mx = jnp.zeros((self.num_states, self.emission_dim)),
         return (sum_x, sum_1mx)
 
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
         sum_x = jnp.einsum("tk, ti->ki", expected_states, jnp.where(jnp.isnan(emissions), 0, emissions))
         sum_1mx = jnp.einsum("tk, ti->ki", expected_states,
                                 jnp.where(jnp.isnan(emissions), 0, 1 - emissions))

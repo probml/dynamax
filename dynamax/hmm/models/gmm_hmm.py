@@ -47,6 +47,10 @@ class GaussianMixtureHMM(ExponentialFamilyHMM):
         self.emission_prior_df = emission_dim + emission_prior_extra_df
         self.emission_prior_scale = emission_prior_scale * jnp.eye(emission_dim)
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
         weights = jr.dirichlet(key1, jnp.ones(self.num_components), shape=(self.num_states,))
@@ -164,7 +168,7 @@ class GaussianMixtureHMM(ExponentialFamilyHMM):
     #                        covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))))
     #     return  params, param_props
 
-    def emission_distribution(self, params, state):
+    def emission_distribution(self, params, state, covariates=None):
         return tfd.MixtureSameFamily(
             mixture_distribution=tfd.Categorical(probs=params['emissions']['weights'][state]),
             components_distribution=tfd.MultivariateNormalFullCovariance(
@@ -185,7 +189,7 @@ class GaussianMixtureHMM(ExponentialFamilyHMM):
                     Sx=jnp.zeros((self.num_states, self.num_components, self.emission_dim)),
                     SxxT=jnp.zeros((self.num_states, self.num_components, self.emission_dim, self.emission_dim)))
 
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
         def prob_fn(x):
             logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalFullCovariance(
                 loc=mus, covariance_matrix=sigmas).log_prob(x) + jnp.log(weights))(
