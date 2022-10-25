@@ -39,6 +39,10 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
             else emission_prior_scale * jnp.eye(emission_dim)
         self.emission_prior_df = emission_dim + emission_prior_extra_df
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def _initialize_emissions(self, key):
         emission_means = jr.normal(key, (self.num_states, self.emission_dim))
         emission_cov = jnp.eye(self.emission_dim)
@@ -47,7 +51,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         param_props = dict(means=ParameterProperties(), cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return  params, param_props
 
-    def emission_distribution(self, params, state):
+    def emission_distribution(self, params, state, covariates=None):
         return tfd.MultivariateNormalFullCovariance(
             params['emissions']['means'][state], params['emissions']['cov'])
 
@@ -70,7 +74,7 @@ class MultivariateNormalTiedHMM(ExponentialFamilyHMM):
         )
 
     # Expectation-maximization (EM) code
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
         sum_xxT = jnp.einsum("tk,ti,tj->kij", expected_states, emissions, emissions)

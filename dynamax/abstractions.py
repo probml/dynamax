@@ -14,7 +14,7 @@ import blackjax
 
 from dynamax.optimize import run_sgd
 from dynamax.parameters import to_unconstrained, from_unconstrained
-from dynamax.utils import pytree_stack
+from dynamax.utils import pytree_stack, ensure_array_has_batch_dim
 
 
 class SSM(ABC):
@@ -27,7 +27,7 @@ class SSM(ABC):
     """
 
     @abstractmethod
-    def initial_distribution(self, params, **covariates):
+    def initial_distribution(self, params, covariates=None):
         """Return an initial distribution over latent states.
         Returns:
             dist (tfd.Distribution): distribution over initial latent state.
@@ -35,7 +35,7 @@ class SSM(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def transition_distribution(self, params, state, **covariates):
+    def transition_distribution(self, params, state, covariates=None):
         """Return a distribution over next latent state given current state.
         Args:
             state (PyTree): current latent state
@@ -45,7 +45,7 @@ class SSM(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def emission_distribution(self, params, state, **covariates):
+    def emission_distribution(self, params, state, covariates=None):
         """Return a distribution over emissions given current state.
         Args:
             state (PyTree): current latent state.
@@ -54,7 +54,28 @@ class SSM(ABC):
         """
         raise NotImplementedError
 
-    def sample(self, params, key, num_timesteps, **covariates):
+    @property
+    @abstractmethod
+    def emission_shape(self):
+        """Return a pytree matching the pytree of tuples specifying the shape(s)
+        of a single time step's emissions.
+
+        For example, a Gaussian HMM with D dimensional emissions would return (D,).
+
+        NOTE: In contrast to `covariates_shape`, this will typically not be a
+        dictionary since emissions are passed as args, not kwargs.
+        """
+        raise NotImplementedError
+
+
+    @property
+    def covariates_shape(self):
+        """Return a pytree matching the pytree of tuples specifying the shape(s)
+        of a single time step's covariates.
+        """
+        return None
+
+    def sample(self, params, key, num_timesteps, covariates=None):
         """Sample a sequence of latent states and emissions.
         Args:
             key: rng key
@@ -64,15 +85,15 @@ class SSM(ABC):
         def _step(prev_state, args):
             key, covariate = args
             key1, key2 = jr.split(key, 2)
-            state = self.transition_distribution(params, prev_state, **covariate).sample(seed=key2)
-            emission = self.emission_distribution(params, state, **covariate).sample(seed=key1)
+            state = self.transition_distribution(params, prev_state, covariate).sample(seed=key2)
+            emission = self.emission_distribution(params, state, covariate).sample(seed=key1)
             return state, (state, emission)
 
         # Sample the initial state
         key1, key2, key = jr.split(key, 3)
         initial_covariate = tree_map(lambda x: x[0], covariates)
-        initial_state = self.initial_distribution(params, **initial_covariate).sample(seed=key1)
-        initial_emission = self.emission_distribution(params, initial_state, **initial_covariate).sample(seed=key2)
+        initial_state = self.initial_distribution(params, initial_covariate).sample(seed=key1)
+        initial_emission = self.emission_distribution(params, initial_state, initial_covariate).sample(seed=key2)
 
         # Sample the remaining emissions and states
         next_keys = jr.split(key, num_timesteps - 1)
@@ -85,22 +106,22 @@ class SSM(ABC):
         emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
         return states, emissions
 
-    def log_prob(self, params, states, emissions, **covariates):
+    def log_prob(self, params, states, emissions, covariates=None):
         """Compute the log joint probability of the states and observations"""
 
         def _step(carry, args):
             lp, prev_state = carry
             state, emission, covariate = args
-            lp += self.transition_distribution(params, prev_state, **covariate).log_prob(state)
-            lp += self.emission_distribution(params, state, **covariate).log_prob(emission)
+            lp += self.transition_distribution(params, prev_state, covariate).log_prob(state)
+            lp += self.emission_distribution(params, state, covariate).log_prob(emission)
             return (lp, state), None
 
         # Compute log prob of initial time step
         initial_state = tree_map(lambda x: x[0], states)
         initial_emission = tree_map(lambda x: x[0], emissions)
         initial_covariate = tree_map(lambda x: x[0], covariates)
-        lp = self.initial_distribution(params, **initial_covariate).log_prob(initial_state)
-        lp += self.emission_distribution(params, initial_state, **initial_covariate).log_prob(initial_emission)
+        lp = self.initial_distribution(params, initial_covariate).log_prob(initial_state)
+        lp += self.emission_distribution(params, initial_state, initial_covariate).log_prob(initial_emission)
 
         # Scan over remaining time steps
         next_states = tree_map(lambda x: x[1:], states)
@@ -116,14 +137,18 @@ class SSM(ABC):
         """
         return 0.0
 
-    def fit_em(self, initial_params, param_props, batch_emissions, num_iters=50, verbose=True, **batch_covariates):
+    def fit_em(self, initial_params, param_props, emissions, covariates=None, num_iters=50, verbose=True):
         """Fit this HMM with Expectation-Maximization (EM).
         """
+        # Make sure the emissions and covariates have batch dimensions
+        batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
+        batch_covariates = ensure_array_has_batch_dim(covariates, self.covariates_shape)
+
         @jit
         def em_step(params):
-            batch_posteriors, lls = vmap(partial(self.e_step, params))(batch_emissions, **batch_covariates)
+            batch_posteriors, lls = vmap(partial(self.e_step, params))(batch_emissions, batch_covariates)
             lp = self.log_prior(params) + lls.sum()
-            params = self.m_step(params, param_props, batch_emissions, batch_posteriors, **batch_covariates)
+            params = self.m_step(params, param_props, batch_emissions, batch_posteriors, batch_covariates)
             return params, lp
 
         log_probs = []
@@ -137,13 +162,13 @@ class SSM(ABC):
     def fit_sgd(self,
                 curr_params,
                 param_props,
-                batch_emissions,
+                emissions,
+                covariates=None,
                 optimizer=optax.adam(1e-3),
                 batch_size=1,
                 num_epochs=50,
                 shuffle=False,
-                key=jr.PRNGKey(0),
-                **batch_covariates):
+                key=jr.PRNGKey(0)):
         """
         Fit this HMM by running SGD on the marginal log likelihood.
         Note that batch_emissions is initially of shape (N,T)
@@ -161,6 +186,10 @@ class SSM(ABC):
         Returns:
             losses: Output of loss_fn stored at each step.
         """
+        # Make sure the emissions and covariates have batch dimensions
+        batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
+        batch_covariates = ensure_array_has_batch_dim(covariates, self.covariates_shape)
+
         curr_unc_params, fixed_params = to_unconstrained(curr_params, param_props)
 
         def _loss_fn(unc_params, minibatch):
@@ -168,7 +197,7 @@ class SSM(ABC):
             params = from_unconstrained(unc_params, fixed_params, param_props)
             minibatch_emissions, minibatch_covariates = minibatch
             scale = len(batch_emissions) / len(minibatch_emissions)
-            minibatch_lls = vmap(partial(self.marginal_log_prob, params))(minibatch_emissions, **minibatch_covariates)
+            minibatch_lls = vmap(partial(self.marginal_log_prob, params))(minibatch_emissions, minibatch_covariates)
             lp = self.log_prior(params) + minibatch_lls.sum() * scale
             return -lp / batch_emissions.size
 
@@ -190,19 +219,23 @@ class SSM(ABC):
                 param_props,
                 key,
                 num_samples,
-                batch_emissions,
+                emissions,
+                covariates=None,
                 warmup_steps=100,
                 num_integration_steps=30,
-                verbose=True,
-                **batch_covariates):
+                verbose=True):
         """Sample parameters of the model using HMC."""
+        # Make sure the emissions and covariates have batch dimensions
+        batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
+        batch_covariates = ensure_array_has_batch_dim(covariates, self.covariates_shape)
+
         initial_unc_params, fixed_params = to_unconstrained(initial_params, param_props)
 
         # The log likelihood that the HMC samples from
         warn("HMC is not currently computing logdets of the constrainer jacobians!")
         def _logprob(unc_params):
             params = from_unconstrained(unc_params, fixed_params, param_props)
-            batch_lls = vmap(partial(self.marginal_log_prob, params))(batch_emissions, **batch_covariates)
+            batch_lls = vmap(partial(self.marginal_log_prob, params))(batch_emissions, batch_covariates)
             lp = self.log_prior(params) + batch_lls.sum()
             # TODO Correct for the log determinant of the jacobian
             return lp

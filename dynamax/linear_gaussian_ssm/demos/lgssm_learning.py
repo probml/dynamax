@@ -30,11 +30,11 @@ def main(state_dim=2, emission_dim=10, num_timesteps=100, test_mode=False, metho
     test_params, param_props = test_model.random_initialization(next(keys))
 
     if method == 'SGD':
-        test_params, neg_marginal_lls = test_model.fit_sgd(test_params, param_props, jnp.array([emissions]), num_epochs=num_iters * 30)
+        test_params, neg_marginal_lls = test_model.fit_sgd(test_params, param_props, emissions, num_epochs=num_iters * 30)
         marginal_lls = -neg_marginal_lls * emissions.size
 
     elif method == 'EM':
-        test_params, marginal_lls = test_model.fit_em(test_params, param_props, jnp.array([emissions]), num_iters=num_iters)
+        test_params, marginal_lls = test_model.fit_em(test_params, param_props, emissions, num_iters=num_iters)
         assert jnp.all(jnp.diff(marginal_lls) > -1e-4)
 
     else:

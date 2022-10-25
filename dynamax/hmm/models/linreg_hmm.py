@@ -34,6 +34,14 @@ class LinearRegressionHMM(ExponentialFamilyHMM):
         self.feature_dim = feature_dim
         self.emission_dim = emission_dim
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
+    @property
+    def covariates_shape(self):
+        return (self.feature_dim,)
+
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
         emission_weights = jr.normal(key1, (self.num_states, self.emission_dim, self.feature_dim))
@@ -44,8 +52,8 @@ class LinearRegressionHMM(ExponentialFamilyHMM):
         param_props = dict(weights=ParameterProperties(), biases=ParameterProperties(), covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, param_props
 
-    def emission_distribution(self, params, state, **covariates):
-        prediction = params["emissions"]["weights"][state] @ covariates['features']
+    def emission_distribution(self, params, state, covariates):
+        prediction = params["emissions"]["weights"][state] @ covariates
         prediction +=  params["emissions"]["biases"][state]
         return tfd.MultivariateNormalFullCovariance(prediction, params["emissions"]["covs"][state])
 
@@ -65,13 +73,12 @@ class LinearRegressionHMM(ExponentialFamilyHMM):
                     sum_xyT=jnp.zeros((self.num_states, self.feature_dim, self.emission_dim)),
                     sum_yyT=jnp.zeros((self.num_states, self.emission_dim, self.emission_dim)))
 
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, **covariates):
-        features = covariates['features']
+    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates):
         sum_w = jnp.einsum("tk->k", expected_states)
-        sum_x = jnp.einsum("tk,ti->ki", expected_states, features)
+        sum_x = jnp.einsum("tk,ti->ki", expected_states, covariates)
         sum_y = jnp.einsum("tk,ti->ki", expected_states, emissions)
-        sum_xxT = jnp.einsum("tk,ti,tj->kij", expected_states, features, features)
-        sum_xyT = jnp.einsum("tk,ti,tj->kij", expected_states, features, emissions)
+        sum_xxT = jnp.einsum("tk,ti,tj->kij", expected_states, covariates, covariates)
+        sum_xyT = jnp.einsum("tk,ti,tj->kij", expected_states, covariates, emissions)
         sum_yyT = jnp.einsum("tk,ti,tj->kij", expected_states, emissions, emissions)
         return dict(sum_w=sum_w, sum_x=sum_x, sum_y=sum_y, sum_xxT=sum_xxT, sum_xyT=sum_xyT, sum_yyT=sum_yyT)
 

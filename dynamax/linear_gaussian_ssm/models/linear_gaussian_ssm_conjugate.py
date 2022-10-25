@@ -70,6 +70,14 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
                  df=self.emission_dim + 0.1,
                  scale=jnp.eye(self.emission_dim)))
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
+    @property
+    def covariates_shape(self):
+        return dict(inputs=(self.input_dim,)) if self.input_dim > 0 else dict()
+
     def log_prior(self, params):
         """Return the log prior probability of any model parameters.
         Returns:
@@ -91,7 +99,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         lp += self.emission_prior.log_prob((params['emissions']['cov'], emission_matrix))
         return lp
 
-    def m_step(self, curr_params, param_props, batch_emissions, batch_stats, **batch_covariates):
+    def m_step(self, curr_params, param_props, batch_emissions, batch_stats, batch_covariates=None):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
         init_stats, dynamics_stats, emission_stats = stats

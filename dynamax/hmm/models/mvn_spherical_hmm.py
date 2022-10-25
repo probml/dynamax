@@ -24,6 +24,10 @@ class MultivariateNormalSphericalHMM(StandardHMM):
         self.emission_var_concentration = emission_var_concentration
         self.emission_var_rate = emission_var_rate
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
         emission_means = jr.normal(key1, (self.num_states, self.emission_dim))
@@ -32,7 +36,7 @@ class MultivariateNormalSphericalHMM(StandardHMM):
         param_props = dict(means=ParameterProperties(), scales=ParameterProperties(constrainer=tfb.Softplus()))
         return  params, param_props
 
-    def emission_distribution(self, params, state):
+    def emission_distribution(self, params, state, covariates=None):
         dim = self.emission_dim
         return tfd.MultivariateNormalDiag(params['emissions']['means'][state],
                                           params['emissions']['scales'][state] * jnp.ones((dim,)))

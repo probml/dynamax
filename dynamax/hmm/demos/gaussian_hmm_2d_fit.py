@@ -25,10 +25,9 @@ def main(num_timesteps=2000, plot_timesteps=200, num_em_iters=50, num_sgd_iters=
 
     # Fit a GaussianHMM with twice number of true states using EM
     print("Fit with EM")
-    batch_emissions = emissions[None, ...]
     test_hmm = GaussianHMM(2 * true_hmm.num_states, true_hmm.emission_dim)
     initial_params, param_props = test_hmm.random_initialization(jr.PRNGKey(1))
-    fitted_params_em, logprobs_em = test_hmm.fit_em(initial_params, param_props, batch_emissions, num_iters=num_em_iters)
+    fitted_params_em, logprobs_em = test_hmm.fit_em(initial_params, param_props, emissions, num_iters=num_em_iters)
 
     # Get the posterior
     print("true LL: ", true_hmm.marginal_log_prob(true_params, emissions))
@@ -47,7 +46,7 @@ def main(num_timesteps=2000, plot_timesteps=200, num_em_iters=50, num_sgd_iters=
     # Fit a Gaussian HMM with twice number of true states using SGD
     print("Fit with SGD")
     optimizer = optax.adam(learning_rate=1e-2)
-    fitted_params_sgd, logprobs_sgd = test_hmm.fit_sgd(initial_params, param_props, batch_emissions, optimizer=optimizer, num_epochs=num_sgd_iters)
+    fitted_params_sgd, logprobs_sgd = test_hmm.fit_sgd(initial_params, param_props, emissions, optimizer=optimizer, num_epochs=num_sgd_iters)
 
     # Get the posterior
     print("true LL: ", true_hmm.marginal_log_prob(true_params, emissions))

@@ -4,6 +4,8 @@ from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 import chex
 from dynamax.containers import GSSMPosterior
+from functools import wraps
+import inspect
 
 
 @chex.dataclass
@@ -13,22 +15,23 @@ class LGSSMParams:
     However, they can also accept a ssm.lgssm.models.LinearGaussianSSM instance,
     if you prefer a more object-oriented approach.
     """
-
     initial_mean: chex.Array
     initial_covariance: chex.Array
     dynamics_matrix: chex.Array
-    dynamics_input_weights: chex.Array
-    dynamics_bias: chex.Array
     dynamics_covariance: chex.Array
     emission_matrix: chex.Array
-    emission_input_weights: chex.Array
-    emission_bias: chex.Array
     emission_covariance: chex.Array
+
+    # Optional parameters (code below assumes zero otherwise)
+    dynamics_input_weights: chex.Array = None
+    dynamics_bias: chex.Array  = None
+    emission_input_weights: chex.Array = None
+    emission_bias: chex.Array = None
 
 
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
-
+_zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
 def _predict(m, S, F, B, b, Q, u):
     """Predict next mean and covariance under a linear Gaussian model
@@ -90,6 +93,64 @@ def _condition_on(m, P, H, D, d, R, u, y):
     return mu_cond, Sigma_cond
 
 
+def preprocess_args(f):
+    """Preprocess the parameters and inputs in case some
+    are set to None.
+
+    Args:
+        params (_type_): _description_
+        num_timesteps (_type_): _description_
+        inputs (_type_): _description_
+    """
+    sig = inspect.signature(f)
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        # Extract the arguments by name
+        bound_args = sig.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+        params = bound_args.arguments['params']
+        emissions = bound_args.arguments['emissions']
+        inputs = bound_args.arguments['inputs']
+
+        # Make sure all the required parameters are there
+        assert params.initial_mean is not None
+        assert params.initial_covariance is not None
+        assert params.dynamics_matrix is not None
+        assert params.dynamics_covariance is not None
+        assert params.emission_matrix is not None
+        assert params.emission_covariance is not None
+
+        # Get shapes
+        emission_dim, state_dim = params.emission_matrix.shape[-2:]
+        num_timesteps = len(emissions)
+
+        # Default the inputs to zero
+        inputs = _zeros_if_none(inputs, (num_timesteps, 0))
+        input_dim = inputs.shape[-1]
+
+        # Default other parameters to zero
+        dynamics_input_weights = _zeros_if_none(params.dynamics_input_weights, (state_dim, input_dim))
+        dynamics_bias = _zeros_if_none(params.dynamics_bias, (state_dim,))
+        emission_input_weights = _zeros_if_none(params.emission_input_weights, (emission_dim, input_dim))
+        emission_bias = _zeros_if_none(params.emission_bias, (emission_dim,))
+
+        full_params = LGSSMParams(
+            initial_mean=params.initial_mean,
+            initial_covariance=params.initial_covariance,
+            dynamics_matrix=params.dynamics_matrix,
+            dynamics_input_weights=dynamics_input_weights,
+            dynamics_bias=dynamics_bias,
+            dynamics_covariance=params.dynamics_covariance,
+            emission_matrix=params.emission_matrix,
+            emission_input_weights=emission_input_weights,
+            emission_bias=emission_bias,
+            emission_covariance=params.emission_covariance
+        )
+        return f(full_params, emissions, inputs=inputs)
+    return wrapper
+
+
 def lgssm_sample(rng, params, num_timesteps, inputs=None):
     """Sample states and emissions from an LGSSM.
 
@@ -125,6 +186,7 @@ def lgssm_sample(rng, params, num_timesteps, inputs=None):
     return states, emissions
 
 
+@preprocess_args
 def lgssm_filter(params, emissions, inputs=None):
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
@@ -228,6 +290,7 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
     return ll, states
 
 
+@preprocess_args
 def lgssm_smoother(params, emissions, inputs=None):
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this

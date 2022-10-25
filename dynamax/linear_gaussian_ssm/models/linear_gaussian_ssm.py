@@ -12,6 +12,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
+_zeros_if_none = lambda x, shp: x if x is not None else jnp.zeros(shp)
 
 class LinearGaussianSSM(SSM):
     """
@@ -43,6 +44,14 @@ class LinearGaussianSSM(SSM):
         self.input_dim = input_dim
         self.has_dynamics_bias = has_dynamics_bias
         self.has_emissions_bias = has_emissions_bias
+
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
+    @property
+    def covariates_shape(self):
+        return (self.input_dim,) if self.input_dim > 0 else None
 
     def random_initialization(self, key):
         m = jnp.zeros(self.state_dim)
@@ -78,33 +87,27 @@ class LinearGaussianSSM(SSM):
 
         return params, param_props
 
-    def initial_distribution(self, params, **covariates):
+    def initial_distribution(self, params, covariates=None):
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
-    def transition_distribution(self, params, state, **covariates):
-        inputs = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
-        mean = params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs 
+    def transition_distribution(self, params, state, covariates=None):
+        inputs = covariates if covariates is not None else jnp.zeros(self.input_dim)
+        mean = params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs
         if self.has_dynamics_bias:
             mean += params["dynamics"]["bias"]
         return MVN(mean, params["dynamics"]["cov"])
 
-    def emission_distribution(self, params, state, **covariates):
-        inputs = covariates['inputs'] if 'inputs' in covariates else jnp.zeros(self.input_dim)
-        mean = params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs 
+    def emission_distribution(self, params, state, covariates=None):
+        inputs = covariates if covariates is not None else jnp.zeros(self.input_dim)
+        mean = params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs
         if self.has_emissions_bias:
             mean += params["emissions"]["bias"]
         return MVN(mean, params["emissions"]["cov"])
 
-    def _zeros_if_none(self, x, dim):
-        if x is not None:
-            return x
-        else:
-            return jnp.zeros(dim)
-
     def _make_inference_args(self, params):
         """Convert params dict to LGSSMParams container replacing Nones if necessary."""
-        dyn_bias = self._zeros_if_none(params["dynamics"]["bias"], self.state_dim)
-        ems_bias = self._zeros_if_none(params["emissions"]["bias"], self.emission_dim)
+        dyn_bias = _zeros_if_none(params["dynamics"]["bias"], self.state_dim)
+        ems_bias = _zeros_if_none(params["emissions"]["bias"], self.emission_dim)
         return LGSSMParams(initial_mean=params["initial"]["mean"],
                            initial_covariance=params["initial"]["cov"],
                            dynamics_matrix=params["dynamics"]["weights"],
@@ -196,7 +199,7 @@ class LinearGaussianSSM(SSM):
 
         return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
-    def m_step(self, curr_params, param_props, batch_emissions, batch_stats, **batch_covariates):
+    def m_step(self, curr_params, param_props, batch_emissions, batch_stats, batch_covariates=None):
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics

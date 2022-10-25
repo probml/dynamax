@@ -19,11 +19,10 @@ def make_associative_filtering_elements(params, emissions):
         S = H @ Q @ H.T + R
         CF, low = jsc.linalg.cho_factor(S)
 
-        m1 = F @ params.initial_mean
-        P1 = F @ params.initial_covariance @ F.T + Q
+        m1 = params.initial_mean
+        P1 = params.initial_covariance
         S1 = H @ P1 @ H.T + R
-        #K1 = jsc.linalg.solve(S1, H @ P1, assume_a='pos').T 
-        K1 = jsc.linalg.solve(S1, H @ P1).T 
+        K1 = jsc.linalg.solve(S1, H @ P1, assume_a='pos').T
 
         A = jnp.zeros_like(F)
         b = m1 + K1 @ (y - H @ m1)
@@ -110,8 +109,7 @@ def make_associative_smoothing_elements(params, filtered_means, filtered_covaria
 
         Pp = F @ P @ F.T + Q
 
-        #E  = jsc.linalg.solve(Pp, F @ P, assume_a='pos').T
-        E  = jsc.linalg.solve(Pp, F @ P,).T
+        E  = jsc.linalg.solve(Pp, F @ P, assume_a='pos').T
         g  = m - E @ F @ m
         L  = P - E @ Pp @ E.T
         return E, g, L
