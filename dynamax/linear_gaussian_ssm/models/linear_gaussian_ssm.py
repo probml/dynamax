@@ -51,7 +51,7 @@ class LinearGaussianSSM(SSM):
 
     @property
     def covariates_shape(self):
-        return dict(inputs=(self.input_dim,)) if self.input_dim > 0 else dict()
+        return (self.input_dim,) if self.input_dim > 0 else None
 
     def random_initialization(self, key):
         m = jnp.zeros(self.state_dim)

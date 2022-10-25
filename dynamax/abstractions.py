@@ -71,12 +71,9 @@ class SSM(ABC):
     @property
     def covariates_shape(self):
         """Return a pytree matching the pytree of tuples specifying the shape(s)
-        of a single time step's covariates. Since covariates are passed as kwargs,
-        this must be a dictionary with keys for each covariate.
-
-        For example, a Gaussian HMM with D dimensional emissions would return (D,).
+        of a single time step's covariates.
         """
-        return dict()   # a dict since covariates are passed as kwargs.
+        return None
 
     def sample(self, params, key, num_timesteps, covariates=None):
         """Sample a sequence of latent states and emissions.

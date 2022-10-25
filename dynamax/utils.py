@@ -93,15 +93,16 @@ def random_rotation(seed, n, theta=None):
 def ensure_array_has_batch_dim(tree, instance_shapes):
     """Add a batch dimension to a PyTree, if necessary.
 
-    Example: If `tree` is an array of shape (100, 2) and
-    `instance_shapes` is a tuple (2,), then the return
+    Example: If `tree` is an array of shape (T, D) where `T` is
+    the number of time steps and `D` is the emission dimension,
+    and if `instance_shapes` is a tuple (D,), then the return
     value is the array with an added batch dimension, with
-    shape (1, 100, 2).
+    shape (1, T, D).
 
-    Example: If `tree` is an array of shape (1,100, 2) and
-    `instance_shapes` is a tuple (2,), then the return
+    Example: If `tree` is an array of shape (N,TD) and
+    `instance_shapes` is a tuple (D,), then the return
     value is simply `tree`, since it already has a batch
-    dimension.
+    dimension (of length N).
 
     Example: If `tree = (A, B)` is a tuple of arrays with
     `A.shape = (100,2)` `B.shape = (100,4)`, and
