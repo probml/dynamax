@@ -1,0 +1,390 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSM &#8212; dynamax documentation</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="_static/sphinx-book-theme.d59cb220de22ca1c485ebbdc042f0030.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="HMM with 2d Gaussian emissions" href="notebooks/gaussian_hmm_2d..html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="_static/logo.gif" class="logo" alt="logo">
+      
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Contents:
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/gaussian_hmm_2d..html">
+   HMM with 2d Gaussian emissions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   SSM
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/ssm.rst.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.rst</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#id1">
+   SSM
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>SSM</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#id1">
+   SSM
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <div class="section" id="ssm">
+<h1>SSM<a class="headerlink" href="#ssm" title="Permalink to this headline">¶</a></h1>
+<table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+</tbody>
+</table>
+<div class="section" id="id1">
+<h2>SSM<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dynamax.abstractions.</span></span><span class="sig-name descname"><span class="pre">SSM</span></span><a class="headerlink" href="#dynamax.abstractions.SSM" title="Permalink to this definition">¶</a></dt>
+<dd><p>A base class for state space models. Such models consist of parameters, which
+we may learn, as well as hyperparameters, which specify static properties of the
+model. This base class allows parameters to be indicated a standardized way
+so that they can easily be converted to/from unconstrained form. It also uses
+these parameters to implement the tree_flatten and tree_unflatten methods necessary
+to register a model as a JAX PyTree.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.covariates_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">covariates_shape</span></span><a class="headerlink" href="#dynamax.abstractions.SSM.covariates_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s covariates.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.emission_distribution">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.emission_distribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a distribution over emissions given current state.
+Args:</p>
+<blockquote>
+<div><p>state (PyTree): current latent state.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of current emission.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.emission_shape">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_shape</span></span><a class="headerlink" href="#dynamax.abstractions.SSM.emission_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s emissions.</p>
+<p>For example, a Gaussian HMM with D dimensional emissions would return (D,).</p>
+<p>NOTE: In contrast to <cite>covariates_shape</cite>, this will typically not be a
+dictionary since emissions are passed as args, not kwargs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_em">
+<span class="sig-name descname"><span class="pre">fit_em</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_props</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_em" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit this HMM with Expectation-Maximization (EM).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_hmc">
+<span class="sig-name descname"><span class="pre">fit_hmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_props</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_hmc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample parameters of the model using HMC.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_sgd">
+<span class="sig-name descname"><span class="pre">fit_sgd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">curr_params,</span> <span class="pre">param_props,</span> <span class="pre">emissions,</span> <span class="pre">covariates=None,</span> <span class="pre">optimizer=GradientTransformation(init=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.init_fn&gt;,</span> <span class="pre">update=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.update_fn&gt;),</span> <span class="pre">batch_size=1,</span> <span class="pre">num_epochs=50,</span> <span class="pre">shuffle=False,</span> <span class="pre">key=DeviceArray([0,</span> <span class="pre">0],</span> <span class="pre">dtype=uint32)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_sgd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit this HMM by running SGD on the marginal log likelihood.
+Note that batch_emissions is initially of shape (N,T)
+where N is the number of independent sequences and
+T is the length of a sequence. Then, a random susbet with shape (B, T)
+of entire sequence, not time steps, is sampled at each step where B is
+batch size.
+Args:</p>
+<blockquote>
+<div><p>batch_emissions (chex.Array): Independent sequences.
+optmizer (optax.Optimizer): Optimizer.
+batch_size (int): Number of sequences used at each update step.
+num_epochs (int): Iterations made through entire dataset.
+shuffle (bool): Indicates whether to shuffle minibatches.
+key (chex.PRNGKey): RNG key to shuffle minibatches.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>losses: Output of loss_fn stored at each step.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.initial_distribution">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">initial_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.initial_distribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an initial distribution over latent states.
+Returns:</p>
+<blockquote>
+<div><p>dist (tfd.Distribution): distribution over initial latent state.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.log_prior">
+<span class="sig-name descname"><span class="pre">log_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.log_prior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the log prior probability of any model parameters.
+Returns:</p>
+<blockquote>
+<div><p>lp (Scalar): log prior probability.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.log_prob">
+<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.log_prob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the log joint probability of the states and observations</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_timesteps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample a sequence of latent states and emissions.
+Args:</p>
+<blockquote>
+<div><p>key: rng key
+num_timesteps: length of sequence to generate</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.transition_distribution">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.transition_distribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a distribution over next latent state given current state.
+Args:</p>
+<blockquote>
+<div><p>state (PyTree): current latent state</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of next latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="notebooks/gaussian_hmm_2d..html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">HMM with 2d Gaussian emissions</p>
+        </div>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+    
+        &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

@@ -139,41 +139,23 @@ To run the tests,
 Related Libraries
 -----------------
 
-- distrax_hmm_: JAX func``tions for HMM inference (replaced by dynamax)
-- filterpy_: Numpy library for (extended) Kalman filtering
-- hmmlearn_: Numpy / C++ library for HMMs 
-- linderman-lab/ssm-jax_:  JAX library for SSMs (replaced by dynamax)
-- linderman-lab/ssm_:  Numpy / numba / autograd library for SSMs  (replaced by dynamax)
-- mattjj/pyhsmm_:  Numpy / Cython library library for HMMs
-- mattjj/pylds_:  Numpy / Cython library library for linear dynamical systems
-- murphy-lab/pgm-jax_: JAX library for factor graphs
-- murphy-lab/JSL_: JAX library for SSMs (replaced by dynamax)
-- pykalman_: Numpy library for (extended) Kalman filtering
-- sarkka-lab/parallel-non-linear-gaussian-smoothers_: JAX code for nonlinear smoothers using parallel scan
-- tfp_hmm_: TF2 code for HMM inference
-- tfp_lgssm_: TF2 code for Kalman filtering
+- murphy-lab/pgm-jax_: Factor graph library
+- murphy-lab/JSL_: Deprecated library for SSMs
+- linderman-lab/ssm-jax_:  Deprecated library for SSMs
+- linderman-lab/ssm_:  Old numpy, autograd, and numba library for SSMs
+- mattjj/pyhsmm_:  Numpy and cython library library for HMMs
+- mattjj/pylds_:  Numpy and cython library library for linear dynamical systems
+- sarkka-lab/parallel-non-linear-gaussian-smoothers_: Code for nonlinear smoothers using parallel scan
 
-.. _Blackjax: https://github.com/blackjax-devs/blackjax
-.. _distrax_hmm: https://github.com/deepmind/distrax/blob/master/distrax/_src/utils/hmm.py
-.. _filterpy: https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python
-.. _hmmlearn: https://github.com/hmmlearn/hmmlearn
 .. _JAX: https://github.com/google/jax
-.. _JSL: https://github.com/probml/JSL
-.. _parallel-non-linear-gaussian-smoothers: https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers
 .. _pgm-jax: https://github.com/probml/pgm-jax
-.. _pyhsmm: https://github.com/mattjj/pyhsmm
-.. _pylds: https://github.com/mattjj/pylds
-.. _pykalman: https://pykalman.github.io/
+.. _JSL: https://github.com/probml/JSL
 .. _ssm-jax: https://github.com/lindermanlab/ssm-jax
 .. _ssm: https://github.com/lindermanlab/ssm
-.. _tfp_hmm: https://www.tensorflow.org/probability/api_docs/python/tfp/distributions/HiddenMarkovModel
-.. _tfp_lgssm: https://www.tensorflow.org/probability/api_docs/python/tfp/distributions/LinearGaussianStateSpaceModel
-
-
-
-
-Introductory examples
-==================
+.. _pyhsmm: https://github.com/mattjj/pyhsmm
+.. _pylds: https://github.com/mattjj/pylds
+.. _parallel-non-linear-gaussian-smoothers: https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers
+.. _Blackjax: https://github.com/blackjax-devs/blackjax
 
 .. toctree::
    :maxdepth: 2
@@ -181,9 +163,6 @@ Introductory examples
 
    notebooks/gaussian_hmm_2d.ipynb
 
-
-API documentation
-==================
 
 .. toctree::
    :maxdepth: 2

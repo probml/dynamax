@@ -134,4 +134,7 @@ def ensure_array_has_batch_dim(tree, instance_shapes):
         else:
             raise Exception("array has too many dimensions!")
 
-    return tree_map(_expand_dim, tree, instance_shapes)
+    if tree is None:
+        return None
+    else:
+        return tree_map(_expand_dim, tree, instance_shapes)
