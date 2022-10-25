@@ -28,6 +28,8 @@ author = 'Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Li
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "myst_nb",
     # "myst_parser"
 ]

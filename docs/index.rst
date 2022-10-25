@@ -16,12 +16,12 @@ parameters of state space models like:
 - Linear Gaussian State Space Models (aka Linear Dynamical Systems)
 - Nonlinear Gaussian State Space Models
 
-Running the Inference Algorithms
+Using the Inference Algorithms
 --------------------------------
 
 The core inference algorithms, like the forward-backward algorithm for HMMs,
 the Kalman filter and smoother for LGSSMs, and the extended and unscented
-Kalman filters for nonlinear SSMs, all have a functional programming interface.
+Kalman filters for nonlinear SSMs, all have a simple, functional interface.
 For example, the following code generates some noisy data and then smooths it
 with an LGSSM smoother (aka Kalman smoother).
 
@@ -70,12 +70,44 @@ differentiation and just-in-time compilation,
 .. code-block:: python
 
    loss = lambda params: -lgssm_smoother(params, emissions).marginal_loglik
-   jit(grad(loss))(params)
-   # LGSSMParams(initial_mean=DeviceArray([-0.2507091], dtype=float32), initial_covariance=DeviceArray([[0.32818437]], dtype=float32), dynamics_matrix=DeviceArray([[47.33144]], dtype=float32), dynamics_covariance=DeviceArray([[-0.41595864]], dtype=float32), emission_matrix=DeviceArray([[0.4483896]], dtype=float32), emission_covariance=DeviceArray([[6.252903]], dtype=float32), dynamics_input_weights=None, dynamics_bias=None, emission_input_weights=None, emission_bias=None)
+   jit(grad(loss))(params) # Returns an LGSSMParams dataclass with the gradients in it
 
 Fitting Models
 --------------
 
+Dynamax also includes a host of model classes for various HMMs and linear Gaussian SSMs.
+You can use these models to simulate data, and you can fit the models using standard
+learning algorithms like expectation-maximization (EM) and stochastic gradient descent.
+
+.. code-block:: python
+
+   import jax.numpy as jnp
+   import jax.random as jr
+   import matplotlib.pyplot as plt
+   from dynamax.hmm.models import GaussianHMM
+
+   key1, key2, key3 = jr.split(jr.PRNGKey(0), 3)
+   num_states = 3
+   emission_dim = 2
+   num_timesteps = 100
+
+   # Make a Gaussian HMM and sample data from it
+   true_hmm = GaussianHMM(num_states, emission_dim)
+   true_params, _ = true_hmm.random_initialization(key1)
+   true_states, emissions = true_hmm.sample(true_params, key2, num_timesteps)
+
+   # Make a new Gaussian HMM and fit it with EM
+   test_hmm = GaussianHMM(num_states, emission_dim)
+   test_params, props = test_hmm.random_initialization(key3)
+   test_params, lls = test_hmm.fit_em(test_params, props, emissions)
+
+   # Plot the marginal log probs across EM iterations
+   plt.plot(lls)
+   plt.xlabel("EM iterations")
+   plt.ylabel("marginal log prob.")
+
+The models also play nicely with other libraries, like Blackjax_, for Bayesian inference
+with Hamiltonian Monte Carlo (HMC) and sequential Monte Carlo (SMC).
 
 Installation and Testing
 ------------------------
@@ -123,13 +155,20 @@ Related Libraries
 .. _pyhsmm: https://github.com/mattjj/pyhsmm
 .. _pylds: https://github.com/mattjj/pylds
 .. _parallel-non-linear-gaussian-smoothers: https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers
-
+.. _Blackjax: https://github.com/blackjax-devs/blackjax
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    notebooks/gaussian_hmm_2d.ipynb
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Documentation
+
+   ssm
 
 Indices and tables
 ==================
