@@ -104,6 +104,10 @@ class _StructuralTimeSeriesSSM(SSM):
         self.priors = {'dynamics_covariances': component_transition_covariance_priors,
                        'regression_weights': emission_input_weights_prior}
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
     def log_prior(self, params):
         lp = jnp.array([
             cov_prior.log_prob(cov) for cov, cov_prior in zip(

@@ -26,6 +26,14 @@ class LogisticRegressionHMM(StandardHMM):
         self.feature_dim = feature_dim
         self.emission_weights_variance = emission_matrices_variance
 
+    @property
+    def emission_shape(self):
+        return ()
+
+    @property
+    def covariates_shape(self):
+        return (self.feature_dim,)
+
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
         emission_weights = jr.normal(key1, (self.num_states, self.feature_dim))
@@ -40,7 +48,7 @@ class LogisticRegressionHMM(StandardHMM):
         lp += tfd.Normal(0, self.emission_weights_variance).log_prob(params['emissions']['weights']).sum()
         return lp
 
-    def emission_distribution(self, params, state, **covariates):
-        logits = params['emissions']['weights'][state] @ covariates['features']
+    def emission_distribution(self, params, state, covariates):
+        logits = params['emissions']['weights'][state] @ covariates
         logits += params['emissions']['biases'][state]
         return tfd.Bernoulli(logits=logits)

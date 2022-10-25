@@ -30,6 +30,14 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
+    @property
+    def covariates_shape(self):
+        return (self.feature_dim,)
+
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
 
@@ -55,14 +63,14 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
             prev_state, prev_emissions = carry
             key1, key2 = jr.split(key, 2)
             state = self.transition_distribution(params, prev_state).sample(seed=key2)
-            emission = self.emission_distribution(params, state, features=jnp.ravel(prev_emissions)).sample(seed=key1)
+            emission = self.emission_distribution(params, state, covariates=jnp.ravel(prev_emissions)).sample(seed=key1)
             next_prev_emissions = jnp.row_stack([emission, prev_emissions[:-1]])
             return (state, next_prev_emissions), (state, emission)
 
         # Sample the initial state
         key1, key2, key = jr.split(key, 3)
         initial_state = self.initial_distribution(params).sample(seed=key1)
-        initial_emission = self.emission_distribution(params, initial_state, features=jnp.ravel(prev_emissions)).sample(seed=key2)
+        initial_emission = self.emission_distribution(params, initial_state, covariates=jnp.ravel(prev_emissions)).sample(seed=key2)
         initial_prev_emissions = jnp.row_stack([initial_emission, prev_emissions[:-1]])
 
         # Sample the remaining emissions and states
