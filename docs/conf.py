@@ -75,6 +75,7 @@ html_theme = 'sphinx_book_theme'
 html_theme_options = {
     'repository_url': 'https://github.com/probml/dynamax',
     'repository_branch': 'main',
+    "path_to_docs": 'docs',
     'launch_buttons': {
         'colab_url': 'https://colab.research.google.com',
         'binderhub_url': 'https://mybinder.org'
