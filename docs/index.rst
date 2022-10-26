@@ -238,6 +238,7 @@ Notebooks
    :caption: Contents:
 
    notebooks/hmm/casino_hmm_inference.ipynb
+   notebooks/hmm/casino_hmm_training.ipynb
    notebooks/hmm/gaussian_hmm_2d.ipynb
    notebooks/linear_gaussian_ssm/kf_tracking.ipynb
 

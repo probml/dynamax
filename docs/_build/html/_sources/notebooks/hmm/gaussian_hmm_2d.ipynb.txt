@@ -6,12 +6,18 @@
     "id": "gr9tjnvk2LB3"
    },
    "source": [
-    "# HMM with 2d Gaussian emissions \n",
+    "# Fitting a Gaussian HMM \n",
     "\n",
-    "We use the [dynamax](https://github.com/probml/dynamax/blob/main/dynamax/) library\n",
-    "to two algorithms for fitting a Gaussian HMM:\n",
+    "We use two algorithms for fitting a 2d Gaussian HMM:\n",
     "1. (Batch) EM\n",
     "2. Stochastic EM"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Setup"
    ]
   },
   {
@@ -43,10 +49,7 @@
     "from rich import print as r_print\n",
     "\n",
     "def print_source(fname):\n",
-    "    r_print(py_inspect.getsource(fname))\n",
-    "\n",
-    "#import dynamax.utils\n",
-    "#print_source(dynamax.utils.ensure_array_has_batch_dim)\n"
+    "    r_print(py_inspect.getsource(fname))\n"
    ]
   },
   {
@@ -89,7 +92,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "**Generate sample data**"
+    "# Generate sample data"
    ]
   },
   {
@@ -161,7 +164,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "**Initialize test HMMs and fit to data**"
+    "# Initialize model and fit to data"
    ]
   },
   {
@@ -266,6 +269,13 @@
    ]
   },
   {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Visualize the fitted model"
+   ]
+  },
+  {
    "cell_type": "code",
    "execution_count": 9,
    "metadata": {},
@@ -320,8 +330,6 @@
     }
    ],
    "source": [
-    "# TODO Recompute once we've implemented k-means initialization\n",
-    "# TODO plotting functions need to be able to permute\n",
     "\n",
     "i_batch = 5\n",
     "\n",
@@ -330,6 +338,54 @@
     "\n",
     "demo.plot_gaussian_hmm(hmm, sem_params, batch_emissions[i_batch], batch_true_states[i_batch], \"HMM Stoch Fit\");\n",
     "demo.plot_gaussian_hmm_data(hmm, sem_params, batch_emissions[i_batch], batch_true_states[i_batch], xlim=(0, 100));"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Show the plotting code"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">def plot_gaussian_hmm<span style=\"font-weight: bold\">(</span>hmm, params, emissions, states, <span style=\"color: #808000; text-decoration-color: #808000\">ttl</span>=<span style=\"color: #008000; text-decoration-color: #008000\">\"Emission Distributions\"</span><span style=\"font-weight: bold\">)</span>:\n",
+       "    lim = <span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">0.85</span> * abs<span style=\"font-weight: bold\">(</span>emissions<span style=\"font-weight: bold\">)</span>.max<span style=\"font-weight: bold\">()</span>\n",
+       "    XX, YY = jnp.meshgrid<span style=\"font-weight: bold\">(</span>jnp.linspace<span style=\"font-weight: bold\">(</span>-lim, lim, <span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">100</span><span style=\"font-weight: bold\">)</span>, jnp.linspace<span style=\"font-weight: bold\">(</span>-lim, lim, <span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">100</span><span style=\"font-weight: bold\">))</span>\n",
+       "    grid = jnp.column_stack<span style=\"font-weight: bold\">((</span>XX.ravel<span style=\"font-weight: bold\">()</span>, YY.ravel<span style=\"font-weight: bold\">()))</span>\n",
+       "\n",
+       "    plt.figure<span style=\"font-weight: bold\">()</span>\n",
+       "    for k in range<span style=\"font-weight: bold\">(</span>hmm.num_states<span style=\"font-weight: bold\">)</span>:\n",
+       "        lls = hmm.emission_distribution<span style=\"font-weight: bold\">(</span>params, k<span style=\"font-weight: bold\">)</span>.log_prob<span style=\"font-weight: bold\">(</span>grid<span style=\"font-weight: bold\">)</span>\n",
+       "        plt.contour<span style=\"font-weight: bold\">(</span>XX, YY, jnp.exp<span style=\"font-weight: bold\">(</span>lls<span style=\"font-weight: bold\">)</span>.reshape<span style=\"font-weight: bold\">(</span>XX.shape<span style=\"font-weight: bold\">)</span>, <span style=\"color: #808000; text-decoration-color: #808000\">cmap</span>=<span style=\"color: #800080; text-decoration-color: #800080\">white_to_color_cmap</span><span style=\"font-weight: bold\">(</span>COLORS<span style=\"font-weight: bold\">))</span>\n",
+       "        plt.plot<span style=\"font-weight: bold\">(</span>emissions, emissions, <span style=\"color: #008000; text-decoration-color: #008000\">\"o\"</span>, <span style=\"color: #808000; text-decoration-color: #808000\">mfc</span>=<span style=\"color: #800080; text-decoration-color: #800080\">COLORS</span>, <span style=\"color: #808000; text-decoration-color: #808000\">mec</span>=<span style=\"color: #008000; text-decoration-color: #008000\">\"none\"</span>, <span style=\"color: #808000; text-decoration-color: #808000\">ms</span>=<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">3</span>, <span style=\"color: #808000; text-decoration-color: #808000\">alpha</span>=<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">0.5</span><span style=\"font-weight: bold\">)</span>\n",
+       "\n",
+       "    plt.plot<span style=\"font-weight: bold\">(</span>emissions<span style=\"font-weight: bold\">[</span>:, <span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">0</span><span style=\"font-weight: bold\">]</span>, emissions<span style=\"font-weight: bold\">[</span>:, <span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">1</span><span style=\"font-weight: bold\">]</span>, <span style=\"color: #008000; text-decoration-color: #008000\">\"-k\"</span>, <span style=\"color: #808000; text-decoration-color: #808000\">lw</span>=<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">1</span>, <span style=\"color: #808000; text-decoration-color: #808000\">alpha</span>=<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">0.25</span><span style=\"font-weight: bold\">)</span>\n",
+       "    plt.xlabel<span style=\"font-weight: bold\">(</span><span style=\"color: #008000; text-decoration-color: #008000\">\"$y_1$\"</span><span style=\"font-weight: bold\">)</span>\n",
+       "    plt.ylabel<span style=\"font-weight: bold\">(</span><span style=\"color: #008000; text-decoration-color: #008000\">\"$y_2$\"</span><span style=\"font-weight: bold\">)</span>\n",
+       "    plt.title<span style=\"font-weight: bold\">(</span>ttl<span style=\"font-weight: bold\">)</span>\n",
+       "    plt.tight_layout<span style=\"font-weight: bold\">()</span>\n",
+       "    return plt.gcf<span style=\"font-weight: bold\">()</span>\n",
+       "\n",
+       "</pre>\n"
+      ],
+      "text/plain": [
+       "<rich.jupyter.JupyterRenderable at 0x7f848959c6d0>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "\n",
+    "print_source(demo.plot_gaussian_hmm)\n"
    ]
   }
  ],

@@ -39,11 +39,13 @@
     <script src="_static/togglebutton.js"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <script src="_static/sphinx-book-theme.d59cb220de22ca1c485ebbdc042f0030.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.18.0/dist/embed-amd.js"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="HMM with 2d Gaussian emissions" href="notebooks/hmm/gaussian_hmm_2d..html" />
+    <link rel="next" title="Casino HMM: Inference (state estimation)" href="notebooks/hmm/casino_hmm_inference..html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -85,13 +87,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/hmm/casino_hmm_inference..html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/hmm/casino_hmm_training..html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d..html">
-   HMM with 2d Gaussian emissions
+   Fitting a Gaussian HMM
   </a>
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking..html">
-   Tracking a 2d point moving in the plane using the Kalman filter
+   Tracking an object using the Kalman filter
   </a>
  </li>
 </ul>
@@ -193,13 +205,13 @@
     </a>
    </li>
    <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#inference">
-     Inference
+    <a class="reference internal nav-link" href="#inference-state-estimation">
+     Inference (state estimation)
     </a>
    </li>
    <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#learning-model-fitting">
-     Learning (model fitting)
+    <a class="reference internal nav-link" href="#learning-parameter-estimation">
+     Learning (parameter estimation)
     </a>
    </li>
    <li class="toc-h2 nav-item toc-entry">
@@ -260,13 +272,13 @@
     </a>
    </li>
    <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#inference">
-     Inference
+    <a class="reference internal nav-link" href="#inference-state-estimation">
+     Inference (state estimation)
     </a>
    </li>
    <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#learning-model-fitting">
-     Learning (model fitting)
+    <a class="reference internal nav-link" href="#learning-parameter-estimation">
+     Learning (parameter estimation)
     </a>
    </li>
    <li class="toc-h2 nav-item toc-entry">
@@ -338,7 +350,6 @@ or sequential Monte Carlo (SMC)).</p>
 </div>
 <div class="section" id="what-are-state-space-models">
 <h2>What are state space models?<a class="headerlink" href="#what-are-state-space-models" title="Permalink to this headline">¶</a></h2>
-<p># <a class="reference external" href="https://sphinx-rtd-trial.readthedocs.io/en/latest/ext/math.html">https://sphinx-rtd-trial.readthedocs.io/en/latest/ext/math.html</a></p>
 <p>A state space model or SSM is a partially observed Markov model, in which the hidden state,
 <span class="math notranslate nohighlight">\(z_t\)</span>, evolves over time according to a Markov process,
 possibly conditional on external inputs / controls / covariates,
@@ -347,16 +358,12 @@ and generates an observation,
 <span class="math notranslate nohighlight">\(y_t\)</span>.
 This is illustrated in the graphical model below.</p>
 <div class="figure align-default">
-<a class="reference internal image-reference" href="_images/LDS-UZY.png"><img alt="SSM as a graphical model." src="_images/LDS-UZY.png" style="width: 378.0px; height: 392.0px;" /></a>
+<a class="reference internal image-reference" href="_images/LDS-UZY.png"><img alt="SSM as a graphical model." src="_images/LDS-UZY.png" style="width: 189.0px; height: 196.0px;" /></a>
 </div>
 <p>The corresponding joint distribution has the following form
-(in dynamax, we restrict attention to discrete time systems):
-.. math:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">p</span><span class="p">(</span><span class="n">y_</span><span class="p">{</span><span class="mi">1</span><span class="p">:</span><span class="n">T</span><span class="p">},</span> <span class="n">z_</span><span class="p">{</span><span class="mi">1</span><span class="p">:</span><span class="n">T</span><span class="p">}</span> <span class="o">|</span> <span class="n">u_</span><span class="p">{</span><span class="mi">1</span><span class="p">:</span><span class="n">T</span><span class="p">})</span> <span class="o">=</span>
- <span class="n">p</span><span class="p">(</span><span class="n">z_1</span> <span class="o">|</span> <span class="n">u_1</span><span class="p">)</span> <span class="n">p</span><span class="p">(</span><span class="n">y_1</span> <span class="o">|</span> <span class="n">z_1</span><span class="p">,</span> <span class="n">u_1</span><span class="p">)</span>
- \<span class="n">prod_</span><span class="p">{</span><span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">}</span><span class="o">^</span><span class="n">T</span> <span class="n">p</span><span class="p">(</span><span class="n">z_t</span> <span class="o">|</span> <span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="n">u_t</span><span class="p">)</span> <span class="n">p</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">z_t</span><span class="p">,</span> <span class="n">u_t</span><span class="p">)</span>
-</pre></div>
-</div>
+(in dynamax, we restrict attention to discrete time systems):</p>
+<div class="math notranslate nohighlight">
+\[p(y_{1:T}, z_{1:T} | u_{1:T}) = p(z_1 | u_1) p(y_1 | z_1, u_1) \prod_{t=1}^T p(z_t | z_{t-1}, u_t) p(y_t | z_t, u_t)\]</div>
 <p>Here <span class="math notranslate nohighlight">\(p(z_t | z_{t-1}, u_t)\)</span> is called the transition or dynamics model,
 and <span class="math notranslate nohighlight">\(p(y_t | z_{t}, u_t)\)</span> is called the observation or emission model.
 (In both cases, the inputs <span class="math notranslate nohighlight">\(u_t\)</span> are optional;
@@ -371,15 +378,15 @@ We may also be interested in predicting future states,
 or future observations,
 <span class="math notranslate nohighlight">\(p(y_{t+h}|y_{1:t})\)</span>,
 where h is the forecast horizon.
-(Note that by using a hidden state  to represent the past observations,</p>
-<blockquote>
-<div><p>the model can have “infinite” memory, unlike a standard auto-regressive model.)</p>
-</div></blockquote>
-<p>All of these computations can be done efficiently using our library,
+(Note that by using a hidden state  to represent the past observations,
+the model can have “infinite” memory, unlike a standard auto-regressive model.)
+All of these computations can be done efficiently using our library,
+as we discuss below.
+In addition, we can estimate the parameters of the transition and emission models,
 as we discuss below.</p>
 </div>
-<div class="section" id="inference">
-<h2>Inference<a class="headerlink" href="#inference" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="inference-state-estimation">
+<h2>Inference (state estimation)<a class="headerlink" href="#inference-state-estimation" title="Permalink to this headline">¶</a></h2>
 <p>The core inference algorithms, like the forward-backward algorithm for HMMs,
 the Kalman filter and smoother for LGSSMs, and the extended and unscented
 Kalman filters for nonlinear SSMs, all have a simple, functional interface.
@@ -428,8 +435,8 @@ differentiation and just-in-time compilation,</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="learning-model-fitting">
-<h2>Learning (model fitting)<a class="headerlink" href="#learning-model-fitting" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="learning-parameter-estimation">
+<h2>Learning (parameter estimation)<a class="headerlink" href="#learning-parameter-estimation" title="Permalink to this headline">¶</a></h2>
 <p>Dynamax also includes a host of model classes for various HMMs and linear Gaussian SSMs.
 You can use these models to simulate data, and you can fit the models using standard
 learning algorithms like expectation-maximization (EM) and stochastic gradient descent (SGD).</p>
@@ -484,8 +491,33 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 <div class="toctree-wrapper compound">
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d..html">HMM with 2d Gaussian emissions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking..html">Tracking a 2d point moving in the plane using the Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference..html">Casino HMM: Inference (state estimation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference..html#setup">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference..html#make-model">Make model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference..html#sample-data-from-model">Sample data from model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference..html#filtering-forwards-algorithm">Filtering (forwards algorithm)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference..html#plotting-code">Plotting code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference..html#smoothing-forwards-backwards-algorithm">Smoothing (forwards-backwards algorithm)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference..html#map-sequence-viterbi-algorithm">MAP sequence (Viterbi algorithm)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_training..html">Casino HMM: learning (parameter estimation)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/hmm/casino_hmm_training..html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/hmm/casino_hmm_training..html#sample-data-from-true-model">Sample data from true model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/hmm/casino_hmm_training..html#learning">Learning</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d..html">Fitting a Gaussian HMM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d..html#setup">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d..html#generate-sample-data">Generate sample data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d..html#initialize-model-and-fit-to-data">Initialize model and fit to data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d..html#visualize-the-fitted-model">Visualize the fitted model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d..html#show-the-plotting-code">Show the plotting code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking..html">Tracking an object using the Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking..html#setup">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking..html#create-the-model">Create the model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking..html#sample-some-data-from-the-model">Sample some data from the model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking..html#perform-online-filtering">Perform online filtering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking..html#perform-offline-smoothing">Perform offline smoothing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking..html#low-level-interface-to-the-underlying-inference-algorithms">Low-level interface to the underlying inference algorithms</a></li>
 </ul>
 </div>
 </div>
@@ -516,10 +548,10 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
             
                 <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='right-next' id="next-link" href="notebooks/hmm/gaussian_hmm_2d..html" title="next page">
+    <a class='right-next' id="next-link" href="notebooks/hmm/casino_hmm_inference..html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">HMM with 2d Gaussian emissions</p>
+        <p class="prev-next-title">Casino HMM: Inference (state estimation)</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

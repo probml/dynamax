@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # HMM with 2d Gaussian emissions 
+# # Fitting a Gaussian HMM 
 # 
-# We use the [dynamax](https://github.com/probml/dynamax/blob/main/dynamax/) library
-# to two algorithms for fitting a Gaussian HMM:
+# We use two algorithms for fitting a 2d Gaussian HMM:
 # 1. (Batch) EM
 # 2. Stochastic EM
+
+# # Setup
 
 # In[1]:
 
@@ -31,9 +32,6 @@ from rich import print as r_print
 def print_source(fname):
     r_print(py_inspect.getsource(fname))
 
-#import dynamax.utils
-#print_source(dynamax.utils.ensure_array_has_batch_dim)
-
 
 # In[3]:
 
@@ -56,7 +54,7 @@ from jax import vmap
 import matplotlib.pyplot as plt
 
 
-# **Generate sample data**
+# # Generate sample data
 
 # In[5]:
 
@@ -94,7 +92,7 @@ demo.plot_gaussian_hmm(hmm, params, batch_emissions[0], batch_true_states[0], "T
 demo.plot_gaussian_hmm_data(hmm, params, batch_emissions[0], batch_true_states[0], xlim=(100, 600));
 
 
-# **Initialize test HMMs and fit to data**
+# # Initialize model and fit to data
 
 # In[6]:
 
@@ -125,11 +123,11 @@ plt.ylabel('log prob')
 plt.legend()
 
 
+# # Visualize the fitted model
+
 # In[7]:
 
 
-# TODO Recompute once we've implemented k-means initialization
-# TODO plotting functions need to be able to permute
 
 i_batch = 5
 
@@ -138,4 +136,13 @@ demo.plot_gaussian_hmm_data(hmm, em_params, batch_emissions[i_batch], batch_true
 
 demo.plot_gaussian_hmm(hmm, sem_params, batch_emissions[i_batch], batch_true_states[i_batch], "HMM Stoch Fit");
 demo.plot_gaussian_hmm_data(hmm, sem_params, batch_emissions[i_batch], batch_true_states[i_batch], xlim=(0, 100));
+
+
+# # Show the plotting code
+
+# In[8]:
+
+
+
+print_source(demo.plot_gaussian_hmm)
 

@@ -54,7 +54,8 @@ To run the tests, do this:
 What are state space models?
 -----------------------------
 
-# https://sphinx-rtd-trial.readthedocs.io/en/latest/ext/math.html
+..
+    https://sphinx-rtd-trial.readthedocs.io/en/latest/ext/math.html
 
 A state space model or SSM is a partially observed Markov model, in which the hidden state,
 :math:`z_t`, evolves over time according to a Markov process,
@@ -65,17 +66,16 @@ and generates an observation,
 This is illustrated in the graphical model below.
 
 .. figure:: figures/LDS-UZY.png
-   :scale: 200 %
+   :scale: 100 %
    :alt: SSM as a graphical model.
 
 
 The corresponding joint distribution has the following form
 (in dynamax, we restrict attention to discrete time systems):
+
 .. math::
 
-      p(y_{1:T}, z_{1:T} | u_{1:T}) =
-       p(z_1 | u_1) p(y_1 | z_1, u_1)
-       \prod_{t=1}^T p(z_t | z_{t-1}, u_t) p(y_t | z_t, u_t)
+      p(y_{1:T}, z_{1:T} | u_{1:T}) = p(z_1 | u_1) p(y_1 | z_1, u_1) \prod_{t=1}^T p(z_t | z_{t-1}, u_t) p(y_t | z_t, u_t)
    
 
 Here :math:`p(z_t | z_{t-1}, u_t)` is called the transition or dynamics model,
@@ -94,13 +94,14 @@ or future observations,
 :math:`p(y_{t+h}|y_{1:t})`,
 where h is the forecast horizon.
 (Note that by using a hidden state  to represent the past observations, 
- the model can have "infinite" memory, unlike a standard auto-regressive model.)
+the model can have "infinite" memory, unlike a standard auto-regressive model.)
 All of these computations can be done efficiently using our library,
+as we discuss below.
+In addition, we can estimate the parameters of the transition and emission models,
 as we discuss below.
 
 
-
-Inference
+Inference (state estimation)
 --------------------------------
 
 The core inference algorithms, like the forward-backward algorithm for HMMs,
@@ -157,8 +158,8 @@ differentiation and just-in-time compilation,
    jit(grad(loss))(params) # Returns an LGSSMParams dataclass with the gradients in it
 
 
-Learning (model fitting) 
--------------------------
+Learning (parameter estimation) 
+---------------------------------
 
 Dynamax also includes a host of model classes for various HMMs and linear Gaussian SSMs.
 You can use these models to simulate data, and you can fit the models using standard
@@ -227,10 +228,6 @@ Related Libraries
 .. _tfp_lgssm: https://www.tensorflow.org/probability/api_docs/python/tfp/distributions/LinearGaussianStateSpaceModel
 
 
-.. _hidden: :math:`z_t`
-.. _hiddentm1: :math:`z_{t-1}`
-.. _obs-t: :math:`y_t`
-.. _inputs-t: :math:`u_t`
 
 
 Notebooks
@@ -240,6 +237,8 @@ Notebooks
    :maxdepth: 2
    :caption: Contents:
 
+   notebooks/hmm/casino_hmm_inference.ipynb
+   notebooks/hmm/casino_hmm_training.ipynb
    notebooks/hmm/gaussian_hmm_2d.ipynb
    notebooks/linear_gaussian_ssm/kf_tracking.ipynb
 

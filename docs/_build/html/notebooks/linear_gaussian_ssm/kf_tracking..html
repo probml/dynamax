@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tracking a 2d point moving in the plane using the Kalman filter &#8212; dynamax documentation</title>
+    <title>Tracking an object using the Kalman filter &#8212; dynamax documentation</title>
     
   <link href="../../_static/css/theme.css" rel="stylesheet">
   <link href="../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -39,10 +39,14 @@
     <script src="../../_static/togglebutton.js"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <script src="../../_static/sphinx-book-theme.d59cb220de22ca1c485ebbdc042f0030.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.18.0/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="SSM" href="../../api/ssm.html" />
-    <link rel="prev" title="HMM with 2d Gaussian emissions" href="../hmm/gaussian_hmm_2d..html" />
+    <link rel="next" title="SSM" href="../../ssm.html" />
+    <link rel="prev" title="Fitting a Gaussian HMM" href="../hmm/gaussian_hmm_2d..html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -84,13 +88,23 @@
 </p>
 <ul class="current nav bd-sidenav">
  <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/casino_hmm_inference..html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/casino_hmm_training..html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="../hmm/gaussian_hmm_2d..html">
-   HMM with 2d Gaussian emissions
+   Fitting a Gaussian HMM
   </a>
  </li>
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
-   Tracking a 2d point moving in the plane using the Kalman filter
+   Tracking an object using the Kalman filter
   </a>
  </li>
 </ul>
@@ -101,7 +115,7 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../api/ssm.html">
+  <a class="reference internal" href="../../ssm.html">
    SSM
   </a>
  </li>
@@ -188,6 +202,49 @@
         <!-- Table of contents -->
         <div class="d-none d-md-block col-md-2 bd-toc show noprint">
             
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#setup">
+   Setup
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#create-the-model">
+   Create the model
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#sample-some-data-from-the-model">
+   Sample some data from the model
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#perform-online-filtering">
+   Perform online filtering
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#perform-offline-smoothing">
+   Perform offline smoothing
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#low-level-interface-to-the-underlying-inference-algorithms">
+   Low-level interface to the underlying inference algorithms
+  </a>
+ </li>
+</ul>
+
+            </nav>
         </div>
     </div>
 </div>
@@ -195,20 +252,117 @@
         <div class="col-12 col-md-9 pl-md-3 pr-md-0">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Tracking a 2d point moving in the plane using the Kalman filter</h1>
+                <h1>Tracking an object using the Kalman filter</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
                         
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#setup">
+   Setup
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#create-the-model">
+   Create the model
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#sample-some-data-from-the-model">
+   Sample some data from the model
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#perform-online-filtering">
+   Perform online filtering
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#perform-offline-smoothing">
+   Perform offline smoothing
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#low-level-interface-to-the-underlying-inference-algorithms">
+   Low-level interface to the underlying inference algorithms
+  </a>
+ </li>
+</ul>
+
+                        </nav>
                     </div>
                 </div>
             </div>
             
               <div>
                 
-  <div class="tex2jax_ignore mathjax_ignore section" id="tracking-a-2d-point-moving-in-the-plane-using-the-kalman-filter">
-<h1>Tracking a 2d point moving in the plane using the Kalman filter<a class="headerlink" href="#tracking-a-2d-point-moving-in-the-plane-using-the-kalman-filter" title="Permalink to this headline">¶</a></h1>
-<p>We use the <a class="reference external" href="https://github.com/probml/dynamax/blob/main/dynamax/">dynamax</a> library.</p>
+  <div class="tex2jax_ignore mathjax_ignore section" id="tracking-an-object-using-the-kalman-filter">
+<h1>Tracking an object using the Kalman filter<a class="headerlink" href="#tracking-an-object-using-the-kalman-filter" title="Permalink to this headline">¶</a></h1>
+<p>Consider an object moving in <span class="math notranslate nohighlight">\(R^2\)</span>.
+We assume that we observe a noisy version of its location at each time step.
+We want to track the object and possibly forecast its future motion.
+We now show how to do this using a simple linear Gaussian SSM, combined with
+the Kalman filter algorithm.</p>
+<p>Let the hidden state represent
+the position and velocity of the object,
+<span class="math notranslate nohighlight">\(z_t =\begin{pmatrix} u_t &amp; \dot{u}_t &amp; v_t &amp; \dot{v}_t \end{pmatrix}\)</span>.
+(We use <span class="math notranslate nohighlight">\(u\)</span> and <span class="math notranslate nohighlight">\(v\)</span> for the two coordinates,
+to avoid confusion with the state and observation variables.)
+The process evolves in continuous time, but if we discretize it with step size <span class="math notranslate nohighlight">\(\Delta\)</span>,
+we can write the dynamics as the following linear system:</p>
+<div class="amsmath math notranslate nohighlight" id="equation-1e57d01f-77bf-4f3d-8cd4-30a70d4a7806">
+<span class="eqno">(1)<a class="headerlink" href="#equation-1e57d01f-77bf-4f3d-8cd4-30a70d4a7806" title="Permalink to this equation">¶</a></span>\[\begin{align}
+\underbrace{\begin{pmatrix} u_t\\ \dot{u}_t \\ v_t \\ \dot{v}_t \end{pmatrix}}_{z_t}
+  = 
+\underbrace{
+\begin{pmatrix}
+1 &amp; 0 &amp; \Delta &amp; 0 \\
+0 &amp; 1 &amp; 0 &amp; \Delta\\
+0 &amp; 0 &amp; 1 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 1
+\end{pmatrix}
+}_{F}
+\underbrace{\begin{pmatrix} u_{t-1} \\ \dot{u}_{t-1} \\ v_{t-1} \\ \dot{v}_{t-1} \end{pmatrix}}_{z_{t-1}}
++ q_t
+\end{align}\]</div>
+<p>where <span class="math notranslate nohighlight">\(q_t \in R^4\)</span> is the process noise, which we assume is Gaussian,
+so  <span class="math notranslate nohighlight">\(q_t \sim N(0,Q)\)</span>.</p>
+<p>Now suppose that at each discrete time point we
+observe the location (but not the velocity).
+We assume the observation is corrupted by  Gaussian noise.
+Thus the observation model becomes
+$$</p>
+<div class="amsmath math notranslate nohighlight" id="equation-540c973f-28d8-4445-814d-e1ce074b03d2">
+<span class="eqno">(2)<a class="headerlink" href="#equation-540c973f-28d8-4445-814d-e1ce074b03d2" title="Permalink to this equation">¶</a></span>\[\begin{align}
+\underbrace{\begin{pmatrix}  y_{1,t} \\  y_{2,t} \end{pmatrix}}_{y_t}
+  &amp;=
+    \underbrace{
+    \begin{pmatrix}
+1 &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 1 &amp; 0
+    \end{pmatrix}
+    }_{H}
+    
+\underbrace{\begin{pmatrix} u_t\\ \dot{u}_t \\ v_t \\ \dot{v}_t \end{pmatrix}}_{z_t}    
+ + r_t
+\end{align}\]</div>
+<p>$<span class="math notranslate nohighlight">\(
+where \)</span>r_t \sim N(0,R)<span class="math notranslate nohighlight">\( is the observation noise.
+We see that the observation matrix \)</span>H$ simply ``extracts’’ the
+relevant parts  of the state vector.</p>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="setup">
+<h1>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h1>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
@@ -242,28 +396,210 @@
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.demos.kf_tracking</span> <span class="kn">import</span> <span class="n">kf_tracking</span><span class="p">,</span> <span class="n">plot_kf_tracking</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">jr</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
-<span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">kf_tracking</span><span class="p">()</span>
-<span class="n">dict_figures</span> <span class="o">=</span> <span class="n">plot_kf_tracking</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">lgssm_posterior</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">plot_lgssm_posterior</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.models.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">LGSSMParams</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.demos.kf_tracking</span> <span class="kn">import</span> <span class="n">kf_tracking</span><span class="p">,</span> <span class="n">plot_kf_tracking</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="create-the-model">
+<h1>Create the model<a class="headerlink" href="#create-the-model" title="Permalink to this headline">¶</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">msilib.schema</span> <span class="kn">import</span> <span class="n">RadioButton</span>
 
-<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dict_figures</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">fname</span> <span class="o">=</span> <span class="n">k</span> <span class="o">+</span> <span class="s2">&quot;.pdf&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;saving &#39;</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">v</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+
+<span class="n">state_dim</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">emission_dim</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">delta</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="c1"># Create object</span>
+<span class="n">lgssm</span> <span class="o">=</span> <span class="n">LinearGaussianSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
+
+<span class="c1"># Random model parameters</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+<span class="c1"># Manually chosen parameters</span>
+<span class="n">mu0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+<span class="n">Sigma0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
+<span class="n">F</span>  <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.001</span>
+<span class="n">H</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="n">R</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.0</span>
+
+<span class="n">params</span><span class="p">[</span><span class="s1">&#39;initial&#39;</span><span class="p">][</span><span class="s1">&#39;mean&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mu0</span>
+<span class="n">params</span><span class="p">[</span><span class="s1">&#39;initial&#39;</span><span class="p">][</span><span class="s1">&#39;cov&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Sigma0</span>
+<span class="n">params</span><span class="p">[</span><span class="s1">&#39;dynamics&#39;</span><span class="p">][</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">F</span>
+<span class="n">params</span><span class="p">[</span><span class="s1">&#39;dynamics&#39;</span><span class="p">][</span><span class="s1">&#39;cov&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Q</span>
+<span class="n">params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">H</span>
+<span class="n">params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;cov&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">R</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving  kalman_tracking_truth.pdf
-saving  kalman_tracking_filtered.pdf
-saving  kalman_tracking_smoothed.pdf
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">4</span><span class="o">-</span><span class="mi">1</span><span class="n">aecdfffc7e4</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+<span class="ne">----&gt; </span><span class="mi">1</span> <span class="kn">from</span> <span class="nn">msilib.schema</span> <span class="kn">import</span> <span class="n">RadioButton</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> 
+<span class="g g-Whitespace">      </span><span class="mi">3</span> 
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="n">state_dim</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="n">emission_dim</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;msilib&#39;
 </pre></div>
 </div>
-<img alt="../../_images/kf_tracking._3_1.png" src="../../_images/kf_tracking._3_1.png" />
-<img alt="../../_images/kf_tracking._3_2.png" src="../../_images/kf_tracking._3_2.png" />
-<img alt="../../_images/kf_tracking._3_3.png" src="../../_images/kf_tracking._3_3.png" />
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="sample-some-data-from-the-model">
+<h1>Sample some data from the model<a class="headerlink" href="#sample-some-data-from-the-model" title="Permalink to this headline">¶</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">15</span>
+<span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">310</span><span class="p">)</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
+
+<span class="c1"># Plot Data</span>
+<span class="n">observation_marker_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;marker&quot;</span><span class="p">:</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="s2">&quot;markerfacecolor&quot;</span><span class="p">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;markeredgewidth&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;markersize&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">}</span>
+<span class="n">fig1</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;C0&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true state&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">observation_marker_kwargs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:green&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;emissions&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper left&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fcf21c62e50&gt;
+</pre></div>
+</div>
+<img alt="../../_images/kf_tracking._10_1.png" src="../../_images/kf_tracking._10_1.png" />
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="perform-online-filtering">
+<h1>Perform online filtering<a class="headerlink" href="#perform-online-filtering" title="Permalink to this headline">¶</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">fields</span>
+<span class="n">attributes</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="p">)]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">attributes</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_covariances</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">marginal_loglik</span><span class="p">)</span>
+<span class="c1"># The smoothed outputs are None</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&#39;marginal_loglik&#39;, &#39;filtered_means&#39;, &#39;filtered_covariances&#39;, &#39;smoothed_means&#39;, &#39;smoothed_covariances&#39;, &#39;smoothed_cross_covariances&#39;]
+(15, 4)
+(15, 4, 4)
+-43.13845
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig2</span><span class="p">,</span> <span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">observation_marker_kwargs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:green&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkgrey&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true state&quot;</span><span class="p">)</span>
+<span class="n">plot_lgssm_posterior</span><span class="p">(</span>
+    <span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span>
+    <span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_covariances</span><span class="p">,</span>
+    <span class="n">ax2</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;filtered means&quot;</span><span class="p">,</span>
+    <span class="n">ellipse_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;edgecolor&quot;</span><span class="p">:</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="s2">&quot;linewidth&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span>
+    <span class="n">legend_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span><span class="s2">&quot;upper left&quot;</span><span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot:&gt;
+</pre></div>
+</div>
+<img alt="../../_images/kf_tracking._13_1.png" src="../../_images/kf_tracking._13_1.png" />
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="perform-offline-smoothing">
+<h1>Perform offline smoothing<a class="headerlink" href="#perform-offline-smoothing" title="Permalink to this headline">¶</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig3</span><span class="p">,</span> <span class="n">ax3</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">observation_marker_kwargs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:green&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkgrey&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true state&quot;</span><span class="p">)</span>
+<span class="n">plot_lgssm_posterior</span><span class="p">(</span>
+    <span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">smoothed_means</span><span class="p">,</span>
+    <span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">smoothed_covariances</span><span class="p">,</span>
+    <span class="n">ax3</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;smoothed means&quot;</span><span class="p">,</span>
+    <span class="n">ellipse_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;edgecolor&quot;</span><span class="p">:</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="s2">&quot;linewidth&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span>
+    <span class="n">legend_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span><span class="s2">&quot;upper left&quot;</span><span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot:&gt;
+</pre></div>
+</div>
+<img alt="../../_images/kf_tracking._16_1.png" src="../../_images/kf_tracking._16_1.png" />
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="low-level-interface-to-the-underlying-inference-algorithms">
+<h1>Low-level interface to the underlying inference algorithms<a class="headerlink" href="#low-level-interface-to-the-underlying-inference-algorithms" title="Permalink to this headline">¶</a></h1>
+<p>We can also call the inference code directly, without having to make an LG-SSM object.
+We just bundle the parameters together into an <code class="docutils literal notranslate"><span class="pre">LGSSMParams</span></code> dataclass and call
+the underlying inference functions.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span> <span class="c1"># Specify the model parameters</span>
+
+
+<span class="n">params</span> <span class="o">=</span> <span class="n">LGSSMParams</span><span class="p">(</span>
+    <span class="n">initial_mean</span><span class="o">=</span><span class="n">mu0</span><span class="p">,</span> 
+    <span class="n">initial_covariance</span><span class="o">=</span><span class="n">Sigma0</span><span class="p">,</span>
+    <span class="n">dynamics_matrix</span><span class="o">=</span><span class="n">F</span><span class="p">,</span>
+    <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span>
+    <span class="n">emission_matrix</span><span class="o">=</span><span class="n">H</span><span class="p">,</span>
+    <span class="n">emission_covariance</span><span class="o">=</span><span class="n">R</span>
+<span class="p">)</span>
+
+<span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">lgssm_filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="c1"># Kalman filter</span>
+<span class="n">smoothed_posterior</span> <span class="o">=</span> <span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="c1"># Kalman filter + smoother</span>
+<span class="k">assert</span> <span class="n">jnp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">jnp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">smoothed_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">jnp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">smoothed_means</span><span class="p">,</span> <span class="n">smoothed_posterior</span><span class="o">.</span><span class="n">smoothed_means</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>
@@ -278,10 +614,10 @@ saving  kalman_tracking_smoothed.pdf
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">HMM with 2d Gaussian emissions</p>
+            <p class="prev-next-title">Fitting a Gaussian HMM</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="../../api/ssm.html" title="next page">
+    <a class='right-next' id="next-link" href="../../ssm.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
         <p class="prev-next-title">SSM</p>
