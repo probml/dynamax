@@ -414,7 +414,6 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
     <span class="kn">import</span> <span class="nn">dynamax</span>
-<span class="n">dynamax</span><span class="o">.</span><span class="vm">__file__</span>
 </pre></div>
 </div>
 </div>
@@ -423,9 +422,6 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Note: you may need to restart the kernel to use updated packages.
-</pre></div>
-</div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&#39;/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/__init__.py&#39;
 </pre></div>
 </div>
 </div>
@@ -445,7 +441,7 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  Downloading graphviz-0.20.1-py3-none-any.whl (47 kB)
 ?25l     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ <span class=" -Color -Color-Green">0.0/47.0 kB</span> <span class=" -Color -Color-Red">?</span> eta <span class=" -Color -Color-Cyan">-:--:--</span>
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ <span class=" -Color -Color-Green">47.0/47.0 kB</span> <span class=" -Color -Color-Red">11.4 MB/s</span> eta <span class=" -Color -Color-Cyan">0:00:00</span>
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ <span class=" -Color -Color-Green">47.0/47.0 kB</span> <span class=" -Color -Color-Red">5.2 MB/s</span> eta <span class=" -Color -Color-Cyan">0:00:00</span>
 ?25h
 </pre></div>
 </div>
@@ -463,18 +459,13 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
-
 <span class="kn">import</span> <span class="nn">optax</span>
-
 <span class="kn">from</span> <span class="nn">graphviz</span> <span class="kn">import</span> <span class="n">Digraph</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-
 <span class="kn">from</span> <span class="nn">dynamax.hmm.models</span> <span class="kn">import</span> <span class="n">CategoricalHMM</span>
-<span class="c1"># from dynamax.hmm.demos.casino_hmm import make_model_and_data</span>
 </pre></div>
 </div>
 </div>
@@ -644,7 +635,7 @@ emission matrix
 <h3>Full-Batch Gradient Descent<a class="headerlink" href="#full-batch-gradient-descent" title="Permalink to this headline">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">fbgd_params</span><span class="p">,</span> <span class="n">fbgd_param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 <span class="n">fbgd_params</span><span class="p">,</span> <span class="n">losses_fbgd</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">,</span> 
                                        <span class="n">fbgd_param_props</span><span class="p">,</span> 
@@ -666,13 +657,13 @@ emission matrix
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial dist: 
-[&#39;0.409,&#39;, &#39;0.596,&#39;]
+[&#39;0.229,&#39;, &#39;0.776,&#39;]
 transition matrix
-[&#39;0.371,&#39;, &#39;0.629,&#39;]
-[&#39;0.668,&#39;, &#39;0.332,&#39;]
+[&#39;0.491,&#39;, &#39;0.509,&#39;]
+[&#39;0.375,&#39;, &#39;0.625,&#39;]
 emission matrix
-[&#39;0.211,&#39;, &#39;0.066,&#39;, &#39;0.097,&#39;, &#39;0.162,&#39;, &#39;0.173,&#39;, &#39;0.291,&#39;]
-[&#39;0.082,&#39;, &#39;0.239,&#39;, &#39;0.215,&#39;, &#39;0.138,&#39;, &#39;0.133,&#39;, &#39;0.194,&#39;]
+[&#39;0.174,&#39;, &#39;0.033,&#39;, &#39;0.126,&#39;, &#39;0.331,&#39;, &#39;0.320,&#39;, &#39;0.016,&#39;]
+[&#39;0.123,&#39;, &#39;0.228,&#39;, &#39;0.166,&#39;, &#39;0.007,&#39;, &#39;0.020,&#39;, &#39;0.456,&#39;]
 </pre></div>
 </div>
 </div>
@@ -685,10 +676,10 @@ emission matrix
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x7f8400965910&gt;]
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x7f1e6071f610&gt;]
 </pre></div>
 </div>
-<img alt="../../_images/a2aacb09b637a0a3d21c1dfc46e83b71e49f3f358a7577975dd1068d27d0f27d.png" src="../../_images/a2aacb09b637a0a3d21c1dfc46e83b71e49f3f358a7577975dd1068d27d0f27d.png" />
+<img alt="../../_images/c97fd5707bbbd0c21a1e5bb4a3a70090dd206669e3f27b58eefb689ac88a5eb8.png" src="../../_images/c97fd5707bbbd0c21a1e5bb4a3a70090dd206669e3f27b58eefb689ac88a5eb8.png" />
 </div>
 </div>
 </section>
@@ -696,7 +687,7 @@ emission matrix
 <h3>Mini-Batch Gradient Descent<a class="headerlink" href="#mini-batch-gradient-descent" title="Permalink to this headline">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">mbgd_params</span><span class="p">,</span> <span class="n">mbgd_param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 <span class="n">mbgd_params</span><span class="p">,</span> <span class="n">losses_mbgd</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">mbgd_params</span><span class="p">,</span> 
                                        <span class="n">mbgd_param_props</span><span class="p">,</span> 
@@ -718,13 +709,13 @@ emission matrix
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial dist: 
-[&#39;0.416,&#39;, &#39;0.609,&#39;]
+[&#39;0.233,&#39;, &#39;0.793,&#39;]
 transition matrix
-[&#39;0.431,&#39;, &#39;0.569,&#39;]
-[&#39;0.628,&#39;, &#39;0.372,&#39;]
+[&#39;0.495,&#39;, &#39;0.505,&#39;]
+[&#39;0.405,&#39;, &#39;0.595,&#39;]
 emission matrix
-[&#39;0.189,&#39;, &#39;0.079,&#39;, &#39;0.111,&#39;, &#39;0.149,&#39;, &#39;0.161,&#39;, &#39;0.311,&#39;]
-[&#39;0.093,&#39;, &#39;0.217,&#39;, &#39;0.190,&#39;, &#39;0.139,&#39;, &#39;0.133,&#39;, &#39;0.226,&#39;]
+[&#39;0.182,&#39;, &#39;0.037,&#39;, &#39;0.147,&#39;, &#39;0.315,&#39;, &#39;0.302,&#39;, &#39;0.016,&#39;]
+[&#39;0.116,&#39;, &#39;0.230,&#39;, &#39;0.151,&#39;, &#39;0.007,&#39;, &#39;0.022,&#39;, &#39;0.474,&#39;]
 </pre></div>
 </div>
 </div>
@@ -737,10 +728,10 @@ emission matrix
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x7f840096b820&gt;]
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x7f1e60429370&gt;]
 </pre></div>
 </div>
-<img alt="../../_images/728c56b1b8545a3157f09a93a2fb47daff131155c89f28befa8a9708dfbe992b.png" src="../../_images/728c56b1b8545a3157f09a93a2fb47daff131155c89f28befa8a9708dfbe992b.png" />
+<img alt="../../_images/c7bd190519a02d1795067717159271b939969776bf3ebcef17b5b8113c105c53.png" src="../../_images/c7bd190519a02d1795067717159271b939969776bf3ebcef17b5b8113c105c53.png" />
 </div>
 </div>
 </section>
@@ -748,16 +739,16 @@ emission matrix
 <h3>Expectation-Maximization<a class="headerlink" href="#expectation-maximization" title="Permalink to this headline">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">em_params</span><span class="p">,</span> <span class="n">em_param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;parameters before learning&#39;</span><span class="p">)</span>
 <span class="n">print_params</span><span class="p">(</span><span class="n">em_params</span><span class="p">)</span>
 
 <span class="n">em_params</span><span class="p">,</span> <span class="n">log_liks</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">em_params</span><span class="p">,</span> 
-                                  <span class="n">em_param_props</span><span class="p">,</span> 
-                                  <span class="n">batch_emissions</span><span class="p">,</span> 
-                                  <span class="n">num_iters</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">)</span>
+                                 <span class="n">em_param_props</span><span class="p">,</span> 
+                                 <span class="n">batch_emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> 
+                                 <span class="n">num_iters</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">)</span>
 <span class="n">losses_em</span> <span class="o">=</span> <span class="o">-</span><span class="n">log_liks</span> <span class="o">/</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">size</span> <span class="c1"># divide by (num sequences * num time steps), so scale is comparable to sgd</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;parameters after learning&#39;</span><span class="p">)</span>
@@ -768,103 +759,91 @@ emission matrix
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>parameters before learning
 initial dist: 
-[&#39;0.362,&#39;, &#39;0.638,&#39;]
+[&#39;0.228,&#39;, &#39;0.772,&#39;]
 transition matrix
-[&#39;0.033,&#39;, &#39;0.967,&#39;]
-[&#39;0.720,&#39;, &#39;0.280,&#39;]
+[&#39;0.935,&#39;, &#39;0.065,&#39;]
+[&#39;0.386,&#39;, &#39;0.614,&#39;]
 emission matrix
-[&#39;0.001,&#39;, &#39;0.016,&#39;, &#39;0.105,&#39;, &#39;0.087,&#39;, &#39;0.424,&#39;, &#39;0.367,&#39;]
-[&#39;0.063,&#39;, &#39;0.036,&#39;, &#39;0.123,&#39;, &#39;0.247,&#39;, &#39;0.179,&#39;, &#39;0.353,&#39;]
+[&#39;0.180,&#39;, &#39;0.016,&#39;, &#39;0.052,&#39;, &#39;0.452,&#39;, &#39;0.288,&#39;, &#39;0.011,&#39;]
+[&#39;0.234,&#39;, &#39;0.243,&#39;, &#39;0.168,&#39;, &#39;0.005,&#39;, &#39;0.012,&#39;, &#39;0.337,&#39;]
 </pre></div>
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/400 [00:00&lt;?, ?it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 1/400 [00:01&lt;09:17,  1.40s/it]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 1/400 [00:00&lt;05:24,  1.23it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  4%|▍         | 17/400 [00:01&lt;00:24, 15.42it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  4%|▍         | 18/400 [00:00&lt;00:14, 26.31it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  8%|▊         | 32/400 [00:01&lt;00:11, 31.00it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  9%|▉         | 35/400 [00:01&lt;00:07, 51.08it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 12%|█▏        | 47/400 [00:01&lt;00:07, 47.80it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 13%|█▎        | 52/400 [00:01&lt;00:04, 74.06it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 15%|█▌        | 61/400 [00:01&lt;00:05, 62.93it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 17%|█▋        | 69/400 [00:01&lt;00:03, 94.27it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 19%|█▉        | 76/400 [00:01&lt;00:04, 79.19it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 22%|██▏       | 86/400 [00:01&lt;00:02, 111.04it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 23%|██▎       | 92/400 [00:02&lt;00:03, 95.30it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 26%|██▌       | 102/400 [00:01&lt;00:02, 122.85it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 27%|██▋       | 107/400 [00:02&lt;00:02, 107.82it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 30%|██▉       | 119/400 [00:01&lt;00:02, 133.51it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 30%|███       | 122/400 [00:02&lt;00:02, 117.95it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 34%|███▍      | 136/400 [00:01&lt;00:01, 141.39it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 34%|███▍      | 137/400 [00:02&lt;00:02, 126.18it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 38%|███▊      | 153/400 [00:01&lt;00:01, 147.40it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 38%|███▊      | 152/400 [00:02&lt;00:01, 132.59it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 42%|████▏     | 169/400 [00:01&lt;00:01, 150.18it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 42%|████▏     | 167/400 [00:02&lt;00:01, 133.19it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 46%|████▋     | 186/400 [00:01&lt;00:01, 153.76it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 46%|████▌     | 182/400 [00:02&lt;00:01, 132.92it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 51%|█████     | 203/400 [00:02&lt;00:01, 156.46it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 49%|████▉     | 196/400 [00:02&lt;00:01, 132.57it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 55%|█████▌    | 220/400 [00:02&lt;00:01, 158.45it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 52%|█████▎    | 210/400 [00:02&lt;00:01, 134.07it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 59%|█████▉    | 237/400 [00:02&lt;00:01, 159.71it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 56%|█████▋    | 225/400 [00:02&lt;00:01, 136.29it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 64%|██████▎   | 254/400 [00:02&lt;00:00, 160.38it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 60%|█████▉    | 239/400 [00:03&lt;00:01, 136.25it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 68%|██████▊   | 271/400 [00:02&lt;00:00, 161.03it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 63%|██████▎   | 253/400 [00:03&lt;00:01, 135.65it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 72%|███████▏  | 288/400 [00:02&lt;00:00, 161.50it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 67%|██████▋   | 267/400 [00:03&lt;00:00, 135.49it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 76%|███████▋  | 305/400 [00:02&lt;00:00, 162.03it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 70%|███████   | 282/400 [00:03&lt;00:00, 138.05it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 80%|████████  | 322/400 [00:02&lt;00:00, 162.11it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 74%|███████▍  | 297/400 [00:03&lt;00:00, 138.86it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 85%|████████▍ | 339/400 [00:02&lt;00:00, 162.45it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 78%|███████▊  | 312/400 [00:03&lt;00:00, 140.72it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 89%|████████▉ | 356/400 [00:03&lt;00:00, 162.40it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 82%|████████▏ | 327/400 [00:03&lt;00:00, 141.34it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 93%|█████████▎| 373/400 [00:03&lt;00:00, 162.05it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 86%|████████▌ | 342/400 [00:03&lt;00:00, 140.30it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 98%|█████████▊| 390/400 [00:03&lt;00:00, 161.95it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 89%|████████▉ | 357/400 [00:03&lt;00:00, 137.25it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 93%|█████████▎| 371/400 [00:04&lt;00:00, 132.02it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 96%|█████████▋| 385/400 [00:04&lt;00:00, 129.64it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|█████████▉| 399/400 [00:04&lt;00:00, 130.00it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 400/400 [00:04&lt;00:00, 93.78it/s] 
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 400/400 [00:03&lt;00:00, 122.11it/s]
 </pre></div>
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
@@ -872,13 +851,13 @@ emission matrix
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>parameters after learning
 initial dist: 
-[&#39;0.712,&#39;, &#39;0.288,&#39;]
+[&#39;0.798,&#39;, &#39;0.202,&#39;]
 transition matrix
-[&#39;0.042,&#39;, &#39;0.958,&#39;]
-[&#39;0.546,&#39;, &#39;0.454,&#39;]
+[&#39;0.954,&#39;, &#39;0.046,&#39;]
+[&#39;0.095,&#39;, &#39;0.905,&#39;]
 emission matrix
-[&#39;0.131,&#39;, &#39;0.129,&#39;, &#39;0.165,&#39;, &#39;0.141,&#39;, &#39;0.163,&#39;, &#39;0.271,&#39;]
-[&#39;0.151,&#39;, &#39;0.155,&#39;, &#39;0.140,&#39;, &#39;0.145,&#39;, &#39;0.138,&#39;, &#39;0.271,&#39;]
+[&#39;0.165,&#39;, &#39;0.168,&#39;, &#39;0.175,&#39;, &#39;0.163,&#39;, &#39;0.166,&#39;, &#39;0.163,&#39;]
+[&#39;0.102,&#39;, &#39;0.098,&#39;, &#39;0.096,&#39;, &#39;0.104,&#39;, &#39;0.107,&#39;, &#39;0.493,&#39;]
 </pre></div>
 </div>
 </div>
@@ -891,10 +870,10 @@ emission matrix
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x7f840057c760&gt;]
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x7f1e6015fb20&gt;]
 </pre></div>
 </div>
-<img alt="../../_images/e05df7e3eb66c8117961a23d7f23265fac0997967e83c92b239ad46dab1fd481.png" src="../../_images/e05df7e3eb66c8117961a23d7f23265fac0997967e83c92b239ad46dab1fd481.png" />
+<img alt="../../_images/92e3987cacc1b9cd3cf26367466c1529ad6341143fb5a8726a3649c4dda0b640.png" src="../../_images/92e3987cacc1b9cd3cf26367466c1529ad6341143fb5a8726a3649c4dda0b640.png" />
 </div>
 </div>
 </section>
