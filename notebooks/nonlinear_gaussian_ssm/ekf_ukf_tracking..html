@@ -394,8 +394,8 @@ the position  of the object,
 (We use <span class="math notranslate nohighlight">\(u\)</span> and <span class="math notranslate nohighlight">\(v\)</span> for the two coordinates,
 to avoid confusion with the state and observation variables.)
 We assume the following nonlinear dynamics:</p>
-<div class="amsmath math notranslate nohighlight" id="equation-a683d6e2-a992-4a71-b017-a17eecc9db5b">
-<span class="eqno">(1)<a class="headerlink" href="#equation-a683d6e2-a992-4a71-b017-a17eecc9db5b" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-6e6fddc6-7a35-4ba7-b163-30c40cd7a25c">
+<span class="eqno">(1)<a class="headerlink" href="#equation-6e6fddc6-7a35-4ba7-b163-30c40cd7a25c" title="Permalink to this equation">#</a></span>\[\begin{align}
 z_t &amp;= f(z_{t-1}) + q_t \\
 f(\begin{pmatrix} u \\ v \end{pmatrix})
  &amp;= \begin{pmatrix} u + 0.5 \sin(v) \\ v + \cos(u) \end{pmatrix}
@@ -405,8 +405,8 @@ so  <span class="math notranslate nohighlight">\(q_t \sim N(0,Q)\)</span>.</p>
 <p>At each discrete time point we
 observe the location corrupted by  Gaussian noise.
 Thus the observation model becomes</p>
-<div class="amsmath math notranslate nohighlight" id="equation-26e3751f-019c-4aea-b7dd-a250d4c11a4a">
-<span class="eqno">(2)<a class="headerlink" href="#equation-26e3751f-019c-4aea-b7dd-a250d4c11a4a" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-3320f2a4-6e4f-47b9-af00-8a426ecbb15c">
+<span class="eqno">(2)<a class="headerlink" href="#equation-3320f2a4-6e4f-47b9-af00-8a426ecbb15c" title="Permalink to this equation">#</a></span>\[\begin{align}
 y_t &amp;= h(z_t) + r_t \\
 h(z) &amp;= z 
 \end{align}\]</div>
