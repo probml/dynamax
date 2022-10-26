@@ -417,8 +417,8 @@ the position and velocity of the object,
 to avoid confusion with the state and observation variables.)
 The process evolves in continuous time, but if we discretize it with step size <span class="math notranslate nohighlight">\(\Delta\)</span>,
 we can write the dynamics as the following linear system:</p>
-<div class="amsmath math notranslate nohighlight" id="equation-707e3ab4-0914-45e3-ba26-379e4e013de9">
-<span class="eqno">(1)<a class="headerlink" href="#equation-707e3ab4-0914-45e3-ba26-379e4e013de9" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-e443ab22-2f94-4d7b-af3c-a2f2736d43e5">
+<span class="eqno">(1)<a class="headerlink" href="#equation-e443ab22-2f94-4d7b-af3c-a2f2736d43e5" title="Permalink to this equation">#</a></span>\[\begin{align}
 \underbrace{\begin{pmatrix} u_t\\ \dot{u}_t \\ v_t \\ \dot{v}_t \end{pmatrix}}_{z_t}
   = 
 \underbrace{
@@ -438,8 +438,8 @@ so  <span class="math notranslate nohighlight">\(q_t \sim N(0,Q)\)</span>.</p>
 observe the location (but not the velocity).
 We assume the observation is corrupted by  Gaussian noise.
 Thus the observation model becomes</p>
-<div class="amsmath math notranslate nohighlight" id="equation-e4255cbe-b386-44e7-8c32-ce4e663a14f7">
-<span class="eqno">(2)<a class="headerlink" href="#equation-e4255cbe-b386-44e7-8c32-ce4e663a14f7" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-59312f84-28eb-48fe-bd37-fa004de63d7f">
+<span class="eqno">(2)<a class="headerlink" href="#equation-59312f84-28eb-48fe-bd37-fa004de63d7f" title="Permalink to this equation">#</a></span>\[\begin{align}
 \underbrace{\begin{pmatrix}  y_{1,t} \\  y_{2,t} \end{pmatrix}}_{y_t}
   &amp;=
     \underbrace{
@@ -568,7 +568,7 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f33645c5220&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f27c85378b0&gt;
 </pre></div>
 </div>
 <img alt="../../_images/c90a04e3c0fa3244515324d7532e0630a8744c02113a1e69a77e02ef62e4f7ab.png" src="../../_images/c90a04e3c0fa3244515324d7532e0630a8744c02113a1e69a77e02ef62e4f7ab.png" />

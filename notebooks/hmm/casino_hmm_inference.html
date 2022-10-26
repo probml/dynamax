@@ -426,7 +426,7 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
-    <span class="o">%</span><span class="k">pip</span> install -qq dynamax
+    <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
     <span class="kn">import</span> <span class="nn">dynamax</span>
 </pre></div>
 </div>
@@ -435,32 +435,7 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>installing dynamax
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span><span class=" -Color -Color-Red">ERROR: Could not find a version that satisfies the requirement dynamax (from versions: none)</span>
-<span class=" -Color -Color-Red">ERROR: No matching distribution found for dynamax</span>
-
-</pre></div>
-</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Note: you may need to restart the kernel to use updated packages.
-</pre></div>
-</div>
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="k">try</span><span class="p">:</span>
-<span class="ne">----&gt; </span><span class="mi">2</span>     <span class="kn">import</span> <span class="nn">dynamax</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
-
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;dynamax&#39;
-
-<span class="n">During</span> <span class="n">handling</span> <span class="n">of</span> <span class="n">the</span> <span class="n">above</span> <span class="n">exception</span><span class="p">,</span> <span class="n">another</span> <span class="n">exception</span> <span class="n">occurred</span><span class="p">:</span>
-
-<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">line</span> <span class="mi">6</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">run_line_magic</span><span class="p">(</span><span class="s1">&#39;pip&#39;</span><span class="p">,</span> <span class="s1">&#39;install -qq dynamax&#39;</span><span class="p">)</span>
-<span class="ne">----&gt; </span><span class="mi">6</span> <span class="kn">import</span> <span class="nn">dynamax</span>
-
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;dynamax&#39;
 </pre></div>
 </div>
 </div>
@@ -468,14 +443,19 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
-
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
 <span class="kn">from</span> <span class="nn">dynamax.hmm.models</span> <span class="kn">import</span> <span class="n">CategoricalHMM</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -544,7 +524,6 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># To sample multiple sequences, just use vmap</span>
-
 <span class="n">num_batches</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">300</span>
 
@@ -573,7 +552,6 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;obs: &quot;</span><span class="p">,</span> <span class="n">to_string</span><span class="p">(</span><span class="n">emissions</span><span class="p">[:</span><span class="n">T</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))</span>
     
 <span class="n">print_seq</span><span class="p">(</span><span class="n">batch_states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
 <span class="n">print_seq</span><span class="p">(</span><span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -600,7 +578,7 @@ obs:  [6166665666644432314213244562342433654325363462364513646626146325646366]
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>empirical frequencies:  [0.17857142 0.49038464]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>empirical frequencies:  [0.14970061 0.46616542]
 expected frequencies:  [0.16666666666666666, 0.5]
 </pre></div>
 </div>
@@ -704,11 +682,7 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipython-input-43-f09c9bcacc95&gt;:5: UserWarning: Matplotlib is currently using module://ipykernel.pylab.backend_inline, which is a non-GUI backend, so cannot show the figure.
-  fig.show()
-</pre></div>
-</div>
-<img alt="../../_images/d6b6b2a8c350c3f23f88929787fde9af596d5b52d6ccdde35f4ef48db7ae4911.png" src="../../_images/d6b6b2a8c350c3f23f88929787fde9af596d5b52d6ccdde35f4ef48db7ae4911.png" />
+<img alt="../../_images/9e8edf0d7566601640517c51fc217d182108bd5dcfeddf579f9be4212c29f9c6.png" src="../../_images/9e8edf0d7566601640517c51fc217d182108bd5dcfeddf579f9be4212c29f9c6.png" />
 </div>
 </div>
 </section>
@@ -740,11 +714,7 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipython-input-45-b9ba0819c6a5&gt;:5: UserWarning: Matplotlib is currently using module://ipykernel.pylab.backend_inline, which is a non-GUI backend, so cannot show the figure.
-  fig.show()
-</pre></div>
-</div>
-<img alt="../../_images/cf9a0474aac98458259327d0f3ed75439cc261e884cbb6fbb013ca1ef4aa7362.png" src="../../_images/cf9a0474aac98458259327d0f3ed75439cc261e884cbb6fbb013ca1ef4aa7362.png" />
+<img alt="../../_images/f50f202d56a8a90b6d15ba0c82b62763b64836228d256f6837432c8fbad68b83.png" src="../../_images/f50f202d56a8a90b6d15ba0c82b62763b64836228d256f6837432c8fbad68b83.png" />
 </div>
 </div>
 </section>
@@ -764,16 +734,11 @@ expected frequencies:  [0.16666666666666666, 0.5]
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;MAP state&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Viterbi&quot;</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-<span class="c1"># pml.savefig(&quot;hmm_casino_map&quot;)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipython-input-47-20e0d2178f2b&gt;:5: UserWarning: Matplotlib is currently using module://ipykernel.pylab.backend_inline, which is a non-GUI backend, so cannot show the figure.
-  fig.show()
-</pre></div>
-</div>
-<img alt="../../_images/ef8f6fd722e97058675b71ce69fa446461e6624463fc3a8f658b366e677b0040.png" src="../../_images/ef8f6fd722e97058675b71ce69fa446461e6624463fc3a8f658b366e677b0040.png" />
+<img alt="../../_images/854d5cf8c09f068fb061bf6b3c9e0a4443ba3aabf17b02638ce1b256e02f9846.png" src="../../_images/854d5cf8c09f068fb061bf6b3c9e0a4443ba3aabf17b02638ce1b256e02f9846.png" />
 </div>
 </div>
 </section>
