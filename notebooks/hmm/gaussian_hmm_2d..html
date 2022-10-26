@@ -1,0 +1,876 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Gaussian HMM &#8212; dynamax documentation</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Tracking an object using the Kalman filter" href="../linear_gaussian_ssm/kf_tracking..html" />
+    <link rel="prev" title="Casino HMM: learning (parameter estimation)" href="casino_hmm_training..html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../../_static/logo.gif" class="logo" alt="logo">
+      
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Contents:
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="casino_hmm_inference..html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="casino_hmm_training..html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking..html">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../ssm.html">
+   SSM
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<div class="menu-dropdown menu-dropdown-launch-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Launch interactive content">
+      <i class="fas fa-rocket"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/notebooks/hmm/gaussian_hmm_2d..ipynb"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Launch on Binder"
+>
+  
+
+<span class="headerbtn__icon-container">
+  
+    <img src="../../_static/images/logo_binder.svg">
+  </span>
+<span class="headerbtn__text-container">Binder</span>
+</a>
+
+      </li>
+      
+      <li>
+        <a href="https://colab.research.google.com/github/probml/dynamax/blob/main/notebooks/hmm/gaussian_hmm_2d..ipynb"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Launch on Colab"
+>
+  
+
+<span class="headerbtn__icon-container">
+  
+    <img src="../../_static/images/logo_colab.png">
+  </span>
+<span class="headerbtn__text-container">Colab</span>
+</a>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+<div class="menu-dropdown menu-dropdown-download-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Download this page">
+      <i class="fas fa-download"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="../../_sources/notebooks/hmm/gaussian_hmm_2d.ipynb.txt"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Download source file"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="headerbtn__text-container">ipynb</span>
+</a>
+
+      </li>
+      
+      <li>
+        
+<button onclick="printPdf(this)"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="left"
+title="Print to PDF"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="headerbtn__text-container">.pdf</span>
+</button>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#setup">
+   Setup
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#generate-sample-data">
+   Generate sample data
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#initialize-model-and-fit-to-data">
+   Initialize model and fit to data
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#visualize-the-fitted-model">
+   Visualize the fitted model
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#show-the-plotting-code">
+   Show the plotting code
+  </a>
+ </li>
+</ul>
+
+    </nav>
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Gaussian HMM</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#setup">
+   Setup
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#generate-sample-data">
+   Generate sample data
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#initialize-model-and-fit-to-data">
+   Initialize model and fit to data
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#visualize-the-fitted-model">
+   Visualize the fitted model
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#show-the-plotting-code">
+   Show the plotting code
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm">
+<h1>Gaussian HMM<a class="headerlink" href="#gaussian-hmm" title="Permalink to this headline">#</a></h1>
+<p>We use two algorithms for fitting a 2d Gaussian HMM:</p>
+<ol class="arabic simple">
+<li><p>(Batch) EM</p></li>
+<li><p>Stochastic EM</p></li>
+</ol>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="setup">
+<h1>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">dynamax</span>
+<span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
+    <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
+    <span class="kn">import</span> <span class="nn">dynamax</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">inspect</span> <span class="k">as</span> <span class="nn">py_inspect</span>
+<span class="kn">import</span> <span class="nn">rich</span>
+<span class="kn">from</span> <span class="nn">rich</span> <span class="kn">import</span> <span class="n">inspect</span> <span class="k">as</span> <span class="n">r_inspect</span>
+<span class="kn">from</span> <span class="nn">rich</span> <span class="kn">import</span> <span class="nb">print</span> <span class="k">as</span> <span class="n">r_print</span>
+
+<span class="k">def</span> <span class="nf">print_source</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+    <span class="n">r_print</span><span class="p">(</span><span class="n">py_inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">fname</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
+<span class="o">%</span><span class="k">autoreload</span> 2
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">dynamax.hmm.models</span> <span class="kn">import</span> <span class="n">GaussianHMM</span>
+<span class="kn">import</span> <span class="nn">dynamax.hmm.demos.gaussian_hmm_2d</span> <span class="k">as</span> <span class="nn">demo</span>
+
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="generate-sample-data">
+<h1>Generate sample data<a class="headerlink" href="#generate-sample-data" title="Permalink to this headline">#</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_batches</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">5000</span>
+
+<span class="c1"># Make an HMM and sample data and true underlying states</span>
+<span class="c1"># Specify parameters of the HMM</span>
+<span class="n">num_states</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">emission_dim</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">hmm</span> <span class="o">=</span> <span class="n">GaussianHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
+
+<span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">initial</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">probs</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_states</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_states</span><span class="p">),</span>
+    <span class="n">transitions</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">transition_matrix</span><span class="o">=</span><span class="mf">0.95</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_states</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_states</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span>
+    <span class="n">emissions</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">means</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)),</span>
+            <span class="p">]),</span>
+        <span class="n">covs</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="mf">0.1</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">),</span> <span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+<span class="p">)</span>
+
+<span class="c1"># Sample data</span>
+<span class="n">batch_true_states</span><span class="p">,</span> <span class="n">batch_emissions</span> <span class="o">=</span> \
+    <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="o">=</span><span class="n">num_timesteps</span><span class="p">))(</span>
+        <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">num_batches</span><span class="p">))</span>
+
+<span class="n">i_batch</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="c1"># Plot emissions and true_states in the emissions plane</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">plot_gaussian_hmm</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">batch_true_states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;True HMM&quot;</span><span class="p">);</span>
+
+<span class="c1"># Plot emissions vs. time, ith background colored by true state</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">plot_gaussian_hmm_data</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">batch_true_states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">600</span><span class="p">));</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../../_images/5beb54e7f161e68a4b8bbf94e4422578377c5ecda9f21c24b5b9c7674601ccd8.png" src="../../_images/5beb54e7f161e68a4b8bbf94e4422578377c5ecda9f21c24b5b9c7674601ccd8.png" />
+<img alt="../../_images/ded17fa1a7b807db9694e0706edef1999c83b72703e987195b71496b6f3e4138.png" src="../../_images/ded17fa1a7b807db9694e0706edef1999c83b72703e987195b71496b6f3e4138.png" />
+</div>
+</div>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="initialize-model-and-fit-to-data">
+<h1>Initialize model and fit to data<a class="headerlink" href="#initialize-model-and-fit-to-data" title="Permalink to this headline">#</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize HMMs, with inexact number of states</span>
+<span class="n">em_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">sem_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+<span class="c1"># Fit</span>
+<span class="n">num_iters</span> <span class="o">=</span> <span class="mi">50</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Fitting via exact EM...&#39;</span><span class="p">)</span>
+<span class="n">em_params</span><span class="p">,</span> <span class="n">em_lps</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">em_params</span><span class="p">,</span> <span class="n">param_props</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="n">num_iters</span><span class="p">)</span>
+
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Fitting via stochastic EM (no progress bar)...&#39;</span><span class="p">)</span>
+<span class="n">minibatch_size</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">emissions_generator</span> <span class="o">=</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_batches</span> <span class="o">//</span> <span class="n">minibatch_size</span><span class="p">,</span> <span class="n">minibatch_size</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
+<span class="n">sem_params</span><span class="p">,</span> <span class="n">sem_lps</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_stochastic_em</span><span class="p">(</span><span class="n">sem_params</span><span class="p">,</span> <span class="n">param_props</span><span class="p">,</span> <span class="n">emissions_generator</span><span class="p">,</span> <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_iters</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Done&#39;</span><span class="p">)</span>
+
+<span class="c1"># Plot log probs vs num_iterations</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">em_lps</span><span class="p">)),</span> <span class="n">em_lps</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Exact EM&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sem_lps</span><span class="p">)),</span> <span class="n">sem_lps</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Stochastic EM&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;num epochs&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;log prob&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Fitting via exact EM...
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/50 [00:00&lt;?, ?it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  2%|▏         | 1/50 [00:03&lt;02:44,  3.36s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  8%|▊         | 4/50 [00:03&lt;00:30,  1.50it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 14%|█▍        | 7/50 [00:03&lt;00:14,  3.01it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 20%|██        | 10/50 [00:03&lt;00:08,  4.85it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 26%|██▌       | 13/50 [00:03&lt;00:05,  6.85it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 32%|███▏      | 16/50 [00:04&lt;00:03,  9.08it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 38%|███▊      | 19/50 [00:04&lt;00:02, 11.57it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 44%|████▍     | 22/50 [00:04&lt;00:02, 13.91it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 50%|█████     | 25/50 [00:04&lt;00:01, 15.96it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 56%|█████▌    | 28/50 [00:04&lt;00:01, 17.66it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 62%|██████▏   | 31/50 [00:04&lt;00:00, 19.19it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 68%|██████▊   | 34/50 [00:04&lt;00:00, 20.55it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 74%|███████▍  | 37/50 [00:04&lt;00:00, 21.57it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 80%|████████  | 40/50 [00:05&lt;00:00, 22.36it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 86%|████████▌ | 43/50 [00:05&lt;00:00, 22.88it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 92%|█████████▏| 46/50 [00:05&lt;00:00, 23.31it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 98%|█████████▊| 49/50 [00:05&lt;00:00, 23.34it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 50/50 [00:05&lt;00:00,  9.21it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Fitting via stochastic EM (no progress bar)...
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/50 [00:00&lt;?, ?it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  2%|▏         | 1/50 [00:03&lt;02:51,  3.51s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  4%|▍         | 2/50 [00:03&lt;01:12,  1.51s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  6%|▌         | 3/50 [00:03&lt;00:41,  1.15it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  8%|▊         | 4/50 [00:03&lt;00:26,  1.74it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 10%|█         | 5/50 [00:03&lt;00:18,  2.40it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 12%|█▏        | 6/50 [00:04&lt;00:13,  3.15it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 14%|█▍        | 7/50 [00:04&lt;00:10,  3.98it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 16%|█▌        | 8/50 [00:04&lt;00:08,  4.81it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 18%|█▊        | 9/50 [00:04&lt;00:07,  5.59it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 20%|██        | 10/50 [00:04&lt;00:06,  6.24it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 22%|██▏       | 11/50 [00:04&lt;00:05,  6.80it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 24%|██▍       | 12/50 [00:04&lt;00:05,  7.03it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 26%|██▌       | 13/50 [00:04&lt;00:05,  7.21it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 28%|██▊       | 14/50 [00:05&lt;00:04,  7.54it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 30%|███       | 15/50 [00:05&lt;00:04,  7.94it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 32%|███▏      | 16/50 [00:05&lt;00:04,  8.05it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 34%|███▍      | 17/50 [00:05&lt;00:03,  8.27it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 36%|███▌      | 18/50 [00:05&lt;00:03,  8.43it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 38%|███▊      | 19/50 [00:05&lt;00:03,  8.28it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 40%|████      | 20/50 [00:05&lt;00:03,  8.09it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 42%|████▏     | 21/50 [00:05&lt;00:03,  8.26it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 44%|████▍     | 22/50 [00:06&lt;00:03,  8.36it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 46%|████▌     | 23/50 [00:06&lt;00:03,  8.49it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 48%|████▊     | 24/50 [00:06&lt;00:03,  8.59it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 50%|█████     | 25/50 [00:06&lt;00:02,  8.55it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 52%|█████▏    | 26/50 [00:06&lt;00:02,  8.52it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 54%|█████▍    | 27/50 [00:06&lt;00:02,  8.59it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 56%|█████▌    | 28/50 [00:06&lt;00:02,  8.70it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 58%|█████▊    | 29/50 [00:06&lt;00:02,  8.77it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 60%|██████    | 30/50 [00:06&lt;00:02,  8.86it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 62%|██████▏   | 31/50 [00:07&lt;00:02,  8.90it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 64%|██████▍   | 32/50 [00:07&lt;00:02,  8.66it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 66%|██████▌   | 33/50 [00:07&lt;00:01,  8.53it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 68%|██████▊   | 34/50 [00:07&lt;00:01,  8.50it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 70%|███████   | 35/50 [00:07&lt;00:01,  8.54it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 72%|███████▏  | 36/50 [00:07&lt;00:01,  8.32it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 74%|███████▍  | 37/50 [00:07&lt;00:01,  8.30it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 76%|███████▌  | 38/50 [00:07&lt;00:01,  8.35it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 78%|███████▊  | 39/50 [00:08&lt;00:01,  8.44it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 80%|████████  | 40/50 [00:08&lt;00:01,  8.59it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 82%|████████▏ | 41/50 [00:08&lt;00:01,  8.67it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 84%|████████▍ | 42/50 [00:08&lt;00:00,  8.71it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 86%|████████▌ | 43/50 [00:08&lt;00:00,  8.80it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 88%|████████▊ | 44/50 [00:08&lt;00:00,  8.68it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 90%|█████████ | 45/50 [00:08&lt;00:00,  8.51it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 92%|█████████▏| 46/50 [00:08&lt;00:00,  8.25it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 94%|█████████▍| 47/50 [00:08&lt;00:00,  8.37it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 96%|█████████▌| 48/50 [00:09&lt;00:00,  8.42it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 98%|█████████▊| 49/50 [00:09&lt;00:00,  8.49it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 50/50 [00:09&lt;00:00,  8.65it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 50/50 [00:09&lt;00:00,  5.39it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>	Done
+</pre></div>
+</div>
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f4c7f680490&gt;
+</pre></div>
+</div>
+<img alt="../../_images/dbc419f95eee71013e54217a4c9456e394189fec808abcc1b6e1f575ee0a9814.png" src="../../_images/dbc419f95eee71013e54217a4c9456e394189fec808abcc1b6e1f575ee0a9814.png" />
+</div>
+</div>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="visualize-the-fitted-model">
+<h1>Visualize the fitted model<a class="headerlink" href="#visualize-the-fitted-model" title="Permalink to this headline">#</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">i_batch</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="n">demo</span><span class="o">.</span><span class="n">plot_gaussian_hmm</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">em_params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">batch_true_states</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="s2">&quot;HMM Exact Fit&quot;</span><span class="p">)</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">plot_gaussian_hmm_data</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">em_params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">batch_true_states</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+
+<span class="n">demo</span><span class="o">.</span><span class="n">plot_gaussian_hmm</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">sem_params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">batch_true_states</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="s2">&quot;HMM Stoch Fit&quot;</span><span class="p">);</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">plot_gaussian_hmm_data</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">sem_params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">batch_true_states</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">));</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../../_images/0d02df3e28d96d3374c6ae3d1682aab61b0f17741e24510c6b0273a207192fe8.png" src="../../_images/0d02df3e28d96d3374c6ae3d1682aab61b0f17741e24510c6b0273a207192fe8.png" />
+<img alt="../../_images/9cf5afef1e0f4a4478a42bd566952be94650caee7fded5ed78cd096e3c208eba.png" src="../../_images/9cf5afef1e0f4a4478a42bd566952be94650caee7fded5ed78cd096e3c208eba.png" />
+<img alt="../../_images/2ffb26a03c7c188ccfe12316b1ddc96756524161ba92ffc0e0c5298fe93c4eb3.png" src="../../_images/2ffb26a03c7c188ccfe12316b1ddc96756524161ba92ffc0e0c5298fe93c4eb3.png" />
+<img alt="../../_images/3fdbe6d6fd779d7f91063125f3235e7bc49ccfa97a318eec1f6b98b792be301c.png" src="../../_images/3fdbe6d6fd779d7f91063125f3235e7bc49ccfa97a318eec1f6b98b792be301c.png" />
+</div>
+</div>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="show-the-plotting-code">
+<h1>Show the plotting code<a class="headerlink" href="#show-the-plotting-code" title="Permalink to this headline">#</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_source</span><span class="p">(</span><span class="n">demo</span><span class="o">.</span><span class="n">plot_gaussian_hmm</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">def <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plot_gaussian_hmm</span><span style="font-weight: bold">(</span>hmm, params, emissions, states, <span style="color: #808000; text-decoration-color: #808000">ttl</span>=<span style="color: #008000; text-decoration-color: #008000">"Emission Distributions"</span><span style="font-weight: bold">)</span>:
+    lim = <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.85</span> * <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">abs</span><span style="font-weight: bold">(</span>emissions<span style="font-weight: bold">)</span><span style="color: #800080; text-decoration-color: #800080; font-weight: bold">.max</span><span style="font-weight: bold">()</span>
+    XX, YY = <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">jnp.meshgrid</span><span style="font-weight: bold">(</span><span style="color: #800080; text-decoration-color: #800080; font-weight: bold">jnp.linspace</span><span style="font-weight: bold">(</span>-lim, lim, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">100</span><span style="font-weight: bold">)</span>, <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">jnp.linspace</span><span style="font-weight: bold">(</span>-lim, lim, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">100</span><span style="font-weight: bold">))</span>
+    grid = <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">jnp.column_stack</span><span style="font-weight: bold">((</span><span style="color: #800080; text-decoration-color: #800080; font-weight: bold">XX.ravel</span><span style="font-weight: bold">()</span>, <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">YY.ravel</span><span style="font-weight: bold">()))</span>
+
+    <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plt.figure</span><span style="font-weight: bold">()</span>
+    for k in <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">range</span><span style="font-weight: bold">(</span>hmm.num_states<span style="font-weight: bold">)</span>:
+        lls = <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">hmm.emission_distribution</span><span style="font-weight: bold">(</span>params, k<span style="font-weight: bold">)</span><span style="color: #800080; text-decoration-color: #800080; font-weight: bold">.log_prob</span><span style="font-weight: bold">(</span>grid<span style="font-weight: bold">)</span>
+        <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plt.contour</span><span style="font-weight: bold">(</span>XX, YY, <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">jnp.exp</span><span style="font-weight: bold">(</span>lls<span style="font-weight: bold">)</span><span style="color: #800080; text-decoration-color: #800080; font-weight: bold">.reshape</span><span style="font-weight: bold">(</span>XX.shape<span style="font-weight: bold">)</span>, <span style="color: #808000; text-decoration-color: #808000">cmap</span>=<span style="color: #800080; text-decoration-color: #800080; font-weight: bold">white_to_color_cmap</span><span style="font-weight: bold">(</span>COLORS<span style="font-weight: bold">))</span>
+        <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plt.plot</span><span style="font-weight: bold">(</span>emissions, emissions, <span style="color: #008000; text-decoration-color: #008000">"o"</span>, <span style="color: #808000; text-decoration-color: #808000">mfc</span>=<span style="color: #800080; text-decoration-color: #800080">COLORS</span>, <span style="color: #808000; text-decoration-color: #808000">mec</span>=<span style="color: #008000; text-decoration-color: #008000">"none"</span>, <span style="color: #808000; text-decoration-color: #808000">ms</span>=<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3</span>, <span style="color: #808000; text-decoration-color: #808000">alpha</span>=<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.5</span><span style="font-weight: bold">)</span>
+
+    <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plt.plot</span><span style="font-weight: bold">(</span>emissions<span style="font-weight: bold">[</span>:, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0</span><span style="font-weight: bold">]</span>, emissions<span style="font-weight: bold">[</span>:, <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span><span style="font-weight: bold">]</span>, <span style="color: #008000; text-decoration-color: #008000">"-k"</span>, <span style="color: #808000; text-decoration-color: #808000">lw</span>=<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span>, <span style="color: #808000; text-decoration-color: #808000">alpha</span>=<span style="color: #008080; text-decoration-color: #008080; font-weight: bold">0.25</span><span style="font-weight: bold">)</span>
+    <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plt.xlabel</span><span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">"$y_1$"</span><span style="font-weight: bold">)</span>
+    <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plt.ylabel</span><span style="font-weight: bold">(</span><span style="color: #008000; text-decoration-color: #008000">"$y_2$"</span><span style="font-weight: bold">)</span>
+    <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plt.title</span><span style="font-weight: bold">(</span>ttl<span style="font-weight: bold">)</span>
+    <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plt.tight_layout</span><span style="font-weight: bold">()</span>
+    return <span style="color: #800080; text-decoration-color: #800080; font-weight: bold">plt.gcf</span><span style="font-weight: bold">()</span>
+
+</pre>
+</div></div>
+</div>
+</section>
+
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="casino_hmm_training..html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Casino HMM: learning (parameter estimation)</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="../linear_gaussian_ssm/kf_tracking..html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Tracking an object using the Kalman filter</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+  
+      &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>
