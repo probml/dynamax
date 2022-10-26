@@ -184,15 +184,16 @@ class StandardHMM(BaseHMM):
     def _compute_transition_matrices(self, params, covariates=None):
         return params['transitions']['transition_matrix']
 
+    # @abstractmethod
+    # def _initialize_emissions(self, key, method="prior", **kwargs):
+    #     """Initialize the emissions parameters
+
+    #     Returns:
+    #         params: nested dictionary of emission parameters
+    #         props: matching nested dictionary emission parameter properties
+    #     """
+
     @abstractmethod
-    def _initialize_emissions(self, key, method="prior", **kwargs):
-        """Initialize the emissions parameters
-
-        Returns:
-            params: nested dictionary of emission parameters
-            props: matching nested dictionary emission parameter properties
-        """
-
     def initialize(self, key=None, method="prior", initial_probs=None, transition_matrix=None, **kwargs):
         """Initialize the model parameters and their corresponding properties.
 
@@ -224,20 +225,16 @@ class StandardHMM(BaseHMM):
             assert jnp.all(transition_matrix >= 0)
             assert jnp.allclose(transition_matrix.sum(axis=1), 1.0)
 
-        # Let subclasses initialize the emissions
-        emission_params, emission_props = self._initialize_emissions(key=key, method=method, **kwargs)
-
         # Package the results into dictionaries
         params = dict(
             initial=dict(probs=initial_probs),
-            transitions=dict(transition_matrix=transition_matrix),
-            emissions=emission_params)
-        param_props = dict(
+            transitions=dict(transition_matrix=transition_matrix))
+        props = dict(
             initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
-            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-            emissions=emission_props)
+            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())))
 
-        return  params, param_props
+        # Subclasses must overload this method and add 'emissions' parameters to these dicts
+        return params, props
 
     @abstractmethod
     def emission_distribution(self, params, state, covariates=None):

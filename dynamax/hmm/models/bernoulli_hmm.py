@@ -47,25 +47,6 @@ class BernoulliHMM(ExponentialFamilyHMM):
             params['emissions']['probs']).sum()
         return lp
 
-    def _initialize_emissions(self, key, method="prior", emission_probs=None):
-        if emission_probs is None:
-            if method.lower() == "prior":
-                prior = tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0)
-                emission_probs = prior.sample(seed=key, sample_shape=(self.num_states, self.emission_dim))
-            elif method.lower() == "kmeans":
-                raise NotImplementedError("kmeans initialization is not yet implemented!")
-            else:
-                raise Exception("invalid initialization method: {}".format(method))
-        else:
-            assert emission_probs.shape == (self.num_states, self.emission_dim)
-            assert jnp.all(emission_probs >= 0)
-            assert jnp.all(emission_probs <= 0)
-
-        # Package into a dictionary
-        params = dict(probs=emission_probs)
-        param_props = dict(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
-        return  params, param_props
-
     def initialize(self, key=None, method="prior", initial_probs=None, transition_matrix=None, emission_probs=None):
         """Initialize the model parameters and their corresponding properties.
 
@@ -86,10 +67,30 @@ class BernoulliHMM(ExponentialFamilyHMM):
             params: a nested dictionary of arrays containing the model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
-        return super().initialize(key=key, method=method,
-                                  initial_probs=initial_probs,
-                                  transition_matrix=transition_matrix,
-                                  emission_probs=emission_probs)
+        # Base class initializes the initial probs and transition matrix
+        this_key, key = jr.split(key)
+        params, props = super().initialize(key=this_key, method=method,
+                                           initial_probs=initial_probs,
+                                           transition_matrix=transition_matrix)
+
+        # Initialize the emission probabilities
+        if emission_probs is None:
+            if method.lower() == "prior":
+                prior = tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0)
+                emission_probs = prior.sample(seed=key, sample_shape=(self.num_states, self.emission_dim))
+            elif method.lower() == "kmeans":
+                raise NotImplementedError("kmeans initialization is not yet implemented!")
+            else:
+                raise Exception("invalid initialization method: {}".format(method))
+        else:
+            assert emission_probs.shape == (self.num_states, self.emission_dim)
+            assert jnp.all(emission_probs >= 0)
+            assert jnp.all(emission_probs <= 0)
+
+        # Add parameters to the dictionary
+        params['emissions'] = dict(probs=emission_probs)
+        props['emissions'] = dict(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
+        return params, props
 
 
     def _zeros_like_suff_stats(self):
