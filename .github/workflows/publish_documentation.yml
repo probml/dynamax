@@ -24,7 +24,7 @@ jobs:
 
       - name: Build the documentation with Sphinx
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements-doc.txt
           sphinx-build -b html docs docs/build/html
       - name: Publish the documentation
         uses: JamesIves/github-pages-deploy-action@3.6.2

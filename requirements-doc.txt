@@ -9,3 +9,8 @@ tqdm
 flax
 scikit-learn
 blackjax
+sphinx
+sphinx-autobuild
+myst-nb
+jupytext
+sphinx-book-theme
