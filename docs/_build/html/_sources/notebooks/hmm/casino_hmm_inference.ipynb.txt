@@ -70,6 +70,14 @@
    ]
   },
   {
+   "cell_type": "markdown",
+   "id": "b48fe0db",
+   "metadata": {},
+   "source": [
+    "![Casino HMM](https://github.com/probml/dynamax/blob/main/docs/figures/casino.png?raw=true)"
+   ]
+  },
+  {
    "cell_type": "code",
    "execution_count": 4,
    "id": "1fc08871",

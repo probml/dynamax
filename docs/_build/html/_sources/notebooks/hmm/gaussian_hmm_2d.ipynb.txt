@@ -6,7 +6,7 @@
     "id": "gr9tjnvk2LB3"
    },
    "source": [
-    "# Fitting a Gaussian HMM \n",
+    "# Gaussian HMM \n",
     "\n",
     "We use two algorithms for fitting a 2d Gaussian HMM:\n",
     "1. (Batch) EM\n",

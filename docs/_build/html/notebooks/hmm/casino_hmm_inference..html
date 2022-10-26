@@ -97,12 +97,17 @@
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="gaussian_hmm_2d..html">
-   Fitting a Gaussian HMM
+   Gaussian HMM
   </a>
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking..html">
    Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../linear_gaussian_ssm/kf_linreg..html">
+   Online linear regression using Kalman filtering
   </a>
  </li>
 </ul>
@@ -353,6 +358,7 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 </div>
 <div class="tex2jax_ignore mathjax_ignore section" id="make-model">
 <h1>Make model<a class="headerlink" href="#make-model" title="Permalink to this headline">¶</a></h1>
+<p><img alt="Casino HMM" src="https://github.com/probml/dynamax/blob/main/docs/figures/casino.png?raw=true" /></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">init_dist</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
@@ -577,7 +583,7 @@ expected frequencies:  [0.16666666666666666, 0.5]
   fig.show()
 </pre></div>
 </div>
-<img alt="../../_images/casino_hmm_inference._16_1.png" src="../../_images/casino_hmm_inference._16_1.png" />
+<img alt="../../_images/casino_hmm_inference._17_1.png" src="../../_images/casino_hmm_inference._17_1.png" />
 </div>
 </div>
 </div>
@@ -613,7 +619,7 @@ expected frequencies:  [0.16666666666666666, 0.5]
   fig.show()
 </pre></div>
 </div>
-<img alt="../../_images/casino_hmm_inference._19_1.png" src="../../_images/casino_hmm_inference._19_1.png" />
+<img alt="../../_images/casino_hmm_inference._20_1.png" src="../../_images/casino_hmm_inference._20_1.png" />
 </div>
 </div>
 </div>
@@ -642,7 +648,7 @@ expected frequencies:  [0.16666666666666666, 0.5]
   fig.show()
 </pre></div>
 </div>
-<img alt="../../_images/casino_hmm_inference._22_1.png" src="../../_images/casino_hmm_inference._22_1.png" />
+<img alt="../../_images/casino_hmm_inference._23_1.png" src="../../_images/casino_hmm_inference._23_1.png" />
 </div>
 </div>
 </div>

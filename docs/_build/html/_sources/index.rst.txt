@@ -237,10 +237,16 @@ Notebooks
    :maxdepth: 2
    :caption: Contents:
 
+   HMM
+   ---
    notebooks/hmm/casino_hmm_inference.ipynb
    notebooks/hmm/casino_hmm_training.ipynb
    notebooks/hmm/gaussian_hmm_2d.ipynb
+
+   LGSSM
+   ------
    notebooks/linear_gaussian_ssm/kf_tracking.ipynb
+   notebooks/linear_gaussian_ssm/kf_linreg.ipynb
 
 
 API documentation

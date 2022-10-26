@@ -42,6 +42,8 @@ from dynamax.hmm.models import CategoricalHMM
 
 # # Make model
 
+# ![Casino HMM](https://github.com/probml/dynamax/blob/main/docs/figures/casino.png?raw=true)
+
 # In[3]:
 
 

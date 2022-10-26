@@ -320,8 +320,8 @@ the position and velocity of the object,
 to avoid confusion with the state and observation variables.)
 The process evolves in continuous time, but if we discretize it with step size <span class="math notranslate nohighlight">\(\Delta\)</span>,
 we can write the dynamics as the following linear system:</p>
-<div class="amsmath math notranslate nohighlight" id="equation-1e57d01f-77bf-4f3d-8cd4-30a70d4a7806">
-<span class="eqno">(1)<a class="headerlink" href="#equation-1e57d01f-77bf-4f3d-8cd4-30a70d4a7806" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-9925d4ee-f22b-411d-9b7a-42371eacb8c6">
+<span class="eqno">(1)<a class="headerlink" href="#equation-9925d4ee-f22b-411d-9b7a-42371eacb8c6" title="Permalink to this equation">¶</a></span>\[\begin{align}
 \underbrace{\begin{pmatrix} u_t\\ \dot{u}_t \\ v_t \\ \dot{v}_t \end{pmatrix}}_{z_t}
   = 
 \underbrace{
@@ -340,10 +340,9 @@ so  <span class="math notranslate nohighlight">\(q_t \sim N(0,Q)\)</span>.</p>
 <p>Now suppose that at each discrete time point we
 observe the location (but not the velocity).
 We assume the observation is corrupted by  Gaussian noise.
-Thus the observation model becomes
-$$</p>
-<div class="amsmath math notranslate nohighlight" id="equation-540c973f-28d8-4445-814d-e1ce074b03d2">
-<span class="eqno">(2)<a class="headerlink" href="#equation-540c973f-28d8-4445-814d-e1ce074b03d2" title="Permalink to this equation">¶</a></span>\[\begin{align}
+Thus the observation model becomes</p>
+<div class="amsmath math notranslate nohighlight" id="equation-ab2a9bfb-ba19-47aa-9945-25f191e43adc">
+<span class="eqno">(2)<a class="headerlink" href="#equation-ab2a9bfb-ba19-47aa-9945-25f191e43adc" title="Permalink to this equation">¶</a></span>\[\begin{align}
 \underbrace{\begin{pmatrix}  y_{1,t} \\  y_{2,t} \end{pmatrix}}_{y_t}
   &amp;=
     \underbrace{
@@ -356,9 +355,8 @@ $$</p>
 \underbrace{\begin{pmatrix} u_t\\ \dot{u}_t \\ v_t \\ \dot{v}_t \end{pmatrix}}_{z_t}    
  + r_t
 \end{align}\]</div>
-<p>$<span class="math notranslate nohighlight">\(
-where \)</span>r_t \sim N(0,R)<span class="math notranslate nohighlight">\( is the observation noise.
-We see that the observation matrix \)</span>H$ simply ``extracts’’ the
+<p>where <span class="math notranslate nohighlight">\(r_t \sim N(0,R)\)</span> is the observation noise.
+We see that the observation matrix <span class="math notranslate nohighlight">\(H\)</span> simply ``extracts’’ the
 relevant parts  of the state vector.</p>
 </div>
 <div class="tex2jax_ignore mathjax_ignore section" id="setup">

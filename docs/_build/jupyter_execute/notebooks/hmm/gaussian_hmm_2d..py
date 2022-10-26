@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Fitting a Gaussian HMM 
+# # Gaussian HMM 
 # 
 # We use two algorithms for fitting a 2d Gaussian HMM:
 # 1. (Batch) EM

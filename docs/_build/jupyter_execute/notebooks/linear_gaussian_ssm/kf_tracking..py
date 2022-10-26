@@ -46,7 +46,7 @@
 # observe the location (but not the velocity).
 # We assume the observation is corrupted by  Gaussian noise.
 # Thus the observation model becomes
-# $$
+# 
 # \begin{align}
 # \underbrace{\begin{pmatrix}  y_{1,t} \\  y_{2,t} \end{pmatrix}}_{y_t}
 #   &=
@@ -60,7 +60,7 @@
 # \underbrace{\begin{pmatrix} u_t\\ \dot{u}_t \\ v_t \\ \dot{v}_t \end{pmatrix}}_{z_t}    
 #  + r_t
 # \end{align}
-# $$
+# 
 # where $r_t \sim N(0,R)$ is the observation noise.
 # We see that the observation matrix $H$ simply ``extracts'' the
 # relevant parts  of the state vector.

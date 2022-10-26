@@ -1,0 +1,561 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Online linear regression using Kalman filtering &#8212; dynamax documentation</title>
+    
+  <link href="../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../../_static/sphinx-book-theme.d59cb220de22ca1c485ebbdc042f0030.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.18.0/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="SSM" href="../../ssm.html" />
+    <link rel="prev" title="Tracking an object using the Kalman filter" href="kf_tracking..html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../../_static/logo.gif" class="logo" alt="logo">
+      
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Contents:
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/casino_hmm_inference..html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/casino_hmm_training..html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/gaussian_hmm_2d..html">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="kf_tracking..html">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../ssm.html">
+   SSM
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            
+            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+                <i class="fas fa-bars"></i>
+                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../../_sources/notebooks/linear_gaussian_ssm/kf_linreg.ipynb.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/notebooks/linear_gaussian_ssm/kf_linreg..ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="../../_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        
+    </div>
+</div>
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#setup">
+   Setup
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#data">
+   Data
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#model">
+   Model
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#online-inference">
+   Online inference
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#offline-inferenece">
+   Offline inferenece
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#plot-results">
+   Plot results
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#run-the-script">
+   Run the script
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Online linear regression using Kalman filtering</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#setup">
+   Setup
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#data">
+   Data
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#model">
+   Model
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#online-inference">
+   Online inference
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#offline-inferenece">
+   Offline inferenece
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#plot-results">
+   Plot results
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#run-the-script">
+   Run the script
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <div class="tex2jax_ignore mathjax_ignore section" id="online-linear-regression-using-kalman-filtering">
+<h1>Online linear regression using Kalman filtering<a class="headerlink" href="#online-linear-regression-using-kalman-filtering" title="Permalink to this headline">¶</a></h1>
+<p>We perform sequential (recursive) Bayesian inference for the parameters of a linear regression model
+using the Kalman filter. (This algorithm is also known as recursive least squares.)
+To do this, we treat the parameers of the model as the unknown hidden states.
+We assume that these are constant over time.
+The graphical model is shown below.</p>
+<p><img alt="RLS" src="https://github.com/probml/dynamax/blob/main/docs/figures/rlsDgm.png?raw=true" /></p>
+<p>The model has the following form</p>
+<div class="amsmath math notranslate nohighlight" id="equation-7ff243c5-18d4-47b5-9ed2-96b1b15aba85">
+<span class="eqno">(1)<a class="headerlink" href="#equation-7ff243c5-18d4-47b5-9ed2-96b1b15aba85" title="Permalink to this equation">¶</a></span>\[\begin{align}
+\theta_t &amp;=  \theta_{t-1}  \\
+y_t &amp;= x_t^T \theta_t + r_t, \; r_t \sim N(0, \sigma^2)
+\end{align}\]</div>
+<p>This is a LG-SSM, where <span class="math notranslate nohighlight">\(F=I\)</span>, <span class="math notranslate nohighlight">\(Q=0\)</span>, <span class="math notranslate nohighlight">\(H_t = x_t^T\)</span> and <span class="math notranslate nohighlight">\(R = \sigma^2\)</span>.</p>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="setup">
+<h1>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">dynamax</span>
+<span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
+    <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
+    <span class="kn">import</span> <span class="nn">dynamax</span>
+
+
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">LGSSMParams</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Silence WARNING:root:The use of `check_types` is deprecated and does not have any effect.</span>
+<span class="c1"># https://github.com/tensorflow/probability/issues/1523</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">CheckTypesFilter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Filter</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;check_types&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">getMessage</span><span class="p">()</span>
+
+
+<span class="n">logger</span><span class="o">.</span><span class="n">addFilter</span><span class="p">(</span><span class="n">CheckTypesFilter</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="data">
+<h1>Data<a class="headerlink" href="#data" title="Permalink to this headline">¶</a></h1>
+<p>Data is from https://github.com/probml/pmtk3/blob/master/demos/linregOnlineDemoKalman.m</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_obs</span> <span class="o">=</span> <span class="mi">21</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">n_obs</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">))</span>  <span class="c1"># Design matrix.</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span><span class="mf">2.486</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.303</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.053</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.336</span><span class="p">,</span> <span class="o">-</span><span class="mf">6.174</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.604</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.507</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.326</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.638</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.233</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.986</span><span class="p">,</span> <span class="mf">1.028</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.264</span><span class="p">,</span>
+     <span class="o">-</span><span class="mf">0.451</span><span class="p">,</span> <span class="mf">1.167</span><span class="p">,</span> <span class="mf">6.652</span><span class="p">,</span> <span class="mf">4.145</span><span class="p">,</span> <span class="mf">5.268</span><span class="p">,</span> <span class="mf">6.34</span><span class="p">,</span> <span class="mf">9.626</span><span class="p">,</span> <span class="mf">14.784</span><span class="p">])</span>
+
+<span class="c1">#print([np.round(v, decimals=3) for v in np.array(y)])</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="model">
+<h1>Model<a class="headerlink" href="#model" title="Permalink to this headline">¶</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">F</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># No parameter drift.</span>
+<span class="n">obs_var</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">R</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="n">obs_var</span>
+<span class="n">mu0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">Sigma0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mf">10.0</span>
+
+<span class="n">lgssm</span> <span class="o">=</span> <span class="n">LGSSMParams</span><span class="p">(</span>
+        <span class="n">initial_mean</span><span class="o">=</span><span class="n">mu0</span><span class="p">,</span>
+        <span class="n">initial_covariance</span><span class="o">=</span><span class="n">Sigma0</span><span class="p">,</span>
+        <span class="n">dynamics_matrix</span><span class="o">=</span><span class="n">F</span><span class="p">,</span>
+        <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span>
+        <span class="n">emission_matrix</span><span class="o">=</span><span class="n">X</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="c1"># (t, 1, D) where D = num input features</span>
+        <span class="n">emission_covariance</span><span class="o">=</span><span class="n">R</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="online-inference">
+<h1>Online inference<a class="headerlink" href="#online-inference" title="Permalink to this headline">¶</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm_filter</span><span class="p">(</span><span class="n">lgssm</span><span class="p">,</span> <span class="n">y</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span> <span class="c1"># reshape y to be (T,1)</span>
+
+
+<span class="n">kf_results</span> <span class="o">=</span> <span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_covariances</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="offline-inferenece">
+<h1>Offline inferenece<a class="headerlink" href="#offline-inferenece" title="Permalink to this headline">¶</a></h1>
+<p>We compute the offline posterior given all the data using Bayes rule for linear regression.
+This should give the same results as the final step of online inference.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior_prec</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Sigma0</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">X</span> <span class="o">/</span> <span class="n">obs_var</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Sigma0</span><span class="p">)</span> <span class="o">@</span> <span class="n">mu0</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">y</span> <span class="o">/</span> <span class="n">obs_var</span>
+<span class="n">posterior_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">posterior_prec</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+<span class="n">batch_results</span> <span class="o">=</span> <span class="p">(</span><span class="n">posterior_mean</span><span class="p">,</span> <span class="n">posterior_prec</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="plot-results">
+<h1>Plot results<a class="headerlink" href="#plot-results" title="Permalink to this headline">¶</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unpack kalman filter results</span>
+<span class="n">post_weights_kf</span><span class="p">,</span> <span class="n">post_sigma_kf</span> <span class="o">=</span> <span class="n">kf_results</span>
+<span class="n">w0_kf_hist</span><span class="p">,</span> <span class="n">w1_kf_hist</span> <span class="o">=</span> <span class="n">post_weights_kf</span><span class="o">.</span><span class="n">T</span>
+<span class="n">w0_kf_err</span><span class="p">,</span> <span class="n">w1_kf_err</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">post_sigma_kf</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+<span class="c1"># Unpack batch results</span>
+<span class="n">post_weights_batch</span><span class="p">,</span> <span class="n">post_prec_batch</span> <span class="o">=</span> <span class="n">batch_results</span>
+<span class="n">w0_post_batch</span><span class="p">,</span> <span class="n">w1_post_batch</span> <span class="o">=</span> <span class="n">post_weights_batch</span>
+<span class="n">Sigma_post_batch</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">post_prec_batch</span><span class="p">)</span>
+<span class="n">w0_std_batch</span><span class="p">,</span> <span class="n">w1_std_batch</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Sigma_post_batch</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">timesteps</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">w0_kf_hist</span><span class="p">))</span>
+
+<span class="c1"># Plot online kalman filter posterior.</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">timesteps</span><span class="p">,</span> <span class="n">w0_kf_hist</span><span class="p">,</span> <span class="n">w0_kf_err</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$w_0$&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">fillstyle</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">timesteps</span><span class="p">,</span> <span class="n">w1_kf_hist</span><span class="p">,</span> <span class="n">w1_kf_err</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$w_1$&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">)</span>
+
+<span class="c1"># Plot batch posterior.</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hlines</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">w0_post_batch</span><span class="p">,</span> <span class="n">xmin</span><span class="o">=</span><span class="n">timesteps</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xmax</span><span class="o">=</span><span class="n">timesteps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$w_0$ batch&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hlines</span><span class="p">(</span>
+    <span class="n">y</span><span class="o">=</span><span class="n">w1_post_batch</span><span class="p">,</span> <span class="n">xmin</span><span class="o">=</span><span class="n">timesteps</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xmax</span><span class="o">=</span><span class="n">timesteps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$w_1$ batch&quot;</span>
+<span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">timesteps</span><span class="p">,</span> <span class="n">w0_post_batch</span> <span class="o">-</span> <span class="n">w0_std_batch</span><span class="p">,</span> <span class="n">w0_post_batch</span> <span class="o">+</span> <span class="n">w0_std_batch</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">timesteps</span><span class="p">,</span> <span class="n">w1_post_batch</span> <span class="o">-</span> <span class="n">w1_std_batch</span><span class="p">,</span> <span class="n">w1_post_batch</span> <span class="o">+</span> <span class="n">w1_std_batch</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;weights&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f82c9287610&gt;
+</pre></div>
+</div>
+<img alt="../../_images/kf_linreg._14_1.png" src="../../_images/kf_linreg._14_1.png" />
+</div>
+</div>
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="run-the-script">
+<h1>Run the script<a class="headerlink" href="#run-the-script" title="Permalink to this headline">¶</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.demos.kf_linreg</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<span class="n">kf_results</span><span class="p">,</span> <span class="n">batch_results</span> <span class="o">=</span> <span class="n">online_kf_vs_batch_linreg</span><span class="p">()</span>
+<span class="n">dict_figures</span> <span class="o">=</span> <span class="n">plot_online_kf_vs_batch_linreg</span><span class="p">(</span><span class="n">kf_results</span><span class="p">,</span> <span class="n">batch_results</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../../_images/kf_linreg._16_0.png" src="../../_images/kf_linreg._16_0.png" />
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="kf_tracking..html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Tracking an object using the Kalman filter</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="../../ssm.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">SSM</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+    
+        &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>
