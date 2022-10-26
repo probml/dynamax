@@ -92,22 +92,22 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/casino_hmm_inference..html">
+  <a class="reference internal" href="../hmm/casino_hmm_inference.html">
    Casino HMM: Inference (state estimation)
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/casino_hmm_training..html">
+  <a class="reference internal" href="../hmm/casino_hmm_training.html">
    Casino HMM: learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/gaussian_hmm_2d..html">
+  <a class="reference internal" href="../hmm/gaussian_hmm_2d.html">
    Gaussian HMM
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking..html">
+  <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
    Tracking an object using the Kalman filter
   </a>
  </li>
@@ -182,7 +182,7 @@ title="Toggle navigation"
   <div class="menu-dropdown__content">
     <ul>
       <li>
-        <a href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/notebooks/nonlinear_gaussian_ssm/ekf_ukf_tracking..ipynb"
+        <a href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/notebooks/nonlinear_gaussian_ssm/ekf_ukf_tracking.ipynb"
    class="headerbtn"
    data-toggle="tooltip"
 data-placement="left"
@@ -200,7 +200,7 @@ title="Launch on Binder"
       </li>
       
       <li>
-        <a href="https://colab.research.google.com/github/probml/dynamax/blob/main/notebooks/nonlinear_gaussian_ssm/ekf_ukf_tracking..ipynb"
+        <a href="https://colab.research.google.com/github/probml/dynamax/blob/main/notebooks/nonlinear_gaussian_ssm/ekf_ukf_tracking.ipynb"
    class="headerbtn"
    data-toggle="tooltip"
 data-placement="left"
@@ -254,7 +254,7 @@ title="Download source file"
 <span class="headerbtn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="headerbtn__text-container">ipynb</span>
+<span class="headerbtn__text-container">.ipynb</span>
 </a>
 
       </li>
@@ -394,8 +394,8 @@ the position  of the object,
 (We use <span class="math notranslate nohighlight">\(u\)</span> and <span class="math notranslate nohighlight">\(v\)</span> for the two coordinates,
 to avoid confusion with the state and observation variables.)
 We assume the following nonlinear dynamics:</p>
-<div class="amsmath math notranslate nohighlight" id="equation-b162a4ce-11e5-4a24-985c-11568ff7aaf3">
-<span class="eqno">(1)<a class="headerlink" href="#equation-b162a4ce-11e5-4a24-985c-11568ff7aaf3" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-51b5913d-cf70-4aef-9286-aaa77e3b2602">
+<span class="eqno">(1)<a class="headerlink" href="#equation-51b5913d-cf70-4aef-9286-aaa77e3b2602" title="Permalink to this equation">#</a></span>\[\begin{align}
 z_t &amp;= f(z_{t-1}) + q_t \\
 f(\begin{pmatrix} u \\ v \end{pmatrix})
  &amp;= \begin{pmatrix} u + 0.5 \sin(v) \\ v + \cos(u) \end{pmatrix}
@@ -405,8 +405,8 @@ so  <span class="math notranslate nohighlight">\(q_t \sim N(0,Q)\)</span>.</p>
 <p>At each discrete time point we
 observe the location corrupted by  Gaussian noise.
 Thus the observation model becomes</p>
-<div class="amsmath math notranslate nohighlight" id="equation-0fb935a1-c32c-4455-a57e-04c3f5a7270d">
-<span class="eqno">(2)<a class="headerlink" href="#equation-0fb935a1-c32c-4455-a57e-04c3f5a7270d" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-ebd32b4f-c11a-4e75-9db4-2591f15c8e1d">
+<span class="eqno">(2)<a class="headerlink" href="#equation-ebd32b4f-c11a-4e75-9db4-2591f15c8e1d" title="Permalink to this equation">#</a></span>\[\begin{align}
 y_t &amp;= h(z_t) + r_t \\
 h(z) &amp;= z 
 \end{align}\]</div>
