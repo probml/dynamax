@@ -2,7 +2,7 @@
 
 ![Logo](https://github.com/probml/dynamax/blob/main/logo/logo.gif)
 
-![Test Status](https://github.com/probml/dynamax/actions/workflows/workflow.yml/badge.svg?branch=main)
+![Test Status](https://github.com/probml/dynamax/actions/workflows/run_tests.yml/badge.svg?branch=main)
 
 Dynamic State Space Models in JAX.
 
