@@ -1,3 +1,7 @@
+"""
+This file contains utility functions that are used to test EKF, UKF and GGF inference,
+by comparing the results to the sarkka-lib codebase on some toy problems.
+"""
 import jax.random as jr
 import jax.numpy as jnp
 

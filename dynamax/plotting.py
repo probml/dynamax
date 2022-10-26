@@ -145,23 +145,6 @@ def plot_lgssm_posterior(post_means, post_covs, ax=None, ellipse_kwargs={}, lege
     return ax
 
 
-def plot_nlgssm_pendulum(time_grid, x_tr, x_obs, x_est=None, est_type=""):
-    fig, ax = plt.subplots()
-    ax.plot(time_grid, x_tr, color="darkgray", linewidth=4, label="True Angle")
-    ax.plot(time_grid, x_obs, "ok", fillstyle="none", ms=1.5, label="Measurements")
-    if x_est is not None:
-        ax.plot(time_grid, x_est, color="k", linewidth=1.5, label=f"{est_type} Estimate")
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Pendulum angle")
-    ax.set_xlim(0, 5)
-    ax.set_ylim(-3, 5)
-    ax.set_xticks(jnp.arange(0.5, 4.6, 0.5))
-    ax.set_yticks(jnp.arange(-3, 5.1, 1))
-    ax.set_aspect(0.5)
-    ax.legend(loc=1, borderpad=0.5, handlelength=4, fancybox=False, edgecolor="k")
-    return fig
-
-
 def plot_inference(states, emissions, estimates=None, est_type="", ax=None, title="", aspect=0.8, show_states=True):
     if ax is None:
         fig, ax = plt.subplots()

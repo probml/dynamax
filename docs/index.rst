@@ -237,10 +237,14 @@ Notebooks
    :maxdepth: 2
    :caption: Contents:
 
+
    notebooks/hmm/casino_hmm_inference.ipynb
    notebooks/hmm/casino_hmm_training.ipynb
    notebooks/hmm/gaussian_hmm_2d.ipynb
    notebooks/linear_gaussian_ssm/kf_tracking.ipynb
+   notebooks/linear_gaussian_ssm/kf_linreg.ipynb
+   notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.ipynb
+   notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.ipynb
 
 
 API documentation

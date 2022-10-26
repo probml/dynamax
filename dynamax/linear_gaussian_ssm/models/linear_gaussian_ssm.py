@@ -20,18 +20,25 @@ class LinearGaussianSSM(SSM):
     p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
     p(y_t | z_t) = N(y_t | H_t z_t + D_t u_t + d_t, R_t)
     p(z_1) = N(z_1 | m, S)
-    where z_t = hidden, y_t = observed, u_t = inputs,
-    dynamics_matrix = F
-    dynamics_covariance = Q
-    emission_matrix = H
-    emissions_covariance = R
-    initial_mean = mu_{1|0}
-    initial_covariance = Sigma_{1|0}
+    where
+    z_t = hidden variables of size `state_dim`,
+    y_t = observed variables of size `emission_dim`
+    u_t = input covariates of size `input_dim` (defaults to 0)
+
+    The parameters of the model are stored in a separate dictionary, as follows:
+    F = params["dynamics"]["weights"]
+    Q = params["dynamics"]["cov"]
+    H = params["emission"]["weights"]
+    R = params["emissions"]["cov]
+    m = params["init"]["mean"]
+    S = params["init"]["cov"]
     Optional parameters (default to 0)
-    dynamics_input_matrix = B
-    dynamics_bias = b
-    emission_input_matrix = D
-    emission_bias = d
+    B = params["dynamics"]["input_weights"]
+    b = params["dynamics"]["bias"]
+    D = params["emission"]["input_weights"]
+    d = params["emission"]["bias"]
+
+    You can create these parameters manually, or by calling `random_initialization`.
     """
     def __init__(self,
                  state_dim,
@@ -54,6 +61,12 @@ class LinearGaussianSSM(SSM):
         return (self.input_dim,) if self.input_dim > 0 else None
 
     def random_initialization(self, key):
+        """Create random parameters. 
+        
+        Returns:
+            params: nested dictionary of parameters
+            props: matching nested dictionary of parameter properties
+        """
         m = jnp.zeros(self.state_dim)
         S = jnp.eye(self.state_dim)
         # TODO: Sample a random rotation matrix
