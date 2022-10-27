@@ -18,7 +18,7 @@ class GGSSMParams:
     dynamics_covariance: chex.Array
     emission_mean_function: Callable
     emission_cov_function: Callable
-    emission_dist: Callable
+    emission_dist: Callable = MVN
 
 
 class GGSSM(SSM):
