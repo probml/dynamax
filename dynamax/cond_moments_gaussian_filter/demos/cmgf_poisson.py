@@ -4,8 +4,8 @@
 
 import warnings
 
+from functools import partial
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from tensorflow_probability.substrates.jax.distributions import Poisson as Pois
 import jax.numpy as jnp
@@ -13,7 +13,8 @@ import jax.random as jr
 from jax import lax, vmap
 from jax.tree_util import tree_map
 
-from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_smoother, EKFParams, GHKFParams
+from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_smoother, EKFIntegrals, GHKFIntegrals
+from dynamax.cond_moments_gaussian_filter.generalized_gaussian_ssm import GGSSM, GGSSMParams
 
 
 def plot_states(states, num_steps, title, ax):
@@ -248,38 +249,31 @@ def main():
     state_dim, emission_dim = 2, 5
     poisson_weights = jr.normal(jr.PRNGKey(0), shape=(emission_dim, state_dim))
 
-    # Construct CMGF-EKF parameters
-    cmgf_ekf_params = EKFParams(
+    # Construct CMGF parameters
+    cmgf_params = GGSSMParams(
         initial_mean = jnp.zeros(state_dim),
         initial_covariance = jnp.eye(state_dim),
         dynamics_function = lambda z: random_rotation(state_dim, theta=jnp.pi/20) @ z,
         dynamics_covariance = 0.001 * jnp.eye(state_dim),
         emission_mean_function = lambda z: jnp.exp(poisson_weights @ z),
-        emission_cov_function = lambda z: jnp.diag(jnp.exp(poisson_weights @ z))
-    )
-
-    # Construct CMGF-GHKF parameters
-    cmgf_ghkf_params = GHKFParams(
-        initial_mean = cmgf_ekf_params.initial_mean,
-        initial_covariance = cmgf_ekf_params.initial_covariance,
-        dynamics_function = cmgf_ekf_params.dynamics_function,
-        dynamics_covariance = cmgf_ekf_params.dynamics_covariance,
-        emission_mean_function = cmgf_ekf_params.emission_mean_function,
-        emission_cov_function = cmgf_ekf_params.emission_cov_function,
-        # order = 5
+        emission_cov_function = lambda z: jnp.diag(jnp.exp(poisson_weights @ z)),
+        emission_dist = lambda mu, _: Pois(log_rate = jnp.log(mu))
     )
 
     # Sample from random-rotation state dynamics and Poisson emissions
     num_steps, num_trials = 200, 3
-    all_states, all_emissions = sample_poisson(cmgf_ekf_params, poisson_weights, num_steps, num_trials)
+    model = GGSSM(state_dim, emission_dim)
+    sample_poisson = lambda key: model.sample(params=cmgf_params, num_timesteps=num_steps, key=key)
+    keys = jr.split(jr.PRNGKey(0), num_trials)
+    all_states, all_emissions = vmap(sample_poisson)(keys)
 
     figs = {}
     # Plot batches of samples generated
     figs['samples'] = plot_emissions_poisson(all_states[0], all_emissions[0])
 
     # Perform CMGF-Smoother Inference
-    for filter_type, params in {"CMGF-EKF": cmgf_ekf_params, "CMGF-GHKF": cmgf_ghkf_params}.items():
-        posts = vmap(conditional_moments_gaussian_smoother, (None, 0))(params, all_emissions)
+    for filter_type, inf_params in {"CMGF-EKF": EKFIntegrals(), "CMGF-GHKF": GHKFIntegrals()}.items():
+        posts = vmap(conditional_moments_gaussian_smoother, (None, None, 0))(cmgf_params, inf_params, all_emissions)
         fig, ax = plt.subplots(figsize=(10, 2.5))
         plot_states(posts.smoothed_means[0], num_steps, f"{filter_type}-Inferred Latent States", ax)
         figs[f'{filter_type.lower()}_latent_states'] = fig

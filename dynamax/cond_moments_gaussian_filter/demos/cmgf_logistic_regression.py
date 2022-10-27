@@ -9,7 +9,8 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax.scipy.optimize import minimize
 
-from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_filter, EKFParams, UKFParams, GHKFParams
+from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_filter, EKFIntegrals, UKFIntegrals, GHKFIntegrals
+from dynamax.cond_moments_gaussian_filter.generalized_gaussian_ssm import GGSSMParams
 
 def plot_posterior_predictive(ax, X, title, colors, Xspace=None, Zspace=None, cmap="viridis"):
     """Plot the 2d posterior predictive distribution.
@@ -195,11 +196,10 @@ def laplace_inference(X, Y, prior_var=2.0, key=0):
     return w_laplace, cov_laplace
 
 
-def generate_cmgf_params(Params, input_with_bias, prior_var=2.0):
+def generate_cmgf_params(input_with_bias, prior_var=2.0):
     """Generate CMGF object with default initial parameters.
 
     Args:
-        Params (CMGFParams): CMGFParams object to instantiate.
         input_with_bias (DeviceArray): Input array with bias term.
         prior_var (float, optional): Prior variance. Defaults to 2.0.
 
@@ -216,7 +216,7 @@ def generate_cmgf_params(Params, input_with_bias, prior_var=2.0):
     emission_mean_function = sigmoid_fn
     emission_cov_function = lambda w, x: sigmoid_fn(w, x) * (1 - sigmoid_fn(w, x))
 
-    cmgf_params = Params(
+    cmgf_params = GGSSMParams(
         initial_mean = initial_mean,
         initial_covariance = initial_covariance,
         dynamics_function = dynamics_function,
@@ -240,10 +240,9 @@ def main():
     w_lap, cov_lap = laplace_inference(input_with_bias, output, prior_var=prior_var)
 
     # Compute CMGF-EKF, CMGF-UKF, and CMGF-GHKF posteriors
-    cmgf_params = [generate_cmgf_params(params, input_with_bias, prior_var)
-                   for params in [EKFParams, UKFParams, GHKFParams]]
-    cmgf_posts = [conditional_moments_gaussian_filter(params, output, inputs=input_with_bias)
-                  for params in cmgf_params]
+    cmgf_params = generate_cmgf_params(input_with_bias, prior_var)
+    cmgf_posts = [conditional_moments_gaussian_filter(cmgf_params, inf_params, output, inputs=input_with_bias)
+                  for inf_params in [EKFIntegrals(), UKFIntegrals(), GHKFIntegrals()]]
     cmgf_means = [post.filtered_means for post in cmgf_posts]
     cmgf_covs = [post.filtered_covariances for post in cmgf_posts]
 
