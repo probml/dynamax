@@ -134,6 +134,7 @@ class LinearGaussianSSM(SSM):
 
     def log_prior(self, params):
         """Return the log prior probability of any model parameters.
+
         Returns:
             lp (Scalar): log prior probability.
         """
@@ -155,6 +156,24 @@ class LinearGaussianSSM(SSM):
     def posterior_sample(self, params, key, emissions, inputs=None):
         _, sample = lgssm_posterior_sample(key, self._make_inference_args(params), emissions, inputs)
         return sample
+
+    def posterior_predictive(self, params, emissions, inputs=None):
+        """Compute marginal posterior predictive for each observation.
+        
+        Returns:
+            means: (T,D) array of E[Y(t,d) | Y(1:T)]
+            stds: (T,D) array std[Y(t,d) | Y(1:T)]
+        """
+        posterior = self.smoother(params, emissions, inputs)
+        H = params['emissions']['weights']
+        b = params['emissions']['bias']
+        R = params['emissions']['cov']
+        emission_dim = R.shape[0]
+        smoothed_emissions = posterior.smoothed_means @ H.T + b
+        smoothed_emissions_cov = H @ posterior.smoothed_covariances @ H.T + R
+        smoothed_emissions_std = jnp.sqrt(
+            jnp.array([smoothed_emissions_cov[:, i, i] for i in range(emission_dim)]))
+        return smoothed_emissions, smoothed_emissions_std
 
     # Expectation-maximization (EM) code
     def e_step(self, params, emissions, inputs=None):

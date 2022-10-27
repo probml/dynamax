@@ -100,6 +100,11 @@ as we discuss below.
 In addition, we can estimate the parameters of the transition and emission models,
 as we discuss below.
 
+More information can be found in these books:
+- *Machine Learning: Advanced Topics*, K. Murphy, MIT Press 2023. 
+Available at https://probml.github.io/pml-book/book2.html.
+-  *Bayesian Filtering and Smoothing*, S. Särkkä, Cambridge University Press, 2013.
+Available at https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
 
 Inference (state estimation)
 --------------------------------
@@ -243,8 +248,11 @@ Notebooks
    notebooks/hmm/gaussian_hmm_2d.ipynb
    notebooks/linear_gaussian_ssm/kf_tracking.ipynb
    notebooks/linear_gaussian_ssm/kf_linreg.ipynb
+   notebooks/linear_gaussian_ssm/lgssm_learning.ipynb
+   notebooks/linear_gaussian_ssm/lgssm_parallel_inference.ipynb
    notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.ipynb
    notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.ipynb
+   notebooks/nonlinear_gaussian_ssm/ekf_mlp.ipynb
 
 
 API documentation
