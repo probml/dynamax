@@ -47,7 +47,7 @@ class BernoulliHMM(ExponentialFamilyHMM):
             params['emissions']['probs']).sum()
         return lp
 
-    def initialize(self, key=None, method="prior", initial_probs=None, transition_matrix=None, emission_probs=None):
+    def initialize(self, key=jr.PRNGKey(0), method="prior", initial_probs=None, transition_matrix=None, emission_probs=None):
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
@@ -91,7 +91,6 @@ class BernoulliHMM(ExponentialFamilyHMM):
         params['emissions'] = dict(probs=emission_probs)
         props['emissions'] = dict(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
         return params, props
-
 
     def _zeros_like_suff_stats(self):
         """Return dataclass containing 'event_shape' of each sufficient statistic."""
