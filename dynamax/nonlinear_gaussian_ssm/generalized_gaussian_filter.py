@@ -4,13 +4,14 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 
 from typing import Callable
 from itertools import product
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from numpy.polynomial.hermite_e import hermegauss
 from jax import jacfwd
 from jax import vmap
 import jax.numpy as jnp
 import chex
+from dynamax.containers import GSSMPosterior
 
 
 
@@ -29,28 +30,6 @@ class GGSSMParams:
     emission_covariance: chex.Array
     gaussian_expectation: Callable
     gaussian_cross_covariance: Callable
-
-
-@chex.dataclass
-class GGSSMPosterior:
-    """Simple wrapper for properties of an GGSSM posterior distribution.
-
-    Attributes:
-            marginal_loglik: marginal log likelihood of the data
-            filtered_means: (T,D_hid) array,
-                E[x_t | y_{1:t}, u_{1:t}].
-            filtered_covariances: (T,D_hid,D_hid) array,
-                Cov[x_t | y_{1:t}, u_{1:t}].
-            smoothed_means: (T,D_hid) array,
-                E[x_t | y_{1:T}, u_{1:T}].
-            smoothed_covs: (T,D_hid,D_hid) array of smoothed marginal covariances,
-                Cov[x_t | y_{1:T}, u_{1:T}].
-    """
-    marginal_loglik: chex.Scalar = None
-    filtered_means: chex.Array = None
-    filtered_covariances: chex.Array = None
-    smoothed_means: chex.Array = None
-    smoothed_covariances: chex.Array = None
 
 
 @chex.dataclass
@@ -247,7 +226,7 @@ def general_gaussian_filter(params, emissions, inputs=None):
     # Run the general Gaussian filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return GGSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def general_gaussian_smoother(params, emissions, inputs=None):
@@ -294,7 +273,7 @@ def general_gaussian_smoother(params, emissions, inputs=None):
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    return GGSSMPosterior(
+    return GSSMPosterior(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
