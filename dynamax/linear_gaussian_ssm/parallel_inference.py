@@ -4,6 +4,7 @@
 from jax import numpy as jnp
 from jax import scipy as jsc
 from jax import vmap, lax
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
 from dynamax.containers import GSSMPosterior
 
@@ -32,8 +33,7 @@ def make_associative_filtering_elements(params, emissions):
         eta = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), y)
         J = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), H @ F)
 
-        logZ = jsc.stats.multivariate_normal.logpdf(y, 
-            mean=jnp.zeros_like(y), cov=H @ P0 @ H.T + R)
+        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=H @ P0 @ H.T + R).log_prob(y)
 
         return A, b, C, J, eta, logZ
 
@@ -54,8 +54,7 @@ def make_associative_filtering_elements(params, emissions):
         eta = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), y)
         J = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), H @ F)
 
-        logZ = jsc.stats.multivariate_normal.logpdf(y, 
-            mean=jnp.zeros_like(y), cov=S)
+        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=S).log_prob(y)
 
         return A, b, C, J, eta, logZ
 
@@ -100,15 +99,15 @@ def lgssm_filter(params, emissions):
         mu = jnp.linalg.solve(C1, b1)
         t1 = (b1 @ mu - (eta2 + mu) @ jnp.linalg.solve(I_C1J2, C1 @ eta2 + b1))
 
-        logZ = (logZ1 + logZ2 - 0.5 * jnp.linalg.slogdet(I_C1J2)[1] - 0.5 * t1)
+        logZ = (logZ1 + logZ2 + 0.5 * jnp.linalg.slogdet(I_C1J2)[1] + 0.5 * t1)
 
         return A, b, C, J, eta, logZ
 
-    _, filtered_means, filtered_covs, _, _, ll = lax.associative_scan(
+    _, filtered_means, filtered_covs, _, _, logZ = lax.associative_scan(
                                                 filtering_operator, initial_elements
                                                 )
 
-    return GSSMPosterior(marginal_loglik=ll[-1],
+    return GSSMPosterior(marginal_loglik=-logZ[-1],
         filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
