@@ -7,10 +7,10 @@ import jax.scipy as jsp
 from jax.tree_util import tree_map
 from jaxopt import LBFGS
 from dynamax.abstractions import SSM
-from dynamax.cond_moments_gaussian_filter.containers import EKFParams
 from dynamax.cond_moments_gaussian_filter.cmgf import (
     iterated_conditional_moments_gaussian_filter as cmgf_filt,
-    iterated_conditional_moments_gaussian_smoother as cmgf_smooth)
+    iterated_conditional_moments_gaussian_smoother as cmgf_smooth,
+    EKFParams)
 from dynamax.linear_gaussian_ssm.inference import (
     LGSSMParams,
     lgssm_filter,

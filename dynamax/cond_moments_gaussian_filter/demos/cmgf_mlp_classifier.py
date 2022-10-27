@@ -14,8 +14,7 @@ import jax.random as jr
 from jax.flatten_util import ravel_pytree
 import flax.linen as nn
 
-from dynamax.cond_moments_gaussian_filter.containers import EKFParams
-from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_filter
+from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_filter, EKFParams
 
 def plot_posterior_predictive(ax, X, Y, title, Xspace=None, Zspace=None, cmap=cm.rainbow):
     """Plot the 2d posterior predictive distribution.

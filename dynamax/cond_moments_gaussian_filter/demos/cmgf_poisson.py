@@ -13,8 +13,7 @@ import jax.random as jr
 from jax import lax, vmap
 from jax.tree_util import tree_map
 
-from dynamax.cond_moments_gaussian_filter.containers import EKFParams, GHKFParams
-from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_smoother
+from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_smoother, EKFParams, GHKFParams
 
 
 def plot_states(states, num_steps, title, ax):

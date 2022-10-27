@@ -1,7 +1,6 @@
 import jax.numpy as jnp
 
-from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_smoother
-from dynamax.cond_moments_gaussian_filter.containers import EKFParams, UKFParams
+from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_smoother, EKFParams, UKFParams
 from dynamax.nonlinear_gaussian_ssm.extended_kalman_filter import extended_kalman_smoother
 from dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.inference_test import random_nlgssm_args

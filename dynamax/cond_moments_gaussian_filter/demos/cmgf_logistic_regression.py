@@ -9,8 +9,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax.scipy.optimize import minimize
 
-from dynamax.cond_moments_gaussian_filter.containers import EKFParams, UKFParams, GHKFParams
-from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_filter
+from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_filter, EKFParams, UKFParams, GHKFParams
 
 def plot_posterior_predictive(ax, X, title, colors, Xspace=None, Zspace=None, cmap="viridis"):
     """Plot the 2d posterior predictive distribution.
