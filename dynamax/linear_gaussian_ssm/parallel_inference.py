@@ -15,6 +15,7 @@ def make_associative_filtering_elements(params, emissions):
         H = params.emission_matrix
         Q = params.dynamics_covariance
         R = params.emission_covariance
+        P0 = params.initial_covariance
         
         S = H @ Q @ H.T + R
         CF, low = jsc.linalg.cho_factor(S)
@@ -30,7 +31,11 @@ def make_associative_filtering_elements(params, emissions):
 
         eta = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), y)
         J = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), H @ F)
-        return A, b, C, J, eta
+
+        logZ = jsc.stats.multivariate_normal.logpdf(y, 
+            mean=jnp.zeros_like(y), cov=H @ P0 @ H.T + R)
+
+        return A, b, C, J, eta, logZ
 
 
     def _generic_filtering_element(params, y):
@@ -48,7 +53,11 @@ def make_associative_filtering_elements(params, emissions):
 
         eta = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), y)
         J = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), H @ F)
-        return A, b, C, J, eta
+
+        logZ = jsc.stats.multivariate_normal.logpdf(y, 
+            mean=jnp.zeros_like(y), cov=S)
+
+        return A, b, C, J, eta, logZ
 
     first_elems = _first_filtering_element(params, emissions[0])
     generic_elems = vmap(_generic_filtering_element, (None, 0))(params, emissions[1:])
@@ -63,14 +72,13 @@ def lgssm_filter(params, emissions):
     
     Note: This function does not yet handle `inputs` to the system.
     """
-    #TODO: Add marginal loglikelihood calculation.
     #TODO: Add input handling.
     initial_elements = make_associative_filtering_elements(params, emissions)
 
     @vmap
     def filtering_operator(elem1, elem2):
-        A1, b1, C1, J1, eta1 = elem1
-        A2, b2, C2, J2, eta2 = elem2
+        A1, b1, C1, J1, eta1, logZ1 = elem1
+        A2, b2, C2, J2, eta2, logZ2 = elem2
         dim = A1.shape[0]
         I = jnp.eye(dim)  
 
@@ -86,12 +94,22 @@ def lgssm_filter(params, emissions):
         eta = temp @ (eta2 - J2 @ b1) + eta1
         J = temp @ J2 @ A1 + J1
 
-        return A, b, C, J, eta
+        # mu = jsc.linalg.solve(J2, eta2)
+        # t2 = - eta2 @ mu + (b1 - mu) @ jsc.linalg.solve(I_J2C1, (J2 @ b1 - eta2))
+        
+        mu = jnp.linalg.solve(C1, b1)
+        t1 = (b1 @ mu - (eta2 + mu) @ jnp.linalg.solve(I_C1J2, C1 @ eta2 + b1))
 
-    _, filtered_means, filtered_covs, *_ = lax.associative_scan(
+        logZ = (logZ1 + logZ2 - 0.5 * jnp.linalg.slogdet(I_C1J2)[1] - 0.5 * t1)
+
+        return A, b, C, J, eta, logZ
+
+    _, filtered_means, filtered_covs, _, _, ll = lax.associative_scan(
                                                 filtering_operator, initial_elements
                                                 )
-    return GSSMPosterior(filtered_means=filtered_means, filtered_covariances=filtered_covs)
+
+    return GSSMPosterior(marginal_loglik=ll[-1],
+        filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 
@@ -150,6 +168,7 @@ def lgssm_smoother(params, emissions):
                                                 smoothing_operator, initial_elements, reverse=True
                                                 )
     return GSSMPosterior(
+        marginal_loglik=filtered_posterior.marginal_loglik,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
         smoothed_means=smoothed_means,
