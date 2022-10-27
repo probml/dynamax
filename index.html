@@ -112,6 +112,36 @@
    Tracking an object using the Kalman filter
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_linreg.html">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_learning.html">
+   MAP parameter estimation for an LG-SSM using EM and SGD
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
+   Tracking a spiraling object using the extended / unscented Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
+   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">
+   Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
@@ -451,6 +481,11 @@ All of these computations can be done efficiently using our library,
 as we discuss below.
 In addition, we can estimate the parameters of the transition and emission models,
 as we discuss below.</p>
+<p>More information can be found in these books:
+- <em>Machine Learning: Advanced Topics</em>, K. Murphy, MIT Press 2023.
+Available at <a class="reference external" href="https://probml.github.io/pml-book/book2.html">https://probml.github.io/pml-book/book2.html</a>.
+-  <em>Bayesian Filtering and Smoothing</em>, S. Särkkä, Cambridge University Press, 2013.
+Available at <a class="reference external" href="https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf">https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf</a></p>
 </section>
 <section id="inference-state-estimation">
 <h2>Inference (state estimation)<a class="headerlink" href="#inference-state-estimation" title="Permalink to this headline">#</a></h2>
@@ -559,32 +594,15 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference.html">Casino HMM: Inference (state estimation)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference.html#setup">Setup</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference.html#make-model">Make model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference.html#sample-data-from-model">Sample data from model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference.html#filtering-forwards-algorithm">Filtering (forwards algorithm)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference.html#plotting-code">Plotting code</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference.html#smoothing-forwards-backwards-algorithm">Smoothing (forwards-backwards algorithm)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference.html#map-sequence-viterbi-algorithm">MAP sequence (Viterbi algorithm)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_training.html">Casino HMM: learning (parameter estimation)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/hmm/casino_hmm_training.html#setup">Setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/hmm/casino_hmm_training.html#sample-data-from-true-model">Sample data from true model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="notebooks/hmm/casino_hmm_training.html#learning">Learning</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_training.html">Casino HMM: learning (parameter estimation)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d.html">Gaussian HMM</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d.html#setup">Setup</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d.html#generate-sample-data">Generate sample data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d.html#initialize-model-and-fit-to-data">Initialize model and fit to data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d.html#visualize-the-fitted-model">Visualize the fitted model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d.html#show-the-plotting-code">Show the plotting code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html">Tracking an object using the Kalman filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html#setup">Setup</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html#create-the-model">Create the model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html#sample-some-data-from-the-model">Sample some data from the model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html#perform-online-filtering">Perform online filtering</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html#perform-offline-smoothing">Perform offline smoothing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html#low-level-interface-to-the-underlying-inference-algorithms">Low-level interface to the underlying inference algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_linreg.html">Online linear regression using Kalman filtering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_learning.html">MAP parameter estimation for an LG-SSM using EM and SGD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">Parallel filtering and smoothing in an LG-SSM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">Tracking a spiraling object using the extended / unscented Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">Online learning for an MLP using extended Kalman filtering</a></li>
 </ul>
 </div>
 </section>

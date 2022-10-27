@@ -111,6 +111,36 @@
    Tracking an object using the Kalman filter
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../linear_gaussian_ssm/kf_linreg.html">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_learning.html">
+   MAP parameter estimation for an LG-SSM using EM and SGD
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
+   Tracking a spiraling object using the extended / unscented Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
+   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
+   Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
@@ -302,42 +332,37 @@ title="Print to PDF"
     </div>
     <nav id="bd-toc-nav" aria-label="Page">
         <ul class="visible nav section-nav flex-column">
- <li class="toc-h1 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#">
-   Casino HMM: Inference (state estimation)
-  </a>
- </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#setup">
    Setup
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#make-model">
    Make model
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#sample-data-from-model">
    Sample data from model
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#filtering-forwards-algorithm">
    Filtering (forwards algorithm)
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#plotting-code">
    Plotting code
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#smoothing-forwards-backwards-algorithm">
    Smoothing (forwards-backwards algorithm)
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#map-sequence-viterbi-algorithm">
    MAP sequence (Viterbi algorithm)
   </a>
@@ -361,42 +386,37 @@ title="Print to PDF"
                         </div>
                         <nav aria-label="Page">
                             <ul class="visible nav section-nav flex-column">
- <li class="toc-h1 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#">
-   Casino HMM: Inference (state estimation)
-  </a>
- </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#setup">
    Setup
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#make-model">
    Make model
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#sample-data-from-model">
    Sample data from model
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#filtering-forwards-algorithm">
    Filtering (forwards algorithm)
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#plotting-code">
    Plotting code
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#smoothing-forwards-backwards-algorithm">
    Smoothing (forwards-backwards algorithm)
   </a>
  </li>
- <li class="toc-h1 nav-item toc-entry">
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#map-sequence-viterbi-algorithm">
    MAP sequence (Viterbi algorithm)
   </a>
@@ -417,9 +437,8 @@ title="Print to PDF"
 This is from the book
 “Biological Sequence Analysis: Probabilistic Models of Proteins and Nucleic Acids”
 by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
-</section>
-<section class="tex2jax_ignore mathjax_ignore" id="setup">
-<h1>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h1>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
@@ -461,8 +480,8 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 </section>
-<section class="tex2jax_ignore mathjax_ignore" id="make-model">
-<h1>Make model<a class="headerlink" href="#make-model" title="Permalink to this headline">#</a></h1>
+<section id="make-model">
+<h2>Make model<a class="headerlink" href="#make-model" title="Permalink to this headline">#</a></h2>
 <p><img alt="Casino HMM" src="https://github.com/probml/dynamax/blob/main/docs/figures/casino.png?raw=true" /></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -502,8 +521,8 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 </section>
-<section class="tex2jax_ignore mathjax_ignore" id="sample-data-from-model">
-<h1>Sample data from model<a class="headerlink" href="#sample-data-from-model" title="Permalink to this headline">#</a></h1>
+<section id="sample-data-from-model">
+<h2>Sample data from model<a class="headerlink" href="#sample-data-from-model" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_timesteps</span> <span class="o">=</span> <span class="mi">300</span>
@@ -585,8 +604,8 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 </section>
-<section class="tex2jax_ignore mathjax_ignore" id="filtering-forwards-algorithm">
-<h1>Filtering (forwards algorithm)<a class="headerlink" href="#filtering-forwards-algorithm" title="Permalink to this headline">#</a></h1>
+<section id="filtering-forwards-algorithm">
+<h2>Filtering (forwards algorithm)<a class="headerlink" href="#filtering-forwards-algorithm" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
@@ -604,8 +623,8 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 </section>
-<section class="tex2jax_ignore mathjax_ignore" id="plotting-code">
-<h1>Plotting code<a class="headerlink" href="#plotting-code" title="Permalink to this headline">#</a></h1>
+<section id="plotting-code">
+<h2>Plotting code<a class="headerlink" href="#plotting-code" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -686,8 +705,8 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 </section>
-<section class="tex2jax_ignore mathjax_ignore" id="smoothing-forwards-backwards-algorithm">
-<h1>Smoothing (forwards-backwards algorithm)<a class="headerlink" href="#smoothing-forwards-backwards-algorithm" title="Permalink to this headline">#</a></h1>
+<section id="smoothing-forwards-backwards-algorithm">
+<h2>Smoothing (forwards-backwards algorithm)<a class="headerlink" href="#smoothing-forwards-backwards-algorithm" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
@@ -718,8 +737,8 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 </section>
-<section class="tex2jax_ignore mathjax_ignore" id="map-sequence-viterbi-algorithm">
-<h1>MAP sequence (Viterbi algorithm)<a class="headerlink" href="#map-sequence-viterbi-algorithm" title="Permalink to this headline">#</a></h1>
+<section id="map-sequence-viterbi-algorithm">
+<h2>MAP sequence (Viterbi algorithm)<a class="headerlink" href="#map-sequence-viterbi-algorithm" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">most_likely_states</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">most_likely_states</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
@@ -741,6 +760,7 @@ expected frequencies:  [0.16666666666666666, 0.5]
 <img alt="../../_images/854d5cf8c09f068fb061bf6b3c9e0a4443ba3aabf17b02638ce1b256e02f9846.png" src="../../_images/854d5cf8c09f068fb061bf6b3c9e0a4443ba3aabf17b02638ce1b256e02f9846.png" />
 </div>
 </div>
+</section>
 </section>
 
 

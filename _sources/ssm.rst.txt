@@ -1,7 +1,7 @@
 SSM
 ===
 
-.. currentmodule:: dynamax
+.. currentmodule:: dynamax.abstractions
 
 .. autosummary::
   :nosignatures:

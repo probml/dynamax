@@ -36,6 +36,8 @@
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="MAP parameter estimation for an LG-SSM using EM and SGD" href="lgssm_learning.html" />
+    <link rel="prev" title="Tracking an object using the Kalman filter" href="kf_tracking.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -90,7 +92,7 @@
   Contents:
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../hmm/casino_hmm_inference.html">
    Casino HMM: Inference (state estimation)
@@ -109,6 +111,36 @@
  <li class="toctree-l1">
   <a class="reference internal" href="kf_tracking.html">
    Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="lgssm_learning.html">
+   MAP parameter estimation for an LG-SSM using EM and SGD
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
+   Tracking a spiraling object using the extended / unscented Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
+   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
+   Online learning for an MLP using extended Kalman filtering
   </a>
  </li>
 </ul>
@@ -332,11 +364,6 @@ title="Print to PDF"
    Plot results
   </a>
  </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#run-the-script-version-of-this-notebook">
-   Run the script version of this notebook
-  </a>
- </li>
 </ul>
 
     </nav>
@@ -386,11 +413,6 @@ title="Print to PDF"
    Plot results
   </a>
  </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#run-the-script-version-of-this-notebook">
-   Run the script version of this notebook
-  </a>
- </li>
 </ul>
 
                         </nav>
@@ -410,11 +432,11 @@ We assume that these are constant over time.
 The graphical model is shown below.</p>
 <p><img alt="RLS" src="https://github.com/probml/dynamax/blob/main/docs/figures/rlsDgm.png?raw=true" /></p>
 <p>The model has the following form</p>
-<div class="amsmath math notranslate nohighlight" id="equation-a683e75a-93ec-4518-b72a-a41fedda105c">
-<span class="eqno">(1)<a class="headerlink" href="#equation-a683e75a-93ec-4518-b72a-a41fedda105c" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
 \theta_t &amp;=  \theta_{t-1}  \\
 y_t &amp;= x_t^T \theta_t + r_t, \; r_t \sim N(0, \sigma^2)
-\end{align}\]</div>
+\end{align*}\]</div>
 <p>This is a LG-SSM, where <span class="math notranslate nohighlight">\(F=I\)</span>, <span class="math notranslate nohighlight">\(Q=0\)</span>, <span class="math notranslate nohighlight">\(H_t = x_t^T\)</span> and <span class="math notranslate nohighlight">\(R = \sigma^2\)</span>.</p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h2>
@@ -574,29 +596,10 @@ This should give the same results as the final step of online inference.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7ff868ff15b0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd7fc1dbe20&gt;
 </pre></div>
 </div>
 <img alt="../../_images/25fe6d8df78ffe332b01e6249f318ce6271284954b4992a1dff45b7578dc5636.png" src="../../_images/25fe6d8df78ffe332b01e6249f318ce6271284954b4992a1dff45b7578dc5636.png" />
-</div>
-</div>
-</section>
-<section id="run-the-script-version-of-this-notebook">
-<h2>Run the script version of this notebook<a class="headerlink" href="#run-the-script-version-of-this-notebook" title="Permalink to this headline">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.demos.kf_linreg</span> <span class="kn">import</span> <span class="o">*</span>
-
-
-<span class="n">kf_results</span><span class="p">,</span> <span class="n">batch_results</span> <span class="o">=</span> <span class="n">online_kf_vs_batch_linreg</span><span class="p">()</span>
-<span class="n">dict_figures</span> <span class="o">=</span> <span class="n">plot_online_kf_vs_batch_linreg</span><span class="p">(</span><span class="n">kf_results</span><span class="p">,</span> <span class="n">batch_results</span><span class="p">)</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../../_images/ced6e0d7679ed800fda2721dc75435212671ecc1d9d7164cd7c6632181124e58.png" src="../../_images/ced6e0d7679ed800fda2721dc75435212671ecc1d9d7164cd7c6632181124e58.png" />
 </div>
 </div>
 </section>
@@ -610,6 +613,20 @@ This should give the same results as the final step of online inference.</p>
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="kf_tracking.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Tracking an object using the Kalman filter</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="lgssm_learning.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">MAP parameter estimation for an LG-SSM using EM and SGD</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
 </div>
             </footer>
         </div>

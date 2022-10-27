@@ -17,23 +17,25 @@ Traceback (most recent call last):
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
-states, emissions = nlgssm.sample(key=0, num_timesteps=100)
-
-
-all_figures = {}
-fig, ax = plt.subplots()
-true_title = "Noisy obervations from hidden trajectory"
-_ = plot_inference(states, emissions, ax=ax, title=true_title)
-all_figures["ekf_spiral_true"] = fig
+from functools import partial
+import jax.numpy as jnp
+import jax.random as jr
+from jax import vmap
+import optax
+from graphviz import Digraph
+import matplotlib.pyplot as plt
+from dynamax.hmm.models import CategoricalHMM
 ------------------
 
 [0;31m---------------------------------------------------------------------------[0m
-[0;31mAttributeError[0m                            Traceback (most recent call last)
-Cell [0;32mIn [5], line 1[0m
-[0;32m----> 1[0m states, emissions [38;5;241m=[39m [43mnlgssm[49m[38;5;241;43m.[39;49m[43msample[49m(key[38;5;241m=[39m[38;5;241m0[39m, num_timesteps[38;5;241m=[39m[38;5;241m100[39m)
-[1;32m      4[0m all_figures [38;5;241m=[39m {}
-[1;32m      5[0m fig, ax [38;5;241m=[39m plt[38;5;241m.[39msubplots()
+[0;31mModuleNotFoundError[0m                       Traceback (most recent call last)
+Cell [0;32mIn [2], line 6[0m
+[1;32m      4[0m [38;5;28;01mfrom[39;00m [38;5;21;01mjax[39;00m [38;5;28;01mimport[39;00m vmap
+[1;32m      5[0m [38;5;28;01mimport[39;00m [38;5;21;01moptax[39;00m
+[0;32m----> 6[0m [38;5;28;01mfrom[39;00m [38;5;21;01mgraphviz[39;00m [38;5;28;01mimport[39;00m Digraph
+[1;32m      7[0m [38;5;28;01mimport[39;00m [38;5;21;01mmatplotlib[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpyplot[39;00m [38;5;28;01mas[39;00m [38;5;21;01mplt[39;00m
+[1;32m      8[0m [38;5;28;01mfrom[39;00m [38;5;21;01mdynamax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mhmm[39;00m[38;5;21;01m.[39;00m[38;5;21;01mmodels[39;00m [38;5;28;01mimport[39;00m CategoricalHMM
 
-[0;31mAttributeError[0m: 'NLGSSMParams' object has no attribute 'sample'
-AttributeError: 'NLGSSMParams' object has no attribute 'sample'
+[0;31mModuleNotFoundError[0m: No module named 'graphviz'
+ModuleNotFoundError: No module named 'graphviz'
 
