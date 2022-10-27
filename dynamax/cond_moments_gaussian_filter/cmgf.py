@@ -25,20 +25,6 @@ _jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
 Parameter Data Classes
 """
 @chex.dataclass
-class CMGFParams:
-    """Lightweight container for CMGF parameters.
-    """
-    initial_mean: chex.Array
-    initial_covariance: chex.Array
-    dynamics_function: Callable
-    dynamics_covariance: chex.Array
-    emission_mean_function: Callable
-    emission_cov_function: Callable
-    gaussian_expectation: Callable
-    gaussian_cross_covariance: Callable
-
-
-@chex.dataclass
 class CMGFIntegrals:
     """
     Lightweight container for CMGF Gaussian integrals
@@ -127,37 +113,6 @@ class GHKFIntegrals(SigmaPointIntegrals):
         unit_sigmas = jnp.array(list(product(samples_1d, repeat=n)))
         sigmas = m + vmap(jnp.matmul, [None, 0], 0)(jnp.linalg.cholesky(P), unit_sigmas)
         return weights, weights, sigmas
-
-
-@chex.dataclass
-class EKFParams(CMGFParams):
-    """
-    Lightweight container for EKF Parameters.
-    """
-    gaussian_expectation: Callable = EKFIntegrals().gaussian_expectation
-    gaussian_cross_covariance: Callable = EKFIntegrals().gaussian_cross_covariance
-
-
-@chex.dataclass
-class UKFParams(CMGFParams):
-    """
-    Lightweight container for UKF Parameters.
-    """
-    alpha: chex.Scalar = jnp.sqrt(3)
-    beta: chex.Scalar = 2
-    kappa: chex.Scalar = 1
-    gaussian_expectation: Callable = UKFIntegrals(alpha=alpha, beta=beta, kappa=kappa).gaussian_expectation
-    gaussian_cross_covariance: Callable = UKFIntegrals(alpha=alpha, beta=beta, kappa=kappa).gaussian_cross_covariance
-
-
-@chex.dataclass
-class GHKFParams(CMGFParams):
-    """
-    Lightweight container for GHKF Parameters.
-    """
-    order: chex.Scalar = 10
-    gaussian_expectation: Callable = GHKFIntegrals(order=order).gaussian_expectation
-    gaussian_cross_covariance: Callable = GHKFIntegrals(order=order).gaussian_cross_covariance
 
 
 """
