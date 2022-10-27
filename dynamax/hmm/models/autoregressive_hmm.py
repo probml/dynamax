@@ -70,14 +70,14 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
         Note: in the future we may support more initialization schemes, like K-Means.
 
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).
             method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
             initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
             transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
             emission_weights (array, optional): manually specified emission weights. Defaults to None.
             emission_biases (array, optional): manually specified emission biases. Defaults to None.
             emission_covariance (array, optional): manually specified emission covariance. Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to jr.PRNGKey(0).
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
             params: a nested dictionary of arrays containing the model parameters.

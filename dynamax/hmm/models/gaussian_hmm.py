@@ -62,6 +62,65 @@ class GaussianHMM(ExponentialFamilyHMM):
                            covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, param_props
 
+    def initialize(self, key=jr.PRNGKey(0),
+                   method="prior",
+                   initial_probs=None,
+                   transition_matrix=None,
+                   emission_means=None,
+                   emission_covariances=None,
+                   emissions=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
+
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_means (array, optional): manually specified emission means. Defaults to None.
+            emission_covariances (array, optional): manually specified emission covariances. Defaults to None.
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
+        # Base class initializes the initial probs and transition matrix
+        this_key, key = jr.split(key)
+        params, props = super().initialize(key=this_key, method=method,
+                                           initial_probs=initial_probs,
+                                           transition_matrix=transition_matrix)
+
+        if method.lower() == "kmeans":
+            assert emissions is not None, "Need emissions to initialize the model with K-Means!"
+            from sklearn.cluster import KMeans
+            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+
+            _emission_means = jnp.array(km.cluster_centers_)
+            _emission_covs = jnp.tile(jnp.eye(self.emission_dim)[None, :, :], (self.num_states, 1, 1))
+
+        elif method.lower() == "prior":
+            this_key, key = jr.split(key)
+            prior = NormalInverseWishart(self.emission_prior_mean, self.emission_prior_conc,
+                                         self.emission_prior_df, self.emission_prior_scale)
+            (_emission_covs, _emission_means) = prior.sample(seed=this_key, sample_shape=(self.num_states,))
+
+        else:
+            raise Exception("Invalid initialization method: {}".format(method))
+
+        # Only use the values above if the user hasn't specified their own
+        default = lambda x, x0: x if x is not None else x0
+        params['emissions'] = dict(means=default(emission_means, _emission_means),
+                                   covs=default(emission_covariances, _emission_covs))
+        props['emissions'] = dict(means=ParameterProperties(),
+                                  covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
+        return params, props
+
     def _zeros_like_suff_stats(self):
         initial_stats = jnp.zeros(self.num_states)
         transition_stats = jnp.zeros((self.num_states, self.num_states))
