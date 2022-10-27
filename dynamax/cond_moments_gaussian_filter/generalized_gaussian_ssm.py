@@ -18,24 +18,25 @@ class GGSSMParams:
     dynamics_covariance: chex.Array
     emission_mean_function: Callable
     emission_cov_function: Callable
+    emission_dist: Callable
 
 
 class GGSSM(SSM):
     """
     General Gaussian State Space Model is defined as follows:
     p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)
-    p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)
+    p(y_t | z_t) = N(y_t | h(z_t, u_t), R(z_t, u_t))
     p(z_1) = N(z_1 | m, S)
     where z_t = hidden, y_t = observed, u_t = inputs (can be None),
-    f = params["dynamics"]["function"]
-    Q = params["dynamics"]["cov"] 
-    h = params["emissions"]["function"]
-    R = params["emissions"]["cov"]
-    m = params["initial"]["mean"]
-    S = params["initial"]["cov"]
+    f = params.dynamics_function
+    Q = params.dynamics_covariance 
+    h = params.emission_mean_function
+    R = params.emission_cov_function
+    m = params.initial_mean
+    S = params.initial_covariance
     """
 
-    def __init__(self, state_dim, emission_dim,   input_dim=0):
+    def __init__(self, state_dim, emission_dim, input_dim=0):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
         self.input_dim = 0
@@ -49,29 +50,23 @@ class GGSSM(SSM):
         return (self.input_dim,) if self.input_dim > 0 else None
 
     def initial_distribution(self, params, covariates=None):
-        return MVN(params["initial"]["mean"], params["initial"]["cov"])
+        return MVN(params.initial_mean, params.initial_covariance)
 
     def transition_distribution(self, params, state, covariates=None):
-        f = params["dynamics"]["function"]
+        f = params.dynamics_function
         if covariates is None:
             mean = f(state)
         else:
             mean = f(state, covariates)
-        return MVN(mean, params["dynamics"]["cov"])
+        return MVN(mean, params.dynamics_covariance)
 
     def emission_distribution(self, params, state, covariates=None):
-        h = params["emissions"]["function"]
+        h = params.emission_mean_function
+        R = params.emission_cov_function
         if covariates is None:
             mean = h(state)
+            cov = R(state)
         else:
             mean = h(state, covariates)
-        return MVN(mean, params["emissions"]["cov"])
-
-    def make_inference_args(self, params):
-        return NLGSSMParams(
-            initial_mean=params["initial"]["mean"],
-            initial_covariance=params["initial"]["cov"],
-            dynamics_function=params["dynamics"]["function"],
-            dynamics_covariance=params["dynamics"]["cov"],
-            emission_function=params["emissions"]["function"],
-            emission_covariance=params["emissions"]["cov"])
+            cov = R(state, covariates)
+        return params.emission_dist(mean, cov)
