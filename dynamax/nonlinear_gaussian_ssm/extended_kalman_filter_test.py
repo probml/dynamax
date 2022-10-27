@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother
-from dynamax.extended_kalman_filter.inference import extended_kalman_filter, extended_kalman_smoother
+from dynamax.nonlinear_gaussian_ssm.extended_kalman_filter import extended_kalman_filter, extended_kalman_smoother
 from dynamax.nonlinear_gaussian_ssm.sarkka_lib import ekf, eks
 from dynamax.nonlinear_gaussian_ssm.inference_test import lgssm_to_nlgssm, random_lgssm_args, random_nlgssm_args
 

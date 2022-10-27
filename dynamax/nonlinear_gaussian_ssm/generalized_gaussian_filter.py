@@ -1,7 +1,6 @@
 from jax import numpy as jnp
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from dynamax.generalized_gaussian_filter.containers import GGSSMPosterior
 
 from typing import Callable
 from itertools import product

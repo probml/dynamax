@@ -18,7 +18,7 @@ _zeros_if_none = lambda x, shp: x if x is not None else jnp.zeros(shp)
 
 @chex.dataclass
 class NLGSSMParams:
-    """Lightweight container for NLGSSM inference parameters."""
+    """Lightweight container for NLGSSM parameters, used by inference algorithms."""
 
     initial_mean: chex.Array
     initial_covariance: chex.Array

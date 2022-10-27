@@ -6,7 +6,7 @@ import jax.random as jr
 import jax.numpy as jnp
 
 from dynamax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_sample
-from dynamax.nonlinear_gaussian_ssm.containers import NLGSSMParams
+from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import NLGSSMParams
 from dynamax.abstractions import SSM
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector

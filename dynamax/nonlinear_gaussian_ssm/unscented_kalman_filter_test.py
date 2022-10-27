@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 
-from dynamax.unscented_kalman_filter.inference import unscented_kalman_smoother, UKFHyperParams
+from dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.sarkka_lib import ukf, uks
 from dynamax.nonlinear_gaussian_ssm.inference_test import random_nlgssm_args
 
