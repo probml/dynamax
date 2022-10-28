@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, tree_map
 
+from dynamax.hmm.models.base import StandardHMM
 from dynamax.hmm.models.linreg_hmm import LinearRegressionHMM
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
@@ -71,9 +72,8 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
         """
         # Base class initializes the initial probs and transition matrix
         this_key, key = jr.split(key)
-        params, props = super().initialize(key=this_key, method=method,
-                                           initial_probs=initial_probs,
-                                           transition_matrix=transition_matrix)
+        params, props = super(LinearRegressionHMM, self).initialize(
+            key=this_key, method=method, initial_probs=initial_probs, transition_matrix=transition_matrix)
 
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
