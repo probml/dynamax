@@ -26,7 +26,7 @@ or sequential Monte Carlo (SMC)).
 Installation and Testing
 ------------------------
 
-To install locally, do this:
+To install locally:
 
 .. code-block:: console
 
@@ -34,14 +34,14 @@ To install locally, do this:
    cd dynamax
    pip install -e .
 
-To install in Colab, do this:
+To install in Colab:
 
 .. code-block:: pycon
 
    %pip install git+https://github.com/probml/dynamax.git
 
 
-To run the tests, do this:
+To run the tests:
 
 .. code-block:: console
 
