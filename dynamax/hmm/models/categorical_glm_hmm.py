@@ -11,7 +11,7 @@ class CategoricalRegressionHMM(StandardHMM):
     def __init__(self,
                  num_states,
                  num_classes,
-                 feature_dim,
+                 covariate_dim,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1):
         """_summary_
@@ -25,7 +25,7 @@ class CategoricalRegressionHMM(StandardHMM):
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
         self.num_classes = num_classes
-        self.feature_dim = feature_dim
+        self.feature_dim = covariate_dim
 
     @property
     def emission_shape(self):

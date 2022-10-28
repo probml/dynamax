@@ -42,16 +42,6 @@ class LinearRegressionHMM(ExponentialFamilyHMM):
     def covariates_shape(self):
         return (self.covariate_dim,)
 
-    # def _initialize_emissions(self, key):
-    #     key1, key2 = jr.split(key, 2)
-    #     emission_weights = jr.normal(key1, (self.num_states, self.emission_dim, self.covariate_dim))
-    #     emission_biases = jr.normal(key2, (self.num_states, self.emission_dim))
-    #     emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, 1, 1))
-
-    #     params = dict(weights=emission_weights, biases=emission_biases, covs=emission_covs)
-    #     param_props = dict(weights=ParameterProperties(), biases=ParameterProperties(), covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
-    #     return params, param_props
-
     def initialize(self,
                    key=jr.PRNGKey(0),
                    method="prior",

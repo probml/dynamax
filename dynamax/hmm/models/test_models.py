@@ -19,7 +19,7 @@ CONFIGS = [
     (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
     (models.DiagonalGaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
     (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
-    (models.LogisticRegressionHMM, dict(num_states=4, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.LogisticRegressionHMM, dict(num_states=4, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.MultinomialHMM, dict(num_states=4, emission_dim=3, num_classes=5, num_trials=10), None),
     (models.PoissonHMM, dict(num_states=4, emission_dim=3), None),
 ]
