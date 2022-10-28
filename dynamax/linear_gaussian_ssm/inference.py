@@ -237,57 +237,6 @@ def lgssm_filter(params, emissions, inputs=None):
     return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def lgssm_posterior_sample(rng, params, emissions, inputs=None):
-    """Run forward-filtering, backward-sampling to draw samples of
-        x_{1:T} | y_{1:T}, u_{1:T}.
-
-    Args:
-        rng: jax.random.PRNGKey.
-        params: an LGSSMParams instance (or object with the same fields)
-        emissions (T,D_hid): array of observations.
-        inputs (T,D_in): array of inputs.
-
-    Returns:
-        ll: marginal log likelihood of the observations.
-        states (T,D_hid): samples from the posterior distribution on latent states.
-    """
-    num_timesteps = len(emissions)
-    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-
-    # Run the Kalman filter
-    filtered_posterior = lgssm_filter(params, emissions, inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
-
-    # Sample backward in time
-    def _step(carry, args):
-        next_state = carry
-        rng, filtered_mean, filtered_cov, t = args
-
-        # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
-        B = _get_params(params.dynamics_input_weights, 2, t)
-        b = _get_params(params.dynamics_bias, 1, t)
-        Q = _get_params(params.dynamics_covariance, 2, t)
-        u = inputs[t]
-
-        # Condition on next state
-        smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F, B, b, Q, u, next_state)
-        state = MVN(smoothed_mean, smoothed_cov).sample(seed=rng)
-        return state, state
-
-    # Initialize the last state
-    rng, this_rng = jr.split(rng, 2)
-    last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_rng)
-
-    args = (
-        jr.split(rng, num_timesteps - 1),
-        filtered_means[:-1][::-1],
-        filtered_covs[:-1][::-1],
-        jnp.arange(num_timesteps - 2, -1, -1),
-    )
-    _, reversed_states = lax.scan(_step, last_state, args)
-    states = jnp.row_stack([reversed_states[::-1], last_state])
-    return ll, states
 
 
 @preprocess_args
@@ -355,3 +304,56 @@ def lgssm_smoother(params, emissions, inputs=None):
         smoothed_covariances=smoothed_covs,
         smoothed_cross_covariances=smoothed_cross,
     )
+
+
+def lgssm_posterior_sample(rng, params, emissions, inputs=None):
+    """Run forward-filtering, backward-sampling to draw samples of
+        x_{1:T} | y_{1:T}, u_{1:T}.
+
+    Args:
+        rng: jax.random.PRNGKey.
+        params: an LGSSMParams instance (or object with the same fields)
+        emissions (T,D_hid): array of observations.
+        inputs (T,D_in): array of inputs.
+
+    Returns:
+        ll: marginal log likelihood of the observations.
+        states (T,D_hid): samples from the posterior distribution on latent states.
+    """
+    num_timesteps = len(emissions)
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
+
+    # Run the Kalman filter
+    filtered_posterior = lgssm_filter(params, emissions, inputs)
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
+
+    # Sample backward in time
+    def _step(carry, args):
+        next_state = carry
+        rng, filtered_mean, filtered_cov, t = args
+
+        # Shorthand: get parameters and inputs for time index t
+        F = _get_params(params.dynamics_matrix, 2, t)
+        B = _get_params(params.dynamics_input_weights, 2, t)
+        b = _get_params(params.dynamics_bias, 1, t)
+        Q = _get_params(params.dynamics_covariance, 2, t)
+        u = inputs[t]
+
+        # Condition on next state
+        smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F, B, b, Q, u, next_state)
+        state = MVN(smoothed_mean, smoothed_cov).sample(seed=rng)
+        return state, state
+
+    # Initialize the last state
+    rng, this_rng = jr.split(rng, 2)
+    last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_rng)
+
+    args = (
+        jr.split(rng, num_timesteps - 1),
+        filtered_means[:-1][::-1],
+        filtered_covs[:-1][::-1],
+        jnp.arange(num_timesteps - 2, -1, -1),
+    )
+    _, reversed_states = lax.scan(_step, last_state, args)
+    states = jnp.row_stack([reversed_states[::-1], last_state])
+    return ll, states

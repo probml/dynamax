@@ -9,3 +9,4 @@ tqdm
 flax
 scikit-learn
 blackjax
+jaxopt
