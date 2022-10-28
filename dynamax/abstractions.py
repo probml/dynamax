@@ -29,6 +29,7 @@ class SSM(ABC):
     @abstractmethod
     def initial_distribution(self, params, covariates=None):
         """Return an initial distribution over latent states.
+
         Returns:
             dist (tfd.Distribution): distribution over initial latent state.
         """
@@ -37,6 +38,7 @@ class SSM(ABC):
     @abstractmethod
     def transition_distribution(self, params, state, covariates=None):
         """Return a distribution over next latent state given current state.
+
         Args:
             state (PyTree): current latent state
         Returns:
@@ -47,6 +49,7 @@ class SSM(ABC):
     @abstractmethod
     def emission_distribution(self, params, state, covariates=None):
         """Return a distribution over emissions given current state.
+
         Args:
             state (PyTree): current latent state.
         Returns:
@@ -59,11 +62,7 @@ class SSM(ABC):
     def emission_shape(self):
         """Return a pytree matching the pytree of tuples specifying the shape(s)
         of a single time step's emissions.
-
         For example, a Gaussian HMM with D dimensional emissions would return (D,).
-
-        NOTE: In contrast to `covariates_shape`, this will typically not be a
-        dictionary since emissions are passed as args, not kwargs.
         """
         raise NotImplementedError
 
@@ -77,6 +76,7 @@ class SSM(ABC):
 
     def sample(self, params, key, num_timesteps, covariates=None):
         """Sample a sequence of latent states and emissions.
+
         Args:
             key: rng key
             num_timesteps: length of sequence to generate
@@ -132,6 +132,7 @@ class SSM(ABC):
 
     def log_prior(self, params):
         """Return the log prior probability of any model parameters.
+
         Returns:
             lp (Scalar): log prior probability.
         """
@@ -176,6 +177,7 @@ class SSM(ABC):
         T is the length of a sequence. Then, a random susbet with shape (B, T)
         of entire sequence, not time steps, is sampled at each step where B is
         batch size.
+
         Args:
             batch_emissions (chex.Array): Independent sequences.
             optmizer (optax.Optimizer): Optimizer.

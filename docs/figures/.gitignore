@@ -1,0 +1,2 @@
+# allow png files by undoing parent restriction
+!*.png

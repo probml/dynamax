@@ -71,3 +71,8 @@ class TestParallelLGSSMSmoother:
                 self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances,
                 atol=1e-5,rtol=1e-3
                 )
+
+    def test_marginal_loglik(self):
+        assert jnp.allclose(
+            self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, rtol=1e-2
+        )

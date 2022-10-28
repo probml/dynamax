@@ -7,10 +7,11 @@ import jax.scipy as jsp
 from jax.tree_util import tree_map
 from jaxopt import LBFGS
 from dynamax.abstractions import SSM
-from dynamax.cond_moments_gaussian_filter.containers import EKFParams
-from dynamax.cond_moments_gaussian_filter.inference import (
+from dynamax.cond_moments_gaussian_filter.cmgf import (
     iterated_conditional_moments_gaussian_filter as cmgf_filt,
-    iterated_conditional_moments_gaussian_smoother as cmgf_smooth)
+    iterated_conditional_moments_gaussian_smoother as cmgf_smooth,
+    EKFIntegrals)
+from dynamax.cond_moments_gaussian_filter.generalized_gaussian_ssm import GGSSMParams
 from dynamax.linear_gaussian_ssm.inference import (
     LGSSMParams,
     lgssm_filter,
@@ -539,7 +540,7 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
         comp_cov = jsp.linalg.block_diag(*params['dynamics_covariances'].values())
         spars_matrix = jsp.linalg.block_diag(*self.spars_matrix.values())
         spars_cov = spars_matrix @ comp_cov @ spars_matrix.T
-        return EKFParams(initial_mean=self.initial_mean,
+        return GGSSMParams(initial_mean=self.initial_mean,
                          initial_covariance=self.initial_covariance,
                          dynamics_function=lambda z: self.dynamics_matrix @ z,
                          dynamics_covariance=spars_cov,
@@ -550,11 +551,11 @@ class PoissonSSM(_StructuralTimeSeriesSSM):
 
     def _ssm_filter(self, params, emissions, inputs):
         """The filter of the corresponding SSM model"""
-        return cmgf_filt(params=params, emissions=emissions, inputs=inputs, num_iter=2)
+        return cmgf_filt(params=params, inf_params=EKFIntegrals(), emissions=emissions, inputs=inputs, num_iter=2)
 
     def _ssm_smoother(self, params, emissions, inputs):
         """The filter of the corresponding SSM model"""
-        return cmgf_smooth(params=params, emissions=emissions, inputs=inputs, num_iter=2)
+        return cmgf_smooth(params=params, inf_params=EKFIntegrals(), emissions=emissions, inputs=inputs, num_iter=2)
 
     def _ssm_posterior_sample(self, key, ssm_params, observed_time_series, inputs):
         """The posterior sampler of the corresponding SSM model"""

@@ -1,0 +1,16 @@
+jax>=0.3.15
+jaxlib
+optax
+chex
+tensorflow_probability
+matplotlib
+seaborn
+tqdm
+flax
+scikit-learn
+blackjax
+sphinx
+sphinx-autobuild
+myst-nb
+jupytext
+sphinx-book-theme

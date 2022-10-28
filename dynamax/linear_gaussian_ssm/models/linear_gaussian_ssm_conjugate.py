@@ -14,27 +14,12 @@ from tqdm.auto import trange
 
 class LinearGaussianConjugateSSM(LinearGaussianSSM):
     """
-    Linear Gaussian State Space Model with conjugate priors for model parameters,
-    p(m, S) = NIW(loc, mean_concentration, df, scale)
-    p([F, B, b], Q) = MNIW(loc, col_precision, df, scale)
-    p([H, D, d], R) = MNIW(loc, col_precision, df, scale)
-    where:
-
-    p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
-    p(y_t | z_t) = N(y_t | H_t z_t + D_t u_t + d_t, R_t)
-    p(z_1) = N(z_1 | m, S)
-    where z_t = hidden, y_t = observed, u_t = inputs,
-    dynamics_matrix = F
-    dynamics_covariance = Q
-    emission_matrix = H
-    emissions_covariance = R
-    initial_mean = mu_{1|0}
-    initial_covariance = Sigma_{1|0}
-    Optional parameters (default to 0)
-    dynamics_input_matrix = B
-    dynamics_bias = b
-    emission_input_matrix = D
-    emission_bias = d
+    Linear Gaussian State Space Model with conjugate priors for the model parameters.
+    The parameters are the same as LG-SSM.
+    The priors are as follows:
+    p(m, S) = NIW(loc, mean_concentration, df, scale) # normal inverse wishart
+    p([F, B, b], Q) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart
+    p([H, D, d], R) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart
     """
     def __init__(self,
                  state_dim,

@@ -9,7 +9,4 @@ tqdm
 flax
 scikit-learn
 blackjax
-myst-nb
-jupytext
-sphinx-book-theme
-pre-commit
+jaxopt
