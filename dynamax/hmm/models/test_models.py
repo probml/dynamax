@@ -11,15 +11,15 @@ NUM_TIMESTEPS = 100
 CONFIGS = [
     (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
     (models.CategoricalHMM, dict(num_states=4, num_emissions=3, num_classes=5), None),
-    (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.GaussianHMM, dict(num_states=4, emission_dim=3), None),
     (models.DiagonalGaussianHMM, dict(num_states=4, emission_dim=3), None),
     (models.SphericalGaussianHMM, dict(num_states=4, emission_dim=3), None),
+    (models.SharedCovarianceGaussianHMM, dict(num_states=4, emission_dim=3), None),
     (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
     (models.DiagonalGaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
-    (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.LogisticRegressionHMM, dict(num_states=4, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
-    (models.SharedCovarianceGaussianHMM, dict(num_states=4, emission_dim=3), None),
     (models.MultinomialHMM, dict(num_states=4, emission_dim=3, num_classes=5, num_trials=10), None),
     (models.PoissonHMM, dict(num_states=4, emission_dim=3), None),
 ]

@@ -24,9 +24,9 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
                  transition_matrix_concentration=1.1
                  ):
         self.num_lags = num_lags
-        feature_dim = num_lags * emission_dim
+        covariate_dim = num_lags * emission_dim
 
-        super().__init__(num_states, feature_dim, emission_dim,
+        super().__init__(num_states, covariate_dim, emission_dim,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
@@ -36,7 +36,7 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
 
     @property
     def covariates_shape(self):
-        return (self.feature_dim,)
+        return (self.covariate_dim,)
 
     def _initialize_emissions(self, key):
         key1, key2 = jr.split(key, 2)
