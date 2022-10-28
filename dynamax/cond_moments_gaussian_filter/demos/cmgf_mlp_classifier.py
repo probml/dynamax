@@ -14,8 +14,8 @@ import jax.random as jr
 from jax.flatten_util import ravel_pytree
 import flax.linen as nn
 
-from dynamax.cond_moments_gaussian_filter.containers import EKFParams
-from dynamax.cond_moments_gaussian_filter.inference import conditional_moments_gaussian_filter
+from dynamax.cond_moments_gaussian_filter.cmgf import conditional_moments_gaussian_filter, EKFIntegrals
+from dynamax.cond_moments_gaussian_filter.generalized_gaussian_ssm import GGSSMParams
 
 def plot_posterior_predictive(ax, X, Y, title, Xspace=None, Zspace=None, cmap=cm.rainbow):
     """Plot the 2d posterior predictive distribution.
@@ -187,7 +187,7 @@ def main():
     # Run CMGF-EKF to train the MLP Classifier
     state_dim, emission_dim = flat_params.size, output_dim
     sigmoid_fn = lambda w, x: jax.nn.sigmoid(apply_fn(w, x))
-    cmgf_ekf_params = EKFParams(
+    cmgf_ekf_params = GGSSMParams(
         initial_mean=flat_params,
         initial_covariance=jnp.eye(state_dim),
         dynamics_function=lambda w, _: w,
@@ -195,7 +195,7 @@ def main():
         emission_mean_function = lambda w, x: sigmoid_fn(w, x),
         emission_cov_function = lambda w, x: sigmoid_fn(w, x) * (1 - sigmoid_fn(w, x))
     )
-    cmgf_ekf_post = conditional_moments_gaussian_filter(cmgf_ekf_params, output, inputs=input)
+    cmgf_ekf_post = conditional_moments_gaussian_filter(cmgf_ekf_params, EKFIntegrals(), output, inputs=input)
     w_means, w_covs = cmgf_ekf_post.filtered_means, cmgf_ekf_post.filtered_covariances
 
     # Define grid on input space
