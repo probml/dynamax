@@ -13,11 +13,11 @@ CONFIGS = [
     (models.CategoricalHMM, dict(num_states=4, num_emissions=3, num_classes=5), None),
     (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.GaussianHMM, dict(num_states=4, emission_dim=3), None),
+    (models.DiagonalGaussianHMM, dict(num_states=4, emission_dim=3), None),
     (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
-    (models.GaussianMixtureDiagHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
+    (models.DiagonalGaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
     (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.LogisticRegressionHMM, dict(num_states=4, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
-    (models.MultivariateNormalDiagHMM, dict(num_states=4, emission_dim=3), None),
     (models.MultivariateNormalSphericalHMM, dict(num_states=4, emission_dim=3), None),
     #(models.MultivariateNormalTiedHMM, dict(num_states=4, emission_dim=3), None),
     (models.MultinomialHMM, dict(num_states=4, emission_dim=3, num_classes=5, num_trials=10), None),
@@ -30,7 +30,7 @@ def test_sample_and_fit(cls, kwargs, covariates):
     hmm = cls(**kwargs)
     #key1, key2 = jr.split(jr.PRNGKey(int(datetime.now().timestamp())))
     key1, key2 = jr.split(jr.PRNGKey(42))
-    params, param_props = hmm.random_initialization(key1)
+    params, param_props = hmm.initialize(key1)
     states, emissions = hmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS, covariates=covariates)
     fitted_params, lps = hmm.fit_em(params, param_props, emissions, covariates=covariates, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
@@ -52,7 +52,7 @@ def test_categorical_hmm_viterbi():
 
 def test_gmm_hmm_vs_gmm_diag_hmm(key=jr.PRNGKey(0), num_states=4, num_components=3, emission_dim=2):
     key1, key2, key3 = jr.split(key, 3)
-    diag_hmm = models.GaussianMixtureDiagHMM(num_states, num_components, emission_dim)
+    diag_hmm = models.DiagonalGaussianMixtureHMM(num_states, num_components, emission_dim)
     diag_params, _ = diag_hmm.random_initialization(key1)
     full_hmm = models.GaussianMixtureHMM(num_states, num_components, emission_dim)
     full_params, _ = full_hmm.random_initialization(key2)
