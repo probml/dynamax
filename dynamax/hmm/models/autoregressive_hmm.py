@@ -38,20 +38,6 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
     def covariates_shape(self):
         return (self.covariate_dim,)
 
-    def _initialize_emissions(self, key):
-        key1, key2 = jr.split(key, 2)
-
-        # Make random emission matrices that are close to identity
-        emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
-        emission_weights = emission_weights.at[:, :, :self.emission_dim].set(0.95 * jnp.eye(self.emission_dim))
-        emission_weights += 0.01 * jr.normal(key1, (self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
-        emission_biases = jr.normal(key2, (self.num_states, self.emission_dim))
-        emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, 1, 1))
-
-        params = dict(weights=emission_weights, biases=emission_biases, covs=emission_covs)
-        param_props = dict(weights=ParameterProperties(), biases=ParameterProperties(), covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
-        return params, param_props
-
     def initialize(self,
                    key=jr.PRNGKey(0),
                    method="prior",
@@ -102,7 +88,7 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
             # technically there's an MNIW prior, but that's a bit complicated...
             key1, key2, key = jr.split(key, 3)
             _emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
-            _emission_weights = emission_weights.at[:, :, :self.emission_dim].set(0.95 * jnp.eye(self.emission_dim))
+            _emission_weights = _emission_weights.at[:, :, :self.emission_dim].set(0.95 * jnp.eye(self.emission_dim))
             _emission_weights += 0.01 * jr.normal(key1, (self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
             _emission_biases = jr.normal(key2, (self.num_states, self.emission_dim))
             _emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, 1, 1))
