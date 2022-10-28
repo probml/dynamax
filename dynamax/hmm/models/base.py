@@ -184,15 +184,6 @@ class StandardHMM(BaseHMM):
     def _compute_transition_matrices(self, params, covariates=None):
         return params['transitions']['transition_matrix']
 
-    # @abstractmethod
-    # def _initialize_emissions(self, key, method="prior", **kwargs):
-    #     """Initialize the emissions parameters
-
-    #     Returns:
-    #         params: nested dictionary of emission parameters
-    #         props: matching nested dictionary emission parameter properties
-    #     """
-
     @abstractmethod
     def initialize(self, key=None, method="prior", initial_probs=None, transition_matrix=None, **kwargs):
         """Initialize the model parameters and their corresponding properties.
@@ -210,20 +201,12 @@ class StandardHMM(BaseHMM):
         if initial_probs is None:
             this_key, key = jr.split(key)
             initial_probs = tfd.Dirichlet(self.initial_probs_concentration).sample(seed=this_key)
-        else:
-            assert initial_probs.shape == (self.num_states,)
-            assert jnp.all(initial_probs >= 0)
-            assert jnp.allclose(initial_probs.sum(), 1.0)
 
         # Initialize the transition matrix
         if transition_matrix is None:
             this_key, key = jr.split(key)
             transition_matrix = tfd.Dirichlet(self.transition_matrix_concentration)\
                 .sample(seed=this_key, sample_shape=(self.num_states,))
-        else:
-            assert transition_matrix.shape == (self.num_states, self.num_states)
-            assert jnp.all(transition_matrix >= 0)
-            assert jnp.allclose(transition_matrix.sum(axis=1), 1.0)
 
         # Package the results into dictionaries
         params = dict(
