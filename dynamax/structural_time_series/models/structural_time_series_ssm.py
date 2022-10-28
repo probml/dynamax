@@ -289,7 +289,7 @@ class _StructuralTimeSeriesSSM(SSM):
             M (int): number of fixed samples from q used in evaluation of ELBO.
 
         Returns:
-            Samples from the approximate posterior q
+            Samples from the approximate posterior q.
         """
         key0, key1 = jr.split(key)
         model_unc_params, fixed_params = to_unconstrained(self.params, self.param_props)
