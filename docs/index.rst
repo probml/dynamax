@@ -184,13 +184,13 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 
    # Make a Gaussian HMM and sample data from it
    true_hmm = GaussianHMM(num_states, emission_dim)
-   true_params, _ = true_hmm.random_initialization(key1)
+   true_params, _ = true_hmm.initialize(key1)
    true_states, emissions = true_hmm.sample(true_params, key2, num_timesteps)
 
    # Make a new Gaussian HMM and fit it with EM
    test_hmm = GaussianHMM(num_states, emission_dim)
-   test_params, props = test_hmm.random_initialization(key3)
-   test_params, lls = test_hmm.fit_em(test_params, props, emissions)
+   params, props = test_hmm.initialize(key3)
+   params, lls = test_hmm.fit_em(params, props, emissions)
 
    # Plot the marginal log probs across EM iterations
    plt.plot(lls)
