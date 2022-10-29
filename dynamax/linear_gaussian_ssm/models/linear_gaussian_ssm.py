@@ -43,7 +43,7 @@ class LinearGaussianSSM(SSM):
     D = params["emission"]["input_weights"]
     d = params["emission"]["bias"]
 
-    You can create these parameters manually, or by calling `random_initialization`.
+    You can create these parameters manually, or by calling `initialize`.
     """
     def __init__(self,
                  state_dim,

@@ -42,7 +42,7 @@ def test_kalman_filter_smoother(num_timesteps=5, seed=0):
     delta = 1.0
 
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
-    params, _ = lgssm.random_initialization(init_key)
+    params, _ = lgssm.initialize(init_key)
     params['initial']['mean'] = jnp.array([8.0, 10.0, 1.0, 0.0])
     params['initial']['cov'] = jnp.eye(state_dim) * 0.1
     params['dynamics']['weights'] = jnp.array([[1, 0, delta, 0],
@@ -79,7 +79,7 @@ def test_posterior_sampler():
     sample_size=500
 
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
-    params, _ = lgssm.random_initialization(key)
+    params, _ = lgssm.initialize(key)
     params['initial']['mean'] = jnp.array([5.0])
     params['initial']['cov'] = jnp.eye(state_dim)
     params['dynamics']['weights'] = jnp.eye(state_dim) * 1.01
