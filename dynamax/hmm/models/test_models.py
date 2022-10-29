@@ -16,6 +16,7 @@ CONFIGS = [
     (models.DiagonalGaussianHMM, dict(num_states=4, emission_dim=3), None),
     (models.SphericalGaussianHMM, dict(num_states=4, emission_dim=3), None),
     (models.SharedCovarianceGaussianHMM, dict(num_states=4, emission_dim=3), None),
+    (models.LowRankGaussianHMM, dict(num_states=4, emission_dim=3, emission_rank=1), None),
     (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3, emission_prior_mean_concentration=1.0), None),
     (models.DiagonalGaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3, emission_prior_mean_concentration=1.0), None),
     (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),

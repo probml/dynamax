@@ -58,14 +58,6 @@ class GaussianHMM(ExponentialFamilyHMM):
             (params['emissions']['covs'], params['emissions']['means'])).sum()
         return lp
 
-    def _initialize_emissions(self, key):
-        emission_means = jr.normal(key, (self.num_states, self.emission_dim))
-        emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, 1, 1))
-        params = dict(means=emission_means, covs=emission_covs)
-        param_props = dict(means=ParameterProperties(),
-                           covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
-        return params, param_props
-
     def initialize(self, key=jr.PRNGKey(0),
                    method="prior",
                    initial_probs=None,
@@ -546,3 +538,104 @@ class SharedCovarianceGaussianHMM(ExponentialFamilyHMM):
         params['emissions']['means'] = jnp.einsum('ki,k->ki', sum_x, 1/sum_w)
         params['emissions']['cov'] = (sum_xxT - jnp.einsum('ki,kj,k->ij', sum_x, sum_x, 1/sum_w)) / sum_T
         return params
+
+
+class LowRankGaussianHMM(StandardHMM):
+
+    def __init__(self, num_states, emission_dim, emission_rank,
+                 initial_probs_concentration=1.1,
+                 transition_matrix_concentration=1.1,
+                 emission_diag_factor_concentration=1.1,
+                 emission_diag_factor_rate=1.1):
+        super().__init__(num_states,
+                         initial_probs_concentration=initial_probs_concentration,
+                         transition_matrix_concentration=transition_matrix_concentration)
+
+        self.emission_dim = emission_dim
+        self.emission_rank = emission_rank
+        self.emission_diag_factor_conc = emission_diag_factor_concentration
+        self.emission_diag_factor_rate = emission_diag_factor_rate
+
+    def initialize(self, key=jr.PRNGKey(0),
+                   method="prior",
+                   initial_probs=None,
+                   transition_matrix=None,
+                   emission_means=None,
+                   emission_cov_diag_factors=None,
+                   emission_cov_low_rank_factors=None,
+                   emissions=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
+
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_means (array, optional): manually specified emission means. Defaults to None.
+            emission_cov_diag_factors (array, optional): manually specified diagonals of the emission covariances. Defaults to None.
+            emission_cov_low_rank_factors (array, optional): manually specified low rank factors of the emission covariances. Defaults to None.
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
+        # Base class initializes the initial probs and transition matrix
+        this_key, key = jr.split(key)
+        params, props = super().initialize(key=this_key, method=method,
+                                           initial_probs=initial_probs,
+                                           transition_matrix=transition_matrix)
+
+        if method.lower() == "kmeans":
+            assert emissions is not None, "Need emissions to initialize the model with K-Means!"
+            from sklearn.cluster import KMeans
+            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+
+            _emission_means = jnp.array(km.cluster_centers_)
+            _emission_cov_diag_factors = jnp.ones((self.num_states, self.emission_dim))
+            _emission_cov_low_rank_factors = jnp.zeros((self.num_states, self.emission_dim, self.emission_rank))
+
+        elif method.lower() == "prior":
+            # We don't have a real prior
+            key1, key2, key3 = jr.split(key, 3)
+            _emission_means = jr.normal(key1, (self.num_states, self.emission_dim))
+            _emission_cov_diag_factors = \
+                tfd.Gamma(self.emission_diag_factor_conc, self.emission_diag_factor_rate)\
+                    .sample(seed=key2, sample_shape=((self.num_states, self.emission_dim)))
+            _emission_cov_low_rank_factors = jr.normal(key3, (self.num_states, self.emission_dim, self.emission_rank))
+
+        else:
+            raise Exception("Invalid initialization method: {}".format(method))
+
+        # Only use the values above if the user hasn't specified their own
+        default = lambda x, x0: x if x is not None else x0
+        params['emissions'] = dict(means=default(emission_means, _emission_means),
+                                   cov_diag_factors=default(emission_cov_diag_factors, _emission_cov_diag_factors),
+                                   cov_low_rank_factors=default(emission_cov_low_rank_factors, _emission_cov_low_rank_factors))
+        props['emissions'] = dict(means=ParameterProperties(),
+                                  cov_diag_factors=ParameterProperties(constrainer=tfb.Softplus()),
+                                  cov_low_rank_factors=ParameterProperties())
+        return params, props
+
+    @property
+    def emission_shape(self):
+        return (self.emission_dim,)
+
+    def emission_distribution(self, params, state, covariates=None):
+        return tfd.MultivariateNormalDiagPlusLowRankCovariance(
+            params["emissions"]["means"][state],
+            params["emissions"]["cov_diag_factors"][state],
+            params["emissions"]["cov_low_rank_factors"][state]
+        )
+
+    def log_prior(self, params):
+        lp = super().log_prior(params)
+        lp += tfd.Gamma(self.emission_diag_factor_conc, self.emission_diag_factor_rate)\
+            .log_prob(params["emissions"]["cov_diag_factors"]).sum()
+        return lp
