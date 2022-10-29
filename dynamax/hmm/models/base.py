@@ -185,28 +185,39 @@ class StandardHMM(BaseHMM):
         return params['transitions']['transition_matrix']
 
     @abstractmethod
-    def _initialize_emissions(self, key):
-        """Initialize the emissions parameters
+    def initialize(self, key=None, method="prior", initial_probs=None, transition_matrix=None, **kwargs):
+        """Initialize the model parameters and their corresponding properties.
+
+        Args:
+            key (_type_, optional): _description_. Defaults to None.
+            method (str, optional): _description_. Defaults to "prior".
+            initial_probs (_type_, optional): _description_. Defaults to None.
+            transition_matrix (_type_, optional): _description_. Defaults to None.
 
         Returns:
-            params: nested dictionary of emission parameters
-            props: matching nested dictionary emission parameter properties
+            _type_: _description_
         """
+        # Initialize the initial probabilities
+        if initial_probs is None:
+            this_key, key = jr.split(key)
+            initial_probs = tfd.Dirichlet(self.initial_probs_concentration).sample(seed=this_key)
 
-    def random_initialization(self, key):
-        key1, key2, key3 = jr.split(key, 3)
-        initial_probs = jr.dirichlet(key1, jnp.ones(self.num_states))
-        transition_matrix = jr.dirichlet(key2, jnp.ones(self.num_states), (self.num_states,))
-        emission_params, emission_param_props = self._initialize_emissions(key3)
+        # Initialize the transition matrix
+        if transition_matrix is None:
+            this_key, key = jr.split(key)
+            transition_matrix = tfd.Dirichlet(self.transition_matrix_concentration)\
+                .sample(seed=this_key, sample_shape=(self.num_states,))
+
+        # Package the results into dictionaries
         params = dict(
             initial=dict(probs=initial_probs),
-            transitions=dict(transition_matrix=transition_matrix),
-            emissions=emission_params)
-        param_props = dict(
+            transitions=dict(transition_matrix=transition_matrix))
+        props = dict(
             initial=dict(probs=ParameterProperties(constrainer=tfb.Softplus())),
-            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-            emissions=emission_param_props)
-        return  params, param_props
+            transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())))
+
+        # Subclasses must overload this method and add 'emissions' parameters to these dicts
+        return params, props
 
     @abstractmethod
     def emission_distribution(self, params, state, covariates=None):

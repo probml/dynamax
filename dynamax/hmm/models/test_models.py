@@ -11,15 +11,15 @@ NUM_TIMESTEPS = 100
 CONFIGS = [
     (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
     (models.CategoricalHMM, dict(num_states=4, num_emissions=3, num_classes=5), None),
-    (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
-    (models.GaussianHMM, dict(num_states=4, emission_dim=3), None),
-    (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
-    (models.GaussianMixtureDiagHMM, dict(num_states=4, num_components=2, emission_dim=3), None),
-    (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
-    (models.LogisticRegressionHMM, dict(num_states=4, feature_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
-    (models.MultivariateNormalDiagHMM, dict(num_states=4, emission_dim=3), None),
-    (models.MultivariateNormalSphericalHMM, dict(num_states=4, emission_dim=3), None),
-    #(models.MultivariateNormalTiedHMM, dict(num_states=4, emission_dim=3), None),
+    (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.GaussianHMM, dict(num_states=4, emission_dim=3, emission_prior_concentration=1.0, emission_prior_scale=1.0), None),
+    (models.DiagonalGaussianHMM, dict(num_states=4, emission_dim=3), None),
+    (models.SphericalGaussianHMM, dict(num_states=4, emission_dim=3), None),
+    (models.SharedCovarianceGaussianHMM, dict(num_states=4, emission_dim=3), None),
+    (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3, emission_prior_mean_concentration=1.0), None),
+    (models.DiagonalGaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3, emission_prior_mean_concentration=1.0), None),
+    (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.LogisticRegressionHMM, dict(num_states=4, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.MultinomialHMM, dict(num_states=4, emission_dim=3, num_classes=5, num_trials=10), None),
     (models.PoissonHMM, dict(num_states=4, emission_dim=3), None),
 ]
@@ -30,7 +30,7 @@ def test_sample_and_fit(cls, kwargs, covariates):
     hmm = cls(**kwargs)
     #key1, key2 = jr.split(jr.PRNGKey(int(datetime.now().timestamp())))
     key1, key2 = jr.split(jr.PRNGKey(42))
-    params, param_props = hmm.random_initialization(key1)
+    params, param_props = hmm.initialize(key1)
     states, emissions = hmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS, covariates=covariates)
     fitted_params, lps = hmm.fit_em(params, param_props, emissions, covariates=covariates, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
@@ -41,7 +41,7 @@ def test_sample_and_fit(cls, kwargs, covariates):
 def test_categorical_hmm_viterbi():
     # From http://en.wikipedia.org/wiki/Viterbi_algorithm:
     hmm = models.CategoricalHMM(num_states=2, num_emissions=1, num_classes=3)
-    params, props = hmm.random_initialization(jr.PRNGKey(0))
+    params, props = hmm.initialize(jr.PRNGKey(0))
     params['initial']['probs'] = jnp.array([0.6, 0.4])
     params['transitions']['transition_matrix'] = jnp.array([[0.7, 0.3], [0.4, 0.6]])
     params['emissions']['probs'] = jnp.array([[0.1, 0.4, 0.5], [0.6, 0.3, 0.1]]).reshape(2, 1, 3)
@@ -52,10 +52,10 @@ def test_categorical_hmm_viterbi():
 
 def test_gmm_hmm_vs_gmm_diag_hmm(key=jr.PRNGKey(0), num_states=4, num_components=3, emission_dim=2):
     key1, key2, key3 = jr.split(key, 3)
-    diag_hmm = models.GaussianMixtureDiagHMM(num_states, num_components, emission_dim)
-    diag_params, _ = diag_hmm.random_initialization(key1)
+    diag_hmm = models.DiagonalGaussianMixtureHMM(num_states, num_components, emission_dim)
+    diag_params, _ = diag_hmm.initialize(key1)
     full_hmm = models.GaussianMixtureHMM(num_states, num_components, emission_dim)
-    full_params, _ = full_hmm.random_initialization(key2)
+    full_params, _ = full_hmm.initialize(key2)
 
     # Copy over a few params
     full_params['initial']['probs'] = diag_params['initial']['probs']
@@ -87,46 +87,12 @@ def test_sample_and_fit_arhmm():
     arhmm = models.LinearAutoregressiveHMM(num_states=4, emission_dim=2, num_lags=1)
     #key1, key2 = jr.split(jr.PRNGKey(int(datetime.now().timestamp())))
     key1, key2 = jr.split(jr.PRNGKey(42))
-    params, param_props = arhmm.random_initialization(key1)
+    params, param_props = arhmm.initialize(key1)
     states, emissions = arhmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS)
     covariates = arhmm.compute_covariates(emissions)
     fitted_params, lps = arhmm.fit_em(params, param_props, emissions, covariates=covariates, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
     fitted_params, lps = arhmm.fit_sgd(params, param_props, emissions, covariates=covariates, num_epochs=10)
-
-
-# def test_kmeans_initialization(key=jr.PRNGKey(0), num_states=4, num_mix=3, emission_dim=2, num_samples=1000):
-#     hmm = GaussianMixtureHMM.random_initialization(key, num_states, num_mix, emission_dim)
-#     key0, key1, key2 = jr.split(key, 3)
-#     true_hmm = GaussianMixtureHMM.random_initialization(key0, num_states, num_mix, emission_dim)
-#     _, emissions = true_hmm.sample(key1, num_samples)
-#     hmm = GaussianMixtureHMM.kmeans_initialization(key2, num_states, num_mix, emission_dim, emissions)
-#     assert hmm.initial_probs.value.shape == (num_states,)
-#     assert jnp.allclose(hmm.initial_probs.value.sum(), 1.)
-#     assert hmm.transition_matrix.value.shape == (num_states, num_states)
-#     assert jnp.allclose(hmm.transition_matrix.value.sum(axis=-1), 1.)
-#     assert hmm.emission_mixture_weights.value.shape == (num_states, num_mix)
-#     assert jnp.allclose(hmm.emission_mixture_weights.value.sum(axis=-1), 1.)
-#     assert hmm.emission_means.value.shape == (num_states, num_mix, emission_dim)
-#     assert jnp.isnan(hmm.emission_means.value).any() == False
-#     assert hmm.emission_covariance_matrices.value.shape == (num_states, num_mix, emission_dim, emission_dim)
-
-
-# def test_kmeans_plusplus_initialization(key=jr.PRNGKey(0), num_states=4, num_mix=3, emission_dim=2, num_samples=1000):
-#     hmm = GaussianMixtureHMM.random_initialization(key, num_states, num_mix, emission_dim)
-#     key0, key1, key2 = jr.split(key, 3)
-#     true_hmm = GaussianMixtureHMM.random_initialization(key0, num_states, num_mix, emission_dim)
-#     _, emissions = true_hmm.sample(key1, num_samples)
-#     hmm = GaussianMixtureHMM.kmeans_plusplus_initialization(key2, num_states, num_mix, emission_dim, emissions)
-#     assert hmm.initial_probs.value.shape == (num_states,)
-#     assert jnp.allclose(hmm.initial_probs.value.sum(), 1.)
-#     assert hmm.transition_matrix.value.shape == (num_states, num_states)
-#     assert jnp.allclose(hmm.transition_matrix.value.sum(axis=-1), 1.)
-#     assert hmm.emission_mixture_weights.value.shape == (num_states, num_mix)
-#     assert jnp.allclose(hmm.emission_mixture_weights.value.sum(axis=-1), 1.)
-#     assert hmm.emission_means.value.shape == (num_states, num_mix, emission_dim)
-#     assert jnp.isnan(hmm.emission_means.value).any() == False
-#     assert hmm.emission_covariance_matrices.value.shape == (num_states, num_mix, emission_dim, emission_dim)
 
 
 # @pytest.mark.skip(reason="this would introduce a torch dependency")

@@ -43,15 +43,15 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
 
         self.dynamics_prior = default_prior(
             'dynamics_prior',
-            MNIW(loc=jnp.zeros((self.state_dim, self.state_dim + self.input_dim + self.has_dynamics_bias)),
-                 col_precision=jnp.eye(self.state_dim + self.input_dim + self.has_dynamics_bias),
+            MNIW(loc=jnp.zeros((self.state_dim, self.state_dim + self.covariate_dim + self.has_dynamics_bias)),
+                 col_precision=jnp.eye(self.state_dim + self.covariate_dim + self.has_dynamics_bias),
                  df=self.state_dim + 0.1,
                  scale=jnp.eye(self.state_dim)))
 
         self.emission_prior = default_prior(
             'emission_prior',
-            MNIW(loc=jnp.zeros((self.emission_dim, self.state_dim + self.input_dim + self.has_emissions_bias)),
-                 col_precision=jnp.eye(self.state_dim + self.input_dim + self.has_emissions_bias),
+            MNIW(loc=jnp.zeros((self.emission_dim, self.state_dim + self.covariate_dim + self.has_emissions_bias)),
+                 col_precision=jnp.eye(self.state_dim + self.covariate_dim + self.has_emissions_bias),
                  df=self.emission_dim + 0.1,
                  scale=jnp.eye(self.emission_dim)))
 
@@ -61,7 +61,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
 
     @property
     def covariates_shape(self):
-        return dict(inputs=(self.input_dim,)) if self.input_dim > 0 else dict()
+        return dict(inputs=(self.covariate_dim,)) if self.covariate_dim > 0 else dict()
 
     def log_prior(self, params):
         """Return the log prior probability of any model parameters.

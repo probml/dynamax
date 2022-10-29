@@ -95,7 +95,7 @@ class SimpleNonlinearSSM(SSM):
         mean = jnp.cos(params["emissions"]["weights"] @ x)
         return MVN(mean, params["emissions"]["cov"])
 
-    def random_initialization(self, key):
+    def initialize(self, key):
         key1, key2 = jr.split(key)
         params = dict(
             initial=dict(mean=0.2 * jnp.ones(self.state_dim), cov=jnp.eye(self.state_dim)),
@@ -133,7 +133,7 @@ def random_nlgssm_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2):
 
     init_key, sample_key = jr.split(key, 2)
     model = SimpleNonlinearSSM(state_dim, emission_dim)
-    params, _ = model.random_initialization(init_key)
+    params, _ = model.initialize(init_key)
     states, emissions = model.sample(params, sample_key, num_timesteps)
     args = model._make_inference_args(params)
     return args, states, emissions
