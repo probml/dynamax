@@ -41,7 +41,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 2,
+   "execution_count": 17,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -63,7 +63,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 13,
+   "execution_count": 18,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -75,31 +75,8 @@
     "    import dynamax\n",
     "\n",
     "\n",
-    "from dynamax.nonlinear_gaussian_ssm.containers import NLGSSMParams\n",
-    "from dynamax.extended_kalman_filter.inference import extended_kalman_filter"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 3,
-   "metadata": {
-    "id": "sO8k0Mi4gv9U"
-   },
-   "outputs": [],
-   "source": [
-    "# Silence WARNING:root:The use of `check_types` is deprecated and does not have any effect.\n",
-    "# https://github.com/tensorflow/probability/issues/1523\n",
-    "import logging\n",
-    "\n",
-    "logger = logging.getLogger()\n",
-    "\n",
-    "\n",
-    "class CheckTypesFilter(logging.Filter):\n",
-    "    def filter(self, record):\n",
-    "        return \"check_types\" not in record.getMessage()\n",
-    "\n",
-    "\n",
-    "logger.addFilter(CheckTypesFilter())"
+    "from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import NLGSSMParams\n",
+    "from dynamax.nonlinear_gaussian_ssm.extended_kalman_filter import extended_kalman_filter"
    ]
   },
   {
@@ -112,7 +89,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 5,
+   "execution_count": 19,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -153,7 +130,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 6,
+   "execution_count": 20,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -174,7 +151,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 7,
+   "execution_count": 21,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -192,7 +169,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 10,
+   "execution_count": 22,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -234,7 +211,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 11,
+   "execution_count": 23,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -252,7 +229,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 14,
+   "execution_count": 24,
    "metadata": {},
    "outputs": [
     {
@@ -294,7 +271,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 15,
+   "execution_count": 25,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -324,7 +301,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 16,
+   "execution_count": 26,
    "metadata": {},
    "outputs": [
     {

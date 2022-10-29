@@ -98,13 +98,18 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="notebooks/hmm/casino_hmm_training.html">
+  <a class="reference internal" href="notebooks/hmm/casino_hmm_learning.html">
    Casino HMM: learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d.html">
+  <a class="reference internal" href="notebooks/hmm/gaussian_hmm.html">
    Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
   </a>
  </li>
  <li class="toctree-l1">
@@ -311,11 +316,6 @@ title="Print to PDF"
      Learning (parameter estimation)
     </a>
    </li>
-   <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#related-libraries">
-     Related Libraries
-    </a>
-   </li>
   </ul>
  </li>
  <li class="toc-h1 nav-item toc-entry">
@@ -327,6 +327,13 @@ title="Print to PDF"
   <a class="reference internal nav-link" href="#api-documentation">
    API documentation
   </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#related-libraries">
+     Related Libraries
+    </a>
+   </li>
+  </ul>
  </li>
  <li class="toc-h1 nav-item toc-entry">
   <a class="reference internal nav-link" href="#indices-and-tables">
@@ -377,11 +384,6 @@ title="Print to PDF"
      Learning (parameter estimation)
     </a>
    </li>
-   <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#related-libraries">
-     Related Libraries
-    </a>
-   </li>
   </ul>
  </li>
  <li class="toc-h1 nav-item toc-entry">
@@ -393,6 +395,13 @@ title="Print to PDF"
   <a class="reference internal nav-link" href="#api-documentation">
    API documentation
   </a>
+  <ul class="visible nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#related-libraries">
+     Related Libraries
+    </a>
+   </li>
+  </ul>
  </li>
  <li class="toc-h1 nav-item toc-entry">
   <a class="reference internal nav-link" href="#indices-and-tables">
@@ -428,17 +437,17 @@ and <a class="reference external" href="https://github.com/blackjax-devs/blackja
 or sequential Monte Carlo (SMC)).</p>
 <section id="installation-and-testing">
 <h2>Installation and Testing<a class="headerlink" href="#installation-and-testing" title="Permalink to this headline">#</a></h2>
-<p>To install locally, do this:</p>
+<p>To install locally:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">git clone git@github.com:probml/dynamax.git</span>
 <span class="go">cd dynamax</span>
 <span class="go">pip install -e .</span>
 </pre></div>
 </div>
-<p>To install in Colab, do this:</p>
+<p>To install in Colab:</p>
 <div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="go">%pip install git+https://github.com/probml/dynamax.git</span>
 </pre></div>
 </div>
-<p>To run the tests, do this:</p>
+<p>To run the tests:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pytest dynamax                         # Run all tests</span>
 <span class="go">pytest dynamax/hmm/inference_test.py   # Run a specific test</span>
 <span class="go">pytest -k lgssm                        # Run tests with lgssm in the name</span>
@@ -554,13 +563,13 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 
 <span class="c1"># Make a Gaussian HMM and sample data from it</span>
 <span class="n">true_hmm</span> <span class="o">=</span> <span class="n">GaussianHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
-<span class="n">true_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">true_hmm</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
+<span class="n">true_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">true_hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
 <span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">true_hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
 
 <span class="c1"># Make a new Gaussian HMM and fit it with EM</span>
 <span class="n">test_hmm</span> <span class="o">=</span> <span class="n">GaussianHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
-<span class="n">test_params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">test_hmm</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">key3</span><span class="p">)</span>
-<span class="n">test_params</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">test_hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">test_params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">test_hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">test_hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
 
 <span class="c1"># Plot the marginal log probs across EM iterations</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lls</span><span class="p">)</span>
@@ -569,24 +578,6 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 </pre></div>
 </div>
 </section>
-<section id="related-libraries">
-<h2>Related Libraries<a class="headerlink" href="#related-libraries" title="Permalink to this headline">#</a></h2>
-<ul class="simple">
-<li><p><a class="reference external" href="https://github.com/deepmind/distrax/blob/master/distrax/_src/utils/hmm.py">distrax_hmm</a>: JAX functions for HMM inference (replaced by dynamax)</p></li>
-<li><p><a class="reference external" href="https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python">filterpy</a>: Numpy library for (extended) Kalman filtering</p></li>
-<li><p><a class="reference external" href="https://github.com/hmmlearn/hmmlearn">hmmlearn</a>: Numpy / C++ library for HMMs</p></li>
-<li><p><a class="reference external" href="https://github.com/lindermanlab/ssm-jax">linderman-ssm-jax</a>:  JAX library for SSMs (replaced by dynamax)</p></li>
-<li><p><a class="reference external" href="https://github.com/lindermanlab/ssm">linderman-ssm-numpy</a>:  Numpy / numba / autograd library for SSMs  (replaced by dynamax)</p></li>
-<li><p><a class="reference external" href="https://github.com/mattjj/pyhsmm">mattjj-pyhsmm</a>:  Numpy / Cython library library for HMMs</p></li>
-<li><p><a class="reference external" href="https://github.com/mattjj/pylds">mattjj-pylds</a>:  Numpy / Cython library library for linear dynamical systems</p></li>
-<li><p><a class="reference external" href="https://github.com/probml/pgm-jax">pgm-jax</a>: JAX library for factor graphs</p></li>
-<li><p><a class="reference external" href="https://github.com/probml/JSL">JSL</a>: JAX library for SSMs (replaced by dynamax)</p></li>
-<li><p><a class="reference external" href="https://pykalman.github.io/">pykalman</a>: Numpy library for (extended) Kalman filtering</p></li>
-<li><p><a class="reference external" href="https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers">sarkka-parallel-non-linear-gaussian-smoothers</a>: JAX code for nonlinear smoothers using parallel scan</p></li>
-<li><p><a class="reference external" href="https://www.tensorflow.org/probability/api_docs/python/tfp/distributions/HiddenMarkovModel">tfp_hmm</a>: TF2 code for HMM inference</p></li>
-<li><p><a class="reference external" href="https://www.tensorflow.org/probability/api_docs/python/tfp/distributions/LinearGaussianStateSpaceModel">tfp_lgssm</a>: TF2 code for Kalman filtering</p></li>
-</ul>
-</section>
 </section>
 <section id="notebooks">
 <h1>Notebooks<a class="headerlink" href="#notebooks" title="Permalink to this headline">#</a></h1>
@@ -594,8 +585,9 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_inference.html">Casino HMM: Inference (state estimation)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_training.html">Casino HMM: learning (parameter estimation)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm_2d.html">Gaussian HMM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/casino_hmm_learning.html">Casino HMM: learning (parameter estimation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/gaussian_hmm.html">Gaussian HMM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/hmm/autoregressive_hmm.html">Autoregressive (AR) HMM Demo</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html">Tracking an object using the Kalman filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_linreg.html">Online linear regression using Kalman filtering</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_learning.html">MAP parameter estimation for an LG-SSM using EM and SGD</a></li>
@@ -617,6 +609,24 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 </li>
 </ul>
 </div>
+<section id="related-libraries">
+<h2>Related Libraries<a class="headerlink" href="#related-libraries" title="Permalink to this headline">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/deepmind/distrax/blob/master/distrax/_src/utils/hmm.py">distrax_hmm</a>: JAX functions for HMM inference (replaced by dynamax)</p></li>
+<li><p><a class="reference external" href="https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python">filterpy</a>: Numpy library for (extended) Kalman filtering</p></li>
+<li><p><a class="reference external" href="https://github.com/hmmlearn/hmmlearn">hmmlearn</a>: Numpy / C++ library for HMMs</p></li>
+<li><p><a class="reference external" href="https://github.com/lindermanlab/ssm-jax">linderman-ssm-jax</a>:  JAX library for SSMs (replaced by dynamax)</p></li>
+<li><p><a class="reference external" href="https://github.com/lindermanlab/ssm">linderman-ssm-numpy</a>:  Numpy / numba / autograd library for SSMs  (replaced by dynamax)</p></li>
+<li><p><a class="reference external" href="https://github.com/mattjj/pyhsmm">mattjj-pyhsmm</a>:  Numpy / Cython library library for HMMs</p></li>
+<li><p><a class="reference external" href="https://github.com/mattjj/pylds">mattjj-pylds</a>:  Numpy / Cython library library for linear dynamical systems</p></li>
+<li><p><a class="reference external" href="https://github.com/probml/pgm-jax">pgm-jax</a>: JAX library for factor graphs</p></li>
+<li><p><a class="reference external" href="https://github.com/probml/JSL">JSL</a>: JAX library for SSMs (replaced by dynamax)</p></li>
+<li><p><a class="reference external" href="https://pykalman.github.io/">pykalman</a>: Numpy library for (extended) Kalman filtering</p></li>
+<li><p><a class="reference external" href="https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers">sarkka-parallel-non-linear-gaussian-smoothers</a>: JAX code for nonlinear smoothers using parallel scan</p></li>
+<li><p><a class="reference external" href="https://www.tensorflow.org/probability/api_docs/python/tfp/distributions/HiddenMarkovModel">tfp_hmm</a>: TF2 code for HMM inference</p></li>
+<li><p><a class="reference external" href="https://www.tensorflow.org/probability/api_docs/python/tfp/distributions/LinearGaussianStateSpaceModel">tfp_lgssm</a>: TF2 code for Kalman filtering</p></li>
+</ul>
+</section>
 </section>
 <section id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">#</a></h1>

@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Online linear regression using Kalman filtering" href="kf_linreg.html" />
-    <link rel="prev" title="Gaussian HMM" href="../hmm/gaussian_hmm_2d.html" />
+    <link rel="prev" title="Autoregressive (AR) HMM Demo" href="../hmm/autoregressive_hmm.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -99,13 +99,18 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/casino_hmm_training.html">
+  <a class="reference internal" href="../hmm/casino_hmm_learning.html">
    Casino HMM: learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/gaussian_hmm_2d.html">
+  <a class="reference internal" href="../hmm/gaussian_hmm.html">
    Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
   </a>
  </li>
  <li class="toctree-l1 current active">
@@ -487,7 +492,12 @@ We see that the observation matrix <span class="math notranslate nohighlight">\(
 relevant parts  of the state vector.</p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h2>
-<div class="cell docutils container">
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
@@ -498,25 +508,7 @@ relevant parts  of the state vector.</p>
 </pre></div>
 </div>
 </div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Silence WARNING:root:The use of `check_types` is deprecated and does not have any effect.</span>
-<span class="c1"># https://github.com/tensorflow/probability/issues/1523</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
-
-
-<span class="k">class</span> <span class="nc">CheckTypesFilter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Filter</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;check_types&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">getMessage</span><span class="p">()</span>
-
-
-<span class="n">logger</span><span class="o">.</span><span class="n">addFilter</span><span class="p">(</span><span class="n">CheckTypesFilter</span><span class="p">())</span>
-</pre></div>
-</div>
-</div>
+</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -525,11 +517,9 @@ relevant parts  of the state vector.</p>
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span><span class="p">,</span> <span class="n">grad</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
-<span class="c1">#from dynamax.plotting import plot_lgssm_posterior</span>
 <span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">plot_uncertainty_ellipses</span>
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.models.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">LGSSMParams</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.demos.kf_tracking</span> <span class="kn">import</span> <span class="n">kf_tracking</span><span class="p">,</span> <span class="n">plot_kf_tracking</span>
 </pre></div>
 </div>
 </div>
@@ -539,16 +529,6 @@ relevant parts  of the state vector.</p>
 </pre></div>
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">line</span> <span class="mi">10</span>
-<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.models.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
-<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">LGSSMParams</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span>
-<span class="ne">---&gt; </span><span class="mi">10</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.demos.kf_tracking</span> <span class="kn">import</span> <span class="n">kf_tracking</span><span class="p">,</span> <span class="n">plot_kf_tracking</span>
-
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;dynamax.linear_gaussian_ssm.demos.kf_tracking&#39;
 </pre></div>
 </div>
 </div>
@@ -565,27 +545,26 @@ relevant parts  of the state vector.</p>
 <span class="c1"># Create object</span>
 <span class="n">lgssm</span> <span class="o">=</span> <span class="n">LinearGaussianSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
 
-<span class="c1"># Random model parameters</span>
-<span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-
 <span class="c1"># Manually chosen parameters</span>
-<span class="n">mu0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
-<span class="n">Sigma0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
-<span class="n">F</span>  <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
-                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="p">],</span>
-                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
-                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
-<span class="n">Q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.001</span>
-<span class="n">H</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
-                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
-<span class="n">R</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.0</span>
+<span class="n">initial_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+<span class="n">initial_covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
+<span class="n">dynamics_weights</span>  <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                               <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="p">],</span>
+                               <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                               <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="n">dynamics_covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.001</span>
+<span class="n">emission_weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                              <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="n">emission_covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.0</span>
 
-<span class="n">params</span><span class="p">[</span><span class="s1">&#39;initial&#39;</span><span class="p">][</span><span class="s1">&#39;mean&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mu0</span>
-<span class="n">params</span><span class="p">[</span><span class="s1">&#39;initial&#39;</span><span class="p">][</span><span class="s1">&#39;cov&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Sigma0</span>
-<span class="n">params</span><span class="p">[</span><span class="s1">&#39;dynamics&#39;</span><span class="p">][</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">F</span>
-<span class="n">params</span><span class="p">[</span><span class="s1">&#39;dynamics&#39;</span><span class="p">][</span><span class="s1">&#39;cov&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Q</span>
-<span class="n">params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">H</span>
-<span class="n">params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;cov&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">R</span>
+<span class="c1"># Initialize model</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                             <span class="n">initial_mean</span><span class="o">=</span><span class="n">initial_mean</span><span class="p">,</span>
+                             <span class="n">initial_covariance</span><span class="o">=</span><span class="n">initial_covariance</span><span class="p">,</span>
+                             <span class="n">dynamics_weights</span><span class="o">=</span><span class="n">dynamics_weights</span><span class="p">,</span>
+                             <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">dynamics_covariance</span><span class="p">,</span>
+                             <span class="n">emission_weights</span><span class="o">=</span><span class="n">emission_weights</span><span class="p">,</span>
+                             <span class="n">emission_covariance</span><span class="o">=</span><span class="n">emission_covariance</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -609,10 +588,10 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fb329b3c640&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f9cc05a5850&gt;
 </pre></div>
 </div>
-<img alt="../../_images/f2bdc2f038f12a8e0e130a189642870c27876c17e935145dbf21e988d3d0b53e.png" src="../../_images/f2bdc2f038f12a8e0e130a189642870c27876c17e935145dbf21e988d3d0b53e.png" />
+<img alt="../../_images/c90a04e3c0fa3244515324d7532e0630a8744c02113a1e69a77e02ef62e4f7ab.png" src="../../_images/c90a04e3c0fa3244515324d7532e0630a8744c02113a1e69a77e02ef62e4f7ab.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -705,10 +684,10 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot:&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/d1ec12ebaa1d93fd376cacdb0413e267d4a6f78d6a5c17b7b0aab88600d54941.png" src="../../_images/d1ec12ebaa1d93fd376cacdb0413e267d4a6f78d6a5c17b7b0aab88600d54941.png" />
+<img alt="../../_images/3b83995e652cd357f4421fb49791c149f7c76bfae9c38664c29ecb0b32f079c6.png" src="../../_images/3b83995e652cd357f4421fb49791c149f7c76bfae9c38664c29ecb0b32f079c6.png" />
 </div>
 </div>
 </section>
@@ -739,10 +718,10 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot:&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/18a8de59361a1c433201e89c643df20d567330cc4dfef99e20c1ad32efda0d0a.png" src="../../_images/18a8de59361a1c433201e89c643df20d567330cc4dfef99e20c1ad32efda0d0a.png" />
+<img alt="../../_images/8df66cd75ca21e3a143057b8e94d4d13ed1af3bb1ff3e73358f01ba090fa8c37.png" src="../../_images/8df66cd75ca21e3a143057b8e94d4d13ed1af3bb1ff3e73358f01ba090fa8c37.png" />
 </div>
 </div>
 </section>
@@ -757,12 +736,12 @@ the underlying inference functions.</p>
 
 
 <span class="n">inf_params</span> <span class="o">=</span> <span class="n">LGSSMParams</span><span class="p">(</span>
-    <span class="n">initial_mean</span><span class="o">=</span><span class="n">mu0</span><span class="p">,</span> 
-    <span class="n">initial_covariance</span><span class="o">=</span><span class="n">Sigma0</span><span class="p">,</span>
-    <span class="n">dynamics_matrix</span><span class="o">=</span><span class="n">F</span><span class="p">,</span>
-    <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span>
-    <span class="n">emission_matrix</span><span class="o">=</span><span class="n">H</span><span class="p">,</span>
-    <span class="n">emission_covariance</span><span class="o">=</span><span class="n">R</span>
+    <span class="n">initial_mean</span><span class="o">=</span><span class="n">initial_mean</span><span class="p">,</span> 
+    <span class="n">initial_covariance</span><span class="o">=</span><span class="n">initial_covariance</span><span class="p">,</span>
+    <span class="n">dynamics_matrix</span><span class="o">=</span><span class="n">dynamics_weights</span><span class="p">,</span>
+    <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">dynamics_covariance</span><span class="p">,</span>
+    <span class="n">emission_matrix</span><span class="o">=</span><span class="n">emission_weights</span><span class="p">,</span>
+    <span class="n">emission_covariance</span><span class="o">=</span><span class="n">emission_covariance</span>
 <span class="p">)</span>
 
 <span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">lgssm_filter</span><span class="p">(</span><span class="n">inf_params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="c1"># Kalman filter</span>
@@ -780,7 +759,6 @@ the underlying inference functions.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate 4 sample trajectories</span>
-
 <span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">15</span>
 <span class="n">num_samples</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">310</span><span class="p">)</span>
@@ -793,7 +771,6 @@ the underlying inference functions.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># vmap the inference</span>
-
 <span class="n">lgssm_posteriors</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">))(</span><span class="n">ys</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -862,27 +839,9 @@ the underlying inference functions.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6b958cc2def34ea911c7b373d2ddeca131b38a2afec76fdbb9de07713ee833f8.png" src="../../_images/6b958cc2def34ea911c7b373d2ddeca131b38a2afec76fdbb9de07713ee833f8.png" />
-<img alt="../../_images/d7a88e7b90b68a2ca492721d4c1ef614b4090846fe3c362571e6b921a8d39561.png" src="../../_images/d7a88e7b90b68a2ca492721d4c1ef614b4090846fe3c362571e6b921a8d39561.png" />
-<img alt="../../_images/15f6b377845295b64944273e19e81ad3f625e7a53dcaca7187e1295ed2237fed.png" src="../../_images/15f6b377845295b64944273e19e81ad3f625e7a53dcaca7187e1295ed2237fed.png" />
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dict_figures</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">fname</span> <span class="o">=</span> <span class="n">k</span> <span class="o">+</span> <span class="s2">&quot;.pdf&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">v</span>
-    <span class="c1">#fig.savefig(fname)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>missiles_latent.pdf
-missiles_filtered.pdf
-missiles_smoothed.pdf
-</pre></div>
-</div>
+<img alt="../../_images/8c5de9c03f6c1479119be7e414e8af4d9bb57215e88f6ed73af7a59e1f75f22e.png" src="../../_images/8c5de9c03f6c1479119be7e414e8af4d9bb57215e88f6ed73af7a59e1f75f22e.png" />
+<img alt="../../_images/c161526458c33b2c0799c7940b5fc23bdff645598ebc4d284bb4d1f93d01148a.png" src="../../_images/c161526458c33b2c0799c7940b5fc23bdff645598ebc4d284bb4d1f93d01148a.png" />
+<img alt="../../_images/5fdfe442b45dc9e4460d1abc148328590688855b1144adec9e507a0ba773d649.png" src="../../_images/5fdfe442b45dc9e4460d1abc148328590688855b1144adec9e507a0ba773d649.png" />
 </div>
 </div>
 </section>
@@ -896,11 +855,11 @@ missiles_smoothed.pdf
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="../hmm/gaussian_hmm_2d.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="../hmm/autoregressive_hmm.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Gaussian HMM</p>
+            <p class="prev-next-title">Autoregressive (AR) HMM Demo</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="kf_linreg.html" title="next page">

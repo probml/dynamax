@@ -97,13 +97,18 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/casino_hmm_training.html">
+  <a class="reference internal" href="../hmm/casino_hmm_learning.html">
    Casino HMM: learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/gaussian_hmm_2d.html">
+  <a class="reference internal" href="../hmm/gaussian_hmm.html">
    Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
   </a>
  </li>
  <li class="toctree-l1">
@@ -410,7 +415,12 @@ we have a GPU device.</p>
 <p><img alt="Parallel KF" src="https://github.com/probml/dynamax/blob/main/docs/figures/lgssm_parallel_smoothing_timing.png?raw=true" /></p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h2>
-<div class="cell docutils container">
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
@@ -421,11 +431,11 @@ we have a GPU device.</p>
 </pre></div>
 </div>
 </div>
+</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">LGSSMParams</span><span class="p">,</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_sample</span>
-<span class="c1">#from dynamax.linear_gaussian_ssm.models import LinearGaussianSSM</span>
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.parallel_inference</span> <span class="kn">import</span>  <span class="n">lgssm_filter</span> <span class="k">as</span> <span class="n">parallel_lgssm_filter</span>
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.parallel_inference</span> <span class="kn">import</span>  <span class="n">lgssm_smoother</span> <span class="k">as</span> <span class="n">parallel_lgssm_smoother</span>
 </pre></div>
@@ -627,22 +637,22 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.8007755279541016
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.8015635013580322
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time parallel = 0.2128441333770752
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time parallel = 0.3399319648742676
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time serial = 0.687882661819458
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time serial = 0.8258702754974365
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time parallel = 0.2832636833190918
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time parallel = 0.45314764976501465
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=1000, 	 time serial = 0.6954896450042725
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=1000, 	 time serial = 0.8298749923706055
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=1000, 	 time parallel = 0.3300023078918457
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=1000, 	 time parallel = 0.5066554546356201
 </pre></div>
 </div>
 </div>
@@ -662,7 +672,7 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/f9ba4958456db2b4634289d327e41e0eaa758be063e10567ee2110d12f80a91f.png" src="../../_images/f9ba4958456db2b4634289d327e41e0eaa758be063e10567ee2110d12f80a91f.png" />
+<img alt="../../_images/8a6b718d57fe87c6d3c7959e9cdb89b48c62b780cdf192749a0342d84513bc77.png" src="../../_images/8a6b718d57fe87c6d3c7959e9cdb89b48c62b780cdf192749a0342d84513bc77.png" />
 </div>
 </div>
 </section>

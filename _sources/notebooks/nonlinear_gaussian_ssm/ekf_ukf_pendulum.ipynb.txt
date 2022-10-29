@@ -121,7 +121,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 9,
+   "execution_count": 2,
    "metadata": {
     "id": "U4xUpwZM3-z5"
    },
@@ -140,9 +140,9 @@
     "from typing import Callable\n",
     "\n",
     "\n",
-    "from dynamax.extended_kalman_filter.inference import extended_kalman_filter, extended_kalman_smoother\n",
-    "from dynamax.unscented_kalman_filter.inference import unscented_kalman_filter, unscented_kalman_smoother, UKFHyperParams\n",
-    "from dynamax.nonlinear_gaussian_ssm.containers import NLGSSMParams"
+    "from dynamax.nonlinear_gaussian_ssm.extended_kalman_filter import extended_kalman_filter, extended_kalman_smoother\n",
+    "from dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter import unscented_kalman_filter, unscented_kalman_smoother, UKFHyperParams\n",
+    "from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import NLGSSMParams"
    ]
   },
   {
@@ -318,7 +318,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 10,
+   "execution_count": 9,
    "metadata": {
     "id": "jWRhHTOCgIAj"
    },
@@ -341,7 +341,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 12,
+   "execution_count": 10,
    "metadata": {
     "colab": {
      "base_uri": "https://localhost:8080/",
@@ -382,7 +382,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 13,
+   "execution_count": 12,
    "metadata": {},
    "outputs": [
     {
@@ -421,7 +421,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 32,
+   "execution_count": 13,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -444,7 +444,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 33,
+   "execution_count": 14,
    "metadata": {},
    "outputs": [
     {
@@ -477,7 +477,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 34,
+   "execution_count": 16,
    "metadata": {},
    "outputs": [
     {
@@ -510,7 +510,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 35,
+   "execution_count": 17,
    "metadata": {},
    "outputs": [
     {
@@ -545,11 +545,6 @@
     "plot_pendulum(time_grid, states[:, 0], obs, x_est=m_ukf, est_type=\"UKF\")\n",
     "compute_and_print_rmse_comparison(states[:, 0], m_ukf, r, \"UKF\")"
    ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": []
   },
   {
    "cell_type": "code",

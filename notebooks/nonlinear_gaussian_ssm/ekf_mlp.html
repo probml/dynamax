@@ -99,13 +99,18 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/casino_hmm_training.html">
+  <a class="reference internal" href="../hmm/casino_hmm_learning.html">
    Casino HMM: learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/gaussian_hmm_2d.html">
+  <a class="reference internal" href="../hmm/gaussian_hmm.html">
    Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
   </a>
  </li>
  <li class="toctree-l1">
@@ -463,8 +468,8 @@ https://github.com/probml/probml-data/blob/main/data/ekf_mlp_demo.mp4</p>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 
 
-<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.containers</span> <span class="kn">import</span> <span class="n">NLGSSMParams</span>
-<span class="kn">from</span> <span class="nn">dynamax.extended_kalman_filter.inference</span> <span class="kn">import</span> <span class="n">extended_kalman_filter</span>
+<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">NLGSSMParams</span>
+<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.extended_kalman_filter</span> <span class="kn">import</span> <span class="n">extended_kalman_filter</span>
 </pre></div>
 </div>
 </div>
@@ -474,25 +479,6 @@ https://github.com/probml/probml-data/blob/main/data/ekf_mlp_demo.mp4</p>
 </pre></div>
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Silence WARNING:root:The use of `check_types` is deprecated and does not have any effect.</span>
-<span class="c1"># https://github.com/tensorflow/probability/issues/1523</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
-
-
-<span class="k">class</span> <span class="nc">CheckTypesFilter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Filter</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;check_types&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">getMessage</span><span class="p">()</span>
-
-
-<span class="n">logger</span><span class="o">.</span><span class="n">addFilter</span><span class="p">(</span><span class="n">CheckTypesFilter</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>

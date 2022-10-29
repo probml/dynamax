@@ -99,13 +99,18 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/casino_hmm_training.html">
+  <a class="reference internal" href="../hmm/casino_hmm_learning.html">
    Casino HMM: learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/gaussian_hmm_2d.html">
+  <a class="reference internal" href="../hmm/gaussian_hmm.html">
    Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
   </a>
  </li>
  <li class="toctree-l1">
@@ -440,45 +445,28 @@ y_t &amp;= x_t^T \theta_t + r_t, \; r_t \sim N(0, \sigma^2)
 <p>This is a LG-SSM, where <span class="math notranslate nohighlight">\(F=I\)</span>, <span class="math notranslate nohighlight">\(Q=0\)</span>, <span class="math notranslate nohighlight">\(H_t = x_t^T\)</span> and <span class="math notranslate nohighlight">\(R = \sigma^2\)</span>.</p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
-    <span class="kn">import</span> <span class="nn">dynamax</span>
-
-
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">LGSSMParams</span>
 </pre></div>
 </div>
 </div>
+</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Silence WARNING:root:The use of `check_types` is deprecated and does not have any effect.</span>
-<span class="c1"># https://github.com/tensorflow/probability/issues/1523</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
-
-
-<span class="k">class</span> <span class="nc">CheckTypesFilter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Filter</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;check_types&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">getMessage</span><span class="p">()</span>
-
-
-<span class="n">logger</span><span class="o">.</span><span class="n">addFilter</span><span class="p">(</span><span class="n">CheckTypesFilter</span><span class="p">())</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">LGSSMParams</span>
 </pre></div>
 </div>
 </div>
@@ -495,8 +483,6 @@ y_t &amp;= x_t^T \theta_t + r_t, \; r_t \sim N(0, \sigma^2)
 <span class="n">y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
     <span class="p">[</span><span class="mf">2.486</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.303</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.053</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.336</span><span class="p">,</span> <span class="o">-</span><span class="mf">6.174</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.604</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.507</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.326</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.638</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.233</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.986</span><span class="p">,</span> <span class="mf">1.028</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.264</span><span class="p">,</span>
      <span class="o">-</span><span class="mf">0.451</span><span class="p">,</span> <span class="mf">1.167</span><span class="p">,</span> <span class="mf">6.652</span><span class="p">,</span> <span class="mf">4.145</span><span class="p">,</span> <span class="mf">5.268</span><span class="p">,</span> <span class="mf">6.34</span><span class="p">,</span> <span class="mf">9.626</span><span class="p">,</span> <span class="mf">14.784</span><span class="p">])</span>
-
-<span class="c1">#print([np.round(v, decimals=3) for v in np.array(y)])</span>
 </pre></div>
 </div>
 </div>
@@ -536,8 +522,6 @@ y_t &amp;= x_t^T \theta_t + r_t, \; r_t \sim N(0, \sigma^2)
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm_filter</span><span class="p">(</span><span class="n">lgssm</span><span class="p">,</span> <span class="n">y</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span> <span class="c1"># reshape y to be (T,1)</span>
-
-
 <span class="n">kf_results</span> <span class="o">=</span> <span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_covariances</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -596,7 +580,7 @@ This should give the same results as the final step of online inference.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd7fc1dbe20&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f87f89a9100&gt;
 </pre></div>
 </div>
 <img alt="../../_images/25fe6d8df78ffe332b01e6249f318ce6271284954b4992a1dff45b7578dc5636.png" src="../../_images/25fe6d8df78ffe332b01e6249f318ce6271284954b4992a1dff45b7578dc5636.png" />

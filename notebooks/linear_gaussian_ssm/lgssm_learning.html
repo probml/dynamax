@@ -97,13 +97,18 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/casino_hmm_training.html">
+  <a class="reference internal" href="../hmm/casino_hmm_learning.html">
    Casino HMM: learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/gaussian_hmm_2d.html">
+  <a class="reference internal" href="../hmm/gaussian_hmm.html">
    Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
   </a>
  </li>
  <li class="toctree-l1">
@@ -415,18 +420,12 @@ title="Print to PDF"
 <h1>MAP parameter estimation for an LG-SSM using EM and SGD<a class="headerlink" href="#map-parameter-estimation-for-an-lg-ssm-using-em-and-sgd" title="Permalink to this headline">#</a></h1>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
@@ -434,7 +433,18 @@ title="Print to PDF"
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
     <span class="kn">import</span> <span class="nn">dynamax</span>
-
+</pre></div>
+</div>
+</div>
+</details>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
 
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.models.linear_gaussian_ssm_conjugate</span> <span class="kn">import</span> <span class="n">LinearGaussianConjugateSSM</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils</span> <span class="kn">import</span> <span class="n">monotonically_increasing</span>
@@ -451,25 +461,6 @@ title="Print to PDF"
 </div>
 </div>
 </div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Silence WARNING:root:The use of `check_types` is deprecated and does not have any effect.</span>
-<span class="c1"># https://github.com/tensorflow/probability/issues/1523</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
-
-
-<span class="k">class</span> <span class="nc">CheckTypesFilter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Filter</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;check_types&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">getMessage</span><span class="p">()</span>
-
-
-<span class="n">logger</span><span class="o">.</span><span class="n">addFilter</span><span class="p">(</span><span class="n">CheckTypesFilter</span><span class="p">())</span>
-</pre></div>
-</div>
-</div>
-</div>
 </section>
 <section id="data">
 <h2>Data<a class="headerlink" href="#data" title="Permalink to this headline">#</a></h2>
@@ -482,7 +473,8 @@ title="Print to PDF"
 
 <span class="n">true_model</span> <span class="o">=</span> <span class="n">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
 <span class="n">key</span><span class="p">,</span> <span class="n">key_root</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">true_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">true_model</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="n">true_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">true_model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
 <span class="n">key</span><span class="p">,</span> <span class="n">key_root</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 <span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">true_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
 
@@ -553,7 +545,7 @@ title="Print to PDF"
 
 <span class="n">test_model</span> <span class="o">=</span> <span class="n">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
 <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
 <span class="n">plot_predictions</span><span class="p">(</span><span class="n">true_model</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">test_model</span><span class="p">,</span> <span class="n">test_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
 </pre></div>
@@ -570,7 +562,7 @@ title="Print to PDF"
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">test_model</span> <span class="o">=</span> <span class="n">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
 <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 <span class="n">num_iters</span> <span class="o">=</span> <span class="mi">100</span>
 <span class="n">test_params</span><span class="p">,</span> <span class="n">marginal_lls</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="n">num_iters</span><span class="p">)</span>
 
@@ -582,10 +574,10 @@ title="Print to PDF"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/100 [00:00&lt;?, ?it/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  1%|          | 1/100 [00:05&lt;08:23,  5.08s/it]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  1%|          | 1/100 [00:05&lt;09:34,  5.80s/it]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 100/100 [00:05&lt;00:00, 19.48it/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 100/100 [00:05&lt;00:00, 17.04it/s]
 </pre></div>
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
@@ -613,7 +605,7 @@ title="Print to PDF"
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">test_model</span> <span class="o">=</span> <span class="n">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
 <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <span class="n">num_iters</span> <span class="o">=</span> <span class="mi">100</span>
-<span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">random_initialization</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
 <span class="n">test_params</span><span class="p">,</span> <span class="n">neg_marginal_lls</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_iters</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
 <span class="n">marginal_lls</span> <span class="o">=</span> <span class="o">-</span><span class="n">neg_marginal_lls</span> <span class="o">*</span> <span class="n">emissions</span><span class="o">.</span><span class="n">size</span>
