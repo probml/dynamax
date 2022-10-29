@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, tree_map
 
+from dynamax.hmm.models.base import StandardHMM
 from dynamax.hmm.models.linreg_hmm import LinearRegressionHMM
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
@@ -24,9 +25,9 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
                  transition_matrix_concentration=1.1
                  ):
         self.num_lags = num_lags
-        feature_dim = num_lags * emission_dim
+        covariate_dim = num_lags * emission_dim
 
-        super().__init__(num_states, feature_dim, emission_dim,
+        super().__init__(num_states, covariate_dim, emission_dim,
                          initial_probs_concentration=initial_probs_concentration,
                          transition_matrix_concentration=transition_matrix_concentration)
 
@@ -36,21 +37,73 @@ class LinearAutoregressiveHMM(LinearRegressionHMM):
 
     @property
     def covariates_shape(self):
-        return (self.feature_dim,)
+        return (self.covariate_dim,)
 
-    def _initialize_emissions(self, key):
-        key1, key2 = jr.split(key, 2)
+    def initialize(self,
+                   key=jr.PRNGKey(0),
+                   method="prior",
+                   initial_probs=None,
+                   transition_matrix=None,
+                   emission_weights=None,
+                   emission_biases=None,
+                   emission_covariances=None,
+                   emissions=None):
+        """Initialize the model parameters and their corresponding properties.
 
-        # Make random emission matrices that are close to identity
-        emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
-        emission_weights = emission_weights.at[:, :, :self.emission_dim].set(0.95 * jnp.eye(self.emission_dim))
-        emission_weights += 0.01 * jr.normal(key1, (self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
-        emission_biases = jr.normal(key2, (self.num_states, self.emission_dim))
-        emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, 1, 1))
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
 
-        params = dict(weights=emission_weights, biases=emission_biases, covs=emission_covs)
-        param_props = dict(weights=ParameterProperties(), biases=ParameterProperties(), covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
-        return params, param_props
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_weights (array, optional): manually specified emission weights. Defaults to None.
+            emission_biases (array, optional): manually specified emission biases. Defaults to None.
+            emission_covariance (array, optional): manually specified emission covariance. Defaults to None.
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
+        # Base class initializes the initial probs and transition matrix
+        this_key, key = jr.split(key)
+        params, props = super(LinearRegressionHMM, self).initialize(
+            key=this_key, method=method, initial_probs=initial_probs, transition_matrix=transition_matrix)
+
+        if method.lower() == "kmeans":
+            assert emissions is not None, "Need emissions to initialize the model with K-Means!"
+            from sklearn.cluster import KMeans
+            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+
+            _emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
+            _emission_biases = jnp.array(km.cluster_centers_)
+            _emission_covs = jnp.tile(jnp.eye(self.emission_dim)[None, :, :], (self.num_states, 1, 1))
+
+        elif method.lower() == "prior":
+            # technically there's an MNIW prior, but that's a bit complicated...
+            key1, key2, key = jr.split(key, 3)
+            _emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
+            _emission_weights = _emission_weights.at[:, :, :self.emission_dim].set(0.95 * jnp.eye(self.emission_dim))
+            _emission_weights += 0.01 * jr.normal(key1, (self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
+            _emission_biases = jr.normal(key2, (self.num_states, self.emission_dim))
+            _emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, 1, 1))
+        else:
+            raise Exception("Invalid initialization method: {}".format(method))
+
+        # Only use the values above if the user hasn't specified their own
+        default = lambda x, x0: x if x is not None else x0
+        params['emissions'] = dict(weights=default(emission_weights, _emission_weights),
+                                   biases=default(emission_biases, _emission_biases),
+                                   covs=default(emission_covariances, _emission_covs))
+        props['emissions'] = dict(weights=ParameterProperties(),
+                                  biases=ParameterProperties(),
+                                  covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
+        return params, props
 
     def sample(self, params, key, num_timesteps, prev_emissions=None):
         """

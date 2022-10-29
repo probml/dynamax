@@ -16,14 +16,19 @@ _zeros_if_none = lambda x, shp: x if x is not None else jnp.zeros(shp)
 
 class LinearGaussianSSM(SSM):
     """
-    Linear Gaussian State Space Model is defined as follows:
+    Linear Gaussian State Space Model.
+
+    The model is defined as follows:
+
     p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
     p(y_t | z_t) = N(y_t | H_t z_t + D_t u_t + d_t, R_t)
     p(z_1) = N(z_1 | m, S)
+
     where
+
     z_t = hidden variables of size `state_dim`,
     y_t = observed variables of size `emission_dim`
-    u_t = input covariates of size `input_dim` (defaults to 0)
+    u_t = input covariates of size `covariate_dim` (defaults to 0)
 
     The parameters of the model are stored in a separate dictionary, as follows:
     F = params["dynamics"]["weights"]
@@ -38,17 +43,17 @@ class LinearGaussianSSM(SSM):
     D = params["emission"]["input_weights"]
     d = params["emission"]["bias"]
 
-    You can create these parameters manually, or by calling `random_initialization`.
+    You can create these parameters manually, or by calling `initialize`.
     """
     def __init__(self,
                  state_dim,
                  emission_dim,
-                 input_dim=0,
+                 covariate_dim=0,
                  has_dynamics_bias=True,
                  has_emissions_bias=True):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
-        self.input_dim = input_dim
+        self.covariate_dim = covariate_dim
         self.has_dynamics_bias = has_dynamics_bias
         self.has_emissions_bias = has_emissions_bias
 
@@ -58,31 +63,71 @@ class LinearGaussianSSM(SSM):
 
     @property
     def covariates_shape(self):
-        return (self.input_dim,) if self.input_dim > 0 else None
+        return (self.covariate_dim,) if self.covariate_dim > 0 else None
 
-    def random_initialization(self, key):
-        """Create random parameters. 
-        
+    def initialize(self,
+                   key=jr.PRNGKey(0),
+                   initial_mean=None,
+                   initial_covariance=None,
+                   dynamics_weights=None,
+                   dynamics_bias=None,
+                   dynamics_input_weights=None,
+                   dynamics_covariance=None,
+                   emission_weights=None,
+                   emission_bias=None,
+                   emission_input_weights=None,
+                   emission_covariance=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled randomly and/or set to reasonable defaults.
+
+        Note: in the future we may support more initialization schemes.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_mean (array, optional): manually specified initial mean. Defaults to None.
+            initial_covariance (array, optional): manually specified initial covariance. Defaults to None.
+            dynamics_weights (array, optional): manually specified dynamics weights. Defaults to None.
+            dynamics_bias (array, optional): manually specified dynamics bias. Defaults to None.
+            dynamics_input_weights (array, optional): manually specified dynamics input weights. Defaults to None.
+            dynamics_covariance (array, optional): manually specified dynamics covariance. Defaults to None.
+            emission_weights (array, optional): manually specified emission weights. Defaults to None.
+            emission_bias (array, optional): manually specified emission bias. Defaults to None.
+            emission_input_weights (array, optional): manually specified emission input weights. Defaults to None.
+            emission_covariance (array, optional): manually specified emission covariance. Defaults to None.
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+
         Returns:
-            params: nested dictionary of parameters
-            props: matching nested dictionary of parameter properties
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
-        m = jnp.zeros(self.state_dim)
-        S = jnp.eye(self.state_dim)
-        # TODO: Sample a random rotation matrix
-        F = 0.99 * jnp.eye(self.state_dim)
-        B = jnp.zeros((self.state_dim, self.input_dim))
-        b = jnp.zeros((self.state_dim,)) if self.has_dynamics_bias else None
-        Q = 0.1 * jnp.eye(self.state_dim)
-        H = jr.normal(key, (self.emission_dim, self.state_dim))
-        D = jnp.zeros((self.emission_dim, self.input_dim))
-        d = jnp.zeros((self.emission_dim,)) if self.has_emissions_bias else None
-        R = 0.1 * jnp.eye(self.emission_dim)
+        _initial_mean = jnp.zeros(self.state_dim)
+        _initial_covariance = jnp.eye(self.state_dim)
+        _dynamics_weights = 0.99 * jnp.eye(self.state_dim)
+        _dynamics_input_weights = jnp.zeros((self.state_dim, self.covariate_dim))
+        _dynamics_bias = jnp.zeros((self.state_dim,)) if self.has_dynamics_bias else None
+        _dynamics_covariance = 0.1 * jnp.eye(self.state_dim)
+        _emission_weights = jr.normal(key, (self.emission_dim, self.state_dim))
+        _emission_input_weights = jnp.zeros((self.emission_dim, self.covariate_dim))
+        _emission_bias = jnp.zeros((self.emission_dim,)) if self.has_emissions_bias else None
+        _emission_covariance = 0.1 * jnp.eye(self.emission_dim)
 
+        # Only use the values above if the user hasn't specified their own
+        default = lambda x, x0: x if x is not None else x0
         params = dict(
-            initial=dict(mean=m, cov=S),
-            dynamics=dict(weights=F, bias=b, input_weights=B, cov=Q),
-            emissions=dict(weights=H, bias=d, input_weights=D, cov=R)
+            initial=dict(mean=default(initial_mean, _initial_mean),
+                         cov=default(initial_covariance, _initial_covariance)),
+            dynamics=dict(weights=default(dynamics_weights, _dynamics_weights),
+                          bias=default(dynamics_bias, _dynamics_bias),
+                          input_weights=default(dynamics_input_weights, _dynamics_input_weights),
+                          cov=default(dynamics_covariance, _dynamics_covariance)),
+            emissions=dict(weights=default(emission_weights, _emission_weights),
+                           bias=default(emission_bias, _emission_bias),
+                           input_weights=default(emission_input_weights, _emission_input_weights),
+                           cov=default(emission_covariance, _emission_covariance))
         )
 
         param_props = dict(
@@ -97,21 +142,20 @@ class LinearGaussianSSM(SSM):
                           input_weights=ParameterProperties(),
                           cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         )
-
         return params, param_props
 
     def initial_distribution(self, params, covariates=None):
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
     def transition_distribution(self, params, state, covariates=None):
-        inputs = covariates if covariates is not None else jnp.zeros(self.input_dim)
+        inputs = covariates if covariates is not None else jnp.zeros(self.covariate_dim)
         mean = params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs
         if self.has_dynamics_bias:
             mean += params["dynamics"]["bias"]
         return MVN(mean, params["dynamics"]["cov"])
 
     def emission_distribution(self, params, state, covariates=None):
-        inputs = covariates if covariates is not None else jnp.zeros(self.input_dim)
+        inputs = covariates if covariates is not None else jnp.zeros(self.covariate_dim)
         mean = params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs
         if self.has_emissions_bias:
             mean += params["emissions"]["bias"]
@@ -159,7 +203,7 @@ class LinearGaussianSSM(SSM):
 
     def posterior_predictive(self, params, emissions, inputs=None):
         """Compute marginal posterior predictive for each observation.
-        
+
         Returns:
             means: (T,D) array of E[Y(t,d) | Y(1:T)]
             stds: (T,D) array std[Y(t,d) | Y(1:T)]
