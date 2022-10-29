@@ -1,0 +1,32 @@
+name: Tests
+
+on:
+  push:
+    branches:
+    - main
+
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  Workflow:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone the reference repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python 3.7.12
+      uses: actions/setup-python@v2
+      with:
+        # Change this based on the python version in Google colab
+        # actions/setup-python@v2 does not have 3.7.13
+        python-version: '3.7.12'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest
+
+    - name: Run tests
+      run: pytest

@@ -9,5 +9,8 @@ tqdm
 flax
 scikit-learn
 blackjax
-jaxopt
-jaxtyping
+sphinx
+sphinx-autobuild
+myst-nb
+jupytext
+sphinx-book-theme
