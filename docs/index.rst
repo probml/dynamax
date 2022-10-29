@@ -207,7 +207,7 @@ Notebooks
 
 
    notebooks/hmm/casino_hmm_inference.ipynb
-   notebooks/hmm/casino_hmm_training.ipynb
+   notebooks/hmm/casino_hmm_learning.ipynb
    notebooks/hmm/gaussian_hmm.ipynb
    notebooks/hmm/autoregressive_hmm.ipynb
    notebooks/linear_gaussian_ssm/kf_tracking.ipynb
