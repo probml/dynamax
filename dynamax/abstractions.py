@@ -1,16 +1,14 @@
 from abc import ABC
 from abc import abstractmethod
+import blackjax
+from fastprogress.fastprogress import progress_bar
 from functools import partial
-from warnings import warn
-from tqdm.auto import trange
-
 import jax.numpy as jnp
 import jax.random as jr
 import optax
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
-
-import blackjax
+from warnings import warn
 
 from dynamax.optimize import run_sgd
 from dynamax.parameters import to_unconstrained, from_unconstrained
@@ -154,7 +152,7 @@ class SSM(ABC):
 
         log_probs = []
         params = initial_params
-        pbar = trange(num_iters) if verbose else range(num_iters)
+        pbar = progress_bar(range(num_iters)) if verbose else range(num_iters)
         for _ in pbar:
             params, marginal_loglik = em_step(params)
             log_probs.append(marginal_loglik)
@@ -261,7 +259,7 @@ class SSM(ABC):
         log_probs = []
         samples = []
         hmc_state = hmc_initial_state
-        pbar = trange(num_samples) if verbose else range(num_samples)
+        pbar = progress_bar(range(num_samples)) if verbose else range(num_samples)
         for _ in pbar:
             step_key, key = jr.split(key)
             hmc_state, params = hmc_step(hmc_state, step_key)

@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from copy import deepcopy
+from fastprogress.fastprogress import master_bar, progress_bar
 from functools import partial
 import jax.numpy as jnp
 import jax.random as jr
@@ -8,6 +9,7 @@ from jax.tree_util import tree_map, tree_leaves
 import optax
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
+
 from dynamax.abstractions import SSM
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.hmm.inference import compute_transition_probs
@@ -18,8 +20,6 @@ from dynamax.hmm.inference import hmm_two_filter_smoother
 from dynamax.optimize import run_sgd
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import pytree_len, pytree_sum
-from tqdm.auto import trange
-
 
 
 class BaseHMM(SSM):
@@ -441,10 +441,11 @@ class ExponentialFamilyHMM(StandardHMM):
         params = initial_params
         expected_log_probs = []
         rolling_stats = self._zeros_like_suff_stats()
-        for epoch in trange(num_epochs):
+        mb = master_bar(range(num_epochs))
+        for epoch in mb:
 
             _expected_lps = 0.
-            for minibatch, minibatch_emissions in enumerate(emissions_generator):
+            for minibatch, minibatch_emissions in enumerate(progress_bar(emissions_generator, parent=mb)):
                 (params, rolling_stats), expected_lp = minibatch_em_step(
                     (params, rolling_stats),
                     (minibatch_emissions, learning_rates[epoch][minibatch]),
