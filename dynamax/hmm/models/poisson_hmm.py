@@ -3,7 +3,7 @@ import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.parameters import ParameterProperties
-from dynamax.hmm.models.base import ExponentialFamilyHMM
+from dynamax.hmm.models.abstractions import ExponentialFamilyHMM
 
 
 class PoissonHMM(ExponentialFamilyHMM):

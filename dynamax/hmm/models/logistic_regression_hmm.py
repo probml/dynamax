@@ -3,7 +3,7 @@ import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from dynamax.parameters import ParameterProperties
-from dynamax.hmm.models.base import StandardHMM
+from dynamax.hmm.models.abstractions import StandardHMM
 
 
 class LogisticRegressionHMM(StandardHMM):

@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from dynamax.hmm.models.base import HMMTransitions
+from dynamax.hmm.models.abstractions import HMMTransitions
 from dynamax.parameters import ParameterProperties
 
 

@@ -9,8 +9,8 @@ from dynamax.distributions import NormalInverseGamma
 from dynamax.distributions import NormalInverseWishart
 from dynamax.distributions import nig_posterior_update
 from dynamax.distributions import niw_posterior_update
-from dynamax.hmm.models.base import ExponentialFamilyHMM
-from dynamax.hmm.models.base import StandardHMM
+from dynamax.hmm.models.abstractions import ExponentialFamilyHMM
+from dynamax.hmm.models.abstractions import StandardHMM
 from dynamax.utils import PSDToRealBijector
 
 

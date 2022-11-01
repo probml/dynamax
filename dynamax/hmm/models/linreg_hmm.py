@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
-from dynamax.hmm.models.base import ExponentialFamilyHMM
+from dynamax.hmm.models.abstractions import ExponentialFamilyHMM
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
 from tensorflow_probability.substrates import jax as tfp

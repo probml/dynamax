@@ -3,7 +3,7 @@ import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.parameters import ParameterProperties
-from dynamax.hmm.models.base import HMMEmissions, BaseHMM
+from dynamax.hmm.models.abstractions import HMMEmissions, HMM
 from dynamax.hmm.models.initial import StandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions
 from dynamax.utils import pytree_sum
@@ -92,7 +92,7 @@ class BernoulliHMMEmissions(HMMEmissions):
         return params
 
 
-class BernoulliHMM(BaseHMM):
+class BernoulliHMM(HMM):
     def __init__(self, num_states: int,
                  emission_dim: int,
                  initial_probs_concentration=1.1,

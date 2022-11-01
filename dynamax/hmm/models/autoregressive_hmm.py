@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, tree_map
 
-from dynamax.hmm.models.base import StandardHMM
+from dynamax.hmm.models.abstractions import StandardHMM
 from dynamax.hmm.models.linreg_hmm import LinearRegressionHMM
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
