@@ -66,7 +66,6 @@ class SSM(ABC):
         """
         raise NotImplementedError
 
-
     @property
     def covariates_shape(self):
         """Return a pytree matching the pytree of tuples specifying the shape(s)
@@ -138,7 +137,7 @@ class SSM(ABC):
         """
         return 0.0
 
-    def fit_em(self, initial_params, param_props, emissions, covariates=None, num_iters=50, verbose=True):
+    def fit_em(self, params, props, emissions, covariates=None, num_iters=50, verbose=True):
         """Fit this HMM with Expectation-Maximization (EM).
         """
         # Make sure the emissions and covariates have batch dimensions
@@ -147,13 +146,12 @@ class SSM(ABC):
 
         @jit
         def em_step(params):
-            batch_posteriors, lls = vmap(partial(self.e_step, params))(batch_emissions, batch_covariates)
+            batch_stats, lls = vmap(partial(self.e_step, params))(batch_emissions, batch_covariates)
             lp = self.log_prior(params) + lls.sum()
-            params = self.m_step(params, param_props, batch_emissions, batch_posteriors, batch_covariates)
+            params = self.m_step(params, props, batch_stats)
             return params, lp
 
         log_probs = []
-        params = initial_params
         pbar = trange(num_iters) if verbose else range(num_iters)
         for _ in pbar:
             params, marginal_loglik = em_step(params)
