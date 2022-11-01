@@ -1,5 +1,5 @@
+from fastprogress.fastprogress import progress_bar
 from functools import partial
-
 import jax.random as jr
 from jax import jit
 from jax import numpy as jnp
@@ -9,7 +9,7 @@ from dynamax.distributions import NormalInverseWishart as NIW
 from dynamax.distributions import mniw_posterior_update, niw_posterior_update
 from dynamax.linear_gaussian_ssm.inference import lgssm_posterior_sample, LGSSMParams
 from dynamax.linear_gaussian_ssm.models.linear_gaussian_ssm import LinearGaussianSSM
-from tqdm.auto import trange
+
 
 
 class LinearGaussianConjugateSSM(LinearGaussianSSM):
@@ -201,7 +201,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         sample_of_params = []
         keys = iter(jr.split(key, sample_size))
         current_params = self._make_inference_args
-        for _ in trange(sample_size):
+        for _ in progress_bar(sample_size):
             sample_of_params.append(current_params)
             current_params, loglik = one_sample(current_params, next(keys))
             log_probs.append(loglik)
