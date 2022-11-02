@@ -10,7 +10,7 @@ Documentation is at https://probml.github.io/dynamax/.
 
 Core team: Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, Kevin Murphy.
 
-Other contributors: Adrien Corenflos, Gerardo Duran-Martin, Colin Schlager. 
+Other contributors: Adrien Corenflos, Elizabeth DuPre, Gerardo Duran-Martin, Colin Schlager. 
 
 [Full list of contributors](https://github.com/probml/dynamax/graphs/contributors)
 
