@@ -85,7 +85,6 @@ class LogisticRegressionHMM(HMM):
         emission_component = LogisticRegressionHMMEmissions(num_states, covariate_dim, emission_matrices_scale=emission_matrices_scale)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-
     def initialize(self,
                    key=jr.PRNGKey(0),
                    method="prior",
