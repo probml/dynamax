@@ -1,4 +1,4 @@
-from dynamax.hmm.models.base import BaseHMM, StandardHMM
+from dynamax.hmm.models.abstractions import HMM, HMMEmissions, HMMInitialState, HMMTransitions
 from dynamax.hmm.models.autoregressive_hmm import LinearAutoregressiveHMM
 from dynamax.hmm.models.bernoulli_hmm import BernoulliHMM
 from dynamax.hmm.models.categorical_glm_hmm import CategoricalRegressionHMM

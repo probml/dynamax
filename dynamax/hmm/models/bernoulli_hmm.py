@@ -3,28 +3,24 @@ import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.parameters import ParameterProperties
-from dynamax.hmm.models.base import ExponentialFamilyHMM
+from dynamax.hmm.models.abstractions import HMMEmissions, HMM
+from dynamax.hmm.models.initial import StandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions
+from dynamax.utils import pytree_sum
 
 
-class BernoulliHMM(ExponentialFamilyHMM):
+class BernoulliHMMEmissions(HMMEmissions):
 
     def __init__(self,
                  num_states,
                  emission_dim,
-                 initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1,
                  emission_prior_concentration1=1.1,
                  emission_prior_concentration0=1.1):
         """_summary_
         Args:
-            initial_probabilities (_type_): _description_
-            transition_matrix (_type_): _description_
             emission_probs (_type_): _description_
         """
-        super().__init__(num_states,
-                         initial_probs_concentration=initial_probs_concentration,
-                         transition_matrix_concentration=transition_matrix_concentration)
-
+        self.num_states = num_states
         self.emission_dim = emission_dim
         self.emission_prior_concentration0 = emission_prior_concentration0
         self.emission_prior_concentration1 = emission_prior_concentration1
@@ -33,21 +29,19 @@ class BernoulliHMM(ExponentialFamilyHMM):
     def emission_shape(self):
         return (self.emission_dim,)
 
-    def emission_distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, covariates=None):
         # This model assumes the emissions are a vector of conditionally independent
         # Bernoulli observations. The `reinterpreted_batch_ndims` argument tells
         # `tfd.Independent` that only the last dimension should be considered a "batch"
         # of conditionally independent observations.
-        return tfd.Independent(tfd.Bernoulli(probs=params['emissions']['probs'][state]),
-                               reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Bernoulli(probs=params['probs'][state]), reinterpreted_batch_ndims=1)
 
     def log_prior(self, params):
-        lp = super().log_prior(params)
-        lp += tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0).log_prob(
-            params['emissions']['probs']).sum()
-        return lp
+        prior = tfd.Beta(self.emission_prior_concentration1,
+                         self.emission_prior_concentration0)
+        return prior.log_prob(params['probs']).sum()
 
-    def initialize(self, key=jr.PRNGKey(0), method="prior", initial_probs=None, transition_matrix=None, emission_probs=None):
+    def initialize(self, key=jr.PRNGKey(0), method="prior", emission_probs=None):
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
@@ -59,21 +53,12 @@ class BernoulliHMM(ExponentialFamilyHMM):
         Args:
             key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).
             method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
-            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
             emission_probs (array, optional): manually specified emission probabilities. Defaults to None.
 
         Returns:
             params: a nested dictionary of arrays containing the model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
-        # Base class initializes the initial probs and transition matrix
-        this_key, key = jr.split(key)
-        params, props = super().initialize(key=this_key, method=method,
-                                           initial_probs=initial_probs,
-                                           transition_matrix=transition_matrix)
-
-        # Initialize the emission probabilities
         if emission_probs is None:
             if method.lower() == "prior":
                 prior = tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0)
@@ -88,26 +73,50 @@ class BernoulliHMM(ExponentialFamilyHMM):
             assert jnp.all(emission_probs <= 0)
 
         # Add parameters to the dictionary
-        params['emissions'] = dict(probs=emission_probs)
-        props['emissions'] = dict(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
+        params = dict(probs=emission_probs)
+        props = dict(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
         return params, props
 
-    def _zeros_like_suff_stats(self):
-        """Return dataclass containing 'event_shape' of each sufficient statistic."""
-        sum_x = jnp.zeros((self.num_states, self.emission_dim)),
-        sum_1mx = jnp.zeros((self.num_states, self.emission_dim)),
-        return (sum_x, sum_1mx)
-
-    def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+        expected_states = posterior.smoothed_probs
         sum_x = jnp.einsum("tk, ti->ki", expected_states, jnp.where(jnp.isnan(emissions), 0, emissions))
-        sum_1mx = jnp.einsum("tk, ti->ki", expected_states,
-                                jnp.where(jnp.isnan(emissions), 0, 1 - emissions))
+        sum_1mx = jnp.einsum("tk, ti->ki", expected_states, jnp.where(jnp.isnan(emissions), 0, 1 - emissions))
         return (sum_x, sum_1mx)
 
-    def _m_step_emissions(self, params, param_props, emission_stats):
-        if param_props['emissions']['probs'].trainable:
-            sum_x, sum_1mx = emission_stats
-            params['emissions']['probs'] = tfd.Beta(
+    def m_step(self, params, props, batch_stats):
+        if props['probs'].trainable:
+            sum_x, sum_1mx = pytree_sum(batch_stats, axis=0)
+            params['probs'] = tfd.Beta(
                 self.emission_prior_concentration1 + sum_x,
                 self.emission_prior_concentration0 + sum_1mx).mode()
         return params
+
+
+class BernoulliHMM(HMM):
+    def __init__(self, num_states: int,
+                 emission_dim: int,
+                 initial_probs_concentration=1.1,
+                 transition_matrix_concentration=1.1,
+                 emission_prior_concentration0=1.1,
+                 emission_prior_concentration1=1.1):
+        self.emission_dim = emission_dim
+        initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
+        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        emission_component = BernoulliHMMEmissions(num_states, emission_dim, emission_prior_concentration0=emission_prior_concentration0, emission_prior_concentration1=emission_prior_concentration1)
+        super().__init__(num_states, initial_component, transition_component, emission_component)
+
+    def initialize(self, key: jr.PRNGKey=None,
+                   method: str="prior",
+                   initial_probs: jnp.array=None,
+                   transition_matrix: jnp.array=None,
+                   emission_probs: jnp.array=None):
+        if key is not None:
+            key1, key2, key3 = jr.split(key , 3)
+        else:
+            key1 = key2 = key3 = None
+
+        params, props = dict(), dict()
+        params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
+        params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
+        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_probs=emission_probs)
+        return params, props

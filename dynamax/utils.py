@@ -58,6 +58,10 @@ def pytree_sum(pytree, axis=None, keepdims=None, where=None):
     return tree_map(partial(jnp.sum, axis=axis, keepdims=keepdims, where=where), pytree)
 
 
+def pytree_slice(pytree, slc):
+    return tree_map(lambda x: x[slc], pytree)
+
+
 def pytree_stack(pytrees):
     _, treedef = tree_flatten(pytrees[0])
     leaves = [tree_leaves(tree) for tree in pytrees]

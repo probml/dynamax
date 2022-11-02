@@ -275,7 +275,7 @@ class LinearGaussianSSM(SSM):
 
         return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
-    def m_step(self, curr_params, param_props, batch_emissions, batch_stats, batch_covariates=None):
+    def m_step(self, params, props, batch_stats):
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
