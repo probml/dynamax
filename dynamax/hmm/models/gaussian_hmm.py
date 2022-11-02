@@ -541,7 +541,6 @@ class GaussianHMM(HMM):
                  emission_prior_concentration=1e-4,
                  emission_prior_scale=1e-4,
                  emission_prior_extra_df=0.1):
-
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
