@@ -30,6 +30,9 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
     def covariates_shape(self):
         return (self.feature_dim,)
 
+    def log_prior(self, params):
+        return 0.0
+
     def initialize(self, key=jr.PRNGKey(0), method="prior", emission_weights=None, emission_biases=None):
         """Initialize the model parameters and their corresponding properties.
 
@@ -77,10 +80,15 @@ class CategoricalRegressionHMM(HMM):
                  covariate_dim: int,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1):
+        self.covariate_dim = covariate_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
         emission_component = CategoricalRegressionHMMEmissions(num_states, num_classes, covariate_dim)
         super().__init__(num_states, initial_component, transition_component, emission_component)
+
+    @property
+    def covariates_shape(self):
+        return (self.covariate_dim,)
 
     def initialize(self, key: jr.PRNGKey=None,
                    method: str="prior",

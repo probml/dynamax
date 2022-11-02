@@ -49,7 +49,7 @@ class StandardHMMTransitions(HMMTransitions):
     def compute_transition_matrices(self, params, covariates=None):
         return params['transition_matrix']
 
-    def collect_suff_stats(self, posterior, covariates=None):
+    def collect_suff_stats(self, params, posterior, covariates=None):
         return posterior.trans_probs
 
     def m_step(self,

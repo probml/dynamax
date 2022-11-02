@@ -77,7 +77,7 @@ class BernoulliHMMEmissions(HMMEmissions):
         props = dict(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
         return params, props
 
-    def collect_suff_stats(self, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
         expected_states = posterior.smoothed_probs
         sum_x = jnp.einsum("tk, ti->ki", expected_states, jnp.where(jnp.isnan(emissions), 0, emissions))
         sum_1mx = jnp.einsum("tk, ti->ki", expected_states, jnp.where(jnp.isnan(emissions), 0, 1 - emissions))

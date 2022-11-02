@@ -46,7 +46,7 @@ class HMMInitialState(ABC):
     def compute_initial_probs(self, params, covariates=None):
         return self.initial_distribution(params, covariates).probs_parameter()
 
-    def collect_suff_stats(self, posterior, covariates=None):
+    def collect_suff_stats(self, params, posterior, covariates=None):
         return posterior.smoothed_probs[0], pytree_slice(covariates, 0)
 
     def m_step(self,
@@ -138,7 +138,7 @@ class HMMTransitions(ABC):
             g = vmap(lambda state: self.distribution(params, state).probs_parameter())
             return g(jnp.arange(self.num_states))
 
-    def collect_suff_stats(self, posterior, covariates=None):
+    def collect_suff_stats(self, params, posterior, covariates=None):
         return posterior.trans_probs, pytree_slice(covariates, slice(1, None))
 
     def m_step(self,
@@ -235,7 +235,7 @@ class HMMEmissions(ABC):
                 jnp.arange(self.num_states))
         return vmap(f)(emissions, covariates)
 
-    def collect_suff_stats(self, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
         return posterior.smoothed_probs, emissions, covariates
 
     def m_step(self, params, props, batch_stats,
@@ -248,7 +248,7 @@ class HMMEmissions(ABC):
         def neg_expected_log_joint(unc_params):
             params = from_unconstrained(unc_params, fixed_params, props)
 
-            def _single_expected_log_like(emissions, stats):
+            def _single_expected_log_like(stats):
                 expected_states, emissions, covariates = stats
                 log_likelihoods = self.compute_conditional_logliks(params, emissions, covariates)
                 lp = jnp.sum(expected_states * log_likelihoods)
@@ -357,9 +357,9 @@ class HMM(SSM):
         posterior = hmm_two_filter_smoother(*args)
         posterior.trans_probs = compute_transition_probs(args[1], posterior, (args[1].ndim == 2))
 
-        initial_stats = self.initial_component.collect_suff_stats(posterior, covariates)
-        transition_stats = self.transition_component.collect_suff_stats(posterior, covariates)
-        emission_stats = self.emission_component.collect_suff_stats(posterior, emissions, covariates)
+        initial_stats = self.initial_component.collect_suff_stats(params["initial"], posterior, covariates)
+        transition_stats = self.transition_component.collect_suff_stats(params["transitions"], posterior, covariates)
+        emission_stats = self.emission_component.collect_suff_stats(params["emissions"], posterior, emissions, covariates)
         return (initial_stats, transition_stats, emission_stats), posterior.marginal_loglik
 
     def m_step(self, params, props, batch_stats):

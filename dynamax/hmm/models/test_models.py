@@ -10,7 +10,7 @@ NUM_TIMESTEPS = 100
 
 CONFIGS = [
     (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
-    (models.CategoricalHMM, dict(num_states=4, num_emissions=3, num_classes=5), None),
+    (models.CategoricalHMM, dict(num_states=4, emission_dim=3, num_classes=5), None),
     (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.GaussianHMM, dict(num_states=4, emission_dim=3, emission_prior_concentration=1.0, emission_prior_scale=1.0), None),
     (models.DiagonalGaussianHMM, dict(num_states=4, emission_dim=3), None),
@@ -41,7 +41,7 @@ def test_sample_and_fit(cls, kwargs, covariates):
 ## A few model-specific tests
 def test_categorical_hmm_viterbi():
     # From http://en.wikipedia.org/wiki/Viterbi_algorithm:
-    hmm = models.CategoricalHMM(num_states=2, num_emissions=1, num_classes=3)
+    hmm = models.CategoricalHMM(num_states=2, emission_dim=1, num_classes=3)
     params, props = hmm.initialize(jr.PRNGKey(0))
     params['initial']['probs'] = jnp.array([0.6, 0.4])
     params['transitions']['transition_matrix'] = jnp.array([[0.7, 0.3], [0.4, 0.6]])

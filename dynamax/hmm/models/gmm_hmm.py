@@ -81,11 +81,11 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
         params = dict(weights=default(emission_weights, _emission_weights),
-                                   means=default(emission_means, _emission_means),
-                                   covs=default(emission_covariances, _emission_covs))
+                      means=default(emission_means, _emission_means),
+                      covs=default(emission_covariances, _emission_covs))
         props = dict(weights=ParameterProperties(constrainer=tfb.SoftmaxCentered()),
-                                  means=ParameterProperties(),
-                                  covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
+                     means=ParameterProperties(),
+                     covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
 
     def distribution(self, params, state, covariates=None):
@@ -387,7 +387,7 @@ class DiagonalGaussianMixtureHMM(HMM):
         self.num_components = num_components
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
-        emission_component = GaussianMixtureHMMEmissions(
+        emission_component = DiagonalGaussianMixtureHMMEmissions(
             num_states, num_components, emission_dim,
             emission_weights_concentration=emission_weights_concentration,
             emission_prior_mean=emission_prior_mean,

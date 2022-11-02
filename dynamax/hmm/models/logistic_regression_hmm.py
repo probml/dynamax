@@ -79,11 +79,15 @@ class LogisticRegressionHMM(HMM):
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
                  emission_matrices_scale=1e8):
-        self.covariates_shape = covariate_dim
+        self.covariates_dim = covariate_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
         emission_component = LogisticRegressionHMMEmissions(num_states, covariate_dim, emission_matrices_scale=emission_matrices_scale)
         super().__init__(num_states, initial_component, transition_component, emission_component)
+
+    @property
+    def covariates_shape(self):
+        return (self.covariates_dim,)
 
     def initialize(self,
                    key=jr.PRNGKey(0),

@@ -2,10 +2,10 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, tree_map
 
-from dynamax.hmm.models.abstractions import HMM, HMMEmissions
+from dynamax.hmm.models.abstractions import HMM
 from dynamax.hmm.models.initial import StandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions
-from dynamax.hmm.models.linreg_hmm import LinearRegressionHMM, LinearRegressionHMMEmissions
+from dynamax.hmm.models.linreg_hmm import LinearRegressionHMMEmissions
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
 
@@ -78,8 +78,17 @@ class LinearAutoregressiveHMM(HMM):
         self.num_lags = num_lags
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
-        emission_component = LinearRegressionHMMEmissions(num_states, emission_dim, num_lags=num_lags)
+        emission_component = LinearAutoregressiveHMMEmissions(num_states, emission_dim, num_lags=num_lags)
         super().__init__(num_states, initial_component, transition_component, emission_component)
+
+    @property
+    def covariates_shape(self):
+        """Return a pytree matching the pytree of tuples specifying the shape(s)
+        of a single time step's emissions.
+        For example, a Gaussian HMM with D dimensional emissions would return (D,).
+        """
+        return (self.num_lags * self.emission_dim,)
+
 
     def initialize(self,
                    key=jr.PRNGKey(0),

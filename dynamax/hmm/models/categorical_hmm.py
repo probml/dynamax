@@ -14,7 +14,7 @@ class CategoricalHMMEmissions(HMMEmissions):
 
     def __init__(self,
                  num_states,
-                 num_emissions,
+                 emission_dim,
                  num_classes,
                  emission_prior_concentration=1.1):
         """_summary_
@@ -23,7 +23,7 @@ class CategoricalHMMEmissions(HMMEmissions):
             emission_probs (_type_): _description_
         """
         self.num_states = num_states
-        self.emission_dim = num_emissions
+        self.emission_dim = emission_dim
         self.num_classes = num_classes
         self.emission_prior_concentration = emission_prior_concentration  * jnp.ones(num_classes)
 
@@ -76,7 +76,7 @@ class CategoricalHMMEmissions(HMMEmissions):
         props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
-    def collect_suff_stats(self, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
         expected_states = posterior.smoothed_probs
         x = one_hot(emissions, self.num_classes)
         return dict(sum_x=jnp.einsum("tk,tdi->kdi", expected_states, x))

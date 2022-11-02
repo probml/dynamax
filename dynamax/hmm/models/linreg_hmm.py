@@ -35,10 +35,6 @@ class LinearRegressionHMMEmissions(HMMEmissions):
     def emission_shape(self):
         return (self.emission_dim,)
 
-    @property
-    def covariates_shape(self):
-        return (self.covariate_dim,)
-
     def initialize(self,
                    key=jr.PRNGKey(0),
                    method="prior",
@@ -82,7 +78,7 @@ class LinearRegressionHMMEmissions(HMMEmissions):
         return 0.0
 
     # Expectation-maximization (EM) code
-    def collect_suff_stats(self, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, covariates)
@@ -130,11 +126,15 @@ class LinearRegressionHMM(HMM):
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1):
         self.emission_dim = emission_dim
-        self.covariates_shape = covariate_dim
+        self.covariate_dim = covariate_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
         emission_component = LinearRegressionHMMEmissions(num_states, covariate_dim, emission_dim)
         super().__init__(num_states, initial_component, transition_component, emission_component)
+
+    @property
+    def covariates_shape(self):
+        return (self.covariate_dim,)
 
     def initialize(self,
                    key=jr.PRNGKey(0),

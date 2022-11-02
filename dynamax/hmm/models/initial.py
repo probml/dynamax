@@ -49,7 +49,7 @@ class StandardHMMInitialState(HMMInitialState):
     def compute_initial_probs(self, params, covariates=None):
         return params['probs']
 
-    def collect_suff_stats(self, posterior, covariates=None):
+    def collect_suff_stats(self, params, posterior, covariates=None):
         return posterior.smoothed_probs[0]
 
     def m_step(self, params, props, batch_stats):

@@ -55,7 +55,7 @@ class MultinomialHMMEmissions(HMMEmissions):
     def log_prior(self, params):
         return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params['probs']).sum()
 
-    def collect_suff_stats(self, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
         expected_states = posterior.smoothed_probs
         return dict(sum_x=jnp.einsum("tk, tdi->kdi", expected_states, emissions))
 

@@ -102,7 +102,7 @@ class GaussianHMMEmissions(HMMEmissions):
                      covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
 
-    def collect_suff_stats(self, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
         expected_states = posterior.smoothed_probs
         return dict(
             sum_w=jnp.einsum("tk->k", expected_states),
@@ -141,8 +141,8 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
                  emission_dim,
                  emission_prior_mean=0.0,
                  emission_prior_mean_concentration=1e-4,
-                 emission_prior_concentration=1e-4,
-                 emission_prior_scale=1e-4):
+                 emission_prior_concentration=1.1,
+                 emission_prior_scale=1.1):
 
         self.num_states = num_states
         self.emission_dim = emission_dim
@@ -215,8 +215,8 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
         return prior.log_prob((params['scale_diags']**2,
                                params['means'])).sum()
 
-    def collect_suff_stats(self, posterior, emissions, covariates=None):
-        expected_states = posterior.expected_states
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+        expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
         sum_xsq = jnp.einsum("tk,ti->ki", expected_states, emissions**2)
@@ -422,7 +422,7 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         lp += tfd.MultivariateNormalFullCovariance(mu0, Sigma / kappa0).log_prob(mus).sum()
         return lp
 
-    def collect_suff_stats(self, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
@@ -552,7 +552,7 @@ class GaussianHMM(HMM):
 
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=None,
+    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,
@@ -579,8 +579,8 @@ class DiagonalGaussianHMM(HMM):
                  transition_matrix_concentration=1.1,
                  emission_prior_mean=0.0,
                  emission_prior_mean_concentration=1e-4,
-                 emission_prior_concentration=1e-4,
-                 emission_prior_scale=1e-4):
+                 emission_prior_concentration=1.1,
+                 emission_prior_scale=1.1):
 
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
@@ -594,7 +594,7 @@ class DiagonalGaussianHMM(HMM):
 
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=None,
+    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,
@@ -627,7 +627,7 @@ class SphericalGaussianHMM(HMM):
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
-        emission_component = DiagonalGaussianHMMEmissions(
+        emission_component = SphericalGaussianHMMEmissions(
             num_states, emission_dim,
             emission_prior_mean=emission_prior_mean,
             emission_prior_mean_covariance=emission_prior_mean_covariance,
@@ -636,7 +636,7 @@ class SphericalGaussianHMM(HMM):
 
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=None,
+    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,
@@ -677,7 +677,7 @@ class SharedCovarianceGaussianHMM(HMM):
             emission_prior_extra_df=emission_prior_extra_df)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=None,
+    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,
@@ -700,21 +700,22 @@ class SharedCovarianceGaussianHMM(HMM):
 class LowRankGaussianHMM(HMM):
     def __init__(self, num_states: int,
                  emission_dim: int,
+                 emission_rank: int,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
-                 emission_diag_factor_concentration=1e-4,
-                 emission_diag_factor_rate=1e-4):
+                 emission_diag_factor_concentration=1.1,
+                 emission_diag_factor_rate=1.1):
 
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
         emission_component = LowRankGaussianHMMEmissions(
-            num_states, emission_dim,
+            num_states, emission_dim, emission_rank,
             emission_diag_factor_concentration=emission_diag_factor_concentration,
             emission_diag_factor_rate=emission_diag_factor_rate)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=None,
+    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,

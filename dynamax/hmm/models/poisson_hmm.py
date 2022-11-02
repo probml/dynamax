@@ -61,7 +61,7 @@ class PoissonHMMEmissions(HMMEmissions):
         prior = tfd.Gamma(self.emission_prior_concentration, self.emission_prior_rate)
         return prior.log_prob(params['rates']).sum()
 
-    def collect_suff_stats(self, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)[:, None]
         sum_x = jnp.einsum("tk, ti->ki", expected_states, emissions)
