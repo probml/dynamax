@@ -2,24 +2,8 @@ from jax import vmap
 from jax import numpy as jnp
 from jax import random as jr
 
-from dynamax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_smoother, lgssm_filter
-from dynamax.linear_gaussian_ssm.info_inference import LGSSMInfoParams, lgssm_info_filter, lgssm_info_smoother
-
-
-def info_to_moment_form(etas, Lambdas):
-    """Convert information form parameters to moment form.
-
-    Args:
-        etas (N,D): precision weighted means.
-        Lambdas (N,D,D): precision matrices.
-
-    Returns:
-        means (N,D)
-        covs (N,D,D)
-    """
-    means = vmap(jnp.linalg.solve)(Lambdas, etas)
-    covs = jnp.linalg.inv(Lambdas)
-    return means, covs
+from dynamax.linear_gaussian_ssm.inference import  lgssm_smoother, lgssm_filter, ParamsLGSSMMoment
+from dynamax.linear_gaussian_ssm.info_inference import lgssm_info_filter, lgssm_info_smoother, info_to_moment_form, ParamsLGSSMInfo
 
 
 def build_lgssm_moment_and_info_form():
@@ -52,32 +36,32 @@ def build_lgssm_moment_and_info_form():
     Lambda0 = jnp.linalg.inv(Sigma0)
 
     # Construct LGSSM
-    lgssm = LGSSMParams(
+    lgssm = ParamsLGSSMMoment(
         initial_mean=mu0,
         initial_covariance=Sigma0,
-        dynamics_matrix=F,
+        dynamics_weights=F,
         dynamics_covariance=Q,
         dynamics_input_weights=B,
         dynamics_bias=b,
-        emission_matrix=H,
+        emission_weights=H,
         emission_covariance=R,
         emission_input_weights=D,
         emission_bias=d,
     )
 
-    # Collect information form parameters
-    lgssm_info = LGSSMInfoParams(
+    lgssm_info = ParamsLGSSMInfo(
         initial_mean=mu0,
         initial_precision=Lambda0,
-        dynamics_matrix=F,
+        dynamics_weights=F,
         dynamics_precision=Q_prec,
         dynamics_input_weights=B,
         dynamics_bias=b,
-        emission_matrix=H,
+        emission_weights=H,
         emission_precision=R_prec,
         emission_input_weights=D,
         emission_bias=d,
     )
+
     return lgssm, lgssm_info
 
 
@@ -145,54 +129,33 @@ class TestInfoKFLinReg:
     Lambda0 = jnp.linalg.inv(Sigma0)
 
     # Data from original matlab example
-    y = jnp.array(
-        [
-            2.4865,
-            -0.3033,
-            -4.0531,
-            -4.3359,
-            -6.1742,
-            -5.604,
-            -3.5069,
-            -2.3257,
-            -4.6377,
-            -0.2327,
-            -1.9858,
-            1.0284,
-            -2.264,
-            -0.4508,
-            1.1672,
-            6.6524,
-            4.1452,
-            5.2677,
-            6.3403,
-            9.6264,
-            14.7842,
-        ]
-    )
+    y = jnp.array([ 2.4865, -0.3033, -4.0531, -4.3359, -6.1742, -5.604 ,
+             -3.5069, -2.3257, -4.6377, -0.2327, -1.9858,  1.0284,
+             -2.264 , -0.4508,  1.1672,  6.6524,  4.1452,  5.2677,
+              6.3403,  9.6264, 14.7842])
     inputs = jnp.zeros((len(y), 1))
 
-    lgssm_moment = LGSSMParams(
+    lgssm_moment = ParamsLGSSMMoment(
         initial_mean=mu0,
         initial_covariance=Sigma0,
-        dynamics_matrix=F,
+        dynamics_weights=F,
         dynamics_input_weights=jnp.zeros((mu0.shape[0], 1)),  # no inputs
         dynamics_bias=jnp.zeros(1),
         dynamics_covariance=Q,
-        emission_matrix=X[:, None, :],
+        emission_weights=X[:, None, :],
         emission_input_weights=jnp.zeros(1),
         emission_bias=jnp.zeros(1),
         emission_covariance=R,
     )
 
-    lgssm_info = LGSSMInfoParams(
+    lgssm_info = ParamsLGSSMInfo(
         initial_mean=mu0,
         initial_precision=Lambda0,
-        dynamics_matrix=F,
+        dynamics_weights=F,
         dynamics_input_weights=jnp.zeros((mu0.shape[0], 1)),  # no inputs
         dynamics_bias=jnp.zeros(1),
         dynamics_precision=Q_prec,
-        emission_matrix=X[:, None, :],
+        emission_weights=X[:, None, :],
         emission_input_weights=jnp.zeros(1),
         emission_bias=jnp.zeros(1),
         emission_precision=R_prec,

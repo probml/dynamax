@@ -2,9 +2,54 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from dynamax.linear_gaussian_ssm.lgssm_types import PosteriorLGSSM, ParamsLGSSM, ParamsLGSSMInf
 from functools import wraps
 import inspect
+
+from jaxtyping import Array, Float, PyTree, Bool, Int, Num
+from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
+import chex
+
+from dynamax.ssm_types import *
+
+@chex.dataclass
+class ParamsLGSSMMoment:
+    """Lightweight container for passing LGSSM parameters in moment form to inference algorithms."""
+    initial_mean: Float[Array, "state_dim"]
+    dynamics_weights: Float[Array, "state_dim state_dim"]
+    emission_weights:  Float[Array, "emission_dim state_dim"]
+
+    initial_covariance: Float[Array, "state_dim state_dim"]
+    dynamics_covariance:  Float[Array, "state_dim state_dim"]
+    emission_covariance: Float[Array, "emission_dim emission_dim"]
+
+    # Optional parameters (None means zeros)
+    dynamics_input_weights: Optional[Float[Array, "input_dim state_dim"]] = None
+    dynamics_bias: Optional[Float[Array, "state_dim"]] = None
+    emission_input_weights: Optional[Float[Array, "input_dim emission_dim"]] = None
+    emission_bias: Optional[Float[Array, "emission_dim"]] = None
+
+
+@chex.dataclass
+class PosteriorLGSSM:
+    """Simple wrapper for properties of an Gaussian SSM posterior distribution.
+    Attributes:
+            filtered_means: (T,D_hid) array,
+                E[x_t | y_{1:t}, u_{1:t}].
+            filtered_covariances: (T,D_hid,D_hid) array,
+                Cov[x_t | y_{1:t}, u_{1:t}].
+            smoothed_means: (T,D_hid) array,
+                E[x_t | y_{1:T}, u_{1:T}].
+            smoothed_covariances: (T,D_hid,D_hid) array of smoothed marginal covariances,
+                Cov[x_t | y_{1:T}, u_{1:T}].
+            smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
+                E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
+    """
+    marginal_loglik: Optional[Float[Array, ""]] = None # Scalar
+    filtered_means: Optional[Float[Array, "ntime state_dim"]] = None
+    filtered_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
+    smoothed_means: Optional[Float[Array, "ntime state_dim"]] = None
+    smoothed_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
+    smoothed_cross_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
 
 
 
@@ -114,7 +159,7 @@ def preprocess_args(f):
         emission_input_weights = _zeros_if_none(params.emission_input_weights, (emission_dim, input_dim))
         emission_bias = _zeros_if_none(params.emission_bias, (emission_dim,))
 
-        full_params = ParamsLGSSMInf(
+        full_params = ParamsLGSSMMoment(
             initial_mean=params.initial_mean,
             initial_covariance=params.initial_covariance,
             dynamics_weights=params.dynamics_weights,
@@ -131,7 +176,11 @@ def preprocess_args(f):
 
 
 @preprocess_args
-def lgssm_filter(params, emissions, inputs=None):
+def lgssm_filter(
+    params: ParamsLGSSMMoment,
+    emissions: EmissionSeq,
+    inputs: Optional[InputSeq]=None
+) -> PosteriorLGSSM:
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
 
@@ -181,10 +230,12 @@ def lgssm_filter(params, emissions, inputs=None):
     return PosteriorLGSSM(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-
-
 @preprocess_args
-def lgssm_smoother(params, emissions, inputs=None):
+def lgssm_smoother(
+    params: ParamsLGSSMMoment,
+    emissions: EmissionSeq,
+    inputs: Optional[InputSeq]=None
+) -> PosteriorLGSSM:
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -250,12 +301,17 @@ def lgssm_smoother(params, emissions, inputs=None):
     )
 
 
-def lgssm_posterior_sample(rng, params, emissions, inputs=None):
+def lgssm_posterior_sample(
+    key: PRNGKey,
+    params: ParamsLGSSMMoment,
+    emissions: EmissionSeq,
+    inputs: Optional[InputSeq]=None
+) -> StateSeq:
     """Run forward-filtering, backward-sampling to draw samples of
         x_{1:T} | y_{1:T}, u_{1:T}.
 
     Args:
-        rng: jax.random.PRNGKey.
+        key: jax.random.PRNGKey.
         params: an LGSSMParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
         inputs (T,D_in): array of inputs.
@@ -273,7 +329,7 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
     # Sample backward in time
     def _step(carry, args):
         next_state = carry
-        rng, filtered_mean, filtered_cov, t = args
+        key, filtered_mean, filtered_cov, t = args
 
         # Shorthand: get parameters and inputs for time index t
         F = _get_params(params.dynamics_weights, 2, t)
@@ -284,15 +340,15 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
 
         # Condition on next state
         smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F, B, b, Q, u, next_state)
-        state = MVN(smoothed_mean, smoothed_cov).sample(seed=rng)
+        state = MVN(smoothed_mean, smoothed_cov).sample(seed=key)
         return state, state
 
     # Initialize the last state
-    rng, this_rng = jr.split(rng, 2)
-    last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_rng)
+    key, this_key = jr.split(key, 2)
+    last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_key)
 
     args = (
-        jr.split(rng, num_timesteps - 1),
+        jr.split(key, num_timesteps - 1),
         filtered_means[:-1][::-1],
         filtered_covs[:-1][::-1],
         jnp.arange(num_timesteps - 2, -1, -1),

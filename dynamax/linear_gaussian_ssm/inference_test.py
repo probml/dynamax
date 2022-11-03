@@ -5,8 +5,6 @@ from functools import partial
 
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
-from dynamax.linear_gaussian_ssm.lgssm_types import *
-
 
 
 def lgssm_dynamax_to_tfp(num_timesteps, params):
@@ -52,15 +50,6 @@ def test_kalman(num_timesteps=5, seed=0):
                      [0, 1.0, 0, 0]])
     R = jnp.eye(emission_dim) * 1.0
 
-    inf_params = ParamsLGSSMInf(
-        initial_mean = mu0,
-        initial_covariance = Sigma0,
-        dynamics_weights = F,
-        dynamics_covariance = Q,
-        emission_weights = H,
-        emission_covariance = R
-    )
-
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
     params, _ = lgssm.initialize(init_key)
 
@@ -102,19 +91,8 @@ def test_posterior_sampler():
     H = jnp.eye(emission_dim)
     R = jnp.eye(emission_dim) * 5.**2
 
-    inf_params = ParamsLGSSMInf(
-        initial_mean = mu0,
-        initial_covariance = Sigma0,
-        dynamics_weights = F,
-        dynamics_covariance = Q,
-        emission_weights = H,
-        emission_covariance = R
-    )
-
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
     params, _ = lgssm.initialize(key)
-
-    print(params)
 
     params['initial']['mean'] = mu0
     params['initial']['cov'] = Sigma0
@@ -123,8 +101,6 @@ def test_posterior_sampler():
     params['emissions']['weights'] = H
     params['emissions']['cov'] = R
 
-    print(params)
-    
     # Generate true observation
     sample_key, key = jr.split(key)
     states, emissions = lgssm.sample(params, key=sample_key, num_timesteps=num_timesteps)

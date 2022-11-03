@@ -6,7 +6,7 @@ from jax import scipy as jsc
 from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
-from dynamax.linear_gaussian_ssm.lgssm_types import PosteriorLGSSM
+from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSM
 
 def make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""

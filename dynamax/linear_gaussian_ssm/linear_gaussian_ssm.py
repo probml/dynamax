@@ -4,8 +4,7 @@ from jax import random as jr
 from jax.tree_util import tree_map
 from dynamax.abstractions import SSM
 from dynamax.ssm_types import *
-from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
-from dynamax.linear_gaussian_ssm.lgssm_types import ParamsLGSSMInf, ParamsLGSSM, ParamPropsLGSSM, PosteriorLGSSM, SuffStatsLGSSM
+from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample, ParamsLGSSMMoment, PosteriorLGSSM
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
 import tensorflow_probability.substrates.jax as tfp
@@ -19,6 +18,12 @@ from dataclasses import dataclass
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
+
+ParamsLGSSM = ParamsSSM # Dict
+
+ParamPropsLGSSM = ParamPropsSSM # Dict
+
+SuffStatsLGSSM = SuffStatsSSM # Any
 
 _zeros_if_none = lambda x, shp: x if x is not None else jnp.zeros(shp)
 
@@ -152,11 +157,11 @@ class LinearGaussianSSM(SSM):
     def _make_inference_args(
         self,
         params: ParamsLGSSM
-    ) -> ParamsLGSSMInf:
+    ) -> ParamsLGSSMMoment:
         """Convert params dict to inference container replacing Nones if necessary."""
         dyn_bias = _zeros_if_none(params["dynamics"]["bias"], self.state_dim)
         ems_bias = _zeros_if_none(params["emissions"]["bias"], self.emission_dim)
-        return ParamsLGSSMInf(initial_mean=params["initial"]["mean"],
+        return ParamsLGSSMMoment(initial_mean=params["initial"]["mean"],
                            initial_covariance=params["initial"]["cov"],
                            dynamics_weights=params["dynamics"]["weights"],
                            dynamics_input_weights=params["dynamics"]["input_weights"],
