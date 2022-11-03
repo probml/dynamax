@@ -3,7 +3,9 @@ from jax import numpy as jnp
 from jax import random as jr
 from jax.tree_util import tree_map
 from dynamax.abstractions import SSM
-from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample, LGSSMParams
+from dynamax.ssm_types import *
+from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
+from dynamax.linear_gaussian_ssm.lgssm_types import ParamsLGSSMInf, ParamsLGSSM
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
 import tensorflow_probability.substrates.jax as tfp
@@ -28,32 +30,17 @@ class LinearGaussianSSM(SSM):
 
     z_t = hidden variables of size `state_dim`,
     y_t = observed variables of size `emission_dim`
-    u_t = input covariates of size `covariate_dim` (defaults to 0)
-
-    The parameters of the model are stored in a separate dictionary, as follows:
-    F = params["dynamics"]["weights"]
-    Q = params["dynamics"]["cov"]
-    H = params["emission"]["weights"]
-    R = params["emissions"]["cov]
-    m = params["init"]["mean"]
-    S = params["init"]["cov"]
-    Optional parameters (default to 0)
-    B = params["dynamics"]["input_weights"]
-    b = params["dynamics"]["bias"]
-    D = params["emission"]["input_weights"]
-    d = params["emission"]["bias"]
-
-    You can create these parameters manually, or by calling `initialize`.
+    u_t = input covariates of size `input_dim` (defaults to 0)
     """
     def __init__(self,
                  state_dim,
                  emission_dim,
-                 covariate_dim=0,
+                 input_dim=0,
                  has_dynamics_bias=True,
                  has_emissions_bias=True):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
-        self.covariate_dim = covariate_dim
+        self.input_dim = input_dim
         self.has_dynamics_bias = has_dynamics_bias
         self.has_emissions_bias = has_emissions_bias
 
@@ -63,11 +50,12 @@ class LinearGaussianSSM(SSM):
 
     @property
     def covariates_shape(self):
-        return (self.covariate_dim,) if self.covariate_dim > 0 else None
+        return (self.input_dim,) if self.input_dim > 0 else None
 
-    def initialize(self,
-                   key=jr.PRNGKey(0),
-                   initial_mean=None,
+    def initialize(
+        self,
+        key: PNRGKey =jr.PRNGKey(0),
+        initial_mean = None,
                    initial_covariance=None,
                    dynamics_weights=None,
                    dynamics_bias=None,
@@ -107,16 +95,17 @@ class LinearGaussianSSM(SSM):
         _initial_mean = jnp.zeros(self.state_dim)
         _initial_covariance = jnp.eye(self.state_dim)
         _dynamics_weights = 0.99 * jnp.eye(self.state_dim)
-        _dynamics_input_weights = jnp.zeros((self.state_dim, self.covariate_dim))
+        _dynamics_input_weights = jnp.zeros((self.state_dim, self.input_dim))
         _dynamics_bias = jnp.zeros((self.state_dim,)) if self.has_dynamics_bias else None
         _dynamics_covariance = 0.1 * jnp.eye(self.state_dim)
         _emission_weights = jr.normal(key, (self.emission_dim, self.state_dim))
-        _emission_input_weights = jnp.zeros((self.emission_dim, self.covariate_dim))
+        _emission_input_weights = jnp.zeros((self.emission_dim, self.input_dim))
         _emission_bias = jnp.zeros((self.emission_dim,)) if self.has_emissions_bias else None
         _emission_covariance = 0.1 * jnp.eye(self.emission_dim)
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
+        # Create nested dictionary of params
         params = dict(
             initial=dict(mean=default(initial_mean, _initial_mean),
                          cov=default(initial_covariance, _initial_covariance)),
@@ -129,7 +118,7 @@ class LinearGaussianSSM(SSM):
                            input_weights=default(emission_input_weights, _emission_input_weights),
                            cov=default(emission_covariance, _emission_covariance))
         )
-
+        # The keys of param_props must match those of params!
         param_props = dict(
             initial=dict(mean=ParameterProperties(),
                          cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))),
@@ -148,14 +137,14 @@ class LinearGaussianSSM(SSM):
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
     def transition_distribution(self, params, state, covariates=None):
-        inputs = covariates if covariates is not None else jnp.zeros(self.covariate_dim)
+        inputs = covariates if covariates is not None else jnp.zeros(self.input_dim)
         mean = params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs
         if self.has_dynamics_bias:
             mean += params["dynamics"]["bias"]
         return MVN(mean, params["dynamics"]["cov"])
 
     def emission_distribution(self, params, state, covariates=None):
-        inputs = covariates if covariates is not None else jnp.zeros(self.covariate_dim)
+        inputs = covariates if covariates is not None else jnp.zeros(self.input_dim)
         mean = params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs
         if self.has_emissions_bias:
             mean += params["emissions"]["bias"]
@@ -165,7 +154,7 @@ class LinearGaussianSSM(SSM):
         """Convert params dict to LGSSMParams container replacing Nones if necessary."""
         dyn_bias = _zeros_if_none(params["dynamics"]["bias"], self.state_dim)
         ems_bias = _zeros_if_none(params["emissions"]["bias"], self.emission_dim)
-        return LGSSMParams(initial_mean=params["initial"]["mean"],
+        return ParamsLGSSMInf(initial_mean=params["initial"]["mean"],
                            initial_covariance=params["initial"]["cov"],
                            dynamics_matrix=params["dynamics"]["weights"],
                            dynamics_input_weights=params["dynamics"]["input_weights"],

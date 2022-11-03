@@ -1,7 +1,8 @@
 from jax import numpy as jnp
 from jax import random as jr
 
-from dynamax.linear_gaussian_ssm.inference import lgssm_sample, LGSSMParams
+from dynamax.linear_gaussian_ssm.lgssm_types import ParamsLGSSMInf, ParamsLGSSM
+from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_smoother as serial_lgssm_smoother
 from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_smoother as parallel_lgssm_smoother
 
@@ -25,16 +26,22 @@ class TestParallelLGSSMSmoother:
     observation_dim = 2
     input_dim = 1
 
-    lgssm_params = LGSSMParams(
+    lgssm = LinearGaussianSSM(latent_dim, observation_dim)
+    model_params, _ = lgssm.initialize(jr.PRNGKey(0),
+                             initial_mean=μ0,
+                             initial_covariance= Σ0,
+                             dynamics_weights=F,
+                             dynamics_covariance=Q,
+                             emission_weights=H,
+                             emission_covariance=R)
+
+
+    inf_params = ParamsLGSSMInf(
         initial_mean = μ0,
         initial_covariance = Σ0,
-        dynamics_matrix = F,
-        dynamics_input_weights = jnp.zeros((latent_dim,input_dim)),
-        dynamics_bias = jnp.zeros(latent_dim),
+        dynamics_weights = F,
         dynamics_covariance = Q,
-        emission_matrix = H,
-        emission_input_weights = jnp.zeros((observation_dim, input_dim)),
-        emission_bias = jnp.zeros(observation_dim),
+        emission_weights = H,
         emission_covariance = R
     )
 
@@ -43,10 +50,10 @@ class TestParallelLGSSMSmoother:
 
     key = jr.PRNGKey(seed)
     key, subkey = jr.split(key)
-    _, emissions = lgssm_sample(subkey,lgssm_params,num_timesteps, inputs)
+    _, emissions = lgssm.sample(model_params, subkey, num_timesteps)
 
-    serial_posterior = serial_lgssm_smoother(lgssm_params, emissions, inputs)
-    parallel_posterior = parallel_lgssm_smoother(lgssm_params, emissions)
+    serial_posterior = serial_lgssm_smoother(inf_params, emissions, inputs)
+    parallel_posterior = parallel_lgssm_smoother(inf_params, emissions)
 
     def test_filtered_means(self):
         assert jnp.allclose(

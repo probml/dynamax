@@ -6,14 +6,14 @@ from jax import scipy as jsc
 from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
-from dynamax.containers import GSSMPosterior
+from dynamax.linear_gaussian_ssm.lgssm_types import PosteriorLGSSM
 
 def make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
 
     def _first_filtering_element(params, y):
-        F = params.dynamics_matrix
-        H = params.emission_matrix
+        F = params.dynamics_weights
+        H = params.emission_weights
         Q = params.dynamics_covariance
         R = params.emission_covariance
         P0 = params.initial_covariance
@@ -39,8 +39,8 @@ def make_associative_filtering_elements(params, emissions):
 
 
     def _generic_filtering_element(params, y):
-        F = params.dynamics_matrix
-        H = params.emission_matrix
+        F = params.dynamics_weights
+        H = params.emission_weights
         Q = params.dynamics_covariance
         R = params.emission_covariance
         
@@ -107,7 +107,7 @@ def lgssm_filter(params, emissions):
                                                 filtering_operator, initial_elements
                                                 )
 
-    return GSSMPosterior(marginal_loglik=-logZ[-1],
+    return PosteriorLGSSM(marginal_loglik=-logZ[-1],
         filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
@@ -119,8 +119,8 @@ def make_associative_smoothing_elements(params, filtered_means, filtered_covaria
         return jnp.zeros_like(P), m, P
 
     def _generic_smoothing_element(params, m, P):
-        F = params.dynamics_matrix
-        H = params.emission_matrix
+        F = params.dynamics_weights
+        H = params.emission_weights
         Q = params.dynamics_covariance
         R = params.emission_covariance
 
@@ -166,7 +166,7 @@ def lgssm_smoother(params, emissions):
     _, smoothed_means, smoothed_covs, *_ = lax.associative_scan(
                                                 smoothing_operator, initial_elements, reverse=True
                                                 )
-    return GSSMPosterior(
+    return PosteriorLGSSM(
         marginal_loglik=filtered_posterior.marginal_loglik,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,

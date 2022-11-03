@@ -2,31 +2,10 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-import chex
-from dynamax.containers import GSSMPosterior
+from dynamax.linear_gaussian_ssm.lgssm_types import PosteriorLGSSM, ParamsLGSSM, ParamsLGSSMInf
 from functools import wraps
 import inspect
 
-
-@chex.dataclass
-class LGSSMParams:
-    """Lightweight container for LGSSM parameters.
-    The functions below can be called with an instance of this class.
-    However, they can also accept a ssm.lgssm.models.LinearGaussianSSM instance,
-    if you prefer a more object-oriented approach.
-    """
-    initial_mean: chex.Array
-    initial_covariance: chex.Array
-    dynamics_matrix: chex.Array
-    dynamics_covariance: chex.Array
-    emission_matrix: chex.Array
-    emission_covariance: chex.Array
-
-    # Optional parameters (code below assumes zero otherwise)
-    dynamics_input_weights: chex.Array = None
-    dynamics_bias: chex.Array  = None
-    emission_input_weights: chex.Array = None
-    emission_bias: chex.Array = None
 
 
 # Helper functions
@@ -34,9 +13,9 @@ _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
 def _predict(m, S, F, B, b, Q, u):
-    """Predict next mean and covariance under a linear Gaussian model
+    """Predict next mean and covariance under a linear Gaussian model.
 
-        p(x_{t+1}) = \int N(x_t | m, S) N(x_{t+1} | Fx_t + Bu + b, Q)
+        p(x_{t+1}) = int N(x_t | m, S) N(x_{t+1} | Fx_t + Bu + b, Q)
                     = N(x_{t+1} | Fm + Bu, F S F^T + Q)
 
     Args:
@@ -116,13 +95,13 @@ def preprocess_args(f):
         # Make sure all the required parameters are there
         assert params.initial_mean is not None
         assert params.initial_covariance is not None
-        assert params.dynamics_matrix is not None
+        assert params.dynamics_weights is not None
         assert params.dynamics_covariance is not None
-        assert params.emission_matrix is not None
+        assert params.emission_weights is not None
         assert params.emission_covariance is not None
 
         # Get shapes
-        emission_dim, state_dim = params.emission_matrix.shape[-2:]
+        emission_dim, state_dim = params.emission_weights.shape[-2:]
         num_timesteps = len(emissions)
 
         # Default the inputs to zero
@@ -135,55 +114,20 @@ def preprocess_args(f):
         emission_input_weights = _zeros_if_none(params.emission_input_weights, (emission_dim, input_dim))
         emission_bias = _zeros_if_none(params.emission_bias, (emission_dim,))
 
-        full_params = LGSSMParams(
+        full_params = ParamsLGSSMInf(
             initial_mean=params.initial_mean,
             initial_covariance=params.initial_covariance,
-            dynamics_matrix=params.dynamics_matrix,
+            dynamics_weights=params.dynamics_weights,
             dynamics_input_weights=dynamics_input_weights,
             dynamics_bias=dynamics_bias,
             dynamics_covariance=params.dynamics_covariance,
-            emission_matrix=params.emission_matrix,
+            emission_weights=params.emission_weights,
             emission_input_weights=emission_input_weights,
             emission_bias=emission_bias,
             emission_covariance=params.emission_covariance
         )
         return f(full_params, emissions, inputs=inputs)
     return wrapper
-
-
-def lgssm_sample(rng, params, num_timesteps, inputs=None):
-    """Sample states and emissions from an LGSSM.
-
-    Args:
-        params (_type_): _description_
-        num_timesteps (_type_): _description_
-        inputs (_type_, optional): _description_. Defaults to None.
-    """
-    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-
-    init_key, rng = jr.split(rng)
-    initial_state = MVN(params.initial_mean, params.initial_covariance).sample(seed=init_key)
-
-    def _step(carry, t):
-        rng, state = carry
-        emission_rng, state_rng, rng = jr.split(rng, 3)
-        # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
-        B = _get_params(params.dynamics_input_weights, 2, t)
-        b = _get_params(params.dynamics_bias, 1, t)
-        Q = _get_params(params.dynamics_covariance, 2, t)
-        H = _get_params(params.emission_matrix, 2, t)
-        D = _get_params(params.emission_input_weights, 2, t)
-        d = _get_params(params.emission_bias, 1, t)
-        R = _get_params(params.emission_covariance, 2, t)
-        u = inputs[t]
-
-        emission = MVN(H @ state + D @ u + d, R).sample(seed=emission_rng)
-        next_state = MVN(F @ state + B @ u + b, Q).sample(seed=state_rng)
-        return (rng, next_state), (state, emission)
-
-    _, (states, emissions) = lax.scan(_step, (rng, initial_state), jnp.arange(num_timesteps))
-    return states, emissions
 
 
 @preprocess_args
@@ -209,11 +153,11 @@ def lgssm_filter(params, emissions, inputs=None):
         ll, pred_mean, pred_cov = carry
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
+        F = _get_params(params.dynamics_weights, 2, t)
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
         Q = _get_params(params.dynamics_covariance, 2, t)
-        H = _get_params(params.emission_matrix, 2, t)
+        H = _get_params(params.emission_weights, 2, t)
         D = _get_params(params.emission_input_weights, 2, t)
         d = _get_params(params.emission_bias, 1, t)
         R = _get_params(params.emission_covariance, 2, t)
@@ -234,7 +178,7 @@ def lgssm_filter(params, emissions, inputs=None):
     # Run the Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return PosteriorLGSSM(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 
@@ -268,7 +212,7 @@ def lgssm_smoother(params, emissions, inputs=None):
         t, filtered_mean, filtered_cov = args
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
+        F = _get_params(params.dynamics_weights, 2, t)
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
         Q = _get_params(params.dynamics_covariance, 2, t)
@@ -296,7 +240,7 @@ def lgssm_smoother(params, emissions, inputs=None):
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
     smoothed_cross = smoothed_cross[::-1]
-    return GSSMPosterior(
+    return PosteriorLGSSM(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
@@ -317,7 +261,6 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
         inputs (T,D_in): array of inputs.
 
     Returns:
-        ll: marginal log likelihood of the observations.
         states (T,D_hid): samples from the posterior distribution on latent states.
     """
     num_timesteps = len(emissions)
@@ -333,7 +276,7 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
         rng, filtered_mean, filtered_cov, t = args
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
+        F = _get_params(params.dynamics_weights, 2, t)
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
         Q = _get_params(params.dynamics_covariance, 2, t)
@@ -356,4 +299,4 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
     )
     _, reversed_states = lax.scan(_step, last_state, args)
     states = jnp.row_stack([reversed_states[::-1], last_state])
-    return ll, states
+    return states

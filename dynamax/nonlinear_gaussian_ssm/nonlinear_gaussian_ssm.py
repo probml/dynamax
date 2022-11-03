@@ -5,19 +5,21 @@ from jax import numpy as jnp
 from jax import random as jr
 from jax.tree_util import tree_map
 from dynamax.abstractions import SSM
-from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample, LGSSMParams
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
+from dynamax.nonlinear_gaussian_ssm.nlgssm_types import *
+
 import tensorflow_probability.substrates.jax as tfp
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
+
 _zeros_if_none = lambda x, shp: x if x is not None else jnp.zeros(shp)
 
 @chex.dataclass
-class NLGSSMParams:
+class ParamsNLGSSM:
     """Lightweight container for NLGSSM parameters, used by inference algorithms."""
 
     initial_mean: chex.Array
@@ -27,8 +29,6 @@ class NLGSSMParams:
     emission_function: Callable
     emission_covariance: chex.Array
 
-
-
 class NLGSSM(SSM):
     """
     NonLinear Gaussian State Space Model is defined as follows:
@@ -36,15 +36,9 @@ class NLGSSM(SSM):
     p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)
     p(z_1) = N(z_1 | m, S)
     where z_t = hidden, y_t = observed, u_t = inputs (can be None),
-    f = params["dynamics"]["function"]
-    Q = params["dynamics"]["cov"] 
-    h = params["emissions"]["function"]
-    R = params["emissions"]["cov"]
-    m = params["initial"]["mean"]
-    S = params["initial"]["cov"]
     """
 
-    def __init__(self, state_dim, emission_dim,   input_dim=0):
+    def __init__(self, state_dim: int, emission_dim: int, input_dim:int = 0):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
         self.input_dim = 0
@@ -57,8 +51,12 @@ class NLGSSM(SSM):
     def covariates_shape(self):
         return (self.input_dim,) if self.input_dim > 0 else None
 
-    def initial_distribution(self, params, covariates=None):
-        return MVN(params["initial"]["mean"], params["initial"]["cov"])
+    def initial_distribution(
+        self,
+        params: ParamsNLGSSM,
+        inputs: Any = None
+    ):
+        return MVN(params.initial_mean, params.initial_covariance)
 
     def transition_distribution(self, params, state, covariates=None):
         f = params["dynamics"]["function"]
@@ -76,11 +74,4 @@ class NLGSSM(SSM):
             mean = h(state, covariates)
         return MVN(mean, params["emissions"]["cov"])
 
-    def make_inference_args(self, params):
-        return NLGSSMParams(
-            initial_mean=params["initial"]["mean"],
-            initial_covariance=params["initial"]["cov"],
-            dynamics_function=params["dynamics"]["function"],
-            dynamics_covariance=params["dynamics"]["cov"],
-            emission_function=params["emissions"]["function"],
-            emission_covariance=params["emissions"]["cov"])
+

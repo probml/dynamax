@@ -2,14 +2,15 @@ import pytest
 from datetime import datetime
 import jax.numpy as jnp
 import jax.random as jr
-import dynamax.linear_gaussian_ssm.models as models
-from dynamax.utils import ensure_array_has_batch_dim, monotonically_increasing
+from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
+from dynamax.linear_gaussian_ssm.linear_gaussian_ssm_conjugate import LinearGaussianConjugateSSM
+from dynamax.utils import monotonically_increasing
 
 NUM_TIMESTEPS = 100
 
 CONFIGS = [
-    (models.LinearGaussianSSM, dict(state_dim=2, emission_dim=10), None),
-    (models.LinearGaussianConjugateSSM, dict(state_dim=2, emission_dim=10), None),
+    (LinearGaussianSSM, dict(state_dim=2, emission_dim=10), None),
+    (LinearGaussianConjugateSSM, dict(state_dim=2, emission_dim=10), None),
 ]
 
 @pytest.mark.parametrize(["cls", "kwargs", "covariates"], CONFIGS)

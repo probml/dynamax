@@ -69,6 +69,7 @@ def pytree_stack(pytrees):
 
 def random_rotation(seed, n, theta=None):
     """Helper function to create a rotating linear system.
+    
     Args:
         seed (jax.random.PRNGKey): JAX random seed.
         n (int): Dimension of the rotation matrix.
