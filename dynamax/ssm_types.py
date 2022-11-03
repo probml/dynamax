@@ -71,3 +71,5 @@ SuffStatsSSM = Any
 
 LossTrace = Float[Array, "nsteps"]
 # Store the sequences of losses over time from an optimizer 
+
+HMMTransitionMatrix = Float[Array, "state_dim state_dim"]
