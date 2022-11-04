@@ -47,7 +47,7 @@ class MultinomialHMMEmissions(HMMEmissions):
         props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.Independent(
             tfd.Multinomial(self.num_trials, probs=params['probs'][state]),
             reinterpreted_batch_ndims=1)
@@ -55,16 +55,19 @@ class MultinomialHMMEmissions(HMMEmissions):
     def log_prior(self, params):
         return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params['probs']).sum()
 
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
         return dict(sum_x=jnp.einsum("tk, tdi->kdi", expected_states, emissions))
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         if props['probs'].trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
             params['probs'] = tfd.Dirichlet(
                 self.emission_prior_concentration + emission_stats['sum_x']).mode()
-        return params
+        return params, m_step_state
 
 
 class MultinomialHMM(HMM):

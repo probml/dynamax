@@ -60,8 +60,8 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         return (self.emission_dim,)
 
     @property
-    def covariates_shape(self):
-        return dict(inputs=(self.input_dim,)) if self.input_dim > 0 else dict()
+    def inputs_shape(self):
+        return (self.input_dim,) if self.input_dim > 0 else None
 
     def log_prior(self, params):
         """Return the log prior probability of any model parameters.
@@ -84,7 +84,10 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         lp += self.emission_prior.log_prob((params['emissions']['cov'], emission_matrix))
         return lp
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
         init_stats, dynamics_stats, emission_stats = stats
@@ -105,11 +108,13 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
 
-        return dict(
+        # Package updated params into dict
+        params = dict(
             initial=dict(mean=m, cov=S),
             dynamics=dict(weights=F, bias=b, input_weights=B, cov=Q),
             emissions=dict(weights=H, bias=d, input_weights=D, cov=R)
         )
+        return params, m_step_state
 
     def fit_blocked_gibbs(self, key, sample_size, emissions, inputs=None):
         """Estimation using blocked-Gibbs sampler."""

@@ -19,7 +19,7 @@ class StandardHMMTransitions(HMMTransitions):
         self.num_states = num_states
         self.transition_matrix_concentration = transition_matrix_concentration * jnp.ones(num_states)
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.Categorical(probs=params['transition_matrix'][state])
 
     def initialize(self, key=None, method="prior", transition_matrix=None):
@@ -46,26 +46,26 @@ class StandardHMMTransitions(HMMTransitions):
     def log_prior(self, params):
         return tfd.Dirichlet(self.transition_matrix_concentration).log_prob(params['transition_matrix']).sum()
 
-    def compute_transition_matrices(self, params, covariates=None):
+    def compute_transition_matrices(self, params, inputs=None):
         return params['transition_matrix']
 
-    def collect_suff_stats(self, params, posterior, covariates=None):
+    def collect_suff_stats(self, params, posterior, inputs=None):
         return posterior.trans_probs
 
-    def m_step(self,
-               curr_params,
-               param_props,
-               batch_transition_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
 
-        if not param_props['transition_matrix'].trainable:
-            return curr_params
+    def m_step(self, params, props, batch_stats, m_step_state):
+
+        if not props['transition_matrix'].trainable:
+            return params
 
         elif self.num_states == 1:
-            curr_params['transition_matrix'] = jnp.array([[1.0]])
-            return curr_params
+            params['transition_matrix'] = jnp.array([[1.0]])
+            return params
 
         else:
-            expected_trans_counts = batch_transition_stats.sum(axis=0)
+            expected_trans_counts = batch_stats.sum(axis=0)
             post = tfd.Dirichlet(self.transition_matrix_concentration + expected_trans_counts)
-            curr_params['transition_matrix'] = post.mode()
-        return curr_params
+            params['transition_matrix'] = post.mode()
+        return params, m_step_state

@@ -43,7 +43,22 @@ class LinearGaussianSSM(SSM):
 
     z_t = hidden variables of size `state_dim`,
     y_t = observed variables of size `emission_dim`
-    u_t = input covariates of size `input_dim` (defaults to 0)
+    u_t = input inputs of size `input_dim` (defaults to 0)
+
+    The parameters of the model are stored in a separate dictionary, as follows:
+    F = params["dynamics"]["weights"]
+    Q = params["dynamics"]["cov"]
+    H = params["emission"]["weights"]
+    R = params["emissions"]["cov]
+    m = params["init"]["mean"]
+    S = params["init"]["cov"]
+    Optional parameters (default to 0)
+    B = params["dynamics"]["input_weights"]
+    b = params["dynamics"]["bias"]
+    D = params["emission"]["input_weights"]
+    d = params["emission"]["bias"]
+
+    You can create these parameters manually, or by calling `initialize`.
     """
     def __init__(self,
                  state_dim,
@@ -62,7 +77,7 @@ class LinearGaussianSSM(SSM):
         return (self.emission_dim,)
 
     @property
-    def covariates_shape(self):
+    def inputs_shape(self):
         return (self.input_dim,) if self.input_dim > 0 else None
 
     def initialize(
@@ -321,12 +336,15 @@ class LinearGaussianSSM(SSM):
 
         return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
+    def initialize_m_step_state(self, params, props):
+        return None
 
     def m_step(
         self,
         params: ParamsLGSSM,
         props: ParamPropsLGSSM,
-        batch_stats: SuffStatsLGSSM
+        batch_stats: SuffStatsLGSSM,
+        m_step_state: Any
     ) -> ParamsLGSSM:
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
@@ -353,8 +371,10 @@ class LinearGaussianSSM(SSM):
         D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], None)
 
-        return dict(
+        # Package updated params into dict
+        params = dict(
             initial=dict(mean=m, cov=S),
             dynamics=dict(weights=F, bias=b, input_weights=B, cov=Q),
             emissions=dict(weights=H, bias=d, input_weights=D, cov=R)
         )
+        return params, m_step_state

@@ -16,7 +16,7 @@ tfb = tfp.bijectors
 
 class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
     """A linear autoregressive HMM (ARHMM) is a special case of a
-    linear regression HMM where the covariates (i.e. features)
+    linear regression HMM where the inputs (i.e. features)
     are functions of the past emissions.
     """
 
@@ -26,8 +26,8 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
                  num_lags=1):
         self.num_lags = num_lags
         self.emission_dim = emission_dim
-        covariate_dim = num_lags * emission_dim
-        super().__init__(num_states, covariate_dim, emission_dim)
+        input_dim = num_lags * emission_dim
+        super().__init__(num_states, input_dim, emission_dim)
 
     def initialize(self,
                    key=jr.PRNGKey(0),
@@ -82,10 +82,9 @@ class LinearAutoregressiveHMM(HMM):
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
     @property
-    def covariates_shape(self):
+    def inputs_shape(self):
         """Return a pytree matching the pytree of tuples specifying the shape(s)
-        of a single time step's emissions.
-        For example, a Gaussian HMM with D dimensional emissions would return (D,).
+        of a single time step's inputs.
         """
         return (self.num_lags * self.emission_dim,)
 
@@ -143,14 +142,14 @@ class LinearAutoregressiveHMM(HMM):
             prev_state, prev_emissions = carry
             key1, key2 = jr.split(key, 2)
             state = self.transition_distribution(params, prev_state).sample(seed=key2)
-            emission = self.emission_distribution(params, state, covariates=jnp.ravel(prev_emissions)).sample(seed=key1)
+            emission = self.emission_distribution(params, state, inputs=jnp.ravel(prev_emissions)).sample(seed=key1)
             next_prev_emissions = jnp.row_stack([emission, prev_emissions[:-1]])
             return (state, next_prev_emissions), (state, emission)
 
         # Sample the initial state
         key1, key2, key = jr.split(key, 3)
         initial_state = self.initial_distribution(params).sample(seed=key1)
-        initial_emission = self.emission_distribution(params, initial_state, covariates=jnp.ravel(prev_emissions)).sample(seed=key2)
+        initial_emission = self.emission_distribution(params, initial_state, inputs=jnp.ravel(prev_emissions)).sample(seed=key2)
         initial_prev_emissions = jnp.row_stack([initial_emission, prev_emissions[:-1]])
 
         # Sample the remaining emissions and states
@@ -164,9 +163,9 @@ class LinearAutoregressiveHMM(HMM):
         emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
         return states, emissions
 
-    def compute_covariates(self, emissions, prev_emissions=None):
+    def compute_inputs(self, emissions, prev_emissions=None):
         """Helper function to compute the matrix of lagged emissions. These are the
-        covariates to the fitting functions.
+        inputs to the fitting functions.
 
         Args:
             emissions (array): (T, D) array of emissions

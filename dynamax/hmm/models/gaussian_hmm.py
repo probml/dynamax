@@ -13,6 +13,7 @@ from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions
 from dynamax.utils import PSDToRealBijector, pytree_sum
+import optax
 
 
 class GaussianHMMEmissions(HMMEmissions):
@@ -44,7 +45,7 @@ class GaussianHMMEmissions(HMMEmissions):
     def emission_shape(self):
         return (self.emission_dim,)
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.MultivariateNormalFullCovariance(
             params['means'][state], params['covs'][state])
 
@@ -58,25 +59,6 @@ class GaussianHMMEmissions(HMMEmissions):
                    emission_means=None,
                    emission_covariances=None,
                    emissions=None):
-        """Initialize the model parameters and their corresponding properties.
-
-        You can either specify parameters manually via the keyword arguments, or you can have
-        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
-        Parameters will then be sampled from the prior (if `method==prior`).
-
-        Note: in the future we may support more initialization schemes, like K-Means.
-
-        Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_covariances (array, optional): manually specified emission covariances. Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
-
-        Returns:
-            params: a nested dictionary of arrays containing the model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
-        """
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
@@ -102,7 +84,7 @@ class GaussianHMMEmissions(HMMEmissions):
                      covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
 
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
         return dict(
             sum_w=jnp.einsum("tk->k", expected_states),
@@ -110,7 +92,10 @@ class GaussianHMMEmissions(HMMEmissions):
             sum_xxT=jnp.einsum("tk,ti,tj->kij", expected_states, emissions, emissions)
         )
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         if props['covs'].trainable and props['means'].trainable:
             niw_prior = NormalInverseWishart(loc=self.emission_prior_mean,
                                             mean_concentration=self.emission_prior_conc,
@@ -131,7 +116,7 @@ class GaussianHMMEmissions(HMMEmissions):
         elif not props['covs'].trainable and props['means'].trainable:
             raise NotImplementedError("GaussianHMM.fit_em() does not yet support fixed covariance and trainable means")
 
-        return params
+        return params, m_step_state
 
 
 class DiagonalGaussianHMMEmissions(HMMEmissions):
@@ -161,25 +146,7 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
                    emission_means=None,
                    emission_scale_diags=None,
                    emissions=None):
-        """Initialize the model parameters and their corresponding properties.
 
-        You can either specify parameters manually via the keyword arguments, or you can have
-        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
-        Parameters will then be sampled from the prior (if `method==prior`).
-
-        Note: in the future we may support more initialization schemes, like K-Means.
-
-        Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_scale_diags (array, optional): manually specified emission scales (sqrt of diagonal of covariance matrix). Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
-
-        Returns:
-            params: a nested dictionary of arrays containing the model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
-        """
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
@@ -205,7 +172,7 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
                      scale_diags=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.MultivariateNormalDiag(params['means'][state],
                                           params['scale_diags'][state])
 
@@ -215,14 +182,17 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
         return prior.log_prob((params['scale_diags']**2,
                                params['means'])).sum()
 
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
         sum_xsq = jnp.einsum("tk,ti->ki", expected_states, emissions**2)
         return dict(sum_w=sum_w, sum_x=sum_x, sum_xsq=sum_xsq)
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         nig_prior = NormalInverseGamma(loc=self.emission_prior_mean,
                                        mean_concentration=self.emission_prior_mean_conc,
                                        concentration=self.emission_prior_conc,
@@ -237,7 +207,7 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
         vars, means = vmap(_single_m_step)(emission_stats)
         params['scale_diags'] = jnp.sqrt(vars)
         params['means'] = means
-        return params
+        return params, m_step_state
 
 
 class SphericalGaussianHMMEmissions(HMMEmissions):
@@ -248,7 +218,10 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
                  emission_prior_mean=0.0,
                  emission_prior_mean_covariance=1.0,
                  emission_var_concentration=1.1,
-                 emission_var_rate=1.1):
+                 emission_var_rate=1.1,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50):
+        super().__init__(m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         self.num_states = num_states
         self.emission_dim = emission_dim
         self.emission_prior_mean = emission_prior_mean * jnp.ones(emission_dim)
@@ -314,7 +287,7 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
                      scales=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         dim = self.emission_dim
         return tfd.MultivariateNormalDiag(params['means'][state],
                                           params['scales'][state] * jnp.ones((dim,)))
@@ -406,7 +379,7 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
                      cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.MultivariateNormalFullCovariance(
             params['means'][state], params['cov'])
 
@@ -422,7 +395,7 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         lp += tfd.MultivariateNormalFullCovariance(mu0, Sigma / kappa0).log_prob(mus).sum()
         return lp
 
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
@@ -431,7 +404,10 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         stats = dict(sum_w=sum_w, sum_x=sum_x, sum_xxT=sum_xxT, sum_T=sum_T)
         return stats
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         mu0 = self.emission_prior_mean
         kappa0 = self.emission_prior_conc
         Psi0 = self.emission_prior_scale
@@ -444,14 +420,17 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         sum_xxT = emission_stats['sum_xxT'] + Psi0 + kappa0 * jnp.outer(mu0, mu0)
         params['means'] = jnp.einsum('ki,k->ki', sum_x, 1/sum_w)
         params['cov'] = (sum_xxT - jnp.einsum('ki,kj,k->ij', sum_x, sum_x, 1/sum_w)) / sum_T
-        return params
+        return params, m_step_state
 
 
 class LowRankGaussianHMMEmissions(HMMEmissions):
 
     def __init__(self, num_states, emission_dim, emission_rank,
                  emission_diag_factor_concentration=1.1,
-                 emission_diag_factor_rate=1.1):
+                 emission_diag_factor_rate=1.1,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50):
+        super().__init__(m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         self.num_states = num_states
         self.emission_dim = emission_dim
         self.emission_rank = emission_rank
@@ -518,7 +497,7 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
     def emission_shape(self):
         return (self.emission_dim,)
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.MultivariateNormalDiagPlusLowRankCovariance(
             params["means"][state],
             params["cov_diag_factors"][state],
@@ -558,8 +537,28 @@ class GaussianHMM(HMM):
                    transition_matrix: jnp.array=None,
                    emission_means: jnp.array=None,
                    emission_covariances: jnp.array=None,
-                   emissions: jnp.array=None,
-                   ):
+                   emissions: jnp.array=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
+
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_means (array, optional): manually specified emission means. Defaults to None.
+            emission_covariances (array, optional): manually specified emission covariances. Defaults to None.
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
         if key is not None:
             key1, key2, key3 = jr.split(key , 3)
         else:
@@ -602,6 +601,27 @@ class DiagonalGaussianHMM(HMM):
                    emission_scale_diags: jnp.array=None,
                    emissions: jnp.array=None,
                    ):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
+
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_means (array, optional): manually specified emission means. Defaults to None.
+            emission_scale_diags (array, optional): manually specified emission scales (sqrt of diagonal of covariance matrix). Defaults to None.
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
         if key is not None:
             key1, key2, key3 = jr.split(key , 3)
         else:
@@ -622,8 +642,9 @@ class SphericalGaussianHMM(HMM):
                  emission_prior_mean=0.0,
                  emission_prior_mean_covariance=1.0,
                  emission_var_concentration=1.1,
-                 emission_var_rate=1.1):
-
+                 emission_var_rate=1.1,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50):
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
@@ -632,7 +653,9 @@ class SphericalGaussianHMM(HMM):
             emission_prior_mean=emission_prior_mean,
             emission_prior_mean_covariance=emission_prior_mean_covariance,
             emission_var_concentration=emission_var_concentration,
-            emission_var_rate=emission_var_rate)
+            emission_var_rate=emission_var_rate,
+            m_step_optimizer=m_step_optimizer,
+            m_step_num_iters=m_step_num_iters)
 
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
@@ -642,8 +665,28 @@ class SphericalGaussianHMM(HMM):
                    transition_matrix: jnp.array=None,
                    emission_means: jnp.array=None,
                    emission_scales: jnp.array=None,
-                   emissions: jnp.array=None,
-                   ):
+                   emissions: jnp.array=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
+
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_means (array, optional): manually specified emission means. Defaults to None.
+            emission_scales (array, optional): manually specified emission scales (sqrt of diagonal of covariance matrix). Defaults to None.
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
         if key is not None:
             key1, key2, key3 = jr.split(key , 3)
         else:
@@ -683,8 +726,28 @@ class SharedCovarianceGaussianHMM(HMM):
                    transition_matrix: jnp.array=None,
                    emission_means: jnp.array=None,
                    emission_covariance: jnp.array=None,
-                   emissions: jnp.array=None,
-                   ):
+                   emissions: jnp.array=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
+
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_means (array, optional): manually specified emission means. Defaults to None.
+            emission_covariance (array, optional): manually specified emission covariance (shared by all states). Defaults to None.
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
         if key is not None:
             key1, key2, key3 = jr.split(key , 3)
         else:
@@ -704,7 +767,9 @@ class LowRankGaussianHMM(HMM):
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
                  emission_diag_factor_concentration=1.1,
-                 emission_diag_factor_rate=1.1):
+                 emission_diag_factor_rate=1.1,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50):
 
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
@@ -712,7 +777,9 @@ class LowRankGaussianHMM(HMM):
         emission_component = LowRankGaussianHMMEmissions(
             num_states, emission_dim, emission_rank,
             emission_diag_factor_concentration=emission_diag_factor_concentration,
-            emission_diag_factor_rate=emission_diag_factor_rate)
+            emission_diag_factor_rate=emission_diag_factor_rate,
+            m_step_optimizer=m_step_optimizer,
+            m_step_num_iters=m_step_num_iters)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
     def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
@@ -722,8 +789,29 @@ class LowRankGaussianHMM(HMM):
                    emission_means=None,
                    emission_cov_diag_factors=None,
                    emission_cov_low_rank_factors=None,
-                   emissions: jnp.array=None,
-                   ):
+                   emissions: jnp.array=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
+
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_means (array, optional): manually specified emission means. Defaults to None.
+            emission_cov_diag_factors (array, optional): manually specified emission scales (sqrt of diagonal of covariance matrix). Defaults to None.
+            emission_cov_low_rank_factors (array, optional): manually specified emission low rank factors (sqrt of diagonal of covariance matrix). Defaults to None.
+            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
         if key is not None:
             key1, key2, key3 = jr.split(key , 3)
         else:
