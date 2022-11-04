@@ -1,3 +1,4 @@
+import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
@@ -77,6 +78,11 @@ class BernoulliHMMEmissions(HMMEmissions):
                 self.emission_prior_concentration0 + sum_1mx).mode()
         return params, m_step_state
 
+
+@chex.dataclass
+class HMMParams:
+    num_states: int
+    emission_dim: int
 
 class BernoulliHMM(HMM):
     def __init__(self, num_states: int,

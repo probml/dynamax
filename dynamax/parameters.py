@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from dataclasses import is_dataclass, replace
+
 import chex
 import jax.numpy as jnp
 from jax.tree_util import tree_flatten, tree_unflatten
@@ -28,14 +30,16 @@ def to_unconstrained(params, param_props):
             existing value, but only for the parameters that are marked not
             trainable in `param_props`.
     """
-    unc_params, fixed_params = dict(), dict()
+    unc_params, fixed_params = dict(), deepcopy(params)
     for k, v in params.items():
-        if isinstance(v, dict):
-            unc_params[k], fixed_params[k] = to_unconstrained(v, param_props[k])
+        if is_dataclass(v):
+            # unc_params[k], fixed_params_k = to_unconstrained(v, param_props[k])
+            # replace(fixed_params[k], **fixed_params_k)
+            unc_params[k], _ = to_unconstrained(v, param_props[k])
         elif param_props[k].trainable:
             unc_params[k] = param_props[k].constrainer.inverse(v)
-        else:
-            fixed_params[k] = v
+        # else:
+        #     fixed_params[k] = v
     return unc_params, fixed_params
 
 
@@ -55,9 +59,11 @@ def from_unconstrained(unc_params, fixed_params, param_props):
     params = deepcopy(fixed_params)
     for k, v in unc_params.items():
         if isinstance(v, dict):
-            params[k] = from_unconstrained(unc_params[k], fixed_params[k], param_props[k])
+            params = params.replace(
+                **{k: from_unconstrained(unc_params[k], fixed_params[k], param_props[k])}
+            )
         else:
-            params[k] = param_props[k].constrainer(v)
+            params = params.replace(**{k:param_props[k].constrainer(v)})
     return params
 
 

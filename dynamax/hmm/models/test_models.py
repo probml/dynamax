@@ -1,5 +1,6 @@
 import pytest
 from datetime import datetime
+import chex
 import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
@@ -7,6 +8,23 @@ import dynamax.hmm.models as models
 from dynamax.utils import ensure_array_has_batch_dim, monotonically_increasing
 
 NUM_TIMESTEPS = 100
+
+@chex.dataclass
+class HMMParamsBernoulli:
+    num_states: int
+    emission_dim: int
+
+@chex.dataclass
+class HMMParamsCategorical:
+    num_states: int
+    emission_dim: int
+    num_classes: int
+
+@chex.dataclass
+class HMMParamsCategoricalRegression:
+    num_states: int
+    num_classes: int
+    covariate_dim: int
 
 CONFIGS = [
     (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
