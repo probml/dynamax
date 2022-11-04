@@ -29,7 +29,7 @@ class GGSSM(SSM):
     p(z_1) = N(z_1 | m, S)
     where z_t = hidden, y_t = observed, u_t = inputs (can be None),
     f = params.dynamics_function
-    Q = params.dynamics_covariance 
+    Q = params.dynamics_covariance
     h = params.emission_mean_function
     R = params.emission_cov_function
     m = params.initial_mean
@@ -46,27 +46,27 @@ class GGSSM(SSM):
         return (self.emission_dim,)
 
     @property
-    def covariates_shape(self):
+    def inputs_shape(self):
         return (self.input_dim,) if self.input_dim > 0 else None
 
-    def initial_distribution(self, params, covariates=None):
+    def initial_distribution(self, params, inputs=None):
         return MVN(params.initial_mean, params.initial_covariance)
 
-    def transition_distribution(self, params, state, covariates=None):
+    def transition_distribution(self, params, state, inputs=None):
         f = params.dynamics_function
-        if covariates is None:
+        if inputs is None:
             mean = f(state)
         else:
-            mean = f(state, covariates)
+            mean = f(state, inputs)
         return MVN(mean, params.dynamics_covariance)
 
-    def emission_distribution(self, params, state, covariates=None):
+    def emission_distribution(self, params, state, inputs=None):
         h = params.emission_mean_function
         R = params.emission_cov_function
-        if covariates is None:
+        if inputs is None:
             mean = h(state)
             cov = R(state)
         else:
-            mean = h(state, covariates)
-            cov = R(state, covariates)
+            mean = h(state, inputs)
+            cov = R(state, inputs)
         return params.emission_dist(mean, cov)
