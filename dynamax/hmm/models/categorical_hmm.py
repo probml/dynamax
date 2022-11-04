@@ -87,7 +87,7 @@ class CategoricalHMMEmissions(HMMEmissions):
     def m_step(self, params, props, batch_stats, m_step_state):
         if props['probs'].trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
-            params['probs'] = tfd.Dirichlet(
+            params.probs = tfd.Dirichlet(
                 self.emission_prior_concentration + emission_stats['sum_x']).mode()
         return params, m_step_state
 

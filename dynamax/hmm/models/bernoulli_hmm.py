@@ -5,10 +5,15 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMMEmissions, HMM
-from dynamax.hmm.models.initial import StandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions
+from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils import pytree_sum
 
+from jaxtyping import Float, Array
+
+@chex.dataclass
+class ParamsBernoulliHMMEmissions:
+    probs: Float[Array, "emission_dim"]
 
 class BernoulliHMMEmissions(HMMEmissions):
 
@@ -57,7 +62,7 @@ class BernoulliHMMEmissions(HMMEmissions):
             assert jnp.all(emission_probs <= 0)
 
         # Add parameters to the dictionary
-        params = dict(probs=emission_probs)
+        params = ParamsBernoulliHMMEmissions(probs=emission_probs)
         props = dict(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
         return params, props
 
@@ -73,16 +78,17 @@ class BernoulliHMMEmissions(HMMEmissions):
     def m_step(self, params, props, batch_stats, m_step_state):
         if props['probs'].trainable:
             sum_x, sum_1mx = pytree_sum(batch_stats, axis=0)
-            params['probs'] = tfd.Beta(
+            params.probs = tfd.Beta(
                 self.emission_prior_concentration1 + sum_x,
                 self.emission_prior_concentration0 + sum_1mx).mode()
         return params, m_step_state
 
 
 @chex.dataclass
-class HMMParams:
-    num_states: int
-    emission_dim: int
+class ParamsBernoulliHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsBernoulliHMMEmissions
 
 class BernoulliHMM(HMM):
     def __init__(self, num_states: int,
@@ -130,4 +136,4 @@ class BernoulliHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_probs=emission_probs)
-        return params, props
+        return ParamsBernoulliHMM(**params), props

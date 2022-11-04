@@ -2,9 +2,15 @@ import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
+import chex
 from dynamax.hmm.models.abstractions import HMMTransitions
 from dynamax.parameters import ParameterProperties
 
+from jaxtyping import Float, Array
+
+@chex.dataclass
+class ParamsStandardHMMTransitions:
+    transition_matrix: Float[Array, "state_dim state_dim"]
 
 class StandardHMMTransitions(HMMTransitions):
     """Standard model for HMM transitions.
@@ -39,7 +45,7 @@ class StandardHMMTransitions(HMMTransitions):
                 .sample(seed=this_key, sample_shape=(self.num_states,))
 
         # Package the results into dictionaries
-        params = dict(transition_matrix=transition_matrix)
+        params = ParamsStandardHMMTransitions(transition_matrix=transition_matrix)
         props = dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
@@ -61,11 +67,11 @@ class StandardHMMTransitions(HMMTransitions):
             return params
 
         elif self.num_states == 1:
-            params['transition_matrix'] = jnp.array([[1.0]])
+            params.transition_matrix = jnp.array([[1.0]])
             return params
 
         else:
             expected_trans_counts = batch_stats.sum(axis=0)
             post = tfd.Dirichlet(self.transition_matrix_concentration + expected_trans_counts)
-            params['transition_matrix'] = post.mode()
+            params.transition_matrix = post.mode()
         return params, m_step_state

@@ -9,10 +9,6 @@ from dynamax.utils import ensure_array_has_batch_dim, monotonically_increasing
 
 NUM_TIMESTEPS = 100
 
-@chex.dataclass
-class HMMParamsBernoulli:
-    num_states: int
-    emission_dim: int
 
 @chex.dataclass
 class HMMParamsCategorical:

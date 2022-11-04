@@ -387,9 +387,9 @@ class HMM(SSM):
     def m_step(self, params, props, batch_stats, m_step_state):
         batch_initial_stats, batch_transition_stats, batch_emission_stats = batch_stats
         initial_m_step_state, transitions_m_step_state, emissions_m_step_state = m_step_state
-        params["initial"], initial_m_step_state = self.initial_component.m_step(params["initial"], props["initial"], batch_initial_stats, initial_m_step_state)
-        params["transitions"], transitions_m_step_state = self.transition_component.m_step(params["transitions"], props["transitions"], batch_transition_stats, transitions_m_step_state)
-        params["emissions"], emissions_m_step_state = self.emission_component.m_step(params["emissions"], props["emissions"], batch_emission_stats, emissions_m_step_state)
+        params.initial, initial_m_step_state = self.initial_component.m_step(params.initial, props["initial"], batch_initial_stats, initial_m_step_state)
+        params.transitions, transitions_m_step_state = self.transition_component.m_step(params.transitions, props["transitions"], batch_transition_stats, transitions_m_step_state)
+        params.emissions, emissions_m_step_state = self.emission_component.m_step(params.emissions, props["emissions"], batch_emission_stats, emissions_m_step_state)
         m_step_state = initial_m_step_state, transitions_m_step_state, emissions_m_step_state
         return params, m_step_state
 

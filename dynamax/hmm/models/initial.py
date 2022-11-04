@@ -2,9 +2,15 @@ import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
+import chex
 from dynamax.hmm.models.abstractions import HMMInitialState
 from dynamax.parameters import ParameterProperties
 
+from jaxtyping import Float, Array
+
+@chex.dataclass
+class ParamsStandardHMMInitialState:
+    probs: Float[Array, "state_dim"]
 
 class StandardHMMInitialState(HMMInitialState):
     """Abstract class for HMM initial distributions.
@@ -39,7 +45,7 @@ class StandardHMMInitialState(HMMInitialState):
             initial_probs = tfd.Dirichlet(self.initial_probs_concentration).sample(seed=this_key)
 
         # Package the results into dictionaries
-        params = dict(probs=initial_probs)
+        params = ParamsStandardHMMInitialState(probs=initial_probs)
         props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
@@ -56,14 +62,13 @@ class StandardHMMInitialState(HMMInitialState):
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
-
         if props['probs'].trainable:
             if self.num_states == 1:
-                params['probs'] = jnp.array([1.0])
-
+                params.probs = jnp.array([1.0])
             else:
                 expected_initial_counts = batch_stats.sum(axis=0)
                 post = tfd.Dirichlet(self.initial_probs_concentration + expected_initial_counts)
-                params['probs'] = post.mode()
+                params.probs = post.mode()
 
         return params, m_step_state
+
