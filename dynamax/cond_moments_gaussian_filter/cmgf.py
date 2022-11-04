@@ -204,7 +204,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
     return lls[0], mu_cond, Sigma_cond
 
 
-def statistical_linear_regression(mu: chex.Array, Sigma: chex.Array, m: chex.Array, S: chex.Array, C: chex.Array) -> Tuple[chex.Array, chex.Array, chex.Array]:
+def statistical_linear_regression(mu, Sigma, m, S, C):
     """Return moment-matching affine coefficients and approximation noise variance
     given joint moments.
         g(x) \approx Ax + b + e where e ~ N(0, Omega)
@@ -231,9 +231,10 @@ def statistical_linear_regression(mu: chex.Array, Sigma: chex.Array, m: chex.Arr
     return A, b, Omega
 
 
-def conditional_moments_gaussian_filter(model_params: GGSSMParams, inf_params: CMGFIntegrals, emissions: chex.Array, num_iter: int=1, inputs: chex.Array=None) -> GSSMPosterior:
-    """Run an (iterated) conditional moments Gaussian filter to produce the
-    marginal likelihood and filtered state estimates.
+def conditional_moments_gaussian_filter(model_params, inf_params, emissions, num_iter=1, inputs=None):
+    """Run conditional moments Gaussian filter to produce the
+    marginal likelihood and filtered state estimates. Set num_iter > 1 for
+    re-linearization of the posterior.
 
     Args:
         model_params (GGSSMParams): model parameters.
@@ -283,27 +284,7 @@ def conditional_moments_gaussian_filter(model_params: GGSSMParams, inf_params: C
     return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def iterated_conditional_moments_gaussian_filter(model_params: GGSSMParams, inf_params: CMGFIntegrals, emissions: chex.Array, num_iter: int=2, inputs: chex.Array=None) -> GSSMPosterior:
-    """Run an iterated conditional moments Gaussian filter.
-
-    Args:
-        model_params (GGSSMParams): model parameters.
-        inf_params (CMGFIntegrals): inference parameters.
-        emissions (T,D_hid): array of observations.
-        num_iter (int): number of linearizations around smoothed posterior.
-        inputs (T,D_in): array of inputs.
-
-    Returns:
-        filtered_posterior: GSSMPosterior instance containing,
-            marginal_log_lik
-            filtered_means (T, D_hid)
-            filtered_covariances (T, D_hid, D_hid)
-    """
-    filtered_posterior = conditional_moments_gaussian_filter(model_params, inf_params, emissions, num_iter, inputs)
-    return filtered_posterior
-
-
-def conditional_moments_gaussian_smoother(model_params: GGSSMParams, inf_params: CMGFIntegrals, emissions: chex.Array, filtered_posterior: GSSMPosterior=None, inputs: chex.Array=None) -> GSSMPosterior:
+def conditional_moments_gaussian_smoother(model_params, inf_params, emissions, filtered_posterior=None, num_iter=1, inputs=None):
     """Run a conditional moments Gaussian smoother.
 
     Args:
@@ -312,6 +293,7 @@ def conditional_moments_gaussian_smoother(model_params: GGSSMParams, inf_params:
         emissions (T,D_hid): array of observations.
         filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.
             If None, the smoother computes the filtered posterior directly.
+        num_iter (int): number of linearizations around smoothed posterior.
         inputs (T,D_in): array of inputs.
 
     Returns:
@@ -353,13 +335,20 @@ def conditional_moments_gaussian_smoother(model_params: GGSSMParams, inf_params:
         return (smoothed_mean, smoothed_cov), (smoothed_mean, smoothed_cov)
 
     # Run the smoother
-    init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_means[:-1][::-1], filtered_covs[:-1][::-1])
-    _, (smoothed_means, smoothed_covs) = lax.scan(_step, init_carry, args)
+    def _iterated_step(carry, _):
+        prior_means, prior_covs = carry
+        init_carry = (prior_means[-1], prior_covs[-1])
+        args = (jnp.arange(num_timesteps - 2, -1, -1), prior_means[:-1][::-1], prior_covs[:-1][::-1])
+        _, (smoothed_means, smoothed_covs) = lax.scan(_step, init_carry, args)
+        
+        # Reverse the arrays
+        smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
+        smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
+        
+        return (smoothed_means, smoothed_covs), None
 
-    # Reverse the arrays and return
-    smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
-    smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
+    (smoothed_means, smoothed_covs), _ = lax.scan(_iterated_step, (filtered_means, filtered_covs), jnp.arange(num_iter))
+
     return GSSMPosterior(
         marginal_loglik=ll,
         filtered_means=filtered_means,
@@ -367,27 +356,3 @@ def conditional_moments_gaussian_smoother(model_params: GGSSMParams, inf_params:
         smoothed_means=smoothed_means,
         smoothed_covariances=smoothed_covs,
     )
-
-
-def iterated_conditional_moments_gaussian_smoother(model_params: GGSSMParams, inf_params: CMGFIntegrals, emissions: chex.Array, num_iter: int=1, inputs: chex.Array=None) -> GSSMPosterior:
-    """Run an iterated conditional moments Gaussian smoother.
-
-    Args:
-        model_params (GGSSMParams): model parameters.
-        inf_params (CMGFIntegrals): inference parameters.
-        emissions (T,D_hid): array of observations.
-        num_iter (int): number of re-linearizations around smoothed posterior.
-        inputs (T,D_in): array of inputs.
-
-    Returns:
-        nlgssm_posterior: GSSMPosterior instance containing properties of
-            filtered and smoothed posterior distributions.
-    """
-    def _step(carry, _):
-        # Relinearize around smoothed posterior from previous iteration
-        smoothed_prior = carry
-        smoothed_posterior = conditional_moments_gaussian_smoother(model_params, inf_params, emissions, smoothed_prior, inputs)
-        return smoothed_posterior, None
-
-    smoothed_posterior, _ = lax.scan(_step, None, jnp.arange(num_iter))
-    return smoothed_posterior
