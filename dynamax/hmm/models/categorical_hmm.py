@@ -31,7 +31,7 @@ class CategoricalHMMEmissions(HMMEmissions):
     def emission_shape(self):
         return (self.emission_dim,)
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.Independent(
             tfd.Categorical(probs=params['probs'][state]),
             reinterpreted_batch_ndims=1)
@@ -76,17 +76,20 @@ class CategoricalHMMEmissions(HMMEmissions):
         props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
         x = one_hot(emissions, self.num_classes)
         return dict(sum_x=jnp.einsum("tk,tdi->kdi", expected_states, x))
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         if props['probs'].trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
             params['probs'] = tfd.Dirichlet(
                 self.emission_prior_concentration + emission_stats['sum_x']).mode()
-        return params
+        return params, m_step_state
 
 
 class CategoricalHMM(HMM):
@@ -107,6 +110,25 @@ class CategoricalHMM(HMM):
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,
                    emission_probs: jnp.array=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
+
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_probs (array, optional): manually specified emission probabilities. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
         if key is not None:
             key1, key2, key3 = jr.split(key , 3)
         else:

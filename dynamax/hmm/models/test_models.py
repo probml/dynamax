@@ -11,7 +11,7 @@ NUM_TIMESTEPS = 100
 CONFIGS = [
     (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
     (models.CategoricalHMM, dict(num_states=4, emission_dim=3, num_classes=5), None),
-    (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, input_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.GaussianHMM, dict(num_states=4, emission_dim=3, emission_prior_concentration=1.0, emission_prior_scale=1.0), None),
     (models.DiagonalGaussianHMM, dict(num_states=4, emission_dim=3), None),
     (models.SphericalGaussianHMM, dict(num_states=4, emission_dim=3), None),
@@ -19,23 +19,23 @@ CONFIGS = [
     (models.LowRankGaussianHMM, dict(num_states=4, emission_dim=3, emission_rank=1), None),
     (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3, emission_prior_mean_concentration=1.0), None),
     (models.DiagonalGaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3, emission_prior_mean_concentration=1.0), None),
-    (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
-    (models.LogisticRegressionHMM, dict(num_states=4, covariate_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.LinearRegressionHMM, dict(num_states=4, emission_dim=3, input_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.LogisticRegressionHMM, dict(num_states=4, input_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.MultinomialHMM, dict(num_states=4, emission_dim=3, num_classes=5, num_trials=10), None),
     (models.PoissonHMM, dict(num_states=4, emission_dim=3), None),
 ]
 
 
-@pytest.mark.parametrize(["cls", "kwargs", "covariates"], CONFIGS)
-def test_sample_and_fit(cls, kwargs, covariates):
+@pytest.mark.parametrize(["cls", "kwargs", "inputs"], CONFIGS)
+def test_sample_and_fit(cls, kwargs, inputs):
     hmm = cls(**kwargs)
     #key1, key2 = jr.split(jr.PRNGKey(int(datetime.now().timestamp())))
     key1, key2 = jr.split(jr.PRNGKey(42))
     params, param_props = hmm.initialize(key1)
-    states, emissions = hmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS, covariates=covariates)
-    fitted_params, lps = hmm.fit_em(params, param_props, emissions, covariates=covariates, num_iters=10)
+    states, emissions = hmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS, inputs=inputs)
+    fitted_params, lps = hmm.fit_em(params, param_props, emissions, inputs=inputs, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
-    fitted_params, lps = hmm.fit_sgd(params, param_props, emissions, covariates=covariates, num_epochs=10)
+    fitted_params, lps = hmm.fit_sgd(params, param_props, emissions, inputs=inputs, num_epochs=10)
 
 
 ## A few model-specific tests
@@ -90,10 +90,10 @@ def test_sample_and_fit_arhmm():
     key1, key2 = jr.split(jr.PRNGKey(42))
     params, param_props = arhmm.initialize(key1)
     states, emissions = arhmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS)
-    covariates = arhmm.compute_covariates(emissions)
-    fitted_params, lps = arhmm.fit_em(params, param_props, emissions, covariates=covariates, num_iters=10)
+    inputs = arhmm.compute_inputs(emissions)
+    fitted_params, lps = arhmm.fit_em(params, param_props, emissions, inputs=inputs, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
-    fitted_params, lps = arhmm.fit_sgd(params, param_props, emissions, covariates=covariates, num_epochs=10)
+    fitted_params, lps = arhmm.fit_sgd(params, param_props, emissions, inputs=inputs, num_epochs=10)
 
 
 # @pytest.mark.skip(reason="this would introduce a torch dependency")

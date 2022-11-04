@@ -5,6 +5,7 @@ from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions
+import optax
 
 
 class CategoricalRegressionHMMEmissions(HMMEmissions):
@@ -12,22 +13,25 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
     def __init__(self,
                  num_states,
                  num_classes,
-                 covariate_dim):
+                 input_dim,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50):
         """_summary_
 
         Args:
             emission_probs (_type_): _description_
         """
+        super().__init__(m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         self.num_states = num_states
         self.num_classes = num_classes
-        self.feature_dim = covariate_dim
+        self.feature_dim = input_dim
 
     @property
     def emission_shape(self):
         return ()
 
     @property
-    def covariates_shape(self):
+    def inputs_shape(self):
         return (self.feature_dim,)
 
     def log_prior(self, params):
@@ -68,8 +72,8 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
         props = dict(weights=ParameterProperties(), biases=ParameterProperties())
         return params, props
 
-    def distribution(self, params, state, covariates=None):
-        logits = params['weights'][state] @ covariates
+    def distribution(self, params, state, inputs=None):
+        logits = params['weights'][state] @ inputs
         logits += params['biases'][state]
         return tfd.Categorical(logits=logits)
 
@@ -77,18 +81,20 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
 class CategoricalRegressionHMM(HMM):
     def __init__(self, num_states: int,
                  num_classes: int,
-                 covariate_dim: int,
+                 input_dim: int,
                  initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1):
-        self.covariate_dim = covariate_dim
+                 transition_matrix_concentration=1.1,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50):
+        self.input_dim = input_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
-        emission_component = CategoricalRegressionHMMEmissions(num_states, num_classes, covariate_dim)
+        emission_component = CategoricalRegressionHMMEmissions(num_states, num_classes, input_dim, m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
     @property
-    def covariates_shape(self):
-        return (self.covariate_dim,)
+    def inputs_shape(self):
+        return (self.input_dim,)
 
     def initialize(self, key: jr.PRNGKey=None,
                    method: str="prior",

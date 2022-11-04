@@ -88,7 +88,7 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
                      covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.MixtureSameFamily(
             mixture_distribution=tfd.Categorical(probs=params['weights'][state]),
             components_distribution=tfd.MultivariateNormalFullCovariance(
@@ -102,7 +102,7 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
             (params['covs'], params['means'])).sum()
         return lp
 
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         def prob_fn(x):
             logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalFullCovariance(
                 loc=mus, covariance_matrix=sigmas).log_prob(x) + jnp.log(weights))(
@@ -118,7 +118,10 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         N = weights.sum(axis=0)
         return dict(N=N, Sx=Sx, SxxT=SxxT)
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         assert props['weights'].trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
         assert props['means'].trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
         assert props['covs'].trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
@@ -144,7 +147,7 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         params['weights'] = weights
         params['means'] = means
         params['covs'] = covs
-        return params
+        return params, m_step_state
 
 
 class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
@@ -210,7 +213,7 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
                      scale_diags=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.MixtureSameFamily(
             mixture_distribution=tfd.Categorical(probs=params['weights'][state]),
             components_distribution=tfd.MultivariateNormalDiag(
@@ -226,7 +229,7 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
         return lp
 
     # Expectation-maximization (EM) code
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         # Evaluate the posterior probability of each discrete class
         def prob_fn(x):
             logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalDiag(
@@ -244,7 +247,10 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
         N = weights.sum(axis=0)
         return dict(N=N, Sx=Sx, Sxsq=Sxsq)
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         assert props['weights'].trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
         assert props['means'].trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
         assert props['scale_diags'].trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
@@ -273,7 +279,7 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
         params['weights'] = weights
         params['means'] = means
         params['scale_diags'] = scale_diags
-        return params
+        return params, m_step_state
 
 
 class GaussianMixtureHMM(HMM):

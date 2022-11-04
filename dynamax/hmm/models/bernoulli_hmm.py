@@ -29,7 +29,7 @@ class BernoulliHMMEmissions(HMMEmissions):
     def emission_shape(self):
         return (self.emission_dim,)
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         # This model assumes the emissions are a vector of conditionally independent
         # Bernoulli observations. The `reinterpreted_batch_ndims` argument tells
         # `tfd.Independent` that only the last dimension should be considered a "batch"
@@ -42,23 +42,6 @@ class BernoulliHMMEmissions(HMMEmissions):
         return prior.log_prob(params['probs']).sum()
 
     def initialize(self, key=jr.PRNGKey(0), method="prior", emission_probs=None):
-        """Initialize the model parameters and their corresponding properties.
-
-        You can either specify parameters manually via the keyword arguments, or you can have
-        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
-        Parameters will then be sampled from the prior (if `method==prior`).
-
-        Note: in the future we may support more initialization schemes, like K-Means.
-
-        Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            emission_probs (array, optional): manually specified emission probabilities. Defaults to None.
-
-        Returns:
-            params: a nested dictionary of arrays containing the model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
-        """
         if emission_probs is None:
             if method.lower() == "prior":
                 prior = tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0)
@@ -77,19 +60,22 @@ class BernoulliHMMEmissions(HMMEmissions):
         props = dict(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
         return params, props
 
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
         sum_x = jnp.einsum("tk, ti->ki", expected_states, jnp.where(jnp.isnan(emissions), 0, emissions))
         sum_1mx = jnp.einsum("tk, ti->ki", expected_states, jnp.where(jnp.isnan(emissions), 0, 1 - emissions))
         return (sum_x, sum_1mx)
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         if props['probs'].trainable:
             sum_x, sum_1mx = pytree_sum(batch_stats, axis=0)
             params['probs'] = tfd.Beta(
                 self.emission_prior_concentration1 + sum_x,
                 self.emission_prior_concentration0 + sum_1mx).mode()
-        return params
+        return params, m_step_state
 
 
 class BernoulliHMM(HMM):
@@ -110,6 +96,25 @@ class BernoulliHMM(HMM):
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,
                    emission_probs: jnp.array=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+        Parameters will then be sampled from the prior (if `method==prior`).
+
+        Note: in the future we may support more initialization schemes, like K-Means.
+
+        Args:
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).
+            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
+            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
+            emission_probs (array, optional): manually specified emission probabilities. Defaults to None.
+
+        Returns:
+            params: a nested dictionary of arrays containing the model parameters.
+            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+        """
         if key is not None:
             key1, key2, key3 = jr.split(key , 3)
         else:

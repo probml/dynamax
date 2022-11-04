@@ -6,16 +6,20 @@ from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions
+import optax
 
 
 class LogisticRegressionHMMEmissions(HMMEmissions):
 
     def __init__(self,
                  num_states,
-                 covariate_dim,
-                 emission_matrices_scale=1e8):
+                 input_dim,
+                 emission_matrices_scale=1e8,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50):
+        super().__init__(m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         self.num_states = num_states
-        self.covariate_dim = covariate_dim
+        self.input_dim = input_dim
         self.emission_weights_scale = emission_matrices_scale
 
     @property
@@ -23,8 +27,8 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
         return ()
 
     @property
-    def covariates_shape(self):
-        return (self.covariate_dim,)
+    def inputs_shape(self):
+        return (self.input_dim,)
 
     def initialize(self,
                    key=jr.PRNGKey(0),
@@ -32,24 +36,24 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
                    emission_weights=None,
                    emission_biases=None,
                    emissions=None,
-                   covariates=None):
+                   inputs=None):
 
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
-            assert covariates is not None, "Need covariates to initialize the model with K-Means!"
+            assert inputs is not None, "Need inputs to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
 
             flat_emissions = emissions.reshape(-1,)
-            flat_covariates = covariates.reshape(-1, self.covariate_dim)
-            km = KMeans(self.num_states).fit(flat_covariates)
-            _emission_weights = jnp.zeros((self.num_states, self.covariate_dim))
+            flat_inputs = inputs.reshape(-1, self.input_dim)
+            km = KMeans(self.num_states).fit(flat_inputs)
+            _emission_weights = jnp.zeros((self.num_states, self.input_dim))
             _emission_biases = jnp.array([tfb.Sigmoid().inverse(flat_emissions[km.labels_ == k].mean())
                                           for k in range(self.num_states)])
 
         elif method.lower() == "prior":
             # TODO: Use an MNIW prior
             key1, key2, key = jr.split(key, 3)
-            _emission_weights = 0.01 * jr.normal(key1, (self.num_states, self.covariate_dim))
+            _emission_weights = 0.01 * jr.normal(key1, (self.num_states, self.input_dim))
             _emission_biases = jr.normal(key2, (self.num_states,))
 
         else:
@@ -66,8 +70,8 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
     def log_prior(self, params):
         return tfd.Normal(0, self.emission_weights_scale).log_prob(params['weights']).sum()
 
-    def distribution(self, params, state, covariates):
-        logits = params['weights'][state] @ covariates
+    def distribution(self, params, state, inputs):
+        logits = params['weights'][state] @ inputs
         logits += params['biases'][state]
         return tfd.Bernoulli(logits=logits)
 
@@ -75,19 +79,21 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
 class LogisticRegressionHMM(HMM):
     def __init__(self,
                  num_states,
-                 covariate_dim,
+                 input_dim,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1,
-                 emission_matrices_scale=1e8):
-        self.covariates_dim = covariate_dim
+                 emission_matrices_scale=1e8,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50):
+        self.inputs_dim = input_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
-        emission_component = LogisticRegressionHMMEmissions(num_states, covariate_dim, emission_matrices_scale=emission_matrices_scale)
+        emission_component = LogisticRegressionHMMEmissions(num_states, input_dim, emission_matrices_scale=emission_matrices_scale, m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
     @property
-    def covariates_shape(self):
-        return (self.covariates_dim,)
+    def inputs_shape(self):
+        return (self.inputs_dim,)
 
     def initialize(self,
                    key=jr.PRNGKey(0),
@@ -97,7 +103,7 @@ class LogisticRegressionHMM(HMM):
                    emission_weights=None,
                    emission_biases=None,
                    emissions=None,
-                   covariates=None):
+                   inputs=None):
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
@@ -114,7 +120,7 @@ class LogisticRegressionHMM(HMM):
             emission_weights (array, optional): manually specified emission weights. Defaults to None.
             emission_biases (array, optional): manually specified emission biases. Defaults to None.
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
-            covariates (array, optional): covariates for initializing the parameters with kmeans. Defaults to None.
+            inputs (array, optional): inputs for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
             params: a nested dictionary of arrays containing the model parameters.
@@ -128,5 +134,5 @@ class LogisticRegressionHMM(HMM):
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
-        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_weights=emission_weights, emission_biases=emission_biases, emissions=emissions, covariates=covariates)
+        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_weights=emission_weights, emission_biases=emission_biases, emissions=emissions, inputs=inputs)
         return params, props

@@ -37,7 +37,7 @@ class NLGSSM(SSM):
     p(z_1) = N(z_1 | m, S)
     where z_t = hidden, y_t = observed, u_t = inputs (can be None),
     f = params["dynamics"]["function"]
-    Q = params["dynamics"]["cov"] 
+    Q = params["dynamics"]["cov"]
     h = params["emissions"]["function"]
     R = params["emissions"]["cov"]
     m = params["initial"]["mean"]
@@ -54,26 +54,26 @@ class NLGSSM(SSM):
         return (self.emission_dim,)
 
     @property
-    def covariates_shape(self):
+    def inputs_shape(self):
         return (self.input_dim,) if self.input_dim > 0 else None
 
-    def initial_distribution(self, params, covariates=None):
+    def initial_distribution(self, params, inputs=None):
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
-    def transition_distribution(self, params, state, covariates=None):
+    def transition_distribution(self, params, state, inputs=None):
         f = params["dynamics"]["function"]
-        if covariates is None:
+        if inputs is None:
             mean = f(state)
         else:
-            mean = f(state, covariates)
+            mean = f(state, inputs)
         return MVN(mean, params["dynamics"]["cov"])
 
-    def emission_distribution(self, params, state, covariates=None):
+    def emission_distribution(self, params, state, inputs=None):
         h = params["emissions"]["function"]
-        if covariates is None:
+        if inputs is None:
             mean = h(state)
         else:
-            mean = h(state, covariates)
+            mean = h(state, inputs)
         return MVN(mean, params["emissions"]["cov"])
 
     def make_inference_args(self, params):

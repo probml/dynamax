@@ -20,22 +20,22 @@ if __name__ == "__main__":
                                    [0.05, 0.95]])
     true_params, _ = hmm.initialize(key=key1, transition_matrix=transition_matrix)
 
-    covariates = jr.normal(key2, (num_timesteps, feature_dim))
-    states, emissions = hmm.sample(true_params, key3, num_timesteps, covariates=covariates)
+    inputs = jr.normal(key2, (num_timesteps, feature_dim))
+    states, emissions = hmm.sample(true_params, key3, num_timesteps, inputs=inputs)
 
     # Try fitting it!
     test_hmm = CategoricalRegressionHMM(num_states, num_classes, feature_dim)
     params, props = test_hmm.initialize(key=key4)
-    params, lps = test_hmm.fit_em(params, props, emissions, covariates=covariates, num_iters=100)
+    params, lps = test_hmm.fit_em(params, props, emissions, inputs=inputs, num_iters=100)
 
     # Plot the data and predictions
     # Compute the most likely states
-    most_likely_states = test_hmm.most_likely_states(params, emissions, covariates=covariates)
+    most_likely_states = test_hmm.most_likely_states(params, emissions, inputs=inputs)
 
     # Predict the emissions given the true states
     As = params["emissions"]["weights"][most_likely_states]
     bs = params["emissions"]["biases"][most_likely_states]
-    predictions = vmap(lambda x, A, b: A @ x + b)(covariates, As, bs)
+    predictions = vmap(lambda x, A, b: A @ x + b)(inputs, As, bs)
     predictions = jnp.argmax(predictions, axis=1)
 
     offsets = 3 * jnp.arange(num_classes)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     plt.figure()
     plt.plot(lps)
-    plt.axhline(hmm.marginal_log_prob(true_params, emissions, covariates), color='k', ls=':')
+    plt.axhline(hmm.marginal_log_prob(true_params, emissions, inputs), color='k', ls=':')
     plt.xlabel("EM iteration")
     plt.ylabel("log joint probability")
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     plt.xlim(0, 500)
 
 
-    print("true log prob: ", hmm.marginal_log_prob(true_params, emissions, covariates=covariates))
-    print("test log prob: ", test_hmm.marginal_log_prob(params, emissions, covariates=covariates))
+    print("true log prob: ", hmm.marginal_log_prob(true_params, emissions, inputs=inputs))
+    print("test log prob: ", test_hmm.marginal_log_prob(params, emissions, inputs=inputs))
 
     plt.show()
