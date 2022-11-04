@@ -28,7 +28,7 @@ class LinearGaussianSSM(SSM):
 
     z_t = hidden variables of size `state_dim`,
     y_t = observed variables of size `emission_dim`
-    u_t = input covariates of size `covariate_dim` (defaults to 0)
+    u_t = input inputs of size `input_dim` (defaults to 0)
 
     The parameters of the model are stored in a separate dictionary, as follows:
     F = params["dynamics"]["weights"]
@@ -48,12 +48,12 @@ class LinearGaussianSSM(SSM):
     def __init__(self,
                  state_dim,
                  emission_dim,
-                 covariate_dim=0,
+                 input_dim=0,
                  has_dynamics_bias=True,
                  has_emissions_bias=True):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
-        self.covariate_dim = covariate_dim
+        self.input_dim = input_dim
         self.has_dynamics_bias = has_dynamics_bias
         self.has_emissions_bias = has_emissions_bias
 
@@ -62,8 +62,8 @@ class LinearGaussianSSM(SSM):
         return (self.emission_dim,)
 
     @property
-    def covariates_shape(self):
-        return (self.covariate_dim,) if self.covariate_dim > 0 else None
+    def inputs_shape(self):
+        return (self.input_dim,) if self.input_dim > 0 else None
 
     def initialize(self,
                    key=jr.PRNGKey(0),
@@ -107,11 +107,11 @@ class LinearGaussianSSM(SSM):
         _initial_mean = jnp.zeros(self.state_dim)
         _initial_covariance = jnp.eye(self.state_dim)
         _dynamics_weights = 0.99 * jnp.eye(self.state_dim)
-        _dynamics_input_weights = jnp.zeros((self.state_dim, self.covariate_dim))
+        _dynamics_input_weights = jnp.zeros((self.state_dim, self.input_dim))
         _dynamics_bias = jnp.zeros((self.state_dim,)) if self.has_dynamics_bias else None
         _dynamics_covariance = 0.1 * jnp.eye(self.state_dim)
         _emission_weights = jr.normal(key, (self.emission_dim, self.state_dim))
-        _emission_input_weights = jnp.zeros((self.emission_dim, self.covariate_dim))
+        _emission_input_weights = jnp.zeros((self.emission_dim, self.input_dim))
         _emission_bias = jnp.zeros((self.emission_dim,)) if self.has_emissions_bias else None
         _emission_covariance = 0.1 * jnp.eye(self.emission_dim)
 
@@ -144,18 +144,18 @@ class LinearGaussianSSM(SSM):
         )
         return params, param_props
 
-    def initial_distribution(self, params, covariates=None):
+    def initial_distribution(self, params, inputs=None):
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
-    def transition_distribution(self, params, state, covariates=None):
-        inputs = covariates if covariates is not None else jnp.zeros(self.covariate_dim)
+    def transition_distribution(self, params, state, inputs=None):
+        inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
         mean = params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs
         if self.has_dynamics_bias:
             mean += params["dynamics"]["bias"]
         return MVN(mean, params["dynamics"]["cov"])
 
-    def emission_distribution(self, params, state, covariates=None):
-        inputs = covariates if covariates is not None else jnp.zeros(self.covariate_dim)
+    def emission_distribution(self, params, state, inputs=None):
+        inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
         mean = params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs
         if self.has_emissions_bias:
             mean += params["emissions"]["bias"]
@@ -275,7 +275,10 @@ class LinearGaussianSSM(SSM):
 
         return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
@@ -302,8 +305,10 @@ class LinearGaussianSSM(SSM):
         D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], None)
 
-        return dict(
+        # Package updated params into dict
+        params = dict(
             initial=dict(mean=m, cov=S),
             dynamics=dict(weights=F, bias=b, input_weights=B, cov=Q),
             emissions=dict(weights=H, bias=d, input_weights=D, cov=R)
         )
+        return params, m_step_state
