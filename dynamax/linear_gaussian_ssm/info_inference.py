@@ -3,7 +3,7 @@ from jax import lax, vmap, value_and_grad
 from jax.scipy.linalg import solve_triangular
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
+from jaxtyping import Array, Float, Bool, Int, Num
 from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
 import chex
 
@@ -27,22 +27,26 @@ class ParamsLGSSMInfo:
 
 
 @chex.dataclass
-class PosteriorLGSSMInfo:
-    """Simple wrapper for properties of an LGSSM posterior distribution in
-    information form.
+class PosteriorLGSSMInfoFiltered:
+    """Marginals of the Gaussian filtering posterior in information form.
 
     Attributes:
-            filtered_means: (T,K) array,
-                E[x_t | y_{1:t}, u_{1:t}].
-            filtered_precisions: (T,K,K) array,
-                inv(Cov[x_t | y_{1:t}, u_{1:t}]).
+        marginal_loglik
+        filtered_means: (T,K) array,
+            E[x_t | y_{1:t}, u_{1:t}].
+        filtered_precisions: (T,K,K) array,
+            inv(Cov[x_t | y_{1:t}, u_{1:t}]).
     """
+    marginal_loglik: Float[Array, ""] # Scalar
+    filtered_etas: Float[Array, "ntime state_dim"]
+    filtered_precisions: Float[Array, "ntime state_dim state_dim"]
 
-    marginal_loglik: chex.Scalar = None
-    filtered_etas: chex.Array = None
-    filtered_precisions: chex.Array = None
-    smoothed_etas: chex.Array = None
-    smoothed_precisions: chex.Array = None
+@chex.dataclass
+class PosteriorLGSSMInfoSmoothed(PosteriorLGSSMInfoFiltered):
+    """"Marginals of the Gaussian filtering and smoothed posterior in information form. 
+    """
+    smoothed_etas: Float[Array, "ntime state_dim"]
+    smoothed_precisions: Float[Array, "ntime state_dim state_dim"]
 
 def info_to_moment_form(etas, Lambdas):
     """Convert information form parameters to moment form.
@@ -161,7 +165,11 @@ def _info_condition_on(eta, Lambda, H, R_prec, D, u, d, obs):
     return eta_cond, Lambda_cond
 
 
-def lgssm_info_filter(params, emissions, inputs):
+def lgssm_info_filter(
+    params: ParamsLGSSMInfo,
+    emissions: Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None
+) -> PosteriorLGSSMInfoFiltered:
     """Run a Kalman filter to produce the filtered state estimates.
 
     Args:
@@ -175,7 +183,7 @@ def lgssm_info_filter(params, emissions, inputs):
             filtered_precisions
     """
     num_timesteps = len(emissions)
-
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
     def _filter_step(carry, t):
         ll, pred_eta, pred_prec = carry
 
@@ -207,10 +215,14 @@ def lgssm_info_filter(params, emissions, inputs):
     initial_eta = params.initial_precision @ params.initial_mean
     carry = (0.0, initial_eta, params.initial_precision)
     (ll, _, _), (filtered_etas, filtered_precisions) = lax.scan(_filter_step, carry, jnp.arange(num_timesteps))
-    return PosteriorLGSSMInfo(marginal_loglik=ll, filtered_etas=filtered_etas, filtered_precisions=filtered_precisions)
+    return PosteriorLGSSMInfoFiltered(marginal_loglik=ll, filtered_etas=filtered_etas, filtered_precisions=filtered_precisions)
 
 
-def lgssm_info_smoother(params, emissions, inputs=None):
+def lgssm_info_smoother(
+    params: ParamsLGSSMInfo,
+    emissions: Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None
+) -> PosteriorLGSSMInfoSmoothed:
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. This
     is the information form of the Rauch-Tung-Striebel (RTS) smoother.
@@ -266,7 +278,7 @@ def lgssm_info_smoother(params, emissions, inputs=None):
     # Reverse the arrays and return
     smoothed_etas = jnp.row_stack((smoothed_etas[::-1], filtered_etas[-1][None, ...]))
     smoothed_precisions = jnp.row_stack((smoothed_precisions[::-1], filtered_precisions[-1][None, ...]))
-    return PosteriorLGSSMInfo(
+    return PosteriorLGSSMInfoSmoothed(
         marginal_loglik=ll,
         filtered_etas=filtered_etas,
         filtered_precisions=filtered_precisions,

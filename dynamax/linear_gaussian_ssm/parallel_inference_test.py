@@ -1,11 +1,9 @@
 from jax import numpy as jnp
 from jax import random as jr
 
-from dynamax.linear_gaussian_ssm.lgssm_types import ParamsLGSSMInf, ParamsLGSSM
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_smoother as serial_lgssm_smoother
 from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_smoother as parallel_lgssm_smoother
-
 
 class TestParallelLGSSMSmoother:
     """ Compare parallel and serial lgssm smoothing implementations."""
@@ -24,7 +22,6 @@ class TestParallelLGSSMSmoother:
 
     latent_dim = 4
     observation_dim = 2
-    input_dim = 1
 
     lgssm = LinearGaussianSSM(latent_dim, observation_dim)
     model_params, _ = lgssm.initialize(jr.PRNGKey(0),
@@ -34,25 +31,14 @@ class TestParallelLGSSMSmoother:
                              dynamics_covariance=Q,
                              emission_weights=H,
                              emission_covariance=R)
-
-
-    inf_params = ParamsLGSSMInf(
-        initial_mean = μ0,
-        initial_covariance = Σ0,
-        dynamics_weights = F,
-        dynamics_covariance = Q,
-        emission_weights = H,
-        emission_covariance = R
-    )
+    inf_params = lgssm.to_inference_args(model_params)
 
     num_timesteps = 50
-    inputs = jnp.zeros((num_timesteps,input_dim))
-
     key = jr.PRNGKey(seed)
     key, subkey = jr.split(key)
     _, emissions = lgssm.sample(model_params, subkey, num_timesteps)
 
-    serial_posterior = serial_lgssm_smoother(inf_params, emissions, inputs)
+    serial_posterior = serial_lgssm_smoother(inf_params, emissions)
     parallel_posterior = parallel_lgssm_smoother(inf_params, emissions)
 
     def test_filtered_means(self):

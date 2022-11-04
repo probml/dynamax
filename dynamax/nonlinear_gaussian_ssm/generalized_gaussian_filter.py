@@ -11,25 +11,19 @@ from jax import jacfwd
 from jax import vmap
 import jax.numpy as jnp
 import chex
-from dynamax.containers import GSSMPosterior
 
+from jaxtyping import Array, Float, PyTree, Bool, Int, Num
+from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
+
+from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import PosteriorNLGSSMFiltered, PosteriorNLGSSMSmoothed, ParamsNLGSSM
 
 
 @chex.dataclass
-class GGSSMParams:
-    """Lightweight container for GGSSM parameters.
-    The functions below can be called with an instance of this class.
-    However, they can also accept a ssm.ggssm.models.GeneralGaussianSSM instance,
-    if you prefer a more object-oriented approach.
-    """
-    initial_mean: chex.Array
-    initial_covariance: chex.Array
-    dynamics_function: Callable
-    dynamics_covariance: chex.Array
-    emission_function: Callable
-    emission_covariance: chex.Array
+class GGSSMParams(ParamsNLGSSM):
+    """Lightweight container for GGSSM parameters. Extends NLGSSM with functions to compute Gaussian moments."""
     gaussian_expectation: Callable
     gaussian_cross_covariance: Callable
+
 
 
 @chex.dataclass
@@ -193,7 +187,11 @@ def _condition_on(m, P, h, R, u, y, g_ev, g_cov):
     return log_likelihood, mu_cond, Sigma_cond
 
 
-def general_gaussian_filter(params, emissions, inputs=None):
+def general_gaussian_filter(
+    params: GGSSMParams,
+    emissions: Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+) -> PosteriorNLGSSMFiltered:
     num_timesteps = len(emissions)
 
     # Process dynamics and emission functions to take in control inputs
@@ -226,10 +224,14 @@ def general_gaussian_filter(params, emissions, inputs=None):
     # Run the general Gaussian filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return PosteriorNLGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-def general_gaussian_smoother(params, emissions, inputs=None):
+def general_gaussian_smoother(
+    params: GGSSMParams,
+    emissions: Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+) -> PosteriorNLGSSMSmoothed:
     num_timesteps = len(emissions)
 
     # Run the general Gaussian filter
@@ -273,7 +275,7 @@ def general_gaussian_smoother(params, emissions, inputs=None):
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    return GSSMPosterior(
+    return PosteriorNLGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,

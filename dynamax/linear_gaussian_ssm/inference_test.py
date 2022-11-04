@@ -62,7 +62,12 @@ def test_kalman(num_timesteps=5, seed=0):
 
     # Sample data and compute posterior
     _, emissions = lgssm.sample(params, sample_key, num_timesteps)
+    ssm_posterior = lgssm.filter(params, emissions)
+    print(ssm_posterior.filtered_means.shape)
+
     ssm_posterior = lgssm.smoother(params, emissions)
+    print(ssm_posterior.filtered_means.shape)
+    print(ssm_posterior.smoothed_means.shape)
 
     # TensorFlow Probability posteriors
     tfp_lgssm = lgssm_dynamax_to_tfp(num_timesteps, params)

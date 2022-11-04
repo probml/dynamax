@@ -26,6 +26,35 @@ Optimizer = optax.GradientTransformation
 #ObsType = TypeVar('ObsType', bound=ArrayTree)
 
 
+InputSingle = Float[Array, "input_dim"]
+InputSeq = Float[Array, "ntime input_dim"]
+InputBatch = Float[Array, "nbatch ntime input_dim"]
+
+StateSingleScalar = Float[Array, ""]
+StateSingleVec = Float[Array, "state_dim"]
+StateSingle = Union[StateSingleScalar, StateSingleVec]
+
+StateSeqScalar = Float[Array, "ntime"]
+StateSeqVec = Float[Array, "ntime state_dim"]
+StateSeq = Union[StateSeqScalar, StateSeqVec]
+
+StateBatchScalar = Float[Array, "nbatch ntime"]
+StateBatchVec = Float[Array, "nbatch ntime state_dim"]
+StateBatch = Union[StateBatchScalar, StateBatchVec]
+
+EmissionSingleScalar = Float[Array, ""]
+EmissionSingleVec = Float[Array, "emission_dim"]
+EmissionSingle = Union[EmissionSingleScalar, EmissionSingleVec]
+
+EmissionSeqScalar = Float[Array, "ntime"]
+EmissionSeqVec = Float[Array, "ntime emission_dim"]
+EmissionSeq = Union[EmissionSeqScalar, EmissionSeqVec]
+
+EmissionBatchScalar = Float[Array, "nbatch ntime"]
+EmissionBatchVec = Float[Array, "nbatch ntime emission_dim"]
+EmissionBatch = Union[EmissionBatchScalar, EmissionBatchVec]
+
+
 InputSingle = Num[Array, "input_dim"]
 InputSeq = Num[Array, "ntime input_dim"]
 InputBatch = Num[Array, "nbatch ntime input_dim"]

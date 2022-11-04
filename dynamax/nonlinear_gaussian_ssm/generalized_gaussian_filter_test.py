@@ -7,8 +7,7 @@ from dynamax.nonlinear_gaussian_ssm.inference_test import random_nlgssm_args
 
 
 # Helper functions
-#_all_close = lambda x, y: jnp.allclose(x, y, rtol=1e-3)
-_all_close = lambda x, y: jnp.allclose(x, y, atol=1e-2)
+_all_close = lambda x, y: jnp.allclose(x, y, atol=1e-1)
 
 
 def test_ekf(key=0, num_timesteps=15):
@@ -28,6 +27,13 @@ def test_ekf(key=0, num_timesteps=15):
     ggf_post = general_gaussian_smoother(ekf_params, emissions)
 
     # Compare filter and smoother results
+    error_ll = jnp.max(ekf_post.marginal_loglik - ggf_post.marginal_loglik)
+    error_filtered_means = jnp.max(ekf_post.filtered_means - ggf_post.filtered_means)
+    error_filtered_covs = jnp.max(ekf_post.filtered_covariances - ggf_post.filtered_covariances) # not as close
+    error_smoothed_means = jnp.max(ekf_post.smoothed_means - ggf_post.smoothed_means)
+    error_smoothed_covs = jnp.max(ekf_post.smoothed_covariances - ggf_post.smoothed_covariances)  # not as close
+    print([error_ll, error_filtered_means, error_filtered_covs, error_smoothed_means, error_smoothed_covs])
+
     assert _all_close(ekf_post.marginal_loglik, ggf_post.marginal_loglik)
     assert _all_close(ekf_post.filtered_means, ggf_post.filtered_means)
     assert _all_close(ekf_post.filtered_covariances, ggf_post.filtered_covariances)

@@ -9,7 +9,6 @@ from jaxtyping import Array, Float, PyTree, Bool, Int, Num
 from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
 import chex
 
-from dynamax.ssm_types import *
 
 @chex.dataclass
 class ParamsLGSSMMoment:
@@ -29,28 +28,36 @@ class ParamsLGSSMMoment:
     emission_bias: Optional[Float[Array, "emission_dim"]] = None
 
 
-@chex.dataclass
-class PosteriorLGSSM:
-    """Simple wrapper for properties of an Gaussian SSM posterior distribution.
-    Attributes:
-            filtered_means: (T,D_hid) array,
-                E[x_t | y_{1:t}, u_{1:t}].
-            filtered_covariances: (T,D_hid,D_hid) array,
-                Cov[x_t | y_{1:t}, u_{1:t}].
-            smoothed_means: (T,D_hid) array,
-                E[x_t | y_{1:T}, u_{1:T}].
-            smoothed_covariances: (T,D_hid,D_hid) array of smoothed marginal covariances,
-                Cov[x_t | y_{1:T}, u_{1:T}].
-            smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
-                E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
-    """
-    marginal_loglik: Optional[Float[Array, ""]] = None # Scalar
-    filtered_means: Optional[Float[Array, "ntime state_dim"]] = None
-    filtered_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
-    smoothed_means: Optional[Float[Array, "ntime state_dim"]] = None
-    smoothed_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
-    smoothed_cross_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
 
+@chex.dataclass
+class PosteriorLGSSMFiltered:
+    """Marginals of the Gaussian filtering posterior.
+    Attributes:
+        marginal_loglik: log marginal probability of observations
+            int_{z(1:T)} p(z(1:T), y(1:T) | u(1:t))
+        filtered_means: (T,D_hid) array,
+            E[x_t | y_{1:t}, u_{1:t}].
+        filtered_covariances: (T,D_hid,D_hid) array,
+            Cov[x_t | y_{1:t}, u_{1:t}].
+    """
+    marginal_loglik: Float[Array, ""] # Scalar
+    filtered_means: Float[Array, "ntime state_dim"]
+    filtered_covariances: Float[Array, "ntime state_dim state_dim"]
+
+@chex.dataclass
+class PosteriorLGSSMSmoothed(PosteriorLGSSMFiltered):
+    """Marginals of the Gaussian filtering and smoothing posterior. .
+    Attributes:
+        smoothed_means: (T,D_hid) array,
+            E[x_t | y_{1:T}, u_{1:T}].
+        smoothed_covariances: (T,D_hid,D_hid) array of smoothed marginal covariances,
+            Cov[x_t | y_{1:T}, u_{1:T}].
+        smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
+            E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
+    """
+    smoothed_means: Float[Array, "ntime state_dim"] 
+    smoothed_covariances: Float[Array, "ntime state_dim state_dim"]
+    smoothed_cross_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
 
 
 # Helper functions
@@ -178,9 +185,9 @@ def preprocess_args(f):
 @preprocess_args
 def lgssm_filter(
     params: ParamsLGSSMMoment,
-    emissions: EmissionSeq,
-    inputs: Optional[InputSeq]=None
-) -> PosteriorLGSSM:
+    emissions:  Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+) -> PosteriorLGSSMFiltered:
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
 
@@ -227,15 +234,15 @@ def lgssm_filter(
     # Run the Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return PosteriorLGSSM(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return PosteriorLGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 @preprocess_args
 def lgssm_smoother(
     params: ParamsLGSSMMoment,
-    emissions: EmissionSeq,
-    inputs: Optional[InputSeq]=None
-) -> PosteriorLGSSM:
+    emissions: Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+) -> PosteriorLGSSMSmoothed:
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -291,7 +298,7 @@ def lgssm_smoother(
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
     smoothed_cross = smoothed_cross[::-1]
-    return PosteriorLGSSM(
+    return PosteriorLGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
@@ -302,11 +309,11 @@ def lgssm_smoother(
 
 
 def lgssm_posterior_sample(
-    key: PRNGKey,
+    key: jr.PRNGKey,
     params: ParamsLGSSMMoment,
-    emissions: EmissionSeq,
-    inputs: Optional[InputSeq]=None
-) -> StateSeq:
+    emissions:  Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+) ->Float[Array, "ntime state_dim"]:
     """Run forward-filtering, backward-sampling to draw samples of
         x_{1:T} | y_{1:T}, u_{1:T}.
 
