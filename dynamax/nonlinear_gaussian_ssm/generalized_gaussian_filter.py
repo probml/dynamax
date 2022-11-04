@@ -19,7 +19,7 @@ from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import PosteriorNLGSS
 
 
 @chex.dataclass
-class GGSSMParams(ParamsNLGSSM):
+class ParamsGGSSM(ParamsNLGSSM):
     """Lightweight container for GGSSM parameters. Extends NLGSSM with functions to compute Gaussian moments."""
     gaussian_expectation: Callable
     gaussian_cross_covariance: Callable
@@ -27,7 +27,7 @@ class GGSSMParams(ParamsNLGSSM):
 
 
 @chex.dataclass
-class EKFParams(GGSSMParams):
+class EKFParams(ParamsGGSSM):
     """
     Lightweight container for extended Kalman filter/smoother parameters.
     """
@@ -36,7 +36,7 @@ class EKFParams(GGSSMParams):
 
 
 @dataclass
-class SigmaPointParams(GGSSMParams):
+class SigmaPointParams(ParamsGGSSM):
     """
     Lightweight container for sigma point filter/smoother parameters.
     """
@@ -188,7 +188,7 @@ def _condition_on(m, P, h, R, u, y, g_ev, g_cov):
 
 
 def general_gaussian_filter(
-    params: GGSSMParams,
+    params: ParamsGGSSM,
     emissions: Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> PosteriorNLGSSMFiltered:
@@ -228,7 +228,7 @@ def general_gaussian_filter(
 
 
 def general_gaussian_smoother(
-    params: GGSSMParams,
+    params: ParamsGGSSM,
     emissions: Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> PosteriorNLGSSMSmoothed:
