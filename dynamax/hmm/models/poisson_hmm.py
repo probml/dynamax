@@ -53,7 +53,7 @@ class PoissonHMMEmissions(HMMEmissions):
         props = dict(rates=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
 
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         return tfd.Independent(tfd.Poisson(rate=params['rates'][state]),
                                reinterpreted_batch_ndims=1)
 
@@ -61,19 +61,22 @@ class PoissonHMMEmissions(HMMEmissions):
         prior = tfd.Gamma(self.emission_prior_concentration, self.emission_prior_rate)
         return prior.log_prob(params['rates']).sum()
 
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)[:, None]
         sum_x = jnp.einsum("tk, ti->ki", expected_states, emissions)
         return dict(sum_w=sum_w, sum_x=sum_x)
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         if props['rates'].trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
             post_concentration = self.emission_prior_concentration + emission_stats['sum_x']
             post_rate = self.emission_prior_rate + emission_stats['sum_w']
             params['rates'] = tfd.Gamma(post_concentration, post_rate).mode()
-        return params
+        return params, m_step_state
 
 
 class PoissonHMM(HMM):

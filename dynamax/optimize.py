@@ -1,9 +1,9 @@
 import jax.numpy as jnp
 import jax.random as jr
 import optax
-from jax import lax, value_and_grad
-from jax.tree_util import tree_map
+from jax import lax, value_and_grad, vmap, tree_map
 from dynamax.utils import pytree_len
+from dynamax.parameters import to_unconstrained, from_unconstrained
 
 
 def sample_minibatches(key, dataset, batch_size, shuffle):
@@ -82,40 +82,30 @@ def run_sgd(loss_fn,
     return params, losses
 
 
-def run_gradient_descent(loss_fn,
+def run_gradient_descent(objective,
                          params,
-                         batch_emissions,
-                         optimizer=optax.adam(1e-3),
-                         num_epochs=50,
-                         key=jr.PRNGKey(0),
-                         **batch_covariates):
-    """
-    Note that batch_emissions is initially of shape (N,T)
-    where N is the number of independent sequences in the batch and
-    T is the length of each sequence.
+                         optimizer=optax.adam(1e-2),
+                         optimizer_state=None,
+                         num_mstep_iters=50):
 
-    Args:
-        loss_fn (Callable): Objective function.
-        params (PyTree): initial value of parameters to be estimated.
-        dataset (chex.Array): PyTree of data arrays with leading batch dimension
-        optmizer (optax.Optimizer): Optimizer.
-        num_iters (int): Iterations made on only one mini-batch.
-        key (chex.PRNGKey): RNG key.
+    if optimizer_state is None:
+        optimizer_state = optimizer.init(params)
 
-    Returns:
-        hmm: HMM with optimized parameters.
-        losses: Output of loss_fn stored at each step.
-    """
-    opt_state = optimizer.init(params)
-    loss_grad_fn = value_and_grad(loss_fn)
+    # Minimize the negative expected log joint with gradient descent
+    loss_grad_fn = value_and_grad(objective)
 
-    def train_step(carry):
-        params, opt_state = carry
-        loss, grads = loss_grad_fn(params, batch_emissions, **batch_covariates)
-        updates, opt_state = optimizer.update(grads, opt_state)
+    # One step of the algorithm
+    def train_step(carry, args):
+        params, optimizer_state = carry
+        loss, grads = loss_grad_fn(params)
+        updates, optimizer_state = optimizer.update(grads, optimizer_state)
         params = optax.apply_updates(params, updates)
-        return (params, opt_state), loss
+        return (params, optimizer_state), loss
 
-    keys = jr.split(key, num_epochs)
-    (params, _), losses = lax.scan(train_step, (params, opt_state), keys)
-    return params, losses
+    # Run the optimizer
+    initial_carry =  (params, optimizer_state)
+    (params, optimizer_state), losses = \
+        lax.scan(train_step, initial_carry, None, length=num_mstep_iters)
+
+    # Return the updated parameters
+    return params, optimizer_state, losses

@@ -6,9 +6,10 @@ from dynamax.hmm.inference import hmm_filter
 from dynamax.hmm.inference import hmm_posterior_mode
 from dynamax.hmm.inference import hmm_smoother
 from dynamax.hmm.inference import hmm_two_filter_smoother
-from dynamax.utils import pytree_len, pytree_slice
+from dynamax.optimize import run_gradient_descent
+from dynamax.utils import pytree_slice
 import jax.numpy as jnp
-from jax import lax, value_and_grad, vmap
+from jax import vmap
 from jax.tree_util import tree_map
 import optax
 
@@ -16,8 +17,14 @@ import optax
 class HMMInitialState(ABC):
     """Abstract class for HMM initial distributions.
     """
+    def __init__(self,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50) -> None:
+        self.m_step_optimizer = m_step_optimizer
+        self.m_step_num_iters = m_step_num_iters
+
     @abstractmethod
-    def distribution(self, params, covariates=None):
+    def distribution(self, params, inputs=None):
         """Return a distribution over the initial latent state
 
         Returns:
@@ -43,62 +50,65 @@ class HMMInitialState(ABC):
     def log_prior(self, params):
         raise NotImplementedError
 
-    def compute_initial_probs(self, params, covariates=None):
-        return self.initial_distribution(params, covariates).probs_parameter()
+    def compute_initial_probs(self, params, inputs=None):
+        return self.initial_distribution(params, inputs).probs_parameter()
 
-    def collect_suff_stats(self, params, posterior, covariates=None):
-        return posterior.smoothed_probs[0], pytree_slice(covariates, 0)
+    def collect_suff_stats(self, params, posterior, inputs=None):
+        return posterior.smoothed_probs[0], pytree_slice(inputs, 0)
 
-    def m_step(self,
-               curr_params,
-               param_props,
-               batch_stats,
-               optimizer=optax.adam(1e-2),
-               num_mstep_iters=50):
+    def initialize_m_step_state(self, params, props):
+        """Initialize any required state for the M step.
+
+        For example, this might include the optimizer state for Adam.
+        """
+        # Extract the remaining unconstrained params, which should only be for the emissions.
+        unc_params, _ = to_unconstrained(params, props)
+        return self.m_step_optimizer.init(unc_params)
+
+    def m_step(self, params, props, batch_stats, m_step_state, scale=1.0):
 
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        curr_unc_params, fixed_params = to_unconstrained(curr_params, param_props)
+        unc_params, fixed_params = to_unconstrained(params, props)
 
-        # the objective is the negative expected log likelihood (and the log prior of the emission params)
+        # Minimize the negative expected log joint probability
         def neg_expected_log_joint(unc_params):
-            params = from_unconstrained(unc_params, fixed_params, param_props)
+            params = from_unconstrained(unc_params, fixed_params, props)
 
             def _single_expected_log_like(stats):
-                smoothed_initial_prob, covariate = stats
-                log_initial_prob = jnp.log(self.compute_initial_probs(params, covariate))
-                lp = jnp.sum(smoothed_initial_prob * log_initial_prob)
+                expected_initial_state, inpt = stats
+                log_initial_prob = jnp.log(self.compute_initial_probs(params, inpt))
+                lp = jnp.sum(expected_initial_state * log_initial_prob)
                 return lp
 
             log_prior = self.log_prior(params)
             batch_ells = vmap(_single_expected_log_like)(batch_stats)
             expected_log_joint = log_prior + batch_ells.sum()
-            return -expected_log_joint / pytree_len(batch_stats)
+            return -expected_log_joint / scale
 
-        # Minimize the negative expected log joint with gradient descent
-        loss_grad_fn = value_and_grad(neg_expected_log_joint)
-        opt_state = optimizer.init(curr_unc_params)
+        # Run gradient descent
+        unc_params, m_step_state, losses = \
+            run_gradient_descent(neg_expected_log_joint,
+                                 unc_params,
+                                 self.m_step_optimizer,
+                                 optimizer_state=m_step_state,
+                                 num_mstep_iters=self.m_step_num_iters)
 
-        # One step of the algorithm
-        def train_step(carry, args):
-            params, opt_state = carry
-            loss, grads = loss_grad_fn(params)
-            updates, opt_state = optimizer.update(grads, opt_state)
-            params = optax.apply_updates(params, updates)
-            return (params, opt_state), loss
-
-        # Run the optimizer
-        initial_carry =  (curr_unc_params, opt_state)
-        (unc_params, _), losses = lax.scan(train_step, initial_carry, None, length=num_mstep_iters)
-
-        # Return the updated parameters
-        return from_unconstrained(unc_params, fixed_params, param_props)
+        # Return the updated parameters and optimizer state
+        params = from_unconstrained(unc_params, fixed_params, props)
+        return params, m_step_state
 
 
 class HMMTransitions(ABC):
     """Abstract class for HMM transitions.
     """
+    def __init__(self,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50) -> None:
+        self.m_step_optimizer = m_step_optimizer
+        self.m_step_num_iters = m_step_num_iters
+
     @abstractmethod
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         """Return a distribution over the next state given the current state.
 
         Args:
@@ -126,69 +136,70 @@ class HMMTransitions(ABC):
     def log_prior(self, params):
         raise NotImplementedError
 
-    def compute_transition_matrices(self, params, covariates=None):
-        if covariates is not None:
-            f = lambda covariate: \
+    def compute_transition_matrices(self, params, inputs=None):
+        if inputs is not None:
+            f = lambda inpt: \
                 vmap(lambda state: \
-                    self.distribution(params, state, covariate).probs_parameter())(
+                    self.distribution(params, state, inpt).probs_parameter())(
                         jnp.arange(self.num_states))
-            next_covariates = tree_map(lambda x: x[1:], covariates)
-            return vmap(f)(next_covariates)
+            next_inputs = tree_map(lambda x: x[1:], inputs)
+            return vmap(f)(next_inputs)
         else:
             g = vmap(lambda state: self.distribution(params, state).probs_parameter())
             return g(jnp.arange(self.num_states))
 
-    def collect_suff_stats(self, params, posterior, covariates=None):
-        return posterior.trans_probs, pytree_slice(covariates, slice(1, None))
+    def collect_suff_stats(self, params, posterior, inputs=None):
+        return posterior.trans_probs, pytree_slice(inputs, slice(1, None))
 
-    def m_step(self,
-               curr_params,
-               param_props,
-               batch_transition_stats,
-               batch_covariates=None,
-               optimizer=optax.adam(1e-2),
-               num_mstep_iters=50,
-               scale=1.0):
+    def initialize_m_step_state(self, params, props):
+        """Initialize any required state for the M step.
 
-        curr_unc_params, fixed_params = to_unconstrained(curr_params, param_props)
+        For example, this might include the optimizer state for Adam.
+        """
+        # Extract the remaining unconstrained params, which should only be for the emissions.
+        unc_params, _ = to_unconstrained(params, props)
+        return self.m_step_optimizer.init(unc_params)
 
-        # the objective is the negative expected log likelihood (and the log prior of the emission params)
+    def m_step(self, params, props, batch_stats, m_step_state, scale=1.0):
+        unc_params, fixed_params = to_unconstrained(params, props)
+
+        # Minimize the negative expected log joint probability
         def neg_expected_log_joint(unc_params):
-            params = from_unconstrained(unc_params, fixed_params, param_props)
+            params = from_unconstrained(unc_params, fixed_params, props)
 
-            def _single_expected_log_like(expected_transitions, covariates):
-                log_trans_matrix = jnp.log(self.compute_transition_matrices(params, covariates))
+            def _single_expected_log_like(stats):
+                expected_transitions, inputs = stats
+                log_trans_matrix = jnp.log(self.compute_transition_matrices(params, inputs))
                 lp = jnp.sum(expected_transitions * log_trans_matrix)
                 return lp
 
             log_prior = self.log_prior(params)
-            batch_ells = vmap(_single_expected_log_like)(batch_transition_stats, batch_covariates)
+            batch_ells = vmap(_single_expected_log_like)(batch_stats)
             expected_log_joint = log_prior + batch_ells.sum()
             return -expected_log_joint / scale
 
-        # Minimize the negative expected log joint with gradient descent
-        loss_grad_fn = value_and_grad(neg_expected_log_joint)
-        opt_state = optimizer.init(curr_unc_params)
+        # Run gradient descent
+        unc_params, m_step_state, losses = \
+            run_gradient_descent(neg_expected_log_joint,
+                                 unc_params,
+                                 self.m_step_optimizer,
+                                 optimizer_state=m_step_state,
+                                 num_mstep_iters=self.m_step_num_iters)
 
-        # One step of the algorithm
-        def train_step(carry, args):
-            params, opt_state = carry
-            loss, grads = loss_grad_fn(params)
-            updates, opt_state = optimizer.update(grads, opt_state)
-            params = optax.apply_updates(params, updates)
-            return (params, opt_state), loss
-
-        # Run the optimizer
-        initial_carry =  (curr_unc_params, opt_state)
-        (unc_params, _), losses = lax.scan(train_step, initial_carry, None, length=num_mstep_iters)
-
-        # Return the updated parameters
-        return from_unconstrained(unc_params, fixed_params, param_props)
+        # Return the updated parameters and optimizer state
+        params = from_unconstrained(unc_params, fixed_params, props)
+        return params, m_step_state
 
 
 class HMMEmissions(ABC):
     """Abstract class for HMM emissions.
     """
+    def __init__(self,
+                 m_step_optimizer=optax.adam(1e-2),
+                 m_step_num_iters=50) -> None:
+        self.m_step_optimizer = m_step_optimizer
+        self.m_step_num_iters = m_step_num_iters
+
     @property
     @abstractmethod
     def emission_shape(self):
@@ -199,7 +210,7 @@ class HMMEmissions(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def distribution(self, params, state, covariates=None):
+    def distribution(self, params, state, inputs=None):
         """Return a distribution over emissions given current state.
 
         Args:
@@ -227,30 +238,38 @@ class HMMEmissions(ABC):
     def log_prior(self, params):
         raise NotImplementedError
 
-    def compute_conditional_logliks(self, params, emissions, covariates=None):
+    def compute_conditional_logliks(self, params, emissions, inputs=None):
         # Compute the log probability for each time step by
         # performing a nested vmap over emission time steps and states.
-        f = lambda emission, covariate: \
-            vmap(lambda state: self.distribution(params, state, covariate).log_prob(emission))(
+        f = lambda emission, inpt: \
+            vmap(lambda state: self.distribution(params, state, inpt).log_prob(emission))(
                 jnp.arange(self.num_states))
-        return vmap(f)(emissions, covariates)
+        return vmap(f)(emissions, inputs)
 
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
-        return posterior.smoothed_probs, emissions, covariates
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
+        return posterior.smoothed_probs, emissions, inputs
 
-    def m_step(self, params, props, batch_stats,
-               optimizer=optax.adam(1e-2), num_mstep_iters=50, scale=1.0):
+    def initialize_m_step_state(self, params, props):
+        """Initialize any required state for the M step.
+
+        For example, this might include the optimizer state for Adam.
+        """
+        # Extract the remaining unconstrained params, which should only be for the emissions.
+        unc_params, _ = to_unconstrained(params, props)
+        return self.m_step_optimizer.init(unc_params)
+
+    def m_step(self, params, props, batch_stats, m_step_state, scale=1.0):
 
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        curr_unc_params, fixed_params = to_unconstrained(params, props)
+        unc_params, fixed_params = to_unconstrained(params, props)
 
         # the objective is the negative expected log likelihood (and the log prior of the emission params)
         def neg_expected_log_joint(unc_params):
             params = from_unconstrained(unc_params, fixed_params, props)
 
             def _single_expected_log_like(stats):
-                expected_states, emissions, covariates = stats
-                log_likelihoods = self.compute_conditional_logliks(params, emissions, covariates)
+                expected_states, emissions, inputs = stats
+                log_likelihoods = self.compute_conditional_logliks(params, emissions, inputs)
                 lp = jnp.sum(expected_states * log_likelihoods)
                 return lp
 
@@ -259,24 +278,17 @@ class HMMEmissions(ABC):
             expected_log_joint = log_prior + batch_ells.sum()
             return -expected_log_joint / scale
 
-        # Minimize the negative expected log joint with gradient descent
-        loss_grad_fn = value_and_grad(neg_expected_log_joint)
-        opt_state = optimizer.init(curr_unc_params)
+        # Run gradient descent
+        unc_params, m_step_state, losses = \
+            run_gradient_descent(neg_expected_log_joint,
+                                 unc_params,
+                                 self.m_step_optimizer,
+                                 optimizer_state=m_step_state,
+                                 num_mstep_iters=self.m_step_num_iters)
 
-        # One step of the algorithm
-        def train_step(carry, args):
-            params, opt_state = carry
-            loss, grads = loss_grad_fn(params)
-            updates, opt_state = optimizer.update(grads, opt_state)
-            params = optax.apply_updates(params, updates)
-            return (params, opt_state), loss
-
-        # Run the optimizer
-        initial_carry =  (curr_unc_params, opt_state)
-        (unc_params, _), losses = lax.scan(train_step, initial_carry, None, length=num_mstep_iters)
-
-        # Return the updated parameters
-        return from_unconstrained(unc_params, fixed_params, props)
+        # Return the updated parameters and optimizer state
+        params = from_unconstrained(unc_params, fixed_params, props)
+        return params, m_step_state
 
 
 class HMM(SSM):
@@ -309,14 +321,14 @@ class HMM(SSM):
         """
         return self.emission_component.emission_shape
 
-    def initial_distribution(self, params, covariates=None):
-        return self.initial_component.distribution(params["initial"], covariates=covariates)
+    def initial_distribution(self, params, inputs=None):
+        return self.initial_component.distribution(params["initial"], inputs=inputs)
 
-    def transition_distribution(self, params, state, covariates=None):
-        return self.transition_component.distribution(params["transitions"], state, covariates=covariates)
+    def transition_distribution(self, params, state, inputs=None):
+        return self.transition_component.distribution(params["transitions"], state, inputs=inputs)
 
-    def emission_distribution(self, params, state, covariates=None):
-        return self.emission_component.distribution(params["emissions"], state, covariates=covariates)
+    def emission_distribution(self, params, state, inputs=None):
+        return self.emission_component.distribution(params["emissions"], state, inputs=inputs)
 
     def log_prior(self, params):
         lp = self.initial_component.log_prior(params["initial"])
@@ -325,79 +337,75 @@ class HMM(SSM):
         return lp
 
     # The inference functions all need the same arguments
-    def _inference_args(self, params, emissions, covariates):
-        return (self.initial_component.compute_initial_probs(params["initial"], covariates),
-                self.transition_component.compute_transition_matrices(params["transitions"], covariates),
-                self.emission_component.compute_conditional_logliks(params["emissions"], emissions, covariates))
+    def _inference_args(self, params, emissions, inputs):
+        return (self.initial_component.compute_initial_probs(params["initial"], inputs),
+                self.transition_component.compute_transition_matrices(params["transitions"], inputs),
+                self.emission_component.compute_conditional_logliks(params["emissions"], emissions, inputs))
 
     # Convenience wrappers for the inference code
-    def marginal_log_prob(self, params, emissions, covariates=None):
+    def marginal_log_prob(self, params, emissions, inputs=None):
         """Compute log marginal likelihood of observations."""
-        post = hmm_filter(*self._inference_args(params, emissions, covariates))
+        post = hmm_filter(*self._inference_args(params, emissions, inputs))
         return post.marginal_loglik
 
-    def most_likely_states(self, params, emissions, covariates=None):
+    def most_likely_states(self, params, emissions, inputs=None):
         """Compute most likely state path with the Viterbi algorithm."""
-        return hmm_posterior_mode(*self._inference_args(params, emissions, covariates))
+        return hmm_posterior_mode(*self._inference_args(params, emissions, inputs))
 
-    def filter(self, params, emissions, covariates=None):
+    def filter(self, params, emissions, inputs=None):
         """Compute filtering distribution."""
-        return hmm_filter(*self._inference_args(params, emissions, covariates))
+        return hmm_filter(*self._inference_args(params, emissions, inputs))
 
-    def smoother(self, params, emissions, covariates=None):
+    def smoother(self, params, emissions, inputs=None):
         """Compute smoothing distribution."""
-        return hmm_smoother(*self._inference_args(params, emissions, covariates))
+        return hmm_smoother(*self._inference_args(params, emissions, inputs))
 
     # Expectation-maximization (EM) code
-    def e_step(self, params, emissions, covariates=None):
+    def e_step(self, params, emissions, inputs=None):
         """The E-step computes expected sufficient statistics under the
         posterior. In the generic case, we simply return the posterior itself.
         """
-        args = self._inference_args(params, emissions, covariates)
+        args = self._inference_args(params, emissions, inputs)
         posterior = hmm_two_filter_smoother(*args)
         posterior.trans_probs = compute_transition_probs(args[1], posterior, (args[1].ndim == 2))
 
-        initial_stats = self.initial_component.collect_suff_stats(params["initial"], posterior, covariates)
-        transition_stats = self.transition_component.collect_suff_stats(params["transitions"], posterior, covariates)
-        emission_stats = self.emission_component.collect_suff_stats(params["emissions"], posterior, emissions, covariates)
+        initial_stats = self.initial_component.collect_suff_stats(params["initial"], posterior, inputs)
+        transition_stats = self.transition_component.collect_suff_stats(params["transitions"], posterior, inputs)
+        emission_stats = self.emission_component.collect_suff_stats(params["emissions"], posterior, emissions, inputs)
         return (initial_stats, transition_stats, emission_stats), posterior.marginal_loglik
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        """Initialize any required state for the M step.
+
+        For example, this might include the optimizer state for Adam.
+        """
+        initial_m_step_state = self.initial_component.initialize_m_step_state(params["initial"], props["initial"])
+        transitions_m_step_state = self.transition_component.initialize_m_step_state(params["transitions"], props["transitions"])
+        emissions_m_step_state = self.emission_component.initialize_m_step_state(params["emissions"], props["emissions"])
+        return initial_m_step_state, transitions_m_step_state, emissions_m_step_state
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         batch_initial_stats, batch_transition_stats, batch_emission_stats = batch_stats
-        params["initial"] = self.initial_component.m_step(params["initial"], props["initial"], batch_initial_stats)
-        params["transitions"] = self.transition_component.m_step(params["transitions"], props["transitions"], batch_transition_stats)
-        params["emissions"] = self.emission_component.m_step(params["emissions"], props["emissions"], batch_emission_stats)
-        return params
+        initial_m_step_state, transitions_m_step_state, emissions_m_step_state = m_step_state
+        params["initial"], initial_m_step_state = self.initial_component.m_step(params["initial"], props["initial"], batch_initial_stats, initial_m_step_state)
+        params["transitions"], transitions_m_step_state = self.transition_component.m_step(params["transitions"], props["transitions"], batch_transition_stats, transitions_m_step_state)
+        params["emissions"], emissions_m_step_state = self.emission_component.m_step(params["emissions"], props["emissions"], batch_emission_stats, emissions_m_step_state)
+        m_step_state = initial_m_step_state, transitions_m_step_state, emissions_m_step_state
+        return params, m_step_state
 
 
-# class ExponentialFamilyHMM(StandardHMM):
+# class ExponentialFamilyHMM(HMM):
 #     """
-#     These models belong the exponential family of distributions and return a
-#     set of expected sufficient statistics instead of an HMMPosterior object.
+#     An HMM whose initial distribution, transition distribution, and emission
+#     distribution all belong to the exponential family. Such models admit a
+#     simple stochastic expectation-maximization algorithm.
 #     """
-#     @abstractmethod
-#     def _compute_expected_suff_stats(self, params, emissions, expected_states, covariates=None):
-#         raise NotImplementedError
-
-#     @abstractmethod
-#     def _zeros_like_suff_stats(self):
-#         raise NotImplementedError
-
-#     # Expectation-maximization (EM) code
-#     def e_step(self, params, emissions, covariates=None):
-#         """For exponential family emissions, the E step returns the sum of expected
-#         sufficient statistics rather than the expected states for each time step.
-#         """
-#         (initial_stats, transition_stats, expected_states), ll = \
-#             super().e_step(params, emissions, covariates)
-#         emission_stats = self._compute_expected_suff_stats(params, emissions, expected_states, covariates)
-#         return (initial_stats, transition_stats, emission_stats), ll
-
-#     @abstractmethod
-#     def _m_step_emissions(self, params, param_props, emission_stats):
-#         raise NotImplementedError
-
-#     def fit_stochastic_em(self, initial_params, param_props, emissions_generator, schedule=None, num_epochs=50):
+#     def fit_stochastic_em(self,
+#                           initial_params,
+#                           param_props,
+#                           emissions_generator,
+#                           schedule=None,
+#                           num_epochs=50):
 #         """
 #         Fit this HMM by running Stochastic Expectation-Maximization.
 #         Assuming the original dataset consists of N independent sequences of
@@ -449,7 +457,7 @@ class HMM(SSM):
 #             minibatch_emissions, learn_rate = inputs
 
 #             # Compute the sufficient stats given a minibatch of emissions
-#             # TODO: Handle minibatch covariates
+#             # TODO: Handle minibatch inputs
 #             minibatch_stats, lls = vmap(partial(self.e_step, params))(minibatch_emissions)
 #             # minibatch_stats, ll = self.e_step(params, minibatch_emissions)
 
@@ -459,7 +467,8 @@ class HMM(SSM):
 #             expected_lp = self.log_prior(params) + lls.sum() * scale
 
 #             # Incorporate these these stats into the rolling averaged stats
-#             rolling_stats = tree_map(lambda s0, s1: (1 - learn_rate) * s0 + learn_rate * s1, rolling_stats,
+#             rolling_stats = tree_map(lambda s0, s1: (1 - learn_rate) * s0 + learn_rate * s1,
+#                                      rolling_stats,
 #                                      scaled_minibatch_stats)
 
 #             # Add a batch dimension and call M-step

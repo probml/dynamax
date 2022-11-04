@@ -16,7 +16,7 @@ class LinearRegressionHMMEmissions(HMMEmissions):
 
     def __init__(self,
                  num_states,
-                 covariate_dim,
+                 input_dim,
                  emission_dim):
         """_summary_
 
@@ -28,7 +28,7 @@ class LinearRegressionHMMEmissions(HMMEmissions):
             emission_covariance_matrices (_type_): _description_
         """
         self.num_states = num_states
-        self.covariate_dim = covariate_dim
+        self.input_dim = input_dim
         self.emission_dim = emission_dim
 
     @property
@@ -46,14 +46,14 @@ class LinearRegressionHMMEmissions(HMMEmissions):
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
             km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
-            _emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.covariate_dim))
+            _emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.input_dim))
             _emission_biases = jnp.array(km.cluster_centers_)
             _emission_covs = jnp.tile(jnp.eye(self.emission_dim)[None, :, :], (self.num_states, 1, 1))
 
         elif method.lower() == "prior":
             # TODO: Use an MNIW prior
             key1, key2, key = jr.split(key, 3)
-            _emission_weights = 0.01 * jr.normal(key1, (self.num_states, self.emission_dim, self.covariate_dim))
+            _emission_weights = 0.01 * jr.normal(key1, (self.num_states, self.emission_dim, self.input_dim))
             _emission_biases = jr.normal(key2, (self.num_states, self.emission_dim))
             _emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, 1, 1))
         else:
@@ -69,8 +69,8 @@ class LinearRegressionHMMEmissions(HMMEmissions):
                      covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
 
-    def distribution(self, params, state, covariates):
-        prediction = params["weights"][state] @ covariates
+    def distribution(self, params, state, inputs):
+        prediction = params["weights"][state] @ inputs
         prediction +=  params["biases"][state]
         return tfd.MultivariateNormalFullCovariance(prediction, params["covs"][state])
 
@@ -78,17 +78,20 @@ class LinearRegressionHMMEmissions(HMMEmissions):
         return 0.0
 
     # Expectation-maximization (EM) code
-    def collect_suff_stats(self, params, posterior, emissions, covariates=None):
+    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
-        sum_x = jnp.einsum("tk,ti->ki", expected_states, covariates)
+        sum_x = jnp.einsum("tk,ti->ki", expected_states, inputs)
         sum_y = jnp.einsum("tk,ti->ki", expected_states, emissions)
-        sum_xxT = jnp.einsum("tk,ti,tj->kij", expected_states, covariates, covariates)
-        sum_xyT = jnp.einsum("tk,ti,tj->kij", expected_states, covariates, emissions)
+        sum_xxT = jnp.einsum("tk,ti,tj->kij", expected_states, inputs, inputs)
+        sum_xyT = jnp.einsum("tk,ti,tj->kij", expected_states, inputs, emissions)
         sum_yyT = jnp.einsum("tk,ti,tj->kij", expected_states, emissions, emissions)
         return dict(sum_w=sum_w, sum_x=sum_x, sum_y=sum_y, sum_xxT=sum_xxT, sum_xyT=sum_xyT, sum_yyT=sum_yyT)
 
-    def m_step(self, params, props, batch_stats):
+    def initialize_m_step_state(self, params, props):
+        return None
+
+    def m_step(self, params, props, batch_stats, m_step_state):
         def _single_m_step(stats):
             sum_w = stats['sum_w']
             sum_x = stats['sum_x']
@@ -115,26 +118,26 @@ class LinearRegressionHMMEmissions(HMMEmissions):
         params["weights"] = As
         params["biases"] = bs
         params["covs"] = Sigmas
-        return params
+        return params, m_step_state
 
 
 class LinearRegressionHMM(HMM):
     def __init__(self,
                  num_states,
-                 covariate_dim,
+                 input_dim,
                  emission_dim,
                  initial_probs_concentration=1.1,
                  transition_matrix_concentration=1.1):
         self.emission_dim = emission_dim
-        self.covariate_dim = covariate_dim
+        self.input_dim = input_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
-        emission_component = LinearRegressionHMMEmissions(num_states, covariate_dim, emission_dim)
+        emission_component = LinearRegressionHMMEmissions(num_states, input_dim, emission_dim)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
     @property
-    def covariates_shape(self):
-        return (self.covariate_dim,)
+    def inputs_shape(self):
+        return (self.input_dim,)
 
     def initialize(self,
                    key=jr.PRNGKey(0),
