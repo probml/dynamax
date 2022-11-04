@@ -16,26 +16,29 @@ tfb = tfp.bijectors
 PosteriorGGSSMFiltered = PosteriorNLGSSMFiltered
 PosteriorGGSSMSmoothed = PosteriorNLGSSMSmoothed
 
+
 FnStateToState = Callable[[Float[Array, "state_dim"]], Float[Array, "state_dim"]]
-FnStateAndInputToState = Callable[[Float[Array, "state_dim input_dim"]], Float[Array, "state_dim"]]
+FnStateAndInputToState = Callable[[Float[Array, "state_dim"], Float[Array, "input_dim"]], Float[Array, "state_dim"]]
 
 FnStateToEmission = Callable[[Float[Array, "state_dim"]], Float[Array, "emission_dim"]]
-FnStateAndInputToEmission = Callable[[Float[Array, "state_dim input_dim"]], Float[Array, "emission_dim"]]
+FnStateAndInputToEmission = Callable[[Float[Array, "state_dim"], Float[Array, "input_dim"]], Float[Array, "emission_dim"]]
 
 FnStateToEmission2 = Callable[[Float[Array, "state_dim"]], Float[Array, "emission_dim emission_dim"]]
-FnStateAndInputToEmission2 = Callable[[Float[Array, "state_dim input_dim"]], Float[Array, "emission_dim emission_dim"]]
+FnStateAndInputToEmission2 = Callable[[Float[Array, "state_dim"], Float[Array, "input_dim"]], Float[Array, "emission_dim emission_dim"]]
 
 # emission distribution takes a mean vector and covariance matrix and returns a distribution
 EmissionDistFn = Callable[ [Float[Array, "state_dim"], Float[Array, "state_dim state_dim"]], tfd.Distribution]
 
+
 @chex.dataclass
 class ParamsGGSSM:
-    """Lightweight container for GGSSM parameters, used by inference algorithms."""
+    """Container for GGSSM parameters. Differs from NLGSSM in terms of emission model."""
 
     initial_mean: Float[Array, "state_dim"]
     initial_covariance: Float[Array, "state_dim state_dim"]
     dynamics_function: Union[FnStateToState, FnStateAndInputToState]
     dynamics_covariance: Float[Array, "state_dim state_dim"]
+
     emission_mean_function: Union[FnStateToEmission, FnStateAndInputToEmission]
     emission_cov_function: Union[FnStateToEmission2, FnStateAndInputToEmission2]
     emission_dist: EmissionDistFn = MVN
@@ -77,7 +80,7 @@ class GeneralizedGaussianSSM(SSM):
         inputs: Optional[Float[Array, "input_dim"]]=None
     ) -> tfd.Distribution:
         return MVN(params.initial_mean, params.initial_covariance)
-
+    
     def transition_distribution(
         self,
         params: ParamsGGSSM, 
