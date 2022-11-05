@@ -24,7 +24,7 @@ def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
     assert _all_close(kf_post.filtered_covariances, ekf_post.filtered_covariances)
 
 
-def test_extended_kalman_filter_nonlinear(key=0, num_timesteps=15):
+def test_extended_kalman_filter_nonlinear(key=42, num_timesteps=15):
     args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run EKF from sarkka-jax library

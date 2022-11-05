@@ -5,15 +5,18 @@ from jax import numpy as jnp
 from jax import scipy as jsc
 from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+from jaxtyping import Array, Float, PyTree, Bool, Int, Num
+from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
+import chex
 
-from dynamax.containers import GSSMPosterior
+from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed, ParamsLGSSMMoment
 
 def make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
 
     def _first_filtering_element(params, y):
-        F = params.dynamics_matrix
-        H = params.emission_matrix
+        F = params.dynamics_weights
+        H = params.emission_weights
         Q = params.dynamics_covariance
         R = params.emission_covariance
         P0 = params.initial_covariance
@@ -39,8 +42,8 @@ def make_associative_filtering_elements(params, emissions):
 
 
     def _generic_filtering_element(params, y):
-        F = params.dynamics_matrix
-        H = params.emission_matrix
+        F = params.dynamics_weights
+        H = params.emission_weights
         Q = params.dynamics_covariance
         R = params.emission_covariance
         
@@ -64,7 +67,10 @@ def make_associative_filtering_elements(params, emissions):
                            for first_elm, gen_elm in zip(first_elems, generic_elems))
     return combined_elems
 
-def lgssm_filter(params, emissions):
+def lgssm_filter(
+    params: ParamsLGSSMMoment,
+    emissions: Float[Array, "ntime emission_dim"]
+) -> PosteriorLGSSMFiltered:
     """A parallel version of the lgssm filtering algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
@@ -107,7 +113,7 @@ def lgssm_filter(params, emissions):
                                                 filtering_operator, initial_elements
                                                 )
 
-    return GSSMPosterior(marginal_loglik=-logZ[-1],
+    return PosteriorLGSSMFiltered(marginal_loglik=-logZ[-1],
         filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
@@ -119,8 +125,8 @@ def make_associative_smoothing_elements(params, filtered_means, filtered_covaria
         return jnp.zeros_like(P), m, P
 
     def _generic_smoothing_element(params, m, P):
-        F = params.dynamics_matrix
-        H = params.emission_matrix
+        F = params.dynamics_weights
+        H = params.emission_weights
         Q = params.dynamics_covariance
         R = params.emission_covariance
 
@@ -140,7 +146,10 @@ def make_associative_smoothing_elements(params, filtered_means, filtered_covaria
     return combined_elems
 
 
-def lgssm_smoother(params, emissions):
+def lgssm_smoother(
+    params: ParamsLGSSMMoment,
+    emissions: Float[Array, "ntime emission_dim"]
+) -> PosteriorLGSSMSmoothed:
     """A parallel version of the lgssm smoothing algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
@@ -166,7 +175,7 @@ def lgssm_smoother(params, emissions):
     _, smoothed_means, smoothed_covs, *_ = lax.associative_scan(
                                                 smoothing_operator, initial_elements, reverse=True
                                                 )
-    return GSSMPosterior(
+    return PosteriorLGSSMSmoothed(
         marginal_loglik=filtered_posterior.marginal_loglik,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,

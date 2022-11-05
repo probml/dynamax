@@ -6,6 +6,11 @@ from jax import vmap
 from jax import jit
 from functools import partial
 
+from typing import Callable, Optional, Tuple, Union
+from jaxtyping import Bool, Int, Float, Array
+from dynamax.ssm_types import PRNGKey, StateSeq, HMMTransitionMatrix
+
+
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 
 def get_trans_mat(transition_matrix, transition_fn, t):
@@ -79,8 +84,14 @@ def _condition_on(probs, ll):
 def _predict(probs, A):
     return A.T @ probs
 
+
 @partial(jit, static_argnames=["transition_fn"])
-def hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transition_fn = None):
+def hmm_filter(
+    initial_distribution: Float[Array, "state_dim"],
+    transition_matrix: HMMTransitionMatrix,
+    log_likelihoods: Float[Array, "ntime state_dim"],
+    transition_fn: Optional[Callable[[Int], HMMTransitionMatrix]] = None
+) -> HMMPosterior:
     """Forwards filtering.
 
     Args:
@@ -113,7 +124,13 @@ def hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transit
 
 
 @partial(jit, static_argnames=["transition_fn"])
-def hmm_posterior_sample(rng, initial_distribution, transition_matrix, log_likelihoods, transition_fn = None):
+def hmm_posterior_sample(
+    rng: PRNGKey,
+    initial_distribution: Float[Array, "state_dim"],
+    transition_matrix: HMMTransitionMatrix,
+    log_likelihoods: Float[Array, "ntime state_dim"],
+    transition_fn: Optional[Callable[[Int], HMMTransitionMatrix]] = None
+) -> StateSeq:
     """Sample a latent sequence from the posterior.
     Args:
         initial_distribution(k): prob(hid(1)=k)
@@ -156,7 +173,11 @@ def hmm_posterior_sample(rng, initial_distribution, transition_matrix, log_likel
     return log_normalizer, states
 
 @partial(jit, static_argnames=["transition_fn"])
-def hmm_backward_filter(transition_matrix, log_likelihoods, transition_fn = None):
+def hmm_backward_filter(
+    transition_matrix: HMMTransitionMatrix,
+    log_likelihoods: Float[Array, "ntime state_dim"],
+    transition_fn: Optional[Callable[[Int], HMMTransitionMatrix]]= None
+) -> Tuple[Float, Float[Array, "ntime state_dim"]]:
     """_summary_
 
     Args:
@@ -190,7 +211,12 @@ def hmm_backward_filter(transition_matrix, log_likelihoods, transition_fn = None
 
 
 @partial(jit, static_argnames=["transition_fn"])
-def hmm_two_filter_smoother(initial_distribution, transition_matrix, log_likelihoods, transition_fn = None):
+def hmm_two_filter_smoother(
+    initial_distribution: Float[Array, "state_dim"],
+    transition_matrix: HMMTransitionMatrix,
+    log_likelihoods: Float[Array, "ntime state_dim"],
+    transition_fn: Optional[Callable[[Int], HMMTransitionMatrix]]= None
+) -> HMMPosterior:
     """Computed the smoothed state probabilities using the two-filter
     smoother, a.k.a. the forward-backward algorithm.
 
@@ -223,7 +249,12 @@ def hmm_two_filter_smoother(initial_distribution, transition_matrix, log_likelih
 
 
 @partial(jit, static_argnames=["transition_fn"])
-def hmm_smoother(initial_distribution, transition_matrix, log_likelihoods, transition_fn = None):
+def hmm_smoother(
+    initial_distribution: Float[Array, "state_dim"],
+    transition_matrix: HMMTransitionMatrix,
+    log_likelihoods: Float[Array, "ntime state_dim"],
+    transition_fn: Optional[Callable[[Int], HMMTransitionMatrix]]= None
+) -> HMMPosterior:
     """Computed the smoothed state probabilities using a general
     Bayesian smoother.
 
@@ -278,7 +309,13 @@ def hmm_smoother(initial_distribution, transition_matrix, log_likelihoods, trans
 
 
 @partial(jit, static_argnames=["transition_fn", "window_size"])
-def hmm_fixed_lag_smoother(initial_distribution, transition_matrix, log_likelihoods, window_size, transition_fn = None):
+def hmm_fixed_lag_smoother(
+    initial_distribution: Float[Array, "state_dim"],
+    transition_matrix: HMMTransitionMatrix,
+    log_likelihoods: Float[Array, "ntime state_dim"],
+    window_size: Int,
+    transition_fn: Optional[Callable[[Int], HMMTransitionMatrix]]= None
+) -> HMMPosterior:
     """Compute the smoothed state probabilities using the fixed-lag smoother.
 
     Args:
@@ -376,7 +413,12 @@ def hmm_fixed_lag_smoother(initial_distribution, transition_matrix, log_likeliho
 
 
 @partial(jit, static_argnames=["transition_fn"])
-def hmm_posterior_mode(initial_distribution, transition_matrix, log_likelihoods, transition_fn = None):
+def hmm_posterior_mode(
+    initial_distribution: Float[Array, "state_dim"],
+    transition_matrix: HMMTransitionMatrix,
+    log_likelihoods: Float[Array, "ntime state_dim"],
+    transition_fn: Optional[Callable[[Int], HMMTransitionMatrix]]= None
+) -> Int[Array, "ntime"]:
     """Compute the most likely state sequence. This is called the Viterbi algorithm.
     Args:
         initial_distribution (_type_): _description_
@@ -413,7 +455,10 @@ def hmm_posterior_mode(initial_distribution, transition_matrix, log_likelihoods,
     return jnp.concatenate([jnp.array([first_state]), states])
 
 
-def _compute_sum_transition_probs(transition_matrix, hmm_posterior):
+def _compute_sum_transition_probs(
+    transition_matrix: HMMTransitionMatrix,
+    hmm_posterior: HMMPosterior
+) -> HMMTransitionMatrix:
     """Compute the transition probabilities from the HMM posterior messages.
     Args:
         transition_matrix (_type_): _description_
@@ -448,7 +493,10 @@ def _compute_sum_transition_probs(transition_matrix, hmm_posterior):
     return sum_transition_probs
 
 
-def _compute_all_transition_probs(transition_matrix, hmm_posterior):
+def _compute_all_transition_probs(
+    transition_matrix: HMMTransitionMatrix,
+    hmm_posterior: HMMPosterior
+) -> Float[Array, "ntime state_dim state_dim"]:
     """Compute the transition probabilities from the HMM posterior messages.
     Args:
         transition_matrix (_type_): _description_
@@ -462,7 +510,14 @@ def _compute_all_transition_probs(transition_matrix, hmm_posterior):
     return transition_probs
 
 
-def compute_transition_probs(transition_matrix, hmm_posterior, reduce_sum=True):
+# TODO: Consider alternative annotation for return type:
+#  Float[Array, "*ntime state_dim state_dim"] I think this would allow multiple prepended dims.
+#  Float[Array, "#ntime state_dim state_dim"] this might accept (1, sd, sd) but not (sd, sd).
+def compute_transition_probs(
+    transition_matrix: HMMTransitionMatrix,
+    hmm_posterior: HMMPosterior,
+    reduce_sum: Bool=True
+) -> Union[Float[Array, "ntime state_dim state_dim"], HMMTransitionMatrix]:
     """Computer the posterior marginal distributions over (hid(t), hid(t+1)),
     ..math:
         q_{tij} = Pr(z_t=i, z_{t+1}=j | obs_{1:T})  for t=1,...,T-1

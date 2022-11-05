@@ -2,31 +2,62 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-import chex
-from dynamax.containers import GSSMPosterior
 from functools import wraps
 import inspect
 
+from jaxtyping import Array, Float, PyTree, Bool, Int, Num
+from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
+import chex
+
 
 @chex.dataclass
-class LGSSMParams:
-    """Lightweight container for LGSSM parameters.
-    The functions below can be called with an instance of this class.
-    However, they can also accept a ssm.lgssm.models.LinearGaussianSSM instance,
-    if you prefer a more object-oriented approach.
-    """
-    initial_mean: chex.Array
-    initial_covariance: chex.Array
-    dynamics_matrix: chex.Array
-    dynamics_covariance: chex.Array
-    emission_matrix: chex.Array
-    emission_covariance: chex.Array
+class ParamsLGSSMMoment:
+    """Lightweight container for passing LGSSM parameters in moment form to inference algorithms."""
+    initial_mean: Float[Array, "state_dim"]
+    dynamics_weights: Float[Array, "state_dim state_dim"]
+    emission_weights:  Float[Array, "emission_dim state_dim"]
 
-    # Optional parameters (code below assumes zero otherwise)
-    dynamics_input_weights: chex.Array = None
-    dynamics_bias: chex.Array  = None
-    emission_input_weights: chex.Array = None
-    emission_bias: chex.Array = None
+    initial_covariance: Float[Array, "state_dim state_dim"]
+    dynamics_covariance:  Float[Array, "state_dim state_dim"]
+    emission_covariance: Float[Array, "emission_dim emission_dim"]
+
+    # Optional parameters (None means zeros)
+    dynamics_input_weights: Optional[Float[Array, "input_dim state_dim"]] = None
+    dynamics_bias: Optional[Float[Array, "state_dim"]] = None
+    emission_input_weights: Optional[Float[Array, "input_dim emission_dim"]] = None
+    emission_bias: Optional[Float[Array, "emission_dim"]] = None
+
+
+
+@chex.dataclass
+class PosteriorLGSSMFiltered:
+    """Marginals of the Gaussian filtering posterior.
+    Attributes:
+        marginal_loglik: log marginal probability of observations
+            int_{z(1:T)} p(z(1:T), y(1:T) | u(1:t))
+        filtered_means: (T,D_hid) array,
+            E[x_t | y_{1:t}, u_{1:t}].
+        filtered_covariances: (T,D_hid,D_hid) array,
+            Cov[x_t | y_{1:t}, u_{1:t}].
+    """
+    marginal_loglik: Float[Array, ""] # Scalar
+    filtered_means: Float[Array, "ntime state_dim"]
+    filtered_covariances: Float[Array, "ntime state_dim state_dim"]
+
+@chex.dataclass
+class PosteriorLGSSMSmoothed(PosteriorLGSSMFiltered):
+    """Marginals of the Gaussian filtering and smoothing posterior. .
+    Attributes:
+        smoothed_means: (T,D_hid) array,
+            E[x_t | y_{1:T}, u_{1:T}].
+        smoothed_covariances: (T,D_hid,D_hid) array of smoothed marginal covariances,
+            Cov[x_t | y_{1:T}, u_{1:T}].
+        smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
+            E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
+    """
+    smoothed_means: Float[Array, "ntime state_dim"] 
+    smoothed_covariances: Float[Array, "ntime state_dim state_dim"]
+    smoothed_cross_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
 
 
 # Helper functions
@@ -34,9 +65,9 @@ _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
 def _predict(m, S, F, B, b, Q, u):
-    """Predict next mean and covariance under a linear Gaussian model
+    """Predict next mean and covariance under a linear Gaussian model.
 
-        p(x_{t+1}) = \int N(x_t | m, S) N(x_{t+1} | Fx_t + Bu + b, Q)
+        p(x_{t+1}) = int N(x_t | m, S) N(x_{t+1} | Fx_t + Bu + b, Q)
                     = N(x_{t+1} | Fm + Bu, F S F^T + Q)
 
     Args:
@@ -116,13 +147,13 @@ def preprocess_args(f):
         # Make sure all the required parameters are there
         assert params.initial_mean is not None
         assert params.initial_covariance is not None
-        assert params.dynamics_matrix is not None
+        assert params.dynamics_weights is not None
         assert params.dynamics_covariance is not None
-        assert params.emission_matrix is not None
+        assert params.emission_weights is not None
         assert params.emission_covariance is not None
 
         # Get shapes
-        emission_dim, state_dim = params.emission_matrix.shape[-2:]
+        emission_dim, state_dim = params.emission_weights.shape[-2:]
         num_timesteps = len(emissions)
 
         # Default the inputs to zero
@@ -135,14 +166,14 @@ def preprocess_args(f):
         emission_input_weights = _zeros_if_none(params.emission_input_weights, (emission_dim, input_dim))
         emission_bias = _zeros_if_none(params.emission_bias, (emission_dim,))
 
-        full_params = LGSSMParams(
+        full_params = ParamsLGSSMMoment(
             initial_mean=params.initial_mean,
             initial_covariance=params.initial_covariance,
-            dynamics_matrix=params.dynamics_matrix,
+            dynamics_weights=params.dynamics_weights,
             dynamics_input_weights=dynamics_input_weights,
             dynamics_bias=dynamics_bias,
             dynamics_covariance=params.dynamics_covariance,
-            emission_matrix=params.emission_matrix,
+            emission_weights=params.emission_weights,
             emission_input_weights=emission_input_weights,
             emission_bias=emission_bias,
             emission_covariance=params.emission_covariance
@@ -151,43 +182,12 @@ def preprocess_args(f):
     return wrapper
 
 
-def lgssm_sample(rng, params, num_timesteps, inputs=None):
-    """Sample states and emissions from an LGSSM.
-
-    Args:
-        params (_type_): _description_
-        num_timesteps (_type_): _description_
-        inputs (_type_, optional): _description_. Defaults to None.
-    """
-    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-
-    init_key, rng = jr.split(rng)
-    initial_state = MVN(params.initial_mean, params.initial_covariance).sample(seed=init_key)
-
-    def _step(carry, t):
-        rng, state = carry
-        emission_rng, state_rng, rng = jr.split(rng, 3)
-        # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
-        B = _get_params(params.dynamics_input_weights, 2, t)
-        b = _get_params(params.dynamics_bias, 1, t)
-        Q = _get_params(params.dynamics_covariance, 2, t)
-        H = _get_params(params.emission_matrix, 2, t)
-        D = _get_params(params.emission_input_weights, 2, t)
-        d = _get_params(params.emission_bias, 1, t)
-        R = _get_params(params.emission_covariance, 2, t)
-        u = inputs[t]
-
-        emission = MVN(H @ state + D @ u + d, R).sample(seed=emission_rng)
-        next_state = MVN(F @ state + B @ u + b, Q).sample(seed=state_rng)
-        return (rng, next_state), (state, emission)
-
-    _, (states, emissions) = lax.scan(_step, (rng, initial_state), jnp.arange(num_timesteps))
-    return states, emissions
-
-
 @preprocess_args
-def lgssm_filter(params, emissions, inputs=None):
+def lgssm_filter(
+    params: ParamsLGSSMMoment,
+    emissions:  Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+) -> PosteriorLGSSMFiltered:
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
 
@@ -209,11 +209,11 @@ def lgssm_filter(params, emissions, inputs=None):
         ll, pred_mean, pred_cov = carry
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
+        F = _get_params(params.dynamics_weights, 2, t)
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
         Q = _get_params(params.dynamics_covariance, 2, t)
-        H = _get_params(params.emission_matrix, 2, t)
+        H = _get_params(params.emission_weights, 2, t)
         D = _get_params(params.emission_input_weights, 2, t)
         d = _get_params(params.emission_bias, 1, t)
         R = _get_params(params.emission_covariance, 2, t)
@@ -234,13 +234,15 @@ def lgssm_filter(params, emissions, inputs=None):
     # Run the Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return GSSMPosterior(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
-
-
+    return PosteriorLGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 @preprocess_args
-def lgssm_smoother(params, emissions, inputs=None):
+def lgssm_smoother(
+    params: ParamsLGSSMMoment,
+    emissions: Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+) -> PosteriorLGSSMSmoothed:
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -268,7 +270,7 @@ def lgssm_smoother(params, emissions, inputs=None):
         t, filtered_mean, filtered_cov = args
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
+        F = _get_params(params.dynamics_weights, 2, t)
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
         Q = _get_params(params.dynamics_covariance, 2, t)
@@ -296,7 +298,7 @@ def lgssm_smoother(params, emissions, inputs=None):
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
     smoothed_cross = smoothed_cross[::-1]
-    return GSSMPosterior(
+    return PosteriorLGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
@@ -306,18 +308,22 @@ def lgssm_smoother(params, emissions, inputs=None):
     )
 
 
-def lgssm_posterior_sample(rng, params, emissions, inputs=None):
+def lgssm_posterior_sample(
+    key: jr.PRNGKey,
+    params: ParamsLGSSMMoment,
+    emissions:  Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+) ->Float[Array, "ntime state_dim"]:
     """Run forward-filtering, backward-sampling to draw samples of
         x_{1:T} | y_{1:T}, u_{1:T}.
 
     Args:
-        rng: jax.random.PRNGKey.
+        key: jax.random.PRNGKey.
         params: an LGSSMParams instance (or object with the same fields)
         emissions (T,D_hid): array of observations.
         inputs (T,D_in): array of inputs.
 
     Returns:
-        ll: marginal log likelihood of the observations.
         states (T,D_hid): samples from the posterior distribution on latent states.
     """
     num_timesteps = len(emissions)
@@ -330,10 +336,10 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
     # Sample backward in time
     def _step(carry, args):
         next_state = carry
-        rng, filtered_mean, filtered_cov, t = args
+        key, filtered_mean, filtered_cov, t = args
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
+        F = _get_params(params.dynamics_weights, 2, t)
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
         Q = _get_params(params.dynamics_covariance, 2, t)
@@ -341,19 +347,19 @@ def lgssm_posterior_sample(rng, params, emissions, inputs=None):
 
         # Condition on next state
         smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F, B, b, Q, u, next_state)
-        state = MVN(smoothed_mean, smoothed_cov).sample(seed=rng)
+        state = MVN(smoothed_mean, smoothed_cov).sample(seed=key)
         return state, state
 
     # Initialize the last state
-    rng, this_rng = jr.split(rng, 2)
-    last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_rng)
+    key, this_key = jr.split(key, 2)
+    last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_key)
 
     args = (
-        jr.split(rng, num_timesteps - 1),
+        jr.split(key, num_timesteps - 1),
         filtered_means[:-1][::-1],
         filtered_covs[:-1][::-1],
         jnp.arange(num_timesteps - 2, -1, -1),
     )
     _, reversed_states = lax.scan(_step, last_state, args)
     states = jnp.row_stack([reversed_states[::-1], last_state])
-    return ll, states
+    return states

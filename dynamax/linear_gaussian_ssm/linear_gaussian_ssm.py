@@ -1,16 +1,31 @@
 from functools import partial
+import jax
 from jax import numpy as jnp
 from jax import random as jr
 from jax.tree_util import tree_map
-from dynamax.abstractions import SSM
-from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample, LGSSMParams
-from dynamax.parameters import ParameterProperties
-from dynamax.utils import PSDToRealBijector
+
 import tensorflow_probability.substrates.jax as tfp
+import tensorflow_probability.substrates.jax.distributions as tfd
+import tensorflow_probability.substrates.jax.bijectors as tfb
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
-tfd = tfp.distributions
-tfb = tfp.bijectors
+from jaxtyping import Array, Float, PyTree, Bool, Int, Num
+from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
+import chex
+from dataclasses import dataclass
+
+
+from dynamax.abstractions import SSM
+from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
+from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMMoment, PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
+from dynamax.parameters import ParameterProperties
+from dynamax.utils import PSDToRealBijector
+
+ParamsLGSSM = Dict
+
+ParamPropsLGSSM = Dict
+
+SuffStatsLGSSM = Any
 
 _zeros_if_none = lambda x, shp: x if x is not None else jnp.zeros(shp)
 
@@ -65,45 +80,23 @@ class LinearGaussianSSM(SSM):
     def inputs_shape(self):
         return (self.input_dim,) if self.input_dim > 0 else None
 
-    def initialize(self,
-                   key=jr.PRNGKey(0),
-                   initial_mean=None,
-                   initial_covariance=None,
-                   dynamics_weights=None,
-                   dynamics_bias=None,
-                   dynamics_input_weights=None,
-                   dynamics_covariance=None,
-                   emission_weights=None,
-                   emission_bias=None,
-                   emission_input_weights=None,
-                   emission_covariance=None):
-        """Initialize the model parameters and their corresponding properties.
+    def initialize(
+        self,
+        key: jr.PRNGKey =jr.PRNGKey(0),
+        initial_mean=None,
+        initial_covariance=None,
+        dynamics_weights=None,
+        dynamics_bias=None,
+        dynamics_input_weights=None,
+        dynamics_covariance=None,
+        emission_weights=None,
+        emission_bias=None,
+        emission_input_weights=None,
+        emission_covariance=None
+    ) -> Tuple[ParamsLGSSM, ParamPropsLGSSM]:
+        """Initialize the model parameters and their corresponding properties."""
 
-        You can either specify parameters manually via the keyword arguments, or you can have
-        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
-        Parameters will then be sampled randomly and/or set to reasonable defaults.
-
-        Note: in the future we may support more initialization schemes.
-
-        Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            initial_mean (array, optional): manually specified initial mean. Defaults to None.
-            initial_covariance (array, optional): manually specified initial covariance. Defaults to None.
-            dynamics_weights (array, optional): manually specified dynamics weights. Defaults to None.
-            dynamics_bias (array, optional): manually specified dynamics bias. Defaults to None.
-            dynamics_input_weights (array, optional): manually specified dynamics input weights. Defaults to None.
-            dynamics_covariance (array, optional): manually specified dynamics covariance. Defaults to None.
-            emission_weights (array, optional): manually specified emission weights. Defaults to None.
-            emission_bias (array, optional): manually specified emission bias. Defaults to None.
-            emission_input_weights (array, optional): manually specified emission input weights. Defaults to None.
-            emission_covariance (array, optional): manually specified emission covariance. Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
-
-        Returns:
-            params: a nested dictionary of arrays containing the model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
-        """
+        # Arbitrary default values, for demo purposes.
         _initial_mean = jnp.zeros(self.state_dim)
         _initial_covariance = jnp.eye(self.state_dim)
         _dynamics_weights = 0.99 * jnp.eye(self.state_dim)
@@ -117,6 +110,8 @@ class LinearGaussianSSM(SSM):
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
+
+        # Create nested dictionary of params
         params = dict(
             initial=dict(mean=default(initial_mean, _initial_mean),
                          cov=default(initial_covariance, _initial_covariance)),
@@ -130,6 +125,7 @@ class LinearGaussianSSM(SSM):
                            cov=default(emission_covariance, _emission_covariance))
         )
 
+        # The keys of param_props must match those of params!
         param_props = dict(
             initial=dict(mean=ParameterProperties(),
                          cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))),
@@ -144,64 +140,124 @@ class LinearGaussianSSM(SSM):
         )
         return params, param_props
 
-    def initial_distribution(self, params, inputs=None):
+    def initial_distribution(
+        self,
+        params: ParamsLGSSM,
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> tfd.Distribution:
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
-    def transition_distribution(self, params, state, inputs=None):
+    def transition_distribution(
+        self,
+        params: ParamsLGSSM,
+        state: Float[Array, "state_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> tfd.Distribution:
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
         mean = params["dynamics"]["weights"] @ state + params["dynamics"]["input_weights"] @ inputs
         if self.has_dynamics_bias:
             mean += params["dynamics"]["bias"]
         return MVN(mean, params["dynamics"]["cov"])
 
-    def emission_distribution(self, params, state, inputs=None):
+    def emission_distribution(
+        self,
+        params: ParamsLGSSM,
+        state: Float[Array, "state_dim"], 
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> tfd.Distribution:
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
         mean = params["emissions"]["weights"] @ state + params["emissions"]["input_weights"] @ inputs
         if self.has_emissions_bias:
             mean += params["emissions"]["bias"]
         return MVN(mean, params["emissions"]["cov"])
 
-    def _make_inference_args(self, params):
-        """Convert params dict to LGSSMParams container replacing Nones if necessary."""
+    def to_inference_args(
+        self,
+        params: ParamsLGSSM
+    ) -> ParamsLGSSMMoment:
+        """Convert params dict to inference container replacing Nones if necessary."""
         dyn_bias = _zeros_if_none(params["dynamics"]["bias"], self.state_dim)
         ems_bias = _zeros_if_none(params["emissions"]["bias"], self.emission_dim)
-        return LGSSMParams(initial_mean=params["initial"]["mean"],
+        return ParamsLGSSMMoment(initial_mean=params["initial"]["mean"],
                            initial_covariance=params["initial"]["cov"],
-                           dynamics_matrix=params["dynamics"]["weights"],
+                           dynamics_weights=params["dynamics"]["weights"],
                            dynamics_input_weights=params["dynamics"]["input_weights"],
                            dynamics_bias=dyn_bias,
                            dynamics_covariance=params["dynamics"]["cov"],
-                           emission_matrix=params["emissions"]["weights"],
+                           emission_weights=params["emissions"]["weights"],
                            emission_input_weights=params["emissions"]["input_weights"],
                            emission_bias=ems_bias,
                            emission_covariance=params["emissions"]["cov"])
 
-    def log_prior(self, params):
-        """Return the log prior probability of any model parameters.
+    def from_inference_args(
+        self,
+        params: ParamsLGSSMMoment
+    ) -> ParamsLGSSM:
+        """Convert params from inference container to dict."""
+        return dict(
+            initial=dict(mean=params.initial_mean,
+                         cov=params.initial_covariance),
+            dynamics=dict(weights=params.dynamics_weights,
+                          bias=params.dynamics_bias,
+                          input_weights=params.dynamics_input_weights,
+                          cov=params.dynamics_covariance),
+            emissions=dict(weights=params.emission_weights,
+                           bias=params.emission_bias,
+                           input_weights=params.emission_input_weights,
+                           cov=params.emission_covariance)
+            )
+       
 
-        Returns:
-            lp (Scalar): log prior probability.
-        """
+    def log_prior(
+        self,
+        params: ParamsLGSSM
+    ) -> float:
+        """Return the log prior probability of model parameters."""
         return 0.0
 
-    def marginal_log_prob(self, params, emissions, inputs=None):
+    def marginal_log_prob(
+        self,
+        params: ParamsLGSSM,
+        emissions: Float[Array, "ntime emission_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]] = None
+    ) -> float:
         """Compute log marginal likelihood of observations."""
-        filtered_posterior = lgssm_filter(self._make_inference_args(params), emissions, inputs)
+        filtered_posterior = lgssm_filter(self.to_inference_args(params), emissions, inputs)
         return filtered_posterior.marginal_loglik
 
-    def filter(self, params, emissions, inputs=None):
-        """Compute filtering distribution."""
-        return lgssm_filter(self._make_inference_args(params), emissions, inputs)
+    def filter(
+        self,
+        params: ParamsLGSSM,
+        emissions: Float[Array, "ntime emission_dim"], 
+        inputs: Optional[Float[Array, "ntime input_dim"]] = None
+    ) -> PosteriorLGSSMFiltered:
+        """Compute filtering tfd.Distribution."""
+        return lgssm_filter(self.to_inference_args(params), emissions, inputs)
 
-    def smoother(self, params, emissions, inputs=None):
-        """Compute smoothing distribution."""
-        return lgssm_smoother(self._make_inference_args(params), emissions, inputs)
+    def smoother(
+        self,
+        params: ParamsLGSSM,
+        emissions: Float[Array, "ntime emission_dim"], 
+        inputs: Optional[Float[Array, "ntime input_dim"]] = None
+    ) -> PosteriorLGSSMSmoothed:
+        """Compute smoothing tfd.Distribution."""
+        return lgssm_smoother(self.to_inference_args(params), emissions, inputs)
 
-    def posterior_sample(self, params, key, emissions, inputs=None):
-        _, sample = lgssm_posterior_sample(key, self._make_inference_args(params), emissions, inputs)
-        return sample
+    def posterior_sample(
+        self,
+        key: jr.PRNGKey, 
+        params: ParamsLGSSM,
+        emissions: Float[Array, "ntime emission_dim"], 
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> Float[Array, "ntime state_dim"]:
+        return lgssm_posterior_sample(key, self.to_inference_args(params), emissions, inputs)
 
-    def posterior_predictive(self, params, emissions, inputs=None):
+    def posterior_predictive(
+        self,
+        params: ParamsLGSSM,
+        emissions: Float[Array, "ntime emission_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> Tuple[Float[Array, "ntime emission_dim"], Float[Array, "ntime emission_dim"]]:
         """Compute marginal posterior predictive for each observation.
 
         Returns:
@@ -220,7 +276,12 @@ class LinearGaussianSSM(SSM):
         return smoothed_emissions, smoothed_emissions_std
 
     # Expectation-maximization (EM) code
-    def e_step(self, params, emissions, inputs=None):
+    def e_step(
+        self,
+        params: ParamsLGSSM,
+        emissions: Float[Array, "nseq ntime emission_dim"],
+        inputs: Optional[Float[Array, "nseq ntime input_dim"]]=None
+    ) -> Tuple[SuffStatsLGSSM, float]:
         """The E-step computes sums of expected sufficient statistics under the
         posterior. In the generic case, we simply return the posterior itself.
         """
@@ -229,7 +290,7 @@ class LinearGaussianSSM(SSM):
             inputs = jnp.zeros((num_timesteps, 0))
 
         # Run the smoother to get posterior expectations
-        posterior = lgssm_smoother(self._make_inference_args(params), emissions, inputs)
+        posterior = lgssm_smoother(self.to_inference_args(params), emissions, inputs)
 
         # shorthand
         Ex = posterior.smoothed_means
@@ -246,12 +307,12 @@ class LinearGaussianSSM(SSM):
         u = inputs
         y = emissions
 
-        # expected sufficient statistics for the initial distribution
+        # expected sufficient statistics for the initial tfd.Distribution
         Ex0 = posterior.smoothed_means[0]
         Ex0x0T = posterior.smoothed_covariances[0] + jnp.outer(Ex0, Ex0)
         init_stats = (Ex0, Ex0x0T, 1)
 
-        # expected sufficient statistics for the dynamics distribution
+        # expected sufficient statistics for the dynamics tfd.Distribution
         # let zp[t] = [x[t], u[t]] for t = 0...T-2
         # let xn[t] = x[t+1]          for t = 0...T-2
         sum_zpzpT = jnp.block([[Exp.T @ Exp, Exp.T @ up], [up.T @ Exp, up.T @ up]])
@@ -278,8 +339,13 @@ class LinearGaussianSSM(SSM):
     def initialize_m_step_state(self, params, props):
         return None
 
-    def m_step(self, params, props, batch_stats, m_step_state):
-
+    def m_step(
+        self,
+        params: ParamsLGSSM,
+        props: ParamPropsLGSSM,
+        batch_stats: SuffStatsLGSSM,
+        m_step_state: Any
+    ) -> ParamsLGSSM:
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
             W = jnp.linalg.solve(ExxT, ExyT).T

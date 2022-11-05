@@ -1,43 +1,67 @@
 import jax.numpy as jnp
-from jax import lax
+from jax import lax, vmap, value_and_grad
+from jax.scipy.linalg import solve_triangular
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+
+from jaxtyping import Array, Float, Bool, Int, Num
+from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
 import chex
 
 
 @chex.dataclass
-class LGSSMInfoParams:
-    """Lightweight container for LGSSM parameters in information form."""
+class ParamsLGSSMInfo:
+    """Lightweight container for passing LGSSM parameters in information form to inference algorithms."""
+    initial_mean: Float[Array, "state_dim"]
+    dynamics_weights: Float[Array, "state_dim state_dim"]
+    emission_weights:  Float[Array, "emission_dim state_dim"]
 
-    initial_mean: chex.Array
-    initial_precision: chex.Array
-    dynamics_matrix: chex.Array
-    dynamics_precision: chex.Array
-    dynamics_input_weights: chex.Array
-    dynamics_bias: chex.Array
-    emission_matrix: chex.Array
-    emission_input_weights: chex.Array
-    emission_bias: chex.Array
-    emission_precision: chex.Array
+    initial_precision: Float[Array, "state_dim state_dim"]
+    dynamics_precision:  Float[Array, "state_dim state_dim"]
+    emission_precision: Float[Array, "emission_dim emission_dim"]
+
+    # Optional parameters (None means zeros)
+    dynamics_input_weights: Optional[Float[Array, "input_dim state_dim"]] = None
+    dynamics_bias: Optional[Float[Array, "state_dim"]] = None
+    emission_input_weights: Optional[Float[Array, "input_dim emission_dim"]] = None
+    emission_bias: Optional[Float[Array, "emission_dim"]] = None
 
 
 @chex.dataclass
-class LGSSMInfoPosterior:
-    """Simple wrapper for properties of an LGSSM posterior distribution in
-    information form.
+class PosteriorLGSSMInfoFiltered:
+    """Marginals of the Gaussian filtering posterior in information form.
 
     Attributes:
-            filtered_means: (T,K) array,
-                E[x_t | y_{1:t}, u_{1:t}].
-            filtered_precisions: (T,K,K) array,
-                inv(Cov[x_t | y_{1:t}, u_{1:t}]).
+        marginal_loglik
+        filtered_means: (T,K) array,
+            E[x_t | y_{1:t}, u_{1:t}].
+        filtered_precisions: (T,K,K) array,
+            inv(Cov[x_t | y_{1:t}, u_{1:t}]).
     """
+    marginal_loglik: Float[Array, ""] # Scalar
+    filtered_etas: Float[Array, "ntime state_dim"]
+    filtered_precisions: Float[Array, "ntime state_dim state_dim"]
 
-    marginal_loglik: chex.Scalar = None
-    filtered_etas: chex.Array = None
-    filtered_precisions: chex.Array = None
-    smoothed_etas: chex.Array = None
-    smoothed_precisions: chex.Array = None
+@chex.dataclass
+class PosteriorLGSSMInfoSmoothed(PosteriorLGSSMInfoFiltered):
+    """"Marginals of the Gaussian filtering and smoothed posterior in information form. 
+    """
+    smoothed_etas: Float[Array, "ntime state_dim"]
+    smoothed_precisions: Float[Array, "ntime state_dim state_dim"]
 
+def info_to_moment_form(etas, Lambdas):
+    """Convert information form parameters to moment form.
+
+    Args:
+        etas (N,D): precision weighted means.
+        Lambdas (N,D,D): precision matrices.
+
+    Returns:
+        means (N,D)
+        covs (N,D,D)
+    """
+    means = vmap(jnp.linalg.solve)(Lambdas, etas)
+    covs = jnp.linalg.inv(Lambdas)
+    return means, covs
 
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
@@ -141,7 +165,11 @@ def _info_condition_on(eta, Lambda, H, R_prec, D, u, d, obs):
     return eta_cond, Lambda_cond
 
 
-def lgssm_info_filter(params, emissions, inputs):
+def lgssm_info_filter(
+    params: ParamsLGSSMInfo,
+    emissions: Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None
+) -> PosteriorLGSSMInfoFiltered:
     """Run a Kalman filter to produce the filtered state estimates.
 
     Args:
@@ -155,14 +183,14 @@ def lgssm_info_filter(params, emissions, inputs):
             filtered_precisions
     """
     num_timesteps = len(emissions)
-
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
     def _filter_step(carry, t):
         ll, pred_eta, pred_prec = carry
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
+        F = _get_params(params.dynamics_weights, 2, t)
         Q_prec = _get_params(params.dynamics_precision, 2, t)
-        H = _get_params(params.emission_matrix, 2, t)
+        H = _get_params(params.emission_weights, 2, t)
         R_prec = _get_params(params.emission_precision, 2, t)
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
@@ -187,10 +215,14 @@ def lgssm_info_filter(params, emissions, inputs):
     initial_eta = params.initial_precision @ params.initial_mean
     carry = (0.0, initial_eta, params.initial_precision)
     (ll, _, _), (filtered_etas, filtered_precisions) = lax.scan(_filter_step, carry, jnp.arange(num_timesteps))
-    return LGSSMInfoPosterior(marginal_loglik=ll, filtered_etas=filtered_etas, filtered_precisions=filtered_precisions)
+    return PosteriorLGSSMInfoFiltered(marginal_loglik=ll, filtered_etas=filtered_etas, filtered_precisions=filtered_precisions)
 
 
-def lgssm_info_smoother(params, emissions, inputs=None):
+def lgssm_info_smoother(
+    params: ParamsLGSSMInfo,
+    emissions: Float[Array, "ntime emission_dim"],
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None
+) -> PosteriorLGSSMInfoSmoothed:
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. This
     is the information form of the Rauch-Tung-Striebel (RTS) smoother.
@@ -218,7 +250,7 @@ def lgssm_info_smoother(params, emissions, inputs=None):
         t, filtered_eta, filtered_prec = args
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_matrix, 2, t)
+        F = _get_params(params.dynamics_weights, 2, t)
         B = _get_params(params.dynamics_input_weights, 2, t)
         b = _get_params(params.dynamics_bias, 1, t)
         Q_prec = _get_params(params.dynamics_precision, 2, t)
@@ -246,10 +278,137 @@ def lgssm_info_smoother(params, emissions, inputs=None):
     # Reverse the arrays and return
     smoothed_etas = jnp.row_stack((smoothed_etas[::-1], filtered_etas[-1][None, ...]))
     smoothed_precisions = jnp.row_stack((smoothed_precisions[::-1], filtered_precisions[-1][None, ...]))
-    return LGSSMInfoPosterior(
+    return PosteriorLGSSMInfoSmoothed(
         marginal_loglik=ll,
         filtered_etas=filtered_etas,
         filtered_precisions=filtered_precisions,
         smoothed_etas=smoothed_etas,
         smoothed_precisions=smoothed_precisions,
     )
+
+
+def block_tridiag_mvn_log_normalizer(precision_diag_blocks, precision_lower_diag_blocks, linear_potential):
+    """
+    Compute the log normalizing constant for a multivariate normal distribution
+    with natural parameters :math:`J` and :math:`h` with density,
+    ..math:
+        \log p(x) = -1/2 x^\top J x + h^\top x - \log Z
+
+    where the log normalizer is
+    ..math:
+        \log Z = N/2 \log 2 \pi - \log |J| + 1/2 h^T J^{-1} h
+
+    and :math:`N` is the dimensionality.
+
+    Typically, computing the log normalizer is cubic in N, but if :math:`J` is
+    block tridiagonal, it can be computed in O(N) time. Specifically, suppose
+    J is TDxTD with blocks of size D on the diagonal and first off diagonal.
+    Since J is symmetric, we can represent the matrix by only its diagonal and
+    first lower diagonal blocks. This is exactly the type of precision matrix
+    we encounter with linear Gaussian dynamical systems. This code computes its
+    log normalizer using the so-called "information form Kalman filter."
+
+    Args:
+
+    precision_diag_blocks:          Shape (T, D, D) array of the diagonal blocks
+                                    of a shape (TD, TD) precision matrix.
+    precision_lower_diag_blocks:    Shape (T-1, D, D) array of the lower diagonal
+                                    blocks of a shape (TD, TD) precision matrix.
+    linear_potential:               Shape (T, D) array of linear potentials of a
+                                    TD dimensional multivariate normal distribution
+                                    in information form.
+
+    Returns:
+
+    log_normalizer:                 The scalar log normalizing constant.
+    (filtered_Js, filtered_hs):     The precision and linear potentials of the
+                                    Gaussian filtering distributions in information
+                                    form, with shape (T, D, D) and (T, D) respectively.
+    """
+    # Shorthand names
+    J_diag = precision_diag_blocks
+    J_lower_diag = precision_lower_diag_blocks
+    h = linear_potential
+
+    # extract dimensions
+    num_timesteps, dim = J_diag.shape[:2]
+
+    # Pad the L's with one extra set of zeros for the last predict step
+    J_lower_diag_pad = jnp.concatenate((J_lower_diag, jnp.zeros((1, dim, dim))), axis=0)
+
+    def marginalize(carry, t):
+        Jp, hp, lp = carry
+
+        # Condition
+        Jc = J_diag[t] + Jp
+        hc = h[t] + hp
+
+        # Predict
+        sqrt_Jc = jnp.linalg.cholesky(Jc)
+        trm1 = solve_triangular(sqrt_Jc, hc, lower=True)
+        trm2 = solve_triangular(sqrt_Jc, J_lower_diag_pad[t].T, lower=True)
+        log_Z = 0.5 * dim * jnp.log(2 * jnp.pi)
+        log_Z += -jnp.sum(jnp.log(jnp.diag(sqrt_Jc)))  # sum these terms only to get approx log|J|
+        log_Z += 0.5 * jnp.dot(trm1.T, trm1)
+        Jp = -jnp.dot(trm2.T, trm2)
+        hp = -jnp.dot(trm2.T, trm1)
+
+        # Alternative predict step:
+        # log_Z = 0.5 * dim * jnp.log(2 * jnp.pi)
+        # log_Z += -0.5 * jnp.linalg.slogdet(Jc)[1]
+        # log_Z += 0.5 * jnp.dot(hc, jnp.linalg.solve(Jc, hc))
+        # Jp = -jnp.dot(J_lower_diag_pad[t], jnp.linalg.solve(Jc, J_lower_diag_pad[t].T))
+        # hp = -jnp.dot(J_lower_diag_pad[t], jnp.linalg.solve(Jc, hc))
+
+        new_carry = Jp, hp, lp + log_Z
+        return new_carry, (Jc, hc)
+
+    # Initialize
+    Jp0 = jnp.zeros((dim, dim))
+    hp0 = jnp.zeros((dim,))
+    (_, _, log_Z), (filtered_Js, filtered_hs) = lax.scan(marginalize, (Jp0, hp0, 0), jnp.arange(num_timesteps))
+    return log_Z, (filtered_Js, filtered_hs)
+
+
+def block_tridiag_mvn_expectations(precision_diag_blocks, precision_lower_diag_blocks, linear_potential):
+    # Run message passing code to get the log normalizer, the filtering potentials,
+    # and the expected values of x. Technically, the natural parameters are -1/2 J
+    # so we need to do a little correction of the gradients to get the expectations.
+    f = value_and_grad(block_tridiag_mvn_log_normalizer, argnums=(0, 1, 2), has_aux=True)
+    (log_normalizer, _), grads = f(precision_diag_blocks, precision_lower_diag_blocks, linear_potential)
+
+    # Correct for the -1/2 J -> J implementation
+    ExxT = -2 * grads[0]
+    ExxnT = -grads[1]
+    Ex = grads[2]
+    return log_normalizer, Ex, ExxT, ExxnT
+
+
+def lds_to_block_tridiag(lds, data, inputs):
+    # Shorthand names for parameters
+    m0 = lds.initial_mean
+    Q0 = lds.initial_covariance
+    A = lds.dynamics_matrix
+    B = lds.dynamics_input_weights
+    Q = lds.dynamics_noise_covariance
+    C = lds.emissions_matrix
+    D = lds.emissions_input_weights
+    R = lds.emissions_noise_covariance
+    T = len(data)
+
+    # diagonal blocks of precision matrix
+    J_diag = jnp.array([jnp.dot(C(t).T, jnp.linalg.solve(R(t), C(t))) for t in range(T)])
+    J_diag = J_diag.at[0].add(jnp.linalg.inv(Q0))
+    J_diag = J_diag.at[:-1].add(jnp.array([jnp.dot(A(t).T, jnp.linalg.solve(Q(t), A(t))) for t in range(T - 1)]))
+    J_diag = J_diag.at[1:].add(jnp.array([jnp.linalg.inv(Q(t)) for t in range(0, T - 1)]))
+
+    # lower diagonal blocks of precision matrix
+    J_lower_diag = jnp.array([-jnp.linalg.solve(Q(t), A(t)) for t in range(T - 1)])
+
+    # linear potential
+    h = jnp.array([jnp.dot(data[t] - D(t) @ inputs[t], jnp.linalg.solve(R(t), C(t))) for t in range(T)])
+    h = h.at[0].add(jnp.linalg.solve(Q0, m0))
+    h = h.at[:-1].add(jnp.array([-jnp.dot(A(t).T, jnp.linalg.solve(Q(t), B(t) @ inputs[t])) for t in range(T - 1)]))
+    h = h.at[1:].add(jnp.array([jnp.linalg.solve(Q(t), B(t) @ inputs[t]) for t in range(T - 1)]))
+
+    return J_diag, J_lower_diag, h
