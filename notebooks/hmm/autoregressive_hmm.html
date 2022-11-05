@@ -89,7 +89,7 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Contents:
+  HMMs
  </span>
 </p>
 <ul class="current nav bd-sidenav">
@@ -113,6 +113,13 @@
    Autoregressive (AR) HMM Demo
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -133,6 +140,13 @@
    Parallel filtering and smoothing in an LG-SSM
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -146,6 +160,28 @@
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
    Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
   </a>
  </li>
 </ul>
@@ -460,15 +496,13 @@ title="Print to PDF"
 <h1>Autoregressive (AR) HMM Demo<a class="headerlink" href="#autoregressive-ar-hmm-demo" title="Permalink to this headline">#</a></h1>
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
 Let <span class="math notranslate nohighlight">\(x_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
-<p>The autoregressive hidden Markov model has the following likelihood,
-$$</p>
-<div class="amsmath math notranslate nohighlight" id="equation-85c63322-49a5-49c2-8ea0-8a3a89fdc224">
-<span class="eqno">(1)<a class="headerlink" href="#equation-85c63322-49a5-49c2-8ea0-8a3a89fdc224" title="Permalink to this equation">#</a></span>\[\begin{align}
+<p>The autoregressive hidden Markov model has the following likelihood,</p>
+<div class="amsmath math notranslate nohighlight" id="equation-5313ca56-8ea8-498a-9a3a-378757a5543c">
+<span class="eqno">(1)<a class="headerlink" href="#equation-5313ca56-8ea8-498a-9a3a-378757a5543c" title="Permalink to this equation">#</a></span>\[\begin{align}
 x_t \mid x_{t-1}, z_t &amp;\sim
 \mathcal{N}\left(A_{z_t} x_{t-1} + b_{z_t}, Q_{z_t} \right).
 \end{align}\]</div>
-<p>$$
-(Higher-order autoregressive processes are also implemented.)</p>
+<p>(Higher-order autoregressive processes are also implemented.)</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
@@ -477,14 +511,6 @@ x_t \mid x_{t-1}, z_t &amp;\sim
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
     <span class="kn">import</span> <span class="nn">dynamax</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>installing dynamax
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Note: you may need to restart the kernel to use updated packages.
 </pre></div>
 </div>
 </div>
@@ -503,9 +529,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -561,10 +585,10 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fb050abffd0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f25f88343d0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/938131efcdf5c39dcb65ac5a5cadfc9692bf4ea6f3c781efc8b518acdcfc8e02.png" src="../../_images/938131efcdf5c39dcb65ac5a5cadfc9692bf4ea6f3c781efc8b518acdcfc8e02.png" />
+<img alt="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" src="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -619,7 +643,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7dc0c061a6795a22a0c17027409b3fd0a078ddb7a5e3a962b23864cc5c5054c6.png" src="../../_images/7dc0c061a6795a22a0c17027409b3fd0a078ddb7a5e3a962b23864cc5c5054c6.png" />
+<img alt="../../_images/093232d9921357e3f303b32676f67df63f3ea143a198a547beba4916911137e5.png" src="../../_images/093232d9921357e3f303b32676f67df63f3ea143a198a547beba4916911137e5.png" />
 </div>
 </div>
 </section>
@@ -640,7 +664,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 <span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">time_bins</span><span class="p">)</span>
 
 <span class="c1"># Compute the lagged emissions (aka covariates)</span>
-<span class="n">covariates</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">compute_covariates</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+<span class="n">covariates</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">compute_inputs</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -663,7 +687,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;$x_2$&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/2fbe8051016c4b174122942ddbfe4e2d8c83fac6da2d6557b070ef9f428b3f98.png" src="../../_images/2fbe8051016c4b174122942ddbfe4e2d8c83fac6da2d6557b070ef9f428b3f98.png" />
+<img alt="../../_images/37c3912479a00ce564fd136232909055219fb3556de9a33090b5f25e0721d221.png" src="../../_images/37c3912479a00ce564fd136232909055219fb3556de9a33090b5f25e0721d221.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the the corresponding AR state while the solid lines are the actual observations sampled from the HMM.</p>
@@ -695,7 +719,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e4cd77e7dfb7250ae2d66c6357f381b3df6b09c4f0fefc332435d595d79e3b07.png" src="../../_images/e4cd77e7dfb7250ae2d66c6357f381b3df6b09c4f0fefc332435d595d79e3b07.png" />
+<img alt="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" src="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" />
 </div>
 </div>
 </section>
@@ -712,33 +736,39 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
 
 <span class="c1"># Fit with EM</span>
-<span class="n">fitted_params</span><span class="p">,</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">covariates</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
+<span class="n">fitted_params</span><span class="p">,</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/50 [00:00&lt;?, ?it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  2%|▏         | 1/50 [00:01&lt;01:17,  1.59s/it]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 56%|█████▌    | 28/50 [00:01&lt;00:00, 22.75it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 50/50 [00:01&lt;00:00, 28.11it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
-</pre></div>
-</div>
-</div>
+<div class="output text_html">
+<style>
+    /* Turns off some styling */
+    progress {
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+    }
+    progress:not([value]), progress:not([value])::-webkit-progress-bar {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
+    }
+    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+        background: #F44336;
+    }
+</style>
+</div><div class="output text_html">
+    <div>
+      <progress value='50' class='' max='50' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      100.00% [50/50 00:01&lt;00:00]
+    </div>
+    </div></div>
 </div>
 <section id="plot-the-log-likelihoods-against-the-true-likelihood-for-comparison">
 <h3>Plot the log likelihoods against the true likelihood, for comparison<a class="headerlink" href="#plot-the-log-likelihoods-against-the-true-likelihood-for-comparison" title="Permalink to this headline">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">true_lp</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">covariates</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">true_lp</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lps</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;EM&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">true_lp</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lps</span><span class="p">)),</span> <span class="s1">&#39;:k&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;True&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;EM Iteration&quot;</span><span class="p">)</span>
@@ -749,7 +779,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/f859a5e78134e31911bf02afd54601d3bee50524643ec3d9a22b6d8b346f56f6.png" src="../../_images/f859a5e78134e31911bf02afd54601d3bee50524643ec3d9a22b6d8b346f56f6.png" />
+<img alt="../../_images/2f592368a7b862f145fdd11ec7cdbb22203e1bcc3a95ec642db508f9a6ac595d.png" src="../../_images/2f592368a7b862f145fdd11ec7cdbb22203e1bcc3a95ec642db508f9a6ac595d.png" />
 </div>
 </div>
 </section>
@@ -757,8 +787,8 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 <h3>Find the most likely states<a class="headerlink" href="#find-the-most-likely-states" title="Permalink to this headline">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">covariates</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
-<span class="n">most_likely_states</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">most_likely_states</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">covariates</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
+<span class="n">most_likely_states</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">most_likely_states</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -796,7 +826,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/5e3c38d9fcb4d00e9103de518429020ecc3611a42d5fe12cd66235de1acff45b.png" src="../../_images/5e3c38d9fcb4d00e9103de518429020ecc3611a42d5fe12cd66235de1acff45b.png" />
+<img alt="../../_images/5b2a74cf4b4706efe6715d24190b3c6689a9aeeab7c186d8acce43d7438c3203.png" src="../../_images/5b2a74cf4b4706efe6715d24190b3c6689a9aeeab7c186d8acce43d7438c3203.png" />
 </div>
 </div>
 </section>
@@ -824,7 +854,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/22125c67e9f6fc1219e7fcc12e388177b52cba0a62da99d2e62f5fb0ccb91661.png" src="../../_images/22125c67e9f6fc1219e7fcc12e388177b52cba0a62da99d2e62f5fb0ccb91661.png" />
+<img alt="../../_images/7dca8fb2757d46bac9a0d51edf906c4de53ab1de2db2dd9da070517fa74b39a8.png" src="../../_images/7dca8fb2757d46bac9a0d51edf906c4de53ab1de2db2dd9da070517fa74b39a8.png" />
 </div>
 </div>
 </section>
@@ -852,7 +882,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/224e4ce5920970975c92ee5ed104752be4921b18458ec4d800e9985cf6fc6e6a.png" src="../../_images/224e4ce5920970975c92ee5ed104752be4921b18458ec4d800e9985cf6fc6e6a.png" />
+<img alt="../../_images/cf655c390dbbee9e93046b0fddc4e45afcfed5b19a7c54a9afa4ca7699050eb8.png" src="../../_images/cf655c390dbbee9e93046b0fddc4e45afcfed5b19a7c54a9afa4ca7699050eb8.png" />
 </div>
 </div>
 </section>

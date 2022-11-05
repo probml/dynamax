@@ -34,7 +34,7 @@
     <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Online learning for an MLP using extended Kalman filtering" href="notebooks/nonlinear_gaussian_ssm/ekf_mlp.html" />
+    <link rel="prev" title="Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter" href="notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -86,7 +86,7 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Contents:
+  HMMs
  </span>
 </p>
 <ul class="nav bd-sidenav">
@@ -110,6 +110,13 @@
    Autoregressive (AR) HMM Demo
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -130,6 +137,13 @@
    Parallel filtering and smoothing in an LG-SSM
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -143,6 +157,28 @@
  <li class="toctree-l1">
   <a class="reference internal" href="notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">
    Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
   </a>
  </li>
 </ul>
@@ -352,16 +388,9 @@ model. This base class allows parameters to be indicated a standardized way
 so that they can easily be converted to/from unconstrained form. It also uses
 these parameters to implement the tree_flatten and tree_unflatten methods necessary
 to register a model as a JAX PyTree.</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="dynamax.abstractions.SSM.covariates_shape">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">covariates_shape</span></span><a class="headerlink" href="#dynamax.abstractions.SSM.covariates_shape" title="Permalink to this definition">#</a></dt>
-<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
-of a single time step’s covariates.</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.emission_distribution">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.emission_distribution" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.emission_distribution" title="Permalink to this definition">#</a></dt>
 <dd><p>Return a distribution over emissions given current state.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>state (PyTree): current latent state.</p>
@@ -381,19 +410,19 @@ For example, a Gaussian HMM with D dimensional emissions would return (D,).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_em">
-<span class="sig-name descname"><span class="pre">fit_em</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_props</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_em" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">fit_em</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">props</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_em" title="Permalink to this definition">#</a></dt>
 <dd><p>Fit this HMM with Expectation-Maximization (EM).</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_hmc">
-<span class="sig-name descname"><span class="pre">fit_hmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_props</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_hmc" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">fit_hmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_props</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_hmc" title="Permalink to this definition">#</a></dt>
 <dd><p>Sample parameters of the model using HMC.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_sgd">
-<span class="sig-name descname"><span class="pre">fit_sgd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">curr_params,</span> <span class="pre">param_props,</span> <span class="pre">emissions,</span> <span class="pre">covariates=None,</span> <span class="pre">optimizer=GradientTransformation(init=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.init_fn&gt;,</span> <span class="pre">update=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.update_fn&gt;),</span> <span class="pre">batch_size=1,</span> <span class="pre">num_epochs=50,</span> <span class="pre">shuffle=False,</span> <span class="pre">key=DeviceArray([0,</span> <span class="pre">0],</span> <span class="pre">dtype=uint32)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_sgd" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">fit_sgd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">curr_params,</span> <span class="pre">param_props,</span> <span class="pre">emissions,</span> <span class="pre">inputs=None,</span> <span class="pre">optimizer=GradientTransformation(init=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.init_fn&gt;,</span> <span class="pre">update=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.update_fn&gt;),</span> <span class="pre">batch_size=1,</span> <span class="pre">num_epochs=50,</span> <span class="pre">shuffle=False,</span> <span class="pre">key=DeviceArray([0,</span> <span class="pre">0],</span> <span class="pre">dtype=uint32)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_sgd" title="Permalink to this definition">#</a></dt>
 <dd><p>Fit this HMM by running SGD on the marginal log likelihood.
 Note that batch_emissions is initially of shape (N,T)
 where N is the number of independent sequences and
@@ -415,12 +444,19 @@ key (chex.PRNGKey): RNG key to shuffle minibatches.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.initial_distribution">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">initial_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.initial_distribution" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">initial_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.initial_distribution" title="Permalink to this definition">#</a></dt>
 <dd><p>Return an initial distribution over latent states.</p>
 <dl class="simple">
 <dt>Returns:</dt><dd><p>dist (tfd.Distribution): distribution over initial latent state.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.inputs_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inputs_shape</span></span><a class="headerlink" href="#dynamax.abstractions.SSM.inputs_shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s inputs.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -435,13 +471,13 @@ key (chex.PRNGKey): RNG key to shuffle minibatches.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.log_prob">
-<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.log_prob" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.log_prob" title="Permalink to this definition">#</a></dt>
 <dd><p>Compute the log joint probability of the states and observations</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.sample">
-<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_timesteps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.sample" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_timesteps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.sample" title="Permalink to this definition">#</a></dt>
 <dd><p>Sample a sequence of latent states and emissions.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>key: rng key
@@ -452,7 +488,7 @@ num_timesteps: length of sequence to generate</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.transition_distribution">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.transition_distribution" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.transition_distribution" title="Permalink to this definition">#</a></dt>
 <dd><p>Return a distribution over next latent state given current state.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>state (PyTree): current latent state</p>
@@ -475,11 +511,11 @@ num_timesteps: length of sequence to generate</p>
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="notebooks/nonlinear_gaussian_ssm/ekf_mlp.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Online learning for an MLP using extended Kalman filtering</p>
+            <p class="prev-next-title">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</p>
         </div>
     </a>
 </div>

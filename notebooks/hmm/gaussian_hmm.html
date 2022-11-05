@@ -89,7 +89,7 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Contents:
+  HMMs
  </span>
 </p>
 <ul class="current nav bd-sidenav">
@@ -113,6 +113,13 @@
    Autoregressive (AR) HMM Demo
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -133,6 +140,13 @@
    Parallel filtering and smoothing in an LG-SSM
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -146,6 +160,28 @@
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
    Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
   </a>
  </li>
 </ul>
@@ -421,8 +457,8 @@ title="Print to PDF"
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm">
 <h1>Gaussian HMM<a class="headerlink" href="#gaussian-hmm" title="Permalink to this headline">#</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-d5e96371-34e5-4c64-a75f-687201f566c5">
-<span class="eqno">(1)<a class="headerlink" href="#equation-d5e96371-34e5-4c64-a75f-687201f566c5" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-9bc1e4fc-5fe4-4f86-a498-5a65d59553ab">
+<span class="eqno">(1)<a class="headerlink" href="#equation-9bc1e4fc-5fe4-4f86-a498-5a65d59553ab" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(x_t \mid z_t, \theta) &amp;= \mathcal{N}(x_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -431,7 +467,12 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <p>This notebook shows how to fit such models using standard (“full batch”) expectation-maximization (EM), as well as with stochastic (“mini batch”) EM. For datasets with many conditionally independent emission sequences, stochastic EM often converges much more quickly. It’s a useful trick to have in your toolkit!</p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h2>
-<div class="cell docutils container">
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
@@ -442,6 +483,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </pre></div>
 </div>
 </div>
+</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -456,9 +498,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -576,8 +616,8 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/bbb2e2b7023a9155bc1c76ef9f2d921683556e8f210d2c183ccc8bc905b5a0e4.png" src="../../_images/bbb2e2b7023a9155bc1c76ef9f2d921683556e8f210d2c183ccc8bc905b5a0e4.png" />
-<img alt="../../_images/ded17fa1a7b807db9694e0706edef1999c83b72703e987195b71496b6f3e4138.png" src="../../_images/ded17fa1a7b807db9694e0706edef1999c83b72703e987195b71496b6f3e4138.png" />
+<img alt="../../_images/9a8c7d2e65e8a39d5139fcda013e2602a90202b018566f723217e121e7775f91.png" src="../../_images/9a8c7d2e65e8a39d5139fcda013e2602a90202b018566f723217e121e7775f91.png" />
+<img alt="../../_images/0eb88219fd80c5d80ab84c151a72eab85ac2eb7a2f571f60820a8a25aafb2100.png" src="../../_images/0eb88219fd80c5d80ab84c151a72eab85ac2eb7a2f571f60820a8a25aafb2100.png" />
 </div>
 </div>
 </section>
@@ -599,265 +639,38 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Fitting via standard (full batch) EM...
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/50 [00:00&lt;?, ?it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  2%|▏         | 1/50 [00:02&lt;02:23,  2.92s/it]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  6%|▌         | 3/50 [00:03&lt;00:37,  1.24it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 10%|█         | 5/50 [00:03&lt;00:19,  2.36it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 14%|█▍        | 7/50 [00:03&lt;00:11,  3.69it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 18%|█▊        | 9/50 [00:03&lt;00:07,  5.18it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 22%|██▏       | 11/50 [00:03&lt;00:05,  6.73it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 26%|██▌       | 13/50 [00:03&lt;00:04,  8.33it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 30%|███       | 15/50 [00:03&lt;00:03,  9.89it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 34%|███▍      | 17/50 [00:03&lt;00:02, 11.12it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 38%|███▊      | 19/50 [00:04&lt;00:02, 12.36it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 42%|████▏     | 21/50 [00:04&lt;00:02, 13.32it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 46%|████▌     | 23/50 [00:04&lt;00:01, 14.18it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 50%|█████     | 25/50 [00:04&lt;00:01, 14.92it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 54%|█████▍    | 27/50 [00:04&lt;00:01, 15.54it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 58%|█████▊    | 29/50 [00:04&lt;00:01, 16.12it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 62%|██████▏   | 31/50 [00:04&lt;00:01, 16.47it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 66%|██████▌   | 33/50 [00:04&lt;00:01, 16.50it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 70%|███████   | 35/50 [00:05&lt;00:00, 16.46it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 74%|███████▍  | 37/50 [00:05&lt;00:00, 16.51it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 78%|███████▊  | 39/50 [00:05&lt;00:00, 16.43it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 82%|████████▏ | 41/50 [00:05&lt;00:00, 16.51it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 86%|████████▌ | 43/50 [00:05&lt;00:00, 16.66it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 90%|█████████ | 45/50 [00:05&lt;00:00, 16.47it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 94%|█████████▍| 47/50 [00:05&lt;00:00, 16.36it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 98%|█████████▊| 49/50 [00:05&lt;00:00, 16.33it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 50/50 [00:05&lt;00:00,  8.44it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
-</pre></div>
-</div>
-</div>
+<div class="output text_html">
+<style>
+    /* Turns off some styling */
+    progress {
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+    }
+    progress:not([value]), progress:not([value])::-webkit-progress-bar {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
+    }
+    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+        background: #F44336;
+    }
+</style>
+</div><div class="output text_html">
+    <div>
+      <progress value='50' class='' max='50' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      100.00% [50/50 00:04&lt;00:00]
+    </div>
+    </div></div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Fitting via stochastic (mini-batch) EM...&#39;</span><span class="p">)</span>
-<span class="n">num_iters</span> <span class="o">=</span> <span class="mi">50</span>
-<span class="n">minibatch_size</span> <span class="o">=</span> <span class="mi">3</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># print(&#39;Fitting via stochastic (mini-batch) EM...&#39;)</span>
+<span class="c1"># num_iters = 50</span>
+<span class="c1"># minibatch_size = 3</span>
 
-<span class="n">sem_params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">test_hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">batch_emissions</span><span class="p">)</span>
-<span class="n">emissions_generator</span> <span class="o">=</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_batches</span> <span class="o">//</span> <span class="n">minibatch_size</span><span class="p">,</span> <span class="n">minibatch_size</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
-<span class="n">sem_params</span><span class="p">,</span> <span class="n">sem_lps</span> <span class="o">=</span> <span class="n">test_hmm</span><span class="o">.</span><span class="n">fit_stochastic_em</span><span class="p">(</span><span class="n">sem_params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions_generator</span><span class="p">,</span> <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_iters</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Fitting via stochastic (mini-batch) EM...
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/50 [00:00&lt;?, ?it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  2%|▏         | 1/50 [00:03&lt;02:34,  3.15s/it]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  4%|▍         | 2/50 [00:03&lt;01:06,  1.38s/it]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  6%|▌         | 3/50 [00:03&lt;00:37,  1.24it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  8%|▊         | 4/50 [00:03&lt;00:24,  1.84it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 10%|█         | 5/50 [00:03&lt;00:17,  2.53it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 12%|█▏        | 6/50 [00:03&lt;00:13,  3.25it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 14%|█▍        | 7/50 [00:03&lt;00:10,  3.93it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 16%|█▌        | 8/50 [00:04&lt;00:09,  4.51it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 18%|█▊        | 9/50 [00:04&lt;00:08,  5.05it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 20%|██        | 10/50 [00:04&lt;00:07,  5.54it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 22%|██▏       | 11/50 [00:04&lt;00:06,  5.94it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 24%|██▍       | 12/50 [00:04&lt;00:06,  6.25it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 26%|██▌       | 13/50 [00:04&lt;00:05,  6.45it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 28%|██▊       | 14/50 [00:04&lt;00:05,  6.63it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 30%|███       | 15/50 [00:05&lt;00:05,  6.71it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 32%|███▏      | 16/50 [00:05&lt;00:04,  6.87it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 34%|███▍      | 17/50 [00:05&lt;00:04,  6.99it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 36%|███▌      | 18/50 [00:05&lt;00:04,  6.93it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 38%|███▊      | 19/50 [00:05&lt;00:04,  6.98it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 40%|████      | 20/50 [00:05&lt;00:04,  6.87it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 42%|████▏     | 21/50 [00:05&lt;00:04,  6.91it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 44%|████▍     | 22/50 [00:06&lt;00:04,  6.90it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 46%|████▌     | 23/50 [00:06&lt;00:03,  6.83it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 48%|████▊     | 24/50 [00:06&lt;00:03,  6.81it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 50%|█████     | 25/50 [00:06&lt;00:03,  6.85it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 52%|█████▏    | 26/50 [00:06&lt;00:03,  6.79it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 54%|█████▍    | 27/50 [00:06&lt;00:03,  6.84it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 56%|█████▌    | 28/50 [00:06&lt;00:03,  6.92it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 58%|█████▊    | 29/50 [00:07&lt;00:02,  7.00it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 60%|██████    | 30/50 [00:07&lt;00:02,  7.01it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 62%|██████▏   | 31/50 [00:07&lt;00:02,  6.86it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 64%|██████▍   | 32/50 [00:07&lt;00:02,  6.85it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 66%|██████▌   | 33/50 [00:07&lt;00:02,  6.91it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 68%|██████▊   | 34/50 [00:07&lt;00:02,  6.93it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 70%|███████   | 35/50 [00:08&lt;00:02,  6.96it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 72%|███████▏  | 36/50 [00:08&lt;00:02,  6.94it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 74%|███████▍  | 37/50 [00:08&lt;00:01,  6.96it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 76%|███████▌  | 38/50 [00:08&lt;00:01,  7.07it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 78%|███████▊  | 39/50 [00:08&lt;00:01,  7.12it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 80%|████████  | 40/50 [00:08&lt;00:01,  7.26it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 82%|████████▏ | 41/50 [00:08&lt;00:01,  7.33it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 84%|████████▍ | 42/50 [00:08&lt;00:01,  7.34it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 86%|████████▌ | 43/50 [00:09&lt;00:00,  7.32it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 88%|████████▊ | 44/50 [00:09&lt;00:00,  7.10it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 90%|█████████ | 45/50 [00:09&lt;00:00,  7.05it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 92%|█████████▏| 46/50 [00:09&lt;00:00,  7.12it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 94%|█████████▍| 47/50 [00:09&lt;00:00,  7.10it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 96%|█████████▌| 48/50 [00:09&lt;00:00,  7.10it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> 98%|█████████▊| 49/50 [00:09&lt;00:00,  7.07it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 50/50 [00:10&lt;00:00,  7.08it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 50/50 [00:10&lt;00:00,  4.95it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
+<span class="c1"># sem_params, props = test_hmm.initialize(key=jr.PRNGKey(1), method=&quot;kmeans&quot;, emissions=batch_emissions)</span>
+<span class="c1"># emissions_generator = batch_emissions.reshape(num_batches // minibatch_size, minibatch_size, num_timesteps, emission_dim)</span>
+<span class="c1"># sem_params, sem_lps = test_hmm.fit_stochastic_em(sem_params, props, emissions_generator, num_epochs=num_iters)</span>
 </pre></div>
 </div>
 </div>
@@ -867,7 +680,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot log probs vs num_iterations</span>
 <span class="n">offset</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">em_lps</span><span class="p">)</span><span class="o">-</span><span class="n">offset</span><span class="p">),</span> <span class="n">em_lps</span><span class="p">[</span><span class="n">offset</span><span class="p">:],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Exact EM&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sem_lps</span><span class="p">)</span><span class="o">-</span><span class="n">offset</span><span class="p">),</span> <span class="n">sem_lps</span><span class="p">[</span><span class="n">offset</span><span class="p">:],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Stochastic EM&#39;</span><span class="p">)</span>
+<span class="c1"># plt.plot(jnp.arange(len(sem_lps)-offset), sem_lps[offset:], label=&#39;Stochastic EM&#39;)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;num epochs&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;log prob&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
@@ -875,10 +688,10 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7ffb9806cc70&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f66afc47af0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/b6badbc55982dd64d87cb9b5a573a35d76d806d9d9d92589b775cc440a102ec6.png" src="../../_images/b6badbc55982dd64d87cb9b5a573a35d76d806d9d9d92589b775cc440a102ec6.png" />
+<img alt="../../_images/9df6198a8468a88b4a4263a81107b97403184504dc131a0b5478cda89e57ec55.png" src="../../_images/9df6198a8468a88b4a4263a81107b97403184504dc131a0b5478cda89e57ec55.png" />
 </div>
 </div>
 </section>
@@ -894,21 +707,17 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/efb46d7a3b05e4e552b156696fb2630e00e9610032371b2cf4371a06d2653a54.png" src="../../_images/efb46d7a3b05e4e552b156696fb2630e00e9610032371b2cf4371a06d2653a54.png" />
-<img alt="../../_images/ba7ee15ca2fd05928f96946fe8b782e47c0376a73557a9ada66dcd446a4a7679.png" src="../../_images/ba7ee15ca2fd05928f96946fe8b782e47c0376a73557a9ada66dcd446a4a7679.png" />
+<img alt="../../_images/ec3064d2b3257f27a3ab8a79d123f2efa7f30c3579f5e71d8fc9d59c3c65ca7c.png" src="../../_images/ec3064d2b3257f27a3ab8a79d123f2efa7f30c3579f5e71d8fc9d59c3c65ca7c.png" />
+<img alt="../../_images/db5bbe5701ab73aa6bf5692290e153b5156f7a54e3512a036025368d25cb92d2.png" src="../../_images/db5bbe5701ab73aa6bf5692290e153b5156f7a54e3512a036025368d25cb92d2.png" />
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sem_most_likely_states</span> <span class="o">=</span> <span class="n">test_hmm</span><span class="o">.</span><span class="n">most_likely_states</span><span class="p">(</span><span class="n">sem_params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="n">i_batch</span><span class="p">])</span>
-<span class="n">plot_gaussian_hmm</span><span class="p">(</span><span class="n">test_hmm</span><span class="p">,</span> <span class="n">sem_params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">sem_most_likely_states</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;HMM Stoch Fit&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-<span class="n">plot_gaussian_hmm_data</span><span class="p">(</span><span class="n">test_hmm</span><span class="p">,</span> <span class="n">sem_params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">sem_most_likely_states</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># sem_most_likely_states = test_hmm.most_likely_states(sem_params, batch_emissions[i_batch])</span>
+<span class="c1"># plot_gaussian_hmm(test_hmm, sem_params, batch_emissions[i_batch], sem_most_likely_states, title=&quot;HMM Stoch Fit&quot;, alpha=0.1)</span>
+<span class="c1"># plot_gaussian_hmm_data(test_hmm, sem_params, batch_emissions[i_batch], sem_most_likely_states, xlim=(0, 100))</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../../_images/aebae8c4e65380ec6de665db06d338ee524d2e392cc7654a82ffdf675bf9990a.png" src="../../_images/aebae8c4e65380ec6de665db06d338ee524d2e392cc7654a82ffdf675bf9990a.png" />
-<img alt="../../_images/f4be0a56350ec9819d23ce26402dc96569c94b7eaf96deaf522c53e23dfa5dc2.png" src="../../_images/f4be0a56350ec9819d23ce26402dc96569c94b7eaf96deaf522c53e23dfa5dc2.png" />
 </div>
 </div>
 </section>

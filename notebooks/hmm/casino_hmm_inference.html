@@ -87,7 +87,7 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Contents:
+  HMMs
  </span>
 </p>
 <ul class="current nav bd-sidenav">
@@ -111,6 +111,13 @@
    Autoregressive (AR) HMM Demo
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -131,6 +138,13 @@
    Parallel filtering and smoothing in an LG-SSM
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -144,6 +158,28 @@
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
    Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
   </a>
  </li>
 </ul>
@@ -469,9 +505,7 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -698,7 +732,7 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9e8edf0d7566601640517c51fc217d182108bd5dcfeddf579f9be4212c29f9c6.png" src="../../_images/9e8edf0d7566601640517c51fc217d182108bd5dcfeddf579f9be4212c29f9c6.png" />
+<img alt="../../_images/bcaede48ce44beb68ab573213bd0ad9786311bd442630d0fd186815a1e10435b.png" src="../../_images/bcaede48ce44beb68ab573213bd0ad9786311bd442630d0fd186815a1e10435b.png" />
 </div>
 </div>
 </section>
@@ -730,7 +764,7 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/f50f202d56a8a90b6d15ba0c82b62763b64836228d256f6837432c8fbad68b83.png" src="../../_images/f50f202d56a8a90b6d15ba0c82b62763b64836228d256f6837432c8fbad68b83.png" />
+<img alt="../../_images/637f7ffb2219ebe81d944310e215ae856f5eea9e49ba820e29757f3ea5d8ad28.png" src="../../_images/637f7ffb2219ebe81d944310e215ae856f5eea9e49ba820e29757f3ea5d8ad28.png" />
 </div>
 </div>
 </section>
@@ -754,7 +788,7 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/854d5cf8c09f068fb061bf6b3c9e0a4443ba3aabf17b02638ce1b256e02f9846.png" src="../../_images/854d5cf8c09f068fb061bf6b3c9e0a4443ba3aabf17b02638ce1b256e02f9846.png" />
+<img alt="../../_images/472091791ebf6671f4d4227c8c760098505b0f58f31f070458e74787a713e511.png" src="../../_images/472091791ebf6671f4d4227c8c760098505b0f58f31f070458e74787a713e511.png" />
 </div>
 </div>
 </section>

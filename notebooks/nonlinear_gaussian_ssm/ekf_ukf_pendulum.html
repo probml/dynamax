@@ -89,10 +89,10 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Contents:
+  HMMs
  </span>
 </p>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../hmm/casino_hmm_inference.html">
    Casino HMM: Inference (state estimation)
@@ -113,6 +113,13 @@
    Autoregressive (AR) HMM Demo
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -133,6 +140,13 @@
    Parallel filtering and smoothing in an LG-SSM
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -146,6 +160,28 @@
  <li class="toctree-l1">
   <a class="reference internal" href="ekf_mlp.html">
    Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
   </a>
  </li>
 </ul>
@@ -492,16 +528,12 @@ r_t &amp;\sim N(0,R)
 
 <span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.extended_kalman_filter</span> <span class="kn">import</span> <span class="n">extended_kalman_filter</span><span class="p">,</span> <span class="n">extended_kalman_smoother</span>
 <span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter</span> <span class="kn">import</span> <span class="n">unscented_kalman_filter</span><span class="p">,</span> <span class="n">unscented_kalman_smoother</span><span class="p">,</span> <span class="n">UKFHyperParams</span>
-<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">NLGSSMParams</span>
+<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">ParamsNLGSSM</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -598,7 +630,7 @@ r_t &amp;\sim N(0,R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/3180d875230582cea711934ece09a4630870a64700194cfa7d84745b5765c0ba.png" src="../../_images/3180d875230582cea711934ece09a4630870a64700194cfa7d84745b5765c0ba.png" />
+<img alt="../../_images/f1c374bf347e06aa7419488bd9db5ab826b095c3079b780537b12e59b57a5c9f.png" src="../../_images/f1c374bf347e06aa7419488bd9db5ab826b095c3079b780537b12e59b57a5c9f.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -626,7 +658,7 @@ r_t &amp;\sim N(0,R)
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pendulum_params</span> <span class="o">=</span> <span class="n">PendulumParams</span><span class="p">()</span>
 
 <span class="c1"># Define parameters for EKF</span>
-<span class="n">ekf_params</span> <span class="o">=</span> <span class="n">NLGSSMParams</span><span class="p">(</span>
+<span class="n">ekf_params</span> <span class="o">=</span> <span class="n">ParamsNLGSSM</span><span class="p">(</span>
     <span class="n">initial_mean</span><span class="o">=</span><span class="n">pendulum_params</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span>
     <span class="n">initial_covariance</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">,</span>
     <span class="n">dynamics_function</span><span class="o">=</span><span class="n">pendulum_params</span><span class="o">.</span><span class="n">dynamics_function</span><span class="p">,</span>
@@ -649,7 +681,7 @@ r_t &amp;\sim N(0,R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/465a98c617e51ea1fd4a44007f0ab54d5048dfd9227a0cc74ea5bdaf174124c2.png" src="../../_images/465a98c617e51ea1fd4a44007f0ab54d5048dfd9227a0cc74ea5bdaf174124c2.png" />
+<img alt="../../_images/eaef2e10f55ccf4c29c15ccc15b0023ddee201364b777e22de141a5ea764e25a.png" src="../../_images/eaef2e10f55ccf4c29c15ccc15b0023ddee201364b777e22de141a5ea764e25a.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the EKF estimate is         : 0.14
 The std of measurement noise is         : 0.55
 </pre></div>
@@ -665,7 +697,7 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/b4ebb1164b8c9a8b18bffa2fcc4eb8d64bffe0dcc65d33dfd4a47bc149e1c08d.png" src="../../_images/b4ebb1164b8c9a8b18bffa2fcc4eb8d64bffe0dcc65d33dfd4a47bc149e1c08d.png" />
+<img alt="../../_images/4303187fa9b027613f46ff8217bff2ba9da801a4dfc157eebddb9adb8b2415e4.png" src="../../_images/4303187fa9b027613f46ff8217bff2ba9da801a4dfc157eebddb9adb8b2415e4.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the EKS estimate is         : 0.09
 The std of measurement noise is         : 0.55
 </pre></div>
@@ -679,7 +711,7 @@ The std of measurement noise is         : 0.55
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pendulum_params</span> <span class="o">=</span> <span class="n">PendulumParams</span><span class="p">()</span>
 
-<span class="n">ukf_params</span> <span class="o">=</span> <span class="n">NLGSSMParams</span><span class="p">(</span>
+<span class="n">ukf_params</span> <span class="o">=</span> <span class="n">ParamsNLGSSM</span><span class="p">(</span>
     <span class="n">initial_mean</span><span class="o">=</span><span class="n">pendulum_params</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span>
     <span class="n">initial_covariance</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">,</span>
     <span class="n">dynamics_function</span><span class="o">=</span><span class="n">pendulum_params</span><span class="o">.</span><span class="n">dynamics_function</span><span class="p">,</span>
@@ -705,7 +737,7 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/2dede69f846148c84d5e90cdc550c1e67ab5cb85dbb384c703771728684247cf.png" src="../../_images/2dede69f846148c84d5e90cdc550c1e67ab5cb85dbb384c703771728684247cf.png" />
+<img alt="../../_images/e5c2275d8698d1af739e5fa30ba6e40770f85bf2415743b5a17c693a30c542c2.png" src="../../_images/e5c2275d8698d1af739e5fa30ba6e40770f85bf2415743b5a17c693a30c542c2.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKF estimate is         : 0.14
 The std of measurement noise is         : 0.55
 </pre></div>
@@ -721,7 +753,7 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/727518f801de675621018694ade93372fccec28b504087958cd8d39e32007727.png" src="../../_images/727518f801de675621018694ade93372fccec28b504087958cd8d39e32007727.png" />
+<img alt="../../_images/4dae15eb77a6159f6429ecb001fecae1c765037aa9267350ec6b944ae5b25ce4.png" src="../../_images/4dae15eb77a6159f6429ecb001fecae1c765037aa9267350ec6b944ae5b25ce4.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKS estimate is         : 0.09
 The std of measurement noise is         : 0.55
 </pre></div>
@@ -743,7 +775,7 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c464865e037ad301d7df059cbe75bdb029345c5c060186cab39659b6947f7ddf.png" src="../../_images/c464865e037ad301d7df059cbe75bdb029345c5c060186cab39659b6947f7ddf.png" />
+<img alt="../../_images/894bcd88a98261b88cab18eb1ec5ff9defd8125293eb6cff7ecd005226eace8d.png" src="../../_images/894bcd88a98261b88cab18eb1ec5ff9defd8125293eb6cff7ecd005226eace8d.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKF estimate is         : 1.07
 The std of measurement noise is         : 0.55
 </pre></div>

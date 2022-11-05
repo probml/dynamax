@@ -87,10 +87,10 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Contents:
+  HMMs
  </span>
 </p>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../hmm/casino_hmm_inference.html">
    Casino HMM: Inference (state estimation)
@@ -111,6 +111,13 @@
    Autoregressive (AR) HMM Demo
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -131,6 +138,13 @@
    Parallel filtering and smoothing in an LG-SSM
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -144,6 +158,28 @@
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
    Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
   </a>
  </li>
 </ul>
@@ -435,9 +471,33 @@ we have a GPU device.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">LGSSMParams</span><span class="p">,</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_sample</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">lgssm_smoother</span>
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.parallel_inference</span> <span class="kn">import</span>  <span class="n">lgssm_filter</span> <span class="k">as</span> <span class="n">parallel_lgssm_filter</span>
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.parallel_inference</span> <span class="kn">import</span>  <span class="n">lgssm_smoother</span> <span class="k">as</span> <span class="n">parallel_lgssm_smoother</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">ParamsLGSSMMoment</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span><span class="p">,</span> <span class="n">ParamsLGSSM</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ImportError</span><span class="g g-Whitespace">                               </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">5</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.parallel_inference</span> <span class="kn">import</span>  <span class="n">lgssm_smoother</span> <span class="k">as</span> <span class="n">parallel_lgssm_smoother</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">ParamsLGSSMMoment</span>
+<span class="ne">----&gt; </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span><span class="p">,</span> <span class="n">ParamsLGSSM</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">linear_gaussian_ssm</span><span class="o">/</span><span class="n">linear_gaussian_ssm</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">32</span>
+<span class="g g-Whitespace">     </span><span class="mi">28</span> <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="g g-Whitespace">     </span><span class="mi">31</span> <span class="kn">from</span> <span class="nn">dynamax.abstractions</span> <span class="kn">import</span> <span class="n">SSM</span>
+<span class="ne">---&gt; </span><span class="mi">32</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_posterior_sample</span><span class="p">,</span> <span class="n">LGSSMParams</span>
+<span class="g g-Whitespace">     </span><span class="mi">33</span> <span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterProperties</span>
+<span class="g g-Whitespace">     </span><span class="mi">34</span> <span class="kn">from</span> <span class="nn">dynamax.utils</span> <span class="kn">import</span> <span class="n">PSDToRealBijector</span>
+
+<span class="ne">ImportError</span>: cannot import name &#39;LGSSMParams&#39; from &#39;dynamax.linear_gaussian_ssm.inference&#39; (/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/linear_gaussian_ssm/inference.py)
 </pre></div>
 </div>
 </div>
@@ -469,9 +529,6 @@ we have a GPU device.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[CpuDevice(id=0)]
 cpu
 </pre></div>
@@ -503,18 +560,23 @@ cpu
 <span class="n">observation_dim</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="n">input_dim</span> <span class="o">=</span> <span class="mi">1</span>
 
-<span class="n">lgssm_params</span> <span class="o">=</span> <span class="n">LGSSMParams</span><span class="p">(</span>
+<span class="n">lgssm</span> <span class="o">=</span> <span class="n">LinearGaussianSSM</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">,</span> <span class="n">observation_dim</span><span class="p">)</span>
+<span class="n">model_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                            <span class="n">initial_mean</span><span class="o">=</span><span class="n">μ0</span><span class="p">,</span>
+                            <span class="n">initial_covariance</span><span class="o">=</span> <span class="n">Σ0</span><span class="p">,</span>
+                            <span class="n">dynamics_weights</span><span class="o">=</span><span class="n">F</span><span class="p">,</span>
+                            <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span>
+                            <span class="n">emission_weights</span><span class="o">=</span><span class="n">H</span><span class="p">,</span>
+                            <span class="n">emission_covariance</span><span class="o">=</span><span class="n">R</span><span class="p">)</span>
+
+
+<span class="n">inf_params</span> <span class="o">=</span> <span class="n">ParamsLGSSMMoment</span><span class="p">(</span>
     <span class="n">initial_mean</span> <span class="o">=</span> <span class="n">μ0</span><span class="p">,</span>
     <span class="n">initial_covariance</span> <span class="o">=</span> <span class="n">Σ0</span><span class="p">,</span>
-    <span class="n">dynamics_matrix</span> <span class="o">=</span> <span class="n">F</span><span class="p">,</span>
-    <span class="n">dynamics_input_weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">latent_dim</span><span class="p">,</span><span class="n">input_dim</span><span class="p">)),</span>
-    <span class="n">dynamics_bias</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">),</span>
+    <span class="n">dynamics_weights</span> <span class="o">=</span> <span class="n">F</span><span class="p">,</span>
     <span class="n">dynamics_covariance</span> <span class="o">=</span> <span class="n">Q</span><span class="p">,</span>
-    <span class="n">emission_matrix</span> <span class="o">=</span> <span class="n">H</span><span class="p">,</span>
-    <span class="n">emission_input_weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">observation_dim</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">)),</span>
-    <span class="n">emission_bias</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">observation_dim</span><span class="p">),</span>
-    <span class="n">emission_covariance</span> <span class="o">=</span> <span class="n">R</span>
-<span class="p">)</span>
+    <span class="n">emission_weights</span> <span class="o">=</span> <span class="n">H</span><span class="p">,</span>
+    <span class="n">emission_covariance</span> <span class="o">=</span> <span class="n">R</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -529,9 +591,9 @@ cpu
 <span class="n">inputs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_timesteps</span><span class="p">,</span><span class="n">input_dim</span><span class="p">))</span>
 
 <span class="n">key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">z</span><span class="p">,</span><span class="n">emissions</span> <span class="o">=</span> <span class="n">lgssm_sample</span><span class="p">(</span><span class="n">subkey</span><span class="p">,</span><span class="n">lgssm_params</span><span class="p">,</span><span class="n">num_timesteps</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
-<span class="n">ssm_posterior</span> <span class="o">=</span> <span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">lgssm_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
-<span class="n">parallel_posterior</span> <span class="o">=</span> <span class="n">parallel_lgssm_smoother</span><span class="p">(</span><span class="n">lgssm_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="n">z</span><span class="p">,</span><span class="n">emissions</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">model_params</span><span class="p">,</span> <span class="n">subkey</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
+<span class="n">ssm_posterior</span> <span class="o">=</span> <span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">inf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="n">parallel_posterior</span> <span class="o">=</span> <span class="n">parallel_lgssm_smoother</span><span class="p">(</span><span class="n">inf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">parallel_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">parallel_posterior</span><span class="o">.</span><span class="n">filtered_covariances</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
@@ -568,7 +630,7 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/1bd5eb64c94871f36911312c37ff3ad4f02cef1ffc0dcf74a82df18b0afdec59.png" src="../../_images/1bd5eb64c94871f36911312c37ff3ad4f02cef1ffc0dcf74a82df18b0afdec59.png" />
+<img alt="../../_images/91d01bf7dbd1cf2e339efe0882a69af325b35bece8d4cf53c12e93848eeecc1c.png" src="../../_images/91d01bf7dbd1cf2e339efe0882a69af325b35bece8d4cf53c12e93848eeecc1c.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -582,7 +644,7 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e685cfc095206ccf9b4f97690d17d3ce97aea2f0556e73a418a0ecf4e717e9cc.png" src="../../_images/e685cfc095206ccf9b4f97690d17d3ce97aea2f0556e73a418a0ecf4e717e9cc.png" />
+<img alt="../../_images/d92a926986374219aed60c28e536deaf45431de50ba875d84e6faa09ad267380.png" src="../../_images/d92a926986374219aed60c28e536deaf45431de50ba875d84e6faa09ad267380.png" />
 </div>
 </div>
 </section>
@@ -599,7 +661,7 @@ cpu
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">cpu_mode</span><span class="p">:</span>
-    <span class="n">Ts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1000</span><span class="p">]</span>
+    <span class="n">Ts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">500</span><span class="p">]</span>
     <span class="n">num_repeats</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="n">Ts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">,</span> <span class="mi">100_000</span><span class="p">]</span>
@@ -609,18 +671,17 @@ cpu
 <span class="n">compiled</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="k">for</span> <span class="n">T</span> <span class="ow">in</span> <span class="n">Ts</span><span class="p">:</span>
-    <span class="n">inputs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">T</span><span class="p">,</span><span class="n">input_dim</span><span class="p">))</span>
     
     <span class="n">key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-    <span class="n">z</span><span class="p">,</span><span class="n">emissions</span> <span class="o">=</span> <span class="n">lgssm_sample</span><span class="p">(</span><span class="n">subkey</span><span class="p">,</span><span class="n">lgssm_params</span><span class="p">,</span><span class="n">T</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+    <span class="n">z</span><span class="p">,</span><span class="n">emissions</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">model_params</span><span class="p">,</span> <span class="n">subkey</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">compiled</span><span class="p">:</span>
-        <span class="n">ssm_posterior</span> <span class="o">=</span> <span class="n">block_until_ready</span><span class="p">(</span><span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">lgssm_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
-        <span class="n">parallel_posterior</span> <span class="o">=</span> <span class="n">block_until_ready</span><span class="p">(</span><span class="n">parallel_lgssm_smoother</span><span class="p">(</span><span class="n">lgssm_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">))</span>
+        <span class="n">ssm_posterior</span> <span class="o">=</span> <span class="n">block_until_ready</span><span class="p">(</span><span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">inf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
+        <span class="n">parallel_posterior</span> <span class="o">=</span> <span class="n">block_until_ready</span><span class="p">(</span><span class="n">parallel_lgssm_smoother</span><span class="p">(</span><span class="n">inf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">))</span>
     
     <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_repeats</span><span class="p">):</span>
-        <span class="n">ssm_posterior</span> <span class="o">=</span> <span class="n">block_until_ready</span><span class="p">(</span><span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">lgssm_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
+        <span class="n">ssm_posterior</span> <span class="o">=</span> <span class="n">block_until_ready</span><span class="p">(</span><span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">inf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
     <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="n">mean_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="n">num_repeats</span>
     <span class="n">serial_smoothing_durations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean_time</span><span class="p">)</span>
@@ -628,7 +689,7 @@ cpu
     
     <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_repeats</span><span class="p">):</span>
-        <span class="n">parallel_posterior</span> <span class="o">=</span> <span class="n">block_until_ready</span><span class="p">(</span><span class="n">parallel_lgssm_smoother</span><span class="p">(</span><span class="n">lgssm_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">))</span>
+        <span class="n">parallel_posterior</span> <span class="o">=</span> <span class="n">block_until_ready</span><span class="p">(</span><span class="n">parallel_lgssm_smoother</span><span class="p">(</span><span class="n">inf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">))</span>
     <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="n">mean_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="n">num_repeats</span>
     <span class="n">parallel_smoothing_durations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean_time</span><span class="p">)</span>
@@ -637,22 +698,12 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.8015635013580322
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time parallel = 0.3399319648742676
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time serial = 0.8258702754974365
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time parallel = 0.45314764976501465
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=1000, 	 time serial = 0.8298749923706055
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=1000, 	 time parallel = 0.5066554546356201
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.6796379089355469
+Num timesteps=100, 	 time parallel = 0.2719862461090088
+Num timesteps=200, 	 time serial = 0.5670959949493408
+Num timesteps=200, 	 time parallel = 0.29800987243652344
+Num timesteps=500, 	 time serial = 0.6445271968841553
+Num timesteps=500, 	 time parallel = 0.33965492248535156
 </pre></div>
 </div>
 </div>
@@ -672,7 +723,7 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8a6b718d57fe87c6d3c7959e9cdb89b48c62b780cdf192749a0342d84513bc77.png" src="../../_images/8a6b718d57fe87c6d3c7959e9cdb89b48c62b780cdf192749a0342d84513bc77.png" />
+<img alt="../../_images/153b71f46e2f8d9fcd038968efc1d6a08ef68fe0baf972a770863e020cb9a67c.png" src="../../_images/153b71f46e2f8d9fcd038968efc1d6a08ef68fe0baf972a770863e020cb9a67c.png" />
 </div>
 </div>
 </section>

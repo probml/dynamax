@@ -89,10 +89,10 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Contents:
+  HMMs
  </span>
 </p>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../hmm/casino_hmm_inference.html">
    Casino HMM: Inference (state estimation)
@@ -113,6 +113,13 @@
    Autoregressive (AR) HMM Demo
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -133,6 +140,13 @@
    Parallel filtering and smoothing in an LG-SSM
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -146,6 +160,28 @@
  <li class="toctree-l1">
   <a class="reference internal" href="ekf_mlp.html">
    Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
   </a>
  </li>
 </ul>
@@ -469,7 +505,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
 <span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span>  <span class="n">plot_uncertainty_ellipses</span>
-<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">NLGSSMParams</span><span class="p">,</span> <span class="n">NLGSSM</span>
+<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span> <span class="n">NonlinearGaussianSSM</span>
 <span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.extended_kalman_filter</span> <span class="kn">import</span> <span class="n">extended_kalman_filter</span> <span class="k">as</span> <span class="n">ekf</span>
 <span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter</span> <span class="kn">import</span> <span class="n">unscented_kalman_filter</span> <span class="k">as</span> <span class="n">ukf</span>
 <span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter</span> <span class="kn">import</span> <span class="n">UKFHyperParams</span>
@@ -477,11 +513,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -496,13 +528,23 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">z</span> <span class="o">+</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">])])</span>
 <span class="n">h</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">z</span>
 
-<span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">initial</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">cov</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)),</span>
-            <span class="n">dynamics</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">function</span> <span class="o">=</span> <span class="n">f</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.001</span><span class="p">),</span>
-            <span class="n">emissions</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">function</span> <span class="o">=</span> <span class="n">h</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">obs_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.05</span><span class="p">)</span>
-        <span class="p">)</span>
+<span class="c1">#params = dict(</span>
+<span class="c1">#            initial=dict(mean=jnp.array([1.5, 0.0]), cov=jnp.eye(state_dim)),</span>
+<span class="c1">#            dynamics=dict(function = f, cov=jnp.eye(state_dim) * 0.001),</span>
+<span class="c1">#            emissions=dict(function = h, cov=jnp.eye(obs_dim) * 0.05)</span>
+<span class="c1">#        )</span>
 
-<span class="n">nlgssm</span> <span class="o">=</span> <span class="n">NLGSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">obs_dim</span><span class="p">)</span>
+
+<span class="n">params</span> <span class="o">=</span> <span class="n">ParamsNLGSSM</span><span class="p">(</span>
+    <span class="n">initial_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>
+    <span class="n">initial_covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">),</span>
+    <span class="n">dynamics_function</span> <span class="o">=</span> <span class="n">f</span><span class="p">,</span>
+    <span class="n">dynamics_covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">emission_function</span> <span class="o">=</span> <span class="n">h</span><span class="p">,</span>
+    <span class="n">emission_covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">obs_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.05</span>
+<span class="p">)</span>
+
+<span class="n">nlgssm</span> <span class="o">=</span> <span class="n">NonlinearGaussianSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">obs_dim</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -548,7 +590,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot: title={&#39;center&#39;: &#39;Noisy obervations from hidden trajectory&#39;}&gt;
 </pre></div>
 </div>
-<img alt="../../_images/f05655d1fcadce7cd5f1eb209b8b95dee6684f3f6239b0390c612e27a43cb784.png" src="../../_images/f05655d1fcadce7cd5f1eb209b8b95dee6684f3f6239b0390c612e27a43cb784.png" />
+<img alt="../../_images/a99c91f064174cce7e28d94afa7caf67ec586c6a36f52d34df68abfba9bdba82.png" src="../../_images/a99c91f064174cce7e28d94afa7caf67ec586c6a36f52d34df68abfba9bdba82.png" />
 </div>
 </div>
 </section>
@@ -556,7 +598,8 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 <h2>Extended Kalman filter<a class="headerlink" href="#extended-kalman-filter" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ekf_params</span> <span class="o">=</span> <span class="n">nlgssm</span><span class="o">.</span><span class="n">make_inference_args</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#ekf_params = nlgssm.make_inference_args(params)</span>
+<span class="n">ekf_params</span> <span class="o">=</span> <span class="n">params</span>
 <span class="n">ekf_post</span> <span class="o">=</span> <span class="n">ekf</span><span class="p">(</span><span class="n">ekf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
 <span class="n">ekf_means</span><span class="p">,</span> <span class="n">ekf_covs</span> <span class="o">=</span> <span class="n">ekf_post</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">ekf_post</span><span class="o">.</span><span class="n">filtered_covariances</span>
 </pre></div>
@@ -572,7 +615,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9145c0df8f3ff8f1a01a5fcc357ad92cfe275dbffaa78a912b102d21c579ec50.png" src="../../_images/9145c0df8f3ff8f1a01a5fcc357ad92cfe275dbffaa78a912b102d21c579ec50.png" />
+<img alt="../../_images/c2a70452ccc4c50a4025662d1d8136911f8f777474b651d58175e9d780d2164f.png" src="../../_images/c2a70452ccc4c50a4025662d1d8136911f8f777474b651d58175e9d780d2164f.png" />
 </div>
 </div>
 </section>
@@ -581,7 +624,8 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hyperparams</span> <span class="o">=</span> <span class="n">UKFHyperParams</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="n">ukf_params</span> <span class="o">=</span> <span class="n">nlgssm</span><span class="o">.</span><span class="n">make_inference_args</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<span class="c1">#ukf_params = nlgssm.make_inference_args(params)</span>
+<span class="n">ukf_params</span> <span class="o">=</span> <span class="n">params</span>
 <span class="n">ukf_post</span> <span class="o">=</span> <span class="n">ukf</span><span class="p">(</span><span class="n">ukf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">hyperparams</span><span class="p">)</span>
 <span class="n">ukf_means</span><span class="p">,</span> <span class="n">ukf_covs</span> <span class="o">=</span> <span class="n">ukf_post</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">ukf_post</span><span class="o">.</span><span class="n">filtered_covariances</span>
 </pre></div>
@@ -597,13 +641,12 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/583ee2b5c17460bc93f3f645bbedaf347835419132d00ac59766c3acd8a2d6c1.png" src="../../_images/583ee2b5c17460bc93f3f645bbedaf347835419132d00ac59766c3acd8a2d6c1.png" />
+<img alt="../../_images/a78f481eb5e2a06744e801b5e438afcede49346bdd25ca53be6aac1264b280c2.png" src="../../_images/a78f481eb5e2a06744e801b5e438afcede49346bdd25ca53be6aac1264b280c2.png" />
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hyperparams</span> <span class="o">=</span> <span class="n">UKFHyperParams</span><span class="p">()</span> <span class="c1"># use defaults</span>
-<span class="n">ukf_params</span> <span class="o">=</span> <span class="n">nlgssm</span><span class="o">.</span><span class="n">make_inference_args</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 <span class="n">ukf_post</span> <span class="o">=</span> <span class="n">ukf</span><span class="p">(</span><span class="n">ukf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">hyperparams</span><span class="p">)</span>
 <span class="n">ukf_means</span><span class="p">,</span> <span class="n">ukf_covs</span> <span class="o">=</span> <span class="n">ukf_post</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">ukf_post</span><span class="o">.</span><span class="n">filtered_covariances</span>
 
@@ -614,7 +657,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/4d27ccf12e9495b8e5044d0d37590ec2adb2b8f1ac826ee5b5f6390ac6f5044a.png" src="../../_images/4d27ccf12e9495b8e5044d0d37590ec2adb2b8f1ac826ee5b5f6390ac6f5044a.png" />
+<img alt="../../_images/724dbff396225f1f595a6ae847f0688e101e14b20fa8a292734f39617538aef2.png" src="../../_images/724dbff396225f1f595a6ae847f0688e101e14b20fa8a292734f39617538aef2.png" />
 </div>
 </div>
 </section>

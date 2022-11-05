@@ -36,7 +36,7 @@
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="SSM" href="../../ssm.html" />
+    <link rel="next" title="Online Logistic Regression using conditional moments Gaussian filter" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html" />
     <link rel="prev" title="Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother" href="ekf_ukf_pendulum.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -89,10 +89,10 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Contents:
+  HMMs
  </span>
 </p>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../hmm/casino_hmm_inference.html">
    Casino HMM: Inference (state estimation)
@@ -113,6 +113,13 @@
    Autoregressive (AR) HMM Demo
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -133,6 +140,13 @@
    Parallel filtering and smoothing in an LG-SSM
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -146,6 +160,28 @@
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
    Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
   </a>
  </li>
 </ul>
@@ -468,17 +504,13 @@ https://github.com/probml/probml-data/blob/main/data/ekf_mlp_demo.mp4</p>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 
 
-<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">NLGSSMParams</span>
+<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">ParamsNLGSSM</span>
 <span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.extended_kalman_filter</span> <span class="kn">import</span> <span class="n">extended_kalman_filter</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -608,7 +640,7 @@ https://github.com/probml/probml-data/blob/main/data/ekf_mlp_demo.mp4</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Note that the dynamics function is the identity function</span>
 <span class="c1"># and the emission function is the model apply function</span>
 <span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span> <span class="o">=</span> <span class="n">flat_params</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">output_dim</span>
-<span class="n">ekf_params</span> <span class="o">=</span> <span class="n">NLGSSMParams</span><span class="p">(</span>
+<span class="n">ekf_params</span> <span class="o">=</span> <span class="n">ParamsNLGSSM</span><span class="p">(</span>
     <span class="n">initial_mean</span><span class="o">=</span><span class="n">flat_params</span><span class="p">,</span>
     <span class="n">initial_covariance</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">dynamics_function</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">u</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
@@ -683,10 +715,10 @@ https://github.com/probml/probml-data/blob/main/data/ekf_mlp_demo.mp4</p>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ntraining = 200
 </pre></div>
 </div>
-<img alt="../../_images/538e5e797c6d9ddc735a73c50e043aaa05933621f59f81ab8638d80340bb3196.png" src="../../_images/538e5e797c6d9ddc735a73c50e043aaa05933621f59f81ab8638d80340bb3196.png" />
-<img alt="../../_images/272747a2ce0d658bb0c3beab0328d412949de3ec12a9af9e4b9dc6aedb3f6371.png" src="../../_images/272747a2ce0d658bb0c3beab0328d412949de3ec12a9af9e4b9dc6aedb3f6371.png" />
-<img alt="../../_images/cafc8852667308f3d5ae4d1584bb53cc42e92f474c5287ba9ab8e3775aa4d39d.png" src="../../_images/cafc8852667308f3d5ae4d1584bb53cc42e92f474c5287ba9ab8e3775aa4d39d.png" />
-<img alt="../../_images/cbe021b79d945fed80df9f3f35bfb09b27224839a0d87696a93d38619bcdb8cc.png" src="../../_images/cbe021b79d945fed80df9f3f35bfb09b27224839a0d87696a93d38619bcdb8cc.png" />
+<img alt="../../_images/7b93767cc3b88e55adb0423e8ed257d6cf9e06fcd98d6dfa98f54cc51fdcf086.png" src="../../_images/7b93767cc3b88e55adb0423e8ed257d6cf9e06fcd98d6dfa98f54cc51fdcf086.png" />
+<img alt="../../_images/edd39f4d6ab8661049381f0c2b4983378dc9751fb8ab6ca2af22a238ddd39b8e.png" src="../../_images/edd39f4d6ab8661049381f0c2b4983378dc9751fb8ab6ca2af22a238ddd39b8e.png" />
+<img alt="../../_images/9f9216f271ffa02be72755545f498caeb3d8f4d35819fd2b62ba8510e1d0703e.png" src="../../_images/9f9216f271ffa02be72755545f498caeb3d8f4d35819fd2b62ba8510e1d0703e.png" />
+<img alt="../../_images/03265b9343e9374e1c3e126ac7506b3819b1fba2696d90353668a774a853013e.png" src="../../_images/03265b9343e9374e1c3e126ac7506b3819b1fba2696d90353668a774a853013e.png" />
 </div>
 </div>
 </section>
@@ -707,10 +739,10 @@ https://github.com/probml/probml-data/blob/main/data/ekf_mlp_demo.mp4</p>
             <p class="prev-next-title">Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="../../ssm.html" title="next page">
+    <a class='right-next' id="next-link" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">SSM</p>
+        <p class="prev-next-title">Online Logistic Regression using conditional moments Gaussian filter</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

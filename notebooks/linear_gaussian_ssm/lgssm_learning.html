@@ -87,10 +87,10 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Contents:
+  HMMs
  </span>
 </p>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../hmm/casino_hmm_inference.html">
    Casino HMM: Inference (state estimation)
@@ -111,6 +111,13 @@
    Autoregressive (AR) HMM Demo
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -131,6 +138,13 @@
    Parallel filtering and smoothing in an LG-SSM
   </a>
  </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -144,6 +158,28 @@
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
    Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
   </a>
  </li>
 </ul>
@@ -446,17 +482,43 @@ title="Print to PDF"
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.models.linear_gaussian_ssm_conjugate</span> <span class="kn">import</span> <span class="n">LinearGaussianConjugateSSM</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm_conjugate</span> <span class="kn">import</span> <span class="n">LinearGaussianConjugateSSM</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils</span> <span class="kn">import</span> <span class="n">monotonically_increasing</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ImportError</span><span class="g g-Whitespace">                               </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">7</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
+<span class="ne">----&gt; </span><span class="mi">7</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm_conjugate</span> <span class="kn">import</span> <span class="n">LinearGaussianConjugateSSM</span>
+<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="kn">from</span> <span class="nn">dynamax.utils</span> <span class="kn">import</span> <span class="n">monotonically_increasing</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">linear_gaussian_ssm</span><span class="o">/</span><span class="n">linear_gaussian_ssm_conjugate</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">11</span>
+<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="kn">from</span> <span class="nn">dynamax.distributions</span> <span class="kn">import</span> <span class="n">mniw_posterior_update</span><span class="p">,</span> <span class="n">niw_posterior_update</span>
+<span class="g g-Whitespace">     </span><span class="mi">10</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">ParamsLGSSMMoment</span><span class="p">,</span> <span class="n">lgssm_posterior_sample</span>
+<span class="ne">---&gt; </span><span class="mi">11</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
+<span class="g g-Whitespace">     </span><span class="mi">15</span> <span class="k">class</span> <span class="nc">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">LinearGaussianSSM</span><span class="p">):</span>
+<span class="g g-Whitespace">     </span><span class="mi">16</span>     <span class="sd">&quot;&quot;&quot;</span>
+<span class="g g-Whitespace">     </span><span class="mi">17</span><span class="sd">     Linear Gaussian State Space Model with conjugate priors for the model parameters.</span>
+<span class="g g-Whitespace">     </span><span class="mi">18</span><span class="sd">     The parameters are the same as LG-SSM.</span>
+<span class="sd">   (...)</span>
+<span class="g g-Whitespace">     </span><span class="mi">22</span><span class="sd">     p([H, D, d], R) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart</span>
+<span class="g g-Whitespace">     </span><span class="mi">23</span><span class="sd">     &quot;&quot;&quot;</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">linear_gaussian_ssm</span><span class="o">/</span><span class="n">linear_gaussian_ssm</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">32</span>
+<span class="g g-Whitespace">     </span><span class="mi">28</span> <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="g g-Whitespace">     </span><span class="mi">31</span> <span class="kn">from</span> <span class="nn">dynamax.abstractions</span> <span class="kn">import</span> <span class="n">SSM</span>
+<span class="ne">---&gt; </span><span class="mi">32</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_posterior_sample</span><span class="p">,</span> <span class="n">LGSSMParams</span>
+<span class="g g-Whitespace">     </span><span class="mi">33</span> <span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterProperties</span>
+<span class="g g-Whitespace">     </span><span class="mi">34</span> <span class="kn">from</span> <span class="nn">dynamax.utils</span> <span class="kn">import</span> <span class="n">PSDToRealBijector</span>
+
+<span class="ne">ImportError</span>: cannot import name &#39;LGSSMParams&#39; from &#39;dynamax.linear_gaussian_ssm.inference&#39; (/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/linear_gaussian_ssm/inference.py)
 </pre></div>
 </div>
 </div>
@@ -491,7 +553,7 @@ title="Print to PDF"
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(0.0, 99.0)
 </pre></div>
 </div>
-<img alt="../../_images/05d27c668f8bff0b16e5e87dd71908be2f11daf466f71501d7d23edf543cb3af.png" src="../../_images/05d27c668f8bff0b16e5e87dd71908be2f11daf466f71501d7d23edf543cb3af.png" />
+<img alt="../../_images/e3d06e5cf8401f3efd67184a5511d26ef8dfd91fc9c49085cc5e48cb8ea9dcde.png" src="../../_images/e3d06e5cf8401f3efd67184a5511d26ef8dfd91fc9c49085cc5e48cb8ea9dcde.png" />
 </div>
 </div>
 </section>
@@ -552,7 +614,7 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/79b739458c7a49a26479f5798765a16022f07c46bcde7ab487f786f9feab7588.png" src="../../_images/79b739458c7a49a26479f5798765a16022f07c46bcde7ab487f786f9feab7588.png" />
+<img alt="../../_images/74867769d2819842a51272df56e13a426ea9a6fa49e7342b9c791fa16346dce7.png" src="../../_images/74867769d2819842a51272df56e13a426ea9a6fa49e7342b9c791fa16346dce7.png" />
 </div>
 </div>
 </section>
@@ -571,19 +633,24 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/100 [00:00&lt;?, ?it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  1%|          | 1/100 [00:05&lt;09:34,  5.80s/it]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 100/100 [00:05&lt;00:00, 17.04it/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
-</pre></div>
-</div>
-</div>
+<div class="output text_html">
+    <div>
+        <style>
+            /* Turns off some styling */
+            progress {
+                /* gets rid of default border in Firefox and Opera. */
+                border: none;
+                /* Needs to be in here for Safari polyfill so background images work as expected. */
+                background-size: auto;
+            }
+            .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+                background: #F44336;
+            }
+        </style>
+      <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      100.00% [100/100 00:04<00:00]
+    </div>
+    </div></div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -593,8 +660,8 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ff2f4ea34d9a0365b85090ec2bd955c13d59eefa9089e44fdcc241fdf980a309.png" src="../../_images/ff2f4ea34d9a0365b85090ec2bd955c13d59eefa9089e44fdcc241fdf980a309.png" />
-<img alt="../../_images/8af05ba464c3a9b9a9138ba58b99e5c9c3b31366c8306924f23f516356fea85b.png" src="../../_images/8af05ba464c3a9b9a9138ba58b99e5c9c3b31366c8306924f23f516356fea85b.png" />
+<img alt="../../_images/85093fccc312faa66c70916719c680f3d64e70d4d6dbd71ef71f534b0e263d56.png" src="../../_images/85093fccc312faa66c70916719c680f3d64e70d4d6dbd71ef71f534b0e263d56.png" />
+<img alt="../../_images/7098f6fe93844936b77381f5b409589917762650ee740e85dfe103e37df6f2ae.png" src="../../_images/7098f6fe93844936b77381f5b409589917762650ee740e85dfe103e37df6f2ae.png" />
 </div>
 </div>
 </section>
@@ -621,8 +688,8 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7e6ee41d4fb9981aa999328b72a4236aedfff9ace91ebeda83376359dd9cbd79.png" src="../../_images/7e6ee41d4fb9981aa999328b72a4236aedfff9ace91ebeda83376359dd9cbd79.png" />
-<img alt="../../_images/148e50d587d031527549d9f8d87ac158b07be24aa55049d3dd29a5d0dcab59e7.png" src="../../_images/148e50d587d031527549d9f8d87ac158b07be24aa55049d3dd29a5d0dcab59e7.png" />
+<img alt="../../_images/e92d34cc8e52891a3db125a4fde49499563c282cfc2f15bddc08a6bef58cb5cb.png" src="../../_images/e92d34cc8e52891a3db125a4fde49499563c282cfc2f15bddc08a6bef58cb5cb.png" />
+<img alt="../../_images/34fb24c9aa322b34a9ebe18e3b79c6f94ec290389713a70b79a9ff639942c3df.png" src="../../_images/34fb24c9aa322b34a9ebe18e3b79c6f94ec290389713a70b79a9ff639942c3df.png" />
 </div>
 </div>
 </section>
