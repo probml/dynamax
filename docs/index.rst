@@ -164,7 +164,7 @@ differentiation and just-in-time compilation,
 
 
 Learning (parameter estimation)
----------------------------------
+-------------------------------
 
 Dynamax also includes a host of model classes for various HMMs and linear Gaussian SSMs.
 You can use these models to simulate data, and you can fit the models using standard
@@ -203,20 +203,41 @@ Notebooks
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
+   :caption: HMMs
 
 
    notebooks/hmm/casino_hmm_inference.ipynb
    notebooks/hmm/casino_hmm_learning.ipynb
    notebooks/hmm/gaussian_hmm.ipynb
    notebooks/hmm/autoregressive_hmm.ipynb
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Linear Gaussian SSMs
+
    notebooks/linear_gaussian_ssm/kf_tracking.ipynb
    notebooks/linear_gaussian_ssm/kf_linreg.ipynb
    notebooks/linear_gaussian_ssm/lgssm_learning.ipynb
    notebooks/linear_gaussian_ssm/lgssm_parallel_inference.ipynb
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Nonlinear Gaussian SSMs
+
    notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.ipynb
    notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.ipynb
    notebooks/nonlinear_gaussian_ssm/ekf_mlp.ipynb
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Generalized Gaussian SSMs
+
+   notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo.ipynb
+   notebooks/generalized_gaussian_ssm/cmgf_mlp_classification_demo.ipynb
+   notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.ipynb
 
 
 API documentation
