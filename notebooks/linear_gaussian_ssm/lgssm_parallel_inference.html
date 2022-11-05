@@ -483,23 +483,6 @@ we have a GPU device.</p>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ImportError</span><span class="g g-Whitespace">                               </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">5</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.parallel_inference</span> <span class="kn">import</span>  <span class="n">lgssm_smoother</span> <span class="k">as</span> <span class="n">parallel_lgssm_smoother</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">ParamsLGSSMMoment</span>
-<span class="ne">----&gt; </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span><span class="p">,</span> <span class="n">ParamsLGSSM</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">linear_gaussian_ssm</span><span class="o">/</span><span class="n">linear_gaussian_ssm</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">32</span>
-<span class="g g-Whitespace">     </span><span class="mi">28</span> <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="g g-Whitespace">     </span><span class="mi">31</span> <span class="kn">from</span> <span class="nn">dynamax.abstractions</span> <span class="kn">import</span> <span class="n">SSM</span>
-<span class="ne">---&gt; </span><span class="mi">32</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_posterior_sample</span><span class="p">,</span> <span class="n">LGSSMParams</span>
-<span class="g g-Whitespace">     </span><span class="mi">33</span> <span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterProperties</span>
-<span class="g g-Whitespace">     </span><span class="mi">34</span> <span class="kn">from</span> <span class="nn">dynamax.utils</span> <span class="kn">import</span> <span class="n">PSDToRealBijector</span>
-
-<span class="ne">ImportError</span>: cannot import name &#39;LGSSMParams&#39; from &#39;dynamax.linear_gaussian_ssm.inference&#39; (/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/linear_gaussian_ssm/inference.py)
-</pre></div>
-</div>
 </div>
 </div>
 <div class="cell docutils container">
@@ -630,7 +613,7 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/91d01bf7dbd1cf2e339efe0882a69af325b35bece8d4cf53c12e93848eeecc1c.png" src="../../_images/91d01bf7dbd1cf2e339efe0882a69af325b35bece8d4cf53c12e93848eeecc1c.png" />
+<img alt="../../_images/ed165ed0d3bb2f79be1ce75495a9ea3775ebb8acf1d184a69794b25990f51717.png" src="../../_images/ed165ed0d3bb2f79be1ce75495a9ea3775ebb8acf1d184a69794b25990f51717.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -644,7 +627,7 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d92a926986374219aed60c28e536deaf45431de50ba875d84e6faa09ad267380.png" src="../../_images/d92a926986374219aed60c28e536deaf45431de50ba875d84e6faa09ad267380.png" />
+<img alt="../../_images/b3968ec4acebbef3316e7a54575a19042915180ed499cb6f13f52b79aa7e76e0.png" src="../../_images/b3968ec4acebbef3316e7a54575a19042915180ed499cb6f13f52b79aa7e76e0.png" />
 </div>
 </div>
 </section>
@@ -698,12 +681,22 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.6796379089355469
-Num timesteps=100, 	 time parallel = 0.2719862461090088
-Num timesteps=200, 	 time serial = 0.5670959949493408
-Num timesteps=200, 	 time parallel = 0.29800987243652344
-Num timesteps=500, 	 time serial = 0.6445271968841553
-Num timesteps=500, 	 time parallel = 0.33965492248535156
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.6584057807922363
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time parallel = 0.2999739646911621
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time serial = 0.6583251953125
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time parallel = 0.34340977668762207
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time serial = 0.6587626934051514
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time parallel = 0.3899102210998535
 </pre></div>
 </div>
 </div>
@@ -723,7 +716,7 @@ Num timesteps=500, 	 time parallel = 0.33965492248535156
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/153b71f46e2f8d9fcd038968efc1d6a08ef68fe0baf972a770863e020cb9a67c.png" src="../../_images/153b71f46e2f8d9fcd038968efc1d6a08ef68fe0baf972a770863e020cb9a67c.png" />
+<img alt="../../_images/5f00c945e46f256ae414bd338b206636debef9ad54767ec42616ccd30289af9e.png" src="../../_images/5f00c945e46f256ae414bd338b206636debef9ad54767ec42616ccd30289af9e.png" />
 </div>
 </div>
 </section>
