@@ -467,20 +467,7 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ImportError</span><span class="g g-Whitespace">                               </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter</span> <span class="kn">import</span> <span class="o">*</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">generalized_gaussian_ssm</span><span class="o">/</span><span class="n">conditional_moments_gaussian_filter</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">16</span>
-<span class="g g-Whitespace">     </span><span class="mi">13</span> <span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Num</span>
-<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span>  <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Callable</span>
-<span class="ne">---&gt; </span><span class="mi">16</span> <span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="n">ParamsGGSSM</span><span class="p">,</span>  <span class="n">PosteriorGGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGGSSMSmoothed</span>
-<span class="g g-Whitespace">     </span><span class="mi">19</span> <span class="c1"># Helper functions</span>
-<span class="g g-Whitespace">     </span><span class="mi">20</span> <span class="n">_get_params</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">x</span>
-
-<span class="ne">ImportError</span>: cannot import name &#39;ParamsGGSSM&#39; from &#39;dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm&#39; (/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/generalized_gaussian_ssm/generalized_gaussian_ssm.py)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -733,7 +720,7 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7da562dda989b49a45a85d5887df426f4cd224ab60a23198c56b730629a9224d.png" src="../../_images/7da562dda989b49a45a85d5887df426f4cd224ab60a23198c56b730629a9224d.png" />
+<img alt="../../_images/860bd8949af6967f0074e791846b6b2282961b415f04764b1a0625df4dcb9855.png" src="../../_images/860bd8949af6967f0074e791846b6b2282961b415f04764b1a0625df4dcb9855.png" />
 </div>
 </div>
 </section>
@@ -755,7 +742,7 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/b132d15a74a53b277a64c837e4a214a24e358419f940e2355f8c4c695df9c165.png" src="../../_images/b132d15a74a53b277a64c837e4a214a24e358419f940e2355f8c4c695df9c165.png" />
+<img alt="../../_images/a51a62852b86d7b0954c444ebe4b83560020c6d0c7d95b93200e37582046b61d.png" src="../../_images/a51a62852b86d7b0954c444ebe4b83560020c6d0c7d95b93200e37582046b61d.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -774,12 +761,12 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/138fc1430563d3389299f4f4537e2a1e6730d4c3653be22836bc144ff65478b3.png" src="../../_images/138fc1430563d3389299f4f4537e2a1e6730d4c3653be22836bc144ff65478b3.png" />
-<img alt="../../_images/129a71ea293e7a806420e5ac8c0c5c9169af4b00037d6d0492ae85bbfe1a7092.png" src="../../_images/129a71ea293e7a806420e5ac8c0c5c9169af4b00037d6d0492ae85bbfe1a7092.png" />
-<img alt="../../_images/b7a0de5ac58905c9c730600ed115521754d60dd0aa586932c69f02672e15a9ef.png" src="../../_images/b7a0de5ac58905c9c730600ed115521754d60dd0aa586932c69f02672e15a9ef.png" />
-<img alt="../../_images/94c77d0ad0994234a937eaa5db9b594c8417c301546c8cd7e2909a7dd39a650c.png" src="../../_images/94c77d0ad0994234a937eaa5db9b594c8417c301546c8cd7e2909a7dd39a650c.png" />
-<img alt="../../_images/6a3d02bb6b18d5ac3a6caf6f85c860a1571cb24f5f5ffa4038109cdeecf28d5e.png" src="../../_images/6a3d02bb6b18d5ac3a6caf6f85c860a1571cb24f5f5ffa4038109cdeecf28d5e.png" />
-<img alt="../../_images/e5f51cbc541cb591cab6c6a1108f44d08fdf394d0e5377227a7e434dee43aee5.png" src="../../_images/e5f51cbc541cb591cab6c6a1108f44d08fdf394d0e5377227a7e434dee43aee5.png" />
+<img alt="../../_images/4b920938fcd1eec1b446af96a337efe3fbf68f3ec4b1bbfee7627d40b81e83db.png" src="../../_images/4b920938fcd1eec1b446af96a337efe3fbf68f3ec4b1bbfee7627d40b81e83db.png" />
+<img alt="../../_images/f83bce25512cc6b4473694480045523c425025fdc9ff423976785b0cd6a8ab8c.png" src="../../_images/f83bce25512cc6b4473694480045523c425025fdc9ff423976785b0cd6a8ab8c.png" />
+<img alt="../../_images/44853c776e85007d428c66eb27cbb348d803b7417152a7381daae47157243dd7.png" src="../../_images/44853c776e85007d428c66eb27cbb348d803b7417152a7381daae47157243dd7.png" />
+<img alt="../../_images/9f0be5205212f127214521bfd51734091c15e8b0797618e59454cb948c10fcdd.png" src="../../_images/9f0be5205212f127214521bfd51734091c15e8b0797618e59454cb948c10fcdd.png" />
+<img alt="../../_images/7c1122eb4bdba5a86377cc3e899ce4f36eb7509e281b7f0eb3be350eba2b4342.png" src="../../_images/7c1122eb4bdba5a86377cc3e899ce4f36eb7509e281b7f0eb3be350eba2b4342.png" />
+<img alt="../../_images/e211603831b1dc05a83eee2971a3fea9ca7a6b2e74a2b56e2909780c0b962274.png" src="../../_images/e211603831b1dc05a83eee2971a3fea9ca7a6b2e74a2b56e2909780c0b962274.png" />
 </div>
 </div>
 </section>

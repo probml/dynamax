@@ -540,20 +540,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ImportError</span><span class="g g-Whitespace">                               </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter</span> <span class="kn">import</span> <span class="o">*</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">generalized_gaussian_ssm</span><span class="o">/</span><span class="n">conditional_moments_gaussian_filter</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">16</span>
-<span class="g g-Whitespace">     </span><span class="mi">13</span> <span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Num</span>
-<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span>  <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Callable</span>
-<span class="ne">---&gt; </span><span class="mi">16</span> <span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="n">ParamsGGSSM</span><span class="p">,</span>  <span class="n">PosteriorGGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGGSSMSmoothed</span>
-<span class="g g-Whitespace">     </span><span class="mi">19</span> <span class="c1"># Helper functions</span>
-<span class="g g-Whitespace">     </span><span class="mi">20</span> <span class="n">_get_params</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">x</span>
-
-<span class="ne">ImportError</span>: cannot import name &#39;ParamsGGSSM&#39; from &#39;dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm&#39; (/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/generalized_gaussian_ssm/generalized_gaussian_ssm.py)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -616,7 +603,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/anaconda3/lib/python3.8/site-packages/jax/_src/random.py:399: FutureWarning: jax.random.shuffle is deprecated and will be removed in a future release. Use jax.random.permutation with independent=True.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/jax/_src/random.py:399: FutureWarning: jax.random.shuffle is deprecated and will be removed in a future release. Use jax.random.permutation with independent=True.
   warnings.warn(msg, FutureWarning)
 </pre></div>
 </div>
@@ -658,7 +645,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e02cfe7cd77d2536d396a395e93ce2dae9180a48c88cadcd7cb35e6accf9223a.png" src="../../_images/e02cfe7cd77d2536d396a395e93ce2dae9180a48c88cadcd7cb35e6accf9223a.png" />
+<img alt="../../_images/b95050c533bc5b0e456c03004c96db3b1a68565ed9757887c1637d7ffef813e5.png" src="../../_images/b95050c533bc5b0e456c03004c96db3b1a68565ed9757887c1637d7ffef813e5.png" />
 </div>
 </div>
 <p>Let us define a grid on which we compute the predictive distribution.</p>
@@ -778,7 +765,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/35c4dd5e9aa3015043b7df8cbcdd0cf8a2f19da30238e761852bcad2bb4c9c82.png" src="../../_images/35c4dd5e9aa3015043b7df8cbcdd0cf8a2f19da30238e761852bcad2bb4c9c82.png" />
+<img alt="../../_images/7ff8e3638b5a82edac8f5fcd31d61b40176267553cecc2a5e56616c0c82c6968.png" src="../../_images/7ff8e3638b5a82edac8f5fcd31d61b40176267553cecc2a5e56616c0c82c6968.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -793,7 +780,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7e73363faf29de2f67273ca0e1a325a9bec5f3732f6ae31a2cd0fde196a1c48f.png" src="../../_images/7e73363faf29de2f67273ca0e1a325a9bec5f3732f6ae31a2cd0fde196a1c48f.png" />
+<img alt="../../_images/a7c8e6d89c83660d06d6936b3ee4272d7264241afd8292c9aff80199bce2e897.png" src="../../_images/a7c8e6d89c83660d06d6936b3ee4272d7264241afd8292c9aff80199bce2e897.png" />
 </div>
 </div>
 </section>
@@ -855,10 +842,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/aa5ca61ce53718d54d8ef4c145488e08a47a9ffc632a44cb638bcb8c630f5908.png" src="../../_images/aa5ca61ce53718d54d8ef4c145488e08a47a9ffc632a44cb638bcb8c630f5908.png" />
-<img alt="../../_images/c84c9bc1200c81a3a3a72255f89ede07616910ecf113537c0d14c277d3a3c558.png" src="../../_images/c84c9bc1200c81a3a3a72255f89ede07616910ecf113537c0d14c277d3a3c558.png" />
-<img alt="../../_images/c0101b6a94bdda6675237f9fa445e78542a3c9fac98689a4083b21e7d3b65b53.png" src="../../_images/c0101b6a94bdda6675237f9fa445e78542a3c9fac98689a4083b21e7d3b65b53.png" />
-<img alt="../../_images/c6318dbfb7edab39fd362621f7ca975390fa9c8526f7caf2d8bffcbfb758deda.png" src="../../_images/c6318dbfb7edab39fd362621f7ca975390fa9c8526f7caf2d8bffcbfb758deda.png" />
+<img alt="../../_images/6b2d6fd3f131b466c93ea9f8d16b74b5b362c7ab7b54176ac37343b99528d1f7.png" src="../../_images/6b2d6fd3f131b466c93ea9f8d16b74b5b362c7ab7b54176ac37343b99528d1f7.png" />
+<img alt="../../_images/406514e6cb6c3d0d9183f43f921ed970972659464d41e4759b9d6ac9f1785403.png" src="../../_images/406514e6cb6c3d0d9183f43f921ed970972659464d41e4759b9d6ac9f1785403.png" />
+<img alt="../../_images/9c1f1fbe9a05a220a13a9713ffb9bf0dc68bc5bc892b608c37a0c6c8f4fa3857.png" src="../../_images/9c1f1fbe9a05a220a13a9713ffb9bf0dc68bc5bc892b608c37a0c6c8f4fa3857.png" />
+<img alt="../../_images/c74ea7c0148d3b7135d7795b62d99059665546451e76ad47dacec5d4552c4103.png" src="../../_images/c74ea7c0148d3b7135d7795b62d99059665546451e76ad47dacec5d4552c4103.png" />
 </div>
 </div>
 </section>
@@ -883,10 +870,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/4a5b3b8801551cc99cb4a6d450ddebf2552db983d1da6bc5683880fe807aba08.png" src="../../_images/4a5b3b8801551cc99cb4a6d450ddebf2552db983d1da6bc5683880fe807aba08.png" />
-<img alt="../../_images/ef54b041721153e2810233ce02550c9d8bd3a0788316f972d2a25634b9639c04.png" src="../../_images/ef54b041721153e2810233ce02550c9d8bd3a0788316f972d2a25634b9639c04.png" />
-<img alt="../../_images/a0b6c991d4b60d9e4e7e3dd0cecf74fd15e96435069c85cb7c440dba0f2dcdca.png" src="../../_images/a0b6c991d4b60d9e4e7e3dd0cecf74fd15e96435069c85cb7c440dba0f2dcdca.png" />
-<img alt="../../_images/9a3be301f26d682d4e66a8c1bcbe7cf84673ed0d26900fa1b18e2e507206acd2.png" src="../../_images/9a3be301f26d682d4e66a8c1bcbe7cf84673ed0d26900fa1b18e2e507206acd2.png" />
+<img alt="../../_images/215b4acd821edecd28b1e351d75e61fc96b9aff3707495bb5513a52a4bdb9d7f.png" src="../../_images/215b4acd821edecd28b1e351d75e61fc96b9aff3707495bb5513a52a4bdb9d7f.png" />
+<img alt="../../_images/d75a1444e56c20a546641dd0b73c14b70809a190fbdc12bba71908632ab48911.png" src="../../_images/d75a1444e56c20a546641dd0b73c14b70809a190fbdc12bba71908632ab48911.png" />
+<img alt="../../_images/62fbaf338117ddf0753876d3445a8af41b2f221b83947ec2662d846f5fcb6107.png" src="../../_images/62fbaf338117ddf0753876d3445a8af41b2f221b83947ec2662d846f5fcb6107.png" />
+<img alt="../../_images/2a0cd4df6ac170ddb60143cb8ebeb265f83b1f5f84cd50d26033e7a4785e2f21.png" src="../../_images/2a0cd4df6ac170ddb60143cb8ebeb265f83b1f5f84cd50d26033e7a4785e2f21.png" />
 </div>
 </div>
 </section>
@@ -912,10 +899,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/fb61ae4dc4b9cce6f118588d7295663eaadabac8d2316f32be3228841c7a7a8f.png" src="../../_images/fb61ae4dc4b9cce6f118588d7295663eaadabac8d2316f32be3228841c7a7a8f.png" />
-<img alt="../../_images/b850da0a104a0c348b443596780e061700a542c6a2c8c8baefdd05035cb2ff23.png" src="../../_images/b850da0a104a0c348b443596780e061700a542c6a2c8c8baefdd05035cb2ff23.png" />
-<img alt="../../_images/f682fb06e97d9583dbab6fea763fd22f11795a8a3f59c57ec4d8f00141f8049e.png" src="../../_images/f682fb06e97d9583dbab6fea763fd22f11795a8a3f59c57ec4d8f00141f8049e.png" />
-<img alt="../../_images/7db9509e089ee94daf4e33c8ea951c39eb1249515923688e100326ff82aef139.png" src="../../_images/7db9509e089ee94daf4e33c8ea951c39eb1249515923688e100326ff82aef139.png" />
+<img alt="../../_images/cd025aa71297a4ce8ea5d356c5f74231a4b58404946e63f0ee77b7646d4dcfe5.png" src="../../_images/cd025aa71297a4ce8ea5d356c5f74231a4b58404946e63f0ee77b7646d4dcfe5.png" />
+<img alt="../../_images/31654190e05d1e74b9018be1dcee3b68a514aab46405aa75df8d3e70ee0d72c6.png" src="../../_images/31654190e05d1e74b9018be1dcee3b68a514aab46405aa75df8d3e70ee0d72c6.png" />
+<img alt="../../_images/b74cb11cb94517924c62fa020b711211d7f052ee8ff95fce2953c9f897079c39.png" src="../../_images/b74cb11cb94517924c62fa020b711211d7f052ee8ff95fce2953c9f897079c39.png" />
+<img alt="../../_images/81da4c0970a47053cbd371d5f7dd281a259fe1a118845c86fa8abf6f4165e284.png" src="../../_images/81da4c0970a47053cbd371d5f7dd281a259fe1a118845c86fa8abf6f4165e284.png" />
 </div>
 </div>
 </section>
