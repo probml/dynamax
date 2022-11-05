@@ -1,15 +1,23 @@
 import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
+import chex
+from jaxtyping import Float, Array
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
-from dynamax.hmm.models.initial import StandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions
+from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector, pytree_sum
 from tensorflow_probability.substrates import jax as tfp
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
+
+@chex.dataclass
+class ParamsLinearRegressionHMMEmissions:
+    weights: Float[Array, "state_dim emission_dim input_dim"]
+    biases: Float[Array, "state_dim emission_dim"]
+    covs: Float[Array, "state_dim emission_dim emission_dim"]
 
 
 class LinearRegressionHMMEmissions(HMMEmissions):
@@ -61,9 +69,11 @@ class LinearRegressionHMMEmissions(HMMEmissions):
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
-        params = dict(weights=default(emission_weights, _emission_weights),
-                      biases=default(emission_biases, _emission_biases),
-                      covs=default(emission_covariances, _emission_covs))
+        params = ParamsLinearRegressionHMMEmissions(
+                    weights=default(emission_weights, _emission_weights),
+                    biases=default(emission_biases, _emission_biases),
+                    covs=default(emission_covariances, _emission_covs)
+                    )
         props = dict(weights=ParameterProperties(),
                      biases=ParameterProperties(),
                      covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
@@ -115,10 +125,17 @@ class LinearRegressionHMMEmissions(HMMEmissions):
 
         emission_stats = pytree_sum(batch_stats, axis=0)
         As, bs, Sigmas = vmap(_single_m_step)(emission_stats)
-        params["weights"] = As
-        params["biases"] = bs
-        params["covs"] = Sigmas
+        params.weights = As
+        params.biases = bs
+        params.covs = Sigmas
         return params, m_step_state
+
+
+@chex.dataclass
+class ParamsLinearRegressionHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsLinearRegressionHMMEmissions
 
 
 class LinearRegressionHMM(HMM):
@@ -179,4 +196,4 @@ class LinearRegressionHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_weights=emission_weights, emission_biases=emission_biases, emission_covariances=emission_covariances, emissions=emissions)
-        return params, props
+        return ParamsLinearRegressionHMM(**params), props

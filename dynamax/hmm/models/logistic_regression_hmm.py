@@ -2,11 +2,19 @@ import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
+import chex
+from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
-from dynamax.hmm.models.initial import StandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions
+from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 import optax
+
+
+@chex.dataclass
+class ParamsLogisticRegressionHMMEmissions:
+    weights: Float[Array, "state_dim input_dim"]
+    biases: Float[Array, "state_dim"]
 
 
 class LogisticRegressionHMMEmissions(HMMEmissions):
@@ -61,8 +69,10 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
-        params = dict(weights=default(emission_weights, _emission_weights),
-                      biases=default(emission_biases, _emission_biases))
+        params = ParamsLogisticRegressionHMMEmissions(
+                    weights=default(emission_weights, _emission_weights),
+                    biases=default(emission_biases, _emission_biases)
+                    )
         props = dict(weights=ParameterProperties(),
                      biases=ParameterProperties())
         return params, props
@@ -75,6 +85,13 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
         logits += params['biases'][state]
         return tfd.Bernoulli(logits=logits)
 
+
+@chex.dataclass
+class ParamsLogisticRegressionHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsLogisticRegressionHMMEmissions
+    
 
 class LogisticRegressionHMM(HMM):
     def __init__(self,
@@ -135,4 +152,4 @@ class LogisticRegressionHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_weights=emission_weights, emission_biases=emission_biases, emissions=emissions, inputs=inputs)
-        return params, props
+        return ParamsLogisticRegressionHMM(**params), props

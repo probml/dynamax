@@ -2,12 +2,18 @@ import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
+import chex
+from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
-from dynamax.hmm.models.initial import StandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions
+from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils import pytree_sum
 
+
+@chex.dataclass
+class ParamsPoissonHMMEmissions:
+    rates: Float[Array, "state_dim emission_dim"]
 
 class PoissonHMMEmissions(HMMEmissions):
 
@@ -49,7 +55,7 @@ class PoissonHMMEmissions(HMMEmissions):
             assert jnp.all(emission_rates >= 0)
 
         # Add parameters to the dictionary
-        params = dict(rates=emission_rates)
+        params = ParamsPoissonHMMEmissions(rates=emission_rates)
         props = dict(rates=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
 
@@ -75,9 +81,15 @@ class PoissonHMMEmissions(HMMEmissions):
             emission_stats = pytree_sum(batch_stats, axis=0)
             post_concentration = self.emission_prior_concentration + emission_stats['sum_x']
             post_rate = self.emission_prior_rate + emission_stats['sum_w']
-            params['rates'] = tfd.Gamma(post_concentration, post_rate).mode()
+            params.rates = tfd.Gamma(post_concentration, post_rate).mode()
         return params, m_step_state
 
+
+@chex.dataclass
+class ParamsPoissonHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsPoissonHMMEmissions
 
 class PoissonHMM(HMM):
 
@@ -137,4 +149,4 @@ class PoissonHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_rates=emission_rates)
-        return params, props
+        return ParamsPoissonHMM(**params), props

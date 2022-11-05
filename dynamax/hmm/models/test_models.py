@@ -10,18 +10,6 @@ from dynamax.utils import ensure_array_has_batch_dim, monotonically_increasing
 NUM_TIMESTEPS = 100
 
 
-@chex.dataclass
-class HMMParamsCategorical:
-    num_states: int
-    emission_dim: int
-    num_classes: int
-
-@chex.dataclass
-class HMMParamsCategoricalRegression:
-    num_states: int
-    num_classes: int
-    covariate_dim: int
-
 CONFIGS = [
     (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
     (models.CategoricalHMM, dict(num_states=4, emission_dim=3, num_classes=5), None),

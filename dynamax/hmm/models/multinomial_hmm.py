@@ -2,12 +2,17 @@ import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
+import chex
+from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
-from dynamax.hmm.models.initial import StandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions
+from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils import pytree_sum
 
+@chex.dataclass
+class ParamsMultinomialHMMEmissions:
+    probs: Float[Array, "state_dim emission_dim num_classes"]
 
 class MultinomialHMMEmissions(HMMEmissions):
 
@@ -43,7 +48,7 @@ class MultinomialHMMEmissions(HMMEmissions):
             assert jnp.allclose(emission_probs.sum(axis=2), 1.0)
 
         # Add parameters to the dictionary
-        params = dict(probs=emission_probs)
+        params = ParamsMultinomialHMMEmissions(probs=emission_probs)
         props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
@@ -69,6 +74,11 @@ class MultinomialHMMEmissions(HMMEmissions):
                 self.emission_prior_concentration + emission_stats['sum_x']).mode()
         return params, m_step_state
 
+@chex.dataclass
+class ParamsMultinomialHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsMultinomialHMMEmissions
 
 class MultinomialHMM(HMM):
 
@@ -121,4 +131,4 @@ class MultinomialHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_probs=emission_probs)
-        return params, props
+        return ParamsMultinomialHMM(**params), props
