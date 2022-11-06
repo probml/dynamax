@@ -7,10 +7,10 @@ from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
+
 @chex.dataclass
 class InitialParams:
     probs: Float[Array, "state_dim"]
-
 
 @chex.dataclass
 class TransitionsParams:
