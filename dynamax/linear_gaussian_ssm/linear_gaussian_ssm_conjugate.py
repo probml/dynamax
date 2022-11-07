@@ -115,7 +115,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         )
         return params, m_step_state
 
-    def fit_blocked_gibbs(self, key, sample_size, emissions, inputs=None):
+    def fit_blocked_gibbs(self, key, initial_params, sample_size, emissions, inputs=None):
         """Estimation using blocked-Gibbs sampler."""
         num_timesteps = len(emissions)
 
@@ -192,21 +192,20 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         def one_sample(_params, rng):
             rngs = jr.split(rng, 2)
             # Sample latent states
-            self._make_inference_args = _params
-            l_prior = self.log_prior()
-            ll, states = lgssm_posterior_sample(rngs[0], self._make_inference_args, emissions, inputs)
+            l_prior = self.log_prior(_params)
+            ll, states = lgssm_posterior_sample(rngs[0], self.to_inference_args(_params), emissions, inputs)
             log_probs = l_prior + ll
             # Sample parameters
             _stats = sufficient_stats_from_sample(states)
-            new_param = lgssm_params_sample(rngs[1], _stats)
+            new_param = self.from_inference_args(lgssm_params_sample(rngs[1], _stats))
             return new_param, log_probs
 
         log_probs = []
         sample_of_params = []
         keys = iter(jr.split(key, sample_size))
-        current_params = self._make_inference_args
-        for _ in progress_bar(sample_size):
+        current_params = initial_params
+        for _ in progress_bar(range(sample_size)):
             sample_of_params.append(current_params)
             current_params, loglik = one_sample(current_params, next(keys))
             log_probs.append(loglik)
-        return log_probs, sample_of_params
+        return sample_of_params, log_probs
