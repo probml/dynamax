@@ -8,7 +8,11 @@ from dynamax.distributions import MatrixNormalInverseWishart as MNIW
 from dynamax.distributions import NormalInverseWishart as NIW
 from dynamax.distributions import mniw_posterior_update, niw_posterior_update
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMMoment, lgssm_posterior_sample
-from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
+from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import (LinearGaussianSSM,
+                                                             ParamsLGSSM,
+                                                             ParamsLGSSMInitial,
+                                                             ParamsLGSSMDynamics,
+                                                             ParamsLGSSMEmissions)
 
 
 
@@ -108,10 +112,10 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
 
-        params = dict(
-            initial=dict(mean=m, cov=S),
-            dynamics=dict(weights=F, bias=b, input_weights=B, cov=Q),
-            emissions=dict(weights=H, bias=d, input_weights=D, cov=R)
+        params = ParamsLGSSM(
+            initial=ParamsLGSSMInitial(mean=m, cov=S),
+            dynamics=ParamsLGSSMDynamics(weights=F, bias=b, input_weights=B, cov=Q),
+            emissions=ParamsLGSSMEmissions(weights=H, bias=d, input_weights=D, cov=R)
         )
         return params, m_step_state
 

@@ -21,13 +21,41 @@ from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMMoment, PosteriorLG
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
 
-ParamsLGSSM = Dict
+
+@chex.dataclass
+class ParamsLGSSMInitial:
+    mean: Float[Array, "state_dim"]
+    cov: Float[Array, "state_dim state_dim"]
+
+
+@chex.dataclass
+class ParamsLGSSMDynamics:
+    weights: Float[Array, "state_dim state_dim"]
+    bias: Float[Array, "state_dim"]
+    input_weights: Float[Array, "state_dim input_dim"]
+    cov: Float[Array, "state_dim state_dim"]
+
+
+@chex.dataclass
+class ParamsLGSSMEmissions:
+    weights: Float[Array, "emission_dim state_dim"]
+    bias: Float[Array, "emission_dim"]
+    input_weights: Float[Array, "emission_dim input_dim"]
+    cov: Float[Array, "emission_dim emission_dim"]
+
+
+@chex.dataclass
+class ParamsLGSSM:
+    initial: ParamsLGSSMInitial
+    dynamics: ParamsLGSSMDynamics
+    emissions: ParamsLGSSMEmissions
+
 
 ParamPropsLGSSM = Dict
 
 SuffStatsLGSSM = Any
 
-_zeros_if_none = lambda x, shp: x if x is not None else jnp.zeros(shp)
+_zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
 class LinearGaussianSSM(SSM):
     """
@@ -112,17 +140,23 @@ class LinearGaussianSSM(SSM):
         default = lambda x, x0: x if x is not None else x0
 
         # Create nested dictionary of params
-        params = dict(
-            initial=dict(mean=default(initial_mean, _initial_mean),
-                         cov=default(initial_covariance, _initial_covariance)),
-            dynamics=dict(weights=default(dynamics_weights, _dynamics_weights),
-                          bias=default(dynamics_bias, _dynamics_bias),
-                          input_weights=default(dynamics_input_weights, _dynamics_input_weights),
-                          cov=default(dynamics_covariance, _dynamics_covariance)),
-            emissions=dict(weights=default(emission_weights, _emission_weights),
-                           bias=default(emission_bias, _emission_bias),
-                           input_weights=default(emission_input_weights, _emission_input_weights),
-                           cov=default(emission_covariance, _emission_covariance))
+        params = ParamsLGSSM(
+            initial=ParamsLGSSMInitial(
+                        mean=default(initial_mean, _initial_mean),
+                        cov=default(initial_covariance, _initial_covariance)
+                        ),
+            dynamics=ParamsLGSSMDynamics(
+                        weights=default(dynamics_weights, _dynamics_weights),
+                        bias=default(dynamics_bias, _dynamics_bias),
+                        input_weights=default(dynamics_input_weights, _dynamics_input_weights),
+                        cov=default(dynamics_covariance, _dynamics_covariance)
+                        ),
+            emissions=ParamsLGSSMEmissions(
+                        weights=default(emission_weights, _emission_weights),
+                        bias=default(emission_bias, _emission_bias),
+                        input_weights=default(emission_input_weights, _emission_input_weights),
+                        cov=default(emission_covariance, _emission_covariance)
+                        )
         )
 
         # The keys of param_props must match those of params!
@@ -376,9 +410,9 @@ class LinearGaussianSSM(SSM):
         D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], None)
 
-        params = dict(
-            initial=dict(mean=m, cov=S),
-            dynamics=dict(weights=F, bias=b, input_weights=B, cov=Q),
-            emissions=dict(weights=H, bias=d, input_weights=D, cov=R)
+        params = ParamsLGSSM(
+            initial=ParamsLGSSMInitial(mean=m, cov=S),
+            dynamics=ParamsLGSSMDynamics(weights=F, bias=b, input_weights=B, cov=Q),
+            emissions=ParamsLGSSMEmissions(weights=H, bias=d, input_weights=D, cov=R)
         )
         return params, m_step_state
