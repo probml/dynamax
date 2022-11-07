@@ -1,6 +1,5 @@
 from abc import ABC
 from abc import abstractmethod
-import blackjax
 from fastprogress.fastprogress import progress_bar
 from functools import partial
 import jax.numpy as jnp
