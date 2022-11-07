@@ -7,7 +7,7 @@ from jax import vmap
 import dynamax.hmm.models as models
 from dynamax.utils import ensure_array_has_batch_dim, monotonically_increasing
 
-NUM_TIMESTEPS = 100
+NUM_TIMESTEPS = 50
 
 
 CONFIGS = [
@@ -45,9 +45,9 @@ def test_categorical_hmm_viterbi():
     # From http://en.wikipedia.org/wiki/Viterbi_algorithm:
     hmm = models.CategoricalHMM(num_states=2, emission_dim=1, num_classes=3)
     params, props = hmm.initialize(jr.PRNGKey(0))
-    params['initial']['probs'] = jnp.array([0.6, 0.4])
-    params['transitions']['transition_matrix'] = jnp.array([[0.7, 0.3], [0.4, 0.6]])
-    params['emissions']['probs'] = jnp.array([[0.1, 0.4, 0.5], [0.6, 0.3, 0.1]]).reshape(2, 1, 3)
+    params.initial.probs = jnp.array([0.6, 0.4])
+    params.transitions.transition_matrix = jnp.array([[0.7, 0.3], [0.4, 0.6]])
+    params.emissions.probs = jnp.array([[0.1, 0.4, 0.5], [0.6, 0.3, 0.1]]).reshape(2, 1, 3)
     emissions = jnp.arange(3).reshape(3, 1)
     state_sequence = hmm.most_likely_states(params, emissions)
     assert jnp.allclose(jnp.squeeze(state_sequence), jnp.array([1, 0, 0]))
@@ -61,11 +61,11 @@ def test_gmm_hmm_vs_gmm_diag_hmm(key=jr.PRNGKey(0), num_states=4, num_components
     full_params, _ = full_hmm.initialize(key2)
 
     # Copy over a few params
-    full_params['initial']['probs'] = diag_params['initial']['probs']
-    full_params['transitions']['transition_matrix'] = diag_params['transitions']['transition_matrix']
-    full_params['emissions']['weights'] = diag_params['emissions']['weights']
-    full_params['emissions']['means'] = diag_params['emissions']['means']
-    full_params['emissions']['covs'] = vmap(lambda ss: vmap(lambda s: jnp.diag(s**2))(ss))(diag_params['emissions']['scale_diags'])
+    full_params.initial.probs = diag_params.initial.probs
+    full_params.transitions.transition_matrix = diag_params.transitions.transition_matrix
+    full_params.emissions.weights = diag_params.emissions.weights
+    full_params.emissions.means = diag_params.emissions.means
+    full_params.emissions.covs = vmap(lambda ss: vmap(lambda s: jnp.diag(s**2))(ss))(diag_params.emissions.scale_diags)
 
     states_diag, emissions_diag = diag_hmm.sample(diag_params, key3, NUM_TIMESTEPS)
     states_full, emissions_full = full_hmm.sample(full_params, key3, NUM_TIMESTEPS)
