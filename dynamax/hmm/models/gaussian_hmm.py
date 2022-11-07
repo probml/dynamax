@@ -280,7 +280,7 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if method.lower() == "kmeans":
@@ -381,7 +381,7 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if method.lower() == "kmeans":
@@ -501,7 +501,7 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if method.lower() == "kmeans":
@@ -606,7 +606,7 @@ class GaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -676,7 +676,7 @@ class DiagonalGaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -748,7 +748,7 @@ class SphericalGaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -816,7 +816,7 @@ class SharedCovarianceGaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -887,7 +887,7 @@ class LowRankGaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:

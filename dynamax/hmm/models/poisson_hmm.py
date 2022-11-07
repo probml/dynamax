@@ -137,7 +137,7 @@ class PoissonHMM(HMM):
             emission_rates (array, optional): manually specified emission rates. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
