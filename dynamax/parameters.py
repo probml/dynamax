@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from dataclasses import is_dataclass, replace
+from dataclasses import is_dataclass
 
 import chex
 import jax.numpy as jnp
@@ -19,61 +19,57 @@ def to_unconstrained(params, param_props):
     unconstrained parameters and fixed parameters.
 
     Args:
-        params (dict): (nested) dictionary whose leaf values are DeviceArrays
+        params (dataclass): (nested) dataclass whose leaf values are DeviceArrays containing 
+                              parameter values.
         param_props (dict): matching (nested) dictionary whose leaf values are ParameterProperties
 
     Returns:
-        unc_params (dict): (nested) dictionary whose values are the
-            unconstrainend parameter values, but only for the parameters that
-            are marked trainable in `param_props`.
-        fixed_params (dict): (nested) dictionary whose values are the
-            existing value, but only for the parameters that are marked not
-            trainable in `param_props`.
+        unc_params (dict): (nested) dictionary whose values are the unconstrainend parameter 
+                            values, but only for the parameters that are marked trainable in
+                            `param_props`.
+        params (dataclass): the original `params` input.
     """
-    unc_params, fixed_params = dict(), deepcopy(params)
+    unc_params = dict()
     for k, v in params.items():
         if is_dataclass(v):
-            # unc_params[k], fixed_params_k = to_unconstrained(v, param_props[k])
-            # replace(fixed_params[k], **fixed_params_k)
             unc_params[k], _ = to_unconstrained(v, param_props[k])
         elif param_props[k].trainable:
             unc_params[k] = param_props[k].constrainer.inverse(v)
-        # else:
-        #     fixed_params[k] = v
-    return unc_params, fixed_params
+    return unc_params, params
 
 
-def from_unconstrained(unc_params, fixed_params, param_props):
+def from_unconstrained(unc_params, orig_params, param_props):
     """Convert the unconstrained parameters to constrained form and
-    combine them with the fixed parameters.
+    combine them with the original parameters.
 
     Args:
         unc_params (dict): (nested) dictionary whose leaf values are DeviceArrays
-        fixed_params (dict): (nested) dictionary whose leaf values are DeviceArrays
+        orig_params (dataclass): (nested) dataclasses whose leaf values are DeviceArrays containing
+                             parameter values
         param_props (dict): matching (nested) dictionary whose leaf values are ParameterProperties
 
     Returns:
-        params (dict): combined dictionary of unconstrained and fixed parameters
-            in their natural (constrained) form.
+        params (dataclass): copy of `orig_params` where values have been replaced by the corresponding 
+                             leaf in `unc_params`, if present.
     """
-    params = deepcopy(fixed_params)
+    params = deepcopy(orig_params)
     for k, v in unc_params.items():
         if isinstance(v, dict):
             params = params.replace(
-                **{k: from_unconstrained(unc_params[k], fixed_params[k], param_props[k])}
+                **{k: from_unconstrained(unc_params[k], orig_params[k], param_props[k])}
             )
         else:
             params = params.replace(**{k:param_props[k].constrainer(v)})
     return params
 
 
-def log_det_jac_constrain(unc_params, fixed_params, param_props):
+def log_det_jac_constrain(unc_params, param_props):
     """Log determinant of the Jacobian matrix evaluated at the unconstrained parameters.
     """
     log_det_jac = 0
     for k, v in unc_params.items():
         if isinstance(v, dict):
-            ldj_inc = log_det_jac_constrain(unc_params[k], fixed_params[k], param_props[k])
+            ldj_inc = log_det_jac_constrain(unc_params[k], param_props[k])
             log_det_jac += ldj_inc
         else:
             log_det_jac += param_props[k].constrainer.forward_log_det_jacobian(v)
