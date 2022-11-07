@@ -1,11 +1,14 @@
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, tree_map
+import chex
+from jaxtyping import Float, Array
 
 from dynamax.hmm.models.abstractions import HMM
-from dynamax.hmm.models.initial import StandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions
-from dynamax.hmm.models.linreg_hmm import LinearRegressionHMMEmissions
+from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
+from dynamax.hmm.models.linreg_hmm import (LinearRegressionHMMEmissions,
+                                           ParamsLinearRegressionHMMEmissions)
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
 
@@ -57,13 +60,22 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
-        params = dict(weights=default(emission_weights, _emission_weights),
-                      biases=default(emission_biases, _emission_biases),
-                      covs=default(emission_covariances, _emission_covs))
+        params = ParamsLinearRegressionHMMEmissions(
+                    weights=default(emission_weights, _emission_weights),
+                    biases=default(emission_biases, _emission_biases),
+                    covs=default(emission_covariances, _emission_covs)
+                    )
         props = dict(weights=ParameterProperties(),
                      biases=ParameterProperties(),
                      covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
+
+
+@chex.dataclass
+class ParamsLinearAutoregressiveHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsLinearRegressionHMMEmissions
 
 
 class LinearAutoregressiveHMM(HMM):
@@ -117,7 +129,7 @@ class LinearAutoregressiveHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -129,7 +141,7 @@ class LinearAutoregressiveHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_weights=emission_weights, emission_biases=emission_biases, emission_covariances=emission_covariances, emissions=emissions)
-        return params, props
+        return ParamsLinearAutoregressiveHMM(**params), props
 
     def sample(self, params, key, num_timesteps, prev_emissions=None):
         """
