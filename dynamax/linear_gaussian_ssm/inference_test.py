@@ -53,12 +53,12 @@ def test_kalman(num_timesteps=5, seed=0):
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
     params, _ = lgssm.initialize(init_key)
 
-    params['initial']['mean'] = mu0
-    params['initial']['cov'] = Sigma0
-    params['dynamics']['weights'] = F
-    params['dynamics']['cov'] = Q
-    params['emissions']['weights'] = H
-    params['emissions']['cov'] = R
+    params.initial.mean = mu0
+    params.initial.cov = Sigma0
+    params.dynamics.weights = F
+    params.dynamics.cov = Q
+    params.emissions.weights = H
+    params.emissions.cov = R
 
     # Sample data and compute posterior
     _, emissions = lgssm.sample(params, sample_key, num_timesteps)
@@ -99,12 +99,12 @@ def test_posterior_sampler():
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
     params, _ = lgssm.initialize(key)
 
-    params['initial']['mean'] = mu0
-    params['initial']['cov'] = Sigma0
-    params['dynamics']['weights'] = F
-    params['dynamics']['cov'] = Q
-    params['emissions']['weights'] = H
-    params['emissions']['cov'] = R
+    params.initial.mean = mu0
+    params.initial.cov = Sigma0
+    params.dynamics.weights = F
+    params.dynamics.cov = Q
+    params.emissions.weights = H
+    params.emissions.cov = R
 
     # Generate true observation
     sample_key, key = jr.split(key)
