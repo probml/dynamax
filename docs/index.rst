@@ -12,15 +12,15 @@ It has code for inference (state estimation) and learning (parameter estimation)
 in a variety of SSMs, including:
 
 - Hidden Markov Models (HMMs)
-- Autoregressive Hidden Markov Models (AR-HMMs)
 - Linear Gaussian State Space Models (aka Linear Dynamical Systems)
 - Nonlinear Gaussian State Space Models
+- Generalized Gaussian State Space Models (with non-Gaussian emission models)
 
 The library consists of a set of core, functionally pure, low-level inference algorithms,
 as well as a set of model classes which provide a more user-friendly, object-oriented interface.
 It is compatible with other libraries in the JAX ecosystem,
-such as optax_ (useful for estimating parameters using stochastic gradient descent),
-and Blackjax_ (useful for computing the posterior using Hamiltonian Monte Carlo (HMC)
+such as optax_ (used for estimating parameters using stochastic gradient descent),
+and Blackjax_ (used for computing the parameter posterior using Hamiltonian Monte Carlo (HMC)
 or sequential Monte Carlo (SMC)).
 
 Installation and Testing
@@ -121,7 +121,7 @@ with an LGSSM smoother (aka Kalman smoother).
    import jax.numpy as jnp
    import jax.random as jr
    import matplotlib.pyplot as plt
-   from dynamax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_smoother
+   from dynamax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_smoother # OLD API!
 
    key = jr.PRNGKey(0)
    state_dim = 1
@@ -218,8 +218,10 @@ Notebooks
 
    notebooks/linear_gaussian_ssm/kf_tracking.ipynb
    notebooks/linear_gaussian_ssm/kf_linreg.ipynb
-   notebooks/linear_gaussian_ssm/lgssm_learning.ipynb
    notebooks/linear_gaussian_ssm/lgssm_parallel_inference.ipynb
+   notebooks/linear_gaussian_ssm/lgssm_learning.ipynb
+   notebooks/linear_gaussian_ssm/lgssm_hmc.ipynb
+
 
 
 .. toctree::

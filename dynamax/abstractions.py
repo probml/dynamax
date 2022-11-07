@@ -136,8 +136,7 @@ class SSM(ABC):
         return 0.0
 
     def fit_em(self, params, props, emissions, inputs=None, num_iters=50, verbose=True):
-        """Fit this HMM with Expectation-Maximization (EM).
-        """
+        """Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM)."""
         # Make sure the emissions and inputs have batch dimensions
         batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
         batch_inputs = ensure_array_has_batch_dim(inputs, self.inputs_shape)
@@ -168,7 +167,8 @@ class SSM(ABC):
                 num_epochs=50,
                 shuffle=False,
                 key=jr.PRNGKey(0)):
-        """
+        """Compute parameter MLE/ MAP estimate using Stochastic gradient descent (SGD).
+
         Fit this HMM by running SGD on the marginal log likelihood.
         Note that batch_emissions is initially of shape (N,T)
         where N is the number of independent sequences and
@@ -213,58 +213,3 @@ class SSM(ABC):
 
         params = from_unconstrained(unc_params, fixed_params, param_props)
         return params, losses
-
-    def fit_hmc(self,
-                initial_params,
-                param_props,
-                key,
-                num_samples,
-                emissions,
-                inputs=None,
-                warmup_steps=100,
-                num_integration_steps=30,
-                verbose=True):
-        """Sample parameters of the model using HMC."""
-        # Make sure the emissions and inputs have batch dimensions
-        batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
-        batch_inputs = ensure_array_has_batch_dim(inputs, self.inputs_shape)
-
-        initial_unc_params, fixed_params = to_unconstrained(initial_params, param_props)
-
-        # The log likelihood that the HMC samples from
-        warn("HMC is not currently computing logdets of the constrainer jacobians!")
-        def _logprob(unc_params):
-            params = from_unconstrained(unc_params, fixed_params, param_props)
-            batch_lls = vmap(partial(self.marginal_log_prob, params))(batch_emissions, batch_inputs)
-            lp = self.log_prior(params) + batch_lls.sum()
-            # TODO Correct for the log determinant of the jacobian
-            return lp
-
-        # Initialize the HMC sampler using window_adaptation
-        warmup = blackjax.window_adaptation(blackjax.hmc,
-                                            _logprob,
-                                            num_steps=warmup_steps,
-                                            num_integration_steps=num_integration_steps,
-                                            progress_bar=verbose)
-        init_key, key = jr.split(key)
-        hmc_initial_state, hmc_kernel, _ = warmup.run(init_key, initial_unc_params)
-
-        @jit
-        def hmc_step(hmc_state, step_key):
-            next_hmc_state, _ = hmc_kernel(step_key, hmc_state)
-            params = from_unconstrained(hmc_state.position, fixed_params, param_props)
-            return next_hmc_state, params
-
-        # Start sampling
-        log_probs = []
-        samples = []
-        hmc_state = hmc_initial_state
-        pbar = progress_bar(range(num_samples)) if verbose else range(num_samples)
-        for _ in pbar:
-            step_key, key = jr.split(key)
-            hmc_state, params = hmc_step(hmc_state, step_key)
-            log_probs.append(-hmc_state.potential_energy)
-            samples.append(params)
-
-        # Combine the samples into a single pytree
-        return pytree_stack(samples), jnp.array(log_probs)

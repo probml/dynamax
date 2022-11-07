@@ -8,6 +8,4 @@ matplotlib
 seaborn
 flax
 scikit-learn
-blackjax
-jaxopt
 jaxtyping
