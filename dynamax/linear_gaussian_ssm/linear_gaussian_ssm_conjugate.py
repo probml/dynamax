@@ -9,6 +9,7 @@ from dynamax.distributions import NormalInverseWishart as NIW
 from dynamax.distributions import mniw_posterior_update, niw_posterior_update
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMMoment, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
+from dynamax.utils import pytree_stack
 
 
 
@@ -138,7 +139,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             sum_zpxnT = jnp.block([[xp.T @ xn], [up.T @ xn]])
             sum_xnxnT = xn.T @ xn
             dynamics_stats = (sum_zpzpT, sum_zpxnT, sum_xnxnT, num_timesteps - 1)
-            if not self._db_indicator:
+            if not self.has_dynamics_bias:
                 dynamics_stats = (sum_zpzpT[:-1, :-1], sum_zpxnT[:-1, :], sum_xnxnT,
                                   num_timesteps - 1)
 
@@ -148,7 +149,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             sum_zyT = jnp.block([[x.T @ y], [u.T @ y]])
             sum_yyT = y.T @ y
             emission_stats = (sum_zzT, sum_zyT, sum_yyT, num_timesteps)
-            if not self._db_indicator:
+            if not self.has_emissions_bias:
                 emission_stats = (sum_zzT[:-1, :-1], sum_zyT[:-1, :], sum_yyT, num_timesteps)
 
             return init_stats, dynamics_stats, emission_stats
@@ -167,23 +168,23 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             dynamics_posterior = mniw_posterior_update(self.dynamics_prior, dynamics_stats)
             Q, FB = dynamics_posterior.sample(seed=next(rngs))
             F = FB[:, :self.state_dim]
-            B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self._db_indicator \
+            B, b = (FB[:, self.state_dim:-1], FB[:, -1]) if self.has_dynamics_bias \
                 else (FB[:, self.state_dim:], jnp.zeros(self.state_dim))
 
             # Sample the emission params
             emission_posterior = mniw_posterior_update(self.emission_prior, emission_stats)
             R, HD = emission_posterior.sample(seed=next(rngs))
             H = HD[:, :self.state_dim]
-            D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self._eb_indicator \
+            D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
                 else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
 
             return ParamsLGSSMMoment(initial_mean=m,
                                initial_covariance=S,
-                               dynamics_matrix=F,
+                               dynamics_weights=F,
                                dynamics_input_weights=B,
                                dynamics_bias=b,
                                dynamics_covariance=Q,
-                               emission_matrix=H,
+                               emission_weights=H,
                                emission_input_weights=D,
                                emission_bias=d,
                                emission_covariance=R)
@@ -192,20 +193,16 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         def one_sample(_params, rng):
             rngs = jr.split(rng, 2)
             # Sample latent states
-            l_prior = self.log_prior(_params)
-            ll, states = lgssm_posterior_sample(rngs[0], self.to_inference_args(_params), emissions, inputs)
-            log_probs = l_prior + ll
+            states = lgssm_posterior_sample(rngs[0], self.to_inference_args(_params), emissions, inputs)
             # Sample parameters
             _stats = sufficient_stats_from_sample(states)
             new_param = self.from_inference_args(lgssm_params_sample(rngs[1], _stats))
-            return new_param, log_probs
+            return new_param
 
-        log_probs = []
         sample_of_params = []
         keys = iter(jr.split(key, sample_size))
         current_params = initial_params
         for _ in progress_bar(range(sample_size)):
             sample_of_params.append(current_params)
-            current_params, loglik = one_sample(current_params, next(keys))
-            log_probs.append(loglik)
-        return sample_of_params, log_probs
+            current_params = one_sample(current_params, next(keys))
+        return pytree_stack(sample_of_params)
