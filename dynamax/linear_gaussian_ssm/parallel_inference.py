@@ -4,23 +4,28 @@
 from jax import numpy as jnp
 from jax import scipy as jsc
 from jax import vmap, lax
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+from jaxtyping import Array, Float, PyTree, Bool, Int, Num
+from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
+import chex
 
-from dynamax.containers import GSSMPosterior
+from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed, ParamsLGSSMMoment
 
 def make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
 
     def _first_filtering_element(params, y):
-        F = params.dynamics_matrix
-        H = params.emission_matrix
+        F = params.dynamics_weights
+        H = params.emission_weights
         Q = params.dynamics_covariance
         R = params.emission_covariance
+        P0 = params.initial_covariance
         
         S = H @ Q @ H.T + R
         CF, low = jsc.linalg.cho_factor(S)
 
-        m1 = F @ params.initial_mean
-        P1 = F @ params.initial_covariance @ F.T + Q
+        m1 = params.initial_mean
+        P1 = params.initial_covariance
         S1 = H @ P1 @ H.T + R
         K1 = jsc.linalg.solve(S1, H @ P1, assume_a='pos').T
 
@@ -30,12 +35,15 @@ def make_associative_filtering_elements(params, emissions):
 
         eta = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), y)
         J = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), H @ F)
-        return A, b, C, J, eta
+
+        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=H @ P0 @ H.T + R).log_prob(y)
+
+        return A, b, C, J, eta, logZ
 
 
     def _generic_filtering_element(params, y):
-        F = params.dynamics_matrix
-        H = params.emission_matrix
+        F = params.dynamics_weights
+        H = params.emission_weights
         Q = params.dynamics_covariance
         R = params.emission_covariance
         
@@ -48,7 +56,10 @@ def make_associative_filtering_elements(params, emissions):
 
         eta = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), y)
         J = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), H @ F)
-        return A, b, C, J, eta
+
+        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=S).log_prob(y)
+
+        return A, b, C, J, eta, logZ
 
     first_elems = _first_filtering_element(params, emissions[0])
     generic_elems = vmap(_generic_filtering_element, (None, 0))(params, emissions[1:])
@@ -56,21 +67,23 @@ def make_associative_filtering_elements(params, emissions):
                            for first_elm, gen_elm in zip(first_elems, generic_elems))
     return combined_elems
 
-def lgssm_filter(params, emissions):
+def lgssm_filter(
+    params: ParamsLGSSMMoment,
+    emissions: Float[Array, "ntime emission_dim"]
+) -> PosteriorLGSSMFiltered:
     """A parallel version of the lgssm filtering algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
     
     Note: This function does not yet handle `inputs` to the system.
     """
-    #TODO: Add marginal loglikelihood calculation.
     #TODO: Add input handling.
     initial_elements = make_associative_filtering_elements(params, emissions)
 
     @vmap
     def filtering_operator(elem1, elem2):
-        A1, b1, C1, J1, eta1 = elem1
-        A2, b2, C2, J2, eta2 = elem2
+        A1, b1, C1, J1, eta1, logZ1 = elem1
+        A2, b2, C2, J2, eta2, logZ2 = elem2
         dim = A1.shape[0]
         I = jnp.eye(dim)  
 
@@ -86,12 +99,22 @@ def lgssm_filter(params, emissions):
         eta = temp @ (eta2 - J2 @ b1) + eta1
         J = temp @ J2 @ A1 + J1
 
-        return A, b, C, J, eta
+        # mu = jsc.linalg.solve(J2, eta2)
+        # t2 = - eta2 @ mu + (b1 - mu) @ jsc.linalg.solve(I_J2C1, (J2 @ b1 - eta2))
+        
+        mu = jnp.linalg.solve(C1, b1)
+        t1 = (b1 @ mu - (eta2 + mu) @ jnp.linalg.solve(I_C1J2, C1 @ eta2 + b1))
 
-    _, filtered_means, filtered_covs, *_ = lax.associative_scan(
+        logZ = (logZ1 + logZ2 + 0.5 * jnp.linalg.slogdet(I_C1J2)[1] + 0.5 * t1)
+
+        return A, b, C, J, eta, logZ
+
+    _, filtered_means, filtered_covs, _, _, logZ = lax.associative_scan(
                                                 filtering_operator, initial_elements
                                                 )
-    return GSSMPosterior(filtered_means=filtered_means, filtered_covariances=filtered_covs)
+
+    return PosteriorLGSSMFiltered(marginal_loglik=-logZ[-1],
+        filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 
@@ -102,8 +125,8 @@ def make_associative_smoothing_elements(params, filtered_means, filtered_covaria
         return jnp.zeros_like(P), m, P
 
     def _generic_smoothing_element(params, m, P):
-        F = params.dynamics_matrix
-        H = params.emission_matrix
+        F = params.dynamics_weights
+        H = params.emission_weights
         Q = params.dynamics_covariance
         R = params.emission_covariance
 
@@ -123,7 +146,10 @@ def make_associative_smoothing_elements(params, filtered_means, filtered_covaria
     return combined_elems
 
 
-def lgssm_smoother(params, emissions):
+def lgssm_smoother(
+    params: ParamsLGSSMMoment,
+    emissions: Float[Array, "ntime emission_dim"]
+) -> PosteriorLGSSMSmoothed:
     """A parallel version of the lgssm smoothing algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
@@ -149,7 +175,8 @@ def lgssm_smoother(params, emissions):
     _, smoothed_means, smoothed_covs, *_ = lax.associative_scan(
                                                 smoothing_operator, initial_elements, reverse=True
                                                 )
-    return GSSMPosterior(
+    return PosteriorLGSSMSmoothed(
+        marginal_loglik=filtered_posterior.marginal_loglik,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
         smoothed_means=smoothed_means,

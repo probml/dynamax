@@ -1,10 +1,11 @@
-from functools import partial
+from functools import partial, wraps
 import jax.numpy as jnp
 import jax.random as jr
 from jax import jit
 from jax import vmap
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
 import tensorflow_probability.substrates.jax.bijectors as tfb
+import inspect
 
 # From https://www.tensorflow.org/probability/examples/
 # TensorFlow_Probability_Case_Study_Covariance_Estimation
@@ -46,16 +47,19 @@ def monotonically_increasing(x, atol=0, rtol=0):
     return jnp.all(jnp.diff(x) >= -thresh)
 
 
-def add_batch_dim(pytree):
-    return tree_map(partial(jnp.expand_dims, axis=0), pytree)
-
-
 def pytree_len(pytree):
-    return len(tree_leaves(pytree)[0])
+    if pytree is None:
+        return 0
+    else:
+        return len(tree_leaves(pytree)[0])
 
 
 def pytree_sum(pytree, axis=None, keepdims=None, where=None):
     return tree_map(partial(jnp.sum, axis=axis, keepdims=keepdims, where=where), pytree)
+
+
+def pytree_slice(pytree, slc):
+    return tree_map(lambda x: x[slc], pytree)
 
 
 def pytree_stack(pytrees):
@@ -65,6 +69,7 @@ def pytree_stack(pytrees):
 
 def random_rotation(seed, n, theta=None):
     """Helper function to create a rotating linear system.
+    
     Args:
         seed (jax.random.PRNGKey): JAX random seed.
         n (int): Dimension of the rotation matrix.
@@ -88,3 +93,53 @@ def random_rotation(seed, n, theta=None):
     out = out.at[:2, :2].set(rot)
     q = jnp.linalg.qr(jr.uniform(key2, shape=(n, n)))[0]
     return q.dot(out).dot(q.T)
+
+
+def ensure_array_has_batch_dim(tree, instance_shapes):
+    """Add a batch dimension to a PyTree, if necessary.
+
+    Example: If `tree` is an array of shape (T, D) where `T` is
+    the number of time steps and `D` is the emission dimension,
+    and if `instance_shapes` is a tuple (D,), then the return
+    value is the array with an added batch dimension, with
+    shape (1, T, D).
+
+    Example: If `tree` is an array of shape (N,TD) and
+    `instance_shapes` is a tuple (D,), then the return
+    value is simply `tree`, since it already has a batch
+    dimension (of length N).
+
+    Example: If `tree = (A, B)` is a tuple of arrays with
+    `A.shape = (100,2)` `B.shape = (100,4)`, and
+    `instances_shapes = ((2,), (4,))`, then the return value
+    is equivalent to `(jnp.expand_dims(A, 0), jnp.expand_dims(B, 0))`.
+
+    Args:
+        tree (_type_): PyTree whose leaves' shapes are either
+            (batch, length) + instance_shape or (length,) + instance_shape.
+            If the latter, this function adds a batch dimension of 1 to
+            each leaf node.
+
+        instance_shape (_type_): matching PyTree where the "leaves" are
+            tuples of integers specifying the shape of one "instance" or
+            entry in the array.
+    """
+    def _expand_dim(x, shp):
+        ndim = len(shp)
+        assert x.ndim > ndim, "array does not match expected shape!"
+        assert all([(d1 == d2) for d1, d2 in zip(x.shape[-ndim:], shp)]), \
+            "array does not match expected shape!"
+
+        if x.ndim == ndim + 2:
+            # x already has a batch dim
+            return x
+        elif x.ndim == ndim + 1:
+            # x has a leading time dimension but no batch dim
+            return jnp.expand_dims(x, 0)
+        else:
+            raise Exception("array has too many dimensions!")
+
+    if tree is None:
+        return None
+    else:
+        return tree_map(_expand_dim, tree, instance_shapes)
