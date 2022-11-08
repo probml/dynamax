@@ -3,12 +3,17 @@ import jax.random as jr
 from jax.nn import one_hot
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
+import chex
+from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
-from dynamax.hmm.models.initial import StandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions
+from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils import pytree_sum
 
+@chex.dataclass
+class ParamsCategoricalHMMEmissions:
+    probs: Float[Array, "state_dim emission_dim"]
 
 class CategoricalHMMEmissions(HMMEmissions):
 
@@ -54,7 +59,7 @@ class CategoricalHMMEmissions(HMMEmissions):
             emission_probs (array, optional): manually specified emission probabilities. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         # Initialize the emission probabilities
@@ -72,7 +77,7 @@ class CategoricalHMMEmissions(HMMEmissions):
             assert jnp.allclose(emission_probs.sum(axis=2), 1.0)
 
         # Add parameters to the dictionary
-        params = dict(probs=emission_probs)
+        params = ParamsCategoricalHMMEmissions(probs=emission_probs)
         props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
@@ -87,10 +92,16 @@ class CategoricalHMMEmissions(HMMEmissions):
     def m_step(self, params, props, batch_stats, m_step_state):
         if props['probs'].trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
-            params['probs'] = tfd.Dirichlet(
+            params.probs = tfd.Dirichlet(
                 self.emission_prior_concentration + emission_stats['sum_x']).mode()
         return params, m_step_state
 
+
+@chex.dataclass
+class ParamsCategoricalHMM:
+    initial: ParamsStandardHMMTransitions
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsCategoricalHMMEmissions
 
 class CategoricalHMM(HMM):
     def __init__(self, num_states: int,
@@ -126,7 +137,7 @@ class CategoricalHMM(HMM):
             emission_probs (array, optional): manually specified emission probabilities. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -138,4 +149,4 @@ class CategoricalHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_probs=emission_probs)
-        return params, props
+        return ParamsCategoricalHMM(**params), props

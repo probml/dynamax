@@ -3,6 +3,9 @@ import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
+import chex
+from jaxtyping import Float, Array
+import optax
 from dynamax.parameters import ParameterProperties
 from dynamax.distributions import InverseWishart
 from dynamax.distributions import NormalInverseGamma
@@ -10,10 +13,15 @@ from dynamax.distributions import NormalInverseWishart
 from dynamax.distributions import nig_posterior_update
 from dynamax.distributions import niw_posterior_update
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
-from dynamax.hmm.models.initial import StandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions
+from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils import PSDToRealBijector, pytree_sum
-import optax
+
+
+@chex.dataclass
+class ParamsGaussianHMMEmissions:
+    means: Float[Array, "state_dim emission_dim"]
+    covs: Float[Array, "state_dim emission_dim emission_dim"]
 
 
 class GaussianHMMEmissions(HMMEmissions):
@@ -78,8 +86,10 @@ class GaussianHMMEmissions(HMMEmissions):
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
-        params = dict(means=default(emission_means, _emission_means),
-                      covs=default(emission_covariances, _emission_covs))
+        params = ParamsGaussianHMMEmissions(
+                    means=default(emission_means, _emission_means),
+                    covs=default(emission_covariances, _emission_covs)
+                    )
         props = dict(means=ParameterProperties(),
                      covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
@@ -108,7 +118,7 @@ class GaussianHMMEmissions(HMMEmissions):
                 return niw_posterior.mode()
 
             emission_stats = pytree_sum(batch_stats, axis=0)
-            params['covs'], params['means'] = vmap(_single_m_step)(emission_stats)
+            params.covs, params.means = vmap(_single_m_step)(emission_stats)
 
         elif props['covs'].trainable and not props['means'].trainable:
             raise NotImplementedError("GaussianHMM.fit_em() does not yet support fixed means and trainable covariance")
@@ -117,6 +127,12 @@ class GaussianHMMEmissions(HMMEmissions):
             raise NotImplementedError("GaussianHMM.fit_em() does not yet support fixed covariance and trainable means")
 
         return params, m_step_state
+
+
+@chex.dataclass
+class ParamsDiagonalGaussianHMMEmissions:
+    means: Float[Array, "state_dim emission_dim"]
+    scale_diags: Float[Array, "state_dim emission_dim"]
 
 
 class DiagonalGaussianHMMEmissions(HMMEmissions):
@@ -166,8 +182,10 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
-        params = dict(means=default(emission_means, _emission_means),
-                      scale_diags=default(emission_scale_diags, _emission_scale_diags))
+        params = ParamsDiagonalGaussianHMMEmissions(
+                    means=default(emission_means, _emission_means),
+                    scale_diags=default(emission_scale_diags, _emission_scale_diags)
+                    )
         props = dict(means=ParameterProperties(),
                      scale_diags=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
@@ -205,9 +223,15 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
 
         emission_stats = pytree_sum(batch_stats, axis=0)
         vars, means = vmap(_single_m_step)(emission_stats)
-        params['scale_diags'] = jnp.sqrt(vars)
-        params['means'] = means
+        params.scale_diags = jnp.sqrt(vars)
+        params.means = means
         return params, m_step_state
+
+
+@chex.dataclass
+class ParamsSphericalGaussianHMMEmissions:
+    means: Float[Array, "state_dim emission_dim"]
+    scales: Float[Array, "state_dim"] 
 
 
 class SphericalGaussianHMMEmissions(HMMEmissions):
@@ -256,7 +280,7 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if method.lower() == "kmeans":
@@ -281,8 +305,10 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
-        params = dict(means=default(emission_means, _emission_means),
-                      scales=default(emission_scales, _emission_scales))
+        params = ParamsSphericalGaussianHMMEmissions(
+                    means=default(emission_means, _emission_means),
+                    scales=default(emission_scales, _emission_scales)
+                    )
         props = dict(means=ParameterProperties(),
                      scales=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
@@ -299,6 +325,12 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
         lp += tfd.Gamma(self.emission_var_concentration, self.emission_var_rate)\
             .log_prob(params['scales']**2).sum()
         return lp
+
+
+@chex.dataclass
+class ParamsSharedCovarianceGaussianHMMEmissions:
+    means: Float[Array, "state_dim emission_dim"]
+    cov: Float[Array, "emission_dim emission_dim"]
 
 
 class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
@@ -349,7 +381,7 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if method.lower() == "kmeans":
@@ -373,8 +405,10 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
-        params = dict(means=default(emission_means, _emission_means),
-                      cov=default(emission_covariance, _emission_cov))
+        params = ParamsSharedCovarianceGaussianHMMEmissions(
+                    means=default(emission_means, _emission_means),
+                    cov=default(emission_covariance, _emission_cov)
+                    )
         props = dict(means=ParameterProperties(),
                      cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
@@ -418,9 +452,16 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         sum_w = emission_stats['sum_w'] + kappa0
         sum_x = emission_stats['sum_x'] + kappa0 * mu0
         sum_xxT = emission_stats['sum_xxT'] + Psi0 + kappa0 * jnp.outer(mu0, mu0)
-        params['means'] = jnp.einsum('ki,k->ki', sum_x, 1/sum_w)
-        params['cov'] = (sum_xxT - jnp.einsum('ki,kj,k->ij', sum_x, sum_x, 1/sum_w)) / sum_T
+        params.means = jnp.einsum('ki,k->ki', sum_x, 1/sum_w)
+        params.cov = (sum_xxT - jnp.einsum('ki,kj,k->ij', sum_x, sum_x, 1/sum_w)) / sum_T
         return params, m_step_state
+
+
+@chex.dataclass
+class ParamsLowRankGaussianHMMEmissions:
+    means: Float[Array, "state_dim emission_dim"]
+    cov_diag_factors: Float[Array, "state_dim emission_dim"]
+    cov_low_rank_factors: Float[Array, "state_dim emission_dim emission_rank"]
 
 
 class LowRankGaussianHMMEmissions(HMMEmissions):
@@ -460,7 +501,7 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if method.lower() == "kmeans":
@@ -485,9 +526,11 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
 
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
-        params = dict(means=default(emission_means, _emission_means),
-                      cov_diag_factors=default(emission_cov_diag_factors, _emission_cov_diag_factors),
-                      cov_low_rank_factors=default(emission_cov_low_rank_factors, _emission_cov_low_rank_factors))
+        params = ParamsLowRankGaussianHMMEmissions(
+                    means=default(emission_means, _emission_means),
+                    cov_diag_factors=default(emission_cov_diag_factors, _emission_cov_diag_factors),
+                    cov_low_rank_factors=default(emission_cov_low_rank_factors, _emission_cov_low_rank_factors)
+                    )
         props = dict(means=ParameterProperties(),
                      cov_diag_factors=ParameterProperties(constrainer=tfb.Softplus()),
                      cov_low_rank_factors=ParameterProperties())
@@ -510,7 +553,14 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
         return lp
 
 
-# Now for the models
+### Now for the models ###
+@chex.dataclass
+class ParamsGaussianHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsGaussianHMMEmissions
+
+
 class GaussianHMM(HMM):
     def __init__(self, num_states: int,
                  emission_dim: int,
@@ -556,7 +606,7 @@ class GaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -568,7 +618,14 @@ class GaussianHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_covariances=emission_covariances, emissions=emissions)
-        return params, props
+        return ParamsGaussianHMM(**params), props
+
+
+@chex.dataclass
+class ParamsDiagonalGaussianHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsDiagonalGaussianHMMEmissions
 
 
 class DiagonalGaussianHMM(HMM):
@@ -619,7 +676,7 @@ class DiagonalGaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -631,7 +688,14 @@ class DiagonalGaussianHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_scale_diags=emission_scale_diags, emissions=emissions)
-        return params, props
+        return ParamsDiagonalGaussianHMM(**params), props
+
+
+@chex.dataclass
+class ParamsSphericalGaussianHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsSphericalGaussianHMMEmissions
 
 
 class SphericalGaussianHMM(HMM):
@@ -684,7 +748,7 @@ class SphericalGaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -696,7 +760,14 @@ class SphericalGaussianHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_scales=emission_scales, emissions=emissions)
-        return params, props
+        return ParamsSphericalGaussianHMM(**params), props
+
+
+@chex.dataclass
+class ParamsSharedCovarianceGaussianHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsSharedCovarianceGaussianHMMEmissions
 
 
 class SharedCovarianceGaussianHMM(HMM):
@@ -745,7 +816,7 @@ class SharedCovarianceGaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -757,7 +828,14 @@ class SharedCovarianceGaussianHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_covariance=emission_covariance, emissions=emissions)
-        return params, props
+        return ParamsSharedCovarianceGaussianHMM(**params), props
+
+
+@chex.dataclass
+class ParamsLowRankGaussianHMM:
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsLowRankGaussianHMMEmissions
 
 
 class LowRankGaussianHMM(HMM):
@@ -809,7 +887,7 @@ class LowRankGaussianHMM(HMM):
             emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
         if key is not None:
@@ -821,4 +899,4 @@ class LowRankGaussianHMM(HMM):
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_cov_diag_factors=emission_cov_diag_factors, emission_cov_low_rank_factors=emission_cov_low_rank_factors, emissions=emissions)
-        return params, props
+        return ParamsLowRankGaussianHMM(**params), props
