@@ -228,17 +228,23 @@ class LinearGaussianSSM(SSM):
         params: ParamsLGSSMMoment
     ) -> ParamsLGSSM:
         """Convert params from inference container to dict."""
-        return dict(
-            initial=dict(mean=params.initial_mean,
-                         cov=params.initial_covariance),
-            dynamics=dict(weights=params.dynamics_weights,
-                          bias=params.dynamics_bias,
-                          input_weights=params.dynamics_input_weights,
-                          cov=params.dynamics_covariance),
-            emissions=dict(weights=params.emission_weights,
-                           bias=params.emission_bias,
-                           input_weights=params.emission_input_weights,
-                           cov=params.emission_covariance)
+        return ParamsLGSSM(
+            initial=ParamsLGSSMInitial(
+                        mean=params.initial_mean,
+                        cov=params.initial_covariance
+                        ),
+            dynamics=ParamsLGSSMDynamics(
+                        weights=params.dynamics_weights,
+                        bias=params.dynamics_bias,
+                        input_weights=params.dynamics_input_weights,
+                        cov=params.dynamics_covariance
+                        ),
+            emissions=ParamsLGSSMEmissions(
+                        weights=params.emission_weights,
+                        bias=params.emission_bias,
+                        input_weights=params.emission_input_weights,
+                        cov=params.emission_covariance
+                        )
             )
        
 
