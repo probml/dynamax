@@ -163,7 +163,7 @@ def iterated_extended_kalman_filter(
 def extended_kalman_smoother(
     params: ParamsNLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
-    filtered_posterior: Optional[PosteriorNLGSSMFiltered] = None, 
+    filtered_posterior: Optional[PosteriorNLGSSMFiltered] = None,
     inputs: Optional[Float[Array, "ntime input_dim"]] = None
 ) -> PosteriorNLGSSMSmoothed:
     """Run an extended Kalman (RTS) smoother.
@@ -184,7 +184,7 @@ def extended_kalman_smoother(
     # Get filtered posterior
     if filtered_posterior is None:
         filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior
 
     # Dynamics and emission functions and their Jacobians
     f = params.dynamics_function

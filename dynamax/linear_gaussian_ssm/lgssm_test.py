@@ -1,6 +1,5 @@
 import pytest
 from datetime import datetime
-import jax.numpy as jnp
 import jax.random as jr
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm_conjugate import LinearGaussianConjugateSSM

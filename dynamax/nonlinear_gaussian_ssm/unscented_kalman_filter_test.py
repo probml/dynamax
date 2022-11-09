@@ -14,9 +14,9 @@ def test_ukf_nonlinear(key=0, num_timesteps=15):
     hyperparams = UKFHyperParams()
 
     # Run UKF from sarkka-jax library
-    means_ukf, covs_ukf = ukf(*(nlgssm_args.values()), *(hyperparams.to_tuple()), emissions)
+    means_ukf, covs_ukf = ukf(*nlgssm_args, *hyperparams, emissions)
     # Run UKS from sarkka-jax library
-    means_uks, covs_uks = uks(*(nlgssm_args.values()), *(hyperparams.to_tuple()), emissions)
+    means_uks, covs_uks = uks(*nlgssm_args, *hyperparams, emissions)
     # Run UKS from dynamax
     uks_post = unscented_kalman_smoother(nlgssm_args, emissions, hyperparams)
 

@@ -72,20 +72,20 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         Returns:
             lp (Scalar): log prior probability.
         """
-        lp = self.initial_prior.log_prob((params['initial']['cov'], params['initial']['mean']))
+        lp = self.initial_prior.log_prob((params.initial.cov, params.initial.mean))
 
         # dynamics
-        dynamics_bias = params['dynamics']['bias'] if self.has_dynamics_bias else jnp.zeros((self.state_dim, 0))
-        dynamics_matrix = jnp.column_stack((params['dynamics']['weights'],
-                                            params['dynamics']['input_weights'],
+        dynamics_bias = params.dynamics.bias if self.has_dynamics_bias else jnp.zeros((self.state_dim, 0))
+        dynamics_matrix = jnp.column_stack((params.dynamics.weights,
+                                            params.dynamics.input_weights,
                                             dynamics_bias))
-        lp += self.dynamics_prior.log_prob((params['dynamics']['cov'], dynamics_matrix))
+        lp += self.dynamics_prior.log_prob((params.dynamics.cov, dynamics_matrix))
 
-        emission_bias = params['emissions']['bias'] if self.has_emissions_bias else jnp.zeros((self.emission_dim, 0))
-        emission_matrix = jnp.column_stack((params['emissions']['weights'],
-                                            params['emissions']['input_weights'],
+        emission_bias = params.emissions.bias if self.has_emissions_bias else jnp.zeros((self.emission_dim, 0))
+        emission_matrix = jnp.column_stack((params.emissions.weights,
+                                            params.emissions.input_weights,
                                             emission_bias))
-        lp += self.emission_prior.log_prob((params['emissions']['cov'], emission_matrix))
+        lp += self.emission_prior.log_prob((params.emissions.cov, emission_matrix))
         return lp
 
     def initialize_m_step_state(self, params, props):

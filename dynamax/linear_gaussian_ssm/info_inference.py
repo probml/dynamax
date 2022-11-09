@@ -1,15 +1,11 @@
 import jax.numpy as jnp
 from jax import lax, vmap, value_and_grad
 from jax.scipy.linalg import solve_triangular
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-
-from jaxtyping import Array, Float, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
-import chex
+from jaxtyping import Array, Float
+from typing import NamedTuple, Optional
 
 
-@chex.dataclass
-class ParamsLGSSMInfo:
+class ParamsLGSSMInfo(NamedTuple):
     """Lightweight container for passing LGSSM parameters in information form to inference algorithms."""
     initial_mean: Float[Array, "state_dim"]
     dynamics_weights: Float[Array, "state_dim state_dim"]
@@ -26,8 +22,7 @@ class ParamsLGSSMInfo:
     emission_bias: Optional[Float[Array, "emission_dim"]] = None
 
 
-@chex.dataclass
-class PosteriorLGSSMInfoFiltered:
+class PosteriorLGSSMInfoFiltered(NamedTuple):
     """Marginals of the Gaussian filtering posterior in information form.
 
     Attributes:
@@ -41,10 +36,13 @@ class PosteriorLGSSMInfoFiltered:
     filtered_etas: Float[Array, "ntime state_dim"]
     filtered_precisions: Float[Array, "ntime state_dim state_dim"]
 
-@chex.dataclass
-class PosteriorLGSSMInfoSmoothed(PosteriorLGSSMInfoFiltered):
-    """"Marginals of the Gaussian filtering and smoothed posterior in information form. 
+
+class PosteriorLGSSMInfoSmoothed(NamedTuple):
+    """"Marginals of the Gaussian filtering and smoothed posterior in information form.
     """
+    marginal_loglik: Float[Array, ""] # Scalar
+    filtered_etas: Float[Array, "ntime state_dim"]
+    filtered_precisions: Float[Array, "ntime state_dim state_dim"]
     smoothed_etas: Float[Array, "ntime state_dim"]
     smoothed_precisions: Float[Array, "ntime state_dim state_dim"]
 
@@ -241,7 +239,7 @@ def lgssm_info_smoother(
 
     # Run the Kalman filter
     filtered_posterior = lgssm_info_filter(params, emissions, inputs)
-    ll, filtered_etas, filtered_precisions, *_ = filtered_posterior.to_tuple()
+    ll, filtered_etas, filtered_precisions, *_ = filtered_posterior
 
     # Run the smoother backward in time
     def _smooth_step(carry, args):
