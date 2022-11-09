@@ -15,15 +15,15 @@ def lgssm_dynamax_to_tfp(num_timesteps, params):
         num_timesteps: int, the number of timesteps.
         lgssm: LinearGaussianSSM or LGSSMParams object.
     """
-    dynamics_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params['dynamics']['cov'])
-    emission_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params['emissions']['cov'])
-    initial_dist = tfd.MultivariateNormalFullCovariance(params['initial']['mean'], params['initial']['cov'])
+    dynamics_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params.dynamics.cov)
+    emission_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params.emissions.cov)
+    initial_dist = tfd.MultivariateNormalFullCovariance(params.initial.mean, params.initial.cov)
 
     tfp_lgssm = tfd.LinearGaussianStateSpaceModel(
         num_timesteps,
-        params['dynamics']['weights'],
+        params.dynamics.weights,
         dynamics_noise_dist,
-        params['emissions']['weights'],
+        params.emissions.weights,
         emission_noise_dist,
         initial_dist,
     )
@@ -51,14 +51,14 @@ def test_kalman(num_timesteps=5, seed=0):
     R = jnp.eye(emission_dim) * 1.0
 
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
-    params, _ = lgssm.initialize(init_key)
+    params, _ = lgssm.initialize(key,
+                                 initial_mean=mu0,
+                                 initial_covariance=Sigma0,
+                                 dynamics_weights=F,
+                                 dynamics_covariance=Q,
+                                 emission_weights=H,
+                                 emission_covariance=R)
 
-    params.initial.mean = mu0
-    params.initial.cov = Sigma0
-    params.dynamics.weights = F
-    params.dynamics.cov = Q
-    params.emissions.weights = H
-    params.emissions.cov = R
 
     # Sample data and compute posterior
     _, emissions = lgssm.sample(params, sample_key, num_timesteps)
@@ -97,14 +97,13 @@ def test_posterior_sampler():
     R = jnp.eye(emission_dim) * 5.**2
 
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
-    params, _ = lgssm.initialize(key)
-
-    params.initial.mean = mu0
-    params.initial.cov = Sigma0
-    params.dynamics.weights = F
-    params.dynamics.cov = Q
-    params.emissions.weights = H
-    params.emissions.cov = R
+    params, _ = lgssm.initialize(key,
+                                 initial_mean=mu0,
+                                 initial_covariance=Sigma0,
+                                 dynamics_weights=F,
+                                 dynamics_covariance=Q,
+                                 emission_weights=H,
+                                 emission_covariance=R)
 
     # Generate true observation
     sample_key, key = jr.split(key)
