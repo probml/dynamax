@@ -15,37 +15,12 @@ from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
 
 from dynamax.abstractions import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
-from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMMoment, PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
+from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
+from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
 
-
-class ParamsLGSSMInitial(NamedTuple):
-    mean: Union[Float[Array, "state_dim"], ParameterProperties]
-    cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
-
-
-class ParamsLGSSMDynamics(NamedTuple):
-    weights: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
-    bias: Union[Float[Array, "state_dim"], ParameterProperties]
-    input_weights: Union[Float[Array, "state_dim input_dim"], ParameterProperties]
-    cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
-
-
-class ParamsLGSSMEmissions(NamedTuple):
-    weights: Union[Float[Array, "emission_dim state_dim"], ParameterProperties]
-    bias: Union[Float[Array, "emission_dim"], ParameterProperties]
-    input_weights: Union[Float[Array, "emission_dim input_dim"], ParameterProperties]
-    cov: Union[Float[Array, "emission_dim emission_dim"], ParameterProperties]
-
-
-class ParamsLGSSM(NamedTuple):
-    initial: ParamsLGSSMInitial
-    dynamics: ParamsLGSSMDynamics
-    emissions: ParamsLGSSMEmissions
-
-
-SuffStatsLGSSM = Any
+SuffStatsLGSSM = Any # type of sufficient statistics for EM
 
 _zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
@@ -65,7 +40,7 @@ class LinearGaussianSSM(SSM):
     y_t = observed variables of size `emission_dim`
     u_t = input covariates of size `input_dim` (defaults to 0)
 
-    The parameters of the model are stored in a separate dictionary, as follows:
+    The parameters of the model are stored in a separate named tuple, with these fields:
     F = params.dynamics.weights
     Q = params.dynamics.cov
     H = params.emissions.weights
@@ -197,48 +172,6 @@ class LinearGaussianSSM(SSM):
             mean += params.emissions.bias
         return MVN(mean, params.emissions.cov)
 
-    def to_inference_args(
-        self,
-        params: ParamsLGSSM
-    ) -> ParamsLGSSMMoment:
-        """Convert params dict to inference container replacing Nones if necessary."""
-        dyn_bias = _zeros_if_none(params.dynamics.bias, self.state_dim)
-        ems_bias = _zeros_if_none(params.emissions.bias, self.emission_dim)
-        return ParamsLGSSMMoment(initial_mean=params.initial.mean,
-                                 initial_covariance=params.initial.cov,
-                                 dynamics_weights=params.dynamics.weights,
-                                 dynamics_input_weights=params.dynamics.input_weights,
-                                 dynamics_bias=dyn_bias,
-                                 dynamics_covariance=params.dynamics.cov,
-                                 emission_weights=params.emissions.weights,
-                                 emission_input_weights=params.emissions.input_weights,
-                                 emission_bias=ems_bias,
-                                 emission_covariance=params.emissions.cov)
-
-    def from_inference_args(
-        self,
-        params: ParamsLGSSMMoment
-    ) -> ParamsLGSSM:
-        """Convert params from inference container to dict."""
-        return ParamsLGSSM(
-            initial=ParamsLGSSMInitial(
-                        mean=params.initial_mean,
-                        cov=params.initial_covariance
-                        ),
-            dynamics=ParamsLGSSMDynamics(
-                        weights=params.dynamics_weights,
-                        bias=params.dynamics_bias,
-                        input_weights=params.dynamics_input_weights,
-                        cov=params.dynamics_covariance
-                        ),
-            emissions=ParamsLGSSMEmissions(
-                        weights=params.emission_weights,
-                        bias=params.emission_bias,
-                        input_weights=params.emission_input_weights,
-                        cov=params.emission_covariance
-                        )
-            )
-
 
     def log_prior(
         self,
@@ -247,45 +180,50 @@ class LinearGaussianSSM(SSM):
         """Return the log prior probability of model parameters."""
         return 0.0
 
+    @classmethod
     def marginal_log_prob(
-        self,
+        cls,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> float:
         """Compute log marginal likelihood of observations."""
-        filtered_posterior = lgssm_filter(self.to_inference_args(params), emissions, inputs)
+        filtered_posterior = lgssm_filter(params, emissions, inputs)
         return filtered_posterior.marginal_loglik
 
+    @classmethod
     def filter(
-        self,
+        cls,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> PosteriorLGSSMFiltered:
-        """Compute filtering tfd.Distribution."""
-        return lgssm_filter(self.to_inference_args(params), emissions, inputs)
+        """Compute filtering distribution."""
+        return lgssm_filter(params, emissions, inputs)
 
+    @classmethod
     def smoother(
-        self,
+        cls,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> PosteriorLGSSMSmoothed:
-        """Compute smoothing tfd.Distribution."""
-        return lgssm_smoother(self.to_inference_args(params), emissions, inputs)
+        """Compute smoothing distribution."""
+        return lgssm_smoother(params, emissions, inputs)
 
+    @classmethod
     def posterior_sample(
-        self,
+        cls,
         key: jr.PRNGKey,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> Float[Array, "ntime state_dim"]:
-        return lgssm_posterior_sample(key, self.to_inference_args(params), emissions, inputs)
+        return lgssm_posterior_sample(key, params, emissions, inputs)
 
+    @classmethod
     def posterior_predictive(
-        self,
+        cls,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
@@ -296,7 +234,7 @@ class LinearGaussianSSM(SSM):
             means: (T,D) array of E[Y(t,d) | Y(1:T)]
             stds: (T,D) array std[Y(t,d) | Y(1:T)]
         """
-        posterior = self.smoother(params, emissions, inputs)
+        posterior = lgssm_smoother(params, emissions, inputs)
         H = params.emissions.weights
         b = params.emissions.bias
         R = params.emissions.cov
@@ -322,7 +260,7 @@ class LinearGaussianSSM(SSM):
             inputs = jnp.zeros((num_timesteps, 0))
 
         # Run the smoother to get posterior expectations
-        posterior = lgssm_smoother(self.to_inference_args(params), emissions, inputs)
+        posterior = lgssm_smoother(params, emissions, inputs)
 
         # shorthand
         Ex = posterior.smoothed_means

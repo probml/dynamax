@@ -7,13 +7,9 @@ from jax.tree_util import tree_map
 from dynamax.distributions import MatrixNormalInverseWishart as MNIW
 from dynamax.distributions import NormalInverseWishart as NIW
 from dynamax.distributions import mniw_posterior_update, niw_posterior_update
-from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMMoment, lgssm_posterior_sample
-from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import (LinearGaussianSSM,
-                                                             ParamsLGSSM,
-                                                             ParamsLGSSMInitial,
-                                                             ParamsLGSSMDynamics,
-                                                             ParamsLGSSMEmissions)
-
+from dynamax.linear_gaussian_ssm.inference import  lgssm_posterior_sample
+from dynamax.linear_gaussian_ssm.inference import  ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
+from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 
 
 class LinearGaussianConjugateSSM(LinearGaussianSSM):
