@@ -1,7 +1,6 @@
 from abc import abstractmethod, ABC
 from dynamax.abstractions import SSM
 from dynamax.parameters import to_unconstrained, from_unconstrained
-from dynamax.hmm.inference import compute_transition_probs
 from dynamax.hmm.inference import hmm_filter
 from dynamax.hmm.inference import hmm_posterior_mode
 from dynamax.hmm.inference import hmm_smoother
@@ -367,7 +366,6 @@ class HMM(SSM):
         """
         args = self._inference_args(params, emissions, inputs)
         posterior = hmm_two_filter_smoother(*args)
-        posterior.trans_probs = compute_transition_probs(args[1], posterior, (args[1].ndim == 2))
 
         initial_stats = self.initial_component.collect_suff_stats(params.initial, posterior, inputs)
         transition_stats = self.transition_component.collect_suff_stats(params.transitions, posterior, inputs)
