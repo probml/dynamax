@@ -4,7 +4,7 @@ from jax import lax
 from jax import vmap
 from jax import value_and_grad
 
-from dynamax.hmm.inference import HMMPosterior
+from dynamax.hmm.inference import HMMPosterior, HMMPosteriorFiltered
 
 @chex.dataclass
 class Message:
@@ -52,9 +52,9 @@ def hmm_filter(initial_probs, transition_matrix, log_likelihoods):
     predicted_probs = jnp.vstack([initial_probs, filtered_probs[:-1] @ transition_matrix])
 
     # Package into a posterior object
-    return HMMPosterior(marginal_loglik=marginal_loglik,
-                        filtered_probs=filtered_probs,
-                        predicted_probs=predicted_probs)
+    return HMMPosteriorFiltered(marginal_loglik=marginal_loglik,
+                                filtered_probs=filtered_probs,
+                                predicted_probs=predicted_probs)
 
 
 def hmm_smoother(initial_probs, transition_matrix, log_likelihoods):

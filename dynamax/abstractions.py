@@ -175,12 +175,12 @@ class SSM(ABC):
         batch size.
 
         Args:
-            batch_emissions (chex.Array): Independent sequences.
+            batch_emissions: Independent sequences.
             optmizer (optax.Optimizer): Optimizer.
             batch_size (int): Number of sequences used at each update step.
             num_epochs (int): Iterations made through entire dataset.
             shuffle (bool): Indicates whether to shuffle minibatches.
-            key (chex.PRNGKey): RNG key to shuffle minibatches.
+            key (jr.PRNGKey): RNG key to shuffle minibatches.
         Returns:
             losses: Output of loss_fn stored at each step.
         """

@@ -1,37 +1,27 @@
-import chex
-from typing import Callable
-from jax import numpy as jnp
 from dynamax.abstractions import SSM
+from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import PosteriorNLGSSMFiltered, PosteriorNLGSSMSmoothed
+from jaxtyping import Array, Float
 import tensorflow_probability.substrates.jax as tfp
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
-
-from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import PosteriorNLGSSMFiltered, PosteriorNLGSSMSmoothed, ParamsNLGSSM
+from typing import NamedTuple, Optional, Union, Callable
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
+MVN = tfd.MultivariateNormalFullCovariance
 
 PosteriorGGSSMFiltered = PosteriorNLGSSMFiltered
 PosteriorGGSSMSmoothed = PosteriorNLGSSMSmoothed
-
-
 FnStateToState = Callable[[Float[Array, "state_dim"]], Float[Array, "state_dim"]]
 FnStateAndInputToState = Callable[[Float[Array, "state_dim"], Float[Array, "input_dim"]], Float[Array, "state_dim"]]
-
 FnStateToEmission = Callable[[Float[Array, "state_dim"]], Float[Array, "emission_dim"]]
 FnStateAndInputToEmission = Callable[[Float[Array, "state_dim"], Float[Array, "input_dim"]], Float[Array, "emission_dim"]]
-
 FnStateToEmission2 = Callable[[Float[Array, "state_dim"]], Float[Array, "emission_dim emission_dim"]]
 FnStateAndInputToEmission2 = Callable[[Float[Array, "state_dim"], Float[Array, "input_dim"]], Float[Array, "emission_dim emission_dim"]]
-
 # emission distribution takes a mean vector and covariance matrix and returns a distribution
 EmissionDistFn = Callable[ [Float[Array, "state_dim"], Float[Array, "state_dim state_dim"]], tfd.Distribution]
 
 
-@chex.dataclass
-class ParamsGGSSM:
+
+class ParamsGGSSM(NamedTuple):
     """Container for GGSSM parameters. Differs from NLGSSM in terms of emission model."""
 
     initial_mean: Float[Array, "state_dim"]
@@ -53,7 +43,7 @@ class GeneralizedGaussianSSM(SSM):
     p(z_1) = N(z_1 | m, S)
     where z_t = hidden, y_t = observed, u_t = inputs (can be None),
     f = params.dynamics_function
-    Q = params.dynamics_covariance 
+    Q = params.dynamics_covariance
     h = params.emission_mean_function
     R = params.emission_cov_function
     Pr = params.emission_dist
@@ -76,17 +66,16 @@ class GeneralizedGaussianSSM(SSM):
 
     def initial_distribution(
         self,
-        params: ParamsGGSSM, 
-        inputs: Optional[Float[Array, "input_dim"]]=None
-    ) -> tfd.Distribution:
+        params: ParamsGGSSM,
+        inputs: Optional[Float[Array, "input_dim"]]=None) -> tfd.Distribution:
         return MVN(params.initial_mean, params.initial_covariance)
-    
+
     def transition_distribution(
         self,
-        params: ParamsGGSSM, 
+        params: ParamsGGSSM,
         state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]=None
-    ) -> tfd.Distribution:
+        inputs: Optional[Float[Array, "input_dim"]]=None) -> tfd.Distribution:
+
         f = params.dynamics_function
         if inputs is None:
             mean = f(state)
@@ -96,10 +85,10 @@ class GeneralizedGaussianSSM(SSM):
 
     def emission_distribution(
         self,
-        params: ParamsGGSSM, 
+        params: ParamsGGSSM,
         state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]=None
-    ) -> tfd.Distribution:
+        inputs: Optional[Float[Array, "input_dim"]]=None) -> tfd.Distribution:
+
         h = params.emission_mean_function
         R = params.emission_cov_function
         if inputs is None:
