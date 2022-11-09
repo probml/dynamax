@@ -66,7 +66,6 @@ def random_lgssm_args(
     # Generate random samples
     model = LinearGaussianSSM(state_dim, emission_dim)
     model_params = model.from_inference_args(inf_params)
-    print(model_params)
     key, subkey = jr.split(subkey, 2)
     states, emissions = model.sample(model_params, key, num_timesteps)
     return inf_params, states, emissions

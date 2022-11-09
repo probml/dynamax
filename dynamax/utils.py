@@ -6,6 +6,14 @@ from jax import vmap
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import inspect
+import jax
+import jaxlib
+
+def has_tpu():
+    try:
+        return isinstance(jax.devices()[0], jaxlib.xla_extension.TpuDevice)
+    except:
+        return False
 
 # From https://www.tensorflow.org/probability/examples/
 # TensorFlow_Probability_Case_Study_Covariance_Estimation

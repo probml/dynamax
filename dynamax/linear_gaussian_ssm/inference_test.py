@@ -1,3 +1,4 @@
+import jax
 from jax import random as jr
 from jax import numpy as jnp
 from jax import vmap
@@ -6,6 +7,14 @@ from functools import partial
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 
+from dynamax.utils import has_tpu
+
+if has_tpu():
+    def allclose(x, y):
+        return jnp.allclose(x, y, atol=1e-1)
+else:
+    def allclose(x,y):
+        return jnp.allclose(x, y, atol=1e-1)
 
 def lgssm_dynamax_to_tfp(num_timesteps, params):
     """Create a Tensorflow Probability `LinearGaussianStateSpaceModel` object
@@ -74,11 +83,11 @@ def test_kalman(num_timesteps=5, seed=0):
     tfp_lls, tfp_filtered_means, tfp_filtered_covs, *_ = tfp_lgssm.forward_filter(emissions)
     tfp_smoothed_means, tfp_smoothed_covs = tfp_lgssm.posterior_marginals(emissions)
 
-    assert jnp.allclose(ssm_posterior.filtered_means, tfp_filtered_means, rtol=1e-2)
-    assert jnp.allclose(ssm_posterior.filtered_covariances, tfp_filtered_covs, rtol=1e-2)
-    assert jnp.allclose(ssm_posterior.smoothed_means, tfp_smoothed_means, rtol=1e-2)
-    assert jnp.allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs, rtol=1e-2)
-    assert jnp.allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
+    assert allclose(ssm_posterior.filtered_means, tfp_filtered_means)
+    assert allclose(ssm_posterior.filtered_covariances, tfp_filtered_covs)
+    assert allclose(ssm_posterior.smoothed_means, tfp_smoothed_means)
+    assert allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs)
+    assert allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
 
 
 def test_posterior_sampler():
@@ -121,5 +130,5 @@ def test_posterior_sampler():
     print(samples.shape) # (N,T,1)
     print(tfp_samples.shape) # (N,T,1)
 
-    assert jnp.allclose(jnp.mean(samples), jnp.mean(tfp_samples), atol=1e-1)
-    assert jnp.allclose(jnp.std(samples), jnp.std(tfp_samples), atol=1e-1)
+    assert allclose(jnp.mean(samples), jnp.mean(tfp_samples))
+    assert allclose(jnp.std(samples), jnp.std(tfp_samples))
