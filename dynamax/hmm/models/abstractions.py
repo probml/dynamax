@@ -62,17 +62,17 @@ class HMMInitialState(ABC):
         For example, this might include the optimizer state for Adam.
         """
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, _ = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
         return self.m_step_optimizer.init(unc_params)
 
     def m_step(self, params, props, batch_stats, m_step_state, scale=1.0):
 
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, fixed_params = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
 
         # Minimize the negative expected log joint probability
         def neg_expected_log_joint(unc_params):
-            params = from_unconstrained(unc_params, fixed_params, props)
+            params = from_unconstrained(unc_params, props)
 
             def _single_expected_log_like(stats):
                 expected_initial_state, inpt = stats
@@ -94,7 +94,7 @@ class HMMInitialState(ABC):
                                  num_mstep_iters=self.m_step_num_iters)
 
         # Return the updated parameters and optimizer state
-        params = from_unconstrained(unc_params, fixed_params, props)
+        params = from_unconstrained(unc_params, props)
         return params, m_step_state
 
 
@@ -157,15 +157,15 @@ class HMMTransitions(ABC):
         For example, this might include the optimizer state for Adam.
         """
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, _ = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
         return self.m_step_optimizer.init(unc_params)
 
     def m_step(self, params, props, batch_stats, m_step_state, scale=1.0):
-        unc_params, fixed_params = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
 
         # Minimize the negative expected log joint probability
         def neg_expected_log_joint(unc_params):
-            params = from_unconstrained(unc_params, fixed_params, props)
+            params = from_unconstrained(unc_params, props)
 
             def _single_expected_log_like(stats):
                 expected_transitions, inputs = stats
@@ -187,7 +187,7 @@ class HMMTransitions(ABC):
                                  num_mstep_iters=self.m_step_num_iters)
 
         # Return the updated parameters and optimizer state
-        params = from_unconstrained(unc_params, fixed_params, props)
+        params = from_unconstrained(unc_params, props)
         return params, m_step_state
 
 
@@ -255,17 +255,17 @@ class HMMEmissions(ABC):
         For example, this might include the optimizer state for Adam.
         """
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, _ = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
         return self.m_step_optimizer.init(unc_params)
 
     def m_step(self, params, props, batch_stats, m_step_state, scale=1.0):
 
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, fixed_params = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
 
         # the objective is the negative expected log likelihood (and the log prior of the emission params)
         def neg_expected_log_joint(unc_params):
-            params = from_unconstrained(unc_params, fixed_params, props)
+            params = from_unconstrained(unc_params, props)
 
             def _single_expected_log_like(stats):
                 expected_states, emissions, inputs = stats
@@ -287,7 +287,7 @@ class HMMEmissions(ABC):
                                  num_mstep_iters=self.m_step_num_iters)
 
         # Return the updated parameters and optimizer state
-        params = from_unconstrained(unc_params, fixed_params, props)
+        params = from_unconstrained(unc_params, props)
         return params, m_step_state
 
 
