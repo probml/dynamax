@@ -31,7 +31,7 @@ class TestParallelLGSSMSmoother:
                              dynamics_covariance=Q,
                              emission_weights=H,
                              emission_covariance=R)
-    inf_params = lgssm.to_inference_args(model_params)
+    inf_params = model_params
 
     num_timesteps = 50
     key = jr.PRNGKey(seed)

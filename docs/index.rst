@@ -106,69 +106,17 @@ Available at https://probml.github.io/pml-book/book2.html.
 -  *Bayesian Filtering and Smoothing*, S. Särkkä, Cambridge University Press, 2013.
 Available at https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
 
-Inference (state estimation)
---------------------------------
-
-The core inference algorithms, like the forward-backward algorithm for HMMs,
-the Kalman filter and smoother for LGSSMs, and the extended and unscented
-Kalman filters for nonlinear SSMs, all have a simple, functional interface.
-For example, the following code generates some noisy data and then smooths it
-with an LGSSM smoother (aka Kalman smoother).
-
-.. code-block:: python
-
-   from jax import jit, grad
-   import jax.numpy as jnp
-   import jax.random as jr
-   import matplotlib.pyplot as plt
-   from dynamax.linear_gaussian_ssm.inference import LGSSMParams, lgssm_smoother # OLD API!
-
-   key = jr.PRNGKey(0)
-   state_dim = 1
-   emission_dim = 1
-   num_timesteps = 100
-
-   # Make some noisy data
-   times = jnp.arange(num_timesteps)
-   emissions = jnp.cos(2 * jnp.pi * times / 20)[:, None]
-   emissions += jr.normal(key, (num_timesteps, emission_dim))
-
-   # Specify the model parameters
-   params = LGSSMParams(
-      initial_mean=jnp.zeros(state_dim),
-      initial_covariance=jnp.eye(state_dim),
-      dynamics_matrix=jnp.eye(state_dim),
-      dynamics_covariance=0.5**2 * jnp.eye(state_dim),
-      emission_matrix=jnp.ones((emission_dim, state_dim)),
-      emission_covariance=jnp.eye(emission_dim),
-   )
-
-   # Run the LGSSM smoother (aka Kalman smoother)
-   lgssm_posterior = lgssm_smoother(params, emissions)
-
-The posterior is a dataclass with a number of fields, including the posterior mean and posterior marginal covariances.
-
-.. code-block:: python
-
-   print(lgssm_posterior.smoothed_means.shape)        # (100, 1)
-   print(lgssm_posterior.smoothed_covariances.shape)  # (100, 1, 1)
-   print(lgssm_posterior.marginal_loglik)             # -160.31303
-
-The inference algorithms are all written in JAX, so they support automatic
-differentiation and just-in-time compilation,
-
-.. code-block:: python
-
-   loss = lambda params: -lgssm_smoother(params, emissions).marginal_loglik
-   jit(grad(loss))(params) # Returns an LGSSMParams dataclass with the gradients in it
 
 
-Learning (parameter estimation)
--------------------------------
+Example usage
+---------------
 
-Dynamax also includes a host of model classes for various HMMs and linear Gaussian SSMs.
+Dynamax includes classes for many kinds of SSM.
 You can use these models to simulate data, and you can fit the models using standard
 learning algorithms like expectation-maximization (EM) and stochastic gradient descent (SGD).
+Below we illustrate the high level (object-oriented) API for the case of an HMM
+with Gaussian emissions. (See [this notebook](https://github.com/probml/dynamax/blob/main/docs/notebooks/hmm/gaussian_hmm.ipynb) for
+a runnable version of this code.)
 
 .. code-block:: python
 
@@ -196,6 +144,9 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
    plt.plot(lls)
    plt.xlabel("EM iterations")
    plt.ylabel("marginal log prob.")
+
+We can also call the low-level inference code directly.
+
 
 
 Notebooks
