@@ -229,7 +229,8 @@ def hmm_two_filter_smoother(
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
+    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None,
+    compute_trans_probs: bool = True
     ) -> HMMPosterior:
     """Computed the smoothed state probabilities using the two-filter
     smoother, a.k.a. the forward-backward algorithm.
@@ -253,13 +254,23 @@ def hmm_two_filter_smoother(
     norm = smoothed_probs.sum(axis=1, keepdims=True)
     smoothed_probs /= norm
 
-    return HMMPosterior(
+    posterior = HMMPosterior(
         marginal_loglik=ll,
         filtered_probs=filtered_probs,
         predicted_probs=predicted_probs,
         smoothed_probs=smoothed_probs,
         initial_probs=smoothed_probs[0]
     )
+
+    # Compute the transition probabilities if specified
+    if compute_trans_probs:
+        trans_probs = compute_transition_probs(
+            transition_matrix,
+            posterior,
+            reduce_sum=(transition_matrix.ndim == 2))
+        posterior = posterior._replace(trans_probs=trans_probs)
+
+    return posterior
 
 
 @partial(jit, static_argnames=["transition_fn"])
@@ -268,7 +279,8 @@ def hmm_smoother(
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
+    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None,
+    compute_trans_probs: bool = True
     ) -> HMMPosterior:
     """Computed the smoothed state probabilities using a general
     Bayesian smoother.
@@ -314,7 +326,8 @@ def hmm_smoother(
     # Reverse the arrays and return
     smoothed_probs = jnp.row_stack([rev_smoothed_probs[::-1], filtered_probs[-1]])
 
-    return HMMPosterior(
+    # Package into a posterior
+    posterior = HMMPosterior(
         marginal_loglik=ll,
         filtered_probs=filtered_probs,
         predicted_probs=predicted_probs,
@@ -322,6 +335,15 @@ def hmm_smoother(
         initial_probs=smoothed_probs[0]
     )
 
+    # Compute the transition probabilities if specified
+    if compute_trans_probs:
+        trans_probs = compute_transition_probs(
+            transition_matrix,
+            posterior,
+            reduce_sum=(transition_matrix.ndim == 2))
+        posterior = posterior._replace(trans_probs=trans_probs)
+
+    return posterior
 
 @partial(jit, static_argnames=["transition_fn", "window_size"])
 def hmm_fixed_lag_smoother(
@@ -534,7 +556,8 @@ def compute_transition_probs(
                              Float[Array, "num_states num_states"]],
     hmm_posterior: HMMPosterior,
     reduce_sum: Bool=True
-    ) -> Union[Float[Array, "num_timesteps num_states num_states"], Float[Array, "num_states num_states"]]:
+    ) -> Union[Float[Array, "num_timesteps num_states num_states"],
+               Float[Array, "num_states num_states"]]:
     """Computer the posterior marginal distributions over (hid(t), hid(t+1)),
     ..math:
         q_{tij} = Pr(z_t=i, z_{t+1}=j | obs_{1:T})  for t=1,...,T-1
