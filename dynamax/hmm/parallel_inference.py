@@ -1,15 +1,13 @@
-import chex
 import jax.numpy as jnp
-from jax import lax
-from jax import vmap
-from jax import value_and_grad
+from jax import lax, vmap, value_and_grad
+from jaxtyping import Array, Float
+from typing import NamedTuple
 
 from dynamax.hmm.inference import HMMPosterior, HMMPosteriorFiltered
 
-@chex.dataclass
-class Message:
-    A: chex.Array
-    log_b: chex.Array
+class Message(NamedTuple):
+    A: Float[Array, "num_timesteps num_states num_states"]
+    log_b: Float[Array, "num_timesteps num_states"]
 
 
 def _condition_on(A, ll, axis=-1):

@@ -1,12 +1,12 @@
-import jax.numpy as jnp
-import jax.random as jr
-import tensorflow_probability.substrates.jax.distributions as tfd
-import tensorflow_probability.substrates.jax.bijectors as tfb
-import chex
 from dynamax.hmm.models.abstractions import HMMInitialState
 from dynamax.parameters import ParameterProperties
+import jax.numpy as jnp
+import jax.random as jr
 from jaxtyping import Float, Array
+import tensorflow_probability.substrates.jax.distributions as tfd
+import tensorflow_probability.substrates.jax.bijectors as tfb
 from typing import NamedTuple, Union
+
 
 class ParamsStandardHMMInitialState(NamedTuple):
     probs: Union[Float[Array, "state_dim"], ParameterProperties]

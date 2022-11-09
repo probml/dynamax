@@ -2,7 +2,6 @@ jax>=0.3.15
 jaxlib
 fastprogress
 optax
-chex
 tensorflow_probability
 matplotlib
 seaborn

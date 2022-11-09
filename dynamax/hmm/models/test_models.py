@@ -1,14 +1,13 @@
 import pytest
 from datetime import datetime
-import chex
 import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
 import dynamax.hmm.models as models
-from dynamax.utils import ensure_array_has_batch_dim, monotonically_increasing
+from dynamax.utils import monotonically_increasing
+
 
 NUM_TIMESTEPS = 50
-
 
 CONFIGS = [
     (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
@@ -121,7 +120,7 @@ def test_sample_and_fit_arhmm():
 #         """Generates an iterable over the given array, with option to reshuffle.
 
 #         Args:
-#             dataset (chex.Array or Dataset): Any object implementing __len__ and __getitem__
+#             dataset: Any object implementing __len__ and __getitem__
 #             batch_size (int): Number of samples to load per batch
 #             shuffle (bool): If True, reshuffle data at every epoch
 #             drop_last (bool): If true, drop last incomplete batch if dataset size is

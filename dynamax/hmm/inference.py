@@ -7,7 +7,6 @@ from functools import partial
 
 from typing import Callable, Optional, Tuple, Union, NamedTuple
 from jaxtyping import Bool, Int, Float, Array
-from dynamax.ssm_types import PRNGKey, StateSeq, HMMTransitionMatrix
 
 
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
@@ -137,13 +136,13 @@ def hmm_filter(
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_posterior_sample(
-    rng: PRNGKey,
+    rng: jr.PRNGKey,
     initial_distribution: Float[Array, "num_states"],
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
-    ) -> StateSeq:
+    ) -> Int[Array, "num_timesteps"]:
     """Sample a latent sequence from the posterior.
     Args:
         initial_distribution(k): prob(hid(1)=k)
@@ -331,7 +330,7 @@ def hmm_fixed_lag_smoother(
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     window_size: Int,
-    transition_fn: Optional[Callable[[Int], HMMTransitionMatrix]]= None
+    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
     ) -> HMMPosterior:
     """Compute the smoothed state probabilities using the fixed-lag smoother.
 
@@ -531,7 +530,8 @@ def _compute_all_transition_probs(
 #  Float[Array, "*num_timesteps num_states num_states"] I think this would allow multiple prepended dims.
 #  Float[Array, "#num_timesteps num_states num_states"] this might accept (1, sd, sd) but not (sd, sd).
 def compute_transition_probs(
-    transition_matrix: HMMTransitionMatrix,
+    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
+                             Float[Array, "num_states num_states"]],
     hmm_posterior: HMMPosterior,
     reduce_sum: Bool=True
     ) -> Union[Float[Array, "num_timesteps num_states num_states"], Float[Array, "num_states num_states"]]:

@@ -429,7 +429,7 @@ class HMM(SSM):
 #                 schedule; defaults to exponential schedule.
 #             num_epochs (int): Num of iterations made through the entire dataset.
 #         Returns:
-#             expected_log_prob (chex.Array): Mean expected log prob of each epoch.
+#             expected_log_prob: Mean expected log prob of each epoch.
 
 #         TODO Any way to take a weighted average of rolling stats (in addition
 #              to the convex combination) given the number of emissions we see
