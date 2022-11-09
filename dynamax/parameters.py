@@ -1,14 +1,39 @@
 from dataclasses import dataclass
 import jax.numpy as jnp
 from jax import lax
-from jax.tree_util import tree_flatten, tree_unflatten, tree_map
+from jax.tree_util import tree_flatten, tree_unflatten, tree_map, register_pytree_node_class
 import tensorflow_probability.substrates.jax.bijectors as tfb
+from typing import Optional
 
 
-@dataclass
+@register_pytree_node_class
 class ParameterProperties:
-    trainable: bool = True
-    constrainer: tfb.Bijector = None
+    """A simple wrapper for mutable parameter properties.
+
+    Note: the properties are stored in the aux_data of this PyTree so that
+    changes will trigger recompilation of functions that rely on them.
+
+    Args:
+        trainable (bool): flat specifying whether or not to fit this parameter
+        constrainer (Optional tfb.Bijector): bijector mapping to constrained form
+    """
+    def __init__(self,
+                 trainable: bool = True,
+                 constrainer: Optional[tfb.Bijector] = None) -> None:
+        self.trainable = trainable
+        self.constrainer = constrainer
+
+    def tree_flatten(self):
+        return (), (self.trainable, self.constrainer)
+
+    @classmethod
+    def tree_unflatten(cls, aux_data, children):
+        return cls(*aux_data)
+
+# @dataclass
+# class ParameterProperties:
+#     trainable: bool = True
+#     constrainer: Optional[tfb.Bijector] = None
 
 
 def to_unconstrained(params, props):
