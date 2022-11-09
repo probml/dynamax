@@ -1,7 +1,6 @@
-from dataclasses import dataclass
 import jax.numpy as jnp
 from jax import lax
-from jax.tree_util import tree_flatten, tree_unflatten, tree_map, register_pytree_node_class
+from jax.tree_util import tree_leaves, tree_reduce, tree_map, register_pytree_node_class
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from typing import Optional
 
@@ -77,52 +76,14 @@ def from_unconstrained(unc_params, props):
     return tree_map(from_unc, unc_params, props, is_leaf=is_leaf)
 
 
-def log_det_jac_constrain(unc_params, param_props):
+def log_det_jac_constrain(unc_params, props):
     """Log determinant of the Jacobian matrix evaluated at the unconstrained parameters.
     """
-    log_det_jac = 0
-    for k, v in unc_params.items():
-        if isinstance(v, dict):
-            ldj_inc = log_det_jac_constrain(unc_params[k], param_props[k])
-            log_det_jac += ldj_inc
-        else:
-            log_det_jac += param_props[k].constrainer.forward_log_det_jacobian(v)
-    return log_det_jac
+    def _compute_logdet(unc_value, prop):
+        logdet = prop.constrainer.forward_log_det_jacobian(unc_value).sum() \
+            if prop.constrainer is not None else 0.0
+        return logdet if prop.trainable else 0.0
 
-
-def flatten(params):
-    """Flatten the (unconstrained) parameters to an 1-d numpy array.
-
-    Returns:
-        params_flat: flat parameters
-        structure (dict): structure information of parameters, used to unflatten the parameters.
-    """
-    # Flatten the tree of parameters into leaves
-    tree_flat, tree_structure = tree_flatten(params)
-    # Flatten leaves of the tree
-    array_shapes = [x.shape for x in tree_flat]
-    params_flat = jnp.concatenate([x.flatten() for x in tree_flat])
-
-    return params_flat, {'array_shapes': array_shapes, 'tree_structure': tree_structure}
-
-
-def unflatten(structure, params_flat):
-    """Unflatten the (unconstrained) parameters.
-
-    Args:
-        params_flat: flat parameters
-        structure (dict): structure information of parameters
-    Returns:
-        params: (unconstrained) parameters
-    """
-    array_shapes = structure['array_shapes']
-    tree_structure = structure['tree_structure']
-    # Restore leaves of the parameter tree, each leave is a numpy array
-    _sizes = jnp.cumsum(jnp.array([jnp.array(x).prod() for x in array_shapes]))
-    cum_sizes = jnp.concatenate([jnp.zeros(1), _sizes]).astype(int)
-    arrays = [params_flat[cum_sizes[i]:cum_sizes[i+1]].reshape(array_shapes[i])
-              for i in range(len(cum_sizes)-1)]
-    # Restore the tree of parameters
-    params = tree_unflatten(tree_structure, arrays)
-
-    return params
+    is_leaf = lambda node: isinstance(node, (ParameterProperties,))
+    logdets = tree_map(_compute_logdet, unc_params, props, is_leaf=is_leaf)
+    return tree_reduce(jnp.add, logdets, 0.0)

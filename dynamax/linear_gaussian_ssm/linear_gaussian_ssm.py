@@ -69,7 +69,7 @@ class LinearGaussianSSM(SSM):
     F = params.dynamics.weights
     Q = params.dynamics.cov
     H = params.emissions.weights
-    R = params.emissions["cov]
+    R = params.emissions.cov
     m = params.initial.mean
     S = params.initial.cov
     Optional parameters (default to 0)
@@ -297,9 +297,9 @@ class LinearGaussianSSM(SSM):
             stds: (T,D) array std[Y(t,d) | Y(1:T)]
         """
         posterior = self.smoother(params, emissions, inputs)
-        H = params['emissions']['weights']
-        b = params['emissions']['bias']
-        R = params['emissions']['cov']
+        H = params.emissions.weights
+        b = params.emissions.bias
+        R = params.emissions.cov
         emission_dim = R.shape[0]
         smoothed_emissions = posterior.smoothed_means @ H.T + b
         smoothed_emissions_cov = H @ posterior.smoothed_covariances @ H.T + R

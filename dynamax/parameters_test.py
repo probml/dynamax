@@ -3,7 +3,7 @@ import jax.numpy as jnp
 from jax import jit, value_and_grad, lax
 from jax.tree_util import tree_map, tree_leaves
 from jaxtyping import Float, Array
-from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained
+from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained, log_det_jac_constrain
 import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from typing import NamedTuple, Union
@@ -122,3 +122,14 @@ def test_parameter_constrained():
     assert not jnp.allclose(params.transitions.transition_matrix, original_params.transitions.transition_matrix)
     assert not jnp.allclose(params.emissions.means, original_params.emissions.means)
     assert jnp.allclose(params.emissions.scales, original_params.emissions.scales)
+
+
+def test_logdet_jacobian():
+    params, props = make_params()
+    unc_params = to_unconstrained(params, props)
+    logdet = log_det_jac_constrain(unc_params, props)
+
+    # only the transition matrix is constrained and trainable
+    f = props.transitions.transition_matrix.constrainer.forward_log_det_jacobian
+    logdet_manual = f(unc_params.transitions.transition_matrix).sum()
+    assert jnp.isclose(logdet, logdet_manual)
