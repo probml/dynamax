@@ -1,30 +1,11 @@
-from abc import ABC
-from abc import abstractmethod
-
-
 import jax
-from jax import jit, lax, vmap
-from jax.tree_util import tree_map
-import jax.numpy as jnp
-import jax.random as jr
-
-
-PRNGKey = jax.random.PRNGKey
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
-import chex
-from dataclasses import dataclass
-
-import tensorflow_probability.substrates.jax.bijectors as tfb
+from jaxtyping import Array, Float, Num
+from typing import NamedTuple, Union, Dict, Any
 import tensorflow_probability.substrates.jax.distributions as tfd
 Distribution = tfd.Distribution
 
 import optax
 Optimizer = optax.GradientTransformation
-
-#LatentType = TypeVar('LatentType', bound=ArrayTree)
-#ObsType = TypeVar('ObsType', bound=ArrayTree)
-
 
 InputSingle = Float[Array, "input_dim"]
 InputSeq = Float[Array, "ntime input_dim"]
@@ -89,16 +70,9 @@ ParamsSSM = Dict
 ParamPropsSSM = Dict
 
 SuffStatsSSM = Any
-
-@chex.dataclass
-class PosteriorSSM(ABC):
-    """Store the output of filtering or smoothing."""
-
-
-SuffStatsSSM = Any
 # Store the expected sufficient statistics from a batch of data.
 
 LossTrace = Float[Array, "nsteps"]
-# Store the sequences of losses over time from an optimizer 
+# Store the sequences of losses over time from an optimizer
 
 HMMTransitionMatrix = Float[Array, "state_dim state_dim"]

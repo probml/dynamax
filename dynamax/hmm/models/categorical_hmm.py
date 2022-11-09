@@ -3,17 +3,24 @@ import jax.random as jr
 from jax.nn import one_hot
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-import chex
 from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils import pytree_sum
+from typing import NamedTuple, Union
 
-@chex.dataclass
-class ParamsCategoricalHMMEmissions:
-    probs: Float[Array, "state_dim emission_dim"]
+
+class ParamsCategoricalHMMEmissions(NamedTuple):
+    probs: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
+
+
+class ParamsCategoricalHMM(NamedTuple):
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsCategoricalHMMEmissions
+
 
 class CategoricalHMMEmissions(HMMEmissions):
 
@@ -38,11 +45,11 @@ class CategoricalHMMEmissions(HMMEmissions):
 
     def distribution(self, params, state, inputs=None):
         return tfd.Independent(
-            tfd.Categorical(probs=params['probs'][state]),
+            tfd.Categorical(probs=params.probs[state]),
             reinterpreted_batch_ndims=1)
 
     def log_prior(self, params):
-        return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params['probs']).sum()
+        return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params.probs).sum()
 
     def initialize(self, key=jr.PRNGKey(0), method="prior", emission_probs=None):
         """Initialize the model parameters and their corresponding properties.
@@ -78,7 +85,7 @@ class CategoricalHMMEmissions(HMMEmissions):
 
         # Add parameters to the dictionary
         params = ParamsCategoricalHMMEmissions(probs=emission_probs)
-        props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
+        props = ParamsCategoricalHMMEmissions(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
     def collect_suff_stats(self, params, posterior, emissions, inputs=None):
@@ -90,18 +97,12 @@ class CategoricalHMMEmissions(HMMEmissions):
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
-        if props['probs'].trainable:
+        if props.probs.trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
-            params.probs = tfd.Dirichlet(
-                self.emission_prior_concentration + emission_stats['sum_x']).mode()
+            probs = tfd.Dirichlet(self.emission_prior_concentration + emission_stats['sum_x']).mode()
+            params = params._replace(probs=probs)
         return params, m_step_state
 
-
-@chex.dataclass
-class ParamsCategoricalHMM:
-    initial: ParamsStandardHMMTransitions
-    transitions: ParamsStandardHMMTransitions
-    emissions: ParamsCategoricalHMMEmissions
 
 class CategoricalHMM(HMM):
     def __init__(self, num_states: int,
@@ -116,7 +117,8 @@ class CategoricalHMM(HMM):
         emission_component = CategoricalHMMEmissions(num_states, emission_dim, num_classes, emission_prior_concentration=emission_prior_concentration)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=None,
+    def initialize(self,
+                   key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,
@@ -140,13 +142,9 @@ class CategoricalHMM(HMM):
             params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
-        if key is not None:
-            key1, key2, key3 = jr.split(key , 3)
-        else:
-            key1 = key2 = key3 = None
-
+        key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_probs=emission_probs)
-        return ParamsCategoricalHMM(**params), props
+        return ParamsCategoricalHMM(**params), ParamsCategoricalHMM(**props)

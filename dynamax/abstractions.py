@@ -7,11 +7,10 @@ import jax.random as jr
 import optax
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
-from warnings import warn
 
 from dynamax.optimize import run_sgd
 from dynamax.parameters import to_unconstrained, from_unconstrained
-from dynamax.utils import pytree_stack, ensure_array_has_batch_dim
+from dynamax.utils import ensure_array_has_batch_dim
 
 
 class SSM(ABC):
@@ -157,8 +156,8 @@ class SSM(ABC):
         return params, jnp.array(log_probs)
 
     def fit_sgd(self,
-                curr_params,
-                param_props,
+                params,
+                props,
                 emissions,
                 inputs=None,
                 optimizer=optax.adam(1e-3),
@@ -176,12 +175,12 @@ class SSM(ABC):
         batch size.
 
         Args:
-            batch_emissions (chex.Array): Independent sequences.
+            batch_emissions: Independent sequences.
             optmizer (optax.Optimizer): Optimizer.
             batch_size (int): Number of sequences used at each update step.
             num_epochs (int): Iterations made through entire dataset.
             shuffle (bool): Indicates whether to shuffle minibatches.
-            key (chex.PRNGKey): RNG key to shuffle minibatches.
+            key (jr.PRNGKey): RNG key to shuffle minibatches.
         Returns:
             losses: Output of loss_fn stored at each step.
         """
@@ -189,11 +188,11 @@ class SSM(ABC):
         batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
         batch_inputs = ensure_array_has_batch_dim(inputs, self.inputs_shape)
 
-        curr_unc_params, fixed_params = to_unconstrained(curr_params, param_props)
+        unc_params = to_unconstrained(params, props)
 
         def _loss_fn(unc_params, minibatch):
             """Default objective function."""
-            params = from_unconstrained(unc_params, fixed_params, param_props)
+            params = from_unconstrained(unc_params, props)
             minibatch_emissions, minibatch_inputs = minibatch
             scale = len(batch_emissions) / len(minibatch_emissions)
             minibatch_lls = vmap(partial(self.marginal_log_prob, params))(minibatch_emissions, minibatch_inputs)
@@ -202,7 +201,7 @@ class SSM(ABC):
 
         dataset = (batch_emissions, batch_inputs)
         unc_params, losses = run_sgd(_loss_fn,
-                                     curr_unc_params,
+                                     unc_params,
                                      dataset,
                                      optimizer=optimizer,
                                      batch_size=batch_size,
@@ -210,5 +209,5 @@ class SSM(ABC):
                                      shuffle=shuffle,
                                      key=key)
 
-        params = from_unconstrained(unc_params, fixed_params, param_props)
+        params = from_unconstrained(unc_params, props)
         return params, losses

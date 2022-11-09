@@ -5,13 +5,11 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from functools import wraps
 import inspect
 
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
-import chex
+from jaxtyping import Array, Float
+from typing import NamedTuple, Optional
 
 
-@chex.dataclass
-class ParamsLGSSMMoment:
+class ParamsLGSSMMoment(NamedTuple):
     """Lightweight container for passing LGSSM parameters in moment form to inference algorithms."""
     initial_mean: Float[Array, "state_dim"]
     dynamics_weights: Float[Array, "state_dim state_dim"]
@@ -28,9 +26,7 @@ class ParamsLGSSMMoment:
     emission_bias: Optional[Float[Array, "emission_dim"]] = None
 
 
-
-@chex.dataclass
-class PosteriorLGSSMFiltered:
+class PosteriorLGSSMFiltered(NamedTuple):
     """Marginals of the Gaussian filtering posterior.
     Attributes:
         marginal_loglik: log marginal probability of observations
@@ -44,8 +40,8 @@ class PosteriorLGSSMFiltered:
     filtered_means: Float[Array, "ntime state_dim"]
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
 
-@chex.dataclass
-class PosteriorLGSSMSmoothed(PosteriorLGSSMFiltered):
+
+class PosteriorLGSSMSmoothed(NamedTuple):
     """Marginals of the Gaussian filtering and smoothing posterior. .
     Attributes:
         smoothed_means: (T,D_hid) array,
@@ -55,7 +51,10 @@ class PosteriorLGSSMSmoothed(PosteriorLGSSMFiltered):
         smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
             E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
     """
-    smoothed_means: Float[Array, "ntime state_dim"] 
+    marginal_loglik: Float[Array, ""] # Scalar
+    filtered_means: Float[Array, "ntime state_dim"]
+    filtered_covariances: Float[Array, "ntime state_dim state_dim"]
+    smoothed_means: Float[Array, "ntime state_dim"]
     smoothed_covariances: Float[Array, "ntime state_dim state_dim"]
     smoothed_cross_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
 
@@ -261,7 +260,7 @@ def lgssm_smoother(
 
     # Run the Kalman filter
     filtered_posterior = lgssm_filter(params, emissions, inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior
 
     # Run the smoother backward in time
     def _step(carry, args):
@@ -331,7 +330,7 @@ def lgssm_posterior_sample(
 
     # Run the Kalman filter
     filtered_posterior = lgssm_filter(params, emissions, inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior
 
     # Sample backward in time
     def _step(carry, args):

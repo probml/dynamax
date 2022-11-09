@@ -28,7 +28,7 @@ def test_extended_kalman_filter_nonlinear(key=42, num_timesteps=15):
     args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run EKF from sarkka-jax library
-    means_ext, covs_ext = ekf(*args.values(), emissions)
+    means_ext, covs_ext = ekf(*args, emissions)
     # Run EKF from dynamax
     ekf_post = extended_kalman_filter(args, emissions)
 
@@ -54,7 +54,7 @@ def test_extended_kalman_smoother_nonlinear(key=0, num_timesteps=15):
     args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run EK smoother from sarkka-jax library
-    means_ext, covs_ext = eks(*args.values(), emissions)
+    means_ext, covs_ext = eks(*args, emissions)
     # Run EK smoother from dynamax
     ekf_post = extended_kalman_smoother(args, emissions)
 

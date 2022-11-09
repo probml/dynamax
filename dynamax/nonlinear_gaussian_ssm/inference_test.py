@@ -5,8 +5,8 @@ by comparing the results to the sarkka-lib codebase on some toy problems.
 import jax.random as jr
 import jax.numpy as jnp
 
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
+from jaxtyping import Array, Float
+from typing import Tuple, Union
 
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMMoment

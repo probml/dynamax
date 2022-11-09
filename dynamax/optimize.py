@@ -35,14 +35,14 @@ def run_sgd(loss_fn,
     batch size.
 
     Args:
-        loss_fn (Callable): Objective function.
-        params (PyTree): initial value of parameters to be estimated.
-        dataset (chex.Array): PyTree of data arrays with leading batch dimension
-        optmizer (optax.Optimizer): Optimizer.
-        batch_size (int): Number of sequences used at each update step.
-        num_iters (int): Iterations made on only one mini-batch.
-        shuffle (bool): Indicates whether to shuffle emissions.
-        key (chex.PRNGKey): RNG key.
+        loss_fn: Objective function.
+        params: initial value of parameters to be estimated.
+        dataset: PyTree of data arrays with leading batch dimension
+        optmizer: Optimizer.
+        batch_size: Number of sequences used at each update step.
+        num_iters: Iterations made on only one mini-batch.
+        shuffle: Indicates whether to shuffle emissions.
+        key: RNG key.
 
     Returns:
         hmm: HMM with optimized parameters.

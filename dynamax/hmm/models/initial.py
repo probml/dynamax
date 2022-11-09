@@ -1,16 +1,16 @@
-import jax.numpy as jnp
-import jax.random as jr
-import tensorflow_probability.substrates.jax.distributions as tfd
-import tensorflow_probability.substrates.jax.bijectors as tfb
-import chex
 from dynamax.hmm.models.abstractions import HMMInitialState
 from dynamax.parameters import ParameterProperties
-
+import jax.numpy as jnp
+import jax.random as jr
 from jaxtyping import Float, Array
+import tensorflow_probability.substrates.jax.distributions as tfd
+import tensorflow_probability.substrates.jax.bijectors as tfb
+from typing import NamedTuple, Union
 
-@chex.dataclass
-class ParamsStandardHMMInitialState:
-    probs: Float[Array, "state_dim"]
+
+class ParamsStandardHMMInitialState(NamedTuple):
+    probs: Union[Float[Array, "state_dim"], ParameterProperties]
+
 
 class StandardHMMInitialState(HMMInitialState):
     """Abstract class for HMM initial distributions.
@@ -26,7 +26,7 @@ class StandardHMMInitialState(HMMInitialState):
         self.initial_probs_concentration = initial_probs_concentration * jnp.ones(num_states)
 
     def distribution(self, params, inputs=None):
-        return tfd.Categorical(probs=params['probs'])
+        return tfd.Categorical(probs=params.probs)
 
     def initialize(self, key=None, method="prior", initial_probs=None):
         """Initialize the model parameters and their corresponding properties.
@@ -46,14 +46,14 @@ class StandardHMMInitialState(HMMInitialState):
 
         # Package the results into dictionaries
         params = ParamsStandardHMMInitialState(probs=initial_probs)
-        props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
+        props = ParamsStandardHMMInitialState(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
     def log_prior(self, params):
-        return tfd.Dirichlet(self.initial_probs_concentration).log_prob(params['probs'])
+        return tfd.Dirichlet(self.initial_probs_concentration).log_prob(params.probs)
 
     def compute_initial_probs(self, params, inputs=None):
-        return params['probs']
+        return params.probs
 
     def collect_suff_stats(self, params, posterior, inputs=None):
         return posterior.smoothed_probs[0]
@@ -62,13 +62,12 @@ class StandardHMMInitialState(HMMInitialState):
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
-        if props['probs'].trainable:
+        if props.probs.trainable:
             if self.num_states == 1:
-                params.probs = jnp.array([1.0])
+                probs = jnp.array([1.0])
             else:
                 expected_initial_counts = batch_stats.sum(axis=0)
-                post = tfd.Dirichlet(self.initial_probs_concentration + expected_initial_counts)
-                params.probs = post.mode()
-
+                probs = tfd.Dirichlet(self.initial_probs_concentration + expected_initial_counts).mode()
+            params = params._replace(probs=probs)
         return params, m_step_state
 

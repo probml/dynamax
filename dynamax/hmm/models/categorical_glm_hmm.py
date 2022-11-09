@@ -1,19 +1,24 @@
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
-import chex
 from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 import optax
+from typing import NamedTuple, Union
 
 
-@chex.dataclass
-class ParamsCategoricalRegressionHMMEmissions:
-    weights: Float[Array, "state_dim num_classes feature_dim"]
-    biases: Float[Array, "state_dim num_classes"]
+class ParamsCategoricalRegressionHMMEmissions(NamedTuple):
+    weights: Union[Float[Array, "state_dim num_classes feature_dim"], ParameterProperties]
+    biases: Union[Float[Array, "state_dim num_classes"], ParameterProperties]
+
+
+class ParamsCategoricalRegressionHMM(NamedTuple):
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsCategoricalRegressionHMMEmissions
 
 
 class CategoricalRegressionHMMEmissions(HMMEmissions):
@@ -76,23 +81,16 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
         params = ParamsCategoricalRegressionHMMEmissions(
-                    weights=default(emission_weights, _emission_weights),
-                    biases=default(emission_biases, _emission_biases)
-                    )
-        props = dict(weights=ParameterProperties(), biases=ParameterProperties())
+            weights=default(emission_weights, _emission_weights),
+            biases=default(emission_biases, _emission_biases))
+        props = ParamsCategoricalRegressionHMMEmissions(
+            weights=ParameterProperties(),
+            biases=ParameterProperties())
         return params, props
 
     def distribution(self, params, state, inputs=None):
-        logits = params.weights[state] @ inputs
-        logits += params.biases[state]
+        logits = params.weights[state] @ inputs + params.biases[state]
         return tfd.Categorical(logits=logits)
-
-
-@chex.dataclass
-class ParamsCategoricalRegressionHMM:
-    initial: ParamsStandardHMMInitialState
-    transitions: ParamsStandardHMMTransitions
-    emissions: ParamsCategoricalRegressionHMMEmissions
 
 
 class CategoricalRegressionHMM(HMM):
@@ -113,19 +111,16 @@ class CategoricalRegressionHMM(HMM):
     def inputs_shape(self):
         return (self.input_dim,)
 
-    def initialize(self, key: jr.PRNGKey=None,
+    def initialize(self,
+                   key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,
                    emission_weights: jnp.array=None,
                    emission_biases: jnp.array=None):
-        if key is not None:
-            key1, key2, key3 = jr.split(key , 3)
-        else:
-            key1 = key2 = key3 = None
-
+        key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key=key3, method=method, emission_weights=emission_weights, emission_biases=emission_biases)
-        return ParamsCategoricalRegressionHMM(**params), props
+        return ParamsCategoricalRegressionHMM(**params), ParamsCategoricalRegressionHMM(**props)
