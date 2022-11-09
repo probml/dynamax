@@ -4,7 +4,6 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jax import vmap
 from jax.scipy.special import logsumexp
-import chex
 from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
 from dynamax.distributions import NormalInverseGamma
@@ -15,13 +14,13 @@ from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils import PSDToRealBijector, pytree_sum
+from typing import NamedTuple, Union
 
 
-@chex.dataclass
-class ParamsGaussianMixtureHMMEmissions:
-    weights: Float[Array, "state_dim num_components"]
-    means: Float[Array, "state_dim num_components emission_dim"]
-    covs: Float[Array, "state_dim num_components emission_dim emission_dim"]
+class ParamsGaussianMixtureHMMEmissions(NamedTuple):
+    weights: Union[Float[Array, "state_dim num_components"], ParameterProperties]
+    means: Union[Float[Array, "state_dim num_components emission_dim"], ParameterProperties]
+    covs: Union[Float[Array, "state_dim num_components emission_dim emission_dim"], ParameterProperties]
 
 
 class GaussianMixtureHMMEmissions(HMMEmissions):
@@ -90,13 +89,13 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
         params = ParamsGaussianMixtureHMMEmissions(
-                    weights=default(emission_weights, _emission_weights),
-                    means=default(emission_means, _emission_means),
-                    covs=default(emission_covariances, _emission_covs)
-                    )
-        props = dict(weights=ParameterProperties(constrainer=tfb.SoftmaxCentered()),
-                     means=ParameterProperties(),
-                     covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
+            weights=default(emission_weights, _emission_weights),
+            means=default(emission_means, _emission_means),
+            covs=default(emission_covariances, _emission_covs))
+        props = ParamsGaussianMixtureHMMEmissions(
+            weights=ParameterProperties(constrainer=tfb.SoftmaxCentered()),
+            means=ParameterProperties(),
+            covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
         return params, props
 
     def distribution(self, params, state, inputs=None):
@@ -133,9 +132,9 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
-        assert props['weights'].trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
-        assert props['means'].trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
-        assert props['covs'].trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
+        assert props.weights.trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
+        assert props.means.trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
+        assert props.covs.trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
 
         niw_prior = NormalInverseWishart(self.emission_prior_mean,
                                          self.emission_prior_mean_concentration,
@@ -155,17 +154,14 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         emission_stats = pytree_sum(batch_stats, axis=0)
         weights, means, covs = vmap(_single_m_step)(
             emission_stats['Sx'], emission_stats['SxxT'], emission_stats['N'])
-        params.weights = weights
-        params.means = means
-        params.covs = covs
+        params = params._replace(weights=weights, means=means, covs=covs)
         return params, m_step_state
 
 
-@chex.dataclass
-class ParamsDiagonalGaussianMixtureHMMEmissions:
-    weights: Float[Array, "state_dim num_components"]
-    means: Float[Array, "state_dim num_components emission_dim"]
-    scale_diags: Float[Array, "state_dim num_components emission_dim"]
+class ParamsDiagonalGaussianMixtureHMMEmissions(NamedTuple):
+    weights: Union[Float[Array, "state_dim num_components"], ParameterProperties]
+    means: Union[Float[Array, "state_dim num_components emission_dim"], ParameterProperties]
+    scale_diags: Union[Float[Array, "state_dim num_components emission_dim"], ParameterProperties]
 
 
 class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
@@ -224,13 +220,13 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
         # Only use the values above if the user hasn't specified their own
         default = lambda x, x0: x if x is not None else x0
         params = ParamsDiagonalGaussianMixtureHMMEmissions(
-                    weights=default(emission_weights, _emission_weights),
-                    means=default(emission_means, _emission_means),
-                    scale_diags=default(emission_scale_diags, _emission_scale_diags)
-                    )
-        props = dict(weights=ParameterProperties(constrainer=tfb.SoftmaxCentered()),
-                     means=ParameterProperties(),
-                     scale_diags=ParameterProperties(constrainer=tfb.Softplus()))
+            weights=default(emission_weights, _emission_weights),
+            means=default(emission_means, _emission_means),
+            scale_diags=default(emission_scale_diags, _emission_scale_diags))
+        props = ParamsDiagonalGaussianMixtureHMMEmissions(
+            weights=ParameterProperties(constrainer=tfb.SoftmaxCentered()),
+            means=ParameterProperties(),
+            scale_diags=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
 
     def distribution(self, params, state, inputs=None):
@@ -271,9 +267,9 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
-        assert props['weights'].trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
-        assert props['means'].trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
-        assert props['scale_diags'].trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
+        assert props.weights.trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
+        assert props.means.trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
+        assert props.scale_diags.trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
 
         nig_prior = NormalInverseGamma(
             self.emission_prior_mean, self.emission_prior_mean_concentration,
@@ -296,15 +292,12 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
         emission_stats = pytree_sum(batch_stats, axis=0)
         weights, means, scale_diags = vmap(_single_m_step)(
             emission_stats['Sx'], emission_stats['Sxsq'], emission_stats['N'])
-        params.weights = weights
-        params.means = means
-        params.scale_diags = scale_diags
+        params = params._replace(weights=weights, means=means, scale_diags=scale_diags)
         return params, m_step_state
 
 
-@chex.dataclass
-class ParamsGaussianMixtureHMM:
-    initial: ParamsStandardHMMTransitions
+class ParamsGaussianMixtureHMM(NamedTuple):
+    initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsGaussianMixtureHMMEmissions
 
@@ -376,21 +369,16 @@ class GaussianMixtureHMM(HMM):
             params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
-        if key is not None:
-            key1, key2, key3 = jr.split(key , 3)
-        else:
-            key1 = key2 = key3 = None
-
+        key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_weights=emission_weights, emission_means=emission_means, emission_covariances=emission_covariances, emissions=emissions)
-        return ParamsGaussianMixtureHMM(**params), props
+        return ParamsGaussianMixtureHMM(**params), ParamsGaussianMixtureHMM(**props)
 
 
-@chex.dataclass
-class ParamsDiagonalGaussianMixtureHMM:
-    initial: ParamsStandardHMMTransitions
+class ParamsDiagonalGaussianMixtureHMM(NamedTuple):
+    initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsDiagonalGaussianMixtureHMMEmissions
 
@@ -466,13 +454,9 @@ class DiagonalGaussianMixtureHMM(HMM):
             params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
-        if key is not None:
-            key1, key2, key3 = jr.split(key , 3)
-        else:
-            key1 = key2 = key3 = None
-
+        key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_weights=emission_weights, emission_means=emission_means, emission_scale_diags=emission_scale_diags, emissions=emissions)
-        return ParamsDiagonalGaussianMixtureHMM(**params), props
+        return ParamsDiagonalGaussianMixtureHMM(**params), ParamsDiagonalGaussianMixtureHMM(**props)

@@ -2,17 +2,18 @@ import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-import chex
 from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils import pytree_sum
+from typing import NamedTuple, Union
 
-@chex.dataclass
-class ParamsMultinomialHMMEmissions:
-    probs: Float[Array, "state_dim emission_dim num_classes"]
+
+class ParamsMultinomialHMMEmissions(NamedTuple):
+    probs: Union[Float[Array, "state_dim emission_dim num_classes"], ParameterProperties]
+
 
 class MultinomialHMMEmissions(HMMEmissions):
 
@@ -49,16 +50,16 @@ class MultinomialHMMEmissions(HMMEmissions):
 
         # Add parameters to the dictionary
         params = ParamsMultinomialHMMEmissions(probs=emission_probs)
-        props = dict(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
+        props = ParamsMultinomialHMMEmissions(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
         return params, props
 
     def distribution(self, params, state, inputs=None):
         return tfd.Independent(
-            tfd.Multinomial(self.num_trials, probs=params['probs'][state]),
+            tfd.Multinomial(self.num_trials, probs=params.probs[state]),
             reinterpreted_batch_ndims=1)
 
     def log_prior(self, params):
-        return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params['probs']).sum()
+        return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params.probs).sum()
 
     def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
@@ -68,14 +69,15 @@ class MultinomialHMMEmissions(HMMEmissions):
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
-        if props['probs'].trainable:
+        if props.probs.trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
-            params.probs = tfd.Dirichlet(
+            probs = tfd.Dirichlet(
                 self.emission_prior_concentration + emission_stats['sum_x']).mode()
+            params = params._replace(probs=probs)
         return params, m_step_state
 
-@chex.dataclass
-class ParamsMultinomialHMM:
+
+class ParamsMultinomialHMM(NamedTuple):
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsMultinomialHMMEmissions
@@ -122,13 +124,9 @@ class MultinomialHMM(HMM):
             params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
-        if key is not None:
-            key1, key2, key3 = jr.split(key , 3)
-        else:
-            key1 = key2 = key3 = None
-
+        key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_probs=emission_probs)
-        return ParamsMultinomialHMM(**params), props
+        return ParamsMultinomialHMM(**params), ParamsMultinomialHMM(**props)
