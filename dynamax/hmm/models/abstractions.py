@@ -322,25 +322,25 @@ class HMM(SSM):
         return self.emission_component.emission_shape
 
     def initial_distribution(self, params, inputs=None):
-        return self.initial_component.distribution(params["initial"], inputs=inputs)
+        return self.initial_component.distribution(params.initial, inputs=inputs)
 
     def transition_distribution(self, params, state, inputs=None):
-        return self.transition_component.distribution(params["transitions"], state, inputs=inputs)
+        return self.transition_component.distribution(params.transitions, state, inputs=inputs)
 
     def emission_distribution(self, params, state, inputs=None):
-        return self.emission_component.distribution(params["emissions"], state, inputs=inputs)
+        return self.emission_component.distribution(params.emissions, state, inputs=inputs)
 
     def log_prior(self, params):
-        lp = self.initial_component.log_prior(params["initial"])
-        lp += self.transition_component.log_prior(params["transitions"])
-        lp += self.emission_component.log_prior(params["emissions"])
+        lp = self.initial_component.log_prior(params.initial)
+        lp += self.transition_component.log_prior(params.transitions)
+        lp += self.emission_component.log_prior(params.emissions)
         return lp
 
     # The inference functions all need the same arguments
     def _inference_args(self, params, emissions, inputs):
-        return (self.initial_component.compute_initial_probs(params["initial"], inputs),
-                self.transition_component.compute_transition_matrices(params["transitions"], inputs),
-                self.emission_component.compute_conditional_logliks(params["emissions"], emissions, inputs))
+        return (self.initial_component.compute_initial_probs(params.initial, inputs),
+                self.transition_component.compute_transition_matrices(params.transitions, inputs),
+                self.emission_component.compute_conditional_logliks(params.emissions, emissions, inputs))
 
     # Convenience wrappers for the inference code
     def marginal_log_prob(self, params, emissions, inputs=None):
@@ -369,9 +369,9 @@ class HMM(SSM):
         posterior = hmm_two_filter_smoother(*args)
         posterior.trans_probs = compute_transition_probs(args[1], posterior, (args[1].ndim == 2))
 
-        initial_stats = self.initial_component.collect_suff_stats(params["initial"], posterior, inputs)
-        transition_stats = self.transition_component.collect_suff_stats(params["transitions"], posterior, inputs)
-        emission_stats = self.emission_component.collect_suff_stats(params["emissions"], posterior, emissions, inputs)
+        initial_stats = self.initial_component.collect_suff_stats(params.initial, posterior, inputs)
+        transition_stats = self.transition_component.collect_suff_stats(params.transitions, posterior, inputs)
+        emission_stats = self.emission_component.collect_suff_stats(params.emissions, posterior, emissions, inputs)
         return (initial_stats, transition_stats, emission_stats), posterior.marginal_loglik
 
     def initialize_m_step_state(self, params, props):
@@ -379,17 +379,19 @@ class HMM(SSM):
 
         For example, this might include the optimizer state for Adam.
         """
-        initial_m_step_state = self.initial_component.initialize_m_step_state(params["initial"], props["initial"])
-        transitions_m_step_state = self.transition_component.initialize_m_step_state(params["transitions"], props["transitions"])
-        emissions_m_step_state = self.emission_component.initialize_m_step_state(params["emissions"], props["emissions"])
+        initial_m_step_state = self.initial_component.initialize_m_step_state(params.initial, props.initial)
+        transitions_m_step_state = self.transition_component.initialize_m_step_state(params.transitions, props.transitions)
+        emissions_m_step_state = self.emission_component.initialize_m_step_state(params.emissions, props.emissions)
         return initial_m_step_state, transitions_m_step_state, emissions_m_step_state
 
     def m_step(self, params, props, batch_stats, m_step_state):
         batch_initial_stats, batch_transition_stats, batch_emission_stats = batch_stats
         initial_m_step_state, transitions_m_step_state, emissions_m_step_state = m_step_state
-        params.initial, initial_m_step_state = self.initial_component.m_step(params.initial, props["initial"], batch_initial_stats, initial_m_step_state)
-        params.transitions, transitions_m_step_state = self.transition_component.m_step(params.transitions, props["transitions"], batch_transition_stats, transitions_m_step_state)
-        params.emissions, emissions_m_step_state = self.emission_component.m_step(params.emissions, props["emissions"], batch_emission_stats, emissions_m_step_state)
+
+        initial_params, initial_m_step_state = self.initial_component.m_step(params.initial, props.initial, batch_initial_stats, initial_m_step_state)
+        transition_params, transitions_m_step_state = self.transition_component.m_step(params.transitions, props.transitions, batch_transition_stats, transitions_m_step_state)
+        emission_params, emissions_m_step_state = self.emission_component.m_step(params.emissions, props.emissions, batch_emission_stats, emissions_m_step_state)
+        params = params._replace(initial=initial_params, transitions=transition_params, emissions=emission_params)
         m_step_state = initial_m_step_state, transitions_m_step_state, emissions_m_step_state
         return params, m_step_state
 

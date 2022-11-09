@@ -1,66 +1,55 @@
-from copy import deepcopy
-
-from dataclasses import is_dataclass
-
-import chex
+from dataclasses import dataclass
 import jax.numpy as jnp
-from jax.tree_util import tree_flatten, tree_unflatten
+from jax import lax
+from jax.tree_util import tree_flatten, tree_unflatten, tree_map
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
 
-@chex.dataclass
+@dataclass
 class ParameterProperties:
     trainable: bool = True
-    constrainer: tfb.Bijector = tfb.Identity()
+    constrainer: tfb.Bijector = None
 
 
-def to_unconstrained(params, param_props):
+def to_unconstrained(params, props):
     """Extract the trainable parameters and convert to unconstrained, then return
     unconstrained parameters and fixed parameters.
 
     Args:
-        params (dataclass): (nested) dataclass whose leaf values are DeviceArrays containing 
+        params (dataclass): (nested) dataclass whose leaf values are DeviceArrays containing
                               parameter values.
-        param_props (dict): matching (nested) dictionary whose leaf values are ParameterProperties
+        props (dict): matching (nested) dictionary whose leaf values are ParameterProperties
 
     Returns:
-        unc_params (dict): (nested) dictionary whose values are the unconstrainend parameter 
+        unc_params (dict): (nested) dictionary whose values are the unconstrainend parameter
                             values, but only for the parameters that are marked trainable in
                             `param_props`.
         params (dataclass): the original `params` input.
     """
-    unc_params = dict()
-    for k, v in params.items():
-        if is_dataclass(v):
-            unc_params[k], _ = to_unconstrained(v, param_props[k])
-        elif param_props[k].trainable:
-            unc_params[k] = param_props[k].constrainer.inverse(v)
-    return unc_params, params
+    to_unc = lambda value, prop: prop.constrainer.inverse(value) \
+        if prop.constrainer is not None else value
+    is_leaf = lambda node: isinstance(node, (ParameterProperties,))
+    return tree_map(to_unc, params, props, is_leaf=is_leaf)
 
 
-def from_unconstrained(unc_params, orig_params, param_props):
+def from_unconstrained(unc_params, props):
     """Convert the unconstrained parameters to constrained form and
     combine them with the original parameters.
 
     Args:
-        unc_params (dict): (nested) dictionary whose leaf values are DeviceArrays
-        orig_params (dataclass): (nested) dataclasses whose leaf values are DeviceArrays containing
-                             parameter values
-        param_props (dict): matching (nested) dictionary whose leaf values are ParameterProperties
+        unc_params: PyTree whose leaf values are DeviceArrays
+        props: matching PyTree whose leaf values are ParameterProperties
 
     Returns:
-        params (dataclass): copy of `orig_params` where values have been replaced by the corresponding 
-                             leaf in `unc_params`, if present.
+        params:
     """
-    params = deepcopy(orig_params)
-    for k, v in unc_params.items():
-        if isinstance(v, dict):
-            params = params.replace(
-                **{k: from_unconstrained(unc_params[k], orig_params[k], param_props[k])}
-            )
-        else:
-            params = params.replace(**{k:param_props[k].constrainer(v)})
-    return params
+    def from_unc(unc_value, prop):
+        value = prop.constrainer(unc_value) if prop.constrainer is not None else unc_value
+        value = lax.stop_gradient(value) if not prop.trainable else value
+        return value
+
+    is_leaf = lambda node: isinstance(node, (ParameterProperties,))
+    return tree_map(from_unc, unc_params, props, is_leaf=is_leaf)
 
 
 def log_det_jac_constrain(unc_params, param_props):

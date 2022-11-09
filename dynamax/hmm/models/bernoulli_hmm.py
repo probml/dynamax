@@ -1,4 +1,3 @@
-import chex
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
@@ -8,12 +7,19 @@ from dynamax.hmm.models.abstractions import HMMEmissions, HMM
 from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils import pytree_sum
-
 from jaxtyping import Float, Array
+from typing import NamedTuple, Union
 
-@chex.dataclass
-class ParamsBernoulliHMMEmissions:
-    probs: Float[Array, "emission_dim"]
+
+class ParamsBernoulliHMMEmissions(NamedTuple):
+    probs: Union[Float[Array, "emission_dim"], ParameterProperties]
+
+
+class ParamsBernoulliHMM(NamedTuple):
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsBernoulliHMMEmissions
+
 
 class BernoulliHMMEmissions(HMMEmissions):
 
@@ -40,12 +46,12 @@ class BernoulliHMMEmissions(HMMEmissions):
         # Bernoulli observations. The `reinterpreted_batch_ndims` argument tells
         # `tfd.Independent` that only the last dimension should be considered a "batch"
         # of conditionally independent observations.
-        return tfd.Independent(tfd.Bernoulli(probs=params['probs'][state]), reinterpreted_batch_ndims=1)
+        return tfd.Independent(tfd.Bernoulli(probs=params.probs[state]), reinterpreted_batch_ndims=1)
 
     def log_prior(self, params):
         prior = tfd.Beta(self.emission_prior_concentration1,
                          self.emission_prior_concentration0)
-        return prior.log_prob(params['probs']).sum()
+        return prior.log_prob(params.probs).sum()
 
     def initialize(self, key=jr.PRNGKey(0), method="prior", emission_probs=None):
         if emission_probs is None:
@@ -63,7 +69,7 @@ class BernoulliHMMEmissions(HMMEmissions):
 
         # Add parameters to the dictionary
         params = ParamsBernoulliHMMEmissions(probs=emission_probs)
-        props = dict(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
+        props = ParamsBernoulliHMMEmissions(probs=ParameterProperties(constrainer=tfb.Sigmoid()))
         return params, props
 
     def collect_suff_stats(self, params, posterior, emissions, inputs=None):
@@ -76,19 +82,14 @@ class BernoulliHMMEmissions(HMMEmissions):
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
-        if props['probs'].trainable:
+        if props.probs.trainable:
             sum_x, sum_1mx = pytree_sum(batch_stats, axis=0)
-            params.probs = tfd.Beta(
+            probs = tfd.Beta(
                 self.emission_prior_concentration1 + sum_x,
                 self.emission_prior_concentration0 + sum_1mx).mode()
+            params = params._replace(probs=probs)
         return params, m_step_state
 
-
-@chex.dataclass
-class ParamsBernoulliHMM:
-    initial: ParamsStandardHMMInitialState
-    transitions: ParamsStandardHMMTransitions
-    emissions: ParamsBernoulliHMMEmissions
 
 class BernoulliHMM(HMM):
     def __init__(self, num_states: int,
@@ -103,7 +104,8 @@ class BernoulliHMM(HMM):
         emission_component = BernoulliHMMEmissions(num_states, emission_dim, emission_prior_concentration0=emission_prior_concentration0, emission_prior_concentration1=emission_prior_concentration1)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=None,
+    def initialize(self,
+                   key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: jnp.array=None,
                    transition_matrix: jnp.array=None,
@@ -127,13 +129,9 @@ class BernoulliHMM(HMM):
             params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
-        if key is not None:
-            key1, key2, key3 = jr.split(key , 3)
-        else:
-            key1 = key2 = key3 = None
-
+        key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_probs=emission_probs)
-        return ParamsBernoulliHMM(**params), props
+        return ParamsBernoulliHMM(**params), ParamsBernoulliHMM(**props)
