@@ -65,7 +65,7 @@ def from_unconstrained(unc_params, props):
         props: matching PyTree whose leaf values are ParameterProperties
 
     Returns:
-        params:
+        params: PyTree whose leaf values are Device arrays in the constrained space
     """
     def from_unc(unc_value, prop):
         value = prop.constrainer(unc_value) if prop.constrainer is not None else unc_value
@@ -76,9 +76,25 @@ def from_unconstrained(unc_params, props):
     return tree_map(from_unc, unc_params, props, is_leaf=is_leaf)
 
 
-def log_det_jac_constrain(unc_params, props):
+def log_det_jac_constrain(params, props):
     """Log determinant of the Jacobian matrix evaluated at the unconstrained parameters.
+
+    Let x be the unconstrained parameter and f(x) be the constrained parameter, so
+    that in code, `props.constrainer` is the Bijector f. To perform Hamiltonian
+    Monte Carlo (HMC) on the unconstrained parameters we need the log determinant of
+    the forward Jacobian, |df(x) / dx|. In math, this falls out as follows:
+
+    ..math:
+        log p(x) = log p(f(x)) + log |df(x) / dx|
+
+    Args:
+        params: PyTree whose leaf values are DeviceArrays
+        props: matching PyTree whose leaf values are ParameterProperties
+
+    Returns:
+        logdet: the log determinant of the forward Jacobian.
     """
+    unc_params = to_unconstrained(params, props)
     def _compute_logdet(unc_value, prop):
         logdet = prop.constrainer.forward_log_det_jacobian(unc_value).sum() \
             if prop.constrainer is not None else 0.0
