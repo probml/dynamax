@@ -565,7 +565,16 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">6</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span><span class="p">,</span> <span class="n">grad</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="ne">----&gt; </span><span class="mi">6</span> <span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">plot_uncertainty_ellipses</span>
+<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
+<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">ParamsLGSSM</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;dynamax.plotting&#39;
 </pre></div>
 </div>
 </div>
@@ -625,10 +634,10 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd8b80c51c0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd660bbdd00&gt;
 </pre></div>
 </div>
-<img alt="../../_images/f89e0b9d96932c3e1751d393f437e0faa1cf6822efaca2ebe885d7e3400190a0.png" src="../../_images/f89e0b9d96932c3e1751d393f437e0faa1cf6822efaca2ebe885d7e3400190a0.png" />
+<img alt="../../_images/308ad07e820e22155c3445642b0fcf1f80bbf271e51b005a6690e78bf9d65612.png" src="../../_images/308ad07e820e22155c3445642b0fcf1f80bbf271e51b005a6690e78bf9d65612.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -722,7 +731,7 @@ relevant parts  of the state vector.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/126379474d66b57b72dd0e18c2a740c69ffeb829ca5178e160b784a3432b5db9.png" src="../../_images/126379474d66b57b72dd0e18c2a740c69ffeb829ca5178e160b784a3432b5db9.png" />
+<img alt="../../_images/2a559cbe58023d6c9a6dcc924764f171560f0230fe941015d438ca95c9ab94e9.png" src="../../_images/2a559cbe58023d6c9a6dcc924764f171560f0230fe941015d438ca95c9ab94e9.png" />
 </div>
 </div>
 </section>
@@ -756,7 +765,7 @@ relevant parts  of the state vector.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/916f02c13cd835be0bcce6514fe7f6e0dc9f56da1e93e1d87e42b8cdf6f8be3e.png" src="../../_images/916f02c13cd835be0bcce6514fe7f6e0dc9f56da1e93e1d87e42b8cdf6f8be3e.png" />
+<img alt="../../_images/1b4a610f7cb7efb3316ccf4ca7849e848d08afc2f5d10d819dd302b880a644a9.png" src="../../_images/1b4a610f7cb7efb3316ccf4ca7849e848d08afc2f5d10d819dd302b880a644a9.png" />
 </div>
 </div>
 </section>
@@ -861,9 +870,9 @@ We just pass the model parameters directly to the function.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a7d9ae7f5b64c612bdbb027ed596bbc724560ca9928f8f46be9eee20b932a1bf.png" src="../../_images/a7d9ae7f5b64c612bdbb027ed596bbc724560ca9928f8f46be9eee20b932a1bf.png" />
-<img alt="../../_images/3a1e092018afd5e41f4811a69be5bb9adb4dbc367fea03641aafae14ba31cf61.png" src="../../_images/3a1e092018afd5e41f4811a69be5bb9adb4dbc367fea03641aafae14ba31cf61.png" />
-<img alt="../../_images/70060d3daa526fcadeb99118ecf53f98c332a2f2cfb6b522222dba06cbca86c4.png" src="../../_images/70060d3daa526fcadeb99118ecf53f98c332a2f2cfb6b522222dba06cbca86c4.png" />
+<img alt="../../_images/e5bdc7b09f90dc6988fc499e7682e328e3b65c037cd164d0a1216cfa9a15dbf2.png" src="../../_images/e5bdc7b09f90dc6988fc499e7682e328e3b65c037cd164d0a1216cfa9a15dbf2.png" />
+<img alt="../../_images/fcd4d9495d86b104d1ef375dba101d9dc5b1dcf230226bfb7fefa40fdc2279ee.png" src="../../_images/fcd4d9495d86b104d1ef375dba101d9dc5b1dcf230226bfb7fefa40fdc2279ee.png" />
+<img alt="../../_images/e261ec220237c0fd30eb9d0f0bc7022693c281b36ed979e29397aaf2b28ab5a2.png" src="../../_images/e261ec220237c0fd30eb9d0f0bc7022693c281b36ed979e29397aaf2b28ab5a2.png" />
 </div>
 </div>
 </section>

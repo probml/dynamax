@@ -32,6 +32,8 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter" href="notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html" />
@@ -520,41 +522,909 @@ title="Print to PDF"
 </section>
 <section id="state-space-model-base-class">
 <h1>State Space Model (Base class)<a class="headerlink" href="#state-space-model-base-class" title="Permalink to this headline">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dynamax.abstractions.</span></span><span class="sig-name descname"><span class="pre">SSM</span></span><a class="headerlink" href="#dynamax.abstractions.SSM" title="Permalink to this definition">#</a></dt>
+<dd><p>A base class for state space models. Such models consist of parameters, which
+we may learn, as well as hyperparameters, which specify static properties of the
+model. This base class allows parameters to be indicated a standardized way
+so that they can easily be converted to/from unconstrained form. It also uses
+these parameters to implement the tree_flatten and tree_unflatten methods necessary
+to register a model as a JAX PyTree.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.emission_distribution">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.emission_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over emissions given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of current emission.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.emission_shape">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_shape</span></span><a class="headerlink" href="#dynamax.abstractions.SSM.emission_shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s emissions.
+For example, a Gaussian HMM with D dimensional emissions would return (D,).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_em">
+<span class="sig-name descname"><span class="pre">fit_em</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">props</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_em" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_sgd">
+<span class="sig-name descname"><span class="pre">fit_sgd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">params,</span> <span class="pre">props,</span> <span class="pre">emissions,</span> <span class="pre">inputs=None,</span> <span class="pre">optimizer=GradientTransformation(init=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.init_fn&gt;,</span> <span class="pre">update=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.update_fn&gt;),</span> <span class="pre">batch_size=1,</span> <span class="pre">num_epochs=50,</span> <span class="pre">shuffle=False,</span> <span class="pre">key=DeviceArray([0,</span> <span class="pre">0],</span> <span class="pre">dtype=uint32)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_sgd" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute parameter MLE/ MAP estimate using Stochastic gradient descent (SGD).</p>
+<p>Fit this HMM by running SGD on the marginal log likelihood.
+Note that batch_emissions is initially of shape (N,T)
+where N is the number of independent sequences and
+T is the length of a sequence. Then, a random susbet with shape (B, T)
+of entire sequence, not time steps, is sampled at each step where B is
+batch size.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>batch_emissions: Independent sequences.
+optmizer (optax.Optimizer): Optimizer.
+batch_size (int): Number of sequences used at each update step.
+num_epochs (int): Iterations made through entire dataset.
+shuffle (bool): Indicates whether to shuffle minibatches.
+key (jr.PRNGKey): RNG key to shuffle minibatches.</p>
+</dd>
+<dt>Returns:</dt><dd><p>losses: Output of loss_fn stored at each step.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.initial_distribution">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">initial_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.initial_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return an initial distribution over latent states.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): distribution over initial latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.inputs_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inputs_shape</span></span><a class="headerlink" href="#dynamax.abstractions.SSM.inputs_shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s inputs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.log_prior">
+<span class="sig-name descname"><span class="pre">log_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.log_prior" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the log prior probability of any model parameters.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>lp (Scalar): log prior probability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.log_prob">
+<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.log_prob" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the log joint probability of the states and observations</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_timesteps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.sample" title="Permalink to this definition">#</a></dt>
+<dd><p>Sample a sequence of latent states and emissions.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>key: rng key
+num_timesteps: length of sequence to generate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.abstractions.SSM.transition_distribution">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transition_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.transition_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over next latent state given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of next latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="hidden-markov-model">
 <h1>Hidden Markov Model<a class="headerlink" href="#hidden-markov-model" title="Permalink to this headline">#</a></h1>
 <section id="high-level-class">
 <h2>High-level class<a class="headerlink" href="#high-level-class" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dynamax.hmm.models.abstractions.</span></span><span class="sig-name descname"><span class="pre">HMM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_component</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.hmm.models.abstractions.HMMInitialState</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_component</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.hmm.models.abstractions.HMMTransitions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_component</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.hmm.models.abstractions.HMMEmissions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM" title="Permalink to this definition">#</a></dt>
+<dd><blockquote>
+<div><p>Hidden Markov Model.</p>
+</div></blockquote>
+<p>The model is defined as follows
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">p</span><span class="p">(</span><span class="n">z_t</span><span class="o">=</span><span class="n">k</span> <span class="o">|</span> <span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">}</span><span class="o">=</span><span class="n">j</span><span class="p">,</span> <span class="n">u_t</span><span class="p">)</span> <span class="o">=</span> <span class="n">A</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">;</span> <span class="n">t</span><span class="p">,</span> <span class="n">u_t</span><span class="p">)</span>
+<span class="n">p</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">z_t</span><span class="o">=</span><span class="n">k</span><span class="p">)</span> <span class="o">=</span> <span class="n">Pr</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">B</span><span class="p">(</span><span class="n">k</span><span class="p">;</span> <span class="n">t</span><span class="p">,</span> <span class="n">u_t</span><span class="p">))</span>
+<span class="n">p</span><span class="p">(</span><span class="n">z_1</span><span class="o">=</span><span class="n">k</span><span class="p">)</span> <span class="o">=</span> <span class="n">pi</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where</p>
+<p><span class="math notranslate nohighlight">\(z_t\)</span> = discrete hidden variable with <code class="docutils literal notranslate"><span class="pre">num_states</span></code> possible values,
+<span class="math notranslate nohighlight">\(y_t\)</span> = observed variables of size <code class="docutils literal notranslate"><span class="pre">emission_dim</span></code>
+<span class="math notranslate nohighlight">\(u_t\)</span> = input covariates of size <code class="docutils literal notranslate"><span class="pre">input_dim</span></code> (defaults to 0).</p>
+<p>The parameters of the model are stored in a separate named tuple, with these fields:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>pi = params.initial</p></li>
+<li><p>A = params.transitions</p></li>
+<li><p>B = params.emissions</p></li>
+</ul>
+</div></blockquote>
+<p>Many possible emission distributions Pr() are supported. Each of these define a different
+set of emission parameters B. For example, if we have a Gaussian HMM, then each discrete
+state <span class="math notranslate nohighlight">\(k\)</span> is associated with a different mean <span class="math notranslate nohighlight">\(\mu_k\)</span> and covariance <span class="math notranslate nohighlight">\(\Sigma_k\)</span>.
+Parameters may also be indexed by time <span class="math notranslate nohighlight">\(k\)</span>, and may also depend on inputs <span class="math notranslate nohighlight">\(u_t\)</span>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.e_step">
+<span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.e_step" title="Permalink to this definition">#</a></dt>
+<dd><p>The E-step computes expected sufficient statistics under the
+posterior. In the generic case, we simply return the posterior itself.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.emission_distribution">
+<span class="sig-name descname"><span class="pre">emission_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.emission_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over emissions given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of current emission.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.emission_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_shape</span></span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.emission_shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s emissions.
+For example, a Gaussian HMM with D dimensional emissions would return (D,).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute filtering distribution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.initial_distribution">
+<span class="sig-name descname"><span class="pre">initial_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.initial_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return an initial distribution over latent states.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): distribution over initial latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.initialize_m_step_state">
+<span class="sig-name descname"><span class="pre">initialize_m_step_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">props</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.initialize_m_step_state" title="Permalink to this definition">#</a></dt>
+<dd><p>Initialize any required state for the M step.</p>
+<p>For example, this might include the optimizer state for Adam.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.log_prior">
+<span class="sig-name descname"><span class="pre">log_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.log_prior" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the log prior probability of any model parameters.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>lp (Scalar): log prior probability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.marginal_log_prob">
+<span class="sig-name descname"><span class="pre">marginal_log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.marginal_log_prob" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute log marginal likelihood of observations.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.most_likely_states">
+<span class="sig-name descname"><span class="pre">most_likely_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.most_likely_states" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute most likely state path with the Viterbi algorithm.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.smoother">
+<span class="sig-name descname"><span class="pre">smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute smoothing distribution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.hmm.models.abstractions.HMM.transition_distribution">
+<span class="sig-name descname"><span class="pre">transition_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.hmm.models.abstractions.HMM.transition_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over next latent state given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of next latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="low-level-inference">
 <h2>Low-level inference<a class="headerlink" href="#low-level-inference" title="Permalink to this headline">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.hmm.inference.hmm_filter">
+<span class="sig-prename descclassname"><span class="pre">dynamax.hmm.inference.</span></span><span class="sig-name descname"><span class="pre">hmm_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.hmm.inference.HMMPosteriorFiltered</span></span></span><a class="headerlink" href="#dynamax.hmm.inference.hmm_filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Forwards filtering.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>initial_distribution(k): prob(hid(1)=k)
+transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
+log_likelihoods(t,k): p(obs(t) | hid(t)=k)
+transition_fn(t): returns K*K transition matrix for step t (default None)</p>
+</dd>
+</dl>
+<p>Returns: HMMPosterior object (smoothed_probs=None)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.hmm.inference.hmm_smoother">
+<span class="sig-prename descclassname"><span class="pre">dynamax.hmm.inference.</span></span><span class="sig-name descname"><span class="pre">hmm_smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_trans_probs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.hmm.inference.HMMPosterior</span></span></span><a class="headerlink" href="#dynamax.hmm.inference.hmm_smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Computed the smoothed state probabilities using a general
+Bayesian smoother.</p>
+<p>Note: This is the discrete SSM analog of the RTS smoother for
+linear Gaussian SSMs.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>initial_distribution (_type_): _description_
+transition_matrix (_type_): _description_
+log_likelihoods (_type_): _description_</p>
+</dd>
+<dt>Returns:</dt><dd><p>HMMPosterior object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.hmm.inference.hmm_two_filter_smoother">
+<span class="sig-prename descclassname"><span class="pre">dynamax.hmm.inference.</span></span><span class="sig-name descname"><span class="pre">hmm_two_filter_smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_trans_probs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.hmm.inference.HMMPosterior</span></span></span><a class="headerlink" href="#dynamax.hmm.inference.hmm_two_filter_smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Computed the smoothed state probabilities using the two-filter
+smoother, a.k.a. the forward-backward algorithm.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>initial_distribution (_type_): _description_
+transition_matrix (_type_): _description_
+log_likelihoods (_type_): _description_</p>
+</dd>
+<dt>Returns:</dt><dd><p>HMMPosterior object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.hmm.inference.hmm_fixed_lag_smoother">
+<span class="sig-prename descclassname"><span class="pre">dynamax.hmm.inference.</span></span><span class="sig-name descname"><span class="pre">hmm_fixed_lag_smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.hmm.inference.HMMPosterior</span></span></span><a class="headerlink" href="#dynamax.hmm.inference.hmm_fixed_lag_smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the smoothed state probabilities using the fixed-lag smoother.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>initial_distribution(k): prob(hid(1)=k)
+transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
+log_likelihoods(t,k): p(obs(t) | hid(t)=k)
+window_size(int): size of smoothed window</p>
+</dd>
+<dt>Returns:</dt><dd><p>HMMPosterior object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.hmm.inference.hmm_posterior_mode">
+<span class="sig-prename descclassname"><span class="pre">dynamax.hmm.inference.</span></span><span class="sig-name descname"><span class="pre">hmm_posterior_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">jaxtyping.Int</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps'</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#dynamax.hmm.inference.hmm_posterior_mode" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the most likely state sequence. This is called the Viterbi algorithm.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>_description_</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.hmm.inference.hmm_posterior_sample">
+<span class="sig-prename descclassname"><span class="pre">dynamax.hmm.inference.</span></span><span class="sig-name descname"><span class="pre">hmm_posterior_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jax._src.random.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_states</span> <span class="pre">num_states'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">jaxtyping.Int</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'num_timesteps'</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#dynamax.hmm.inference.hmm_posterior_sample" title="Permalink to this definition">#</a></dt>
+<dd><p>Sample a latent sequence from the posterior.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>initial_distribution(k): prob(hid(1)=k)
+transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
+log_likelihoods(t,k): p(obs(t) | hid(t)=k)</p>
+</dd>
+<dt>Returns:</dt><dd><p>log_prob
+sampled_states(1:T)</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 <section id="linear-gaussian-ssm">
 <h1>Linear Gaussian SSM<a class="headerlink" href="#linear-gaussian-ssm" title="Permalink to this headline">#</a></h1>
 <section id="id1">
 <h2>High-level class<a class="headerlink" href="#id1" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dynamax.linear_gaussian_ssm.linear_gaussian_ssm.</span></span><span class="sig-name descname"><span class="pre">LinearGaussianSSM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_dynamics_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_emissions_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM" title="Permalink to this definition">#</a></dt>
+<dd><p>Linear Gaussian State Space Model.</p>
+<p>The model is defined as follows
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">p</span><span class="p">(</span><span class="n">z_t</span> <span class="o">|</span> <span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="n">u_t</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">z_t</span> <span class="o">|</span> <span class="n">F_t</span> <span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">}</span> <span class="o">+</span> <span class="n">B_t</span> <span class="n">u_t</span> <span class="o">+</span> <span class="n">b_t</span><span class="p">,</span> <span class="n">Q_t</span><span class="p">)</span>
+<span class="n">p</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">z_t</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">H_t</span> <span class="n">z_t</span> <span class="o">+</span> <span class="n">D_t</span> <span class="n">u_t</span> <span class="o">+</span> <span class="n">d_t</span><span class="p">,</span> <span class="n">R_t</span><span class="p">)</span>
+<span class="n">p</span><span class="p">(</span><span class="n">z_1</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">z_1</span> <span class="o">|</span> <span class="n">m</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where</p>
+<p><span class="math notranslate nohighlight">\(z_t\)</span> = hidden variables of size <code class="docutils literal notranslate"><span class="pre">state_dim</span></code>,
+<span class="math notranslate nohighlight">\(y_t\)</span> = observed variables of size <code class="docutils literal notranslate"><span class="pre">emission_dim</span></code>
+<span class="math notranslate nohighlight">\(u_t\)</span> = input covariates of size <code class="docutils literal notranslate"><span class="pre">input_dim</span></code> (defaults to 0)</p>
+<p>The parameters of the model are stored in a separate named tuple, with these fields:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>F = params.dynamics.weights</p></li>
+<li><p>Q = params.dynamics.cov</p></li>
+<li><p>H = params.emissions.weights</p></li>
+<li><p>R = params.emissions.cov</p></li>
+<li><p>m = params.initial.mean</p></li>
+<li><p>S = params.initial.cov</p></li>
+</ul>
+</div></blockquote>
+<p>Optional parameters (default to 0)</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>B = params.dynamics.input_weights</p></li>
+<li><p>b = params.dynamics.bias</p></li>
+<li><p>D = params.emissions.input_weights</p></li>
+<li><p>d = params.emissions.bias</p></li>
+</ul>
+</div></blockquote>
+<p>You can create these parameters manually, or by calling <cite>initialize</cite>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.e_step">
+<span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nseq</span> <span class="pre">ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nseq</span> <span class="pre">ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.e_step" title="Permalink to this definition">#</a></dt>
+<dd><p>The E-step computes sums of expected sufficient statistics under the
+posterior. In the generic case, we simply return the posterior itself.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.emission_distribution">
+<span class="sig-name descname"><span class="pre">emission_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'state_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensorflow_probability.substrates.jax.distributions.distribution.Distribution</span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.emission_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over emissions given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of current emission.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.emission_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_shape</span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.emission_shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s emissions.
+For example, a Gaussian HMM with D dimensional emissions would return (D,).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.filter">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMFiltered</span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute filtering distribution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.initial_distribution">
+<span class="sig-name descname"><span class="pre">initial_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensorflow_probability.substrates.jax.distributions.distribution.Distribution</span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.initial_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return an initial distribution over latent states.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): distribution over initial latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.initialize">
+<span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jax._src.random.PRNGKey</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">DeviceArray([0,</span> <span class="pre">0],</span> <span class="pre">dtype=uint32)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_covariance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_input_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_covariance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_input_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_covariance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.initialize" title="Permalink to this definition">#</a></dt>
+<dd><p>Initialize the model parameters and their corresponding properties.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.log_prior">
+<span class="sig-name descname"><span class="pre">log_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.log_prior" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the log prior probability of model parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.marginal_log_prob">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">marginal_log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.marginal_log_prob" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute log marginal likelihood of observations.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.posterior_predictive">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">posterior_predictive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.posterior_predictive" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute marginal posterior predictive for each observation.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>means: (T,D) array of E[Y(t,d) | Y(1:T)]
+stds: (T,D) array std[Y(t,d) | Y(1:T)]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.smoother">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMSmoothed</span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute smoothing distribution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.transition_distribution">
+<span class="sig-name descname"><span class="pre">transition_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'state_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensorflow_probability.substrates.jax.distributions.distribution.Distribution</span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.linear_gaussian_ssm.LinearGaussianSSM.transition_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over next latent state given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of next latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="id2">
 <h2>Low-level inference<a class="headerlink" href="#id2" title="Permalink to this headline">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.inference.lgssm_filter">
+<span class="sig-prename descclassname"><span class="pre">dynamax.linear_gaussian_ssm.inference.</span></span><span class="sig-name descname"><span class="pre">lgssm_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMFiltered</span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.inference.lgssm_filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Run a Kalman filter to produce the marginal likelihood and filtered state
+estimates.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>params: an LGSSMParams instance (or object with the same fields)
+emissions (T,D_hid): array of observations.
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>filtered_posterior: GSSMPosterior instance containing,</dt><dd><p>marginal_log_lik
+filtered_means (T, D_hid)
+filtered_covariances (T, D_hid, D_hid)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.inference.lgssm_smoother">
+<span class="sig-prename descclassname"><span class="pre">dynamax.linear_gaussian_ssm.inference.</span></span><span class="sig-name descname"><span class="pre">lgssm_smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMSmoothed</span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.inference.lgssm_smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Run forward-filtering, backward-smoother to compute expectations
+under the posterior distribution on latent states. Technically, this
+implements the Rauch-Tung-Striebel (RTS) smoother.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>params: an LGSSMParams instance (or object with the same fields)
+emissions (T,D_hid): array of observations.
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>lgssm_posterior: GSSMPosterior instance containing properites of</dt><dd><p>filtered and smoothed posterior distributions.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.linear_gaussian_ssm.inference.lgssm_posterior_sample">
+<span class="sig-prename descclassname"><span class="pre">dynamax.linear_gaussian_ssm.inference.</span></span><span class="sig-name descname"><span class="pre">lgssm_posterior_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jax._src.random.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.linear_gaussian_ssm.inference.ParamsLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">state_dim'</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#dynamax.linear_gaussian_ssm.inference.lgssm_posterior_sample" title="Permalink to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>Run forward-filtering, backward-sampling to draw samples of</dt><dd><p>x_{1:T} | y_{1:T}, u_{1:T}.</p>
+</dd>
+<dt>Args:</dt><dd><p>key: jax.random.PRNGKey.
+params: an LGSSMParams instance (or object with the same fields)
+emissions (T,D_hid): array of observations.
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><p>states (T,D_hid): samples from the posterior distribution on latent states.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 <section id="nonlinear-gaussian-gssm">
 <h1>Nonlinear Gaussian GSSM<a class="headerlink" href="#nonlinear-gaussian-gssm" title="Permalink to this headline">#</a></h1>
 <section id="id3">
 <h2>High-level class<a class="headerlink" href="#id3" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.</span></span><span class="sig-name descname"><span class="pre">NonlinearGaussianSSM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM" title="Permalink to this definition">#</a></dt>
+<dd><blockquote>
+<div><p>Nonlinear Gaussian State Space Model.</p>
+</div></blockquote>
+<p>The model is defined as follows
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">p</span><span class="p">(</span><span class="n">z_t</span> <span class="o">|</span> <span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="n">u_t</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">z_t</span> <span class="o">|</span> <span class="n">f</span><span class="p">(</span><span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="n">u_t</span><span class="p">),</span> <span class="n">Q_t</span><span class="p">)</span>
+<span class="n">p</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">z_t</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">h</span><span class="p">(</span><span class="n">z_t</span><span class="p">,</span> <span class="n">u_t</span><span class="p">),</span> <span class="n">R_t</span><span class="p">)</span>
+<span class="n">p</span><span class="p">(</span><span class="n">z_1</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">z_1</span> <span class="o">|</span> <span class="n">m</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where</p>
+<p><span class="math notranslate nohighlight">\(z_t\)</span> = hidden variables of size <code class="docutils literal notranslate"><span class="pre">state_dim</span></code>,
+<span class="math notranslate nohighlight">\(y_t\)</span> = observed variables of size <code class="docutils literal notranslate"><span class="pre">emission_dim</span></code>
+<span class="math notranslate nohighlight">\(u_t\)</span> = input covariates of size <code class="docutils literal notranslate"><span class="pre">input_dim</span></code> (defaults to 0).</p>
+<p>Alternatively, if you have no inputs, we can use the following, simpler model:
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">p</span><span class="p">(</span><span class="n">z_t</span> <span class="o">|</span> <span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="n">u_t</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">z_t</span> <span class="o">|</span> <span class="n">f</span><span class="p">(</span><span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">}),</span> <span class="n">Q_t</span><span class="p">)</span>
+<span class="n">p</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">z_t</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">h</span><span class="p">(</span><span class="n">z_t</span><span class="p">),</span> <span class="n">R_t</span><span class="p">)</span>
+<span class="n">p</span><span class="p">(</span><span class="n">z_1</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">z_1</span> <span class="o">|</span> <span class="n">m</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The parameters of the model are stored in a separate named tuple, with these fields:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>f = params.dynamics_function</p></li>
+<li><p>Q = params.dynamics_covariance</p></li>
+<li><p>h = params.emissions_function</p></li>
+<li><p>R = params.emissions_covariance</p></li>
+<li><p>m = params.init_mean</p></li>
+<li><p>S = params.initial_covariance</p></li>
+</ul>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.emission_distribution">
+<span class="sig-name descname"><span class="pre">emission_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.ParamsNLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'state_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensorflow_probability.substrates.jax.distributions.distribution.Distribution</span></span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.emission_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over emissions given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of current emission.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.emission_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_shape</span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.emission_shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s emissions.
+For example, a Gaussian HMM with D dimensional emissions would return (D,).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.initial_distribution">
+<span class="sig-name descname"><span class="pre">initial_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.ParamsNLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensorflow_probability.substrates.jax.distributions.distribution.Distribution</span></span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.initial_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return an initial distribution over latent states.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): distribution over initial latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.inputs_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inputs_shape</span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.inputs_shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s inputs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.transition_distribution">
+<span class="sig-name descname"><span class="pre">transition_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.ParamsNLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'state_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensorflow_probability.substrates.jax.distributions.distribution.Distribution</span></span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.NonlinearGaussianSSM.transition_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over next latent state given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of next latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="id4">
 <h2>Low-level inference<a class="headerlink" href="#id4" title="Permalink to this headline">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.extended_kalman_filter">
+<span class="sig-prename descclassname"><span class="pre">dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.</span></span><span class="sig-name descname"><span class="pre">extended_kalman_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.ParamsNLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMFiltered</span></span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.extended_kalman_filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Run an (iterated) extended Kalman filter to produce the
+marginal likelihood and filtered state estimates.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>params: an NLGSSMParams instance (or object with the same fields)
+emissions (T,D_hid): array of observations.
+num_iter (int): number of linearizations around posterior for update step.
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>filtered_posterior: GSSMPosterior instance containing,</dt><dd><p>marginal_log_lik
+filtered_means (T, D_hid)
+filtered_covariances (T, D_hid, D_hid)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.iterated_extended_kalman_filter">
+<span class="sig-prename descclassname"><span class="pre">dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.</span></span><span class="sig-name descname"><span class="pre">iterated_extended_kalman_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.ParamsNLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMFiltered</span></span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.iterated_extended_kalman_filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Run an iterated extended Kalman filter (IEKF).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>params: an NLGSSMParams instance (or object with the same fields)
+emissions (T,D_hid): array of observations.
+num_iter (int): number of linearizations around smoothed posterior.
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>filtered_posterior: GSSMPosterior instance containing,</dt><dd><p>marginal_log_lik
+filtered_means (T, D_hid)
+filtered_covariances (T, D_hid, D_hid)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.extended_kalman_smoother">
+<span class="sig-prename descclassname"><span class="pre">dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.</span></span><span class="sig-name descname"><span class="pre">extended_kalman_smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.ParamsNLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered_posterior</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMFiltered</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMSmoothed</span></span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.extended_kalman_smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Run an extended Kalman (RTS) smoother.</p>
+<dl>
+<dt>Args:</dt><dd><p>params: an NLGSSMParams instance (or object with the same fields)
+emissions (T,D_hid): array of observations.
+filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.</p>
+<blockquote>
+<div><p>If None, the smoother computes the filtered posterior directly.</p>
+</div></blockquote>
+<p>inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>nlgssm_posterior: GSSMPosterior instance containing properties of</dt><dd><p>filtered and smoothed posterior distributions.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.iterated_extended_kalman_smoother">
+<span class="sig-prename descclassname"><span class="pre">dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.</span></span><span class="sig-name descname"><span class="pre">iterated_extended_kalman_smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.ParamsNLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMSmoothed</span></span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.extended_kalman_filter.iterated_extended_kalman_smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Run an iterated extended Kalman smoother (IEKS).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>params: an NLGSSMParams instance (or object with the same fields)
+emissions (T,D_hid): array of observations.
+num_iter (int): number of re-linearizations around smoothed posterior.
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>nlgssm_posterior: GSSMPosterior instance containing properties of</dt><dd><p>filtered and smoothed posterior distributions.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter.unscented_kalman_filter">
+<span class="sig-prename descclassname"><span class="pre">dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter.</span></span><span class="sig-name descname"><span class="pre">unscented_kalman_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.ParamsNLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hyperparams</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter.UKFHyperParams</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMFiltered</span></span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter.unscented_kalman_filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Run a unscented Kalman filter to produce the marginal likelihood and
+filtered state estimates.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>params: an NLGSSMParams instance (or object with the same fields)
+emissions (T,D_hid): array of observations.
+hyperperams: a UKFHyperParams instance
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>filtered_posterior: ESSMPosterior instance containing,</dt><dd><p>marginal_log_lik
+filtered_means (T, D_hid)
+filtered_covariances (T, D_hid, D_hid)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter.unscented_kalman_smoother">
+<span class="sig-prename descclassname"><span class="pre">dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter.</span></span><span class="sig-name descname"><span class="pre">unscented_kalman_smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm.ParamsNLGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hyperparams</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter.UKFHyperParams</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMSmoothed</span></span></span><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter.unscented_kalman_smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Run a unscented Kalman (RTS) smoother.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>params: an NLGSSMParams instance (or object with the same fields)
+emissions (T,D_hid): array of observations.
+hyperperams: a UKFHyperParams instance
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>nlgssm_posterior: GSSMPosterior instance containing properties of</dt><dd><p>filtered and smoothed posterior distributions.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 <section id="generalized-gaussian-gssm">
 <h1>Generalized Gaussian GSSM<a class="headerlink" href="#generalized-gaussian-gssm" title="Permalink to this headline">#</a></h1>
 <section id="id5">
 <h2>High-level class<a class="headerlink" href="#id5" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.</span></span><span class="sig-name descname"><span class="pre">GeneralizedGaussianSSM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM" title="Permalink to this definition">#</a></dt>
+<dd><blockquote>
+<div><p>Generalized Gaussian State Space Model.</p>
+</div></blockquote>
+<p>The model is defined as follows
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">p</span><span class="p">(</span><span class="n">z_t</span> <span class="o">|</span> <span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="n">u_t</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">z_t</span> <span class="o">|</span> <span class="n">f</span><span class="p">(</span><span class="n">z_</span><span class="p">{</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="n">u_t</span><span class="p">),</span> <span class="n">Q_t</span><span class="p">)</span>
+<span class="n">p</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">z_t</span><span class="p">)</span> <span class="o">=</span> <span class="n">Pr</span><span class="p">(</span><span class="n">y_t</span> <span class="o">|</span> <span class="n">h</span><span class="p">(</span><span class="n">z_t</span><span class="p">,</span> <span class="n">u_t</span><span class="p">),</span> <span class="n">R</span><span class="p">(</span><span class="n">z_t</span><span class="p">,</span> <span class="n">u_t</span><span class="p">))</span>
+<span class="n">p</span><span class="p">(</span><span class="n">z_1</span><span class="p">)</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="n">z_1</span> <span class="o">|</span> <span class="n">m</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where</p>
+<p><span class="math notranslate nohighlight">\(z_t\)</span> = hidden variables of size <code class="docutils literal notranslate"><span class="pre">state_dim</span></code>,
+<span class="math notranslate nohighlight">\(y_t\)</span> = observed variables of size <code class="docutils literal notranslate"><span class="pre">emission_dim</span></code>
+<span class="math notranslate nohighlight">\(u_t\)</span> = input covariates of size <code class="docutils literal notranslate"><span class="pre">input_dim</span></code> (defaults to 0).</p>
+<p>The parameters of the model are stored in a separate named tuple, with these fields:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>f = params.dynamics_function</p></li>
+<li><p>Q = params.dynamics_covariance</p></li>
+<li><p>h = params.emissions_mean_function</p></li>
+<li><p>R = params.emissions_cov_function</p></li>
+<li><p>Pr = params.emission_dist</p></li>
+<li><p>m = params.init_mean</p></li>
+<li><p>S = params.initial_covariance</p></li>
+</ul>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM.emission_distribution">
+<span class="sig-name descname"><span class="pre">emission_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.ParamsGGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'state_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensorflow_probability.substrates.jax.distributions.distribution.Distribution</span></span></span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM.emission_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over emissions given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of current emission.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM.emission_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_shape</span></span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM.emission_shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a pytree matching the pytree of tuples specifying the shape(s)
+of a single time step’s emissions.
+For example, a Gaussian HMM with D dimensional emissions would return (D,).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM.initial_distribution">
+<span class="sig-name descname"><span class="pre">initial_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.ParamsGGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensorflow_probability.substrates.jax.distributions.distribution.Distribution</span></span></span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM.initial_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return an initial distribution over latent states.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): distribution over initial latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM.transition_distribution">
+<span class="sig-name descname"><span class="pre">transition_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.ParamsGGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'state_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensorflow_probability.substrates.jax.distributions.distribution.Distribution</span></span></span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.GeneralizedGaussianSSM.transition_distribution" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a distribution over next latent state given current state.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>state (PyTree): current latent state</p>
+</dd>
+<dt>Returns:</dt><dd><p>dist (tfd.Distribution): conditional distribution of next latent state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="id6">
 <h2>Low-level inference<a class="headerlink" href="#id6" title="Permalink to this headline">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.conditional_moments_gaussian_filter">
+<span class="sig-prename descclassname"><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.</span></span><span class="sig-name descname"><span class="pre">conditional_moments_gaussian_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.ParamsGGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inf_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.EKFIntegrals</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.UKFIntegrals</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.GHKFIntegrals</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMFiltered</span></span></span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.conditional_moments_gaussian_filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Run an (iterated) conditional moments Gaussian filter to produce the
+marginal likelihood and filtered state estimates.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model_params (GGSSMParams): model parameters.
+inf_params (CMGFIntegrals): inference parameters.
+emissions (T,D_hid): array of observations.
+num_iter (int): number of linearizations around prior/posterior for update step.
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>filtered_posterior: GSSMPosterior instance containing,</dt><dd><p>marginal_log_lik
+filtered_means (T, D_hid)
+filtered_covariances (T, D_hid, D_hid)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.iterated_conditional_moments_gaussian_filter">
+<span class="sig-prename descclassname"><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.</span></span><span class="sig-name descname"><span class="pre">iterated_conditional_moments_gaussian_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.ParamsGGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inf_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.EKFIntegrals</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.UKFIntegrals</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.GHKFIntegrals</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMFiltered</span></span></span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.iterated_conditional_moments_gaussian_filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Run an iterated conditional moments Gaussian filter.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model_params (GGSSMParams): model parameters.
+inf_params (CMGFIntegrals): inference parameters.
+emissions (T,D_hid): array of observations.
+num_iter (int): number of linearizations around smoothed posterior.
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>filtered_posterior: GSSMPosterior instance containing,</dt><dd><p>marginal_log_lik
+filtered_means (T, D_hid)
+filtered_covariances (T, D_hid, D_hid)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.conditional_moments_gaussian_smoother">
+<span class="sig-prename descclassname"><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.</span></span><span class="sig-name descname"><span class="pre">conditional_moments_gaussian_smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.ParamsGGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inf_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.EKFIntegrals</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.UKFIntegrals</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.GHKFIntegrals</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered_posterior</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMFiltered</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMSmoothed</span></span></span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.conditional_moments_gaussian_smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Run a conditional moments Gaussian smoother.</p>
+<dl>
+<dt>Args:</dt><dd><p>model_params (GGSSMParams): model parameters.
+inf_params (CMGFIntegrals): inference parameters.
+emissions (T,D_hid): array of observations.
+filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.</p>
+<blockquote>
+<div><p>If None, the smoother computes the filtered posterior directly.</p>
+</div></blockquote>
+<p>inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>nlgssm_posterior: GSSMPosterior instance containing properties of</dt><dd><p>filtered and smoothed posterior distributions.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.iterated_conditional_moments_gaussian_smoother">
+<span class="sig-prename descclassname"><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.</span></span><span class="sig-name descname"><span class="pre">iterated_conditional_moments_gaussian_smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm.ParamsGGSSM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inf_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.EKFIntegrals</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.UKFIntegrals</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.GHKFIntegrals</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">emission_dim'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jaxtyping.Float</span><span class="p"><span class="pre">[</span></span><span class="pre">Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ntime</span> <span class="pre">input_dim'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dynamax.linear_gaussian_ssm.inference.PosteriorLGSSMSmoothed</span></span></span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter.iterated_conditional_moments_gaussian_smoother" title="Permalink to this definition">#</a></dt>
+<dd><p>Run an iterated conditional moments Gaussian smoother.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model_params (GGSSMParams): model parameters.
+inf_params (CMGFIntegrals): inference parameters.
+emissions (T,D_hid): array of observations.
+num_iter (int): number of re-linearizations around smoothed posterior.
+inputs (T,D_in): array of inputs.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>nlgssm_posterior: GSSMPosterior instance containing properties of</dt><dd><p>filtered and smoothed posterior distributions.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 

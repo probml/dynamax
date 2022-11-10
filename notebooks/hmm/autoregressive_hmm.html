@@ -502,8 +502,8 @@ title="Print to PDF"
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
 Let <span class="math notranslate nohighlight">\(x_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
 <p>The autoregressive hidden Markov model has the following likelihood,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-4c56f305-b0cd-40f2-b23e-b8979ab67fac">
-<span class="eqno">(1)<a class="headerlink" href="#equation-4c56f305-b0cd-40f2-b23e-b8979ab67fac" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-444c303b-d88a-4e8d-b9d5-33665062b76b">
+<span class="eqno">(1)<a class="headerlink" href="#equation-444c303b-d88a-4e8d-b9d5-33665062b76b" title="Permalink to this equation">#</a></span>\[\begin{align}
 x_t \mid x_{t-1}, z_t &amp;\sim
 \mathcal{N}\left(A_{z_t} x_{t-1} + b_{z_t}, Q_{z_t} \right).
 \end{align}\]</div>
@@ -527,8 +527,8 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
 <span class="kn">from</span> <span class="nn">dynamax.hmm.models.autoregressive_hmm</span> <span class="kn">import</span> <span class="n">LinearAutoregressiveHMM</span>
-<span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">gradient_cmap</span>
-<span class="kn">from</span> <span class="nn">dynamax.utils</span> <span class="kn">import</span> <span class="n">random_rotation</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.plotting</span> <span class="kn">import</span> <span class="n">gradient_cmap</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">random_rotation</span>
 <span class="kn">from</span> <span class="nn">tensorflow_probability.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
 </pre></div>
 </div>
@@ -590,7 +590,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f76e84a11f0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f4ebcedf670&gt;
 </pre></div>
 </div>
 <img alt="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" src="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" />
@@ -692,7 +692,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;$x_2$&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/37440369c074b69e7ac7f5ae9a003c9b14a3281dd601480a1b98a8be20c667ab.png" src="../../_images/37440369c074b69e7ac7f5ae9a003c9b14a3281dd601480a1b98a8be20c667ab.png" />
+<img alt="../../_images/37c3912479a00ce564fd136232909055219fb3556de9a33090b5f25e0721d221.png" src="../../_images/37c3912479a00ce564fd136232909055219fb3556de9a33090b5f25e0721d221.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the the corresponding AR state while the solid lines are the actual observations sampled from the HMM.</p>
@@ -724,7 +724,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9aa8941eeb8cbd572d0e605c2a61fe0b7686d242cb6658d0cba3c18c168b42e1.png" src="../../_images/9aa8941eeb8cbd572d0e605c2a61fe0b7686d242cb6658d0cba3c18c168b42e1.png" />
+<img alt="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" src="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" />
 </div>
 </div>
 </section>
@@ -784,7 +784,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/96a5cfc923d875fbe72b1c414772ee6710470e1b0bdcfddda334d3bdeac3a639.png" src="../../_images/96a5cfc923d875fbe72b1c414772ee6710470e1b0bdcfddda334d3bdeac3a639.png" />
+<img alt="../../_images/05504ecf7d1736f8191b16257982a1d86c6560af5b7f26492fd8a2d66a0b08d3.png" src="../../_images/05504ecf7d1736f8191b16257982a1d86c6560af5b7f26492fd8a2d66a0b08d3.png" />
 </div>
 </div>
 </section>

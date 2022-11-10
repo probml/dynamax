@@ -462,8 +462,8 @@ title="Print to PDF"
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm">
 <h1>Gaussian HMM<a class="headerlink" href="#gaussian-hmm" title="Permalink to this headline">#</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-f617afc1-0ab3-4ee6-a7ab-ba4f28c5d50f">
-<span class="eqno">(1)<a class="headerlink" href="#equation-f617afc1-0ab3-4ee6-a7ab-ba4f28c5d50f" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-95c5b555-73fd-48b9-aa3c-b794cc944319">
+<span class="eqno">(1)<a class="headerlink" href="#equation-95c5b555-73fd-48b9-aa3c-b794cc944319" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(x_t \mid z_t, \theta) &amp;= \mathcal{N}(x_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -575,6 +575,19 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Helper functions for plotting</span>
+<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">CMAP</span><span class="p">,</span> <span class="n">COLORS</span><span class="p">,</span> <span class="n">white_to_color_cmap</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="k">def</span> <span class="nf">plot_gaussian_hmm</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span>  <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Emission Distributions&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">):</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span>     <span class="n">lim</span> <span class="o">=</span> <span class="mf">0.85</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;dynamax.plotting&#39;
+</pre></div>
+</div>
+</div>
 </details>
 </div>
 </section>
@@ -621,8 +634,8 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9a8c7d2e65e8a39d5139fcda013e2602a90202b018566f723217e121e7775f91.png" src="../../_images/9a8c7d2e65e8a39d5139fcda013e2602a90202b018566f723217e121e7775f91.png" />
-<img alt="../../_images/0eb88219fd80c5d80ab84c151a72eab85ac2eb7a2f571f60820a8a25aafb2100.png" src="../../_images/0eb88219fd80c5d80ab84c151a72eab85ac2eb7a2f571f60820a8a25aafb2100.png" />
+<img alt="../../_images/c4e8a534af49d842f294224a42540eb247fa72d2673254fb239ca22d7fbbf881.png" src="../../_images/c4e8a534af49d842f294224a42540eb247fa72d2673254fb239ca22d7fbbf881.png" />
+<img alt="../../_images/98afa7954f7e2619a8104ea4fa91ba34c5f46e5192887b87702ea4fe17c3fb8d.png" src="../../_images/98afa7954f7e2619a8104ea4fa91ba34c5f46e5192887b87702ea4fe17c3fb8d.png" />
 </div>
 </div>
 </section>
@@ -663,7 +676,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div><div class="output text_html">
     <div>
       <progress value='50' class='' max='50' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [50/50 00:08&lt;00:00]
+      100.00% [50/50 00:05&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -693,10 +706,10 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f30ffc1d730&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fe9912ab190&gt;
 </pre></div>
 </div>
-<img alt="../../_images/3315ae707f25d5dc8e7e65f06f79b893a5cb408ba8039e28912224df12636ea8.png" src="../../_images/3315ae707f25d5dc8e7e65f06f79b893a5cb408ba8039e28912224df12636ea8.png" />
+<img alt="../../_images/766c369e61fe779265bca283fd3bf1dcfa0800563feb2b91dde628df99322085.png" src="../../_images/766c369e61fe779265bca283fd3bf1dcfa0800563feb2b91dde628df99322085.png" />
 </div>
 </div>
 </section>
@@ -712,8 +725,8 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d995b6a88cc5e8db13355f0c99755a60fe9bd03af49bb22e3cce0534c13dbdc2.png" src="../../_images/d995b6a88cc5e8db13355f0c99755a60fe9bd03af49bb22e3cce0534c13dbdc2.png" />
-<img alt="../../_images/a60b78e9a2d674fe43b4b89d8b87487dc9ea3d94c621e3e3eb95eb223e8d0114.png" src="../../_images/a60b78e9a2d674fe43b4b89d8b87487dc9ea3d94c621e3e3eb95eb223e8d0114.png" />
+<img alt="../../_images/c65bf2ca5b0bf7365e2785721c5da82626a75fb06e1eb21fa7add4652cc3c882.png" src="../../_images/c65bf2ca5b0bf7365e2785721c5da82626a75fb06e1eb21fa7add4652cc3c882.png" />
+<img alt="../../_images/1be207fa0df0f20a22dca040d69b3934c05e7f92d6e10bad54fda45d3d3fa3b2.png" src="../../_images/1be207fa0df0f20a22dca040d69b3934c05e7f92d6e10bad54fda45d3d3fa3b2.png" />
 </div>
 </div>
 <div class="cell docutils container">
