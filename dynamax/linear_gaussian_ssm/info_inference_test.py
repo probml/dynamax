@@ -1,5 +1,4 @@
-from jax import vmap
-from jax import numpy as jnp
+import jax.numpy as jnp
 from jax import random as jr
 
 from dynamax.linear_gaussian_ssm.inference import  lgssm_smoother, lgssm_filter
@@ -53,7 +52,7 @@ def build_lgssm_moment_and_info_form():
             dynamics=ParamsLGSSMDynamics(weights=F, bias=b, input_weights=B, cov=Q),
             emissions=ParamsLGSSMEmissions(weights=H, bias=d, input_weights=D, cov=R)
             )
-   
+
     lgssm_info = ParamsLGSSMInfo(
         initial_mean=mu0,
         initial_precision=Lambda0,

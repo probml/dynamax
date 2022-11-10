@@ -1,7 +1,6 @@
-import jax
-from jax import random as jr
-from jax import numpy as jnp
 from jax import vmap
+from jax import random as jr
+import jax.numpy as jnp
 from functools import partial
 
 import tensorflow_probability.substrates.jax.distributions as tfd

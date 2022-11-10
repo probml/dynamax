@@ -1,16 +1,14 @@
 from functools import partial
-import jax
-from jax import numpy as jnp
-from jax import random as jr
+import jax.numpy as jnp
+import jax.random as jr
 from jax.tree_util import tree_map
 
-import tensorflow_probability.substrates.jax as tfp
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
 from jaxtyping import Array, Float
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
+from typing import Any, Optional, Tuple
 
 
 from dynamax.abstractions import SSM
@@ -22,7 +20,6 @@ from dynamax.utils import PSDToRealBijector
 
 SuffStatsLGSSM = Any # type of sufficient statistics for EM
 
-_zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
 class LinearGaussianSSM(SSM):
     """

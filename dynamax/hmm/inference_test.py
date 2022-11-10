@@ -6,7 +6,6 @@ import dynamax.hmm.inference as core
 import dynamax.hmm.parallel_inference as parallel
 
 from jax.scipy.special import logsumexp
-import numpy as np
 
 def big_log_joint(initial_probs, transition_matrix, log_likelihoods):
     """Compute the big log joint probability array
@@ -48,11 +47,11 @@ def random_hmm_args_nonstationary(key, num_timesteps, num_states, scale=1.0):
 
     # we use numpy so we can assign to the matrix.
     # Then we convert to jnp.
-    trans_mat = np.zeros((num_timesteps, num_states, num_states))
+    trans_mat = jnp.zeros((num_timesteps, num_states, num_states))
     for t in range(num_timesteps):
       A = jr.uniform(k2, (num_states, num_states))
       A /= A.sum(1, keepdims=True)
-      trans_mat[t] = A
+      trans_mat = trans_mat.at[t].set(A)
     return initial_probs, jnp.array(trans_mat), log_likelihoods
 
 def test_hmm_filter(key=0, num_timesteps=3, num_states=2):

@@ -1,8 +1,8 @@
 # Parallel filtering and smoothing for a lgssm.
 # This implementation is adapted from the work of Adrien Correnflos in,
 #  https://github.com/EEA-sensors/sequential-parallelization-examples/
-from jax import numpy as jnp
-from jax import scipy as jsc
+import jax.numpy as jnp
+import jax.scipy as jsc
 from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
