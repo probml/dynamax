@@ -28,8 +28,8 @@ def lgssm_to_nlgssm(params: ParamsLGSSM) -> ParamsNLGSSM:
         initial_covariance=params.initial.covariance,
         dynamics_function=lambda x: params.dynamics.weights @ x + params.dynamics.bias,
         dynamics_covariance=params.dynamics.covariance,
-        emission_function=lambda x: params.emission.weights @ x + params.emission.bias,
-        emission_covariance=params.emission.covariance,
+        emission_function=lambda x: params.emissions.weights @ x + params.emissions.bias,
+        emission_covariance=params.emissions.covariance,
     )
     return nlgssm_params
 
