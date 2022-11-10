@@ -34,7 +34,7 @@
     <script src="../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="SSM" href="../../ssm.html" />
+    <link rel="next" title="API" href="../../api.html" />
     <link rel="prev" title="Online learning of an MLP Classifier using conditional moments Gaussian filter" href="cmgf_mlp_classification_demo.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -129,13 +129,18 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/lgssm_learning.html">
    MAP parameter estimation for an LG-SSM using EM and SGD
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
   </a>
  </li>
 </ul>
@@ -190,8 +195,8 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../ssm.html">
-   SSM
+  <a class="reference internal" href="../../api.html">
+   API
   </a>
  </li>
 </ul>
@@ -477,12 +482,10 @@ title="Print to PDF"
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">from</span> <span class="nn">matplotlib.gridspec</span> <span class="kn">import</span> <span class="n">GridSpec</span>
 
-<span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormalFullCovariance</span> <span class="k">as</span> <span class="n">MVN</span>
 <span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="kn">import</span> <span class="n">Poisson</span> <span class="k">as</span> <span class="n">Pois</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">lax</span><span class="p">,</span> <span class="n">vmap</span>
-<span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_map</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
 </pre></div>
 </div>
 </div>
@@ -733,6 +736,55 @@ title="Print to PDF"
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
+<span class="ne">----&gt; </span><span class="mi">1</span> <span class="n">posts</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">conditional_moments_gaussian_smoother</span><span class="p">,</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">params</span><span class="p">,</span> <span class="n">EKFIntegrals</span><span class="p">,</span> <span class="n">all_emissions</span><span class="p">)</span>
+
+    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">3</span> <span class="n">frame</span><span class="p">]</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/generalized_gaussian_ssm/conditional_moments_gaussian_filter.py:322,</span> in <span class="ni">conditional_moments_gaussian_smoother</span><span class="nt">(model_params, inf_params, emissions, filtered_posterior, inputs)</span>
+<span class="g g-Whitespace">    </span><span class="mi">320</span> <span class="c1"># Get filtered posterior</span>
+<span class="g g-Whitespace">    </span><span class="mi">321</span> <span class="k">if</span> <span class="n">filtered_posterior</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">322</span>     <span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">conditional_moments_gaussian_filter</span><span class="p">(</span><span class="n">model_params</span><span class="p">,</span> <span class="n">inf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">323</span> <span class="n">ll</span><span class="p">,</span> <span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covs</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">filtered_posterior</span>
+<span class="g g-Whitespace">    </span><span class="mi">325</span> <span class="c1"># Process dynamics function to take in control inputs</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/generalized_gaussian_ssm/conditional_moments_gaussian_filter.py:266,</span> in <span class="ni">conditional_moments_gaussian_filter</span><span class="nt">(model_params, inf_params, emissions, num_iter, inputs)</span>
+<span class="g g-Whitespace">    </span><span class="mi">264</span> <span class="c1"># Run the general linearization filter</span>
+<span class="g g-Whitespace">    </span><span class="mi">265</span> <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model_params</span><span class="o">.</span><span class="n">initial_mean</span><span class="p">,</span> <span class="n">model_params</span><span class="o">.</span><span class="n">initial_covariance</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">266</span> <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="p">(</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covs</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">))</span>
+<span class="g g-Whitespace">    </span><span class="mi">267</span> <span class="k">return</span> <span class="n">PosteriorGGSSMFiltered</span><span class="p">(</span><span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span> <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">)</span>
+
+    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">9</span> <span class="n">frame</span><span class="p">]</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/generalized_gaussian_ssm/conditional_moments_gaussian_filter.py:256,</span> in <span class="ni">conditional_moments_gaussian_filter.&lt;locals&gt;._step</span><span class="nt">(carry, t)</span>
+<span class="g g-Whitespace">    </span><span class="mi">253</span> <span class="n">y</span> <span class="o">=</span> <span class="n">emissions</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+<span class="g g-Whitespace">    </span><span class="mi">255</span> <span class="c1"># Condition on the emission</span>
+<span class="ne">--&gt; </span><span class="mi">256</span> <span class="n">log_likelihood</span><span class="p">,</span> <span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span> <span class="o">=</span> <span class="n">_condition_on</span><span class="p">(</span><span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span><span class="p">,</span> <span class="n">m_Y</span><span class="p">,</span> <span class="n">Cov_Y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">g_ev</span><span class="p">,</span> <span class="n">g_cov</span><span class="p">,</span> <span class="n">num_iter</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">257</span> <span class="n">ll</span> <span class="o">+=</span> <span class="n">log_likelihood</span>
+<span class="g g-Whitespace">    </span><span class="mi">259</span> <span class="c1"># Predict the next state</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/generalized_gaussian_ssm/conditional_moments_gaussian_filter.py:180,</span> in <span class="ni">_condition_on</span><span class="nt">(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter)</span>
+<span class="g g-Whitespace">    </span><span class="mi">178</span> <span class="c1"># Iterate re-linearization over posterior mean and covariance</span>
+<span class="g g-Whitespace">    </span><span class="mi">179</span> <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">180</span> <span class="p">(</span><span class="n">mu_cond</span><span class="p">,</span> <span class="n">Sigma_cond</span><span class="p">),</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_iter</span><span class="p">))</span>
+<span class="g g-Whitespace">    </span><span class="mi">181</span> <span class="k">return</span> <span class="n">lls</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mu_cond</span><span class="p">,</span> <span class="n">Sigma_cond</span>
+
+    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">9</span> <span class="n">frame</span><span class="p">]</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/dynamax/generalized_gaussian_ssm/conditional_moments_gaussian_filter.py:169,</span> in <span class="ni">_condition_on.&lt;locals&gt;._step</span><span class="nt">(carry, _)</span>
+<span class="g g-Whitespace">    </span><span class="mi">167</span> <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">168</span>     <span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span> <span class="o">=</span> <span class="n">carry</span>
+<span class="ne">--&gt; </span><span class="mi">169</span>     <span class="n">yhat</span> <span class="o">=</span> <span class="n">g_ev</span><span class="p">(</span><span class="n">m_Y</span><span class="p">,</span> <span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">170</span>     <span class="n">S</span> <span class="o">=</span> <span class="n">g_ev</span><span class="p">(</span><span class="n">Cov_Y</span><span class="p">,</span> <span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span><span class="p">)</span> <span class="o">+</span> <span class="n">g_cov</span><span class="p">(</span><span class="n">m_Y</span><span class="p">,</span> <span class="n">m_Y</span><span class="p">,</span> <span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">171</span>     <span class="n">log_likelihood</span> <span class="o">=</span> <span class="n">MVN</span><span class="p">(</span><span class="n">yhat</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+
+<span class="ne">TypeError</span>: &#39;_collections._tuplegetter&#39; object is not callable
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -742,7 +794,7 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a51a62852b86d7b0954c444ebe4b83560020c6d0c7d95b93200e37582046b61d.png" src="../../_images/a51a62852b86d7b0954c444ebe4b83560020c6d0c7d95b93200e37582046b61d.png" />
+<img alt="../../_images/b132d15a74a53b277a64c837e4a214a24e358419f940e2355f8c4c695df9c165.png" src="../../_images/b132d15a74a53b277a64c837e4a214a24e358419f940e2355f8c4c695df9c165.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -761,12 +813,12 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/4b920938fcd1eec1b446af96a337efe3fbf68f3ec4b1bbfee7627d40b81e83db.png" src="../../_images/4b920938fcd1eec1b446af96a337efe3fbf68f3ec4b1bbfee7627d40b81e83db.png" />
-<img alt="../../_images/f83bce25512cc6b4473694480045523c425025fdc9ff423976785b0cd6a8ab8c.png" src="../../_images/f83bce25512cc6b4473694480045523c425025fdc9ff423976785b0cd6a8ab8c.png" />
-<img alt="../../_images/44853c776e85007d428c66eb27cbb348d803b7417152a7381daae47157243dd7.png" src="../../_images/44853c776e85007d428c66eb27cbb348d803b7417152a7381daae47157243dd7.png" />
-<img alt="../../_images/9f0be5205212f127214521bfd51734091c15e8b0797618e59454cb948c10fcdd.png" src="../../_images/9f0be5205212f127214521bfd51734091c15e8b0797618e59454cb948c10fcdd.png" />
-<img alt="../../_images/7c1122eb4bdba5a86377cc3e899ce4f36eb7509e281b7f0eb3be350eba2b4342.png" src="../../_images/7c1122eb4bdba5a86377cc3e899ce4f36eb7509e281b7f0eb3be350eba2b4342.png" />
-<img alt="../../_images/e211603831b1dc05a83eee2971a3fea9ca7a6b2e74a2b56e2909780c0b962274.png" src="../../_images/e211603831b1dc05a83eee2971a3fea9ca7a6b2e74a2b56e2909780c0b962274.png" />
+<img alt="../../_images/138fc1430563d3389299f4f4537e2a1e6730d4c3653be22836bc144ff65478b3.png" src="../../_images/138fc1430563d3389299f4f4537e2a1e6730d4c3653be22836bc144ff65478b3.png" />
+<img alt="../../_images/129a71ea293e7a806420e5ac8c0c5c9169af4b00037d6d0492ae85bbfe1a7092.png" src="../../_images/129a71ea293e7a806420e5ac8c0c5c9169af4b00037d6d0492ae85bbfe1a7092.png" />
+<img alt="../../_images/b7a0de5ac58905c9c730600ed115521754d60dd0aa586932c69f02672e15a9ef.png" src="../../_images/b7a0de5ac58905c9c730600ed115521754d60dd0aa586932c69f02672e15a9ef.png" />
+<img alt="../../_images/94c77d0ad0994234a937eaa5db9b594c8417c301546c8cd7e2909a7dd39a650c.png" src="../../_images/94c77d0ad0994234a937eaa5db9b594c8417c301546c8cd7e2909a7dd39a650c.png" />
+<img alt="../../_images/6a3d02bb6b18d5ac3a6caf6f85c860a1571cb24f5f5ffa4038109cdeecf28d5e.png" src="../../_images/6a3d02bb6b18d5ac3a6caf6f85c860a1571cb24f5f5ffa4038109cdeecf28d5e.png" />
+<img alt="../../_images/e5f51cbc541cb591cab6c6a1108f44d08fdf394d0e5377227a7e434dee43aee5.png" src="../../_images/e5f51cbc541cb591cab6c6a1108f44d08fdf394d0e5377227a7e434dee43aee5.png" />
 </div>
 </div>
 </section>
@@ -787,10 +839,10 @@ title="Print to PDF"
             <p class="prev-next-title">Online learning of an MLP Classifier using conditional moments Gaussian filter</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="../../ssm.html" title="next page">
+    <a class='right-next' id="next-link" href="../../api.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">SSM</p>
+        <p class="prev-next-title">API</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

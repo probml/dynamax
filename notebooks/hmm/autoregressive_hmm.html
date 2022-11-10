@@ -131,13 +131,18 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/lgssm_learning.html">
    MAP parameter estimation for an LG-SSM using EM and SGD
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
   </a>
  </li>
 </ul>
@@ -192,8 +197,8 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../ssm.html">
-   SSM
+  <a class="reference internal" href="../../api.html">
+   API
   </a>
  </li>
 </ul>
@@ -497,8 +502,8 @@ title="Print to PDF"
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
 Let <span class="math notranslate nohighlight">\(x_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
 <p>The autoregressive hidden Markov model has the following likelihood,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-d350701d-27c9-4f2e-a0ec-3196c066c694">
-<span class="eqno">(1)<a class="headerlink" href="#equation-d350701d-27c9-4f2e-a0ec-3196c066c694" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-4c56f305-b0cd-40f2-b23e-b8979ab67fac">
+<span class="eqno">(1)<a class="headerlink" href="#equation-4c56f305-b0cd-40f2-b23e-b8979ab67fac" title="Permalink to this equation">#</a></span>\[\begin{align}
 x_t \mid x_{t-1}, z_t &amp;\sim
 \mathcal{N}\left(A_{z_t} x_{t-1} + b_{z_t}, Q_{z_t} \right).
 \end{align}\]</div>
@@ -585,7 +590,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f90fc996f70&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f76e84a11f0&gt;
 </pre></div>
 </div>
 <img alt="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" src="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" />
@@ -687,7 +692,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;$x_2$&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/37c3912479a00ce564fd136232909055219fb3556de9a33090b5f25e0721d221.png" src="../../_images/37c3912479a00ce564fd136232909055219fb3556de9a33090b5f25e0721d221.png" />
+<img alt="../../_images/37440369c074b69e7ac7f5ae9a003c9b14a3281dd601480a1b98a8be20c667ab.png" src="../../_images/37440369c074b69e7ac7f5ae9a003c9b14a3281dd601480a1b98a8be20c667ab.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the the corresponding AR state while the solid lines are the actual observations sampled from the HMM.</p>
@@ -719,7 +724,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" src="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" />
+<img alt="../../_images/9aa8941eeb8cbd572d0e605c2a61fe0b7686d242cb6658d0cba3c18c168b42e1.png" src="../../_images/9aa8941eeb8cbd572d0e605c2a61fe0b7686d242cb6658d0cba3c18c168b42e1.png" />
 </div>
 </div>
 </section>
@@ -779,7 +784,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/80a9ffbef54563b36c3b91ae2b95a3f6cec2ea427c3594298011d64062f2033c.png" src="../../_images/80a9ffbef54563b36c3b91ae2b95a3f6cec2ea427c3594298011d64062f2033c.png" />
+<img alt="../../_images/96a5cfc923d875fbe72b1c414772ee6710470e1b0bdcfddda334d3bdeac3a639.png" src="../../_images/96a5cfc923d875fbe72b1c414772ee6710470e1b0bdcfddda334d3bdeac3a639.png" />
 </div>
 </div>
 </section>
@@ -826,7 +831,19 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/948ef2daae72fc55a7b18fb67c9de5838884682a99a7b885e639b33e277b32f5.png" src="../../_images/948ef2daae72fc55a7b18fb67c9de5838884682a99a7b885e639b33e277b32f5.png" />
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">line</span> <span class="mi">11</span>
+<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="n">true_arhmm</span><span class="p">,</span> <span class="n">arhmm</span><span class="p">]):</span>
+<span class="g g-Whitespace">     </span><span class="mi">10</span>     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">num_states</span><span class="p">):</span>
+<span class="ne">---&gt; </span><span class="mi">11</span>         <span class="n">A</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;weights&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+<span class="g g-Whitespace">     </span><span class="mi">12</span>         <span class="n">b</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;biases&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+<span class="g g-Whitespace">     </span><span class="mi">13</span>         <span class="n">dxydt_m</span> <span class="o">=</span> <span class="n">xy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="n">xy</span>
+
+<span class="ne">TypeError</span>: tuple indices must be integers or slices, not str
+</pre></div>
+</div>
+<img alt="../../_images/9b24aa129e95733ca695e4588a89c1eda1054597121db5957c6225191c3a08fa.png" src="../../_images/9b24aa129e95733ca695e4588a89c1eda1054597121db5957c6225191c3a08fa.png" />
 </div>
 </div>
 </section>
@@ -854,7 +871,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/81ad84ccf32c12894719fc56e0245f050f63ef9d29edee63e85b43e136412bcd.png" src="../../_images/81ad84ccf32c12894719fc56e0245f050f63ef9d29edee63e85b43e136412bcd.png" />
+<img alt="../../_images/2ae0be5b38eb42fee4750113268a1a7fb7d9b92ab58cf631a1631fc849f56558.png" src="../../_images/2ae0be5b38eb42fee4750113268a1a7fb7d9b92ab58cf631a1631fc849f56558.png" />
 </div>
 </div>
 </section>
@@ -882,7 +899,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9b58b94a7cec3c7b2c680cbd235ce29eefc2b0733be7583d78aa0722c5a4e7a5.png" src="../../_images/9b58b94a7cec3c7b2c680cbd235ce29eefc2b0733be7583d78aa0722c5a4e7a5.png" />
+<img alt="../../_images/d1569b63c211279d916bb1c69a7f0616bffc02ef0c450393ec9dd2456add116b.png" src="../../_images/d1569b63c211279d916bb1c69a7f0616bffc02ef0c450393ec9dd2456add116b.png" />
 </div>
 </div>
 </section>

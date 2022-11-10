@@ -129,13 +129,18 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/lgssm_learning.html">
    MAP parameter estimation for an LG-SSM using EM and SGD
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
   </a>
  </li>
 </ul>
@@ -190,8 +195,8 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../ssm.html">
-   SSM
+  <a class="reference internal" href="../../api.html">
+   API
   </a>
  </li>
 </ul>
@@ -541,12 +546,9 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 <span class="n">num_classes</span> <span class="o">=</span> <span class="mi">6</span> <span class="c1"># size of output alphabet</span>
 
 <span class="n">hmm</span> <span class="o">=</span> <span class="n">CategoricalHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">)</span>
-
-<span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-    <span class="n">initial</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">probs</span><span class="o">=</span><span class="n">init_dist</span><span class="p">),</span>
-    <span class="n">transitions</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">transition_matrix</span><span class="o">=</span><span class="n">A</span><span class="p">),</span>
-    <span class="n">emissions</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">probs</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">))</span>
-    <span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">initial_probs</span><span class="o">=</span><span class="n">init_dist</span><span class="p">,</span>
+                           <span class="n">transition_matrix</span><span class="o">=</span><span class="n">A</span><span class="p">,</span>
+                           <span class="n">emission_probs</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>

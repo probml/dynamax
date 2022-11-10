@@ -36,7 +36,7 @@
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="MAP parameter estimation for an LG-SSM using EM and SGD" href="lgssm_learning.html" />
+    <link rel="next" title="Parallel filtering and smoothing in an LG-SSM" href="lgssm_parallel_inference.html" />
     <link rel="prev" title="Tracking an object using the Kalman filter" href="kf_tracking.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -131,13 +131,18 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="lgssm_learning.html">
    MAP parameter estimation for an LG-SSM using EM and SGD
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
+  <a class="reference internal" href="lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
   </a>
  </li>
 </ul>
@@ -192,8 +197,8 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../ssm.html">
-   SSM
+  <a class="reference internal" href="../../api.html">
+   API
   </a>
  </li>
 </ul>
@@ -501,8 +506,14 @@ y_t &amp;= x_t^T \theta_t + r_t, \; r_t \sim N(0, \sigma^2)
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">ParamsLGSSMMoment</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -522,11 +533,6 @@ y_t &amp;= x_t^T \theta_t + r_t, \; r_t \sim N(0, \sigma^2)
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="model">
@@ -540,15 +546,16 @@ y_t &amp;= x_t^T \theta_t + r_t, \; r_t \sim N(0, \sigma^2)
 <span class="n">mu0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">Sigma0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mf">10.0</span>
 
-<span class="c1"># This is an LGSSM with a non-stationary (time-index) emissions model</span>
 
-<span class="n">lgssm</span> <span class="o">=</span> <span class="n">ParamsLGSSMMoment</span><span class="p">(</span>
-        <span class="n">initial_mean</span><span class="o">=</span><span class="n">mu0</span><span class="p">,</span>
-        <span class="n">initial_covariance</span><span class="o">=</span><span class="n">Sigma0</span><span class="p">,</span>
-        <span class="n">dynamics_weights</span><span class="o">=</span><span class="n">F</span><span class="p">,</span>
-        <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span>
-        <span class="n">emission_weights</span><span class="o">=</span><span class="n">X</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="c1"># (t, 1, D) where D = num input features</span>
-        <span class="n">emission_covariance</span><span class="o">=</span><span class="n">R</span><span class="p">,</span>
+<span class="c1"># the input_dim = 0 since we encode the covariates into the non-stationary emission matrix</span>
+<span class="n">lgssm</span> <span class="o">=</span> <span class="n">LinearGaussianSSM</span><span class="p">(</span><span class="n">state_dim</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">emission_dim</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">input_dim</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+    <span class="n">initial_mean</span><span class="o">=</span><span class="n">mu0</span><span class="p">,</span>
+    <span class="n">initial_covariance</span><span class="o">=</span><span class="n">Sigma0</span><span class="p">,</span>
+    <span class="n">dynamics_weights</span><span class="o">=</span><span class="n">F</span><span class="p">,</span>
+    <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span>
+    <span class="n">emission_weights</span><span class="o">=</span><span class="n">X</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="c1"># (t, 1, D) where D = num input features</span>
+    <span class="n">emission_covariance</span><span class="o">=</span><span class="n">R</span><span class="p">,</span>
     <span class="p">)</span>
 </pre></div>
 </div>
@@ -559,7 +566,7 @@ y_t &amp;= x_t^T \theta_t + r_t, \; r_t \sim N(0, \sigma^2)
 <h2>Online inference<a class="headerlink" href="#online-inference" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm_filter</span><span class="p">(</span><span class="n">lgssm</span><span class="p">,</span> <span class="n">y</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span> <span class="c1"># reshape y to be (T,1)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span> <span class="c1"># reshape y to be (T,1)</span>
 <span class="n">kf_results</span> <span class="o">=</span> <span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_covariances</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -618,7 +625,7 @@ This should give the same results as the final step of online inference.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fcc6cb125b0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fdff0086a90&gt;
 </pre></div>
 </div>
 <img alt="../../_images/17bdbe50b26a16b04a6afd1c22a56c35bf644ce203229c9947f7522828f15ba4.png" src="../../_images/17bdbe50b26a16b04a6afd1c22a56c35bf644ce203229c9947f7522828f15ba4.png" />
@@ -642,10 +649,10 @@ This should give the same results as the final step of online inference.</p>
             <p class="prev-next-title">Tracking an object using the Kalman filter</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="lgssm_learning.html" title="next page">
+    <a class='right-next' id="next-link" href="lgssm_parallel_inference.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">MAP parameter estimation for an LG-SSM using EM and SGD</p>
+        <p class="prev-next-title">Parallel filtering and smoothing in an LG-SSM</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

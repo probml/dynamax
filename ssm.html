@@ -34,7 +34,6 @@
     <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter" href="notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -128,13 +127,18 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_learning.html">
    MAP parameter estimation for an LG-SSM using EM and SGD
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
+  <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
   </a>
  </li>
 </ul>
@@ -187,10 +191,10 @@
   API Documentation
  </span>
 </p>
-<ul class="current nav bd-sidenav">
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   SSM
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="api.html">
+   API
   </a>
  </li>
 </ul>
@@ -411,31 +415,26 @@ For example, a Gaussian HMM with D dimensional emissions would return (D,).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_em">
 <span class="sig-name descname"><span class="pre">fit_em</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">props</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_em" title="Permalink to this definition">#</a></dt>
-<dd><p>Fit this HMM with Expectation-Maximization (EM).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_hmc">
-<span class="sig-name descname"><span class="pre">fit_hmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_props</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_hmc" title="Permalink to this definition">#</a></dt>
-<dd><p>Sample parameters of the model using HMC.</p>
+<dd><p>Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.abstractions.SSM.fit_sgd">
-<span class="sig-name descname"><span class="pre">fit_sgd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">curr_params,</span> <span class="pre">param_props,</span> <span class="pre">emissions,</span> <span class="pre">inputs=None,</span> <span class="pre">optimizer=GradientTransformation(init=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.init_fn&gt;,</span> <span class="pre">update=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.update_fn&gt;),</span> <span class="pre">batch_size=1,</span> <span class="pre">num_epochs=50,</span> <span class="pre">shuffle=False,</span> <span class="pre">key=DeviceArray([0,</span> <span class="pre">0],</span> <span class="pre">dtype=uint32)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_sgd" title="Permalink to this definition">#</a></dt>
-<dd><p>Fit this HMM by running SGD on the marginal log likelihood.
+<span class="sig-name descname"><span class="pre">fit_sgd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">params,</span> <span class="pre">props,</span> <span class="pre">emissions,</span> <span class="pre">inputs=None,</span> <span class="pre">optimizer=GradientTransformation(init=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.init_fn&gt;,</span> <span class="pre">update=&lt;function</span> <span class="pre">chain.&lt;locals&gt;.update_fn&gt;),</span> <span class="pre">batch_size=1,</span> <span class="pre">num_epochs=50,</span> <span class="pre">shuffle=False,</span> <span class="pre">key=DeviceArray([0,</span> <span class="pre">0],</span> <span class="pre">dtype=uint32)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dynamax.abstractions.SSM.fit_sgd" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute parameter MLE/ MAP estimate using Stochastic gradient descent (SGD).</p>
+<p>Fit this HMM by running SGD on the marginal log likelihood.
 Note that batch_emissions is initially of shape (N,T)
 where N is the number of independent sequences and
 T is the length of a sequence. Then, a random susbet with shape (B, T)
 of entire sequence, not time steps, is sampled at each step where B is
 batch size.</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p>batch_emissions (chex.Array): Independent sequences.
+<dt>Args:</dt><dd><p>batch_emissions: Independent sequences.
 optmizer (optax.Optimizer): Optimizer.
 batch_size (int): Number of sequences used at each update step.
 num_epochs (int): Iterations made through entire dataset.
 shuffle (bool): Indicates whether to shuffle minibatches.
-key (chex.PRNGKey): RNG key to shuffle minibatches.</p>
+key (jr.PRNGKey): RNG key to shuffle minibatches.</p>
 </dd>
 <dt>Returns:</dt><dd><p>losses: Output of loss_fn stored at each step.</p>
 </dd>
@@ -511,13 +510,6 @@ num_timesteps: length of sequence to generate</p>
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</p>
-        </div>
-    </a>
 </div>
             </footer>
         </div>

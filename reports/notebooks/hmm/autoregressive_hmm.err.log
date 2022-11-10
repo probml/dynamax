@@ -1,0 +1,60 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/nbclient/client.py", line 1204, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/nbclient/util.py", line 84, in wrapped
+    return just_run(coro(*args, **kwargs))
+  File "/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/nbclient/util.py", line 62, in just_run
+    return loop.run_until_complete(coro)
+  File "/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+    return future.result()
+  File "/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/nbclient/client.py", line 663, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/nbclient/client.py", line 965, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/nbclient/client.py", line 862, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+if emission_dim == 2:
+    lim = abs(emissions).max()
+    x = jnp.linspace(-lim, lim, 10)
+    y = jnp.linspace(-lim, lim, 10)
+    X, Y = jnp.meshgrid(x, y)
+    xy = jnp.column_stack((X.ravel(), Y.ravel()))
+
+    fig, axs = plt.subplots(2, max(num_states, test_num_states), figsize=(3 * num_states, 6))
+    for i, model in enumerate([true_arhmm, arhmm]):
+        for j in range(model.num_states):
+            A = fitted_params['emissions']['weights'][j]
+            b = fitted_params['emissions']['biases'][j]
+            dxydt_m = xy.dot(A.T) + b - xy
+            axs[i,j].quiver(xy[:, 0], xy[:, 1],
+                        dxydt_m[:, 0], dxydt_m[:, 1],
+                        color=colors[j % len(colors)])
+
+
+            axs[i,j].set_xlabel('$x_1$')
+            axs[i,j].set_xticks([])
+            if j == 0:
+                axs[i,j].set_ylabel("$x_2$")
+            axs[i,j].set_yticks([])
+            axs[i,j].set_aspect("equal")
+                        
+
+    plt.tight_layout()
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mTypeError[0m                                 Traceback (most recent call last)
+Cell [0;32mIn [13], line 11[0m
+[1;32m      9[0m [38;5;28;01mfor[39;00m i, model [38;5;129;01min[39;00m [38;5;28menumerate[39m([true_arhmm, arhmm]):
+[1;32m     10[0m     [38;5;28;01mfor[39;00m j [38;5;129;01min[39;00m [38;5;28mrange[39m(model[38;5;241m.[39mnum_states):
+[0;32m---> 11[0m         A [38;5;241m=[39m [43mfitted_params[49m[43m[[49m[38;5;124;43m'[39;49m[38;5;124;43memissions[39;49m[38;5;124;43m'[39;49m[43m][49m[[38;5;124m'[39m[38;5;124mweights[39m[38;5;124m'[39m][j]
+[1;32m     12[0m         b [38;5;241m=[39m fitted_params[[38;5;124m'[39m[38;5;124memissions[39m[38;5;124m'[39m][[38;5;124m'[39m[38;5;124mbiases[39m[38;5;124m'[39m][j]
+[1;32m     13[0m         dxydt_m [38;5;241m=[39m xy[38;5;241m.[39mdot(A[38;5;241m.[39mT) [38;5;241m+[39m b [38;5;241m-[39m xy
+
+[0;31mTypeError[0m: tuple indices must be integers or slices, not str
+TypeError: tuple indices must be integers or slices, not str
+

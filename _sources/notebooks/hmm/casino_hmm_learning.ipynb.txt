@@ -149,18 +149,17 @@
     "num_states = 2\n",
     "num_emissions = 1\n",
     "num_classes = 6\n",
-    "hmm = CategoricalHMM(num_states, num_emissions, num_classes)\n",
     "\n",
-    "params = dict(\n",
-    "    initial=dict(probs=jnp.array([1, 1]) / 2),\n",
-    "    transitions=dict(transition_matrix=jnp.array([[0.95, 0.05], [0.10, 0.90]])),\n",
-    "    emissions=dict(probs=jnp.array(\n",
-    "        [\n",
-    "            [1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6],  # fair die\n",
-    "            [1 / 10, 1 / 10, 1 / 10, 1 / 10, 1 / 10, 5 / 10],  # loaded die\n",
-    "        ]\n",
-    "    ).reshape(num_states, num_emissions, num_classes))\n",
-    ")"
+    "initial_probs = jnp.array([1, 1]) / 2\n",
+    "transition_matrix = jnp.array([[0.95, 0.05], [0.10, 0.90]])\n",
+    "emission_probs = jnp.array(\n",
+    "    [[1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6],        # fair die\n",
+    "     [1 / 10, 1 / 10, 1 / 10, 1 / 10, 1 / 10, 5 / 10]]  # loaded die\n",
+    "    ).reshape(num_states, num_emissions, num_classes)\n",
+    "hmm = CategoricalHMM(num_states, num_emissions, num_classes)\n",
+    "params, _ = hmm.initialize(initial_probs=initial_probs,\n",
+    "                           transition_matrix=transition_matrix,\n",
+    "                           emission_probs=emission_probs)"
    ]
   },
   {
@@ -181,7 +180,6 @@
     }
    ],
    "source": [
-    "\n",
     "num_batches = 5\n",
     "num_timesteps = 5000\n",
     "hmm = CategoricalHMM(num_states, num_emissions, num_classes)\n",
@@ -197,7 +195,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 7,
+   "execution_count": 8,
    "metadata": {},
    "outputs": [
     {
@@ -217,9 +215,9 @@
    ],
    "source": [
     "def extract_params(params):\n",
-    "    A = params['transitions']['transition_matrix']\n",
-    "    B = params['emissions']['probs'] # (nstates, 1, noutputs)\n",
-    "    pi = params['initial']['probs']\n",
+    "    A = params.transitions.transition_matrix\n",
+    "    B = params.emissions.probs # (nstates, 1, noutputs)\n",
+    "    pi = params.initial.probs\n",
     "    return pi, A, B[:, 0, :]\n",
     "\n",
     "def print_floats(probs):\n",
@@ -238,12 +236,12 @@
     "    for k in range(nstates):\n",
     "        print_floats(B[k,:])\n",
     "\n",
-    "print_params(params)\n"
+    "print_params(params)"
    ]
   },
   {
    "cell_type": "code",
-   "execution_count": 8,
+   "execution_count": 9,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -263,7 +261,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 9,
+   "execution_count": 10,
    "metadata": {
     "id": "qG9c7pUaUE-5"
    },
@@ -287,7 +285,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 10,
+   "execution_count": 11,
    "metadata": {
     "id": "tooveAHeUR4b"
    },
@@ -307,7 +305,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 11,
+   "execution_count": 12,
    "metadata": {},
    "outputs": [
     {
@@ -331,16 +329,16 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 12,
+   "execution_count": 13,
    "metadata": {},
    "outputs": [
     {
      "data": {
       "text/plain": [
-       "[<matplotlib.lines.Line2D at 0x7f83e83ef340>]"
+       "[<matplotlib.lines.Line2D at 0x7f83d96b05e0>]"
       ]
      },
-     "execution_count": 12,
+     "execution_count": 13,
      "metadata": {},
      "output_type": "execute_result"
     },
@@ -373,7 +371,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 13,
+   "execution_count": 14,
    "metadata": {
     "id": "x6L5NPatUJ1s"
    },
@@ -393,7 +391,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 14,
+   "execution_count": 15,
    "metadata": {},
    "outputs": [
     {
@@ -417,16 +415,16 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 15,
+   "execution_count": 16,
    "metadata": {},
    "outputs": [
     {
      "data": {
       "text/plain": [
-       "[<matplotlib.lines.Line2D at 0x7f83d8d20a00>]"
+       "[<matplotlib.lines.Line2D at 0x7f83f07d92e0>]"
       ]
      },
-     "execution_count": 15,
+     "execution_count": 16,
      "metadata": {},
      "output_type": "execute_result"
     },
@@ -459,7 +457,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 16,
+   "execution_count": 17,
    "metadata": {
     "colab": {
      "base_uri": "https://localhost:8080/",
@@ -498,11 +496,48 @@
      ]
     },
     {
-     "name": "stderr",
-     "output_type": "stream",
-     "text": [
-      "100%|██████████| 400/400 [00:01<00:00, 208.00it/s]\n"
-     ]
+     "data": {
+      "text/html": [
+       "\n",
+       "<style>\n",
+       "    /* Turns off some styling */\n",
+       "    progress {\n",
+       "        /* gets rid of default border in Firefox and Opera. */\n",
+       "        border: none;\n",
+       "        /* Needs to be in here for Safari polyfill so background images work as expected. */\n",
+       "        background-size: auto;\n",
+       "    }\n",
+       "    progress:not([value]), progress:not([value])::-webkit-progress-bar {\n",
+       "        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);\n",
+       "    }\n",
+       "    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {\n",
+       "        background: #F44336;\n",
+       "    }\n",
+       "</style>\n"
+      ],
+      "text/plain": [
+       "<IPython.core.display.HTML object>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "data": {
+      "text/html": [
+       "\n",
+       "    <div>\n",
+       "      <progress value='400' class='' max='400' style='width:300px; height:20px; vertical-align: middle;'></progress>\n",
+       "      100.00% [400/400 00:01&lt;00:00]\n",
+       "    </div>\n",
+       "    "
+      ],
+      "text/plain": [
+       "<IPython.core.display.HTML object>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
     },
     {
      "name": "stdout",
@@ -539,16 +574,16 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 17,
+   "execution_count": 18,
    "metadata": {},
    "outputs": [
     {
      "data": {
       "text/plain": [
-       "[<matplotlib.lines.Line2D at 0x7f83da08e160>]"
+       "[<matplotlib.lines.Line2D at 0x7f8429707250>]"
       ]
      },
-     "execution_count": 17,
+     "execution_count": 18,
      "metadata": {},
      "output_type": "execute_result"
     },

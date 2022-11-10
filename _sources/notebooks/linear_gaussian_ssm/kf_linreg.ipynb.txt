@@ -52,13 +52,14 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 1,
+   "execution_count": 6,
    "metadata": {},
    "outputs": [],
    "source": [
     "from jax import numpy as jnp\n",
+    "import jax.random as jr\n",
     "from matplotlib import pyplot as plt\n",
-    "from dynamax.linear_gaussian_ssm.inference import lgssm_filter, ParamsLGSSMMoment"
+    "from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM"
    ]
   },
   {
@@ -72,7 +73,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 2,
+   "execution_count": 4,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -93,7 +94,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 3,
+   "execution_count": 7,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -104,16 +105,17 @@
     "mu0 = jnp.zeros(2)\n",
     "Sigma0 = jnp.eye(2) * 10.0\n",
     "\n",
-    "# This is an LGSSM with a non-stationary (time-index) emissions model\n",
     "\n",
-    "lgssm = ParamsLGSSMMoment(\n",
-    "        initial_mean=mu0,\n",
-    "        initial_covariance=Sigma0,\n",
-    "        dynamics_weights=F,\n",
-    "        dynamics_covariance=Q,\n",
-    "        emission_weights=X[:, None, :], # (t, 1, D) where D = num input features\n",
-    "        emission_covariance=R,\n",
-    "    )\n"
+    "# the input_dim = 0 since we encode the covariates into the non-stationary emission matrix\n",
+    "lgssm = LinearGaussianSSM(state_dim = 2, emission_dim = 1, input_dim = 0)\n",
+    "params, _ = lgssm.initialize(\n",
+    "    initial_mean=mu0,\n",
+    "    initial_covariance=Sigma0,\n",
+    "    dynamics_weights=F,\n",
+    "    dynamics_covariance=Q,\n",
+    "    emission_weights=X[:, None, :], # (t, 1, D) where D = num input features\n",
+    "    emission_covariance=R,\n",
+    "    )"
    ]
   },
   {
@@ -125,11 +127,11 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 4,
+   "execution_count": 8,
    "metadata": {},
    "outputs": [],
    "source": [
-    "lgssm_posterior = lgssm_filter(lgssm, y[:, None]) # reshape y to be (T,1)\n",
+    "lgssm_posterior = lgssm.filter(params, y[:, None]) # reshape y to be (T,1)\n",
     "kf_results = (lgssm_posterior.filtered_means, lgssm_posterior.filtered_covariances)"
    ]
   },
@@ -145,7 +147,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 5,
+   "execution_count": 9,
    "metadata": {},
    "outputs": [],
    "source": [
@@ -164,16 +166,16 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 6,
+   "execution_count": 10,
    "metadata": {},
    "outputs": [
     {
      "data": {
       "text/plain": [
-       "<matplotlib.legend.Legend at 0x7fa8b119db20>"
+       "<matplotlib.legend.Legend at 0x7ff4ba3527f0>"
       ]
      },
-     "execution_count": 6,
+     "execution_count": 10,
      "metadata": {},
      "output_type": "execute_result"
     },
@@ -231,7 +233,7 @@
    "provenance": []
   },
   "kernelspec": {
-   "display_name": "Python 3.8.5 ('base')",
+   "display_name": "base",
    "language": "python",
    "name": "python3"
   },

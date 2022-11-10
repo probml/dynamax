@@ -130,13 +130,18 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_learning.html">
    MAP parameter estimation for an LG-SSM using EM and SGD
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
+  <a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
   </a>
  </li>
 </ul>
@@ -191,8 +196,8 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="ssm.html">
-   SSM
+  <a class="reference internal" href="api.html">
+   API
   </a>
  </li>
 </ul>
@@ -343,13 +348,8 @@ title="Print to PDF"
     </a>
    </li>
    <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#inference-state-estimation">
-     Inference (state estimation)
-    </a>
-   </li>
-   <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#learning-parameter-estimation">
-     Learning (parameter estimation)
+    <a class="reference internal nav-link" href="#example-usage">
+     Example usage
     </a>
    </li>
   </ul>
@@ -365,13 +365,11 @@ title="Print to PDF"
   <a class="reference internal nav-link" href="#api-documentation">
    API documentation
   </a>
-  <ul class="visible nav section-nav flex-column">
-   <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#related-libraries">
-     Related Libraries
-    </a>
-   </li>
-  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#related-libraries">
+   Related Libraries
+  </a>
  </li>
  <li class="toc-h1 nav-item toc-entry">
   <a class="reference internal nav-link" href="#indices-and-tables">
@@ -413,13 +411,8 @@ title="Print to PDF"
     </a>
    </li>
    <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#inference-state-estimation">
-     Inference (state estimation)
-    </a>
-   </li>
-   <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#learning-parameter-estimation">
-     Learning (parameter estimation)
+    <a class="reference internal nav-link" href="#example-usage">
+     Example usage
     </a>
    </li>
   </ul>
@@ -435,13 +428,11 @@ title="Print to PDF"
   <a class="reference internal nav-link" href="#api-documentation">
    API documentation
   </a>
-  <ul class="visible nav section-nav flex-column">
-   <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#related-libraries">
-     Related Libraries
-    </a>
-   </li>
-  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#related-libraries">
+   Related Libraries
+  </a>
  </li>
  <li class="toc-h1 nav-item toc-entry">
   <a class="reference internal nav-link" href="#indices-and-tables">
@@ -465,15 +456,15 @@ It has code for inference (state estimation) and learning (parameter estimation)
 in a variety of SSMs, including:</p>
 <ul class="simple">
 <li><p>Hidden Markov Models (HMMs)</p></li>
-<li><p>Autoregressive Hidden Markov Models (AR-HMMs)</p></li>
 <li><p>Linear Gaussian State Space Models (aka Linear Dynamical Systems)</p></li>
 <li><p>Nonlinear Gaussian State Space Models</p></li>
+<li><p>Generalized Gaussian State Space Models (with non-Gaussian emission models)</p></li>
 </ul>
 <p>The library consists of a set of core, functionally pure, low-level inference algorithms,
 as well as a set of model classes which provide a more user-friendly, object-oriented interface.
 It is compatible with other libraries in the JAX ecosystem,
-such as <a class="reference external" href="https://github.com/deepmind/optax">optax</a> (useful for estimating parameters using stochastic gradient descent),
-and <a class="reference external" href="https://github.com/blackjax-devs/blackjax">Blackjax</a> (useful for computing the posterior using Hamiltonian Monte Carlo (HMC)
+such as <a class="reference external" href="https://github.com/deepmind/optax">optax</a> (used for estimating parameters using stochastic gradient descent),
+and <a class="reference external" href="https://github.com/blackjax-devs/blackjax">Blackjax</a> (used for computing the parameter posterior using Hamiltonian Monte Carlo (HMC)
 or sequential Monte Carlo (SMC)).</p>
 <section id="installation-and-testing">
 <h2>Installation and Testing<a class="headerlink" href="#installation-and-testing" title="Permalink to this headline">#</a></h2>
@@ -530,67 +521,22 @@ All of these computations can be done efficiently using our library,
 as we discuss below.
 In addition, we can estimate the parameters of the transition and emission models,
 as we discuss below.</p>
-<p>More information can be found in these books:
-- <em>Machine Learning: Advanced Topics</em>, K. Murphy, MIT Press 2023.
-Available at <a class="reference external" href="https://probml.github.io/pml-book/book2.html">https://probml.github.io/pml-book/book2.html</a>.
--  <em>Bayesian Filtering and Smoothing</em>, S. Särkkä, Cambridge University Press, 2013.
-Available at <a class="reference external" href="https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf">https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf</a></p>
+<p>More information can be found in these books:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>“Machine Learning: Advanced Topics”, K. Murphy, MIT Press 2023. Available at <a class="reference external" href="https://probml.github.io/pml-book/book2.html">https://probml.github.io/pml-book/book2.html</a>.</p></li>
+<li><p>“Bayesian Filtering and Smoothing”, S. Särkkä, Cambridge University Press, 2013. Available at <a class="reference external" href="https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf">https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf</a></p></li>
+</ul>
+</div></blockquote>
 </section>
-<section id="inference-state-estimation">
-<h2>Inference (state estimation)<a class="headerlink" href="#inference-state-estimation" title="Permalink to this headline">#</a></h2>
-<p>The core inference algorithms, like the forward-backward algorithm for HMMs,
-the Kalman filter and smoother for LGSSMs, and the extended and unscented
-Kalman filters for nonlinear SSMs, all have a simple, functional interface.
-For example, the following code generates some noisy data and then smooths it
-with an LGSSM smoother (aka Kalman smoother).</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">grad</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">LGSSMParams</span><span class="p">,</span> <span class="n">lgssm_smoother</span>
-
-<span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">state_dim</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">emission_dim</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">100</span>
-
-<span class="c1"># Make some noisy data</span>
-<span class="n">times</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">)</span>
-<span class="n">emissions</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">times</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
-<span class="n">emissions</span> <span class="o">+=</span> <span class="n">jr</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">num_timesteps</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">))</span>
-
-<span class="c1"># Specify the model parameters</span>
-<span class="n">params</span> <span class="o">=</span> <span class="n">LGSSMParams</span><span class="p">(</span>
-   <span class="n">initial_mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">state_dim</span><span class="p">),</span>
-   <span class="n">initial_covariance</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">),</span>
-   <span class="n">dynamics_matrix</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">),</span>
-   <span class="n">dynamics_covariance</span><span class="o">=</span><span class="mf">0.5</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">),</span>
-   <span class="n">emission_matrix</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">emission_dim</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">)),</span>
-   <span class="n">emission_covariance</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">),</span>
-<span class="p">)</span>
-
-<span class="c1"># Run the LGSSM smoother (aka Kalman smoother)</span>
-<span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The posterior is a dataclass with a number of fields, including the posterior mean and posterior marginal covariances.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">smoothed_means</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>        <span class="c1"># (100, 1)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">smoothed_covariances</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (100, 1, 1)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">marginal_loglik</span><span class="p">)</span>             <span class="c1"># -160.31303</span>
-</pre></div>
-</div>
-<p>The inference algorithms are all written in JAX, so they support automatic
-differentiation and just-in-time compilation,</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">loss</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">params</span><span class="p">:</span> <span class="o">-</span><span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span><span class="o">.</span><span class="n">marginal_loglik</span>
-<span class="n">jit</span><span class="p">(</span><span class="n">grad</span><span class="p">(</span><span class="n">loss</span><span class="p">))(</span><span class="n">params</span><span class="p">)</span> <span class="c1"># Returns an LGSSMParams dataclass with the gradients in it</span>
-</pre></div>
-</div>
-</section>
-<section id="learning-parameter-estimation">
-<h2>Learning (parameter estimation)<a class="headerlink" href="#learning-parameter-estimation" title="Permalink to this headline">#</a></h2>
-<p>Dynamax also includes a host of model classes for various HMMs and linear Gaussian SSMs.
+<section id="example-usage">
+<h2>Example usage<a class="headerlink" href="#example-usage" title="Permalink to this headline">#</a></h2>
+<p>Dynamax includes classes for many kinds of SSM.
 You can use these models to simulate data, and you can fit the models using standard
-learning algorithms like expectation-maximization (EM) and stochastic gradient descent (SGD).</p>
+learning algorithms like expectation-maximization (EM) and stochastic gradient descent (SGD).
+Below we illustrate the high level (object-oriented) API for the case of an HMM
+with Gaussian emissions. (See <a class="reference external" href="https://github.com/probml/dynamax/blob/main/docs/notebooks/hmm/gaussian_hmm.ipynb">this notebook</a> for
+a runnable version of this code.)</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -617,6 +563,7 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;marginal log prob.&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>We can also call the low-level inference code directly.</p>
 </section>
 </section>
 <section id="notebooks">
@@ -635,8 +582,9 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_tracking.html">Tracking an object using the Kalman filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/kf_linreg.html">Online linear regression using Kalman filtering</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_learning.html">MAP parameter estimation for an LG-SSM using EM and SGD</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">Parallel filtering and smoothing in an LG-SSM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_learning.html">MAP parameter estimation for an LG-SSM using EM and SGD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/linear_gaussian_ssm/lgssm_hmc.html">Bayesian parameter estimation for an LG-SSM using HMC</a></li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
@@ -661,14 +609,33 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 <div class="toctree-wrapper compound">
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="ssm.html">SSM</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="ssm.html#id1">SSM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html#state-space-model-base-class">State Space Model (Base class)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html#hidden-markov-model">Hidden Markov Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#high-level-class">High-level class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#low-level-inference">Low-level inference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html#linear-gaussian-ssm">Linear Gaussian SSM</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id1">High-level class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id2">Low-level inference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html#nonlinear-gaussian-gssm">Nonlinear Gaussian GSSM</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id3">High-level class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id4">Low-level inference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html#generalized-gaussian-gssm">Generalized Gaussian GSSM</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id5">High-level class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id6">Low-level inference</a></li>
 </ul>
 </li>
 </ul>
 </div>
+</section>
 <section id="related-libraries">
-<h2>Related Libraries<a class="headerlink" href="#related-libraries" title="Permalink to this headline">#</a></h2>
+<h1>Related Libraries<a class="headerlink" href="#related-libraries" title="Permalink to this headline">#</a></h1>
 <ul class="simple">
 <li><p><a class="reference external" href="https://github.com/deepmind/distrax/blob/master/distrax/_src/utils/hmm.py">distrax_hmm</a>: JAX functions for HMM inference (replaced by dynamax)</p></li>
 <li><p><a class="reference external" href="https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python">filterpy</a>: Numpy library for (extended) Kalman filtering</p></li>
@@ -684,7 +651,6 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 <li><p><a class="reference external" href="https://www.tensorflow.org/probability/api_docs/python/tfp/distributions/HiddenMarkovModel">tfp_hmm</a>: TF2 code for HMM inference</p></li>
 <li><p><a class="reference external" href="https://www.tensorflow.org/probability/api_docs/python/tfp/distributions/LinearGaussianStateSpaceModel">tfp_lgssm</a>: TF2 code for Kalman filtering</p></li>
 </ul>
-</section>
 </section>
 <section id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">#</a></h1>

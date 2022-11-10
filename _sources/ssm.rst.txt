@@ -8,9 +8,9 @@ SSM
 
   SSM
 
-
 SSM
 ~~~
 
 .. autoclass:: dynamax.abstractions.SSM
   :members:
+

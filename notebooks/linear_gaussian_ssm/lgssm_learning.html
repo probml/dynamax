@@ -34,8 +34,8 @@
     <script src="../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Parallel filtering and smoothing in an LG-SSM" href="lgssm_parallel_inference.html" />
-    <link rel="prev" title="Online linear regression using Kalman filtering" href="kf_linreg.html" />
+    <link rel="next" title="Bayesian parameter estimation for an LG-SSM using HMC" href="lgssm_hmc.html" />
+    <link rel="prev" title="Parallel filtering and smoothing in an LG-SSM" href="lgssm_parallel_inference.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -128,14 +128,19 @@
    Online linear regression using Kalman filtering
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
    MAP parameter estimation for an LG-SSM using EM and SGD
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
+  <a class="reference internal" href="lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
   </a>
  </li>
 </ul>
@@ -190,8 +195,8 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../ssm.html">
-   SSM
+  <a class="reference internal" href="../../api.html">
+   API
   </a>
  </li>
 </ul>
@@ -479,8 +484,6 @@ title="Print to PDF"
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
 
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm_conjugate</span> <span class="kn">import</span> <span class="n">LinearGaussianConjugateSSM</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils</span> <span class="kn">import</span> <span class="n">monotonically_increasing</span>
@@ -584,7 +587,7 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/408245bcf5513e46e52f812b8405293e9fae08c44dcfb0d38b14186d03058fbc.png" src="../../_images/408245bcf5513e46e52f812b8405293e9fae08c44dcfb0d38b14186d03058fbc.png" />
+<img alt="../../_images/a5fd16e6892d6473989900b24bfa82b4d1767d62db9f84205c1083c55c55c80a.png" src="../../_images/a5fd16e6892d6473989900b24bfa82b4d1767d62db9f84205c1083c55c55c80a.png" />
 </div>
 </div>
 </section>
@@ -622,7 +625,7 @@ title="Print to PDF"
 </div><div class="output text_html">
     <div>
       <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [100/100 00:04&lt;00:00]
+      100.00% [100/100 00:07&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -635,7 +638,7 @@ title="Print to PDF"
 </div>
 <div class="cell_output docutils container">
 <img alt="../../_images/5acdb5c39f57d39677ace706db0ba8e0a859a131e4c08847808f69045736b88e.png" src="../../_images/5acdb5c39f57d39677ace706db0ba8e0a859a131e4c08847808f69045736b88e.png" />
-<img alt="../../_images/a8723fa6288747f58b4afcbfc33653dcd67cd09fa6329fc0ce4c107f6c69794f.png" src="../../_images/a8723fa6288747f58b4afcbfc33653dcd67cd09fa6329fc0ce4c107f6c69794f.png" />
+<img alt="../../_images/17496578c83a368d400a7bcfaa9e9f7414f94a23a0c75b95a017f5fa698d776a.png" src="../../_images/17496578c83a368d400a7bcfaa9e9f7414f94a23a0c75b95a017f5fa698d776a.png" />
 </div>
 </div>
 </section>
@@ -662,8 +665,8 @@ title="Print to PDF"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/129008e7b0a1431e155562fbfdfad4e4d357475ba2cc58b1588e47b914c4c393.png" src="../../_images/129008e7b0a1431e155562fbfdfad4e4d357475ba2cc58b1588e47b914c4c393.png" />
-<img alt="../../_images/dc3fdf785d608514f0f404abc0d400d8e32a75c1b880a84e849507ceaa5525c9.png" src="../../_images/dc3fdf785d608514f0f404abc0d400d8e32a75c1b880a84e849507ceaa5525c9.png" />
+<img alt="../../_images/7ebfc3151ecbe0cb4f207f6ad73a4c1430b16abe7e804637f60f4cc73bd36f71.png" src="../../_images/7ebfc3151ecbe0cb4f207f6ad73a4c1430b16abe7e804637f60f4cc73bd36f71.png" />
+<img alt="../../_images/0200566939cbaee3d43de946141611c205e9d3cdd9740fff201cb321999fa688.png" src="../../_images/0200566939cbaee3d43de946141611c205e9d3cdd9740fff201cb321999fa688.png" />
 </div>
 </div>
 </section>
@@ -677,17 +680,17 @@ title="Print to PDF"
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="kf_linreg.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="lgssm_parallel_inference.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Online linear regression using Kalman filtering</p>
+            <p class="prev-next-title">Parallel filtering and smoothing in an LG-SSM</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="lgssm_parallel_inference.html" title="next page">
+    <a class='right-next' id="next-link" href="lgssm_hmc.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Parallel filtering and smoothing in an LG-SSM</p>
+        <p class="prev-next-title">Bayesian parameter estimation for an LG-SSM using HMC</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

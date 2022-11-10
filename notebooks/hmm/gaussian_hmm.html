@@ -131,13 +131,18 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/lgssm_learning.html">
    MAP parameter estimation for an LG-SSM using EM and SGD
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
+  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
   </a>
  </li>
 </ul>
@@ -192,8 +197,8 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../ssm.html">
-   SSM
+  <a class="reference internal" href="../../api.html">
+   API
   </a>
  </li>
 </ul>
@@ -457,8 +462,8 @@ title="Print to PDF"
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm">
 <h1>Gaussian HMM<a class="headerlink" href="#gaussian-hmm" title="Permalink to this headline">#</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-6e38ec1b-c71c-4789-8a9f-adc340c4d513">
-<span class="eqno">(1)<a class="headerlink" href="#equation-6e38ec1b-c71c-4789-8a9f-adc340c4d513" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-f617afc1-0ab3-4ee6-a7ab-ba4f28c5d50f">
+<span class="eqno">(1)<a class="headerlink" href="#equation-f617afc1-0ab3-4ee6-a7ab-ba4f28c5d50f" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(x_t \mid z_t, \theta) &amp;= \mathcal{N}(x_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -552,7 +557,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
         <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">means</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">][</span><span class="s2">&quot;means&quot;</span><span class="p">][</span><span class="n">states</span><span class="p">]</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="n">states</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">):</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">emissions</span><span class="p">[:,</span> <span class="n">d</span><span class="p">]</span> <span class="o">+</span> <span class="n">lim</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="s2">&quot;-k&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">means</span><span class="p">[:,</span> <span class="n">d</span><span class="p">]</span> <span class="o">+</span> <span class="n">lim</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="s2">&quot;:k&quot;</span><span class="p">)</span>
@@ -658,7 +663,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div><div class="output text_html">
     <div>
       <progress value='50' class='' max='50' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [50/50 00:04&lt;00:00]
+      100.00% [50/50 00:08&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -688,10 +693,10 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd19fe93d00&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f30ffc1d730&gt;
 </pre></div>
 </div>
-<img alt="../../_images/6b4dd82b4a78cdfbec83aecc21d5b2b7de92f0f94ed6946f48a834277acb7964.png" src="../../_images/6b4dd82b4a78cdfbec83aecc21d5b2b7de92f0f94ed6946f48a834277acb7964.png" />
+<img alt="../../_images/3315ae707f25d5dc8e7e65f06f79b893a5cb408ba8039e28912224df12636ea8.png" src="../../_images/3315ae707f25d5dc8e7e65f06f79b893a5cb408ba8039e28912224df12636ea8.png" />
 </div>
 </div>
 </section>
@@ -707,8 +712,8 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/cc25b6d2fb665b7fa5bc37ce4243a3f1f2fee14ba7cd406b736b3018973438dd.png" src="../../_images/cc25b6d2fb665b7fa5bc37ce4243a3f1f2fee14ba7cd406b736b3018973438dd.png" />
-<img alt="../../_images/f86782b908e4eba44e371a44a35d09ecd0be7017e71bb7bc89db526c9b490010.png" src="../../_images/f86782b908e4eba44e371a44a35d09ecd0be7017e71bb7bc89db526c9b490010.png" />
+<img alt="../../_images/d995b6a88cc5e8db13355f0c99755a60fe9bd03af49bb22e3cce0534c13dbdc2.png" src="../../_images/d995b6a88cc5e8db13355f0c99755a60fe9bd03af49bb22e3cce0534c13dbdc2.png" />
+<img alt="../../_images/a60b78e9a2d674fe43b4b89d8b87487dc9ea3d94c621e3e3eb95eb223e8d0114.png" src="../../_images/a60b78e9a2d674fe43b4b89d8b87487dc9ea3d94c621e3e3eb95eb223e8d0114.png" />
 </div>
 </div>
 <div class="cell docutils container">

@@ -131,13 +131,18 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="lgssm_learning.html">
    MAP parameter estimation for an LG-SSM using EM and SGD
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
+  <a class="reference internal" href="lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
   </a>
  </li>
 </ul>
@@ -192,8 +197,8 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../ssm.html">
-   SSM
+  <a class="reference internal" href="../../api.html">
+   API
   </a>
  </li>
 </ul>
@@ -555,7 +560,7 @@ relevant parts  of the state vector.</p>
 
 <span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">plot_uncertainty_ellipses</span>
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">ParamsLGSSMMoment</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">ParamsLGSSM</span>
 </pre></div>
 </div>
 </div>
@@ -620,7 +625,7 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fef9ccf88e0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd8b80c51c0&gt;
 </pre></div>
 </div>
 <img alt="../../_images/f89e0b9d96932c3e1751d393f437e0faa1cf6822efaca2ebe885d7e3400190a0.png" src="../../_images/f89e0b9d96932c3e1751d393f437e0faa1cf6822efaca2ebe885d7e3400190a0.png" />
@@ -682,22 +687,14 @@ relevant parts  of the state vector.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">fields</span>
-<span class="n">attributes</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="p">)]</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">attributes</span><span class="p">)</span>
-
 <span class="nb">print</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_covariances</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">marginal_loglik</span><span class="p">)</span>
-<span class="c1"># The smoothed outputs are None</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&#39;marginal_loglik&#39;, &#39;filtered_means&#39;, &#39;filtered_covariances&#39;]
-(15, 4)
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(15, 4)
 (15, 4, 4)
 -43.13845
 </pre></div>
@@ -766,24 +763,11 @@ relevant parts  of the state vector.</p>
 <section id="low-level-interface-to-the-underlying-inference-algorithms">
 <h2>Low-level interface to the underlying inference algorithms<a class="headerlink" href="#low-level-interface-to-the-underlying-inference-algorithms" title="Permalink to this headline">#</a></h2>
 <p>We can also call the inference code directly, without having to make an LG-SSM object.
-We just bundle the parameters together into an <code class="docutils literal notranslate"><span class="pre">LGSSMParams</span></code> dataclass and call
-the underlying inference functions.</p>
+We just pass the model parameters directly to the function.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span> <span class="c1"># Specify the model parameters</span>
-
-
-<span class="n">inf_params</span> <span class="o">=</span> <span class="n">ParamsLGSSMMoment</span><span class="p">(</span>
-    <span class="n">initial_mean</span><span class="o">=</span><span class="n">initial_mean</span><span class="p">,</span> 
-    <span class="n">initial_covariance</span><span class="o">=</span><span class="n">initial_covariance</span><span class="p">,</span>
-    <span class="n">dynamics_weights</span><span class="o">=</span><span class="n">dynamics_weights</span><span class="p">,</span>
-    <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">dynamics_covariance</span><span class="p">,</span>
-    <span class="n">emission_weights</span><span class="o">=</span><span class="n">emission_weights</span><span class="p">,</span>
-    <span class="n">emission_covariance</span><span class="o">=</span><span class="n">emission_covariance</span>
-<span class="p">)</span>
-
-<span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">lgssm_filter</span><span class="p">(</span><span class="n">inf_params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="c1"># Kalman filter</span>
-<span class="n">smoothed_posterior</span> <span class="o">=</span> <span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">inf_params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="c1"># Kalman filter + smoother</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">lgssm_filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="c1"># Kalman filter</span>
+<span class="n">smoothed_posterior</span> <span class="o">=</span> <span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="c1"># Kalman filter + smoother</span>
 <span class="k">assert</span> <span class="n">jnp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">jnp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">smoothed_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">jnp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">lgssm_posterior</span><span class="o">.</span><span class="n">smoothed_means</span><span class="p">,</span> <span class="n">smoothed_posterior</span><span class="o">.</span><span class="n">smoothed_means</span><span class="p">)</span>
