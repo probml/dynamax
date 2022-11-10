@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-from setuptools import setup
+import setuptools
 import versioneer
 
 # Give setuptools a hint to complain if it's too old a version
@@ -11,7 +11,7 @@ SETUP_REQUIRES = ['setuptools >= 30.3.0']
 SETUP_REQUIRES += ['wheel'] if 'bdist_wheel' in sys.argv else []
 
 if __name__ == '__main__':
-    setup(name='dynamax',
+    setuptools.setup(name='dynamax',
           version=versioneer.get_version(),
           cmdclass=versioneer.get_cmdclass(),
           setup_requires=SETUP_REQUIRES,
