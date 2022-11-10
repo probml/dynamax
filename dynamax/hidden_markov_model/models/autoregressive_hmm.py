@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, tree_map
 from typing import NamedTuple
+from dynamax.hidden_markov_model.models.abstractions import HMM
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.hidden_markov_model.models.linreg_hmm import LinearRegressionHMMEmissions, ParamsLinearRegressionHMMEmissions
