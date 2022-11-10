@@ -23,5 +23,5 @@ jobs:
 
       - name: Build the documentation with Sphinx
         run: |
-          pip install -e .[dev]
+          pip install -e '.[dev]'
           sphinx-build -b html docs docs/build/html
