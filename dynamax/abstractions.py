@@ -8,9 +8,9 @@ import optax
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
 
-from dynamax.optimize import run_sgd
 from dynamax.parameters import to_unconstrained, from_unconstrained
-from dynamax.utils import ensure_array_has_batch_dim
+from dynamax.utils.optimize import run_sgd
+from dynamax.utils.utils import ensure_array_has_batch_dim
 
 
 class SSM(ABC):

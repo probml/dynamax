@@ -3,9 +3,7 @@ from datetime import datetime
 import jax.random as jr
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm_conjugate import LinearGaussianConjugateSSM
-from dynamax.utils import monotonically_increasing
-
-from dynamax.utils import has_tpu
+from dynamax.utils.utils import monotonically_increasing, has_tpu
 
 NUM_TIMESTEPS = 100
 

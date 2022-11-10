@@ -4,7 +4,7 @@ from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother
 from dynamax.nonlinear_gaussian_ssm.extended_kalman_filter import extended_kalman_filter, extended_kalman_smoother
 from dynamax.nonlinear_gaussian_ssm.sarkka_lib import ekf, eks
 from dynamax.nonlinear_gaussian_ssm.inference_test import lgssm_to_nlgssm, random_lgssm_args, random_nlgssm_args
-from dynamax.utils import has_tpu
+from dynamax.utils.utils import has_tpu
 
 if has_tpu():
     def allclose(x, y):

@@ -1,13 +1,11 @@
-from jax import vmap
-from jax import numpy as jnp
+import jax.numpy as jnp
 from jax import random as jr
 
 from dynamax.linear_gaussian_ssm.inference import  lgssm_smoother, lgssm_filter
 from dynamax.linear_gaussian_ssm.inference import  ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.info_inference import lgssm_info_filter, lgssm_info_smoother, info_to_moment_form
 from dynamax.linear_gaussian_ssm.info_inference import ParamsLGSSMInfo
-
-from dynamax.utils import has_tpu
+from dynamax.utils.utils import has_tpu
 
 if has_tpu():
     def allclose(x, y):
@@ -53,7 +51,7 @@ def build_lgssm_moment_and_info_form():
             dynamics=ParamsLGSSMDynamics(weights=F, bias=b, input_weights=B, cov=Q),
             emissions=ParamsLGSSMEmissions(weights=H, bias=d, input_weights=D, cov=R)
             )
-   
+
     lgssm_info = ParamsLGSSMInfo(
         initial_mean=mu0,
         initial_precision=Lambda0,

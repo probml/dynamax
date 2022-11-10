@@ -1,8 +1,8 @@
 from fastprogress.fastprogress import progress_bar
 from functools import partial
-import jax.random as jr
 from jax import jit
-from jax import numpy as jnp
+import jax.random as jr
+import jax.numpy as jnp
 from jax.tree_util import tree_map
 from dynamax.distributions import MatrixNormalInverseWishart as MNIW
 from dynamax.distributions import NormalInverseWishart as NIW

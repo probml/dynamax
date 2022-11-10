@@ -1,6 +1,4 @@
 import jax.numpy as jnp
-import numpy as np
-import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, transforms
 from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
@@ -48,7 +46,7 @@ def gradient_cmap(colors, nsteps=256, bounds=None):
     ncolors = len(colors)
     # assert colors.shape[1] == 3
     if bounds is None:
-        bounds = np.linspace(0, 1, ncolors)
+        bounds = jnp.linspace(0, 1, ncolors)
 
     reds = []
     greens = []
@@ -72,10 +70,10 @@ CMAP = gradient_cmap(COLORS)
 def plot_ellipse(Sigma, mu, ax, n_std=3.0, facecolor="none", edgecolor="k", **kwargs):
     """Plot an ellipse to with centre `mu` and axes defined by `Sigma`."""
     cov = Sigma
-    pearson = cov[0, 1] / np.sqrt(cov[0, 0] * cov[1, 1])
+    pearson = cov[0, 1] / jnp.sqrt(cov[0, 0] * cov[1, 1])
 
-    ell_radius_x = np.sqrt(1 + pearson)
-    ell_radius_y = np.sqrt(1 - pearson)
+    ell_radius_x = jnp.sqrt(1 + pearson)
+    ell_radius_y = jnp.sqrt(1 - pearson)
 
     # if facecolor not in kwargs:
     #     kwargs['facecolor'] = 'none'
@@ -86,10 +84,10 @@ def plot_ellipse(Sigma, mu, ax, n_std=3.0, facecolor="none", edgecolor="k", **kw
         (0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2, facecolor=facecolor, edgecolor=edgecolor, **kwargs
     )
 
-    scale_x = np.sqrt(cov[0, 0]) * n_std
+    scale_x = jnp.sqrt(cov[0, 0]) * n_std
     mean_x = mu[0]
 
-    scale_y = np.sqrt(cov[1, 1]) * n_std
+    scale_y = jnp.sqrt(cov[1, 1]) * n_std
     mean_y = mu[1]
 
     transf = transforms.Affine2D().rotate_deg(45).scale(scale_x, scale_y).translate(mean_x, mean_y)

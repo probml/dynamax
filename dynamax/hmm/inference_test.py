@@ -6,7 +6,6 @@ import dynamax.hmm.inference as core
 import dynamax.hmm.parallel_inference as parallel
 
 from jax.scipy.special import logsumexp
-import numpy as np
 
 def big_log_joint(initial_probs, transition_matrix, log_likelihoods):
     """Compute the big log joint probability array
@@ -48,11 +47,11 @@ def random_hmm_args_nonstationary(key, num_timesteps, num_states, scale=1.0):
 
     # we use numpy so we can assign to the matrix.
     # Then we convert to jnp.
-    trans_mat = np.zeros((num_timesteps, num_states, num_states))
+    trans_mat = jnp.zeros((num_timesteps - 1, num_states, num_states))
     for t in range(num_timesteps):
       A = jr.uniform(k2, (num_states, num_states))
       A /= A.sum(1, keepdims=True)
-      trans_mat[t] = A
+      trans_mat = trans_mat.at[t].set(A)
     return initial_probs, jnp.array(trans_mat), log_likelihoods
 
 def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
@@ -182,27 +181,7 @@ def test_compute_transition_probs(key=0, num_timesteps=5, num_states=2):
 
     # Run the HMM smoother
     posterior = core.hmm_smoother(*args)
-    transition_probs = core.compute_transition_probs(args[1], posterior, reduce_sum=False)
-
-    # Compare log_normalizer to manually computed entries
-    log_joint = big_log_joint(*args)
-    joint = jnp.exp(log_joint - logsumexp(log_joint))
-
-    # Compare the smooth transition probabilities to the manually computed ones
-    for t in range(num_timesteps - 1):
-        trans_probs_t = jnp.sum(joint, axis=tuple(jnp.arange(t)) + tuple(jnp.arange(t + 2, num_timesteps)))
-        assert jnp.allclose(transition_probs[t], trans_probs_t, atol=1e-4)
-
-
-def test_compute_transition_probs_reduce(key=0, num_timesteps=5, num_states=2):
-    if isinstance(key, int):
-        key = jr.PRNGKey(key)
-
-    args = random_hmm_args(key, num_timesteps, num_states)
-
-    # Run the HMM smoother
-    posterior = core.hmm_smoother(*args)
-    sum_trans_probs = core.compute_transition_probs(args[1], posterior, reduce_sum=True)
+    sum_trans_probs = core.compute_transition_probs(args[1], posterior)
 
     # Compare log_normalizer to manually computed entries
     log_joint = big_log_joint(*args)
@@ -250,7 +229,7 @@ def test_hmm_non_stationary(key=0, num_timesteps=10, num_states=5, scale=1):
         key = jr.PRNGKey(key)
 
     initial_probs, transition_matrices, log_lkhds= random_hmm_args_nonstationary(key, num_timesteps, num_states)
-    assert jnp.shape(transition_matrices)[0] == num_timesteps
+    assert jnp.shape(transition_matrices)[0] == num_timesteps - 1
     assert jnp.shape(transition_matrices)[1] == num_states
 
     def trans_mat_callable(t):

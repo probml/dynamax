@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from jax import lax
-from jax.tree_util import tree_leaves, tree_reduce, tree_map, register_pytree_node_class
+from jax.tree_util import tree_reduce, tree_map, register_pytree_node_class
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from typing import Optional
 

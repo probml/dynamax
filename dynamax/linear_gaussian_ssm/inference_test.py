@@ -1,13 +1,12 @@
-import jax
-from jax import random as jr
-from jax import numpy as jnp
 from jax import vmap
+from jax import random as jr
+import jax.numpy as jnp
 from functools import partial
 
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 
-from dynamax.utils import has_tpu
+from dynamax.utils.utils import has_tpu
 
 if has_tpu():
     def allclose(x, y):

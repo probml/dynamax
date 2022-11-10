@@ -13,7 +13,8 @@ from dynamax.distributions import niw_posterior_update
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
-from dynamax.utils import PSDToRealBijector, pytree_sum
+from dynamax.utils.bijectors import RealToPSDBijector
+from dynamax.utils.utils import pytree_sum
 from typing import NamedTuple, Union
 
 
@@ -95,7 +96,7 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         props = ParamsGaussianMixtureHMMEmissions(
             weights=ParameterProperties(constrainer=tfb.SoftmaxCentered()),
             means=ParameterProperties(),
-            covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
+            covs=ParameterProperties(constrainer=RealToPSDBijector()))
         return params, props
 
     def distribution(self, params, state, inputs=None):
