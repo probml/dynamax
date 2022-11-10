@@ -215,10 +215,7 @@ def hmm_two_filter_smoother(
 
     # Compute the transition probabilities if specified
     if compute_trans_probs:
-        trans_probs = compute_transition_probs(
-            transition_matrix,
-            posterior,
-            reduce_sum=(transition_matrix.ndim == 2))
+        trans_probs = compute_transition_probs(transition_matrix, posterior, transition_fn)
         posterior = posterior._replace(trans_probs=trans_probs)
 
     return posterior
@@ -288,10 +285,7 @@ def hmm_smoother(
 
     # Compute the transition probabilities if specified
     if compute_trans_probs:
-        trans_probs = compute_transition_probs(
-            transition_matrix,
-            posterior,
-            reduce_sum=(transition_matrix.ndim == 2))
+        trans_probs = compute_transition_probs(transition_matrix, posterior, transition_fn)
         posterior = posterior._replace(trans_probs=trans_probs)
 
     return posterior
@@ -452,7 +446,7 @@ def hmm_posterior_sample(
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
     ) -> Int[Array, "num_timesteps"]:
     """Sample a latent sequence from the posterior.
-    
+
     Args:
         initial_distribution(k): prob(hid(1)=k)
         transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
@@ -532,7 +526,8 @@ def _compute_sum_transition_probs(
 
 def _compute_all_transition_probs(
     transition_matrix: Float[Array, "num_timesteps num_states num_states"],
-    hmm_posterior: HMMPosterior
+    hmm_posterior: HMMPosterior,
+    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
     ) -> Float[Array, "num_timesteps num_states num_states"]:
     """Compute the transition probabilities from the HMM posterior messages.
     Args:
@@ -543,7 +538,12 @@ def _compute_all_transition_probs(
     smoothed_probs_next = hmm_posterior.smoothed_probs[1:]
     predicted_probs_next = hmm_posterior.predicted_probs[1:]
     relative_probs_next = smoothed_probs_next / predicted_probs_next
-    transition_probs = filtered_probs[:, :, None] * transition_matrix * relative_probs_next[:, None, :]
+
+    def _compute_probs(t):
+        A = get_trans_mat(transition_matrix, transition_fn, t)
+        return jnp.einsum('i,ij,j->ij', filtered_probs[t], A, relative_probs_next[t])
+
+    transition_probs = vmap(_compute_probs)(jnp.arange(len(filtered_probs)-1))
     return transition_probs
 
 
@@ -554,7 +554,7 @@ def compute_transition_probs(
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     hmm_posterior: HMMPosterior,
-    reduce_sum: Bool=True
+    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
     ) -> Union[Float[Array, "num_timesteps num_states num_states"],
                Float[Array, "num_states num_states"]]:
     """Computer the posterior marginal distributions over (hid(t), hid(t+1)),
@@ -571,7 +571,8 @@ def compute_transition_probs(
         array of transition probabilities. The shape is (num_states, num_states) if
             reduce_sum==True, otherwise (num_timesteps, num_states, num_states).
     """
+    reduce_sum = transition_matrix is not None and transition_matrix.ndim == 2
     if reduce_sum:
         return _compute_sum_transition_probs(transition_matrix, hmm_posterior)
     else:
-        return _compute_all_transition_probs(transition_matrix, hmm_posterior)
+        return _compute_all_transition_probs(transition_matrix, hmm_posterior, transition_fn=transition_fn)
