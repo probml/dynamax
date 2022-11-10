@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
 import dynamax.hmm.models as models
-from dynamax.utils import monotonically_increasing
+from dynamax.utils.utils import monotonically_increasing
 
 
 NUM_TIMESTEPS = 50

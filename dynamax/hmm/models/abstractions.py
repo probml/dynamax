@@ -5,8 +5,8 @@ from dynamax.hmm.inference import hmm_filter
 from dynamax.hmm.inference import hmm_posterior_mode
 from dynamax.hmm.inference import hmm_smoother
 from dynamax.hmm.inference import hmm_two_filter_smoother
-from dynamax.optimize import run_gradient_descent
-from dynamax.utils import pytree_slice
+from dynamax.utils.optimize import run_gradient_descent
+from dynamax.utils.utils import pytree_slice
 import jax.numpy as jnp
 from jax import vmap
 from jax.tree_util import tree_map

@@ -13,7 +13,7 @@ from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitia
 from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import ParamsNLGSSM, NonlinearGaussianSSM
 from dynamax.abstractions import SSM
 from dynamax.parameters import ParameterProperties
-from dynamax.utils import PSDToRealBijector
+from dynamax.utils.bijectors import RealToPSDBijector
 
 import tensorflow_probability.substrates.jax as tfp
 tfd = tfp.distributions
@@ -130,11 +130,11 @@ class SimpleNonlinearSSM(SSM):
 
         param_props = dict(
             initial=dict(mean=ParameterProperties(),
-                         cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))),
+                         cov=ParameterProperties(constrainer=RealToPSDBijector())),
             dynamics=dict(weights=ParameterProperties(),
-                          cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))),
+                          cov=ParameterProperties(constrainer=RealToPSDBijector())),
             emissions=dict(weights=ParameterProperties(),
-                           cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))),
+                           cov=ParameterProperties(constrainer=RealToPSDBijector())),
         )
         return params, param_props
 

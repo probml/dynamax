@@ -5,8 +5,7 @@ from dynamax.linear_gaussian_ssm.inference import  lgssm_smoother, lgssm_filter
 from dynamax.linear_gaussian_ssm.inference import  ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.info_inference import lgssm_info_filter, lgssm_info_smoother, info_to_moment_form
 from dynamax.linear_gaussian_ssm.info_inference import ParamsLGSSMInfo
-
-from dynamax.utils import has_tpu
+from dynamax.utils.utils import has_tpu
 
 if has_tpu():
     def allclose(x, y):

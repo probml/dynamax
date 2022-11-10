@@ -8,7 +8,7 @@ from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandar
 from dynamax.hmm.models.linreg_hmm import (LinearRegressionHMMEmissions,
                                            ParamsLinearRegressionHMMEmissions)
 from dynamax.parameters import ParameterProperties
-from dynamax.utils import PSDToRealBijector
+from dynamax.utils.bijectors import RealToPSDBijector
 
 from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
@@ -71,7 +71,7 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
         props = ParamsLinearRegressionHMMEmissions(
             weights=ParameterProperties(),
             biases=ParameterProperties(),
-            covs=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
+            covs=ParameterProperties(constrainer=RealToPSDBijector()))
         return params, props
 
 

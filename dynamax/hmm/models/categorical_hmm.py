@@ -8,7 +8,7 @@ from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
-from dynamax.utils import pytree_sum
+from dynamax.utils.utils import pytree_sum
 from typing import NamedTuple, Union
 
 

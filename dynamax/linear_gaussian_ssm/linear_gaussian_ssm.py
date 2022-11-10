@@ -16,7 +16,7 @@ from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, 
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
 from dynamax.parameters import ParameterProperties
-from dynamax.utils import PSDToRealBijector
+from dynamax.utils.bijectors import RealToPSDBijector
 
 SuffStatsLGSSM = Any # type of sufficient statistics for EM
 
@@ -128,17 +128,17 @@ class LinearGaussianSSM(SSM):
         props = ParamsLGSSM(
             initial=ParamsLGSSMInitial(
                 mean=ParameterProperties(),
-                cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))),
+                cov=ParameterProperties(constrainer=RealToPSDBijector())),
             dynamics=ParamsLGSSMDynamics(
                 weights=ParameterProperties(),
                 bias=ParameterProperties(),
                 input_weights=ParameterProperties(),
-                cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))),
+                cov=ParameterProperties(constrainer=RealToPSDBijector())),
             emissions=ParamsLGSSMEmissions(
                 weights=ParameterProperties(),
                 bias=ParameterProperties(),
                 input_weights=ParameterProperties(),
-                cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
+                cov=ParameterProperties(constrainer=RealToPSDBijector()))
             )
         return params, props
 
