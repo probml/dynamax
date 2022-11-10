@@ -4,9 +4,9 @@ from jax import jit
 import jax.random as jr
 import jax.numpy as jnp
 from jax.tree_util import tree_map
-from dynamax.distributions import MatrixNormalInverseWishart as MNIW
-from dynamax.distributions import NormalInverseWishart as NIW
-from dynamax.distributions import mniw_posterior_update, niw_posterior_update
+from dynamax.utils.distributions import MatrixNormalInverseWishart as MNIW
+from dynamax.utils.distributions import NormalInverseWishart as NIW
+from dynamax.utils.distributions import mniw_posterior_update, niw_posterior_update
 from dynamax.linear_gaussian_ssm.inference import  lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import  ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM

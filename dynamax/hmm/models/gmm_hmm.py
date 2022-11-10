@@ -6,10 +6,10 @@ from jax import vmap
 from jax.scipy.special import logsumexp
 from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
-from dynamax.distributions import NormalInverseGamma
-from dynamax.distributions import NormalInverseWishart
-from dynamax.distributions import nig_posterior_update
-from dynamax.distributions import niw_posterior_update
+from dynamax.utils.distributions import NormalInverseGamma
+from dynamax.utils.distributions import NormalInverseWishart
+from dynamax.utils.distributions import nig_posterior_update
+from dynamax.utils.distributions import niw_posterior_update
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
 from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions

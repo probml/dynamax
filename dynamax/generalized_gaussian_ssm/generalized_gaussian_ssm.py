@@ -1,4 +1,4 @@
-from dynamax.abstractions import SSM
+from dynamax.ssm import SSM
 from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import PosteriorNLGSSMFiltered, PosteriorNLGSSMSmoothed
 from jaxtyping import Array, Float
 import tensorflow_probability.substrates.jax as tfp

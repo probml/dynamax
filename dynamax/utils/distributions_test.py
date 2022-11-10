@@ -6,11 +6,11 @@ from jax.scipy.stats import norm
 from scipy.stats import invgamma
 from tensorflow_probability.substrates import jax as tfp
 
-from dynamax.distributions import InverseWishart
-from dynamax.distributions import MatrixNormalInverseWishart
-from dynamax.distributions import MatrixNormalPrecision
-from dynamax.distributions import NormalInverseGamma
-from dynamax.distributions import NormalInverseWishart
+from dynamax.utils.distributions import InverseWishart
+from dynamax.utils.distributions import MatrixNormalInverseWishart
+from dynamax.utils.distributions import MatrixNormalPrecision
+from dynamax.utils.distributions import NormalInverseGamma
+from dynamax.utils.distributions import NormalInverseWishart
 
 tfd = tfp.distributions
 tfb = tfp.bijectors

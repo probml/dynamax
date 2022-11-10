@@ -11,7 +11,7 @@ from jaxtyping import Array, Float
 from typing import Any, Optional, Tuple
 
 
-from dynamax.abstractions import SSM
+from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed

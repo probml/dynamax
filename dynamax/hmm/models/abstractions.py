@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from dynamax.abstractions import SSM
+from dynamax.ssm import SSM
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.hmm.inference import hmm_filter
 from dynamax.hmm.inference import hmm_posterior_mode
