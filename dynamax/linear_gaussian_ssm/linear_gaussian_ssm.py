@@ -48,7 +48,7 @@ class LinearGaussianSSM(SSM):
         * S = params.initial.cov
 
     Optional parameters (default to 0)
-    
+
         * B = params.dynamics.input_weights
         * b = params.dynamics.bias
         * D = params.emissions.input_weights
@@ -125,7 +125,7 @@ class LinearGaussianSSM(SSM):
             )
 
         # The keys of param_props must match those of params!
-        param_props = ParamsLGSSM(
+        props = ParamsLGSSM(
             initial=ParamsLGSSMInitial(
                 mean=ParameterProperties(),
                 cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector))),
@@ -140,7 +140,7 @@ class LinearGaussianSSM(SSM):
                 input_weights=ParameterProperties(),
                 cov=ParameterProperties(constrainer=tfb.Invert(PSDToRealBijector)))
             )
-        return params, param_props
+        return params, props
 
     def initial_distribution(
         self,
