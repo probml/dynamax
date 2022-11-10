@@ -2,10 +2,10 @@ import jax.numpy as jnp
 from jax import lax
 from jax import jacfwd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
+from jaxtyping import Array, Float
+from typing import Optional
 
-from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import PosteriorNLGSSMFiltered, PosteriorNLGSSMSmoothed, ParamsNLGSSM
+from dynamax.nonlinear_gaussian_ssm.models import PosteriorNLGSSMFiltered, PosteriorNLGSSMSmoothed, ParamsNLGSSM
 
 
 # Helper functions
@@ -251,7 +251,7 @@ def iterated_extended_kalman_smoother(
     Returns:
         nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
-            
+
     """
 
     def _step(carry, _):

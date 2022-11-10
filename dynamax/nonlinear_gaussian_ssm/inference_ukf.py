@@ -4,7 +4,7 @@ from jax import vmap
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional
-from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import PosteriorNLGSSMFiltered, PosteriorNLGSSMSmoothed, ParamsNLGSSM
+from dynamax.nonlinear_gaussian_ssm.models import PosteriorNLGSSMFiltered, PosteriorNLGSSMSmoothed, ParamsNLGSSM
 
 
 class UKFHyperParams(NamedTuple):

@@ -6,7 +6,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union, Callable
 
-from dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm import ParamsGGSSM,  PosteriorGGSSMFiltered, PosteriorGGSSMSmoothed
+from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM,  PosteriorGGSSMFiltered, PosteriorGGSSMSmoothed
 
 
 # Helper functions
@@ -156,7 +156,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
         log_likelihood (Scalar): prediction log likelihood for observation y
         mu_cond (D_hid,): conditioned mean.
         Sigma_cond (D_hid,D_hid): conditioned covariance.
-        
+
     """
     m_Y = lambda x: y_cond_mean(x, u)
     Cov_Y = lambda x: y_cond_cov(x, u)

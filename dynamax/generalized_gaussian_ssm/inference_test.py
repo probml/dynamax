@@ -1,9 +1,9 @@
 import jax.numpy as jnp
 
-from dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm import ParamsGGSSM
-from dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter import conditional_moments_gaussian_smoother, EKFIntegrals, UKFIntegrals
-from dynamax.nonlinear_gaussian_ssm.extended_kalman_filter import extended_kalman_smoother
-from dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter import unscented_kalman_smoother, UKFHyperParams
+from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
+from dynamax.generalized_gaussian_ssm.inference import conditional_moments_gaussian_smoother, EKFIntegrals, UKFIntegrals
+from dynamax.nonlinear_gaussian_ssm.inference_ekf import extended_kalman_smoother
+from dynamax.nonlinear_gaussian_ssm.inference_ukf import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.inference_test import random_nlgssm_args
 from dynamax.utils.utils import has_tpu
 

@@ -10,7 +10,7 @@ from typing import Tuple, Union
 
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
-from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import ParamsNLGSSM, NonlinearGaussianSSM
+from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM, NonlinearGaussianSSM
 from dynamax.parameters import ParameterProperties
 from dynamax.ssm import SSM
 from dynamax.utils.bijectors import RealToPSDBijector

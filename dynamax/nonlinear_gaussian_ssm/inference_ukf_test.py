@@ -1,8 +1,8 @@
 import jax.numpy as jnp
 
-from dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter import unscented_kalman_smoother, UKFHyperParams
+from dynamax.nonlinear_gaussian_ssm.inference_ukf import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.sarkka_lib import ukf, uks
-from dynamax.nonlinear_gaussian_ssm.inference_test import random_nlgssm_args
+from dynamax.nonlinear_gaussian_ssm.inference_test_utils import random_nlgssm_args
 from dynamax.utils.utils import has_tpu
 
 if has_tpu():
