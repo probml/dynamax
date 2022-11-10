@@ -502,8 +502,8 @@ title="Print to PDF"
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
 Let <span class="math notranslate nohighlight">\(x_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
 <p>The autoregressive hidden Markov model has the following likelihood,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-444c303b-d88a-4e8d-b9d5-33665062b76b">
-<span class="eqno">(1)<a class="headerlink" href="#equation-444c303b-d88a-4e8d-b9d5-33665062b76b" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-3d8fad35-7055-46d9-a7b6-04873c8cc8ea">
+<span class="eqno">(1)<a class="headerlink" href="#equation-3d8fad35-7055-46d9-a7b6-04873c8cc8ea" title="Permalink to this equation">#</a></span>\[\begin{align}
 x_t \mid x_{t-1}, z_t &amp;\sim
 \mathcal{N}\left(A_{z_t} x_{t-1} + b_{z_t}, Q_{z_t} \right).
 \end{align}\]</div>
@@ -590,7 +590,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f4ebcedf670&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f7a0815f640&gt;
 </pre></div>
 </div>
 <img alt="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" src="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" />
@@ -784,7 +784,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/05504ecf7d1736f8191b16257982a1d86c6560af5b7f26492fd8a2d66a0b08d3.png" src="../../_images/05504ecf7d1736f8191b16257982a1d86c6560af5b7f26492fd8a2d66a0b08d3.png" />
+<img alt="../../_images/89ec1b19a88a87c17e793754b9081090173f84c6128ef8654f7be47fca9df16a.png" src="../../_images/89ec1b19a88a87c17e793754b9081090173f84c6128ef8654f7be47fca9df16a.png" />
 </div>
 </div>
 </section>
@@ -810,8 +810,8 @@ x_t \mid x_{t-1}, z_t &amp;\sim
     <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">test_num_states</span><span class="p">),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">num_states</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="n">true_arhmm</span><span class="p">,</span> <span class="n">arhmm</span><span class="p">]):</span>
         <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">num_states</span><span class="p">):</span>
-            <span class="n">A</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;weights&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
-            <span class="n">b</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;biases&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">A</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
             <span class="n">dxydt_m</span> <span class="o">=</span> <span class="n">xy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="n">xy</span>
             <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">quiver</span><span class="p">(</span><span class="n">xy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
                         <span class="n">dxydt_m</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dxydt_m</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
@@ -831,19 +831,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">line</span> <span class="mi">11</span>
-<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="n">true_arhmm</span><span class="p">,</span> <span class="n">arhmm</span><span class="p">]):</span>
-<span class="g g-Whitespace">     </span><span class="mi">10</span>     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">num_states</span><span class="p">):</span>
-<span class="ne">---&gt; </span><span class="mi">11</span>         <span class="n">A</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;weights&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
-<span class="g g-Whitespace">     </span><span class="mi">12</span>         <span class="n">b</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="p">[</span><span class="s1">&#39;emissions&#39;</span><span class="p">][</span><span class="s1">&#39;biases&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
-<span class="g g-Whitespace">     </span><span class="mi">13</span>         <span class="n">dxydt_m</span> <span class="o">=</span> <span class="n">xy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="n">xy</span>
-
-<span class="ne">TypeError</span>: tuple indices must be integers or slices, not str
-</pre></div>
-</div>
-<img alt="../../_images/9b24aa129e95733ca695e4588a89c1eda1054597121db5957c6225191c3a08fa.png" src="../../_images/9b24aa129e95733ca695e4588a89c1eda1054597121db5957c6225191c3a08fa.png" />
+<img alt="../../_images/efebbc1abc2d4b1f45a696eb3bbad205624dc52d8671296193f73d1f55ef8117.png" src="../../_images/efebbc1abc2d4b1f45a696eb3bbad205624dc52d8671296193f73d1f55ef8117.png" />
 </div>
 </div>
 </section>
@@ -871,7 +859,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/2ae0be5b38eb42fee4750113268a1a7fb7d9b92ab58cf631a1631fc849f56558.png" src="../../_images/2ae0be5b38eb42fee4750113268a1a7fb7d9b92ab58cf631a1631fc849f56558.png" />
+<img alt="../../_images/6b3274fc1cca819b7377d58674dbe4e2743b2b9d39e29c527cbb390c161848b0.png" src="../../_images/6b3274fc1cca819b7377d58674dbe4e2743b2b9d39e29c527cbb390c161848b0.png" />
 </div>
 </div>
 </section>
@@ -899,7 +887,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d1569b63c211279d916bb1c69a7f0616bffc02ef0c450393ec9dd2456add116b.png" src="../../_images/d1569b63c211279d916bb1c69a7f0616bffc02ef0c450393ec9dd2456add116b.png" />
+<img alt="../../_images/bc3ba812087371451f5b43830eca6c538f1058e14f758d7846746996f1112e7f.png" src="../../_images/bc3ba812087371451f5b43830eca6c538f1058e14f758d7846746996f1112e7f.png" />
 </div>
 </div>
 </section>
