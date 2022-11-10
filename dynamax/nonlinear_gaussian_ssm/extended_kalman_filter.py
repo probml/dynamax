@@ -101,6 +101,7 @@ def extended_kalman_filter(
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
+
     """
     num_timesteps = len(emissions)
     # Dynamics and emission functions and their Jacobians
@@ -155,6 +156,7 @@ def iterated_extended_kalman_filter(
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
+
     """
     filtered_posterior = extended_kalman_filter(params, emissions, num_iter, inputs)
     return filtered_posterior
@@ -178,6 +180,7 @@ def extended_kalman_smoother(
     Returns:
         nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
+
     """
     num_timesteps = len(emissions)
 
@@ -248,6 +251,7 @@ def iterated_extended_kalman_smoother(
     Returns:
         nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
+            
     """
 
     def _step(carry, _):

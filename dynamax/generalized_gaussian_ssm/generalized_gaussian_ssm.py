@@ -37,18 +37,32 @@ class ParamsGGSSM(NamedTuple):
 
 class GeneralizedGaussianSSM(SSM):
     """
-    General Gaussian State Space Model is defined as follows:
-    p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)
-    p(y_t | z_t) = Pr(y_t | h(z_t, u_t), R(z_t, u_t))
-    p(z_1) = N(z_1 | m, S)
-    where z_t = hidden, y_t = observed, u_t = inputs (can be None),
-    f = params.dynamics_function
-    Q = params.dynamics_covariance
-    h = params.emission_mean_function
-    R = params.emission_cov_function
-    Pr = params.emission_dist
-    m = params.initial_mean
-    S = params.initial_covariance
+        Generalized Gaussian State Space Model.
+
+    The model is defined as follows
+    .. math::
+
+        p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)
+        p(y_t | z_t) = Pr(y_t | h(z_t, u_t), R(z_t, u_t))
+        p(z_1) = N(z_1 | m, S)
+
+    where
+
+    :math:`z_t` = hidden variables of size ``state_dim``,
+    :math:`y_t` = observed variables of size ``emission_dim``
+    :math:`u_t` = input covariates of size ``input_dim`` (defaults to 0).
+
+
+    The parameters of the model are stored in a separate named tuple, with these fields:
+
+        * f = params.dynamics_function
+        * Q = params.dynamics_covariance
+        * h = params.emissions_mean_function
+        * R = params.emissions_cov_function
+        * Pr = params.emission_dist
+        * m = params.init_mean
+        * S = params.initial_covariance
+
     """
 
     def __init__(self, state_dim, emission_dim, input_dim=0):

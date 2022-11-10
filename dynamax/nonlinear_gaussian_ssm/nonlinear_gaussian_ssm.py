@@ -29,12 +29,40 @@ class ParamsNLGSSM(NamedTuple):
 
 class NonlinearGaussianSSM(SSM):
     """
-    NonLinear Gaussian State Space Model is defined as follows:
-    p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)
-    p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)
-    p(z_1) = N(z_1 | m, S)
-    where z_t = hidden, y_t = observed, u_t = inputs (can be None),
+        Nonlinear Gaussian State Space Model.
+
+    The model is defined as follows
+    .. math::
+
+        p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)
+        p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)
+        p(z_1) = N(z_1 | m, S)
+
+    where
+
+    :math:`z_t` = hidden variables of size ``state_dim``,
+    :math:`y_t` = observed variables of size ``emission_dim``
+    :math:`u_t` = input covariates of size ``input_dim`` (defaults to 0).
+
+    Alternatively, if you have no inputs, we can use the following, simpler model:
+    .. math::
+
+        p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}), Q_t)
+        p(y_t | z_t) = N(y_t | h(z_t), R_t)
+        p(z_1) = N(z_1 | m, S)
+
+
+    The parameters of the model are stored in a separate named tuple, with these fields:
+
+        * f = params.dynamics_function
+        * Q = params.dynamics_covariance
+        * h = params.emissions_function
+        * R = params.emissions_covariance
+        * m = params.init_mean
+        * S = params.initial_covariance
+
     """
+
 
     def __init__(self, state_dim: int, emission_dim: int, input_dim: int = 0):
         self.state_dim = state_dim

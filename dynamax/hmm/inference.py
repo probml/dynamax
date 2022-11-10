@@ -134,55 +134,6 @@ def hmm_filter(
     return post
 
 
-@partial(jit, static_argnames=["transition_fn"])
-def hmm_posterior_sample(
-    rng: jr.PRNGKey,
-    initial_distribution: Float[Array, "num_states"],
-    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
-                             Float[Array, "num_states num_states"]],
-    log_likelihoods: Float[Array, "num_timesteps num_states"],
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
-    ) -> Int[Array, "num_timesteps"]:
-    """Sample a latent sequence from the posterior.
-    Args:
-        initial_distribution(k): prob(hid(1)=k)
-        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
-        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
-    Returns:
-        log_prob
-        sampled_states(1:T)
-    """
-    num_timesteps, num_states = log_likelihoods.shape
-
-    # Run the HMM filter
-    post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transition_fn)
-    log_normalizer, filtered_probs = post.marginal_loglik, post.filtered_probs
-
-    # Run the sampler backward in time
-    def _step(carry, args):
-        next_state = carry
-        t, rng, filtered_probs = args
-
-        A = get_trans_mat(transition_matrix, transition_fn, t)
-
-        # Fold in the next state and renormalize
-        smoothed_probs = filtered_probs * A[:, next_state]
-        smoothed_probs /= smoothed_probs.sum()
-
-        # Sample current state
-        state = jr.choice(rng, a=num_states, p=smoothed_probs)
-
-        return state, state
-
-    # Run the HMM smoother
-    rngs = jr.split(rng, num_timesteps)
-    last_state = jr.choice(rngs[-1], a=num_states, p=filtered_probs[-1])
-    args = (jnp.arange(num_timesteps - 1, 0, -1), rngs[:-1][::-1], filtered_probs[:-1][::-1])
-    _, rev_states = lax.scan(_step, last_state, args)
-
-    # Reverse the arrays and return
-    states = jnp.concatenate([rev_states[::-1], jnp.array([last_state])])
-    return log_normalizer, states
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_backward_filter(
@@ -459,12 +410,9 @@ def hmm_posterior_mode(
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
     ) -> Int[Array, "num_timesteps"]:
     """Compute the most likely state sequence. This is called the Viterbi algorithm.
-    Args:
-        initial_distribution (_type_): _description_
-        transition_matrix (_type_): _description_
-        log_likelihoods (_type_): _description_
+
     Returns:
-        map_state_seq(1:T)
+        _description_
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -493,6 +441,57 @@ def hmm_posterior_mode(
 
     return jnp.concatenate([jnp.array([first_state]), states])
 
+
+@partial(jit, static_argnames=["transition_fn"])
+def hmm_posterior_sample(
+    rng: jr.PRNGKey,
+    initial_distribution: Float[Array, "num_states"],
+    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
+                             Float[Array, "num_states num_states"]],
+    log_likelihoods: Float[Array, "num_timesteps num_states"],
+    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
+    ) -> Int[Array, "num_timesteps"]:
+    """Sample a latent sequence from the posterior.
+    
+    Args:
+        initial_distribution(k): prob(hid(1)=k)
+        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
+        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
+    Returns:
+        log_prob
+        sampled_states(1:T)
+    """
+    num_timesteps, num_states = log_likelihoods.shape
+
+    # Run the HMM filter
+    post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transition_fn)
+    log_normalizer, filtered_probs = post.marginal_loglik, post.filtered_probs
+
+    # Run the sampler backward in time
+    def _step(carry, args):
+        next_state = carry
+        t, rng, filtered_probs = args
+
+        A = get_trans_mat(transition_matrix, transition_fn, t)
+
+        # Fold in the next state and renormalize
+        smoothed_probs = filtered_probs * A[:, next_state]
+        smoothed_probs /= smoothed_probs.sum()
+
+        # Sample current state
+        state = jr.choice(rng, a=num_states, p=smoothed_probs)
+
+        return state, state
+
+    # Run the HMM smoother
+    rngs = jr.split(rng, num_timesteps)
+    last_state = jr.choice(rngs[-1], a=num_states, p=filtered_probs[-1])
+    args = (jnp.arange(num_timesteps - 1, 0, -1), rngs[:-1][::-1], filtered_probs[:-1][::-1])
+    _, rev_states = lax.scan(_step, last_state, args)
+
+    # Reverse the arrays and return
+    states = jnp.concatenate([rev_states[::-1], jnp.array([last_state])])
+    return log_normalizer, states
 
 def _compute_sum_transition_probs(
     transition_matrix: Float[Array, "num_states num_states"],
