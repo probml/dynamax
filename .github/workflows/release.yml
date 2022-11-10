@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  release-job:
+    name: Release on PyPi
+    runs-on: ubuntu-latest
+    env:
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install release tooling
+      run: |
+        pip install twine wheel
+    - name: Build package
+      run: |
+        python setup.py sdist bdist_wheel
+    - name: Check that `dynamax.__version__` matches the Release name
+      run: |
+        echo "GITHUB_REF: ${GITHUB_REF}"
+        # The GITHUB_REF should be something like "refs/tags/v3.x.x"
+        # Make sure the package version is the same as the tag
+        grep -Rq "^Version: ${GITHUB_REF:10}$" dynamax.egg-info/PKG-INFO
+    - name: Publish to PyPi
+      run: |
+        twine check dist/*
+        twine upload --repository pypi --username __token__ --password ${PYPI_TOKEN} dist/*
+  test-install-job:
+    name: Test install from PyPi
+    needs: release-job
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Give PyPI some time to update the index
+      run: sleep 240
+    - name: Attempt install from PyPI
+      run: |
+        pip install dynamax==${GITHUB_REF:10}
