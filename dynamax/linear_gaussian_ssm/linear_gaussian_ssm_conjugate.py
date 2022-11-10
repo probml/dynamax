@@ -179,15 +179,15 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
                 else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
 
             return ParamsLGSSMMoment(initial_mean=m,
-                               initial_covariance=S,
-                               dynamics_weights=F,
-                               dynamics_input_weights=B,
-                               dynamics_bias=b,
-                               dynamics_covariance=Q,
-                               emission_weights=H,
-                               emission_input_weights=D,
-                               emission_bias=d,
-                               emission_covariance=R)
+                                     initial_covariance=S,
+                                     dynamics_weights=F,
+                                     dynamics_input_weights=B,
+                                     dynamics_bias=b,
+                                     dynamics_covariance=Q,
+                                     emission_weights=H,
+                                     emission_input_weights=D,
+                                     emission_bias=d,
+                                     emission_covariance=R)
 
         @jit
         def one_sample(_params, rng):
