@@ -9,7 +9,7 @@ from jaxtyping import Array, Float
 from typing import Tuple, Union
 
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
-from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMMoment
+from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import ParamsNLGSSM, NonlinearGaussianSSM
 from dynamax.abstractions import SSM
 from dynamax.parameters import ParameterProperties
@@ -21,15 +21,15 @@ tfb = tfp.bijectors
 MVN = tfd.MultivariateNormalFullCovariance
 
 
-def lgssm_to_nlgssm(params: ParamsLGSSMMoment) -> ParamsNLGSSM:
+def lgssm_to_nlgssm(params: ParamsLGSSM) -> ParamsNLGSSM:
     """Generates NonLinearGaussianSSM params from LinearGaussianSSM params"""
     nlgssm_params = ParamsNLGSSM(
-        initial_mean=params.initial_mean,
-        initial_covariance=params.initial_covariance,
-        dynamics_function=lambda x: params.dynamics_weights @ x + params.dynamics_bias,
-        dynamics_covariance=params.dynamics_covariance,
-        emission_function=lambda x: params.emission_weights @ x + params.emission_bias,
-        emission_covariance=params.emission_covariance,
+        initial_mean=params.initial.mean,
+        initial_covariance=params.initial.covariance,
+        dynamics_function=lambda x: params.dynamics.weights @ x + params.dynamics.bias,
+        dynamics_covariance=params.dynamics.covariance,
+        emission_function=lambda x: params.emissions.weights @ x + params.emissions.bias,
+        emission_covariance=params.emissions.covariance,
     )
     return nlgssm_params
 
@@ -39,7 +39,7 @@ def random_lgssm_args(
     num_timesteps: int = 15,
     state_dim: int = 4,
     emission_dim: int = 2
-) -> Tuple[ParamsLGSSMMoment, Float[Array, "ntime state_dim"], Float[Array, "ntime emission_dim"]]:
+) -> Tuple[ParamsLGSSM, Float[Array, "ntime state_dim"], Float[Array, "ntime emission_dim"]]:
     if isinstance(key, int):
         key = jr.PRNGKey(key)
     *keys, subkey = jr.split(key, 9)
@@ -50,17 +50,23 @@ def random_lgssm_args(
     dynamics_covariance = jnp.eye(state_dim) * jr.uniform(keys[2])
     emission_covariance = jnp.eye(emission_dim) * jr.uniform(keys[3])
 
-    inf_params = ParamsLGSSMMoment(
-        initial_mean=initial_mean,
-        initial_covariance=initial_covariance,
-        dynamics_weights=jr.normal(keys[4], (state_dim, state_dim)),
-        dynamics_input_weights=jnp.zeros((state_dim, 0)),
-        dynamics_covariance=dynamics_covariance,
-        dynamics_bias=jr.normal(keys[5], (state_dim,)),
-        emission_weights=jr.normal(keys[6], (emission_dim, state_dim)),
-        emission_input_weights=jnp.zeros((emission_dim, 0)),
-        emission_covariance=emission_covariance,
-        emission_bias=jr.normal(keys[7], (emission_dim,)),
+    inf_params = ParamsLGSSM(
+        initial=ParamsLGSSMInitial(
+            mean=initial_mean,
+            cov=initial_covariance
+            ),
+        dynamics=ParamsLGSSMDynamics(
+            weights=jr.normal(keys[4], (state_dim, state_dim)),
+            bias=jr.normal(keys[5], (state_dim,)),
+            input_weights=jnp.zeros((state_dim, 0)),
+            cov=dynamics_covariance
+            ),
+        emissions=ParamsLGSSMEmissions(
+            weights=jr.normal(keys[6], (emission_dim, state_dim)),
+            bias=jr.normal(keys[7], (emission_dim,)),
+            input_weights=jnp.zeros((emission_dim, 0)),
+            cov=emission_covariance,
+            )
     )
 
     # Generate random samples

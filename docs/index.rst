@@ -101,10 +101,9 @@ In addition, we can estimate the parameters of the transition and emission model
 as we discuss below.
 
 More information can be found in these books:
-- *Machine Learning: Advanced Topics*, K. Murphy, MIT Press 2023.
-Available at https://probml.github.io/pml-book/book2.html.
--  *Bayesian Filtering and Smoothing*, S. Särkkä, Cambridge University Press, 2013.
-Available at https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
+
+   * "Machine Learning: Advanced Topics", K. Murphy, MIT Press 2023. Available at https://probml.github.io/pml-book/book2.html.
+   * "Bayesian Filtering and Smoothing", S. Särkkä, Cambridge University Press, 2013. Available at https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
 
 
 
@@ -115,7 +114,7 @@ Dynamax includes classes for many kinds of SSM.
 You can use these models to simulate data, and you can fit the models using standard
 learning algorithms like expectation-maximization (EM) and stochastic gradient descent (SGD).
 Below we illustrate the high level (object-oriented) API for the case of an HMM
-with Gaussian emissions. (See [this notebook](https://github.com/probml/dynamax/blob/main/docs/notebooks/hmm/gaussian_hmm.ipynb) for
+with Gaussian emissions. (See `this notebook <https://github.com/probml/dynamax/blob/main/docs/notebooks/hmm/gaussian_hmm.ipynb>`_ for
 a runnable version of this code.)
 
 .. code-block:: python
@@ -200,11 +199,11 @@ API documentation
    :maxdepth: 2
    :caption: API Documentation
 
-   ssm
+   api
 
 
 Related Libraries
------------------
+==================
 
 - distrax_hmm_: JAX functions for HMM inference (replaced by dynamax)
 - filterpy_: Numpy library for (extended) Kalman filtering

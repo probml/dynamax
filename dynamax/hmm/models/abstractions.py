@@ -291,6 +291,35 @@ class HMMEmissions(ABC):
 
 
 class HMM(SSM):
+    """
+        Hidden Markov Model.
+
+    The model is defined as follows
+    .. math::
+
+        p(z_t=k | z_{t-1}=j, u_t) = A(j, k; t, u_t)
+        p(y_t | z_t=k) = Pr(y_t | B(k; t, u_t))
+        p(z_1=k) = pi(k)
+
+    where
+
+    :math:`z_t` = discrete hidden variable with ``num_states`` possible values,
+    :math:`y_t` = observed variables of size ``emission_dim``
+    :math:`u_t` = input covariates of size ``input_dim`` (defaults to 0).
+
+
+    The parameters of the model are stored in a separate named tuple, with these fields:
+
+        * pi = params.initial
+        * A = params.transitions
+        * B = params.emissions
+
+    Many possible emission distributions Pr() are supported. Each of these define a different
+    set of emission parameters B. For example, if we have a Gaussian HMM, then each discrete
+    state :math:`k` is associated with a different mean :math:`\mu_k` and covariance :math:`\Sigma_k`.
+    Parameters may also be indexed by time :math:`k`, and may also depend on inputs :math:`u_t`.
+
+    """
 
     def __init__(self,
                  num_states : int,

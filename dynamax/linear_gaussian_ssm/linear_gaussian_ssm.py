@@ -25,30 +25,34 @@ class LinearGaussianSSM(SSM):
     """
     Linear Gaussian State Space Model.
 
-    The model is defined as follows:
+    The model is defined as follows
+    .. math::
 
-    p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
-    p(y_t | z_t) = N(y_t | H_t z_t + D_t u_t + d_t, R_t)
-    p(z_1) = N(z_1 | m, S)
+        p(z_t | z_{t-1}, u_t) = N(z_t | F_t z_{t-1} + B_t u_t + b_t, Q_t)
+        p(y_t | z_t) = N(y_t | H_t z_t + D_t u_t + d_t, R_t)
+        p(z_1) = N(z_1 | m, S)
 
     where
 
-    z_t = hidden variables of size `state_dim`,
-    y_t = observed variables of size `emission_dim`
-    u_t = input covariates of size `input_dim` (defaults to 0)
+    :math:`z_t` = hidden variables of size ``state_dim``,
+    :math:`y_t` = observed variables of size ``emission_dim``
+    :math:`u_t` = input covariates of size ``input_dim`` (defaults to 0)
 
     The parameters of the model are stored in a separate named tuple, with these fields:
-    F = params.dynamics.weights
-    Q = params.dynamics.cov
-    H = params.emissions.weights
-    R = params.emissions.cov
-    m = params.initial.mean
-    S = params.initial.cov
+
+        * F = params.dynamics.weights
+        * Q = params.dynamics.cov
+        * H = params.emissions.weights
+        * R = params.emissions.cov
+        * m = params.initial.mean
+        * S = params.initial.cov
+
     Optional parameters (default to 0)
-    B = params.dynamics.input_weights
-    b = params.dynamics.bias
-    D = params.emissions.input_weights
-    d = params.emissions.bias
+    
+        * B = params.dynamics.input_weights
+        * b = params.dynamics.bias
+        * D = params.emissions.input_weights
+        * d = params.emissions.bias
 
     You can create these parameters manually, or by calling `initialize`.
     """

@@ -91,9 +91,6 @@ class GHKFIntegrals(NamedTuple):
 CMGFIntegrals = Union[EKFIntegrals, UKFIntegrals, GHKFIntegrals]
 
 
-"""
-Inference for Conditional Guassian Moments Filters
-"""
 def _predict(m, P, f, Q, u, g_ev, g_cov):
     """Predict next mean and covariance under an additive-noise Gaussian filter
 
@@ -118,6 +115,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
         mu_pred (D_hid,): predicted mean.
         Sigma_pred (D_hid,D_hid): predicted covariance.
         cross_pred (D_hid,D_hid): cross covariance term.
+
     """
     dynamics_fn = lambda x: f(x, u)
     identity_fn = lambda x: x
@@ -158,6 +156,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
         log_likelihood (Scalar): prediction log likelihood for observation y
         mu_cond (D_hid,): conditioned mean.
         Sigma_cond (D_hid,D_hid): conditioned covariance.
+        
     """
     m_Y = lambda x: y_cond_mean(x, u)
     Cov_Y = lambda x: y_cond_cov(x, u)
@@ -229,6 +228,7 @@ def conditional_moments_gaussian_filter(
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
+
     """
     num_timesteps = len(emissions)
 
@@ -286,6 +286,7 @@ def iterated_conditional_moments_gaussian_filter(
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
+
     """
     filtered_posterior = conditional_moments_gaussian_filter(model_params, inf_params, emissions, num_iter, inputs)
     return filtered_posterior

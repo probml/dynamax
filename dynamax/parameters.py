@@ -7,14 +7,15 @@ from typing import Optional
 
 @register_pytree_node_class
 class ParameterProperties:
-    """A simple wrapper for mutable parameter properties.
+    """A PyTree containing parameter metadata (properties).
 
     Note: the properties are stored in the aux_data of this PyTree so that
     changes will trigger recompilation of functions that rely on them.
 
     Args:
-        trainable (bool): flat specifying whether or not to fit this parameter
-        constrainer (Optional tfb.Bijector): bijector mapping to constrained form
+        trainable (bool): flag specifying whether or not to fit this parameter is adjustable.
+        constrainer (Optional tfb.Bijector): bijector mapping to constrained form.
+
     """
     def __init__(self,
                  trainable: bool = True,
@@ -29,26 +30,20 @@ class ParameterProperties:
     def tree_unflatten(cls, aux_data, children):
         return cls(*aux_data)
 
-# @dataclass
-# class ParameterProperties:
-#     trainable: bool = True
-#     constrainer: Optional[tfb.Bijector] = None
-
 
 def to_unconstrained(params, props):
-    """Extract the trainable parameters and convert to unconstrained, then return
-    unconstrained parameters and fixed parameters.
+    """Convert the constrained parameters to unconstrained form.
 
     Args:
-        params (dataclass): (nested) dataclass whose leaf values are DeviceArrays containing
+        params: (nested) named tuple whose leaf values are DeviceArrays containing
                               parameter values.
-        props (dict): matching (nested) dictionary whose leaf values are ParameterProperties
+        props: matching named tuple whose leaf values are ParameterProperties,
+                containing an optional bijector that converts to unconstrained form,
+                and a boolean flag specifying if the parameter is trainable or not.
 
     Returns:
-        unc_params (dict): (nested) dictionary whose values are the unconstrainend parameter
-                            values, but only for the parameters that are marked trainable in
-                            `param_props`.
-        params (dataclass): the original `params` input.
+        unc_params: named tuple containing parameters in unconstrained form.
+
     """
     to_unc = lambda value, prop: prop.constrainer.inverse(value) \
         if prop.constrainer is not None else value
@@ -57,15 +52,21 @@ def to_unconstrained(params, props):
 
 
 def from_unconstrained(unc_params, props):
-    """Convert the unconstrained parameters to constrained form and
-    combine them with the original parameters.
+    """Convert the unconstrained parameters to constrained form.
 
     Args:
-        unc_params: PyTree whose leaf values are DeviceArrays
-        props: matching PyTree whose leaf values are ParameterProperties
+        unc_params: (nested) named tuple whose leaf values are DeviceArrays containing
+                              unconstrained parameter values.
+        props: matching named tuple whose leaf values are ParameterProperties,
+                containing an optional bijector that converts to unconstrained form,
+                and a boolean flag specifying if the parameter is trainable or not.
 
     Returns:
-        params: PyTree whose leaf values are Device arrays in the constrained space
+        params: named tuple containing parameters in constrained form.
+                 If a parameter is marked with trainable=False (frozen) in the properties structure,
+                 it will be tagged with a "stop gradient". Thus the gradient of any loss function computed
+                 using these frozen constrained parameters will be zero.
+
     """
     def from_unc(unc_value, prop):
         value = prop.constrainer(unc_value) if prop.constrainer is not None else unc_value
