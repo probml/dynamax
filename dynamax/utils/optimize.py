@@ -1,9 +1,8 @@
 import jax.numpy as jnp
 import jax.random as jr
 import optax
-from jax import lax, value_and_grad, vmap, tree_map
-from dynamax.utils import pytree_len
-from dynamax.parameters import to_unconstrained, from_unconstrained
+from jax import lax, value_and_grad, tree_map
+from dynamax.utils.utils import pytree_len
 
 
 def sample_minibatches(key, dataset, batch_size, shuffle):

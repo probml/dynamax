@@ -1,7 +1,6 @@
+import pytest
 import jax.numpy as jnp
 import jax.random as jr
-import numpy as np
-import pytest
 from jax import tree_map
 from jax.scipy.stats import norm
 from scipy.stats import invgamma
@@ -153,7 +152,7 @@ def test_normal_inverse_gamma_log_prob(
     log_prob += tfd.InverseGamma(concentration, scale).log_prob(variance)
 
     scipy_log_prob = norm.logpdf(mean, loc, jnp.sqrt(variance / mean_conc))
-    scipy_log_prob += invgamma.logpdf(np.array(variance), concentration, scale=scale)
+    scipy_log_prob += invgamma.logpdf(jnp.array(variance), concentration, scale=scale)
 
     nig_log_prob = nig.log_prob((variance, mean))
 

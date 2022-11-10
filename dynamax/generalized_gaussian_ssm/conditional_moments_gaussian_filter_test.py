@@ -5,9 +5,7 @@ from dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter import
 from dynamax.nonlinear_gaussian_ssm.extended_kalman_filter import extended_kalman_smoother
 from dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.inference_test import random_nlgssm_args
-
-
-from dynamax.utils import has_tpu
+from dynamax.utils.utils import has_tpu
 
 if has_tpu():
     def allclose(x, y):
@@ -35,7 +33,7 @@ def test_ekf(key=0, num_timesteps=15):
     )
     ggf_post = conditional_moments_gaussian_smoother(ekf_params, EKFIntegrals(), emissions)
 
-    # Compare filter and smoother results    
+    # Compare filter and smoother results
     assert allclose(ekf_post.marginal_loglik, ggf_post.marginal_loglik)
     assert allclose(ekf_post.filtered_means, ggf_post.filtered_means)
     assert allclose(ekf_post.filtered_covariances, ggf_post.filtered_covariances)

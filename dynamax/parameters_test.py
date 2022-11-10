@@ -127,7 +127,7 @@ def test_parameter_constrained():
 def test_logdet_jacobian():
     params, props = make_params()
     unc_params = to_unconstrained(params, props)
-    logdet = log_det_jac_constrain(unc_params, props)
+    logdet = log_det_jac_constrain(params, props)
 
     # only the transition matrix is constrained and trainable
     f = props.transitions.transition_matrix.constrainer.forward_log_det_jacobian

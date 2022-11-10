@@ -1,8 +1,8 @@
 from fastprogress.fastprogress import progress_bar
 from functools import partial
-import jax.random as jr
 from jax import jit
-from jax import numpy as jnp
+import jax.random as jr
+import jax.numpy as jnp
 from jax.tree_util import tree_map
 from dynamax.distributions import MatrixNormalInverseWishart as MNIW
 from dynamax.distributions import NormalInverseWishart as NIW
@@ -154,8 +154,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             return init_stats, dynamics_stats, emission_stats
 
         def lgssm_params_sample(rng, stats):
-            """Sample parameters of the model.
-            """
+            """Sample parameters of the model given sufficient statistics from observed states and emissions."""
             init_stats, dynamics_stats, emission_stats = stats
             rngs = iter(jr.split(rng, 3))
 
