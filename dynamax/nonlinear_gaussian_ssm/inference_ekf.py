@@ -1,10 +1,12 @@
 import jax.numpy as jnp
+from jax import scipy as jsc
 from jax import lax
 from jax import jacfwd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
 from typing import Optional
 
+from dynamax.utils.utils import linear_solve
 from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
 
@@ -71,7 +73,7 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
         prior_mean, prior_cov = carry
         H_x = H(prior_mean, u)
         S = R + H_x @ prior_cov @ H_x.T
-        K = jnp.linalg.solve(S, H_x @ prior_cov).T
+        K = linear_solve(S, H_x @ prior_cov).T
         posterior_cov = prior_cov - K @ S @ K.T
         posterior_mean = prior_mean + K @ (y - h(prior_mean, u))
         return (posterior_mean, posterior_cov), None
@@ -203,7 +205,7 @@ def extended_kalman_smoother(
         # Prediction step
         m_pred = f(filtered_mean, u)
         S_pred = Q + F_x @ filtered_cov @ F_x.T
-        G = jnp.linalg.solve(S_pred, F_x @ filtered_cov).T
+        G = linear_solve(S_pred, F_x @ filtered_cov).T
 
         # Compute smoothed mean and covariance
         smoothed_mean = filtered_mean + G @ (smoothed_mean_next - m_pred)

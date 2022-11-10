@@ -7,6 +7,7 @@ from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
 
+from dynamax.utils.utils import linear_solve
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
 
 def _make_associative_filtering_elements(params, emissions):
@@ -25,7 +26,7 @@ def _make_associative_filtering_elements(params, emissions):
         m1 = params.initial.mean
         P1 = params.initial.cov
         S1 = H @ P1 @ H.T + R
-        K1 = jsc.linalg.solve(S1, H @ P1, assume_a='pos').T
+        K1 = linear_solve(S1, H @ P1).T
 
         A = jnp.zeros_like(F)
         b = m1 + K1 @ (y - H @ m1)
@@ -130,7 +131,7 @@ def _make_associative_smoothing_elements(params, filtered_means, filtered_covari
 
         Pp = F @ P @ F.T + Q
 
-        E  = jsc.linalg.solve(Pp, F @ P, assume_a='pos').T
+        E  = linear_solve(Pp, F @ P).T
         g  = m - E @ F @ m
         L  = P - E @ Pp @ E.T
         return E, g, L
