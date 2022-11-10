@@ -15,7 +15,8 @@ from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
 
 from dynamax.abstractions import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
-from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
+#from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
+from dynamax import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
 from dynamax.parameters import ParameterProperties
 from dynamax.utils import PSDToRealBijector
@@ -51,7 +52,7 @@ class LinearGaussianSSM(SSM):
         * S = params.initial.cov
 
     Optional parameters (default to 0)
-    
+
         * B = params.dynamics.input_weights
         * b = params.dynamics.bias
         * D = params.emissions.input_weights
