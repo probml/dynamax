@@ -3,9 +3,9 @@ import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.parameters import ParameterProperties
-from dynamax.hmm.models.abstractions import HMMEmissions, HMM
-from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
+from dynamax.hidden_markov_model.models.abstractions import HMMEmissions, HMM
+from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils.utils import pytree_sum
 from jaxtyping import Float, Array
 from typing import NamedTuple, Union

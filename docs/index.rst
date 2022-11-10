@@ -122,7 +122,7 @@ a runnable version of this code.)
    import jax.numpy as jnp
    import jax.random as jr
    import matplotlib.pyplot as plt
-   from dynamax.hmm.models import GaussianHMM
+   from dynamax.hidden_markov_model.models import GaussianHMM
 
    key1, key2, key3 = jr.split(jr.PRNGKey(0), 3)
    num_states = 3

@@ -2,9 +2,9 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
 from jaxtyping import Float, Array
-from dynamax.hmm.models.abstractions import HMM, HMMEmissions
-from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
+from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions
+from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.parameters import ParameterProperties
 from dynamax.utils.utils import pytree_sum
 from dynamax.utils.bijectors import RealToPSDBijector

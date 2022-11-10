@@ -1,4 +1,4 @@
-from dynamax.hmm.models.abstractions import HMMInitialState
+from dynamax.hidden_markov_model.models.abstractions import HMMInitialState
 from dynamax.parameters import ParameterProperties
 import jax.numpy as jnp
 import jax.random as jr

@@ -1,10 +1,10 @@
 from abc import abstractmethod, ABC
 from dynamax.ssm import SSM
 from dynamax.parameters import to_unconstrained, from_unconstrained
-from dynamax.hmm.inference import hmm_filter
-from dynamax.hmm.inference import hmm_posterior_mode
-from dynamax.hmm.inference import hmm_smoother
-from dynamax.hmm.inference import hmm_two_filter_smoother
+from dynamax.hidden_markov_model.inference import hmm_filter
+from dynamax.hidden_markov_model.inference import hmm_posterior_mode
+from dynamax.hidden_markov_model.inference import hmm_smoother
+from dynamax.hidden_markov_model.inference import hmm_two_filter_smoother
 from dynamax.utils.optimize import run_gradient_descent
 from dynamax.utils.utils import pytree_slice
 import jax.numpy as jnp

@@ -2,8 +2,8 @@ import pytest
 import itertools as it
 import jax.numpy as jnp
 import jax.random as jr
-import dynamax.hmm.inference as core
-import dynamax.hmm.parallel_inference as parallel
+import dynamax.hidden_markov_model.inference as core
+import dynamax.hidden_markov_model.parallel_inference as parallel
 
 from jax.scipy.special import logsumexp
 

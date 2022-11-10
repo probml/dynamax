@@ -3,7 +3,7 @@ from jax import lax, vmap, value_and_grad
 from jaxtyping import Array, Float
 from typing import NamedTuple
 
-from dynamax.hmm.inference import HMMPosterior, HMMPosteriorFiltered
+from dynamax.hidden_markov_model.inference import HMMPosterior, HMMPosteriorFiltered
 
 class Message(NamedTuple):
     A: Float[Array, "num_timesteps num_states num_states"]

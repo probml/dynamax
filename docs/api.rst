@@ -14,18 +14,18 @@ Hidden Markov Model
 High-level class
 ----------------
 
-.. autoclass:: dynamax.hmm.models.abstractions.HMM
+.. autoclass:: dynamax.hidden_markov_model.models.abstractions.HMM
   :members:
 
 Low-level inference
 -------------------
 
-.. autofunction:: dynamax.hmm.inference.hmm_filter
-.. autofunction:: dynamax.hmm.inference.hmm_smoother
-.. autofunction:: dynamax.hmm.inference.hmm_two_filter_smoother
-.. autofunction:: dynamax.hmm.inference.hmm_fixed_lag_smoother
-.. autofunction:: dynamax.hmm.inference.hmm_posterior_mode
-.. autofunction:: dynamax.hmm.inference.hmm_posterior_sample
+.. autofunction:: dynamax.hidden_markov_model.inference.hmm_filter
+.. autofunction:: dynamax.hidden_markov_model.inference.hmm_smoother
+.. autofunction:: dynamax.hidden_markov_model.inference.hmm_two_filter_smoother
+.. autofunction:: dynamax.hidden_markov_model.inference.hmm_fixed_lag_smoother
+.. autofunction:: dynamax.hidden_markov_model.inference.hmm_posterior_mode
+.. autofunction:: dynamax.hidden_markov_model.inference.hmm_posterior_sample
 
 Linear Gaussian SSM
 ====================

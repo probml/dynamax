@@ -3,7 +3,7 @@ from datetime import datetime
 import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
-import dynamax.hmm.models as models
+import dynamax.hidden_markov_model.models as models
 from dynamax.utils.utils import monotonically_increasing
 
 
