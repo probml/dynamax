@@ -53,7 +53,7 @@ def random_lgssm_args(
     inf_params = ParamsLGSSM(
         initial=ParamsLGSSMInitial(
             mean=initial_mean,
-            covariance=initial_covariance
+            cov=initial_covariance
             ),
         dynamics=ParamsLGSSMDynamics(
             weights=jr.normal(keys[4], (state_dim, state_dim)),
