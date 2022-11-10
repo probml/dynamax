@@ -154,8 +154,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             return init_stats, dynamics_stats, emission_stats
 
         def lgssm_params_sample(rng, stats):
-            """Sample parameters of the model.
-            """
+            """Sample parameters of the model given sufficient statistics from observed states and emissions."""
             init_stats, dynamics_stats, emission_stats = stats
             rngs = iter(jr.split(rng, 3))
 

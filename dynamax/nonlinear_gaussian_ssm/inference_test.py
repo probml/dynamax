@@ -25,11 +25,11 @@ def lgssm_to_nlgssm(params: ParamsLGSSM) -> ParamsNLGSSM:
     """Generates NonLinearGaussianSSM params from LinearGaussianSSM params"""
     nlgssm_params = ParamsNLGSSM(
         initial_mean=params.initial.mean,
-        initial_covariance=params.initial.covariance,
+        initial_covariance=params.initial.cov,
         dynamics_function=lambda x: params.dynamics.weights @ x + params.dynamics.bias,
-        dynamics_covariance=params.dynamics.covariance,
+        dynamics_covariance=params.dynamics.cov,
         emission_function=lambda x: params.emissions.weights @ x + params.emissions.bias,
-        emission_covariance=params.emissions.covariance,
+        emission_covariance=params.emissions.cov,
     )
     return nlgssm_params
 
@@ -50,7 +50,7 @@ def random_lgssm_args(
     dynamics_covariance = jnp.eye(state_dim) * jr.uniform(keys[2])
     emission_covariance = jnp.eye(emission_dim) * jr.uniform(keys[3])
 
-    inf_params = ParamsLGSSM(
+    params = ParamsLGSSM(
         initial=ParamsLGSSMInitial(
             mean=initial_mean,
             cov=initial_covariance
@@ -71,10 +71,9 @@ def random_lgssm_args(
 
     # Generate random samples
     model = LinearGaussianSSM(state_dim, emission_dim)
-    model_params = model.from_inference_args(inf_params)
     key, subkey = jr.split(subkey, 2)
-    states, emissions = model.sample(model_params, key, num_timesteps)
-    return inf_params, states, emissions
+    states, emissions = model.sample(params, key, num_timesteps)
+    return params, states, emissions
 
 
 def to_poly(state, degree):
