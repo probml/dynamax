@@ -1,0 +1,410 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dynamax.nonlinear_gaussian_ssm.models &#8212; dynamax documentation</title>
+    
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../../../index.html">
+  
+  <img src="../../../_static/logo.gif" class="logo" alt="logo">
+  
+  
+  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
+  
+</a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  HMMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/casino_hmm_inference.html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/casino_hmm_learning.html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/gaussian_hmm.html">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/kf_tracking.html">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/kf_linreg.html">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_learning.html">
+   MAP parameter estimation for an LG-SSM using EM and SGD
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
+   Tracking a spiraling object using the extended / unscented Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
+   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">
+   Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html">
+   API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#state-space-model-base-class">
+   State Space Model (Base class)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#hidden-markov-model">
+   Hidden Markov Model
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#linear-gaussian-ssm">
+   Linear Gaussian SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#nonlinear-gaussian-gssm">
+   Nonlinear Gaussian GSSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#generalized-gaussian-gssm">
+   Generalized Gaussian GSSM
+  </a>
+ </li>
+</ul>
+
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+    </div>
+    <div class="col pl-2 topbar-main">
+        
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        
+        <!-- Source interaction buttons -->
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <h1>Source code for dynamax.nonlinear_gaussian_ssm.models</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax</span> <span class="k">as</span> <span class="nn">tfp</span>
+<span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormalFullCovariance</span> <span class="k">as</span> <span class="n">MVN</span>
+<span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="k">as</span> <span class="nn">tfd</span>
+<span class="kn">from</span> <span class="nn">dynamax.ssm</span> <span class="kn">import</span> <span class="n">SSM</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">PosteriorLGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorLGSSMSmoothed</span>
+
+<span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
+<span class="n">tfb</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">bijectors</span>
+
+<span class="n">PosteriorNLGSSMFiltered</span> <span class="o">=</span> <span class="n">PosteriorLGSSMFiltered</span> <span class="c1"># posterior is same as linear-gaussian case</span>
+<span class="n">PosteriorNLGSSMSmoothed</span> <span class="o">=</span> <span class="n">PosteriorLGSSMSmoothed</span> <span class="c1"># posterior is same as linear-gaussian case</span>
+<span class="n">FnStateToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]]</span>
+<span class="n">FnStateAndInputToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim input_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]]</span>
+<span class="n">FnStateToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span>
+<span class="n">FnStateAndInputToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim input_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span>
+
+
+<span class="k">class</span> <span class="nc">ParamsNLGSSM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Lightweight container for NLGSSM parameters.&quot;&quot;&quot;</span>
+    <span class="n">initial_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]</span>
+    <span class="n">initial_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]</span>
+    <span class="n">dynamics_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FnStateToState</span><span class="p">,</span> <span class="n">FnStateAndInputToState</span><span class="p">]</span>
+    <span class="n">dynamics_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]</span>
+    <span class="n">emission_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FnStateToEmission</span><span class="p">,</span> <span class="n">FnStateAndInputToEmission</span><span class="p">]</span>
+    <span class="n">emission_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="NonlinearGaussianSSM"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM">[docs]</a><span class="k">class</span> <span class="nc">NonlinearGaussianSSM</span><span class="p">(</span><span class="n">SSM</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Nonlinear Gaussian State Space Model.</span>
+
+<span class="sd">    The model is defined as follows</span>
+<span class="sd">    .. math::</span>
+
+<span class="sd">        p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)</span>
+<span class="sd">        p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)</span>
+<span class="sd">        p(z_1) = N(z_1 | m, S)</span>
+
+<span class="sd">    where</span>
+
+<span class="sd">    :math:`z_t` = hidden variables of size ``state_dim``,</span>
+<span class="sd">    :math:`y_t` = observed variables of size ``emission_dim``</span>
+<span class="sd">    :math:`u_t` = input covariates of size ``input_dim`` (defaults to 0).</span>
+
+<span class="sd">    Alternatively, if you have no inputs, we can use the following, simpler model:</span>
+<span class="sd">    .. math::</span>
+
+<span class="sd">        p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}), Q_t)</span>
+<span class="sd">        p(y_t | z_t) = N(y_t | h(z_t), R_t)</span>
+<span class="sd">        p(z_1) = N(z_1 | m, S)</span>
+
+
+<span class="sd">    The parameters of the model are stored in a separate named tuple, with these fields:</span>
+
+<span class="sd">        * f = params.dynamics_function</span>
+<span class="sd">        * Q = params.dynamics_covariance</span>
+<span class="sd">        * h = params.emissions_function</span>
+<span class="sd">        * R = params.emissions_covariance</span>
+<span class="sd">        * m = params.init_mean</span>
+<span class="sd">        * S = params.initial_covariance</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_dim</span> <span class="o">=</span> <span class="n">state_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">,)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inputs_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">,)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="NonlinearGaussianSSM.initial_distribution"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM.initial_distribution">[docs]</a>    <span class="k">def</span> <span class="nf">initial_distribution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">MVN</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">initial_mean</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">initial_covariance</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NonlinearGaussianSSM.transition_distribution"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM.transition_distribution">[docs]</a>    <span class="k">def</span> <span class="nf">transition_distribution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamics_function</span>
+        <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MVN</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NonlinearGaussianSSM.emission_distribution"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM.emission_distribution">[docs]</a>    <span class="k">def</span> <span class="nf">emission_distribution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">emission_function</span>
+        <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">h</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">h</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MVN</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">emission_covariance</span><span class="p">)</span></div></div>
+</pre></div>
+
+              </div>
+              
+        </div>
+    </div>
+    
+    
+    <div class='prev-next-bottom'>
+        
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+        
+            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    
+  </body>
+</html>

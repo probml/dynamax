@@ -1,16 +1,14 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Gaussian HMM &#8212; dynamax documentation</title>
     
-  <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
     
   <link rel="stylesheet"
@@ -20,79 +18,68 @@
   <link rel="preload" as="font" type="font/woff2" crossorigin
     href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
 
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     
-  <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  <link rel="preload" as="script" href="../../_static/js/index.d3f166471bb80abb5163.js">
 
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Autoregressive (AR) HMM Demo" href="autoregressive_hmm.html" />
     <link rel="prev" title="Casino HMM: learning (parameter estimation)" href="casino_hmm_learning.html" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="None">
-    
+    <meta name="docsearch:language" content="en" />
 
-    <!-- Google Analytics -->
-    
+
+
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay overlay-navbar" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<!-- Checkboxes to toggle the in-page toc -->
-<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
-<label class="overlay overlay-pagetoc" for="__page-toc">
-    <div class="visually-hidden">Toggle in-page Table of Contents</div>
-</label>
-<!-- Headers at the top -->
-<div class="announcement header-item noprint"></div>
-<div class="header header-item noprint"></div>
-
-    
-    <div class="container-fluid" id="banner"></div>
-
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
 
     <div class="container-xl">
       <div class="row">
           
-<!-- Sidebar -->
-<div class="bd-sidebar noprint" id="site-navigation">
-    <div class="bd-sidebar__content">
-        <div class="bd-sidebar__top"><div class="navbar-brand-box">
-    <a class="navbar-brand text-wrap" href="../../index.html">
-      
-        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
-        
-      
-      
-      <img src="../../_static/logo.gif" class="logo" alt="logo">
-      
-      
-    </a>
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../../index.html">
+  
+  <img src="../../_static/logo.gif" class="logo" alt="logo">
+  
+  
+  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
+  
+</a>
 </div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
-    <div class="bd-toc-item active">
-        <p aria-level="2" class="caption" role="heading">
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   HMMs
  </span>
 </p>
-<ul class="current nav bd-sidenav">
+<ul class="current nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="casino_hmm_inference.html">
    Casino HMM: Inference (state estimation)
@@ -114,12 +101,12 @@
   </a>
  </li>
 </ul>
-<p aria-level="2" class="caption" role="heading">
+<p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   Linear Gaussian SSMs
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
    Tracking an object using the Kalman filter
@@ -146,12 +133,12 @@
   </a>
  </li>
 </ul>
-<p aria-level="2" class="caption" role="heading">
+<p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   Nonlinear Gaussian SSMs
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -168,12 +155,12 @@
   </a>
  </li>
 </ul>
-<p aria-level="2" class="caption" role="heading">
+<p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   Generalized Gaussian SSMs
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
    Online Logistic Regression using conditional moments Gaussian filter
@@ -190,31 +177,50 @@
   </a>
  </li>
 </ul>
-<p aria-level="2" class="caption" role="heading">
+<p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   API Documentation
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../../api.html">
    API
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#state-space-model-base-class">
+   State Space Model (Base class)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#hidden-markov-model">
+   Hidden Markov Model
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#linear-gaussian-ssm">
+   Linear Gaussian SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#nonlinear-gaussian-gssm">
+   Nonlinear Gaussian GSSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#generalized-gaussian-gssm">
+   Generalized Gaussian GSSM
+  </a>
+ </li>
 </ul>
 
-    </div>
-</nav></div>
-        <div class="bd-sidebar__bottom">
-             <!-- To handle the deprecated key -->
-            
-            <div class="navbar_extra_footer">
-            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-            </div>
-            
-        </div>
-    </div>
-    <div id="rtd-footer-container"></div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
 </div>
 
 
@@ -222,164 +228,83 @@
 
 
           
-<!-- A tiny helper pixel to detect if we've scrolled -->
-<div class="sbt-scroll-pixel-helper"></div>
-<!-- Main content -->
-<div class="col py-0 content-container">
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
     
-    <div class="header-article row sticky-top noprint">
-        
-
-
-
-<div class="col py-1 d-flex header-article-main">
-    <div class="header-article__left">
-        
-        <label for="__navigation"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="right"
-title="Toggle navigation"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-bars"></i>
-  </span>
-
-</label>
-
-        
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
     </div>
-    <div class="header-article__right">
-<div class="menu-dropdown menu-dropdown-launch-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Launch interactive content">
-      <i class="fas fa-rocket"></i>
-  </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/hmm/gaussian_hmm.ipynb"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Launch on Binder"
->
-  
-
-<span class="headerbtn__icon-container">
-  
-    <img src="../../_static/images/logo_binder.svg">
-  </span>
-<span class="headerbtn__text-container">Binder</span>
-</a>
-
-      </li>
-      
-      <li>
-        <a href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/hmm/gaussian_hmm.ipynb"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Launch on Colab"
->
-  
-
-<span class="headerbtn__icon-container">
-  
-    <img src="../../_static/images/logo_colab.png">
-  </span>
-<span class="headerbtn__text-container">Colab</span>
-</a>
-
-      </li>
-      
-    </ul>
-  </div>
-</div>
-
-<button onclick="toggleFullScreen()"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="bottom"
-title="Fullscreen mode"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-expand"></i>
-  </span>
-
-</button>
-
-<div class="menu-dropdown menu-dropdown-download-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Download this page">
-      <i class="fas fa-download"></i>
-  </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="../../_sources/notebooks/hmm/gaussian_hmm.ipynb.txt"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Download source file"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file"></i>
-  </span>
-<span class="headerbtn__text-container">.ipynb</span>
-</a>
-
-      </li>
-      
-      <li>
+    <div class="col pl-2 topbar-main">
         
-<button onclick="printPdf(this)"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="left"
-title="Print to PDF"
->
-  
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
 
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file-pdf"></i>
-  </span>
-<span class="headerbtn__text-container">.pdf</span>
-</button>
-
-      </li>
-      
-    </ul>
-  </div>
-</div>
-<label for="__page-toc"
-  class="headerbtn headerbtn-page-toc"
-  
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-list"></i>
-  </span>
-
-</label>
-
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../../_sources/notebooks/hmm/gaussian_hmm.ipynb.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
     </div>
 </div>
 
-<!-- Table of contents -->
-<div class="col-md-3 bd-toc show noprint">
-    <div class="tocsection onthispage pt-5 pb-3">
-        <i class="fas fa-list"></i> Contents
+        <!-- Source interaction buttons -->
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/hmm/gaussian_hmm.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="../../_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        <a class="colab-button" href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/hmm/gaussian_hmm.ipynb"><button type="button" class="btn btn-secondary topbarbtn"
+                title="Launch Colab" data-toggle="tooltip" data-placement="left"><img class="colab-button-logo"
+                    src="../../_static/images/logo_colab.png"
+                    alt="Interact on Colab">Colab</button></a>
+        
+        
     </div>
-    <nav id="bd-toc-nav" aria-label="Page">
-        <ul class="visible nav section-nav flex-column">
+</div>
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+        <div class="tocsection onthispage pt-5 pb-3">
+            <i class="fas fa-list"></i> Contents
+        </div>
+        <nav id="bd-toc-nav">
+            <ul class="nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#setup">
    Setup
@@ -407,63 +332,20 @@ title="Print to PDF"
  </li>
 </ul>
 
-    </nav>
-</div>
+        </nav>
+        
     </div>
-    <div class="article row">
-        <div class="col pl-md-3 pl-lg-5 content-container">
-            <!-- Table of contents that is only displayed when printing the page -->
-            <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Gaussian HMM</h1>
-                <!-- Table of contents -->
-                <div id="print-main-content">
-                    <div id="jb-print-toc">
-                        
-                        <div>
-                            <h2> Contents </h2>
-                        </div>
-                        <nav aria-label="Page">
-                            <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#setup">
-   Setup
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#helper-functions-for-plotting">
-   Helper functions for plotting
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#generate-sample-data">
-   Generate sample data
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#randomly-initialize-a-new-model-and-fit-to-data">
-   Randomly initialize a new model and fit to data
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#visualize-the-fitted-model">
-   Visualize the fitted model
-  </a>
- </li>
-</ul>
-
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            <main id="main-content" role="main">
-                
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
               <div>
                 
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm">
-<h1>Gaussian HMM<a class="headerlink" href="#gaussian-hmm" title="Permalink to this headline">#</a></h1>
+<h1>Gaussian HMM<a class="headerlink" href="#gaussian-hmm" title="Permalink to this heading">¶</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-62a5722b-8677-4db7-879a-c687425d8f28">
-<span class="eqno">(1)<a class="headerlink" href="#equation-62a5722b-8677-4db7-879a-c687425d8f28" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-2c35eaf8-7f77-4872-9c31-44b0bae12e96">
+<span class="eqno">(1)<a class="headerlink" href="#equation-2c35eaf8-7f77-4872-9c31-44b0bae12e96" title="Permalink to this equation">¶</a></span>\[\begin{align}
 p(x_t \mid z_t, \theta) &amp;= \mathcal{N}(x_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -471,7 +353,7 @@ p(x_t \mid z_t, \theta) &amp;= \mathcal{N}(x_t \mid \mu_{z_t}, \Sigma_{z_t})
 It also includes prior distributions on the parameters. For example, it uses a conjugate <a class="reference external" href="https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution">normal-inverse Wishart (NIW)</a> prior for the standard case.</p>
 <p>This notebook shows how to fit such models using standard (“full batch”) expectation-maximization (EM), as well as with stochastic (“mini batch”) EM. For datasets with many conditionally independent emission sequences, stochastic EM often converges much more quickly. It’s a useful trick to have in your toolkit!</p>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -498,7 +380,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.hmm.models</span> <span class="kn">import</span> <span class="n">GaussianHMM</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">GaussianHMM</span>
 </pre></div>
 </div>
 </div>
@@ -510,7 +392,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </section>
 <section id="helper-functions-for-plotting">
-<h2>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Permalink to this headline">#</a></h2>
+<h2>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Permalink to this heading">¶</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -519,7 +401,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Helper functions for plotting</span>
-<span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">CMAP</span><span class="p">,</span> <span class="n">COLORS</span><span class="p">,</span> <span class="n">white_to_color_cmap</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.plotting</span> <span class="kn">import</span> <span class="n">CMAP</span><span class="p">,</span> <span class="n">COLORS</span><span class="p">,</span> <span class="n">white_to_color_cmap</span>
 
 <span class="k">def</span> <span class="nf">plot_gaussian_hmm</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span>  <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Emission Distributions&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">):</span>
     <span class="n">lim</span> <span class="o">=</span> <span class="mf">0.85</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
@@ -575,24 +457,11 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Helper functions for plotting</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">CMAP</span><span class="p">,</span> <span class="n">COLORS</span><span class="p">,</span> <span class="n">white_to_color_cmap</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="k">def</span> <span class="nf">plot_gaussian_hmm</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span>  <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Emission Distributions&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">):</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span>     <span class="n">lim</span> <span class="o">=</span> <span class="mf">0.85</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
-
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;dynamax.plotting&#39;
-</pre></div>
-</div>
-</div>
 </details>
 </div>
 </section>
 <section id="generate-sample-data">
-<h2>Generate sample data<a class="headerlink" href="#generate-sample-data" title="Permalink to this headline">#</a></h2>
+<h2>Generate sample data<a class="headerlink" href="#generate-sample-data" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_batches</span> <span class="o">=</span> <span class="mi">18</span>
@@ -634,13 +503,13 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c4e8a534af49d842f294224a42540eb247fa72d2673254fb239ca22d7fbbf881.png" src="../../_images/c4e8a534af49d842f294224a42540eb247fa72d2673254fb239ca22d7fbbf881.png" />
-<img alt="../../_images/98afa7954f7e2619a8104ea4fa91ba34c5f46e5192887b87702ea4fe17c3fb8d.png" src="../../_images/98afa7954f7e2619a8104ea4fa91ba34c5f46e5192887b87702ea4fe17c3fb8d.png" />
+<img alt="../../_images/9a8c7d2e65e8a39d5139fcda013e2602a90202b018566f723217e121e7775f91.png" src="../../_images/9a8c7d2e65e8a39d5139fcda013e2602a90202b018566f723217e121e7775f91.png" />
+<img alt="../../_images/7349944314622faef14a25aadee1443700759b26d7e3ad9615723aa3ff9f2fb0.png" src="../../_images/7349944314622faef14a25aadee1443700759b26d7e3ad9615723aa3ff9f2fb0.png" />
 </div>
 </div>
 </section>
 <section id="randomly-initialize-a-new-model-and-fit-to-data">
-<h2>Randomly initialize a new model and fit to data<a class="headerlink" href="#randomly-initialize-a-new-model-and-fit-to-data" title="Permalink to this headline">#</a></h2>
+<h2>Randomly initialize a new model and fit to data<a class="headerlink" href="#randomly-initialize-a-new-model-and-fit-to-data" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fit with standard (full batch) EM</span>
@@ -676,7 +545,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div><div class="output text_html">
     <div>
       <progress value='50' class='' max='50' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [50/50 00:05&lt;00:00]
+      100.00% [50/50 00:04&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -706,15 +575,15 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fe9912ab190&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f299c919b80&gt;
 </pre></div>
 </div>
-<img alt="../../_images/766c369e61fe779265bca283fd3bf1dcfa0800563feb2b91dde628df99322085.png" src="../../_images/766c369e61fe779265bca283fd3bf1dcfa0800563feb2b91dde628df99322085.png" />
+<img alt="../../_images/8764928b83b0d964c485e00571668d57100def2c7069f578c935e20c25c11cf6.png" src="../../_images/8764928b83b0d964c485e00571668d57100def2c7069f578c935e20c25c11cf6.png" />
 </div>
 </div>
 </section>
 <section id="visualize-the-fitted-model">
-<h2>Visualize the fitted model<a class="headerlink" href="#visualize-the-fitted-model" title="Permalink to this headline">#</a></h2>
+<h2>Visualize the fitted model<a class="headerlink" href="#visualize-the-fitted-model" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">i_batch</span> <span class="o">=</span> <span class="mi">5</span>
@@ -725,8 +594,8 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c65bf2ca5b0bf7365e2785721c5da82626a75fb06e1eb21fa7add4652cc3c882.png" src="../../_images/c65bf2ca5b0bf7365e2785721c5da82626a75fb06e1eb21fa7add4652cc3c882.png" />
-<img alt="../../_images/1be207fa0df0f20a22dca040d69b3934c05e7f92d6e10bad54fda45d3d3fa3b2.png" src="../../_images/1be207fa0df0f20a22dca040d69b3934c05e7f92d6e10bad54fda45d3d3fa3b2.png" />
+<img alt="../../_images/d986132c9d7ad7f07cf9ee01fd816f5071503b930a68d819a211cb820b0a6f64.png" src="../../_images/d986132c9d7ad7f07cf9ee01fd816f5071503b930a68d819a211cb820b0a6f64.png" />
+<img alt="../../_images/f64de307c9d644b9b627f2af5351fd9a1289531e7868d1e22530c58c7c3bf778.png" src="../../_images/f64de307c9d644b9b627f2af5351fd9a1289531e7868d1e22530c58c7c3bf778.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -744,48 +613,36 @@ It also includes prior distributions on the parameters. For example, it uses a c
 
               </div>
               
-            </main>
-            <footer class="footer-article noprint">
-                
-    <!-- Previous / next buttons -->
-<div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="casino_hmm_learning.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Casino HMM: learning (parameter estimation)</p>
         </div>
-    </a>
-    <a class='right-next' id="next-link" href="autoregressive_hmm.html" title="next page">
-    <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Autoregressive (AR) HMM Demo</p>
-    </div>
-    <i class="fas fa-angle-right"></i>
-    </a>
-</div>
-            </footer>
-        </div>
-    </div>
-    <div class="footer-content row">
-        <footer class="col footer"><p>
-  
-    By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
-  
-      &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
-</p>
-        </footer>
     </div>
     
-</div>
+    
+    <div class='prev-next-bottom'>
+        
+    <a class='left-prev' id="prev-link" href="casino_hmm_learning.html" title="previous page">Casino HMM: learning (parameter estimation)</a>
+    <a class='right-next' id="next-link" href="autoregressive_hmm.html" title="next page">Autoregressive (AR) HMM Demo</a>
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+        
+            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
 
 
       </div>
     </div>
-  
-  <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+    
+  <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
   </body>
 </html>

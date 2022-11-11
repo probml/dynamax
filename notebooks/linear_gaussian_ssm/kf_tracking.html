@@ -1,16 +1,14 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Tracking an object using the Kalman filter &#8212; dynamax documentation</title>
     
-  <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
     
   <link rel="stylesheet"
@@ -20,79 +18,68 @@
   <link rel="preload" as="font" type="font/woff2" crossorigin
     href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
 
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     
-  <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  <link rel="preload" as="script" href="../../_static/js/index.d3f166471bb80abb5163.js">
 
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Online linear regression using Kalman filtering" href="kf_linreg.html" />
     <link rel="prev" title="Autoregressive (AR) HMM Demo" href="../hmm/autoregressive_hmm.html" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="None">
-    
+    <meta name="docsearch:language" content="en" />
 
-    <!-- Google Analytics -->
-    
+
+
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay overlay-navbar" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<!-- Checkboxes to toggle the in-page toc -->
-<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
-<label class="overlay overlay-pagetoc" for="__page-toc">
-    <div class="visually-hidden">Toggle in-page Table of Contents</div>
-</label>
-<!-- Headers at the top -->
-<div class="announcement header-item noprint"></div>
-<div class="header header-item noprint"></div>
-
-    
-    <div class="container-fluid" id="banner"></div>
-
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
 
     <div class="container-xl">
       <div class="row">
           
-<!-- Sidebar -->
-<div class="bd-sidebar noprint" id="site-navigation">
-    <div class="bd-sidebar__content">
-        <div class="bd-sidebar__top"><div class="navbar-brand-box">
-    <a class="navbar-brand text-wrap" href="../../index.html">
-      
-        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
-        
-      
-      
-      <img src="../../_static/logo.gif" class="logo" alt="logo">
-      
-      
-    </a>
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../../index.html">
+  
+  <img src="../../_static/logo.gif" class="logo" alt="logo">
+  
+  
+  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
+  
+</a>
 </div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
-    <div class="bd-toc-item active">
-        <p aria-level="2" class="caption" role="heading">
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   HMMs
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../hmm/casino_hmm_inference.html">
    Casino HMM: Inference (state estimation)
@@ -114,12 +101,12 @@
   </a>
  </li>
 </ul>
-<p aria-level="2" class="caption" role="heading">
+<p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   Linear Gaussian SSMs
  </span>
 </p>
-<ul class="current nav bd-sidenav">
+<ul class="current nav sidenav_l1">
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
    Tracking an object using the Kalman filter
@@ -146,12 +133,12 @@
   </a>
  </li>
 </ul>
-<p aria-level="2" class="caption" role="heading">
+<p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   Nonlinear Gaussian SSMs
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
    Tracking a spiraling object using the extended / unscented Kalman filter
@@ -168,12 +155,12 @@
   </a>
  </li>
 </ul>
-<p aria-level="2" class="caption" role="heading">
+<p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   Generalized Gaussian SSMs
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
    Online Logistic Regression using conditional moments Gaussian filter
@@ -190,31 +177,50 @@
   </a>
  </li>
 </ul>
-<p aria-level="2" class="caption" role="heading">
+<p class="caption collapsible-parent" role="heading">
  <span class="caption-text">
   API Documentation
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../../api.html">
    API
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#state-space-model-base-class">
+   State Space Model (Base class)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#hidden-markov-model">
+   Hidden Markov Model
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#linear-gaussian-ssm">
+   Linear Gaussian SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#nonlinear-gaussian-gssm">
+   Nonlinear Gaussian GSSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#generalized-gaussian-gssm">
+   Generalized Gaussian GSSM
+  </a>
+ </li>
 </ul>
 
-    </div>
-</nav></div>
-        <div class="bd-sidebar__bottom">
-             <!-- To handle the deprecated key -->
-            
-            <div class="navbar_extra_footer">
-            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-            </div>
-            
-        </div>
-    </div>
-    <div id="rtd-footer-container"></div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
 </div>
 
 
@@ -222,164 +228,83 @@
 
 
           
-<!-- A tiny helper pixel to detect if we've scrolled -->
-<div class="sbt-scroll-pixel-helper"></div>
-<!-- Main content -->
-<div class="col py-0 content-container">
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
     
-    <div class="header-article row sticky-top noprint">
-        
-
-
-
-<div class="col py-1 d-flex header-article-main">
-    <div class="header-article__left">
-        
-        <label for="__navigation"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="right"
-title="Toggle navigation"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-bars"></i>
-  </span>
-
-</label>
-
-        
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
     </div>
-    <div class="header-article__right">
-<div class="menu-dropdown menu-dropdown-launch-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Launch interactive content">
-      <i class="fas fa-rocket"></i>
-  </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/linear_gaussian_ssm/kf_tracking.ipynb"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Launch on Binder"
->
-  
-
-<span class="headerbtn__icon-container">
-  
-    <img src="../../_static/images/logo_binder.svg">
-  </span>
-<span class="headerbtn__text-container">Binder</span>
-</a>
-
-      </li>
-      
-      <li>
-        <a href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/linear_gaussian_ssm/kf_tracking.ipynb"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Launch on Colab"
->
-  
-
-<span class="headerbtn__icon-container">
-  
-    <img src="../../_static/images/logo_colab.png">
-  </span>
-<span class="headerbtn__text-container">Colab</span>
-</a>
-
-      </li>
-      
-    </ul>
-  </div>
-</div>
-
-<button onclick="toggleFullScreen()"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="bottom"
-title="Fullscreen mode"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-expand"></i>
-  </span>
-
-</button>
-
-<div class="menu-dropdown menu-dropdown-download-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Download this page">
-      <i class="fas fa-download"></i>
-  </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="../../_sources/notebooks/linear_gaussian_ssm/kf_tracking.ipynb.txt"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Download source file"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file"></i>
-  </span>
-<span class="headerbtn__text-container">.ipynb</span>
-</a>
-
-      </li>
-      
-      <li>
+    <div class="col pl-2 topbar-main">
         
-<button onclick="printPdf(this)"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="left"
-title="Print to PDF"
->
-  
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
 
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file-pdf"></i>
-  </span>
-<span class="headerbtn__text-container">.pdf</span>
-</button>
-
-      </li>
-      
-    </ul>
-  </div>
-</div>
-<label for="__page-toc"
-  class="headerbtn headerbtn-page-toc"
-  
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-list"></i>
-  </span>
-
-</label>
-
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../../_sources/notebooks/linear_gaussian_ssm/kf_tracking.ipynb.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
     </div>
 </div>
 
-<!-- Table of contents -->
-<div class="col-md-3 bd-toc show noprint">
-    <div class="tocsection onthispage pt-5 pb-3">
-        <i class="fas fa-list"></i> Contents
+        <!-- Source interaction buttons -->
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
+    <div class="dropdown-buttons">
+        
+        <a class="binder-button" href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/linear_gaussian_ssm/kf_tracking.ipynb"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
+                data-placement="left"><img class="binder-button-logo"
+                    src="../../_static/images/logo_binder.svg"
+                    alt="Interact on binder">Binder</button></a>
+        
+        
+        
+        <a class="colab-button" href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/linear_gaussian_ssm/kf_tracking.ipynb"><button type="button" class="btn btn-secondary topbarbtn"
+                title="Launch Colab" data-toggle="tooltip" data-placement="left"><img class="colab-button-logo"
+                    src="../../_static/images/logo_colab.png"
+                    alt="Interact on Colab">Colab</button></a>
+        
+        
     </div>
-    <nav id="bd-toc-nav" aria-label="Page">
-        <ul class="visible nav section-nav flex-column">
+</div>
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+        <div class="tocsection onthispage pt-5 pb-3">
+            <i class="fas fa-list"></i> Contents
+        </div>
+        <nav id="bd-toc-nav">
+            <ul class="nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#setup">
    Setup
@@ -417,70 +342,17 @@ title="Print to PDF"
  </li>
 </ul>
 
-    </nav>
-</div>
+        </nav>
+        
     </div>
-    <div class="article row">
-        <div class="col pl-md-3 pl-lg-5 content-container">
-            <!-- Table of contents that is only displayed when printing the page -->
-            <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Tracking an object using the Kalman filter</h1>
-                <!-- Table of contents -->
-                <div id="print-main-content">
-                    <div id="jb-print-toc">
-                        
-                        <div>
-                            <h2> Contents </h2>
-                        </div>
-                        <nav aria-label="Page">
-                            <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#setup">
-   Setup
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#create-the-model">
-   Create the model
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#sample-some-data-from-the-model">
-   Sample some data from the model
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#perform-online-filtering">
-   Perform online filtering
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#perform-offline-smoothing">
-   Perform offline smoothing
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#low-level-interface-to-the-underlying-inference-algorithms">
-   Low-level interface to the underlying inference algorithms
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#tracking-multiple-objects-in-parallel">
-   Tracking multiple objects in parallel
-  </a>
- </li>
-</ul>
-
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            <main id="main-content" role="main">
-                
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
               <div>
                 
   <section class="tex2jax_ignore mathjax_ignore" id="tracking-an-object-using-the-kalman-filter">
-<h1>Tracking an object using the Kalman filter<a class="headerlink" href="#tracking-an-object-using-the-kalman-filter" title="Permalink to this headline">#</a></h1>
+<h1>Tracking an object using the Kalman filter<a class="headerlink" href="#tracking-an-object-using-the-kalman-filter" title="Permalink to this heading">¶</a></h1>
 <p>Consider an object moving in <span class="math notranslate nohighlight">\(R^2\)</span>.
 We assume that we observe a noisy version of its location at each time step.
 We want to track the object and possibly forecast its future motion.
@@ -532,7 +404,7 @@ Thus the observation model becomes</p>
 We see that the observation matrix <span class="math notranslate nohighlight">\(H\)</span> simply ``extracts’’ the
 relevant parts  of the state vector.</p>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">#</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -555,33 +427,24 @@ relevant parts  of the state vector.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">jr</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span><span class="p">,</span> <span class="n">grad</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">plot_uncertainty_ellipses</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">ParamsLGSSM</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.plotting</span> <span class="kn">import</span> <span class="n">plot_uncertainty_ellipses</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">6</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span><span class="p">,</span> <span class="n">grad</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="ne">----&gt; </span><span class="mi">6</span> <span class="kn">from</span> <span class="nn">dynamax.plotting</span> <span class="kn">import</span> <span class="n">plot_uncertainty_ellipses</span>
-<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
-<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">ParamsLGSSM</span>
-
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;dynamax.plotting&#39;
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
 </div>
 </section>
 <section id="create-the-model">
-<h2>Create the model<a class="headerlink" href="#create-the-model" title="Permalink to this headline">#</a></h2>
+<h2>Create the model<a class="headerlink" href="#create-the-model" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">state_dim</span> <span class="o">=</span> <span class="mi">4</span>
@@ -617,7 +480,7 @@ relevant parts  of the state vector.</p>
 </div>
 </section>
 <section id="sample-some-data-from-the-model">
-<h2>Sample some data from the model<a class="headerlink" href="#sample-some-data-from-the-model" title="Permalink to this headline">#</a></h2>
+<h2>Sample some data from the model<a class="headerlink" href="#sample-some-data-from-the-model" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">15</span>
@@ -634,10 +497,10 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd660bbdd00&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7ffb30bcaac0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/308ad07e820e22155c3445642b0fcf1f80bbf271e51b005a6690e78bf9d65612.png" src="../../_images/308ad07e820e22155c3445642b0fcf1f80bbf271e51b005a6690e78bf9d65612.png" />
+<img alt="../../_images/f89e0b9d96932c3e1751d393f437e0faa1cf6822efaca2ebe885d7e3400190a0.png" src="../../_images/f89e0b9d96932c3e1751d393f437e0faa1cf6822efaca2ebe885d7e3400190a0.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -692,7 +555,7 @@ relevant parts  of the state vector.</p>
 </div>
 </section>
 <section id="perform-online-filtering">
-<h2>Perform online filtering<a class="headerlink" href="#perform-online-filtering" title="Permalink to this headline">#</a></h2>
+<h2>Perform online filtering<a class="headerlink" href="#perform-online-filtering" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
@@ -731,12 +594,12 @@ relevant parts  of the state vector.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/2a559cbe58023d6c9a6dcc924764f171560f0230fe941015d438ca95c9ab94e9.png" src="../../_images/2a559cbe58023d6c9a6dcc924764f171560f0230fe941015d438ca95c9ab94e9.png" />
+<img alt="../../_images/126379474d66b57b72dd0e18c2a740c69ffeb829ca5178e160b784a3432b5db9.png" src="../../_images/126379474d66b57b72dd0e18c2a740c69ffeb829ca5178e160b784a3432b5db9.png" />
 </div>
 </div>
 </section>
 <section id="perform-offline-smoothing">
-<h2>Perform offline smoothing<a class="headerlink" href="#perform-offline-smoothing" title="Permalink to this headline">#</a></h2>
+<h2>Perform offline smoothing<a class="headerlink" href="#perform-offline-smoothing" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
@@ -765,12 +628,12 @@ relevant parts  of the state vector.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;AxesSubplot: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/1b4a610f7cb7efb3316ccf4ca7849e848d08afc2f5d10d819dd302b880a644a9.png" src="../../_images/1b4a610f7cb7efb3316ccf4ca7849e848d08afc2f5d10d819dd302b880a644a9.png" />
+<img alt="../../_images/916f02c13cd835be0bcce6514fe7f6e0dc9f56da1e93e1d87e42b8cdf6f8be3e.png" src="../../_images/916f02c13cd835be0bcce6514fe7f6e0dc9f56da1e93e1d87e42b8cdf6f8be3e.png" />
 </div>
 </div>
 </section>
 <section id="low-level-interface-to-the-underlying-inference-algorithms">
-<h2>Low-level interface to the underlying inference algorithms<a class="headerlink" href="#low-level-interface-to-the-underlying-inference-algorithms" title="Permalink to this headline">#</a></h2>
+<h2>Low-level interface to the underlying inference algorithms<a class="headerlink" href="#low-level-interface-to-the-underlying-inference-algorithms" title="Permalink to this heading">¶</a></h2>
 <p>We can also call the inference code directly, without having to make an LG-SSM object.
 We just pass the model parameters directly to the function.</p>
 <div class="cell docutils container">
@@ -786,7 +649,7 @@ We just pass the model parameters directly to the function.</p>
 </div>
 </section>
 <section id="tracking-multiple-objects-in-parallel">
-<h2>Tracking multiple objects in parallel<a class="headerlink" href="#tracking-multiple-objects-in-parallel" title="Permalink to this headline">#</a></h2>
+<h2>Tracking multiple objects in parallel<a class="headerlink" href="#tracking-multiple-objects-in-parallel" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate 4 sample trajectories</span>
@@ -870,9 +733,9 @@ We just pass the model parameters directly to the function.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e5bdc7b09f90dc6988fc499e7682e328e3b65c037cd164d0a1216cfa9a15dbf2.png" src="../../_images/e5bdc7b09f90dc6988fc499e7682e328e3b65c037cd164d0a1216cfa9a15dbf2.png" />
-<img alt="../../_images/fcd4d9495d86b104d1ef375dba101d9dc5b1dcf230226bfb7fefa40fdc2279ee.png" src="../../_images/fcd4d9495d86b104d1ef375dba101d9dc5b1dcf230226bfb7fefa40fdc2279ee.png" />
-<img alt="../../_images/e261ec220237c0fd30eb9d0f0bc7022693c281b36ed979e29397aaf2b28ab5a2.png" src="../../_images/e261ec220237c0fd30eb9d0f0bc7022693c281b36ed979e29397aaf2b28ab5a2.png" />
+<img alt="../../_images/a7d9ae7f5b64c612bdbb027ed596bbc724560ca9928f8f46be9eee20b932a1bf.png" src="../../_images/a7d9ae7f5b64c612bdbb027ed596bbc724560ca9928f8f46be9eee20b932a1bf.png" />
+<img alt="../../_images/a3fb14b79affa375551379d1546783609078267abf499cf41efd4322cb53466e.png" src="../../_images/a3fb14b79affa375551379d1546783609078267abf499cf41efd4322cb53466e.png" />
+<img alt="../../_images/8a8ef703ab246ee3830a0d96a198df42e33cc917be3b871f0e841bcb87b7ed44.png" src="../../_images/8a8ef703ab246ee3830a0d96a198df42e33cc917be3b871f0e841bcb87b7ed44.png" />
 </div>
 </div>
 </section>
@@ -881,48 +744,36 @@ We just pass the model parameters directly to the function.</p>
 
               </div>
               
-            </main>
-            <footer class="footer-article noprint">
-                
-    <!-- Previous / next buttons -->
-<div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="../hmm/autoregressive_hmm.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Autoregressive (AR) HMM Demo</p>
         </div>
-    </a>
-    <a class='right-next' id="next-link" href="kf_linreg.html" title="next page">
-    <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Online linear regression using Kalman filtering</p>
-    </div>
-    <i class="fas fa-angle-right"></i>
-    </a>
-</div>
-            </footer>
-        </div>
-    </div>
-    <div class="footer-content row">
-        <footer class="col footer"><p>
-  
-    By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
-  
-      &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
-</p>
-        </footer>
     </div>
     
-</div>
+    
+    <div class='prev-next-bottom'>
+        
+    <a class='left-prev' id="prev-link" href="../hmm/autoregressive_hmm.html" title="previous page">Autoregressive (AR) HMM Demo</a>
+    <a class='right-next' id="next-link" href="kf_linreg.html" title="next page">Online linear regression using Kalman filtering</a>
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+        
+            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
 
 
       </div>
     </div>
-  
-  <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+    
+  <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
 
 
+    
   </body>
 </html>

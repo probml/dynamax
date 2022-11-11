@@ -1,0 +1,514 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dynamax.ssm &#8212; dynamax documentation</title>
+    
+  <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../../index.html">
+  
+  <img src="../../_static/logo.gif" class="logo" alt="logo">
+  
+  
+  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
+  
+</a>
+</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  HMMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/hmm/casino_hmm_inference.html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/hmm/casino_hmm_learning.html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/hmm/gaussian_hmm.html">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/linear_gaussian_ssm/kf_tracking.html">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/linear_gaussian_ssm/kf_linreg.html">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/linear_gaussian_ssm/lgssm_learning.html">
+   MAP parameter estimation for an LG-SSM using EM and SGD
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
+   Tracking a spiraling object using the extended / unscented Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
+   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">
+   Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html">
+   API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#state-space-model-base-class">
+   State Space Model (Base class)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#hidden-markov-model">
+   Hidden Markov Model
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#linear-gaussian-ssm">
+   Linear Gaussian SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#nonlinear-gaussian-gssm">
+   Nonlinear Gaussian GSSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html#generalized-gaussian-gssm">
+   Generalized Gaussian GSSM
+  </a>
+ </li>
+</ul>
+
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+    </div>
+    <div class="col pl-2 topbar-main">
+        
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        
+        <!-- Source interaction buttons -->
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <h1>Source code for dynamax.ssm</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">fastprogress.fastprogress</span> <span class="kn">import</span> <span class="n">progress_bar</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
+<span class="kn">import</span> <span class="nn">optax</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">lax</span><span class="p">,</span> <span class="n">vmap</span>
+<span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_map</span>
+
+<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">to_unconstrained</span><span class="p">,</span> <span class="n">from_unconstrained</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.optimize</span> <span class="kn">import</span> <span class="n">run_sgd</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">ensure_array_has_batch_dim</span>
+
+
+<div class="viewcode-block" id="SSM"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM">[docs]</a><span class="k">class</span> <span class="nc">SSM</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A base class for state space models. Such models consist of parameters, which</span>
+<span class="sd">    we may learn, as well as hyperparameters, which specify static properties of the</span>
+<span class="sd">    model. This base class allows parameters to be indicated a standardized way</span>
+<span class="sd">    so that they can easily be converted to/from unconstrained form. It also uses</span>
+<span class="sd">    these parameters to implement the tree_flatten and tree_unflatten methods necessary</span>
+<span class="sd">    to register a model as a JAX PyTree.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SSM.initial_distribution"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.initial_distribution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">initial_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return an initial distribution over latent states.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dist (tfd.Distribution): distribution over initial latent state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="SSM.transition_distribution"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.transition_distribution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">transition_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a distribution over next latent state given current state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state (PyTree): current latent state</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dist (tfd.Distribution): conditional distribution of next latent state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="SSM.emission_distribution"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.emission_distribution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">emission_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a distribution over emissions given current state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state (PyTree): current latent state.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dist (tfd.Distribution): conditional distribution of current emission.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a pytree matching the pytree of tuples specifying the shape(s)</span>
+<span class="sd">        of a single time step&#39;s emissions.</span>
+<span class="sd">        For example, a Gaussian HMM with D dimensional emissions would return (D,).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inputs_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a pytree matching the pytree of tuples specifying the shape(s)</span>
+<span class="sd">        of a single time step&#39;s inputs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="SSM.sample"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sample a sequence of latent states and emissions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: rng key</span>
+<span class="sd">            num_timesteps: length of sequence to generate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">inpt</span> <span class="o">=</span> <span class="n">args</span>
+            <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">prev_state</span><span class="p">,</span> <span class="n">inpt</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">)</span>
+            <span class="n">emission</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inpt</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">emission</span><span class="p">)</span>
+
+        <span class="c1"># Sample the initial state</span>
+        <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">initial_input</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">inputs</span><span class="p">)</span>
+        <span class="n">initial_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">initial_input</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key1</span><span class="p">)</span>
+        <span class="n">initial_emission</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">initial_input</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">)</span>
+
+        <span class="c1"># Sample the remaining emissions and states</span>
+        <span class="n">next_keys</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">next_inputs</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">inputs</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">next_states</span><span class="p">,</span> <span class="n">next_emissions</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="p">(</span><span class="n">next_keys</span><span class="p">,</span> <span class="n">next_inputs</span><span class="p">))</span>
+
+        <span class="c1"># Concatenate the initial state and emission with the following ones</span>
+        <span class="n">expand_and_cat</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x0</span><span class="p">,</span> <span class="n">x1T</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">x1T</span><span class="p">))</span>
+        <span class="n">states</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">expand_and_cat</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">next_states</span><span class="p">)</span>
+        <span class="n">emissions</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">expand_and_cat</span><span class="p">,</span> <span class="n">initial_emission</span><span class="p">,</span> <span class="n">next_emissions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">emissions</span></div>
+
+<div class="viewcode-block" id="SSM.log_prob"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute the log joint probability of the states and observations&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+            <span class="n">lp</span><span class="p">,</span> <span class="n">prev_state</span> <span class="o">=</span> <span class="n">carry</span>
+            <span class="n">state</span><span class="p">,</span> <span class="n">emission</span><span class="p">,</span> <span class="n">inpt</span> <span class="o">=</span> <span class="n">args</span>
+            <span class="n">lp</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">prev_state</span><span class="p">,</span> <span class="n">inpt</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+            <span class="n">lp</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inpt</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">emission</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">lp</span><span class="p">,</span> <span class="n">state</span><span class="p">),</span> <span class="kc">None</span>
+
+        <span class="c1"># Compute log prob of initial time step</span>
+        <span class="n">initial_state</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+        <span class="n">initial_emission</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">emissions</span><span class="p">)</span>
+        <span class="n">initial_input</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">inputs</span><span class="p">)</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">initial_input</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">initial_state</span><span class="p">)</span>
+        <span class="n">lp</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">initial_input</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">initial_emission</span><span class="p">)</span>
+
+        <span class="c1"># Scan over remaining time steps</span>
+        <span class="n">next_states</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">states</span><span class="p">)</span>
+        <span class="n">next_emissions</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">emissions</span><span class="p">)</span>
+        <span class="n">next_inputs</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">inputs</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">lp</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="p">(</span><span class="n">lp</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">),</span> <span class="p">(</span><span class="n">next_states</span><span class="p">,</span> <span class="n">next_emissions</span><span class="p">,</span> <span class="n">next_inputs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">lp</span></div>
+
+<div class="viewcode-block" id="SSM.log_prior"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.log_prior">[docs]</a>    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the log prior probability of any model parameters.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            lp (Scalar): log prior probability.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mf">0.0</span></div>
+
+<div class="viewcode-block" id="SSM.fit_em"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.fit_em">[docs]</a>    <span class="k">def</span> <span class="nf">fit_em</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).&quot;&quot;&quot;</span>
+        <span class="c1"># Make sure the emissions and inputs have batch dimensions</span>
+        <span class="n">batch_emissions</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">emissions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_shape</span><span class="p">)</span>
+        <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs_shape</span><span class="p">)</span>
+
+        <span class="nd">@jit</span>
+        <span class="k">def</span> <span class="nf">em_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
+            <span class="n">batch_stats</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">e_step</span><span class="p">,</span> <span class="n">params</span><span class="p">))(</span><span class="n">batch_emissions</span><span class="p">,</span> <span class="n">batch_inputs</span><span class="p">)</span>
+            <span class="n">lp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prior</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="n">lls</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">,</span> <span class="n">lp</span>
+
+        <span class="n">log_probs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+        <span class="n">m_step_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_m_step_state</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">progress_bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_iters</span><span class="p">))</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_iters</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">pbar</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">,</span> <span class="n">marginal_loglik</span> <span class="o">=</span> <span class="n">em_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">)</span>
+            <span class="n">log_probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">marginal_loglik</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">log_probs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SSM.fit_sgd"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.fit_sgd">[docs]</a>    <span class="k">def</span> <span class="nf">fit_sgd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">,</span>
+                <span class="n">props</span><span class="p">,</span>
+                <span class="n">emissions</span><span class="p">,</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">),</span>
+                <span class="n">batch_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">num_epochs</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+                <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;Compute parameter MLE/ MAP estimate using Stochastic gradient descent (SGD).</span>
+
+<span class="sd">        Fit this HMM by running SGD on the marginal log likelihood.</span>
+<span class="sd">        Note that batch_emissions is initially of shape (N,T)</span>
+<span class="sd">        where N is the number of independent sequences and</span>
+<span class="sd">        T is the length of a sequence. Then, a random susbet with shape (B, T)</span>
+<span class="sd">        of entire sequence, not time steps, is sampled at each step where B is</span>
+<span class="sd">        batch size.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_emissions: Independent sequences.</span>
+<span class="sd">            optmizer (optax.Optimizer): Optimizer.</span>
+<span class="sd">            batch_size (int): Number of sequences used at each update step.</span>
+<span class="sd">            num_epochs (int): Iterations made through entire dataset.</span>
+<span class="sd">            shuffle (bool): Indicates whether to shuffle minibatches.</span>
+<span class="sd">            key (jr.PRNGKey): RNG key to shuffle minibatches.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            losses: Output of loss_fn stored at each step.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Make sure the emissions and inputs have batch dimensions</span>
+        <span class="n">batch_emissions</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">emissions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_shape</span><span class="p">)</span>
+        <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs_shape</span><span class="p">)</span>
+
+        <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_loss_fn</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Default objective function.&quot;&quot;&quot;</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
+            <span class="n">minibatch_emissions</span><span class="p">,</span> <span class="n">minibatch_inputs</span> <span class="o">=</span> <span class="n">minibatch</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_emissions</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">minibatch_emissions</span><span class="p">)</span>
+            <span class="n">minibatch_lls</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">,</span> <span class="n">params</span><span class="p">))(</span><span class="n">minibatch_emissions</span><span class="p">,</span> <span class="n">minibatch_inputs</span><span class="p">)</span>
+            <span class="n">lp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prior</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="n">minibatch_lls</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">scale</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">lp</span> <span class="o">/</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="n">dataset</span> <span class="o">=</span> <span class="p">(</span><span class="n">batch_emissions</span><span class="p">,</span> <span class="n">batch_inputs</span><span class="p">)</span>
+        <span class="n">unc_params</span><span class="p">,</span> <span class="n">losses</span> <span class="o">=</span> <span class="n">run_sgd</span><span class="p">(</span><span class="n">_loss_fn</span><span class="p">,</span>
+                                     <span class="n">unc_params</span><span class="p">,</span>
+                                     <span class="n">dataset</span><span class="p">,</span>
+                                     <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+                                     <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+                                     <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">,</span>
+                                     <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
+                                     <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="n">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">losses</span></div></div>
+</pre></div>
+
+              </div>
+              
+        </div>
+    </div>
+    
+    
+    <div class='prev-next-bottom'>
+        
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+        
+            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    
+  </body>
+</html>

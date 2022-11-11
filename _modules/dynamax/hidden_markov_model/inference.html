@@ -1,0 +1,879 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dynamax.hidden_markov_model.inference &#8212; dynamax documentation</title>
+    
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../../../index.html">
+  
+  <img src="../../../_static/logo.gif" class="logo" alt="logo">
+  
+  
+  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
+  
+</a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  HMMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/casino_hmm_inference.html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/casino_hmm_learning.html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/gaussian_hmm.html">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/kf_tracking.html">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/kf_linreg.html">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_learning.html">
+   MAP parameter estimation for an LG-SSM using EM and SGD
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
+   Tracking a spiraling object using the extended / unscented Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
+   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">
+   Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html">
+   API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#state-space-model-base-class">
+   State Space Model (Base class)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#hidden-markov-model">
+   Hidden Markov Model
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#linear-gaussian-ssm">
+   Linear Gaussian SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#nonlinear-gaussian-gssm">
+   Nonlinear Gaussian GSSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#generalized-gaussian-gssm">
+   Generalized Gaussian GSSM
+  </a>
+ </li>
+</ul>
+
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+    </div>
+    <div class="col pl-2 topbar-main">
+        
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        
+        <!-- Source interaction buttons -->
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <h1>Source code for dynamax.hidden_markov_model.inference</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">lax</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jit</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Array</span>
+
+
+<span class="n">_get_params</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">x</span>
+
+<span class="k">def</span> <span class="nf">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">transition_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">transition_fn</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">transition_matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span> <span class="c1"># (T,K,K)</span>
+            <span class="k">return</span> <span class="n">transition_matrix</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">transition_matrix</span>
+
+<span class="k">class</span> <span class="nc">HMMPosteriorFiltered</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple wrapper for properties of an HMM filtering posterior.</span>
+
+<span class="sd">    marginal_loglik: log sum_{hidden(1:t)} prob(hidden(1:t), obs(1:t) | params)</span>
+<span class="sd">    filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))</span>
+<span class="sd">    predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">marginal_loglik</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">filtered_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span>
+    <span class="n">predicted_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">HMMPosterior</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple wrapper for properties of an HMM posterior distribution.</span>
+
+<span class="sd">    marginal_loglik: log sum_{hidden(1:t)} prob(hidden(1:t), obs(1:t) | params)</span>
+<span class="sd">    filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))</span>
+<span class="sd">    predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead</span>
+<span class="sd">    smoothed_probs(t,k) = p(hidden(t)=k | obs(1:T))</span>
+<span class="sd">    initial_probs[i] = p(hidden(0)=i | obs(1:T))</span>
+
+<span class="sd">    transition probabilities may be 2d or 3d with either</span>
+<span class="sd">    trans_probs[i,j] = \sum_t p(hidden(t)=i, hidden(t+1)=j | obs(1:T))</span>
+<span class="sd">    trans_probs[t,i,j] = p(hidden(t)=i, hidden(t+1)=j | obs(1:T))</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">marginal_loglik</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">filtered_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span>
+    <span class="n">predicted_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span>
+    <span class="n">smoothed_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span>
+    <span class="n">initial_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]</span>
+    <span class="n">trans_probs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+                                <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">_normalize</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-15</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Normalizes the values within the axis in a way that they sum up to 1.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        u: Input array to normalize.</span>
+<span class="sd">        axis: Axis over which to normalize.</span>
+<span class="sd">        eps: Minimum value threshold for numerical stability.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple of the normalized values, and the normalizing denominator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">u</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">u</span> <span class="o">&lt;</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">u</span><span class="p">))</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">u</span> <span class="o">/</span> <span class="n">c</span><span class="p">,</span> <span class="n">c</span>
+
+
+<span class="c1"># Helper functions for the two key filtering steps</span>
+<span class="k">def</span> <span class="nf">_condition_on</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">ll</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Condition on new emissions, given in the form of log likelihoods</span>
+<span class="sd">    for each discrete state, while avoiding numerical underflow.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        probs(k): prior for state k</span>
+<span class="sd">        ll(k): log likelihood for state k</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        probs(k): posterior for state k</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ll_max</span> <span class="o">=</span> <span class="n">ll</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">new_probs</span> <span class="o">=</span> <span class="n">probs</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">ll</span> <span class="o">-</span> <span class="n">ll_max</span><span class="p">)</span>
+    <span class="n">new_probs</span><span class="p">,</span> <span class="n">norm</span> <span class="o">=</span> <span class="n">_normalize</span><span class="p">(</span><span class="n">new_probs</span><span class="p">)</span>
+    <span class="n">log_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span> <span class="o">+</span> <span class="n">ll_max</span>
+    <span class="k">return</span> <span class="n">new_probs</span><span class="p">,</span> <span class="n">log_norm</span>
+
+
+<span class="k">def</span> <span class="nf">_predict</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">A</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">probs</span>
+
+
+<div class="viewcode-block" id="hmm_filter"><a class="viewcode-back" href="../../../api.html#dynamax.hidden_markov_model.hmm_filter">[docs]</a><span class="nd">@partial</span><span class="p">(</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;transition_fn&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">hmm_filter</span><span class="p">(</span>
+    <span class="n">initial_distribution</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+                             <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]],</span>
+    <span class="n">log_likelihoods</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Int</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HMMPosteriorFiltered</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Forwards filtering.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        initial_distribution(k): prob(hid(1)=k)</span>
+<span class="sd">        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)</span>
+<span class="sd">        log_likelihoods(t,k): p(obs(t) | hid(t)=k)</span>
+<span class="sd">        transition_fn(t): returns K*K transition matrix for step t (default None)</span>
+
+<span class="sd">    Returns: HMMPosterior object (smoothed_probs=None)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">log_normalizer</span><span class="p">,</span> <span class="n">predicted_probs</span> <span class="o">=</span> <span class="n">carry</span>
+
+        <span class="n">A</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+        <span class="n">filtered_probs</span><span class="p">,</span> <span class="n">log_norm</span> <span class="o">=</span> <span class="n">_condition_on</span><span class="p">(</span><span class="n">predicted_probs</span><span class="p">,</span> <span class="n">ll</span><span class="p">)</span>
+        <span class="n">log_normalizer</span> <span class="o">+=</span> <span class="n">log_norm</span>
+        <span class="n">predicted_probs_next</span> <span class="o">=</span> <span class="n">_predict</span><span class="p">(</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">log_normalizer</span><span class="p">,</span> <span class="n">predicted_probs_next</span><span class="p">),</span> <span class="p">(</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">predicted_probs</span><span class="p">)</span>
+
+    <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">initial_distribution</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">log_normalizer</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="p">(</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">predicted_probs</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">))</span>
+
+    <span class="n">post</span> <span class="o">=</span> <span class="n">HMMPosteriorFiltered</span><span class="p">(</span><span class="n">marginal_loglik</span><span class="o">=</span><span class="n">log_normalizer</span><span class="p">,</span>
+                                <span class="n">filtered_probs</span><span class="o">=</span><span class="n">filtered_probs</span><span class="p">,</span>
+                                <span class="n">predicted_probs</span><span class="o">=</span><span class="n">predicted_probs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">post</span></div>
+
+
+
+<span class="nd">@partial</span><span class="p">(</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;transition_fn&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">hmm_backward_filter</span><span class="p">(</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+                             <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]],</span>
+    <span class="n">log_likelihoods</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Int</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span><span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;_summary_</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hmm_params (_type_): _description_</span>
+<span class="sd">        log_likelihoods (_type_): _description_</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        log_marginal_lik</span>
+<span class="sd">        backwards_probs(t,k)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">log_normalizer</span><span class="p">,</span> <span class="n">backward_pred_probs</span> <span class="o">=</span> <span class="n">carry</span>
+
+        <span class="n">A</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+        <span class="c1"># Condition on emission at time t, being careful not to overflow.</span>
+        <span class="n">backward_filt_probs</span><span class="p">,</span> <span class="n">log_norm</span> <span class="o">=</span> <span class="n">_condition_on</span><span class="p">(</span><span class="n">backward_pred_probs</span><span class="p">,</span> <span class="n">ll</span><span class="p">)</span>
+        <span class="c1"># Update the log normalizer.</span>
+        <span class="n">log_normalizer</span> <span class="o">+=</span> <span class="n">log_norm</span>
+        <span class="c1"># Predict the next state (going backward in time).</span>
+        <span class="n">next_backward_pred_probs</span> <span class="o">=</span> <span class="n">_predict</span><span class="p">(</span><span class="n">backward_filt_probs</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">log_normalizer</span><span class="p">,</span> <span class="n">next_backward_pred_probs</span><span class="p">),</span> <span class="n">backward_pred_probs</span>
+
+    <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_states</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">log_normalizer</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">rev_backward_pred_probs</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">backward_pred_probs</span> <span class="o">=</span> <span class="n">rev_backward_pred_probs</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">log_normalizer</span><span class="p">,</span> <span class="n">backward_pred_probs</span>
+
+
+<div class="viewcode-block" id="hmm_two_filter_smoother"><a class="viewcode-back" href="../../../api.html#dynamax.hidden_markov_model.hmm_two_filter_smoother">[docs]</a><span class="nd">@partial</span><span class="p">(</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;transition_fn&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">hmm_two_filter_smoother</span><span class="p">(</span>
+    <span class="n">initial_distribution</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+                             <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]],</span>
+    <span class="n">log_likelihoods</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Int</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span><span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">compute_trans_probs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HMMPosterior</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Computed the smoothed state probabilities using the two-filter</span>
+<span class="sd">    smoother, a.k.a. the forward-backward algorithm.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        initial_distribution (_type_): _description_</span>
+<span class="sd">        transition_matrix (_type_): _description_</span>
+<span class="sd">        log_likelihoods (_type_): _description_</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        HMMPosterior object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">post</span> <span class="o">=</span> <span class="n">hmm_filter</span><span class="p">(</span><span class="n">initial_distribution</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="p">,</span> <span class="n">log_likelihoods</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">)</span>
+    <span class="n">ll</span> <span class="o">=</span> <span class="n">post</span><span class="o">.</span><span class="n">marginal_loglik</span>
+    <span class="n">filtered_probs</span><span class="p">,</span> <span class="n">predicted_probs</span> <span class="o">=</span> <span class="n">post</span><span class="o">.</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">post</span><span class="o">.</span><span class="n">predicted_probs</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">backward_pred_probs</span> <span class="o">=</span> <span class="n">hmm_backward_filter</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">log_likelihoods</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">)</span>
+
+    <span class="c1"># Compute smoothed probabilities</span>
+    <span class="n">smoothed_probs</span> <span class="o">=</span> <span class="n">filtered_probs</span> <span class="o">*</span> <span class="n">backward_pred_probs</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">smoothed_probs</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">smoothed_probs</span> <span class="o">/=</span> <span class="n">norm</span>
+
+    <span class="n">posterior</span> <span class="o">=</span> <span class="n">HMMPosterior</span><span class="p">(</span>
+        <span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span>
+        <span class="n">filtered_probs</span><span class="o">=</span><span class="n">filtered_probs</span><span class="p">,</span>
+        <span class="n">predicted_probs</span><span class="o">=</span><span class="n">predicted_probs</span><span class="p">,</span>
+        <span class="n">smoothed_probs</span><span class="o">=</span><span class="n">smoothed_probs</span><span class="p">,</span>
+        <span class="n">initial_probs</span><span class="o">=</span><span class="n">smoothed_probs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Compute the transition probabilities if specified</span>
+    <span class="k">if</span> <span class="n">compute_trans_probs</span><span class="p">:</span>
+        <span class="n">trans_probs</span> <span class="o">=</span> <span class="n">compute_transition_probs</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">)</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">trans_probs</span><span class="o">=</span><span class="n">trans_probs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">posterior</span></div>
+
+
+<div class="viewcode-block" id="hmm_smoother"><a class="viewcode-back" href="../../../api.html#dynamax.hidden_markov_model.hmm_smoother">[docs]</a><span class="nd">@partial</span><span class="p">(</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;transition_fn&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">hmm_smoother</span><span class="p">(</span>
+    <span class="n">initial_distribution</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+                             <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]],</span>
+    <span class="n">log_likelihoods</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Int</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span><span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">compute_trans_probs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HMMPosterior</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Computed the smoothed state probabilities using a general</span>
+<span class="sd">    Bayesian smoother.</span>
+
+<span class="sd">    Note: This is the discrete SSM analog of the RTS smoother for</span>
+<span class="sd">    linear Gaussian SSMs.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        initial_distribution (_type_): _description_</span>
+<span class="sd">        transition_matrix (_type_): _description_</span>
+<span class="sd">        log_likelihoods (_type_): _description_</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        HMMPosterior object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># Run the HMM filter</span>
+    <span class="n">post</span> <span class="o">=</span> <span class="n">hmm_filter</span><span class="p">(</span><span class="n">initial_distribution</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="p">,</span> <span class="n">log_likelihoods</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">)</span>
+    <span class="n">ll</span> <span class="o">=</span> <span class="n">post</span><span class="o">.</span><span class="n">marginal_loglik</span>
+    <span class="n">filtered_probs</span><span class="p">,</span> <span class="n">predicted_probs</span> <span class="o">=</span> <span class="n">post</span><span class="o">.</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">post</span><span class="o">.</span><span class="n">predicted_probs</span>
+
+    <span class="c1"># Run the smoother backward in time</span>
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c1"># Unpack the inputs</span>
+        <span class="n">smoothed_probs_next</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">filtered_probs</span><span class="p">,</span> <span class="n">predicted_probs_next</span> <span class="o">=</span> <span class="n">args</span>
+
+        <span class="n">A</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+        <span class="c1"># Fold in the next state (Eq. 8.2 of Saarka, 2013)</span>
+        <span class="n">relative_probs_next</span> <span class="o">=</span> <span class="n">smoothed_probs_next</span> <span class="o">/</span> <span class="n">predicted_probs_next</span>
+        <span class="n">smoothed_probs</span> <span class="o">=</span> <span class="n">filtered_probs</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span> <span class="o">@</span> <span class="n">relative_probs_next</span><span class="p">)</span>
+        <span class="n">smoothed_probs</span> <span class="o">/=</span> <span class="n">smoothed_probs</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">smoothed_probs</span><span class="p">,</span> <span class="n">smoothed_probs</span>
+
+    <span class="c1"># Run the HMM smoother</span>
+    <span class="n">carry</span> <span class="o">=</span> <span class="n">filtered_probs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">filtered_probs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">predicted_probs</span><span class="p">[</span><span class="mi">1</span><span class="p">:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">rev_smoothed_probs</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+    <span class="c1"># Reverse the arrays and return</span>
+    <span class="n">smoothed_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">row_stack</span><span class="p">([</span><span class="n">rev_smoothed_probs</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_probs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+
+    <span class="c1"># Package into a posterior</span>
+    <span class="n">posterior</span> <span class="o">=</span> <span class="n">HMMPosterior</span><span class="p">(</span>
+        <span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span>
+        <span class="n">filtered_probs</span><span class="o">=</span><span class="n">filtered_probs</span><span class="p">,</span>
+        <span class="n">predicted_probs</span><span class="o">=</span><span class="n">predicted_probs</span><span class="p">,</span>
+        <span class="n">smoothed_probs</span><span class="o">=</span><span class="n">smoothed_probs</span><span class="p">,</span>
+        <span class="n">initial_probs</span><span class="o">=</span><span class="n">smoothed_probs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Compute the transition probabilities if specified</span>
+    <span class="k">if</span> <span class="n">compute_trans_probs</span><span class="p">:</span>
+        <span class="n">trans_probs</span> <span class="o">=</span> <span class="n">compute_transition_probs</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">)</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">trans_probs</span><span class="o">=</span><span class="n">trans_probs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">posterior</span></div>
+
+<div class="viewcode-block" id="hmm_fixed_lag_smoother"><a class="viewcode-back" href="../../../api.html#dynamax.hidden_markov_model.hmm_fixed_lag_smoother">[docs]</a><span class="nd">@partial</span><span class="p">(</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;transition_fn&quot;</span><span class="p">,</span> <span class="s2">&quot;window_size&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">hmm_fixed_lag_smoother</span><span class="p">(</span>
+    <span class="n">initial_distribution</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+                             <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]],</span>
+    <span class="n">log_likelihoods</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">],</span>
+    <span class="n">window_size</span><span class="p">:</span> <span class="n">Int</span><span class="p">,</span>
+    <span class="n">transition_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Int</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span><span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HMMPosterior</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Compute the smoothed state probabilities using the fixed-lag smoother.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        initial_distribution(k): prob(hid(1)=k)</span>
+<span class="sd">        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)</span>
+<span class="sd">        log_likelihoods(t,k): p(obs(t) | hid(t)=k)</span>
+<span class="sd">        window_size(int): size of smoothed window</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        HMMPosterior object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="c1"># Unpack the inputs</span>
+        <span class="n">log_normalizers</span><span class="p">,</span> <span class="n">filtered_probs</span><span class="p">,</span> <span class="n">predicted_probs</span><span class="p">,</span> <span class="n">bmatrices</span> <span class="o">=</span> <span class="n">carry</span>
+
+        <span class="c1"># Get parameters for time t</span>
+        <span class="n">A_fwd</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">A_bwd</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+        <span class="c1"># Shift window forward by 1</span>
+        <span class="n">log_normalizers</span> <span class="o">=</span> <span class="n">log_normalizers</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">predicted_probs</span> <span class="o">=</span> <span class="n">predicted_probs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">filtered_probs</span> <span class="o">=</span> <span class="n">filtered_probs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">bmatrices</span> <span class="o">=</span> <span class="n">bmatrices</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="c1"># Perform forward operation</span>
+        <span class="n">predicted_probs_next</span> <span class="o">=</span> <span class="n">_predict</span><span class="p">(</span><span class="n">filtered_probs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">A_fwd</span><span class="p">)</span>
+        <span class="n">filtered_probs_next</span><span class="p">,</span> <span class="n">log_norm</span> <span class="o">=</span> <span class="n">_condition_on</span><span class="p">(</span><span class="n">predicted_probs_next</span><span class="p">,</span> <span class="n">ll</span><span class="p">)</span>
+        <span class="n">log_normalizers</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">log_normalizers</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">log_norm</span><span class="p">])))</span>
+        <span class="n">filtered_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">filtered_probs_next</span><span class="p">])))</span>
+        <span class="n">predicted_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">predicted_probs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">predicted_probs_next</span><span class="p">])))</span>
+
+        <span class="c1"># Smooth inside the window in parallel</span>
+        <span class="k">def</span> <span class="nf">update_bmatrix</span><span class="p">(</span><span class="n">bmatrix</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">bmatrix</span> <span class="o">@</span> <span class="n">A_bwd</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">ll</span><span class="p">)</span>
+
+        <span class="n">bmatrices</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">update_bmatrix</span><span class="p">)(</span><span class="n">bmatrices</span><span class="p">)</span>
+        <span class="n">bmatrices</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">bmatrices</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_states</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]))</span>
+
+        <span class="c1"># Compute beta values by row-summing bmatrices</span>
+        <span class="k">def</span> <span class="nf">compute_beta</span><span class="p">(</span><span class="n">bmatrix</span><span class="p">):</span>
+            <span class="n">beta</span> <span class="o">=</span> <span class="n">bmatrix</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">beta</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">beta</span> <span class="o">/</span> <span class="n">beta</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">beta</span><span class="p">)</span>
+
+        <span class="n">betas</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">compute_beta</span><span class="p">)(</span><span class="n">bmatrices</span><span class="p">)</span>
+
+        <span class="c1"># Compute posterior values</span>
+        <span class="k">def</span> <span class="nf">compute_posterior</span><span class="p">(</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
+            <span class="n">smoothed_probs</span> <span class="o">=</span> <span class="n">filtered_probs</span> <span class="o">*</span> <span class="n">beta</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">smoothed_probs</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">smoothed_probs</span> <span class="o">/</span> <span class="n">smoothed_probs</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">smoothed_probs</span><span class="p">)</span>
+
+        <span class="n">smoothed_probs</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">compute_posterior</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">betas</span><span class="p">)</span>
+
+        <span class="n">post</span> <span class="o">=</span> <span class="n">HMMPosterior</span><span class="p">(</span>
+            <span class="n">marginal_loglik</span><span class="o">=</span><span class="n">log_normalizers</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+            <span class="n">filtered_probs</span><span class="o">=</span><span class="n">filtered_probs</span><span class="p">,</span>
+            <span class="n">predicted_probs</span><span class="o">=</span><span class="n">predicted_probs</span><span class="p">,</span>
+            <span class="n">smoothed_probs</span><span class="o">=</span><span class="n">smoothed_probs</span><span class="p">,</span>
+            <span class="n">initial_probs</span><span class="o">=</span><span class="n">smoothed_probs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">log_normalizers</span><span class="p">,</span> <span class="n">filtered_probs</span><span class="p">,</span> <span class="n">predicted_probs</span><span class="p">,</span> <span class="n">bmatrices</span><span class="p">),</span> <span class="n">post</span>
+
+    <span class="c1"># Filter on first observation</span>
+    <span class="n">ll</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">filtered_probs</span><span class="p">,</span> <span class="n">log_norm</span> <span class="o">=</span> <span class="n">_condition_on</span><span class="p">(</span><span class="n">initial_distribution</span><span class="p">,</span> <span class="n">ll</span><span class="p">)</span>
+
+    <span class="c1"># Reshape for lax.scan</span>
+    <span class="n">filtered_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="p">((</span><span class="n">window_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span>
+    <span class="n">predicted_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">initial_distribution</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="p">((</span><span class="n">window_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span>
+    <span class="n">log_normalizers</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">log_norm</span><span class="p">]),</span> <span class="p">(</span><span class="n">window_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">bmatrices</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_states</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="p">((</span><span class="n">window_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span>
+
+    <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_normalizers</span><span class="p">,</span> <span class="n">filtered_probs</span><span class="p">,</span> <span class="n">predicted_probs</span><span class="p">,</span> <span class="n">bmatrices</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">posts</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">))</span>
+
+    <span class="c1"># Include initial values</span>
+    <span class="n">marginal_loglik</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">log_normalizers</span><span class="o">.</span><span class="n">sum</span><span class="p">()]),</span> <span class="n">posts</span><span class="o">.</span><span class="n">marginal_loglik</span><span class="p">))</span>
+    <span class="n">predicted_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">predicted_probs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">posts</span><span class="o">.</span><span class="n">predicted_probs</span><span class="p">))</span>
+    <span class="n">smoothed_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">posts</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">))</span>
+    <span class="n">filtered_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">posts</span><span class="o">.</span><span class="n">filtered_probs</span><span class="p">))</span>
+
+    <span class="n">posts</span> <span class="o">=</span> <span class="n">HMMPosterior</span><span class="p">(</span>
+        <span class="n">marginal_loglik</span><span class="o">=</span><span class="n">marginal_loglik</span><span class="p">,</span>
+        <span class="n">filtered_probs</span><span class="o">=</span><span class="n">filtered_probs</span><span class="p">,</span>
+        <span class="n">predicted_probs</span><span class="o">=</span><span class="n">predicted_probs</span><span class="p">,</span>
+        <span class="n">smoothed_probs</span><span class="o">=</span><span class="n">smoothed_probs</span><span class="p">,</span>
+        <span class="n">initial_probs</span><span class="o">=</span><span class="n">smoothed_probs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">posts</span></div>
+
+
+<div class="viewcode-block" id="hmm_posterior_mode"><a class="viewcode-back" href="../../../api.html#dynamax.hidden_markov_model.hmm_posterior_mode">[docs]</a><span class="nd">@partial</span><span class="p">(</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;transition_fn&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">hmm_posterior_mode</span><span class="p">(</span>
+    <span class="n">initial_distribution</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+                             <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]],</span>
+    <span class="n">log_likelihoods</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Int</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span><span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Compute the most likely state sequence. This is called the Viterbi algorithm.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        _description_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># Run the backward pass</span>
+    <span class="k">def</span> <span class="nf">_backward_pass</span><span class="p">(</span><span class="n">best_next_score</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">+</span> <span class="n">best_next_score</span> <span class="o">+</span> <span class="n">log_likelihoods</span><span class="p">[</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">best_next_state</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">best_next_score</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">best_next_score</span><span class="p">,</span> <span class="n">best_next_state</span>
+
+    <span class="n">num_states</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">best_second_score</span><span class="p">,</span> <span class="n">rev_best_next_states</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">_backward_pass</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_states</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">best_next_states</span> <span class="o">=</span> <span class="n">rev_best_next_states</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># Run the forward pass</span>
+    <span class="k">def</span> <span class="nf">_forward_pass</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">best_next_state</span><span class="p">):</span>
+        <span class="n">next_state</span> <span class="o">=</span> <span class="n">best_next_state</span><span class="p">[</span><span class="n">state</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">next_state</span>
+
+    <span class="n">first_state</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">initial_distribution</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_likelihoods</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">best_second_score</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">states</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_forward_pass</span><span class="p">,</span> <span class="n">first_state</span><span class="p">,</span> <span class="n">best_next_states</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">first_state</span><span class="p">]),</span> <span class="n">states</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="hmm_posterior_sample"><a class="viewcode-back" href="../../../api.html#dynamax.hidden_markov_model.hmm_posterior_sample">[docs]</a><span class="nd">@partial</span><span class="p">(</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;transition_fn&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">hmm_posterior_sample</span><span class="p">(</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">initial_distribution</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+                             <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]],</span>
+    <span class="n">log_likelihoods</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">],</span>
+    <span class="n">transition_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Int</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Sample a latent sequence from the posterior.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        initial_distribution(k): prob(hid(1)=k)</span>
+<span class="sd">        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)</span>
+<span class="sd">        log_likelihoods(t,k): p(obs(t) | hid(t)=k)</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        log_prob</span>
+<span class="sd">        sampled_states(1:T)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># Run the HMM filter</span>
+    <span class="n">post</span> <span class="o">=</span> <span class="n">hmm_filter</span><span class="p">(</span><span class="n">initial_distribution</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="p">,</span> <span class="n">log_likelihoods</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">)</span>
+    <span class="n">log_normalizer</span><span class="p">,</span> <span class="n">filtered_probs</span> <span class="o">=</span> <span class="n">post</span><span class="o">.</span><span class="n">marginal_loglik</span><span class="p">,</span> <span class="n">post</span><span class="o">.</span><span class="n">filtered_probs</span>
+
+    <span class="c1"># Run the sampler backward in time</span>
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">next_state</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">filtered_probs</span> <span class="o">=</span> <span class="n">args</span>
+
+        <span class="n">A</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+        <span class="c1"># Fold in the next state and renormalize</span>
+        <span class="n">smoothed_probs</span> <span class="o">=</span> <span class="n">filtered_probs</span> <span class="o">*</span> <span class="n">A</span><span class="p">[:,</span> <span class="n">next_state</span><span class="p">]</span>
+        <span class="n">smoothed_probs</span> <span class="o">/=</span> <span class="n">smoothed_probs</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="c1"># Sample current state</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">num_states</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">smoothed_probs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">state</span>
+
+    <span class="c1"># Run the HMM smoother</span>
+    <span class="n">rngs</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
+    <span class="n">last_state</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">rngs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">a</span><span class="o">=</span><span class="n">num_states</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">filtered_probs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">rngs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_probs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">rev_states</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+    <span class="c1"># Reverse the arrays and return</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">rev_states</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">last_state</span><span class="p">])])</span>
+    <span class="k">return</span> <span class="n">log_normalizer</span><span class="p">,</span> <span class="n">states</span></div>
+
+<span class="k">def</span> <span class="nf">_compute_sum_transition_probs</span><span class="p">(</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">],</span>
+    <span class="n">hmm_posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Compute the transition probabilities from the HMM posterior messages.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        transition_matrix (_type_): _description_</span>
+<span class="sd">        hmm_posterior (_type_): _description_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">filtered_probs</span><span class="p">,</span> <span class="n">smoothed_probs_next</span><span class="p">,</span> <span class="n">predicted_probs_next</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">args</span>
+
+        <span class="c1"># Get parameters for time t</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+        <span class="c1"># Compute smoothed transition probabilities (Eq. 8.4 of Saarka, 2013)</span>
+        <span class="n">relative_probs_next</span> <span class="o">=</span> <span class="n">smoothed_probs_next</span> <span class="o">/</span> <span class="n">predicted_probs_next</span>
+        <span class="n">smoothed_trans_probs</span> <span class="o">=</span> <span class="n">filtered_probs</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="n">relative_probs_next</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">smoothed_trans_probs</span> <span class="o">/=</span> <span class="n">smoothed_trans_probs</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">carry</span> <span class="o">+</span> <span class="n">smoothed_trans_probs</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="c1"># Initialize the recursion</span>
+    <span class="n">num_states</span> <span class="o">=</span> <span class="n">transition_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hmm_posterior</span><span class="o">.</span><span class="n">filtered_probs</span><span class="p">)</span>
+    <span class="n">sum_transition_probs</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">_step</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_states</span><span class="p">)),</span>
+        <span class="p">(</span>
+            <span class="n">hmm_posterior</span><span class="o">.</span><span class="n">filtered_probs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">hmm_posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+            <span class="n">hmm_posterior</span><span class="o">.</span><span class="n">predicted_probs</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">sum_transition_probs</span>
+
+
+<span class="k">def</span> <span class="nf">_compute_all_transition_probs</span><span class="p">(</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+    <span class="n">hmm_posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">,</span>
+    <span class="n">transition_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Int</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Compute the transition probabilities from the HMM posterior messages.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        transition_matrix (_type_): _description_</span>
+<span class="sd">        hmm_posterior (_type_): _description_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filtered_probs</span> <span class="o">=</span> <span class="n">hmm_posterior</span><span class="o">.</span><span class="n">filtered_probs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">smoothed_probs_next</span> <span class="o">=</span> <span class="n">hmm_posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">predicted_probs_next</span> <span class="o">=</span> <span class="n">hmm_posterior</span><span class="o">.</span><span class="n">predicted_probs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">relative_probs_next</span> <span class="o">=</span> <span class="n">smoothed_probs_next</span> <span class="o">/</span> <span class="n">predicted_probs_next</span>
+
+    <span class="k">def</span> <span class="nf">_compute_probs</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;i,ij,j-&gt;ij&#39;</span><span class="p">,</span> <span class="n">filtered_probs</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">A</span><span class="p">,</span> <span class="n">relative_probs_next</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+
+    <span class="n">transition_probs</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">_compute_probs</span><span class="p">)(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">filtered_probs</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">transition_probs</span>
+
+
+<span class="c1"># TODO: Consider alternative annotation for return type:</span>
+<span class="c1">#  Float[Array, &quot;*num_timesteps num_states num_states&quot;] I think this would allow multiple prepended dims.</span>
+<span class="c1">#  Float[Array, &quot;#num_timesteps num_states num_states&quot;] this might accept (1, sd, sd) but not (sd, sd).</span>
+<span class="k">def</span> <span class="nf">compute_transition_probs</span><span class="p">(</span>
+    <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+                             <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]],</span>
+    <span class="n">hmm_posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">,</span>
+    <span class="n">transition_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Int</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states num_states&quot;</span><span class="p">],</span>
+               <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;Computer the posterior marginal distributions over (hid(t), hid(t+1)),</span>
+<span class="sd">    ..math:</span>
+<span class="sd">        q_{tij} = Pr(z_t=i, z_{t+1}=j | obs_{1:T})  for t=1,...,T-1</span>
+<span class="sd">    If `reduce_sum` is True, return :math:`\sum_t q_{tij}`.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        transition_matrix (array): the transition matrix</span>
+<span class="sd">        hmm_posterior (HMMPosterior): Output of `hmm_smoother` or `hmm_two_filter_smoother`</span>
+<span class="sd">        reduce_sum (bool, optional): Whether or not to return the</span>
+<span class="sd">            sum of transition probabilities over time. Defaults to True, which is</span>
+<span class="sd">            more memory efficient.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        array of transition probabilities. The shape is (num_states, num_states) if</span>
+<span class="sd">            reduce_sum==True, otherwise (num_timesteps, num_states, num_states).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reduce_sum</span> <span class="o">=</span> <span class="n">transition_matrix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">transition_matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">reduce_sum</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_compute_sum_transition_probs</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">hmm_posterior</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_compute_all_transition_probs</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">hmm_posterior</span><span class="p">,</span> <span class="n">transition_fn</span><span class="o">=</span><span class="n">transition_fn</span><span class="p">)</span>
+</pre></div>
+
+              </div>
+              
+        </div>
+    </div>
+    
+    
+    <div class='prev-next-bottom'>
+        
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+        
+            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    
+  </body>
+</html>

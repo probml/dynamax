@@ -136,10 +136,8 @@
     "from jaxtyping import Float, Array\n",
     "from typing import Callable, NamedTuple\n",
     "\n",
-    "\n",
-    "from dynamax.nonlinear_gaussian_ssm.extended_kalman_filter import extended_kalman_smoother\n",
-    "from dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter import unscented_kalman_smoother, UKFHyperParams\n",
-    "from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import ParamsNLGSSM"
+    "from dynamax.nonlinear_gaussian_ssm import ParamsNLGSSM, UKFHyperParams\n",
+    "from dynamax.nonlinear_gaussian_ssm import extended_kalman_smoother, unscented_kalman_smoother"
    ]
   },
   {

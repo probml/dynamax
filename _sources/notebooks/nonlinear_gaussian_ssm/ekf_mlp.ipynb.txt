@@ -66,11 +66,16 @@
     "except ModuleNotFoundError:\n",
     "    print('installing dynamax')\n",
     "    %pip install -qq git+https://github.com/probml/dynamax.git\n",
-    "    import dynamax\n",
-    "\n",
-    "\n",
-    "from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import ParamsNLGSSM\n",
-    "from dynamax.nonlinear_gaussian_ssm.extended_kalman_filter import extended_kalman_filter"
+    "    import dynamax"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from dynamax.nonlinear_gaussian_ssm import ParamsNLGSSM, extended_kalman_filter"
    ]
   },
   {

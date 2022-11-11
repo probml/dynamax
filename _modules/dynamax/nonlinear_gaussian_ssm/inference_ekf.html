@@ -1,0 +1,569 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dynamax.nonlinear_gaussian_ssm.inference_ekf &#8212; dynamax documentation</title>
+    
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../../../index.html">
+  
+  <img src="../../../_static/logo.gif" class="logo" alt="logo">
+  
+  
+  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
+  
+</a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  HMMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/casino_hmm_inference.html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/casino_hmm_learning.html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/gaussian_hmm.html">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/kf_tracking.html">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/kf_linreg.html">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_learning.html">
+   MAP parameter estimation for an LG-SSM using EM and SGD
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
+   Tracking a spiraling object using the extended / unscented Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
+   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">
+   Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html">
+   API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#state-space-model-base-class">
+   State Space Model (Base class)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#hidden-markov-model">
+   Hidden Markov Model
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#linear-gaussian-ssm">
+   Linear Gaussian SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#nonlinear-gaussian-gssm">
+   Nonlinear Gaussian GSSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#generalized-gaussian-gssm">
+   Generalized Gaussian GSSM
+  </a>
+ </li>
+</ul>
+
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+    </div>
+    <div class="col pl-2 topbar-main">
+        
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        
+        <!-- Source interaction buttons -->
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <h1>Source code for dynamax.nonlinear_gaussian_ssm.inference_ekf</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">lax</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jacfwd</span>
+<span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormalFullCovariance</span> <span class="k">as</span> <span class="n">MVN</span>
+<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.models</span> <span class="kn">import</span> <span class="n">PosteriorNLGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorNLGSSMSmoothed</span><span class="p">,</span> <span class="n">ParamsNLGSSM</span>
+
+
+<span class="c1"># Helper functions</span>
+<span class="n">_get_params</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">x</span>
+<span class="n">_process_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">,</span> <span class="n">u</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">if</span> <span class="n">u</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">f</span>
+<span class="n">_process_input</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">y</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x</span>
+
+
+<span class="k">def</span> <span class="nf">_predict</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Predict next mean and covariance using first-order additive EKF</span>
+
+<span class="sd">        p(x_{t+1}) = \int N(x_t | m, S) N(x_{t+1} | f(x_t, u), Q)</span>
+<span class="sd">                    = N(x_{t+1} | f(m, u), F(m, u) S F(m, u)^T + Q)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        m (D_hid,): prior mean.</span>
+<span class="sd">        P (D_hid,D_hid): prior covariance.</span>
+<span class="sd">        f (Callable): dynamics function.</span>
+<span class="sd">        F (Callable): Jacobian of dynamics function.</span>
+<span class="sd">        Q (D_hid,D_hid): dynamics covariance matrix.</span>
+<span class="sd">        u (D_in,): inputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        mu_pred (D_hid,): predicted mean.</span>
+<span class="sd">        Sigma_pred (D_hid,D_hid): predicted covariance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">F_x</span> <span class="o">=</span> <span class="n">F</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">mu_pred</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">Sigma_pred</span> <span class="o">=</span> <span class="n">F_x</span> <span class="o">@</span> <span class="n">P</span> <span class="o">@</span> <span class="n">F_x</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">Q</span>
+    <span class="k">return</span> <span class="n">mu_pred</span><span class="p">,</span> <span class="n">Sigma_pred</span>
+
+
+<span class="k">def</span> <span class="nf">_condition_on</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">num_iter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Condition a Gaussian potential on a new observation</span>
+<span class="sd">       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})</span>
+<span class="sd">         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)</span>
+<span class="sd">         = N(x_t | m, S) N(y_t | h_t(x_t, u_t), R_t)</span>
+<span class="sd">         = N(x_t | mm, SS)</span>
+<span class="sd">     where</span>
+<span class="sd">         mm = m + K*(y - yhat) = mu_cond</span>
+<span class="sd">         yhat = h(m, u)</span>
+<span class="sd">         S = R + H(m,u) * P * H(m,u)&#39;</span>
+<span class="sd">         K = P * H(m, u)&#39; * S^{-1}</span>
+<span class="sd">         SS = P - K * S * K&#39; = Sigma_cond</span>
+<span class="sd">     **Note! This can be done more efficiently when R is diagonal.**</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">         m (D_hid,): prior mean.</span>
+<span class="sd">         P (D_hid,D_hid): prior covariance.</span>
+<span class="sd">         h (Callable): emission function.</span>
+<span class="sd">         H (Callable): Jacobian of emission function.</span>
+<span class="sd">         R (D_obs,D_obs): emission covariance matrix.</span>
+<span class="sd">         u (D_in,): inputs.</span>
+<span class="sd">         y (D_obs,): observation.</span>
+<span class="sd">         num_iter (int): number of re-linearizations around posterior for update step.</span>
+
+<span class="sd">     Returns:</span>
+<span class="sd">         mu_cond (D_hid,): filtered mean.</span>
+<span class="sd">         Sigma_cond (D_hid,D_hid): filtered covariance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+        <span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">H_x</span> <span class="o">=</span> <span class="n">H</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">R</span> <span class="o">+</span> <span class="n">H_x</span> <span class="o">@</span> <span class="n">prior_cov</span> <span class="o">@</span> <span class="n">H_x</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">H_x</span> <span class="o">@</span> <span class="n">prior_cov</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">posterior_cov</span> <span class="o">=</span> <span class="n">prior_cov</span> <span class="o">-</span> <span class="n">K</span> <span class="o">@</span> <span class="n">S</span> <span class="o">@</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">posterior_mean</span> <span class="o">=</span> <span class="n">prior_mean</span> <span class="o">+</span> <span class="n">K</span> <span class="o">@</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">h</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">,</span> <span class="n">u</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">posterior_mean</span><span class="p">,</span> <span class="n">posterior_cov</span><span class="p">),</span> <span class="kc">None</span>
+
+    <span class="c1"># Iterate re-linearization over posterior mean and covariance</span>
+    <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">mu_cond</span><span class="p">,</span> <span class="n">Sigma_cond</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_iter</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">mu_cond</span><span class="p">,</span> <span class="n">Sigma_cond</span>
+
+
+<div class="viewcode-block" id="extended_kalman_filter"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.extended_kalman_filter">[docs]</a><span class="k">def</span> <span class="nf">extended_kalman_filter</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
+    <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
+    <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorNLGSSMFiltered</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Run an (iterated) extended Kalman filter to produce the</span>
+<span class="sd">    marginal likelihood and filtered state estimates.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        params: an NLGSSMParams instance (or object with the same fields)</span>
+<span class="sd">        emissions (T,D_hid): array of observations.</span>
+<span class="sd">        num_iter (int): number of linearizations around posterior for update step.</span>
+<span class="sd">        inputs (T,D_in): array of inputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        filtered_posterior: GSSMPosterior instance containing,</span>
+<span class="sd">            marginal_log_lik</span>
+<span class="sd">            filtered_means (T, D_hid)</span>
+<span class="sd">            filtered_covariances (T, D_hid, D_hid)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+    <span class="c1"># Dynamics and emission functions and their Jacobians</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamics_function</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">emission_function</span>
+    <span class="n">F</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="n">jacfwd</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">jacfwd</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="p">(</span><span class="n">_process_fn</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">H</span><span class="p">))</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">_process_input</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">ll</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span> <span class="o">=</span> <span class="n">carry</span>
+
+        <span class="c1"># Get parameters and inputs for time index t</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emission_covariance</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">emissions</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+        <span class="c1"># Update the log likelihood</span>
+        <span class="n">H_x</span> <span class="o">=</span> <span class="n">H</span><span class="p">(</span><span class="n">pred_mean</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+        <span class="n">ll</span> <span class="o">+=</span> <span class="n">MVN</span><span class="p">(</span><span class="n">h</span><span class="p">(</span><span class="n">pred_mean</span><span class="p">,</span> <span class="n">u</span><span class="p">),</span> <span class="n">H_x</span> <span class="o">@</span> <span class="n">pred_cov</span> <span class="o">@</span> <span class="n">H_x</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">R</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+
+        <span class="c1"># Condition on this emission</span>
+        <span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span> <span class="o">=</span> <span class="n">_condition_on</span><span class="p">(</span><span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">num_iter</span><span class="p">)</span>
+
+        <span class="c1"># Predict the next state</span>
+        <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span> <span class="o">=</span> <span class="n">_predict</span><span class="p">(</span><span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span><span class="p">),</span> <span class="p">(</span><span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span><span class="p">)</span>
+
+    <span class="c1"># Run the extended Kalman filter</span>
+    <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">initial_mean</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">initial_covariance</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="p">(</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covs</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">PosteriorNLGSSMFiltered</span><span class="p">(</span><span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span> <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="iterated_extended_kalman_filter"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.iterated_extended_kalman_filter">[docs]</a><span class="k">def</span> <span class="nf">iterated_extended_kalman_filter</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
+    <span class="n">emissions</span><span class="p">:</span>  <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
+    <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorNLGSSMFiltered</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Run an iterated extended Kalman filter (IEKF).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        params: an NLGSSMParams instance (or object with the same fields)</span>
+<span class="sd">        emissions (T,D_hid): array of observations.</span>
+<span class="sd">        num_iter (int): number of linearizations around smoothed posterior.</span>
+<span class="sd">        inputs (T,D_in): array of inputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        filtered_posterior: GSSMPosterior instance containing,</span>
+<span class="sd">            marginal_log_lik</span>
+<span class="sd">            filtered_means (T, D_hid)</span>
+<span class="sd">            filtered_covariances (T, D_hid, D_hid)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">extended_kalman_filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_iter</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">filtered_posterior</span></div>
+
+
+<div class="viewcode-block" id="extended_kalman_smoother"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.extended_kalman_smoother">[docs]</a><span class="k">def</span> <span class="nf">extended_kalman_smoother</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
+    <span class="n">emissions</span><span class="p">:</span>  <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
+    <span class="n">filtered_posterior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorNLGSSMFiltered</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorNLGSSMSmoothed</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Run an extended Kalman (RTS) smoother.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        params: an NLGSSMParams instance (or object with the same fields)</span>
+
+<span class="sd">        emissions (T,D_hid): array of observations.</span>
+
+<span class="sd">        filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.</span>
+<span class="sd">        If None, the smoother computes the filtered posterior directly.</span>
+
+<span class="sd">        inputs (T,D_in): array of inputs.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        nlgssm_posterior: GSSMPosterior instance containing properties of</span>
+<span class="sd">        filtered and smoothed posterior distributions.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+
+    <span class="c1"># Get filtered posterior</span>
+    <span class="k">if</span> <span class="n">filtered_posterior</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">extended_kalman_filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+    <span class="n">ll</span><span class="p">,</span> <span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covs</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">filtered_posterior</span>
+
+    <span class="c1"># Dynamics and emission functions and their Jacobians</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamics_function</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="n">jacfwd</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="p">(</span><span class="n">_process_fn</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">F</span><span class="p">))</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">_process_input</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c1"># Unpack the inputs</span>
+        <span class="n">smoothed_mean_next</span><span class="p">,</span> <span class="n">smoothed_cov_next</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span> <span class="o">=</span> <span class="n">args</span>
+
+        <span class="c1"># Get parameters and inputs for time index t</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emission_covariance</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="n">F_x</span> <span class="o">=</span> <span class="n">F</span><span class="p">(</span><span class="n">filtered_mean</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+
+        <span class="c1"># Prediction step</span>
+        <span class="n">m_pred</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">filtered_mean</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+        <span class="n">S_pred</span> <span class="o">=</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">F_x</span> <span class="o">@</span> <span class="n">filtered_cov</span> <span class="o">@</span> <span class="n">F_x</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">S_pred</span><span class="p">,</span> <span class="n">F_x</span> <span class="o">@</span> <span class="n">filtered_cov</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="c1"># Compute smoothed mean and covariance</span>
+        <span class="n">smoothed_mean</span> <span class="o">=</span> <span class="n">filtered_mean</span> <span class="o">+</span> <span class="n">G</span> <span class="o">@</span> <span class="p">(</span><span class="n">smoothed_mean_next</span> <span class="o">-</span> <span class="n">m_pred</span><span class="p">)</span>
+        <span class="n">smoothed_cov</span> <span class="o">=</span> <span class="n">filtered_cov</span> <span class="o">+</span> <span class="n">G</span> <span class="o">@</span> <span class="p">(</span><span class="n">smoothed_cov_next</span> <span class="o">-</span> <span class="n">S_pred</span><span class="p">)</span> <span class="o">@</span> <span class="n">G</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">smoothed_mean</span><span class="p">,</span> <span class="n">smoothed_cov</span><span class="p">),</span> <span class="p">(</span><span class="n">smoothed_mean</span><span class="p">,</span> <span class="n">smoothed_cov</span><span class="p">)</span>
+
+    <span class="c1"># Run the extended Kalman smoother</span>
+    <span class="n">init_carry</span> <span class="o">=</span> <span class="p">(</span><span class="n">filtered_means</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_covs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">filtered_means</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_covs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">smoothed_means</span><span class="p">,</span> <span class="n">smoothed_covs</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">init_carry</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+    <span class="c1"># Reverse the arrays and return</span>
+    <span class="n">smoothed_means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">row_stack</span><span class="p">((</span><span class="n">smoothed_means</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_means</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]))</span>
+    <span class="n">smoothed_covs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">row_stack</span><span class="p">((</span><span class="n">smoothed_covs</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_covs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">PosteriorNLGSSMSmoothed</span><span class="p">(</span>
+        <span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span>
+        <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span>
+        <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">,</span>
+        <span class="n">smoothed_means</span><span class="o">=</span><span class="n">smoothed_means</span><span class="p">,</span>
+        <span class="n">smoothed_covariances</span><span class="o">=</span><span class="n">smoothed_covs</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="iterated_extended_kalman_smoother"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.iterated_extended_kalman_smoother">[docs]</a><span class="k">def</span> <span class="nf">iterated_extended_kalman_smoother</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
+    <span class="n">emissions</span><span class="p">:</span>  <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
+    <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorNLGSSMSmoothed</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Run an iterated extended Kalman smoother (IEKS).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        params: an NLGSSMParams instance (or object with the same fields)</span>
+<span class="sd">        emissions (T,D_hid): array of observations.</span>
+<span class="sd">        num_iter (int): number of re-linearizations around smoothed posterior.</span>
+<span class="sd">        inputs (T,D_in): array of inputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        nlgssm_posterior: GSSMPosterior instance containing properties of</span>
+<span class="sd">            filtered and smoothed posterior distributions.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+        <span class="c1"># Relinearize around smoothed posterior from previous iteration</span>
+        <span class="n">smoothed_prior</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">smoothed_posterior</span> <span class="o">=</span> <span class="n">extended_kalman_smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">smoothed_prior</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">smoothed_posterior</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="n">smoothed_posterior</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_iter</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">smoothed_posterior</span></div>
+</pre></div>
+
+              </div>
+              
+        </div>
+    </div>
+    
+    
+    <div class='prev-next-bottom'>
+        
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+        
+            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    
+  </body>
+</html>
