@@ -26,19 +26,27 @@ or sequential Monte Carlo (SMC)).
 Installation and Testing
 ------------------------
 
-To install locally:
+To install the latest releast of dynamax from PyPi:
+
+.. code-block:: console
+
+   pip install dynamax                 # Install dynamax and core dependencies, or
+   pip install dynamax[notebooks]      # Install with dep's for demo notebooks
+
+
+To install the latest development branch:
+
+.. code-block:: console
+
+   pip install git+https://github.com/probml/dynamax.git
+
+Finally, if you're a developer, you can install dynamax along with the test and documentation dependencies with:
 
 .. code-block:: console
 
    git clone git@github.com:probml/dynamax.git
    cd dynamax
-   pip install -e .
-
-To install in Colab:
-
-.. code-block:: pycon
-
-   %pip install git+https://github.com/probml/dynamax.git
+   pip install -e '.[dev]'
 
 
 To run the tests:
@@ -122,7 +130,7 @@ a runnable version of this code.)
    import jax.numpy as jnp
    import jax.random as jr
    import matplotlib.pyplot as plt
-   from dynamax.hidden_markov_model.models import GaussianHMM
+   from dynamax.hidden_markov_model import GaussianHMM
 
    key1, key2, key3 = jr.split(jr.PRNGKey(0), 3)
    num_states = 3
@@ -205,19 +213,19 @@ API documentation
 Related Libraries
 ==================
 
-- distrax_hmm_: JAX functions for HMM inference (replaced by dynamax)
-- filterpy_: Numpy library for (extended) Kalman filtering
-- hmmlearn_: Numpy / C++ library for HMMs
-- linderman-ssm-jax_:  JAX library for SSMs (replaced by dynamax)
-- linderman-ssm-numpy_:  Numpy / numba / autograd library for SSMs  (replaced by dynamax)
-- mattjj-pyhsmm_:  Numpy / Cython library library for HMMs
-- mattjj-pylds_:  Numpy / Cython library library for linear dynamical systems
-- pgm-jax_: JAX library for factor graphs
-- JSL_: JAX library for SSMs (replaced by dynamax)
-- pykalman_: Numpy library for (extended) Kalman filtering
-- sarkka-parallel-non-linear-gaussian-smoothers_: JAX code for nonlinear smoothers using parallel scan
-- tfp_hmm_: TF2 code for HMM inference
-- tfp_lgssm_: TF2 code for Kalman filtering
+* distrax_hmm_: JAX functions for HMM inference (replaced by dynamax)
+* filterpy_: Numpy library for (extended) Kalman filtering
+* hmmlearn_: Numpy / C++ library for HMMs
+* linderman-ssm-jax_:  JAX library for SSMs (replaced by dynamax)
+* linderman-ssm-numpy_:  Numpy / numba / autograd library for SSMs  (replaced by dynamax)
+* mattjj-pyhsmm_:  Numpy / Cython library library for HMMs
+* mattjj-pylds_:  Numpy / Cython library library for linear dynamical systems
+* pgm-jax_: JAX library for factor graphs
+* JSL_: JAX library for SSMs (replaced by dynamax)
+* pykalman_: Numpy library for (extended) Kalman filtering
+* sarkka-parallel-non-linear-gaussian-smoothers_: JAX code for nonlinear smoothers using parallel scan
+* tfp_hmm_: TF2 code for HMM inference
+* tfp_lgssm_: TF2 code for Kalman filtering
 
 
 .. _Blackjax: https://github.com/blackjax-devs/blackjax
@@ -243,6 +251,5 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 

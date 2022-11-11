@@ -24,18 +24,6 @@ author = 'Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Li
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
-# extensions = [
-#     "sphinx.ext.autodoc",
-#     "sphinx_autodoc_typehints",
-#     "sphinx.ext.autosummary",
-#     "sphinx.ext.mathjax",
-#     "myst_nb",
-#     # "myst_parser"
-# ]
-
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",

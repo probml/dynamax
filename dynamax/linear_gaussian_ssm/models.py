@@ -43,13 +43,19 @@ class LinearGaussianSSM(SSM):
     The parameters of the model are stored in a :class:`ParamsLGSSM`.
     You can create the parameters manually, or by calling :meth:`initialize`.
 
+    :param state_dim: _description_
+    :param emission_dim: _description_
+    :param input_dim: _description_. Defaults to 0.
+    :param has_dynamics_bias: _description_. Defaults to True.
+    :param has_emissions_bias: _description_. Defaults to True.
+
     """
     def __init__(self,
-                 state_dim,
-                 emission_dim,
-                 input_dim=0,
-                 has_dynamics_bias=True,
-                 has_emissions_bias=True):
+                 state_dim: int,
+                 emission_dim: int,
+                 input_dim: int=0,
+                 has_dynamics_bias: bool=True,
+                 has_emissions_bias: bool=True):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
         self.input_dim = input_dim
