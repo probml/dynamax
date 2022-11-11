@@ -1,16 +1,16 @@
 from fastprogress.fastprogress import progress_bar
 from functools import partial
-import jax.random as jr
 from jax import jit
-from jax import numpy as jnp
+import jax.random as jr
+import jax.numpy as jnp
 from jax.tree_util import tree_map
 from dynamax.distributions import MatrixNormalInverseWishart as MNIW
 from dynamax.distributions import NormalInverseWishart as NIW
 from dynamax.distributions import mniw_posterior_update, niw_posterior_update
-from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMMoment, lgssm_posterior_sample
+from dynamax.linear_gaussian_ssm.inference import  lgssm_posterior_sample
+from dynamax.linear_gaussian_ssm.inference import  ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
-from dynamax.utils import pytree_stack
-
+from dynamax.utils.utils import pytree_stack
 
 
 class LinearGaussianConjugateSSM(LinearGaussianSSM):
@@ -69,20 +69,20 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         Returns:
             lp (Scalar): log prior probability.
         """
-        lp = self.initial_prior.log_prob((params['initial']['cov'], params['initial']['mean']))
+        lp = self.initial_prior.log_prob((params.initial.cov, params.initial.mean))
 
         # dynamics
-        dynamics_bias = params['dynamics']['bias'] if self.has_dynamics_bias else jnp.zeros((self.state_dim, 0))
-        dynamics_matrix = jnp.column_stack((params['dynamics']['weights'],
-                                            params['dynamics']['input_weights'],
+        dynamics_bias = params.dynamics.bias if self.has_dynamics_bias else jnp.zeros((self.state_dim, 0))
+        dynamics_matrix = jnp.column_stack((params.dynamics.weights,
+                                            params.dynamics.input_weights,
                                             dynamics_bias))
-        lp += self.dynamics_prior.log_prob((params['dynamics']['cov'], dynamics_matrix))
+        lp += self.dynamics_prior.log_prob((params.dynamics.cov, dynamics_matrix))
 
-        emission_bias = params['emissions']['bias'] if self.has_emissions_bias else jnp.zeros((self.emission_dim, 0))
-        emission_matrix = jnp.column_stack((params['emissions']['weights'],
-                                            params['emissions']['input_weights'],
+        emission_bias = params.emissions.bias if self.has_emissions_bias else jnp.zeros((self.emission_dim, 0))
+        emission_matrix = jnp.column_stack((params.emissions.weights,
+                                            params.emissions.input_weights,
                                             emission_bias))
-        lp += self.emission_prior.log_prob((params['emissions']['cov'], emission_matrix))
+        lp += self.emission_prior.log_prob((params.emissions.cov, emission_matrix))
         return lp
 
     def initialize_m_step_state(self, params, props):
@@ -109,10 +109,10 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
             else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
 
-        params = dict(
-            initial=dict(mean=m, cov=S),
-            dynamics=dict(weights=F, bias=b, input_weights=B, cov=Q),
-            emissions=dict(weights=H, bias=d, input_weights=D, cov=R)
+        params = ParamsLGSSM(
+            initial=ParamsLGSSMInitial(mean=m, cov=S),
+            dynamics=ParamsLGSSMDynamics(weights=F, bias=b, input_weights=B, cov=Q),
+            emissions=ParamsLGSSMEmissions(weights=H, bias=d, input_weights=D, cov=R)
         )
         return params, m_step_state
 
@@ -155,8 +155,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             return init_stats, dynamics_stats, emission_stats
 
         def lgssm_params_sample(rng, stats):
-            """Sample parameters of the model.
-            """
+            """Sample parameters of the model given sufficient statistics from observed states and emissions."""
             init_stats, dynamics_stats, emission_stats = stats
             rngs = iter(jr.split(rng, 3))
 
@@ -178,16 +177,12 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             D, d = (HD[:, self.state_dim:-1], HD[:, -1]) if self.has_emissions_bias \
                 else (HD[:, self.state_dim:], jnp.zeros(self.emission_dim))
 
-            return ParamsLGSSMMoment(initial_mean=m,
-                                     initial_covariance=S,
-                                     dynamics_weights=F,
-                                     dynamics_input_weights=B,
-                                     dynamics_bias=b,
-                                     dynamics_covariance=Q,
-                                     emission_weights=H,
-                                     emission_input_weights=D,
-                                     emission_bias=d,
-                                     emission_covariance=R)
+            params = ParamsLGSSM(
+                initial=ParamsLGSSMInitial(mean=m, cov=S),
+                dynamics=ParamsLGSSMDynamics(weights=F, bias=b, input_weights=B, cov=Q),
+                emissions=ParamsLGSSMEmissions(weights=H, bias=d, input_weights=D, cov=R)
+            )
+            return params
 
         @jit
         def one_sample(_params, rng):
@@ -205,4 +200,5 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         for _ in progress_bar(range(sample_size)):
             sample_of_params.append(current_params)
             current_params = one_sample(current_params, next(keys))
+
         return pytree_stack(sample_of_params)

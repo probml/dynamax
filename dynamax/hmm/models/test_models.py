@@ -4,9 +4,10 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
 import dynamax.hmm.models as models
-from dynamax.utils import ensure_array_has_batch_dim, monotonically_increasing
+from dynamax.utils.utils import monotonically_increasing
 
-NUM_TIMESTEPS = 100
+
+NUM_TIMESTEPS = 50
 
 CONFIGS = [
     (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
@@ -42,10 +43,12 @@ def test_sample_and_fit(cls, kwargs, inputs):
 def test_categorical_hmm_viterbi():
     # From http://en.wikipedia.org/wiki/Viterbi_algorithm:
     hmm = models.CategoricalHMM(num_states=2, emission_dim=1, num_classes=3)
-    params, props = hmm.initialize(jr.PRNGKey(0))
-    params['initial']['probs'] = jnp.array([0.6, 0.4])
-    params['transitions']['transition_matrix'] = jnp.array([[0.7, 0.3], [0.4, 0.6]])
-    params['emissions']['probs'] = jnp.array([[0.1, 0.4, 0.5], [0.6, 0.3, 0.1]]).reshape(2, 1, 3)
+    params, props = hmm.initialize(
+        jr.PRNGKey(0),
+        initial_probs=jnp.array([0.6, 0.4]),
+        transition_matrix=jnp.array([[0.7, 0.3], [0.4, 0.6]]),
+        emission_probs=jnp.array([[0.1, 0.4, 0.5], [0.6, 0.3, 0.1]]).reshape(2, 1, 3))
+
     emissions = jnp.arange(3).reshape(3, 1)
     state_sequence = hmm.most_likely_states(params, emissions)
     assert jnp.allclose(jnp.squeeze(state_sequence), jnp.array([1, 0, 0]))
@@ -55,15 +58,15 @@ def test_gmm_hmm_vs_gmm_diag_hmm(key=jr.PRNGKey(0), num_states=4, num_components
     key1, key2, key3 = jr.split(key, 3)
     diag_hmm = models.DiagonalGaussianMixtureHMM(num_states, num_components, emission_dim)
     diag_params, _ = diag_hmm.initialize(key1)
-    full_hmm = models.GaussianMixtureHMM(num_states, num_components, emission_dim)
-    full_params, _ = full_hmm.initialize(key2)
 
-    # Copy over a few params
-    full_params['initial']['probs'] = diag_params['initial']['probs']
-    full_params['transitions']['transition_matrix'] = diag_params['transitions']['transition_matrix']
-    full_params['emissions']['weights'] = diag_params['emissions']['weights']
-    full_params['emissions']['means'] = diag_params['emissions']['means']
-    full_params['emissions']['covs'] = vmap(lambda ss: vmap(lambda s: jnp.diag(s**2))(ss))(diag_params['emissions']['scale_diags'])
+    full_hmm = models.GaussianMixtureHMM(num_states, num_components, emission_dim)
+    emission_covariances = vmap(lambda ss: vmap(lambda s: jnp.diag(s**2))(ss))(diag_params.emissions.scale_diags)
+    full_params, _ = full_hmm.initialize(key2,
+        initial_probs=diag_params.initial.probs,
+        transition_matrix=diag_params.transitions.transition_matrix,
+        emission_weights=diag_params.emissions.weights,
+        emission_means=diag_params.emissions.means,
+        emission_covariances=emission_covariances)
 
     states_diag, emissions_diag = diag_hmm.sample(diag_params, key3, NUM_TIMESTEPS)
     states_full, emissions_full = full_hmm.sample(full_params, key3, NUM_TIMESTEPS)
@@ -117,7 +120,7 @@ def test_sample_and_fit_arhmm():
 #         """Generates an iterable over the given array, with option to reshuffle.
 
 #         Args:
-#             dataset (chex.Array or Dataset): Any object implementing __len__ and __getitem__
+#             dataset: Any object implementing __len__ and __getitem__
 #             batch_size (int): Number of samples to load per batch
 #             shuffle (bool): If True, reshuffle data at every epoch
 #             drop_last (bool): If true, drop last incomplete batch if dataset size is

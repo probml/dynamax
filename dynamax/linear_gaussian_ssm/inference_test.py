@@ -1,11 +1,19 @@
-from jax import random as jr
-from jax import numpy as jnp
 from jax import vmap
+from jax import random as jr
+import jax.numpy as jnp
 from functools import partial
 
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 
+from dynamax.utils.utils import has_tpu
+
+if has_tpu():
+    def allclose(x, y):
+        return jnp.allclose(x, y, atol=1e-1)
+else:
+    def allclose(x,y):
+        return jnp.allclose(x, y, atol=1e-1)
 
 def lgssm_dynamax_to_tfp(num_timesteps, params):
     """Create a Tensorflow Probability `LinearGaussianStateSpaceModel` object
@@ -15,15 +23,15 @@ def lgssm_dynamax_to_tfp(num_timesteps, params):
         num_timesteps: int, the number of timesteps.
         lgssm: LinearGaussianSSM or LGSSMParams object.
     """
-    dynamics_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params['dynamics']['cov'])
-    emission_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params['emissions']['cov'])
-    initial_dist = tfd.MultivariateNormalFullCovariance(params['initial']['mean'], params['initial']['cov'])
+    dynamics_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params.dynamics.cov)
+    emission_noise_dist = tfd.MultivariateNormalFullCovariance(covariance_matrix=params.emissions.cov)
+    initial_dist = tfd.MultivariateNormalFullCovariance(params.initial.mean, params.initial.cov)
 
     tfp_lgssm = tfd.LinearGaussianStateSpaceModel(
         num_timesteps,
-        params['dynamics']['weights'],
+        params.dynamics.weights,
         dynamics_noise_dist,
-        params['emissions']['weights'],
+        params.emissions.weights,
         emission_noise_dist,
         initial_dist,
     )
@@ -51,14 +59,14 @@ def test_kalman(num_timesteps=5, seed=0):
     R = jnp.eye(emission_dim) * 1.0
 
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
-    params, _ = lgssm.initialize(init_key)
+    params, _ = lgssm.initialize(key,
+                                 initial_mean=mu0,
+                                 initial_covariance=Sigma0,
+                                 dynamics_weights=F,
+                                 dynamics_covariance=Q,
+                                 emission_weights=H,
+                                 emission_covariance=R)
 
-    params['initial']['mean'] = mu0
-    params['initial']['cov'] = Sigma0
-    params['dynamics']['weights'] = F
-    params['dynamics']['cov'] = Q
-    params['emissions']['weights'] = H
-    params['emissions']['cov'] = R
 
     # Sample data and compute posterior
     _, emissions = lgssm.sample(params, sample_key, num_timesteps)
@@ -74,11 +82,11 @@ def test_kalman(num_timesteps=5, seed=0):
     tfp_lls, tfp_filtered_means, tfp_filtered_covs, *_ = tfp_lgssm.forward_filter(emissions)
     tfp_smoothed_means, tfp_smoothed_covs = tfp_lgssm.posterior_marginals(emissions)
 
-    assert jnp.allclose(ssm_posterior.filtered_means, tfp_filtered_means, rtol=1e-2)
-    assert jnp.allclose(ssm_posterior.filtered_covariances, tfp_filtered_covs, rtol=1e-2)
-    assert jnp.allclose(ssm_posterior.smoothed_means, tfp_smoothed_means, rtol=1e-2)
-    assert jnp.allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs, rtol=1e-2)
-    assert jnp.allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
+    assert allclose(ssm_posterior.filtered_means, tfp_filtered_means)
+    assert allclose(ssm_posterior.filtered_covariances, tfp_filtered_covs)
+    assert allclose(ssm_posterior.smoothed_means, tfp_smoothed_means)
+    assert allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs)
+    assert allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
 
 
 def test_posterior_sampler():
@@ -97,14 +105,13 @@ def test_posterior_sampler():
     R = jnp.eye(emission_dim) * 5.**2
 
     lgssm = LinearGaussianSSM(state_dim, emission_dim)
-    params, _ = lgssm.initialize(key)
-
-    params['initial']['mean'] = mu0
-    params['initial']['cov'] = Sigma0
-    params['dynamics']['weights'] = F
-    params['dynamics']['cov'] = Q
-    params['emissions']['weights'] = H
-    params['emissions']['cov'] = R
+    params, _ = lgssm.initialize(key,
+                                 initial_mean=mu0,
+                                 initial_covariance=Sigma0,
+                                 dynamics_weights=F,
+                                 dynamics_covariance=Q,
+                                 emission_weights=H,
+                                 emission_covariance=R)
 
     # Generate true observation
     sample_key, key = jr.split(key)
@@ -122,5 +129,5 @@ def test_posterior_sampler():
     print(samples.shape) # (N,T,1)
     print(tfp_samples.shape) # (N,T,1)
 
-    assert jnp.allclose(jnp.mean(samples), jnp.mean(tfp_samples), atol=1e-1)
-    assert jnp.allclose(jnp.std(samples), jnp.std(tfp_samples), atol=1e-1)
+    assert allclose(jnp.mean(samples), jnp.mean(tfp_samples))
+    assert allclose(jnp.std(samples), jnp.std(tfp_samples))

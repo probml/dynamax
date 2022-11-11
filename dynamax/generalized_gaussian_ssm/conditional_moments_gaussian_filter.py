@@ -1,17 +1,10 @@
-from typing import Callable, Tuple
 from itertools import product
-from dataclasses import dataclass
-
 from numpy.polynomial.hermite_e import hermegauss
-from jax import jacfwd
-from jax import vmap
-from jax import numpy as jnp
-from jax import lax
+from jax import jacfwd, vmap, lax
+import jax.numpy as jnp
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-import chex
-
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
+from jaxtyping import Array, Float
+from typing import NamedTuple, Optional, Union, Callable
 
 from dynamax.generalized_gaussian_ssm.generalized_gaussian_ssm import ParamsGGSSM,  PosteriorGGSSMFiltered, PosteriorGGSSMSmoothed
 
@@ -24,19 +17,11 @@ _jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
 
 
 """
-Parameter Data Classes
+Parameter structures are represented as NamedTuples.
+(NamedTuples do not easily support inheritance, so we define
+the CMGFIntegrals "meta-type" below.)
 """
-@chex.dataclass
-class CMGFIntegrals:
-    """
-    Lightweight container for CMGF Gaussian integrals
-    """
-    gaussian_expectation: Callable
-    gaussian_cross_covariance: Callable
-
-
-@chex.dataclass
-class EKFIntegrals(CMGFIntegrals):
+class EKFIntegrals(NamedTuple):
     """
     Lightweight container for EKF Gaussian integrals.
     """
@@ -44,40 +29,25 @@ class EKFIntegrals(CMGFIntegrals):
     gaussian_cross_covariance: Callable = lambda f, g, m, P: _jacfwd_2d(f, m) @ P @ _jacfwd_2d(g, m).T
 
 
-@dataclass
-class SigmaPointIntegrals(CMGFIntegrals):
+class UKFIntegrals(NamedTuple):
     """
-    Lightweight container for sigma point filter/smoother Gaussian integrals.
+    Lightweight container for UKF Gaussian integrals.
     """
-    def _gaussian_expectation(self, f, m, P):
+    alpha: float = jnp.sqrt(3)
+    beta: float = 2.0
+    kappa: float = 1.0
+
+    def gaussian_expectation(self, f, m, P):
         w_mean, _, sigmas = self.compute_weights_and_sigmas(m, P)
         return jnp.atleast_1d(jnp.tensordot(w_mean, vmap(f)(sigmas), axes=1))
 
-    def _gaussian_cross_covariance(self, f, g, m, P):
+    def gaussian_cross_covariance(self, f, g, m, P):
         _, w_cov, sigmas = self.compute_weights_and_sigmas(m, P)
         _outer = vmap(lambda x, y: jnp.atleast_2d(x).T @ jnp.atleast_2d(y), 0, 0)
         f_mean, g_mean = self.gaussian_expectation(f, m, P), self.gaussian_expectation(g, m, P)
         return jnp.atleast_2d(jnp.tensordot(w_cov, _outer(vmap(f)(sigmas) - f_mean, vmap(g)(sigmas) - g_mean), axes=1))
 
-
-@dataclass
-class UKFIntegrals(SigmaPointIntegrals):
-    """
-    Lightweight container for UKF Gaussian integrals.
-    """
-    alpha: chex.Scalar = jnp.sqrt(3)
-    beta: chex.Scalar = 2
-    kappa: chex.Scalar = 1
-    compute_weights_and_sigmas: Callable = lambda x, y: (0, 0, 0)
-    gaussian_expectation: Callable = None
-    gaussian_cross_covariance: Callable = None
-    
-    def __post_init__(self):
-        self.compute_weights_and_sigmas = self._compute_weights_and_sigmas
-        self.gaussian_expectation = super()._gaussian_expectation
-        self.gaussian_cross_covariance = super()._gaussian_cross_covariance
-
-    def _compute_weights_and_sigmas(self, m, P):
+    def compute_weights_and_sigmas(self, m, P):
         n = len(m)
         lamb = self.alpha**2 * (n + self.kappa) - n
         # Compute weights
@@ -92,24 +62,25 @@ class UKFIntegrals(SigmaPointIntegrals):
         return w_mean, w_cov, sigmas
 
 
-@dataclass
-class GHKFIntegrals(SigmaPointIntegrals):
+class GHKFIntegrals(NamedTuple):
     """
     Lightweight container for GHKF Gaussian integrals.
     """
-    order: chex.Scalar = 10
-    compute_weights_and_sigmas: Callable = lambda x, y: (0, 0, 0)
-    gaussian_expectation: Callable = None
-    gaussian_cross_covariance: Callable = None
-    
-    def __post_init__(self):
-        self.compute_weights_and_sigmas = self._compute_weights_and_sigmas
-        self.gaussian_expectation = super()._gaussian_expectation
-        self.gaussian_cross_covariance = super()._gaussian_cross_covariance
+    order: int = 10
 
-    def _compute_weights_and_sigmas(self, m, P):
+    def gaussian_expectation(self, f, m, P):
+        w_mean, _, sigmas = self.compute_weights_and_sigmas(m, P)
+        return jnp.atleast_1d(jnp.tensordot(w_mean, vmap(f)(sigmas), axes=1))
+
+    def gaussian_cross_covariance(self, f, g, m, P):
+        _, w_cov, sigmas = self.compute_weights_and_sigmas(m, P)
+        _outer = vmap(lambda x, y: jnp.atleast_2d(x).T @ jnp.atleast_2d(y), 0, 0)
+        f_mean, g_mean = self.gaussian_expectation(f, m, P), self.gaussian_expectation(g, m, P)
+        return jnp.atleast_2d(jnp.tensordot(w_cov, _outer(vmap(f)(sigmas) - f_mean, vmap(g)(sigmas) - g_mean), axes=1))
+
+    def compute_weights_and_sigmas(self, m, P):
         n = len(m)
-        samples_1d, weights_1d = hermegauss(self.order)
+        samples_1d, weights_1d = jnp.array(hermegauss(self.order))
         weights_1d /= weights_1d.sum()
         weights = jnp.prod(jnp.array(list(product(weights_1d, repeat=n))), axis=1)
         unit_sigmas = jnp.array(list(product(samples_1d, repeat=n)))
@@ -117,9 +88,9 @@ class GHKFIntegrals(SigmaPointIntegrals):
         return weights, weights, sigmas
 
 
-"""
-Inference for Conditional Guassian Moments Filters
-"""
+CMGFIntegrals = Union[EKFIntegrals, UKFIntegrals, GHKFIntegrals]
+
+
 def _predict(m, P, f, Q, u, g_ev, g_cov):
     """Predict next mean and covariance under an additive-noise Gaussian filter
 
@@ -144,6 +115,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
         mu_pred (D_hid,): predicted mean.
         Sigma_pred (D_hid,D_hid): predicted covariance.
         cross_pred (D_hid,D_hid): cross covariance term.
+
     """
     dynamics_fn = lambda x: f(x, u)
     identity_fn = lambda x: x
@@ -184,6 +156,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
         log_likelihood (Scalar): prediction log likelihood for observation y
         mu_cond (D_hid,): conditioned mean.
         Sigma_cond (D_hid,D_hid): conditioned covariance.
+        
     """
     m_Y = lambda x: y_cond_mean(x, u)
     Cov_Y = lambda x: y_cond_cov(x, u)
@@ -255,6 +228,7 @@ def conditional_moments_gaussian_filter(
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
+
     """
     num_timesteps = len(emissions)
 
@@ -312,6 +286,7 @@ def iterated_conditional_moments_gaussian_filter(
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
+
     """
     filtered_posterior = conditional_moments_gaussian_filter(model_params, inf_params, emissions, num_iter, inputs)
     return filtered_posterior
@@ -343,7 +318,7 @@ def conditional_moments_gaussian_smoother(
     # Get filtered posterior
     if filtered_posterior is None:
         filtered_posterior = conditional_moments_gaussian_filter(model_params, inf_params, emissions, inputs=inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior
 
     # Process dynamics function to take in control inputs
     f  = _process_fn(model_params.dynamics_function, inputs)

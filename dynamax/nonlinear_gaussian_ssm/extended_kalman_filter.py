@@ -101,6 +101,7 @@ def extended_kalman_filter(
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
+
     """
     num_timesteps = len(emissions)
     # Dynamics and emission functions and their Jacobians
@@ -155,6 +156,7 @@ def iterated_extended_kalman_filter(
             marginal_log_lik
             filtered_means (T, D_hid)
             filtered_covariances (T, D_hid, D_hid)
+
     """
     filtered_posterior = extended_kalman_filter(params, emissions, num_iter, inputs)
     return filtered_posterior
@@ -163,7 +165,7 @@ def iterated_extended_kalman_filter(
 def extended_kalman_smoother(
     params: ParamsNLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
-    filtered_posterior: Optional[PosteriorNLGSSMFiltered] = None, 
+    filtered_posterior: Optional[PosteriorNLGSSMFiltered] = None,
     inputs: Optional[Float[Array, "ntime input_dim"]] = None
 ) -> PosteriorNLGSSMSmoothed:
     """Run an extended Kalman (RTS) smoother.
@@ -178,13 +180,14 @@ def extended_kalman_smoother(
     Returns:
         nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
+
     """
     num_timesteps = len(emissions)
 
     # Get filtered posterior
     if filtered_posterior is None:
         filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior
 
     # Dynamics and emission functions and their Jacobians
     f = params.dynamics_function
@@ -248,6 +251,7 @@ def iterated_extended_kalman_smoother(
     Returns:
         nlgssm_posterior: GSSMPosterior instance containing properties of
             filtered and smoothed posterior distributions.
+            
     """
 
     def _step(carry, _):

@@ -1,13 +1,12 @@
 from abc import abstractmethod, ABC
 from dynamax.abstractions import SSM
 from dynamax.parameters import to_unconstrained, from_unconstrained
-from dynamax.hmm.inference import compute_transition_probs
 from dynamax.hmm.inference import hmm_filter
 from dynamax.hmm.inference import hmm_posterior_mode
 from dynamax.hmm.inference import hmm_smoother
 from dynamax.hmm.inference import hmm_two_filter_smoother
-from dynamax.optimize import run_gradient_descent
-from dynamax.utils import pytree_slice
+from dynamax.utils.optimize import run_gradient_descent
+from dynamax.utils.utils import pytree_slice
 import jax.numpy as jnp
 from jax import vmap
 from jax.tree_util import tree_map
@@ -62,17 +61,17 @@ class HMMInitialState(ABC):
         For example, this might include the optimizer state for Adam.
         """
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, _ = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
         return self.m_step_optimizer.init(unc_params)
 
     def m_step(self, params, props, batch_stats, m_step_state, scale=1.0):
 
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, fixed_params = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
 
         # Minimize the negative expected log joint probability
         def neg_expected_log_joint(unc_params):
-            params = from_unconstrained(unc_params, fixed_params, props)
+            params = from_unconstrained(unc_params, props)
 
             def _single_expected_log_like(stats):
                 expected_initial_state, inpt = stats
@@ -94,7 +93,7 @@ class HMMInitialState(ABC):
                                  num_mstep_iters=self.m_step_num_iters)
 
         # Return the updated parameters and optimizer state
-        params = from_unconstrained(unc_params, fixed_params, props)
+        params = from_unconstrained(unc_params, props)
         return params, m_step_state
 
 
@@ -157,15 +156,15 @@ class HMMTransitions(ABC):
         For example, this might include the optimizer state for Adam.
         """
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, _ = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
         return self.m_step_optimizer.init(unc_params)
 
     def m_step(self, params, props, batch_stats, m_step_state, scale=1.0):
-        unc_params, fixed_params = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
 
         # Minimize the negative expected log joint probability
         def neg_expected_log_joint(unc_params):
-            params = from_unconstrained(unc_params, fixed_params, props)
+            params = from_unconstrained(unc_params, props)
 
             def _single_expected_log_like(stats):
                 expected_transitions, inputs = stats
@@ -187,7 +186,7 @@ class HMMTransitions(ABC):
                                  num_mstep_iters=self.m_step_num_iters)
 
         # Return the updated parameters and optimizer state
-        params = from_unconstrained(unc_params, fixed_params, props)
+        params = from_unconstrained(unc_params, props)
         return params, m_step_state
 
 
@@ -255,17 +254,17 @@ class HMMEmissions(ABC):
         For example, this might include the optimizer state for Adam.
         """
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, _ = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
         return self.m_step_optimizer.init(unc_params)
 
     def m_step(self, params, props, batch_stats, m_step_state, scale=1.0):
 
         # Extract the remaining unconstrained params, which should only be for the emissions.
-        unc_params, fixed_params = to_unconstrained(params, props)
+        unc_params = to_unconstrained(params, props)
 
         # the objective is the negative expected log likelihood (and the log prior of the emission params)
         def neg_expected_log_joint(unc_params):
-            params = from_unconstrained(unc_params, fixed_params, props)
+            params = from_unconstrained(unc_params, props)
 
             def _single_expected_log_like(stats):
                 expected_states, emissions, inputs = stats
@@ -287,11 +286,40 @@ class HMMEmissions(ABC):
                                  num_mstep_iters=self.m_step_num_iters)
 
         # Return the updated parameters and optimizer state
-        params = from_unconstrained(unc_params, fixed_params, props)
+        params = from_unconstrained(unc_params, props)
         return params, m_step_state
 
 
 class HMM(SSM):
+    """
+        Hidden Markov Model.
+
+    The model is defined as follows
+    .. math::
+
+        p(z_t=k | z_{t-1}=j, u_t) = A(j, k; t, u_t)
+        p(y_t | z_t=k) = Pr(y_t | B(k; t, u_t))
+        p(z_1=k) = pi(k)
+
+    where
+
+    :math:`z_t` = discrete hidden variable with ``num_states`` possible values,
+    :math:`y_t` = observed variables of size ``emission_dim``
+    :math:`u_t` = input covariates of size ``input_dim`` (defaults to 0).
+
+
+    The parameters of the model are stored in a separate named tuple, with these fields:
+
+        * pi = params.initial
+        * A = params.transitions
+        * B = params.emissions
+
+    Many possible emission distributions Pr() are supported. Each of these define a different
+    set of emission parameters B. For example, if we have a Gaussian HMM, then each discrete
+    state :math:`k` is associated with a different mean :math:`\mu_k` and covariance :math:`\Sigma_k`.
+    Parameters may also be indexed by time :math:`k`, and may also depend on inputs :math:`u_t`.
+
+    """
 
     def __init__(self,
                  num_states : int,
@@ -322,25 +350,25 @@ class HMM(SSM):
         return self.emission_component.emission_shape
 
     def initial_distribution(self, params, inputs=None):
-        return self.initial_component.distribution(params["initial"], inputs=inputs)
+        return self.initial_component.distribution(params.initial, inputs=inputs)
 
     def transition_distribution(self, params, state, inputs=None):
-        return self.transition_component.distribution(params["transitions"], state, inputs=inputs)
+        return self.transition_component.distribution(params.transitions, state, inputs=inputs)
 
     def emission_distribution(self, params, state, inputs=None):
-        return self.emission_component.distribution(params["emissions"], state, inputs=inputs)
+        return self.emission_component.distribution(params.emissions, state, inputs=inputs)
 
     def log_prior(self, params):
-        lp = self.initial_component.log_prior(params["initial"])
-        lp += self.transition_component.log_prior(params["transitions"])
-        lp += self.emission_component.log_prior(params["emissions"])
+        lp = self.initial_component.log_prior(params.initial)
+        lp += self.transition_component.log_prior(params.transitions)
+        lp += self.emission_component.log_prior(params.emissions)
         return lp
 
     # The inference functions all need the same arguments
     def _inference_args(self, params, emissions, inputs):
-        return (self.initial_component.compute_initial_probs(params["initial"], inputs),
-                self.transition_component.compute_transition_matrices(params["transitions"], inputs),
-                self.emission_component.compute_conditional_logliks(params["emissions"], emissions, inputs))
+        return (self.initial_component.compute_initial_probs(params.initial, inputs),
+                self.transition_component.compute_transition_matrices(params.transitions, inputs),
+                self.emission_component.compute_conditional_logliks(params.emissions, emissions, inputs))
 
     # Convenience wrappers for the inference code
     def marginal_log_prob(self, params, emissions, inputs=None):
@@ -367,11 +395,10 @@ class HMM(SSM):
         """
         args = self._inference_args(params, emissions, inputs)
         posterior = hmm_two_filter_smoother(*args)
-        posterior.trans_probs = compute_transition_probs(args[1], posterior, (args[1].ndim == 2))
 
-        initial_stats = self.initial_component.collect_suff_stats(params["initial"], posterior, inputs)
-        transition_stats = self.transition_component.collect_suff_stats(params["transitions"], posterior, inputs)
-        emission_stats = self.emission_component.collect_suff_stats(params["emissions"], posterior, emissions, inputs)
+        initial_stats = self.initial_component.collect_suff_stats(params.initial, posterior, inputs)
+        transition_stats = self.transition_component.collect_suff_stats(params.transitions, posterior, inputs)
+        emission_stats = self.emission_component.collect_suff_stats(params.emissions, posterior, emissions, inputs)
         return (initial_stats, transition_stats, emission_stats), posterior.marginal_loglik
 
     def initialize_m_step_state(self, params, props):
@@ -379,17 +406,19 @@ class HMM(SSM):
 
         For example, this might include the optimizer state for Adam.
         """
-        initial_m_step_state = self.initial_component.initialize_m_step_state(params["initial"], props["initial"])
-        transitions_m_step_state = self.transition_component.initialize_m_step_state(params["transitions"], props["transitions"])
-        emissions_m_step_state = self.emission_component.initialize_m_step_state(params["emissions"], props["emissions"])
+        initial_m_step_state = self.initial_component.initialize_m_step_state(params.initial, props.initial)
+        transitions_m_step_state = self.transition_component.initialize_m_step_state(params.transitions, props.transitions)
+        emissions_m_step_state = self.emission_component.initialize_m_step_state(params.emissions, props.emissions)
         return initial_m_step_state, transitions_m_step_state, emissions_m_step_state
 
     def m_step(self, params, props, batch_stats, m_step_state):
         batch_initial_stats, batch_transition_stats, batch_emission_stats = batch_stats
         initial_m_step_state, transitions_m_step_state, emissions_m_step_state = m_step_state
-        params["initial"], initial_m_step_state = self.initial_component.m_step(params["initial"], props["initial"], batch_initial_stats, initial_m_step_state)
-        params["transitions"], transitions_m_step_state = self.transition_component.m_step(params["transitions"], props["transitions"], batch_transition_stats, transitions_m_step_state)
-        params["emissions"], emissions_m_step_state = self.emission_component.m_step(params["emissions"], props["emissions"], batch_emission_stats, emissions_m_step_state)
+
+        initial_params, initial_m_step_state = self.initial_component.m_step(params.initial, props.initial, batch_initial_stats, initial_m_step_state)
+        transition_params, transitions_m_step_state = self.transition_component.m_step(params.transitions, props.transitions, batch_transition_stats, transitions_m_step_state)
+        emission_params, emissions_m_step_state = self.emission_component.m_step(params.emissions, props.emissions, batch_emission_stats, emissions_m_step_state)
+        params = params._replace(initial=initial_params, transitions=transition_params, emissions=emission_params)
         m_step_state = initial_m_step_state, transitions_m_step_state, emissions_m_step_state
         return params, m_step_state
 
@@ -427,7 +456,7 @@ class HMM(SSM):
 #                 schedule; defaults to exponential schedule.
 #             num_epochs (int): Num of iterations made through the entire dataset.
 #         Returns:
-#             expected_log_prob (chex.Array): Mean expected log prob of each epoch.
+#             expected_log_prob: Mean expected log prob of each epoch.
 
 #         TODO Any way to take a weighted average of rolling stats (in addition
 #              to the convex combination) given the number of emissions we see

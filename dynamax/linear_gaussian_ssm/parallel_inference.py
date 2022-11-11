@@ -1,31 +1,29 @@
 # Parallel filtering and smoothing for a lgssm.
 # This implementation is adapted from the work of Adrien Correnflos in,
 #  https://github.com/EEA-sensors/sequential-parallelization-examples/
-from jax import numpy as jnp
-from jax import scipy as jsc
+import jax.numpy as jnp
+import jax.scipy as jsc
 from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
-import chex
+from jaxtyping import Array, Float
 
-from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed, ParamsLGSSMMoment
+from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed, ParamsLGSSM
 
 def make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
 
     def _first_filtering_element(params, y):
-        F = params.dynamics_weights
-        H = params.emission_weights
-        Q = params.dynamics_covariance
-        R = params.emission_covariance
-        P0 = params.initial_covariance
-        
+        F = params.dynamics.weights
+        H = params.emissions.weights
+        Q = params.dynamics.cov
+        R = params.emissions.cov
+        P0 = params.initial.cov
+
         S = H @ Q @ H.T + R
         CF, low = jsc.linalg.cho_factor(S)
 
-        m1 = params.initial_mean
-        P1 = params.initial_covariance
+        m1 = params.initial.mean
+        P1 = params.initial.cov
         S1 = H @ P1 @ H.T + R
         K1 = jsc.linalg.solve(S1, H @ P1, assume_a='pos').T
 
@@ -42,14 +40,14 @@ def make_associative_filtering_elements(params, emissions):
 
 
     def _generic_filtering_element(params, y):
-        F = params.dynamics_weights
-        H = params.emission_weights
-        Q = params.dynamics_covariance
-        R = params.emission_covariance
-        
+        F = params.dynamics.weights
+        H = params.emissions.weights
+        Q = params.dynamics.cov
+        R = params.emissions.cov
+
         S = H @ Q @ H.T + R
-        CF, low = jsc.linalg.cho_factor(S)  
-        K = jsc.linalg.cho_solve((CF, low), H @ Q).T  
+        CF, low = jsc.linalg.cho_factor(S)
+        K = jsc.linalg.cho_solve((CF, low), H @ Q).T
         A = F - K @ H @ F
         b = K @ y
         C = Q - K @ H @ Q
@@ -68,13 +66,13 @@ def make_associative_filtering_elements(params, emissions):
     return combined_elems
 
 def lgssm_filter(
-    params: ParamsLGSSMMoment,
+    params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"]
 ) -> PosteriorLGSSMFiltered:
     """A parallel version of the lgssm filtering algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
-    
+
     Note: This function does not yet handle `inputs` to the system.
     """
     #TODO: Add input handling.
@@ -85,7 +83,7 @@ def lgssm_filter(
         A1, b1, C1, J1, eta1, logZ1 = elem1
         A2, b2, C2, J2, eta2, logZ2 = elem2
         dim = A1.shape[0]
-        I = jnp.eye(dim)  
+        I = jnp.eye(dim)
 
         I_C1J2 = I + C1 @ J2
         temp = jsc.linalg.solve(I_C1J2.T, A2.T).T
@@ -101,7 +99,7 @@ def lgssm_filter(
 
         # mu = jsc.linalg.solve(J2, eta2)
         # t2 = - eta2 @ mu + (b1 - mu) @ jsc.linalg.solve(I_J2C1, (J2 @ b1 - eta2))
-        
+
         mu = jnp.linalg.solve(C1, b1)
         t1 = (b1 @ mu - (eta2 + mu) @ jnp.linalg.solve(I_C1J2, C1 @ eta2 + b1))
 
@@ -125,10 +123,10 @@ def make_associative_smoothing_elements(params, filtered_means, filtered_covaria
         return jnp.zeros_like(P), m, P
 
     def _generic_smoothing_element(params, m, P):
-        F = params.dynamics_weights
-        H = params.emission_weights
-        Q = params.dynamics_covariance
-        R = params.emission_covariance
+        F = params.dynamics.weights
+        H = params.emissions.weights
+        Q = params.dynamics.cov
+        R = params.emissions.cov
 
         Pp = F @ P @ F.T + Q
 
@@ -147,7 +145,7 @@ def make_associative_smoothing_elements(params, filtered_means, filtered_covaria
 
 
 def lgssm_smoother(
-    params: ParamsLGSSMMoment,
+    params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"]
 ) -> PosteriorLGSSMSmoothed:
     """A parallel version of the lgssm smoothing algorithm.

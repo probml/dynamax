@@ -2,11 +2,17 @@ import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
+from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
 from dynamax.hmm.models.abstractions import HMM, HMMEmissions
-from dynamax.hmm.models.initial import StandardHMMInitialState
-from dynamax.hmm.models.transitions import StandardHMMTransitions
-from dynamax.utils import pytree_sum
+from dynamax.hmm.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hmm.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
+from dynamax.utils.utils import pytree_sum
+from typing import NamedTuple, Union
+
+
+class ParamsPoissonHMMEmissions(NamedTuple):
+    rates: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
 
 
 class PoissonHMMEmissions(HMMEmissions):
@@ -49,17 +55,17 @@ class PoissonHMMEmissions(HMMEmissions):
             assert jnp.all(emission_rates >= 0)
 
         # Add parameters to the dictionary
-        params = dict(rates=emission_rates)
-        props = dict(rates=ParameterProperties(constrainer=tfb.Softplus()))
+        params = ParamsPoissonHMMEmissions(rates=emission_rates)
+        props = ParamsPoissonHMMEmissions(rates=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
 
     def distribution(self, params, state, inputs=None):
-        return tfd.Independent(tfd.Poisson(rate=params['rates'][state]),
+        return tfd.Independent(tfd.Poisson(rate=params.rates[state]),
                                reinterpreted_batch_ndims=1)
 
     def log_prior(self, params):
         prior = tfd.Gamma(self.emission_prior_concentration, self.emission_prior_rate)
-        return prior.log_prob(params['rates']).sum()
+        return prior.log_prob(params.rates).sum()
 
     def collect_suff_stats(self, params, posterior, emissions, inputs=None):
         expected_states = posterior.smoothed_probs
@@ -71,12 +77,19 @@ class PoissonHMMEmissions(HMMEmissions):
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
-        if props['rates'].trainable:
+        if props.rates.trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
             post_concentration = self.emission_prior_concentration + emission_stats['sum_x']
             post_rate = self.emission_prior_rate + emission_stats['sum_w']
-            params['rates'] = tfd.Gamma(post_concentration, post_rate).mode()
+            rates = tfd.Gamma(post_concentration, post_rate).mode()
+            params = params._replace(rates=rates)
         return params, m_step_state
+
+
+class ParamsPoissonHMM(NamedTuple):
+    initial: ParamsStandardHMMInitialState
+    transitions: ParamsStandardHMMTransitions
+    emissions: ParamsPoissonHMMEmissions
 
 
 class PoissonHMM(HMM):
@@ -125,16 +138,12 @@ class PoissonHMM(HMM):
             emission_rates (array, optional): manually specified emission rates. Defaults to None.
 
         Returns:
-            params: a nested dictionary of arrays containing the model parameters.
+            params: nested dataclasses of arrays containing model parameters.
             props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
         """
-        if key is not None:
-            key1, key2, key3 = jr.split(key , 3)
-        else:
-            key1 = key2 = key3 = None
-
+        key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_rates=emission_rates)
-        return params, props
+        return ParamsPoissonHMM(**params), ParamsPoissonHMM(**props)

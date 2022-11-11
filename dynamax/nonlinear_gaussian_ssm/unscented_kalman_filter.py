@@ -2,23 +2,18 @@ import jax.numpy as jnp
 from jax import lax
 from jax import vmap
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-import chex
-
-
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
-
+from jaxtyping import Array, Float
+from typing import NamedTuple, Optional
 from dynamax.nonlinear_gaussian_ssm.nonlinear_gaussian_ssm import PosteriorNLGSSMFiltered, PosteriorNLGSSMSmoothed, ParamsNLGSSM
 
 
-@chex.dataclass
-class UKFHyperParams:
+class UKFHyperParams(NamedTuple):
     """Lightweight container for UKF hyperparameters.
     Default values taken from https://github.com/sbitzer/UKF-exposed
     """
-    alpha: chex.Scalar = jnp.sqrt(3)
-    beta: chex.Scalar = 2
-    kappa: chex.Scalar = 1
+    alpha: float = jnp.sqrt(3)
+    beta: int = 2
+    kappa: int = 1
 
 
 # Helper functions
@@ -221,7 +216,7 @@ def unscented_kalman_smoother(
 
     # Run the unscented Kalman filter
     ukf_posterior = unscented_kalman_filter(params, emissions, hyperparams, inputs)
-    ll, filtered_means, filtered_covs, *_ = ukf_posterior.to_tuple()
+    ll, filtered_means, filtered_covs, *_ = ukf_posterior
 
     # Compute lambda and weights from from hyperparameters
     alpha, beta, kappa = hyperparams.alpha, hyperparams.beta, hyperparams.kappa

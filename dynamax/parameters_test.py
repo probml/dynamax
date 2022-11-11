@@ -1,23 +1,135 @@
+import copy
 import jax.numpy as jnp
+from jax import jit, value_and_grad, lax
 from jax.tree_util import tree_map, tree_leaves
-
-from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained
+from jaxtyping import Float, Array
+from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained, log_det_jac_constrain
+import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
+from typing import NamedTuple, Union
+
+
+class InitialParams(NamedTuple):
+    probs: Union[Float[Array, "state_dim"], ParameterProperties]
+
+class TransitionsParams(NamedTuple):
+    transition_matrix: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
+
+class EmissionsParams(NamedTuple):
+    means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
+    scales: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
+
+class Params(NamedTuple):
+    initial: InitialParams
+    transitions: TransitionsParams
+    emissions: EmissionsParams
+
+
+def make_params():
+    params = Params(
+        initial=InitialParams(probs=jnp.ones(3) / 3.0),
+        transitions=TransitionsParams(transition_matrix=0.9 * jnp.eye(3) + 0.1 * jnp.ones((3, 3)) / 3),
+        emissions=EmissionsParams(means=jnp.zeros((3, 2)), scales=jnp.ones((3, 2)))
+    )
+
+    props = Params(
+        initial=InitialParams(probs=ParameterProperties(trainable=False, constrainer=tfb.SoftmaxCentered())),
+        transitions=TransitionsParams(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
+        emissions=EmissionsParams(means=ParameterProperties(), scales=ParameterProperties(constrainer=tfb.Softplus(), trainable=False))
+    )
+    return params, props
 
 
 def test_parameter_tofrom_unconstrained():
-    params = dict(
-        initial=dict(probs=jnp.ones(3) / 3.0),
-        transitions=dict(transition_matrix=0.9 * jnp.eye(3) + 0.1 * jnp.ones((3, 3)) / 3),
-        emissions=dict(means=jnp.zeros((3, 2)), scales=jnp.ones((3, 2)))
-    )
-
-    param_props = dict(
-        initial=dict(probs=ParameterProperties(trainable=False, constrainer=tfb.SoftmaxCentered())),
-        transitions=dict(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered())),
-        emissions=dict(means=ParameterProperties(), scales=ParameterProperties(constrainer=tfb.Softplus(), trainable=False))
-    )
-
-    unc_params, fixed_params = to_unconstrained(params, param_props)
-    recon_params = from_unconstrained(unc_params, fixed_params, param_props)
+    params, props = make_params()
+    unc_params = to_unconstrained(params, props)
+    recon_params = from_unconstrained(unc_params, props)
     assert all(tree_leaves(tree_map(jnp.allclose, params, recon_params)))
+
+
+def test_parameter_pytree_jittable():
+    # If there's a problem with our PyTree registration, this should catch it.
+    params, props = make_params()
+
+    @jit
+    def get_trainable(params, props):
+        # test function that includes props in its closure
+        return tree_map(lambda node, prop: node if prop.trainable else None,
+                        params, props,
+                        is_leaf=lambda node: isinstance(node, ParameterProperties))
+
+    # first call, jit
+    get_trainable(params, props)
+    assert get_trainable._cache_size() == 1
+
+    # change param values, don't jit
+    params = params._replace(initial=params.initial._replace(probs=jnp.zeros(3)))
+    get_trainable(params, props)
+    assert get_trainable._cache_size() == 1
+
+    # change param dtype, jit
+    params = params._replace(initial=params.initial._replace(probs=jnp.zeros(3, dtype=int)))
+    get_trainable(params, props)
+    assert get_trainable._cache_size() == 2
+
+    # change props, jit
+    props.transitions.transition_matrix.trainable = False
+    get_trainable(params, props)
+    assert get_trainable._cache_size() == 3
+
+
+def test_parameter_constrained():
+    """Test that only trainable params are updated in gradient descent.
+    """
+    params, props = make_params()
+    original_params = copy.deepcopy(params)
+
+    unc_params = to_unconstrained(params, props)
+    def loss(unc_params):
+        params = from_unconstrained(unc_params, props)
+        log_initial_probs = jnp.log(params.initial.probs)
+        log_transition_matrix = jnp.log(params.transitions.transition_matrix)
+        means = params.emissions.means
+        scales = params.emissions.scales
+
+        lp = log_initial_probs[1]
+        lp += log_transition_matrix[0,0]
+        lp += log_transition_matrix[1,1]
+        lp += log_transition_matrix[2,2]
+        lp += jnp.sum(-0.5 * (1.0 - means[0])**2 / scales[0]**2)
+        lp += jnp.sum(-0.5 * (2.0 - means[1])**2 / scales[1]**2)
+        lp += jnp.sum(-0.5 * (3.0 - means[2])**2 / scales[2]**2)
+        return -lp
+
+    # Run a dummy optimization
+    f = jit(value_and_grad(loss))
+    optimizer = optax.adam(1e-2)
+    opt_state = optimizer.init(unc_params)
+
+    def step(carry, args):
+        unc_params, opt_state = carry
+        loss, grads = f(unc_params)
+        updates, opt_state = optimizer.update(grads, opt_state)
+        unc_params = optax.apply_updates(unc_params, updates)
+        return (unc_params, opt_state), loss
+
+    initial_carry =  (unc_params, opt_state)
+    (unc_params, opt_state), losses = \
+        lax.scan(step, initial_carry, None, length=10)
+    params = from_unconstrained(unc_params, props)
+
+    assert jnp.allclose(params.initial.probs, original_params.initial.probs)
+    assert not jnp.allclose(params.transitions.transition_matrix, original_params.transitions.transition_matrix)
+    assert not jnp.allclose(params.emissions.means, original_params.emissions.means)
+    assert jnp.allclose(params.emissions.scales, original_params.emissions.scales)
+
+
+def test_logdet_jacobian():
+    params, props = make_params()
+    unc_params = to_unconstrained(params, props)
+    logdet = log_det_jac_constrain(params, props)
+
+    # only the transition matrix is constrained and trainable
+    f = props.transitions.transition_matrix.constrainer.forward_log_det_jacobian
+    logdet_manual = f(unc_params.transitions.transition_matrix).sum()
+    assert jnp.isclose(logdet, logdet_manual)

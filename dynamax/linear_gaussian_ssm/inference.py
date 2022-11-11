@@ -5,32 +5,39 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from functools import wraps
 import inspect
 
-from jaxtyping import Array, Float, PyTree, Bool, Int, Num
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union,  TypeVar, Generic, Mapping, Callable
-import chex
+from jaxtyping import Array, Float
+from typing import NamedTuple, Optional, Union
+
+from dynamax.parameters import ParameterProperties
+
+class ParamsLGSSMInitial(NamedTuple):
+    mean: Union[Float[Array, "state_dim"], ParameterProperties]
+    cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
 
 
-@chex.dataclass
-class ParamsLGSSMMoment:
-    """Lightweight container for passing LGSSM parameters in moment form to inference algorithms."""
-    initial_mean: Float[Array, "state_dim"]
-    dynamics_weights: Float[Array, "state_dim state_dim"]
-    emission_weights:  Float[Array, "emission_dim state_dim"]
-
-    initial_covariance: Float[Array, "state_dim state_dim"]
-    dynamics_covariance:  Float[Array, "state_dim state_dim"]
-    emission_covariance: Float[Array, "emission_dim emission_dim"]
-
-    # Optional parameters (None means zeros)
-    dynamics_input_weights: Optional[Float[Array, "input_dim state_dim"]] = None
-    dynamics_bias: Optional[Float[Array, "state_dim"]] = None
-    emission_input_weights: Optional[Float[Array, "input_dim emission_dim"]] = None
-    emission_bias: Optional[Float[Array, "emission_dim"]] = None
+class ParamsLGSSMDynamics(NamedTuple):
+    weights: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
+    bias: Union[Float[Array, "state_dim"], ParameterProperties]
+    input_weights: Union[Float[Array, "state_dim input_dim"], ParameterProperties]
+    cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
 
 
+class ParamsLGSSMEmissions(NamedTuple):
+    weights: Union[Float[Array, "emission_dim state_dim"], ParameterProperties]
+    bias: Union[Float[Array, "emission_dim"], ParameterProperties]
+    input_weights: Union[Float[Array, "emission_dim input_dim"], ParameterProperties]
+    cov: Union[Float[Array, "emission_dim emission_dim"], ParameterProperties]
 
-@chex.dataclass
-class PosteriorLGSSMFiltered:
+
+class ParamsLGSSM(NamedTuple):
+    initial: ParamsLGSSMInitial
+    dynamics: ParamsLGSSMDynamics
+    emissions: ParamsLGSSMEmissions
+
+
+
+
+class PosteriorLGSSMFiltered(NamedTuple):
     """Marginals of the Gaussian filtering posterior.
     Attributes:
         marginal_loglik: log marginal probability of observations
@@ -44,8 +51,8 @@ class PosteriorLGSSMFiltered:
     filtered_means: Float[Array, "ntime state_dim"]
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
 
-@chex.dataclass
-class PosteriorLGSSMSmoothed(PosteriorLGSSMFiltered):
+
+class PosteriorLGSSMSmoothed(NamedTuple):
     """Marginals of the Gaussian filtering and smoothing posterior. .
     Attributes:
         smoothed_means: (T,D_hid) array,
@@ -55,7 +62,10 @@ class PosteriorLGSSMSmoothed(PosteriorLGSSMFiltered):
         smoothed_cross: (T-1, D_hid, D_hid) array of smoothed cross products,
             E[x_t x_{t+1}^T | y_{1:T}, u_{1:T}].
     """
-    smoothed_means: Float[Array, "ntime state_dim"] 
+    marginal_loglik: Float[Array, ""] # Scalar
+    filtered_means: Float[Array, "ntime state_dim"]
+    filtered_covariances: Float[Array, "ntime state_dim state_dim"]
+    smoothed_means: Float[Array, "ntime state_dim"]
     smoothed_covariances: Float[Array, "ntime state_dim state_dim"]
     smoothed_cross_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
 
@@ -145,15 +155,15 @@ def preprocess_args(f):
         inputs = bound_args.arguments['inputs']
 
         # Make sure all the required parameters are there
-        assert params.initial_mean is not None
-        assert params.initial_covariance is not None
-        assert params.dynamics_weights is not None
-        assert params.dynamics_covariance is not None
-        assert params.emission_weights is not None
-        assert params.emission_covariance is not None
+        assert params.initial.mean is not None
+        assert params.initial.cov is not None
+        assert params.dynamics.weights is not None
+        assert params.dynamics.cov is not None
+        assert params.emissions.weights is not None
+        assert params.emissions.cov is not None
 
         # Get shapes
-        emission_dim, state_dim = params.emission_weights.shape[-2:]
+        emission_dim, state_dim = params.emissions.weights.shape[-2:]
         num_timesteps = len(emissions)
 
         # Default the inputs to zero
@@ -161,30 +171,33 @@ def preprocess_args(f):
         input_dim = inputs.shape[-1]
 
         # Default other parameters to zero
-        dynamics_input_weights = _zeros_if_none(params.dynamics_input_weights, (state_dim, input_dim))
-        dynamics_bias = _zeros_if_none(params.dynamics_bias, (state_dim,))
-        emission_input_weights = _zeros_if_none(params.emission_input_weights, (emission_dim, input_dim))
-        emission_bias = _zeros_if_none(params.emission_bias, (emission_dim,))
+        dynamics_input_weights = _zeros_if_none(params.dynamics.input_weights, (state_dim, input_dim))
+        dynamics_bias = _zeros_if_none(params.dynamics.bias, (state_dim,))
+        emissions_input_weights = _zeros_if_none(params.emissions.input_weights, (emission_dim, input_dim))
+        emissions_bias = _zeros_if_none(params.emissions.bias, (emission_dim,))
 
-        full_params = ParamsLGSSMMoment(
-            initial_mean=params.initial_mean,
-            initial_covariance=params.initial_covariance,
-            dynamics_weights=params.dynamics_weights,
-            dynamics_input_weights=dynamics_input_weights,
-            dynamics_bias=dynamics_bias,
-            dynamics_covariance=params.dynamics_covariance,
-            emission_weights=params.emission_weights,
-            emission_input_weights=emission_input_weights,
-            emission_bias=emission_bias,
-            emission_covariance=params.emission_covariance
-        )
+        full_params = ParamsLGSSM(
+            initial=ParamsLGSSMInitial(
+                mean=params.initial.mean,
+                cov=params.initial.cov),
+            dynamics=ParamsLGSSMDynamics(
+                weights=params.dynamics.weights,
+                bias=dynamics_bias,
+                input_weights=dynamics_input_weights,
+                cov=params.dynamics.cov),
+            emissions=ParamsLGSSMEmissions(
+                weights=params.emissions.weights,
+                bias=emissions_bias,
+                input_weights=emissions_input_weights,
+                cov=params.emissions.cov)
+            )
         return f(full_params, emissions, inputs=inputs)
     return wrapper
 
 
 @preprocess_args
 def lgssm_filter(
-    params: ParamsLGSSMMoment,
+    params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> PosteriorLGSSMFiltered:
@@ -209,14 +222,14 @@ def lgssm_filter(
         ll, pred_mean, pred_cov = carry
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_weights, 2, t)
-        B = _get_params(params.dynamics_input_weights, 2, t)
-        b = _get_params(params.dynamics_bias, 1, t)
-        Q = _get_params(params.dynamics_covariance, 2, t)
-        H = _get_params(params.emission_weights, 2, t)
-        D = _get_params(params.emission_input_weights, 2, t)
-        d = _get_params(params.emission_bias, 1, t)
-        R = _get_params(params.emission_covariance, 2, t)
+        F = _get_params(params.dynamics.weights, 2, t)
+        B = _get_params(params.dynamics.input_weights, 2, t)
+        b = _get_params(params.dynamics.bias, 1, t)
+        Q = _get_params(params.dynamics.cov, 2, t)
+        H = _get_params(params.emissions.weights, 2, t)
+        D = _get_params(params.emissions.input_weights, 2, t)
+        d = _get_params(params.emissions.bias, 1, t)
+        R = _get_params(params.emissions.cov, 2, t)
         u = inputs[t]
         y = emissions[t]
 
@@ -232,14 +245,14 @@ def lgssm_filter(
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
     # Run the Kalman filter
-    carry = (0.0, params.initial_mean, params.initial_covariance)
+    carry = (0.0, params.initial.mean, params.initial.cov)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     return PosteriorLGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 @preprocess_args
 def lgssm_smoother(
-    params: ParamsLGSSMMoment,
+    params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> PosteriorLGSSMSmoothed:
@@ -261,7 +274,7 @@ def lgssm_smoother(
 
     # Run the Kalman filter
     filtered_posterior = lgssm_filter(params, emissions, inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior
 
     # Run the smoother backward in time
     def _step(carry, args):
@@ -270,10 +283,10 @@ def lgssm_smoother(
         t, filtered_mean, filtered_cov = args
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_weights, 2, t)
-        B = _get_params(params.dynamics_input_weights, 2, t)
-        b = _get_params(params.dynamics_bias, 1, t)
-        Q = _get_params(params.dynamics_covariance, 2, t)
+        F = _get_params(params.dynamics.weights, 2, t)
+        B = _get_params(params.dynamics.input_weights, 2, t)
+        b = _get_params(params.dynamics.bias, 1, t)
+        Q = _get_params(params.dynamics.cov, 2, t)
         u = inputs[t]
 
         # This is like the Kalman gain but in reverse
@@ -310,7 +323,7 @@ def lgssm_smoother(
 
 def lgssm_posterior_sample(
     key: jr.PRNGKey,
-    params: ParamsLGSSMMoment,
+    params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) ->Float[Array, "ntime state_dim"]:
@@ -331,7 +344,7 @@ def lgssm_posterior_sample(
 
     # Run the Kalman filter
     filtered_posterior = lgssm_filter(params, emissions, inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior
 
     # Sample backward in time
     def _step(carry, args):
@@ -339,10 +352,10 @@ def lgssm_posterior_sample(
         key, filtered_mean, filtered_cov, t = args
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_weights, 2, t)
-        B = _get_params(params.dynamics_input_weights, 2, t)
-        b = _get_params(params.dynamics_bias, 1, t)
-        Q = _get_params(params.dynamics_covariance, 2, t)
+        F = _get_params(params.dynamics.weights, 2, t)
+        B = _get_params(params.dynamics.input_weights, 2, t)
+        b = _get_params(params.dynamics.bias, 1, t)
+        Q = _get_params(params.dynamics.cov, 2, t)
         u = inputs[t]
 
         # Condition on next state

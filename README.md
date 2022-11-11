@@ -1,6 +1,6 @@
 # dynamax
 
-![Logo](https://github.com/probml/dynamax/blob/main/logo/logo.gif)
+![Logo](https://raw.githubusercontent.com/probml/dynamax/main/logo/logo.gif)
 
 ![Test Status](https://github.com/probml/dynamax/actions/workflows/run_tests.yml/badge.svg?branch=main)
 

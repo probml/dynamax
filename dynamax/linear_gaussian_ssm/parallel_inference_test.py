@@ -1,5 +1,5 @@
-from jax import numpy as jnp
-from jax import random as jr
+import jax.numpy as jnp
+import jax.random as jr
 
 from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_smoother as serial_lgssm_smoother
@@ -13,7 +13,7 @@ class TestParallelLGSSMSmoother:
     dt = 0.1
     F = jnp.eye(4) + dt * jnp.eye(4, k=2)
     Q = 1. * jnp.kron(jnp.array([[dt**3/3, dt**2/2],
-                          [dt**2/2, dt]]), 
+                          [dt**2/2, dt]]),
                      jnp.eye(2))
     H = jnp.eye(2, 4)
     R = 0.5 ** 2 * jnp.eye(2)
@@ -31,7 +31,7 @@ class TestParallelLGSSMSmoother:
                              dynamics_covariance=Q,
                              emission_weights=H,
                              emission_covariance=R)
-    inf_params = lgssm.to_inference_args(model_params)
+    inf_params = model_params
 
     num_timesteps = 50
     key = jr.PRNGKey(seed)

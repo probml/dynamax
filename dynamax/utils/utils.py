@@ -1,19 +1,17 @@
-from functools import partial, wraps
+from functools import partial
 import jax.numpy as jnp
 import jax.random as jr
 from jax import jit
 from jax import vmap
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
-import tensorflow_probability.substrates.jax.bijectors as tfb
-import inspect
+import jax
+import jaxlib
 
-# From https://www.tensorflow.org/probability/examples/
-# TensorFlow_Probability_Case_Study_Covariance_Estimation
-PSDToRealBijector = tfb.Chain([
-    tfb.Invert(tfb.FillTriangular()),
-    tfb.TransformDiagonal(tfb.Invert(tfb.Exp())),
-    tfb.Invert(tfb.CholeskyOuterProduct()),
-])
+def has_tpu():
+    try:
+        return isinstance(jax.devices()[0], jaxlib.xla_extension.TpuDevice)
+    except:
+        return False
 
 
 @jit
@@ -69,7 +67,7 @@ def pytree_stack(pytrees):
 
 def random_rotation(seed, n, theta=None):
     """Helper function to create a rotating linear system.
-    
+
     Args:
         seed (jax.random.PRNGKey): JAX random seed.
         n (int): Dimension of the rotation matrix.
