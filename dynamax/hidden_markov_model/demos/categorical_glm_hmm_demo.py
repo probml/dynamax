@@ -1,11 +1,9 @@
 import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
-
-from itertools import count
 import matplotlib.pyplot as plt
 
-from dynamax.hidden_markov_model.models import CategoricalRegressionHMM
+from dynamax.hidden_markov_model import CategoricalRegressionHMM
 
 if __name__ == "__main__":
     key1, key2, key3, key4 = jr.split(jr.PRNGKey(0), 4)

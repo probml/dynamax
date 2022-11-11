@@ -10,6 +10,7 @@ from typing import NamedTuple, Optional, Union
 
 from dynamax.parameters import ParameterProperties
 
+
 class ParamsLGSSMInitial(NamedTuple):
     mean: Union[Float[Array, "state_dim"], ParameterProperties]
     cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
@@ -33,8 +34,6 @@ class ParamsLGSSM(NamedTuple):
     initial: ParamsLGSSMInitial
     dynamics: ParamsLGSSMDynamics
     emissions: ParamsLGSSMEmissions
-
-
 
 
 class PosteriorLGSSMFiltered(NamedTuple):
