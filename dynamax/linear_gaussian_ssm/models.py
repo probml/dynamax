@@ -8,20 +8,23 @@ from jaxtyping import Array, Float
 import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from typing import Any, Optional, Tuple
+from typing_extensions import Protocol
 
 from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
 from dynamax.parameters import ParameterProperties
+from dynamax.types import PRNGKey, Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
 from dynamax.utils.distributions import MatrixNormalInverseWishart as MNIW
 from dynamax.utils.distributions import NormalInverseWishart as NIW
 from dynamax.utils.distributions import mniw_posterior_update, niw_posterior_update
 from dynamax.utils.utils import pytree_stack
 
-
-SuffStatsLGSSM = Any # type of sufficient statistics for EM
+class SuffStatsLGSSM(Protocol):
+    """A :class:`NamedTuple` with sufficient statistics for LGSSM parameter estimation."""
+    pass
 
 
 class LinearGaussianSSM(SSM):
@@ -30,32 +33,34 @@ class LinearGaussianSSM(SSM):
 
     The model is defined as follows
 
-    $$p(x_1) = \mathcal{N}(x_1 \mid m, S)$$
-    $$p(x_t \mid x_{t-1}, u_t) = \mathcal{N}(x_t \mid F_t x_{t-1} + B_t u_t + b_t, Q_t)$$
-    $$p(y_t \mid x_t) = \mathcal{N}(y_t \mid H_t x_t + D_t u_t + d_t, R_t)$$
+    $$p(z_1) = \mathcal{N}(z_1 \mid m, S)$$
+    $$p(z_t \mid z_{t-1}, u_t) = \mathcal{N}(z_t \mid F_t z_{t-1} + B_t u_t + b_t, Q_t)$$
+    $$p(y_t \mid z_t) = \mathcal{N}(y_t \mid H_t z_t + D_t u_t + d_t, R_t)$$
 
     where
 
-    * $x_t$ is a latent state of size `state_dim`,
+    * $z_t$ is a latent state of size `state_dim`,
     * $y_t$ is an emission of size `emission_dim`
     * $u_t$ is an input of size `input_dim` (defaults to 0)
 
     The parameters of the model are stored in a :class:`ParamsLGSSM`.
     You can create the parameters manually, or by calling :meth:`initialize`.
 
-    :param state_dim: _description_
-    :param emission_dim: _description_
-    :param input_dim: _description_. Defaults to 0.
-    :param has_dynamics_bias: _description_. Defaults to True.
-    :param has_emissions_bias: _description_. Defaults to True.
+    :param state_dim: Dimensionality of latent state.
+    :param emission_dim: Dimensionality of observation vector.
+    :param input_dim: Dimensionality of input vector. Defaults to 0.
+    :param has_dynamics_bias: Whether model contains an offset term b. Defaults to True.
+    :param has_emissions_bias:  Whether model contains an offset term d. Defaults to True.
 
     """
-    def __init__(self,
-                 state_dim: int,
-                 emission_dim: int,
-                 input_dim: int=0,
-                 has_dynamics_bias: bool=True,
-                 has_emissions_bias: bool=True):
+    def __init__(
+        self,
+        state_dim: int,
+        emission_dim: int,
+        input_dim: int=0,
+        has_dynamics_bias: bool=True,
+        has_emissions_bias: bool=True
+    ):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
         self.input_dim = input_dim
@@ -72,8 +77,8 @@ class LinearGaussianSSM(SSM):
 
     def initialize(
         self,
-        key: jr.PRNGKey =jr.PRNGKey(0),
-        initial_mean=None,
+        key: PRNGKey =jr.PRNGKey(0),
+        initial_mean: Optional[Float[Array, "state_dim"]]=None,
         initial_covariance=None,
         dynamics_weights=None,
         dynamics_bias=None,
@@ -84,7 +89,24 @@ class LinearGaussianSSM(SSM):
         emission_input_weights=None,
         emission_covariance=None
     ) -> Tuple[ParamsLGSSM, ParamsLGSSM]:
-        """Initialize the model parameters and their corresponding properties."""
+        """Initialize the model parameters and their corresponding properties.
+
+        Args:
+            key: Random number key. Defaults to jr.PRNGKey(0).
+            initial_mean: _description_. Defaults to None.
+            initial_covariance: _description_. Defaults to None.
+            dynamics_weights: _description_. Defaults to None.
+            dynamics_bias: _description_. Defaults to None.
+            dynamics_input_weights: _description_. Defaults to None.
+            dynamics_covariance: _description_. Defaults to None.
+            emission_weights: _description_. Defaults to None.
+            emission_bias: _description_. Defaults to None.
+            emission_input_weights: _description_. Defaults to None.
+            emission_covariance: _description_. Defaults to None.
+
+        Returns:
+            Parameters and their properties.
+        """
 
         # Arbitrary default values, for demo purposes.
         _initial_mean = jnp.zeros(self.state_dim)

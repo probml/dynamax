@@ -6,8 +6,7 @@ from typing import Optional, Union
 from typing_extensions import Protocol
 from jaxtyping import Array, Float
 
-# Type aliases
-Scalar = Union[float, Float[Array, ""]] # python float or scalar jax device array with dtype float
+from dynamax.types import PRNGKey, Scalar
 
 class ParameterSet(Protocol):
     """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.
