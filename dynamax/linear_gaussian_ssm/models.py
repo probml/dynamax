@@ -189,46 +189,32 @@ class LinearGaussianSSM(SSM):
             mean += params.emissions.bias
         return MVN(mean, params.emissions.cov)
 
-
-    def log_prior(
-        self,
-        params: ParamsLGSSM
-    ) -> float:
-        """Return the log prior probability of model parameters."""
-        return 0.0
-
-    @classmethod
+    @staticmethod
     def marginal_log_prob(
-        cls,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> float:
-        """Compute log marginal likelihood of observations."""
         filtered_posterior = lgssm_filter(params, emissions, inputs)
         return filtered_posterior.marginal_loglik
 
-    @classmethod
+    @staticmethod
     def filter(
-        cls,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> PosteriorLGSSMFiltered:
-        """Compute filtering distribution."""
         return lgssm_filter(params, emissions, inputs)
 
-    @classmethod
+    @staticmethod
     def smoother(
-        cls,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> PosteriorLGSSMSmoothed:
-        """Compute smoothing distribution."""
         return lgssm_smoother(params, emissions, inputs)
 
-    @classmethod
+    @staticmethod
     def posterior_sample(
         cls,
         key: jr.PRNGKey,
