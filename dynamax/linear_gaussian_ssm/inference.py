@@ -174,14 +174,7 @@ def _condition_on(m, P, H, D, d, R, u, y):
 
 
 def preprocess_args(f):
-    """Preprocess the parameters and inputs in case some
-    are set to None.
-
-    Args:
-        params (_type_): _description_
-        num_timesteps (_type_): _description_
-        inputs (_type_): _description_
-    """
+    """Preprocess the parameters and inputs in case some are set to None."""
     sig = inspect.signature(f)
 
     @wraps(f)
@@ -240,13 +233,15 @@ def lgssm_filter(
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> PosteriorLGSSMFiltered:
-    """Run a Kalman filter to produce the marginal likelihood and filtered state
-    estimates.
+    """Run a Kalman filter to produce the marginal likelihood and filtered state estimates.
 
     Args:
         params: model parameters
         emissions: array of observations.
-        inputs: array of inputs.
+        inputs: optional array of inputs.
+    
+    Returns:
+        post: filtered posterior object.
 
     """
     num_timesteps = len(emissions)
@@ -298,6 +293,9 @@ def lgssm_smoother(
         params: an LGSSMParams instance (or object with the same fields)
         emissions: array of observations.
         inputs: array of inputs.
+
+    Returns:
+        post: smoothed posterior object.
 
     """
     num_timesteps = len(emissions)
@@ -353,21 +351,21 @@ def lgssm_smoother(
 
 
 def lgssm_posterior_sample(
-    key: jr.PRNGKey,
+    key: PRNGKey,
     params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> Float[Array, "ntime state_dim"]:
-    """Run forward-filtering, backward-sampling to draw samples from $p(x_{1:T} | y_{1:T}, u_{1:T})$.
+    """Run forward-filtering, backward-sampling to draw samples from $p(z_{1:T} | y_{1:T}, u_{1:T})$.
 
     Args:
-        key:
-        params:
-        emissions:
-        inputs:
+        key: random number key.
+        params: parameters.
+        emissions: sequence of observations.
+        inputs: optional sequence of inptus.
 
     Returns:
-        states: one sample of $x_{1:T}$ from the posterior distribution on latent states.
+        states: one sample of $z_{1:T}$ from the posterior distribution on latent states.
     """
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs

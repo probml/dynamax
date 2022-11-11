@@ -4,7 +4,7 @@ from jax import jit
 import jax.numpy as jnp
 import jax.random as jr
 from jax.tree_util import tree_map
-from jaxtyping import Array, Float
+from jaxtyping import Array, Float, PyTree
 import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from typing import Any, Optional, Tuple
@@ -14,7 +14,7 @@ from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
-from dynamax.parameters import ParameterProperties
+from dynamax.parameters import ParameterProperties, ParameterSet
 from dynamax.types import PRNGKey, Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
 from dynamax.utils.distributions import MatrixNormalInverseWishart as MNIW
@@ -89,23 +89,24 @@ class LinearGaussianSSM(SSM):
         emission_input_weights=None,
         emission_covariance=None
     ) -> Tuple[ParamsLGSSM, ParamsLGSSM]:
-        """Initialize the model parameters and their corresponding properties.
+        """Initialize model parameters that are set to None, and their corresponding properties.
 
         Args:
             key: Random number key. Defaults to jr.PRNGKey(0).
-            initial_mean: _description_. Defaults to None.
-            initial_covariance: _description_. Defaults to None.
-            dynamics_weights: _description_. Defaults to None.
-            dynamics_bias: _description_. Defaults to None.
-            dynamics_input_weights: _description_. Defaults to None.
-            dynamics_covariance: _description_. Defaults to None.
-            emission_weights: _description_. Defaults to None.
-            emission_bias: _description_. Defaults to None.
-            emission_input_weights: _description_. Defaults to None.
-            emission_covariance: _description_. Defaults to None.
+            initial_mean: parameter $m$. Defaults to None.
+            initial_covariance: parameter $S$. Defaults to None.
+            dynamics_weights: parameter $F$. Defaults to None.
+            dynamics_bias: parameter $b$. Defaults to None.
+            dynamics_input_weights: parameter $B$. Defaults to None.
+            dynamics_covariance: parameter $Q$. Defaults to None.
+            emission_weights: parameter $H$. Defaults to None.
+            emission_bias: parameter $d$. Defaults to None.
+            emission_input_weights: parameter $D$. Defaults to None.
+            emission_covariance: parameter $R$. Defaults to None.
 
         Returns:
-            Parameters and their properties.
+            params: parameter object.
+            props: parameter properties object.
         """
 
         # Arbitrary default values, for demo purposes.
@@ -189,49 +190,52 @@ class LinearGaussianSSM(SSM):
             mean += params.emissions.bias
         return MVN(mean, params.emissions.cov)
 
-    @staticmethod
     def marginal_log_prob(
+        self,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
-    ) -> float:
+    ) -> Scalar:
         filtered_posterior = lgssm_filter(params, emissions, inputs)
         return filtered_posterior.marginal_loglik
 
-    @staticmethod
     def filter(
+        self,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> PosteriorLGSSMFiltered:
         return lgssm_filter(params, emissions, inputs)
 
-    @staticmethod
     def smoother(
+        self,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> PosteriorLGSSMSmoothed:
         return lgssm_smoother(params, emissions, inputs)
 
-    @staticmethod
     def posterior_sample(
-        cls,
-        key: jr.PRNGKey,
+        self,
+        key: PRNGKey,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> Float[Array, "ntime state_dim"]:
         return lgssm_posterior_sample(key, params, emissions, inputs)
 
-    @classmethod
     def posterior_predictive(
-        cls,
+        self,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> Tuple[Float[Array, "ntime emission_dim"], Float[Array, "ntime emission_dim"]]:
-        """Compute marginal posterior predictive for each observation.
+        """Compute marginal posterior predictive smoothing distribution for each observation.
+
+        Args:
+            params: model parameters.
+            emissions: sequence of observations.
+            inputs: optional sequence of inputs.
 
         Returns:
             means: (T,D) array of E[Y(t,d) | Y(1:T)]
@@ -255,9 +259,6 @@ class LinearGaussianSSM(SSM):
         emissions: Float[Array, "nseq ntime emission_dim"],
         inputs: Optional[Float[Array, "nseq ntime input_dim"]]=None
     ) -> Tuple[SuffStatsLGSSM, float]:
-        """The E-step computes sums of expected sufficient statistics under the
-        posterior. In the generic case, we simply return the posterior itself.
-        """
         num_timesteps = emissions.shape[0]
         if inputs is None:
             inputs = jnp.zeros((num_timesteps, 0))
@@ -361,11 +362,19 @@ class LinearGaussianSSM(SSM):
 class LinearGaussianConjugateSSM(LinearGaussianSSM):
     """
     Linear Gaussian State Space Model with conjugate priors for the model parameters.
-    The parameters are the same as LG-SSM.
-    The priors are as follows:
-    p(m, S) = NIW(loc, mean_concentration, df, scale) # normal inverse wishart
-    p([F, B, b], Q) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart
-    p([H, D, d], R) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart
+
+    The parameters are the same as LG-SSM. The priors are as follows:
+    
+    * p(m, S) = NIW(loc, mean_concentration, df, scale) # normal inverse wishart
+    * p([F, B, b], Q) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart
+    * p([H, D, d], R) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart
+
+    :param state_dim: Dimensionality of latent state.
+    :param emission_dim: Dimensionality of observation vector.
+    :param input_dim: Dimensionality of input vector. Defaults to 0.
+    :param has_dynamics_bias: Whether model contains an offset term b. Defaults to True.
+    :param has_emissions_bias:  Whether model contains an offset term d. Defaults to True.
+
     """
     def __init__(self,
                  state_dim,
@@ -409,11 +418,10 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
     def covariates_shape(self):
         return dict(inputs=(self.input_dim,)) if self.input_dim > 0 else dict()
 
-    def log_prior(self, params):
-        """Return the log prior probability of any model parameters.
-        Returns:
-            lp (Scalar): log prior probability.
-        """
+    def log_prior(
+        self,
+        params: ParamsLGSSM
+    ) -> Scalar:
         lp = self.initial_prior.log_prob((params.initial.cov, params.initial.mean))
 
         # dynamics
@@ -430,10 +438,19 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         lp += self.emission_prior.log_prob((params.emissions.cov, emission_matrix))
         return lp
 
-    def initialize_m_step_state(self, params, props):
+    def initialize_m_step_state(
+        self,
+        params: ParamsLGSSM,
+        props: ParamsLGSSM
+    ) -> Any:
         return None
 
-    def m_step(self, params, props, batch_stats, m_step_state):
+    def m_step(
+        self,
+        params: ParamsLGSSM,
+        props: ParamsLGSSM,
+        batch_stats: SuffStatsLGSSM,
+        m_step_state: Any):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
         init_stats, dynamics_stats, emission_stats = stats
@@ -461,8 +478,26 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         )
         return params, m_step_state
 
-    def fit_blocked_gibbs(self, key, initial_params, sample_size, emissions, inputs=None):
-        """Estimation using blocked-Gibbs sampler."""
+    def fit_blocked_gibbs(
+        self,
+        key: PRNGKey,
+        initial_params: ParamsLGSSM,
+        sample_size: int,
+        emissions: Float[Array, "nbatch ntime emission_dim"],
+        inputs: Optional[Float[Array, "nbatch ntime input_dim"]]=None
+    ) -> ParamsLGSSM:
+        """Estimate parameter posterior using block-Gibbs sampler.
+        
+        Args:
+            key: random number key.
+            initial_params: starting parameters.
+            sample_size: how many samples to draw.
+            emissions: set of observation sequences.
+            inputs: optional set of input sequences.
+
+        Returns:
+            parameter object, where each field has `sample_size` copies as leading batch dimension.
+        """
         num_timesteps = len(emissions)
 
         if inputs is None:
