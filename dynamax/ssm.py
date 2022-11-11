@@ -14,14 +14,10 @@ from typing_extensions import Protocol
 
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.parameters import ParameterSet, PropertySet
+from dynamax.types import PRNGKey, Scalar
 from dynamax.utils.optimize import run_sgd
 from dynamax.utils.utils import ensure_array_has_batch_dim
 
-# Type aliases
-import jax._src.random as prng
-PRNGKey = prng.KeyArray
-
-Scalar = Union[float, Float[Array, ""]] # python float or scalar jax device array with dtype float
 
 class Posterior(Protocol):
     """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.

@@ -9,7 +9,7 @@ from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union
 
 from dynamax.parameters import ParameterProperties
-
+from dynamax.types import PRNGKey, Scalar
 
 class ParamsLGSSMInitial(NamedTuple):
     """Parameters of the initial distribution
@@ -239,7 +239,7 @@ def lgssm_filter(
     params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> PosteriorLGSSMFiltered:
+) -> PosteriorLGSSMFiltered:
     """Run a Kalman filter to produce the marginal likelihood and filtered state
     estimates.
 
@@ -289,7 +289,7 @@ def lgssm_smoother(
     params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> PosteriorLGSSMSmoothed:
+) -> PosteriorLGSSMSmoothed:
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -357,7 +357,7 @@ def lgssm_posterior_sample(
     params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> Float[Array, "ntime state_dim"]:
+) -> Float[Array, "ntime state_dim"]:
     """Run forward-filtering, backward-sampling to draw samples from $p(x_{1:T} | y_{1:T}, u_{1:T})$.
 
     Args:
