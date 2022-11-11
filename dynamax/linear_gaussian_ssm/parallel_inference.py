@@ -9,7 +9,7 @@ from jaxtyping import Array, Float
 
 from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed, ParamsLGSSM
 
-def make_associative_filtering_elements(params, emissions):
+def _make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
 
     def _first_filtering_element(params, y):
@@ -76,7 +76,7 @@ def lgssm_filter(
     Note: This function does not yet handle `inputs` to the system.
     """
     #TODO: Add input handling.
-    initial_elements = make_associative_filtering_elements(params, emissions)
+    initial_elements = _make_associative_filtering_elements(params, emissions)
 
     @vmap
     def filtering_operator(elem1, elem2):
@@ -116,7 +116,7 @@ def lgssm_filter(
 
 
 
-def make_associative_smoothing_elements(params, filtered_means, filtered_covariances):
+def _make_associative_smoothing_elements(params, filtered_means, filtered_covariances):
     """Preprocess filtering output to construct input for smoothing assocative scan."""
 
     def _last_smoothing_element(m, P):
@@ -157,7 +157,7 @@ def lgssm_smoother(
     filtered_posterior = lgssm_filter(params, emissions)
     filtered_means = filtered_posterior.filtered_means
     filtered_covs = filtered_posterior.filtered_covariances
-    initial_elements = make_associative_smoothing_elements(params, filtered_means, filtered_covs)
+    initial_elements = _make_associative_smoothing_elements(params, filtered_means, filtered_covs)
 
     @vmap
     def smoothing_operator(elem1, elem2):
