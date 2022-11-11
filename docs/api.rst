@@ -1,7 +1,3 @@
-
-API
-===
-
 State Space Model (Base class)
 ===============================
 
@@ -23,14 +19,34 @@ aliases for immutable datastructures (in our case,  :class:`NamedTuple`).
 Hidden Markov Model
 ===================
 
-High-level class
-----------------
+High-level classes
+------------------
 
 .. autoclass:: dynamax.hidden_markov_model.HMM
-  :members:
+.. autoclass:: dynamax.hidden_markov_model.BernoulliHMM
+.. autoclass:: dynamax.hidden_markov_model.CategoricalHMM
+.. autoclass:: dynamax.hidden_markov_model.GaussianHMM
+.. autoclass:: dynamax.hidden_markov_model.DiagonalGaussianHMM
+.. autoclass:: dynamax.hidden_markov_model.SphericalGaussianHMM
+.. autoclass:: dynamax.hidden_markov_model.SharedCovarianceGaussianHMM
+.. autoclass:: dynamax.hidden_markov_model.LowRankGaussianHMM
+.. autoclass:: dynamax.hidden_markov_model.MultinomialHMM
+.. autoclass:: dynamax.hidden_markov_model.PoissonHMM
+
+.. autoclass:: dynamax.hidden_markov_model.GaussianMixtureHMM
+.. autoclass:: dynamax.hidden_markov_model.DiagonalGaussianMixtureHMM
+
+.. autoclass:: dynamax.hidden_markov_model.LinearRegressionHMM
+.. autoclass:: dynamax.hidden_markov_model.LinearAutoregressiveHMM
+.. autoclass:: dynamax.hidden_markov_model.LogisticRegressionHMM
+.. autoclass:: dynamax.hidden_markov_model.CategoricalRegressionHMM
+
 
 Low-level inference
 -------------------
+
+.. autoclass:: dynamax.hidden_markov_model.HMMPosterior
+.. autoclass:: dynamax.hidden_markov_model.HMMPosteriorFiltered
 
 .. autofunction:: dynamax.hidden_markov_model.hmm_filter
 .. autofunction:: dynamax.hidden_markov_model.hmm_smoother
