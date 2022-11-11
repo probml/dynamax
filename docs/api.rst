@@ -43,6 +43,16 @@ Low-level inference
 .. autofunction:: dynamax.linear_gaussian_ssm.lgssm_smoother
 .. autofunction:: dynamax.linear_gaussian_ssm.lgssm_posterior_sample
 
+Types
+-----
+
+.. autoclass:: dynamax.linear_gaussian_ssm.ParamsLGSSM
+.. autoclass:: dynamax.linear_gaussian_ssm.ParamsLGSSMInitial
+.. autoclass:: dynamax.linear_gaussian_ssm.ParamsLGSSMDynamics
+.. autoclass:: dynamax.linear_gaussian_ssm.ParamsLGSSMEmissions
+.. autoclass:: dynamax.linear_gaussian_ssm.PosteriorLGSSMFiltered
+.. autoclass:: dynamax.linear_gaussian_ssm.PosteriorLGSSMSmoothed
+
 Nonlinear Gaussian GSSM
 ========================
 

@@ -172,14 +172,18 @@ def extended_kalman_smoother(
 
     Args:
         params: an NLGSSMParams instance (or object with the same fields)
+
         emissions (T,D_hid): array of observations.
+
         filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.
-            If None, the smoother computes the filtered posterior directly.
+        If None, the smoother computes the filtered posterior directly.
+
         inputs (T,D_in): array of inputs.
 
     Returns:
+
         nlgssm_posterior: GSSMPosterior instance containing properties of
-            filtered and smoothed posterior distributions.
+        filtered and smoothed posterior distributions.
 
     """
     num_timesteps = len(emissions)
