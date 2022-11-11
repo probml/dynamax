@@ -3,6 +3,21 @@ from jax import lax
 from jax.tree_util import tree_reduce, tree_map, register_pytree_node_class
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from typing import Optional
+from typing_extensions import Protocol
+
+
+# Type aliases
+class ParameterSet(Protocol):
+    """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.
+
+    """
+    pass
+
+class PropertySet(Protocol):
+    """A matching :class:`NamedTuple` with :class:`ParameterProperties` stored in the leaf nodes.
+
+    """
+    pass
 
 
 @register_pytree_node_class

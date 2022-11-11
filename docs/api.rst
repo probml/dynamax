@@ -8,6 +8,18 @@ State Space Model (Base class)
 .. autoclass:: dynamax.ssm.SSM
   :members:
 
+Parameters
+----------
+
+Parameters and their associated properties are stored as :class:`jax.DeviceArray`
+and :class:`dynamax.parameters.ParameterProperties`, respectively. They are bundled together into a
+:class:`dynamax.parameters.ParameterSet` and a :class:`dynamax.parameters.PropertySet`, which are simply
+aliases for immutable datastructures (in our case,  :class:`NamedTuple`).
+
+.. autoclass:: dynamax.parameters.ParameterSet
+.. autoclass:: dynamax.parameters.PropertySet
+.. autoclass:: dynamax.parameters.ParameterProperties
+
 Hidden Markov Model
 ===================
 

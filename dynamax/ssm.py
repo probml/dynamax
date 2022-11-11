@@ -4,11 +4,15 @@ from fastprogress.fastprogress import progress_bar
 from functools import partial
 import jax.numpy as jnp
 import jax.random as jr
-import optax
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
+from jaxtyping import Float, Array
+import optax
+from typing import Optional
+
 
 from dynamax.parameters import to_unconstrained, from_unconstrained
+from dynamax.parameters import ParameterSet, PropertySet
 from dynamax.utils.optimize import run_sgd
 from dynamax.utils.utils import ensure_array_has_batch_dim
 
@@ -17,9 +21,7 @@ class SSM(ABC):
     """A base class for state space models. Such models consist of parameters, which
     we may learn, as well as hyperparameters, which specify static properties of the
     model. This base class allows parameters to be indicated a standardized way
-    so that they can easily be converted to/from unconstrained form. It also uses
-    these parameters to implement the tree_flatten and tree_unflatten methods necessary
-    to register a model as a JAX PyTree.
+    so that they can easily be converted to/from unconstrained form for optimization.
     """
 
     @abstractmethod
@@ -69,7 +71,11 @@ class SSM(ABC):
         """
         return None
 
-    def sample(self, params, key, num_timesteps, inputs=None):
+    def sample(self,
+               params: ParameterSet,
+               key: jr.PRNGKey,
+               num_timesteps: int,
+               inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None):
         """Sample a sequence of latent states and emissions.
 
         Args:
@@ -101,7 +107,11 @@ class SSM(ABC):
         emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
         return states, emissions
 
-    def log_prob(self, params, states, emissions, inputs=None):
+    def log_prob(self,
+                 params: ParameterSet,
+                 states: Float[Array, "num_timesteps state_dim"],
+                 emissions: Float[Array, "num_timesteps emission_dim"],
+                 inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None):
         """Compute the log joint probability of the states and observations"""
 
         def _step(carry, args):
@@ -125,7 +135,7 @@ class SSM(ABC):
         (lp, _), _ = lax.scan(_step, (lp, initial_state), (next_states, next_emissions, next_inputs))
         return lp
 
-    def log_prior(self, params):
+    def log_prior(self, params: ParameterSet):
         """Return the log prior probability of any model parameters.
 
         Returns:
@@ -133,7 +143,13 @@ class SSM(ABC):
         """
         return 0.0
 
-    def fit_em(self, params, props, emissions, inputs=None, num_iters=50, verbose=True):
+    def fit_em(self,
+               params: ParameterSet,
+               props: PropertySet,
+               emissions: Float[Array, "num_timesteps emission_dim"],
+               inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
+               num_iters: int=50,
+               verbose: bool=True):
         """Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM)."""
         # Make sure the emissions and inputs have batch dimensions
         batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
@@ -156,15 +172,15 @@ class SSM(ABC):
         return params, jnp.array(log_probs)
 
     def fit_sgd(self,
-                params,
-                props,
-                emissions,
-                inputs=None,
-                optimizer=optax.adam(1e-3),
-                batch_size=1,
-                num_epochs=50,
-                shuffle=False,
-                key=jr.PRNGKey(0)):
+                params: ParameterSet,
+                props: PropertySet,
+                emissions: Float[Array, "num_timesteps emission_dim"],
+                inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
+                optimizer: optax.GradientTransformation=optax.adam(1e-3),
+                batch_size: int=1,
+                num_epochs: int=50,
+                shuffle: bool=False,
+                key: jr.PRNGKey=jr.PRNGKey(0)):
         """Compute parameter MLE/ MAP estimate using Stochastic gradient descent (SGD).
 
         Fit this HMM by running SGD on the marginal log likelihood.
