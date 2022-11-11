@@ -8,7 +8,7 @@ import jax.numpy as jnp
 from jaxtyping import Array, Float
 from typing import Tuple, Union
 
-from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
+from dynamax.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM, NonlinearGaussianSSM
 from dynamax.parameters import ParameterProperties

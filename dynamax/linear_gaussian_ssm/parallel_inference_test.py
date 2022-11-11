@@ -1,9 +1,9 @@
 import jax.numpy as jnp
 import jax.random as jr
 
-from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
-from dynamax.linear_gaussian_ssm.inference import lgssm_smoother as serial_lgssm_smoother
-from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_smoother as parallel_lgssm_smoother
+from dynamax.linear_gaussian_ssm import LinearGaussianSSM
+from dynamax.linear_gaussian_ssm import lgssm_smoother as serial_lgssm_smoother
+from dynamax.linear_gaussian_ssm import parallel_lgssm_smoother
 
 class TestParallelLGSSMSmoother:
     """ Compare parallel and serial lgssm smoothing implementations."""

@@ -4,7 +4,7 @@ import tensorflow_probability.substrates.jax as tfp
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.ssm import SSM
-from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
+from dynamax.linear_gaussian_ssm import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
