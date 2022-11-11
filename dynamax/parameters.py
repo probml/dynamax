@@ -2,9 +2,11 @@ import jax.numpy as jnp
 from jax import lax
 from jax.tree_util import tree_reduce, tree_map, register_pytree_node_class
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from typing import Optional
+from typing import Optional, Union
 from typing_extensions import Protocol
+from jaxtyping import Array, Float
 
+Scalar = Union[float, Float[Array, ""]] # python float or scalar jax device array with dtype float
 
 # Type aliases
 class ParameterSet(Protocol):
@@ -46,7 +48,7 @@ class ParameterProperties:
         return cls(*aux_data)
 
 
-def to_unconstrained(params, props):
+def to_unconstrained(params: ParameterSet, props: PropertySet) -> ParameterSet:
     """Convert the constrained parameters to unconstrained form.
 
     Args:
@@ -66,7 +68,7 @@ def to_unconstrained(params, props):
     return tree_map(to_unc, params, props, is_leaf=is_leaf)
 
 
-def from_unconstrained(unc_params, props):
+def from_unconstrained(unc_params: ParameterSet, props: PropertySet) -> ParameterSet:
     """Convert the unconstrained parameters to constrained form.
 
     Args:
@@ -92,7 +94,7 @@ def from_unconstrained(unc_params, props):
     return tree_map(from_unc, unc_params, props, is_leaf=is_leaf)
 
 
-def log_det_jac_constrain(params, props):
+def log_det_jac_constrain(params: ParameterSet, props: PropertySet) -> Scalar:
     """Log determinant of the Jacobian matrix evaluated at the unconstrained parameters.
 
     Let x be the unconstrained parameter and f(x) be the constrained parameter, so
