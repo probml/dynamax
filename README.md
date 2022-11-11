@@ -82,9 +82,9 @@ $$p(y_{1:T}, z_{1:T} | u_{1:T}) = p(z_1 | u_1) p(y_1 | z_1, u_1) \prod_{t=1}^T p
 
 Here $p(z_t | z_{t-1}, u_t)$ is called the transition or dynamics model,
 and $p(y_t | z_{t}, u_t)$ is called the observation or emission model.
-(In both cases, the inputs $u_t$ are optional; furthermore, the
+In both cases, the inputs $u_t$ are optional; furthermore, the
 observation model may have auto-regressive dependencies, in which case
-we write $p(y_t | z_{t}, u_t, y_{1:t-1})$.)
+we write $p(y_t | z_{t}, u_t, y_{1:t-1})$.
 
 We assume that we see the observations $y_{1:T}$, and want to infer the
 hidden states, either using online filtering (i.e., computing
