@@ -188,11 +188,11 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         def one_sample(_params, rng):
             rngs = jr.split(rng, 2)
             # Sample latent states
-            states = lgssm_posterior_sample(rngs[0], self.to_inference_args(_params), emissions, inputs)
+            states = lgssm_posterior_sample(rngs[0], _params, emissions, inputs)
             # Sample parameters
             _stats = sufficient_stats_from_sample(states)
-            new_param = self.from_inference_args(lgssm_params_sample(rngs[1], _stats))
-            return new_param
+            return lgssm_params_sample(rngs[1], _stats)
+
 
         sample_of_params = []
         keys = iter(jr.split(key, sample_size))
