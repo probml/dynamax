@@ -6,9 +6,10 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
-from jaxtyping import Float, Array, Num
+from jaxtyping import Float, Array
 import optax
-from typing import Optional, Any, Union, Tuple
+from tensorflow_probability.substrates.jax import distributions as tfd
+from typing import Optional, Union, Tuple
 from typing_extensions import Protocol
 
 from dynamax.parameters import to_unconstrained, from_unconstrained
@@ -28,6 +29,7 @@ class Posterior(Protocol):
     """
     pass
 
+
 class SSM(ABC):
     """A base class for state space models. Such models consist of parameters, which
     we may learn, as well as hyperparameters, which specify static properties of the
@@ -36,49 +38,75 @@ class SSM(ABC):
     """
 
     @abstractmethod
-    def initial_distribution(self, params, inputs=None):
+    def initial_distribution(self,
+                             params: ParameterSet,
+                             inputs: Optional[Float[Array, "input_dim"]]) \
+                                 -> tfd.Distribution:
         """Return an initial distribution over latent states.
 
+        Args:
+            params: model parameters $\\theta$
+            state: current latent state $z_t$
+            inputs: current inputs  $u_t$
+
         Returns:
-            dist (tfd.Distribution): distribution over initial latent state.
+            dist: distribution over initial latent state, $p(z_1 \mid \\theta)$.
+
         """
         raise NotImplementedError
 
     @abstractmethod
-    def transition_distribution(self, params, state, inputs=None):
+    def transition_distribution(self,
+                                params: ParameterSet,
+                                state: Float[Array, "state_dim"],
+                                inputs: Optional[Float[Array, "input_dim"]]) \
+                                    -> tfd.Distribution:
         """Return a distribution over next latent state given current state.
 
         Args:
-            state (PyTree): current latent state
+            params: model parameters $\\theta$
+            state: current latent state $z_t$
+            inputs: current inputs  $u_t$
+
         Returns:
-            dist (tfd.Distribution): conditional distribution of next latent state.
+            dist: conditional distribution of next latent state $p(z_{t+1} \mid z_t, u_t, \\theta)$.
+
         """
         raise NotImplementedError
 
     @abstractmethod
-    def emission_distribution(self, params, state, inputs=None):
+    def emission_distribution(self,
+                              params: ParameterSet,
+                              state: Float[Array, "state_dim"],
+                              inputs: Optional[Float[Array, "input_dim"]]=None) \
+                                  -> tfd.Distribution:
         """Return a distribution over emissions given current state.
 
         Args:
-            state (PyTree): current latent state.
+            params: model parameters $\\theta$
+            state: current latent state $z_t$
+            inputs: current inputs  $u_t$
+
         Returns:
-            dist (tfd.Distribution): conditional distribution of current emission.
+            dist: conditional distribution of current emission $p(y_t \mid z_t, u_t, \\theta)$
+
         """
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def emission_shape(self):
-        """Return a pytree matching the pytree of tuples specifying the shape(s)
-        of a single time step's emissions.
-        For example, a Gaussian HMM with D dimensional emissions would return (D,).
+    def emission_shape(self) -> Tuple[int]:
+        """Return a pytree matching the pytree of tuples specifying the shape of a single time step's emissions.
+
+        For example, a `GaussianHMM` with $D$ dimensional emissions would return `(D,)`.
+
         """
         raise NotImplementedError
 
     @property
-    def inputs_shape(self):
-        """Return a pytree matching the pytree of tuples specifying the shape(s)
-        of a single time step's inputs.
+    def inputs_shape(self) -> Optional[Tuple[int]]:
+        """Return a pytree matching the pytree of tuples specifying the shape of a single time step's inputs.
+
         """
         return None
 
@@ -113,16 +141,26 @@ class SSM(ABC):
     ) -> Posterior:
         """Compute smoothing distribution."""
         raise NotImplementedError
-        
 
-    def sample(
-        self,
-        params: ParameterSet,
-        key: PRNGKey,
-        num_timesteps: int,
-        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> Tuple[Num[Array, "ntime nstates"], Num[Array, "ntime emission_dim"]]:
-        """_summary_
+
+    def sample(self,
+               params: ParameterSet,
+               key: jr.PRNGKey,
+               num_timesteps: int,
+               inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+    )-> Tuple[Float[Array, "num_timesteps state_dim"],
+              Float[Array, "num_timesteps emission_dim"]]:
+        """Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\\theta$ and (optionally) inputs $u_{1:T}$.
+
+        Args:
+            params: model parameters $\\theta$
+            key: random number generator
+            num_timesteps: number of timesteps $T$
+            inputs: inputs $u_{1:T}$
+
+        Returns:
+            latent states and emissions
+
         """
         def _step(prev_state, args):
             key, inpt = args
