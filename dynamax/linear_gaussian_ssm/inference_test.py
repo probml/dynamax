@@ -4,7 +4,7 @@ import jax.numpy as jnp
 from functools import partial
 
 import tensorflow_probability.substrates.jax.distributions as tfd
-from dynamax.linear_gaussian_ssm.linear_gaussian_ssm import LinearGaussianSSM
+from dynamax.linear_gaussian_ssm import LinearGaussianSSM
 
 from dynamax.utils.utils import has_tpu
 
