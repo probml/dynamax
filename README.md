@@ -88,8 +88,8 @@ we write $p(y_t | z_{t}, u_t, y_{1:t-1})$.)
 
 We assume that we see the observations $y_{1:T}$, and want to infer the
 hidden states, either using online filtering (i.e., computing
-$p(z_t|y_{1:t})$) or offline smoothing (i.e., computing
-$p(z_t|y_{1:T})$). We may also be interested in predicting future
+$p(z_t|y_{1:t})$ ) or offline smoothing (i.e., computing
+$p(z_t|y_{1:T})$ ). We may also be interested in predicting future
 states, $p(z_{t+h}|y_{1:t})$, or future observations,
 $p(y_{t+h}|y_{1:t})$, where h is the forecast horizon. (Note that by
 using a hidden state to represent the past observations, the model can
