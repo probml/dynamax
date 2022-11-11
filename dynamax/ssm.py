@@ -35,6 +35,20 @@ class SSM(ABC):
     we may learn, as well as hyperparameters, which specify static properties of the
     model. This base class allows parameters to be indicated a standardized way
     so that they can easily be converted to/from unconstrained form for optimization.
+
+    Models that inherit from `SSM` must implement three key functions:
+
+    * :meth:`initial_distribution`, which returns the distribution over the initial state
+    * :meth:`transition_distribution`, which returns the conditional distribution over the next state given the current state
+    * :meth:`emission_distribution`, which returns the conditional distribution over the emission given the current state
+
+    Additionally, they must specify the shape of the emissions and inputs.
+    These properties are required for properly handling batches of data.
+
+    * :attr:`emission_shape` returns a tuple specification of the emission shape
+    * :attr:`inputs_shape` returns a tuple specification of the input shape, or `None` if there are no inputs.
+
+
     """
 
     @abstractmethod
@@ -50,7 +64,7 @@ class SSM(ABC):
             inputs: current inputs  $u_t$
 
         Returns:
-            dist: distribution over initial latent state, $p(z_1 \mid \\theta)$.
+            distribution over initial latent state, $p(z_1 \mid \\theta)$.
 
         """
         raise NotImplementedError
@@ -69,7 +83,7 @@ class SSM(ABC):
             inputs: current inputs  $u_t$
 
         Returns:
-            dist: conditional distribution of next latent state $p(z_{t+1} \mid z_t, u_t, \\theta)$.
+            conditional distribution of next latent state $p(z_{t+1} \mid z_t, u_t, \\theta)$.
 
         """
         raise NotImplementedError
@@ -88,7 +102,7 @@ class SSM(ABC):
             inputs: current inputs  $u_t$
 
         Returns:
-            dist: conditional distribution of current emission $p(y_t \mid z_t, u_t, \\theta)$
+            conditional distribution of current emission $p(y_t \mid z_t, u_t, \\theta)$
 
         """
         raise NotImplementedError
@@ -110,39 +124,7 @@ class SSM(ABC):
         """
         return None
 
-
-    # Convenience wrappers for the inference code
-    @abstractmethod
-    def marginal_log_prob(
-        self,
-        params: ParameterSet,
-        emissions: Float[Array, "ntime emission_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> Scalar:
-        """Compute log marginal likelihood of observations, i.e., log sum_{z(1:T)} p(y_{1:T},z_{1:T} | params)"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def filter(
-        self,
-        params: ParameterSet,
-        emissions: Float[Array, "ntime emission_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> Posterior:
-        """Compute filtering distribution."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def smoother(
-        self,
-        params: ParameterSet,
-        emissions: Float[Array, "ntime emission_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> Posterior:
-        """Compute smoothing distribution."""
-        raise NotImplementedError
-
-
+    # All SSMs support sampling
     def sample(self,
                params: ParameterSet,
                key: jr.PRNGKey,
@@ -227,6 +209,78 @@ class SSM(ABC):
         """
         return 0.0
 
+    # Some SSMs will implement these inference functions.
+    def marginal_log_prob(
+        self,
+        params: ParameterSet,
+        emissions: Float[Array, "ntime emission_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> Scalar:
+        """Compute log marginal likelihood of observations, $\log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \\theta)$.
+
+        Args:
+            params: model parameters $\\theta$
+            state: current latent state $z_t$
+            inputs: current inputs  $u_t$
+
+        Returns:
+            marginal log probability
+
+        """
+        raise NotImplementedError
+
+    def filter(
+        self,
+        params: ParameterSet,
+        emissions: Float[Array, "ntime emission_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> Posterior:
+        """Compute filtering distributions, $p(z_t \mid y_{1:t}, u_{1:t}, \\theta)$ for $t=1,\ldots,T$.
+
+        Args:
+            params: model parameters $\\theta$
+            state: current latent state $z_t$
+            inputs: current inputs  $u_t$
+
+        Returns:
+            filtering distributions
+
+        """
+        raise NotImplementedError
+
+    def smoother(
+        self,
+        params: ParameterSet,
+        emissions: Float[Array, "ntime emission_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> Posterior:
+        """Compute smoothing distribution, $p(z_t \mid y_{1:T}, u_{1:T}, \\theta)$ for $t=1,\ldots,T$.
+
+        Args:
+            params: model parameters $\\theta$
+            state: current latent state $z_t$
+            inputs: current inputs  $u_t$
+
+        Returns:
+            smoothing distributions
+
+        """
+        raise NotImplementedError
+
+    # Learning algorithms
+    def e_step(self, params, emissions, inputs=None):
+        """Perform an E-step to compute expected sufficient statistics under the posterior, $p(z_{1:T} \mid y_{1:T}, u_{1:T}, \\theta)$.
+
+        Args:
+            params: model parameters $\\theta$
+            emissions: emissions $y_{1:T}$
+            inputs: optional inputs $u_{1:T}$
+
+        Returns:
+            Expected sufficient statistics under the posterior.
+        """
+        raise NotImplementedError
+
     def fit_em(
         self,
         params: ParameterSet,
@@ -237,6 +291,7 @@ class SSM(ABC):
         verbose: bool=True
     ) -> Tuple[ParameterSet, Float[Array, "niter"]]:
         """Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM)."""
+
         # Make sure the emissions and inputs have batch dimensions
         batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
         batch_inputs = ensure_array_has_batch_dim(inputs, self.inputs_shape)
@@ -249,7 +304,6 @@ class SSM(ABC):
             return params, m_step_state, lp
 
         log_probs = []
-        params = params
         m_step_state = self.initialize_m_step_state(params, props)
         pbar = progress_bar(range(num_iters)) if verbose else range(num_iters)
         for _ in pbar:
@@ -261,8 +315,10 @@ class SSM(ABC):
         self,
         params: ParameterSet,
         props: PropertySet,
-        emissions: Float[Array, "num_timesteps emission_dim"],
-        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
+        emissions: Union[Float[Array, "num_timesteps emission_dim"],
+                         Float[Array, "num_batches num_timesteps emission_dim"]],
+        inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
+                               Float[Array, "num_batches num_timesteps input_dim"]]]=None,
         optimizer: optax.GradientTransformation=optax.adam(1e-3),
         batch_size: int=1,
         num_epochs: int=50,
@@ -271,11 +327,12 @@ class SSM(ABC):
     ) -> Tuple[ParameterSet, Float[Array, "niter"]]:
         """Compute parameter MLE/ MAP estimate using Stochastic gradient descent (SGD).
 
-        Fit this HMM by running SGD on the marginal log likelihood.
-        Note that batch_emissions is initially of shape (N,T)
-        where N is the number of independent sequences and
-        T is the length of a sequence. Then, a random susbet with shape (B, T)
-        of entire sequence, not time steps, is sampled at each step where B is
+        Fit the model by running SGD on the marginal log likelihood.
+
+        Note that batch_emissions is initially of shape `(N,T)`
+        where `N` is the number of independent sequences and
+        `T` is the length of a sequence. Then, a random susbet with shape `(B, T)`
+        of entire sequence, not time steps, is sampled at each step where `B` is
         batch size.
 
         Args:
