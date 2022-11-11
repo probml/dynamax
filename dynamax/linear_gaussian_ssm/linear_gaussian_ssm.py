@@ -73,7 +73,7 @@ class LinearGaussianSSM(SSM):
         return (self.emission_dim,)
 
     @property
-    def covariates_shape(self):
+    def inputs_shape(self):
         return (self.input_dim,) if self.input_dim > 0 else None
 
     def initialize(
