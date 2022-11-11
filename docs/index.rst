@@ -204,8 +204,7 @@ API documentation
 ==================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: API Documentation
+   :maxdepth: 3
 
    api
 
