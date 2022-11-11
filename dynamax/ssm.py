@@ -6,16 +6,27 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
-from jaxtyping import Float, Array
+from jaxtyping import Float, Array, Num
 import optax
-from typing import Optional
-
+from typing import Optional, Any, Union, Tuple
+from typing_extensions import Protocol
 
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.parameters import ParameterSet, PropertySet
 from dynamax.utils.optimize import run_sgd
 from dynamax.utils.utils import ensure_array_has_batch_dim
 
+# Type aliases
+import jax._src.random as prng
+PRNGKey = prng.KeyArray
+
+Scalar = Union[float, Float[Array, ""]] # python float or scalar jax device array with dtype float
+
+class Posterior(Protocol):
+    """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.
+
+    """
+    pass
 
 class SSM(ABC):
     """A base class for state space models. Such models consist of parameters, which
@@ -71,18 +82,48 @@ class SSM(ABC):
         """
         return None
 
-    def sample(self,
-               params: ParameterSet,
-               key: jr.PRNGKey,
-               num_timesteps: int,
-               inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None):
-        """Sample a sequence of latent states and emissions.
 
-        Args:
-            key: rng key
-            num_timesteps: length of sequence to generate
+    # Convenience wrappers for the inference code
+    @abstractmethod
+    def marginal_log_prob(
+        self,
+        params: ParameterSet,
+        emissions: Float[Array, "ntime emission_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> Scalar:
+        """Compute log marginal likelihood of observations, i.e., log sum_{z(1:T)} p(y_{1:T},z_{1:T} | params)"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def filter(
+        self,
+        params: ParameterSet,
+        emissions: Float[Array, "ntime emission_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> Posterior:
+        """Compute filtering distribution."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def smoother(
+        self,
+        params: ParameterSet,
+        emissions: Float[Array, "ntime emission_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    ) -> Posterior:
+        """Compute smoothing distribution."""
+        raise NotImplementedError
+        
+
+    def sample(
+        self,
+        params: ParameterSet,
+        key: PRNGKey,
+        num_timesteps: int,
+        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+    ) -> Tuple[Num[Array, "ntime nstates"], Num[Array, "ntime emission_dim"]]:
+        """_summary_
         """
-
         def _step(prev_state, args):
             key, inpt = args
             key1, key2 = jr.split(key, 2)
@@ -107,11 +148,13 @@ class SSM(ABC):
         emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
         return states, emissions
 
-    def log_prob(self,
-                 params: ParameterSet,
-                 states: Float[Array, "num_timesteps state_dim"],
-                 emissions: Float[Array, "num_timesteps emission_dim"],
-                 inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None):
+    def log_prob(
+        self,
+        params: ParameterSet,
+        states: Float[Array, "num_timesteps state_dim"],
+        emissions: Float[Array, "num_timesteps emission_dim"],
+        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+    ) -> Scalar:
         """Compute the log joint probability of the states and observations"""
 
         def _step(carry, args):
@@ -135,7 +178,10 @@ class SSM(ABC):
         (lp, _), _ = lax.scan(_step, (lp, initial_state), (next_states, next_emissions, next_inputs))
         return lp
 
-    def log_prior(self, params: ParameterSet):
+    def log_prior(
+        self,
+        params: ParameterSet
+    ) -> Scalar:
         """Return the log prior probability of any model parameters.
 
         Returns:
@@ -143,13 +189,15 @@ class SSM(ABC):
         """
         return 0.0
 
-    def fit_em(self,
-               params: ParameterSet,
-               props: PropertySet,
-               emissions: Float[Array, "num_timesteps emission_dim"],
-               inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
-               num_iters: int=50,
-               verbose: bool=True):
+    def fit_em(
+        self,
+        params: ParameterSet,
+        props: PropertySet,
+        emissions: Float[Array, "num_timesteps emission_dim"],
+        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
+        num_iters: int=50,
+        verbose: bool=True
+    ) -> Tuple[ParameterSet, Float[Array, "niter"]]:
         """Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM)."""
         # Make sure the emissions and inputs have batch dimensions
         batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
@@ -171,16 +219,18 @@ class SSM(ABC):
             log_probs.append(marginal_loglik)
         return params, jnp.array(log_probs)
 
-    def fit_sgd(self,
-                params: ParameterSet,
-                props: PropertySet,
-                emissions: Float[Array, "num_timesteps emission_dim"],
-                inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
-                optimizer: optax.GradientTransformation=optax.adam(1e-3),
-                batch_size: int=1,
-                num_epochs: int=50,
-                shuffle: bool=False,
-                key: jr.PRNGKey=jr.PRNGKey(0)):
+    def fit_sgd(
+        self,
+        params: ParameterSet,
+        props: PropertySet,
+        emissions: Float[Array, "num_timesteps emission_dim"],
+        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
+        optimizer: optax.GradientTransformation=optax.adam(1e-3),
+        batch_size: int=1,
+        num_epochs: int=50,
+        shuffle: bool=False,
+        key: PRNGKey=jr.PRNGKey(0)
+    ) -> Tuple[ParameterSet, Float[Array, "niter"]]:
         """Compute parameter MLE/ MAP estimate using Stochastic gradient descent (SGD).
 
         Fit this HMM by running SGD on the marginal log likelihood.
