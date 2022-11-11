@@ -73,7 +73,9 @@ process, possibly conditional on external inputs / controls /
 covariates, $u_t$, and generates an observation, $y_t$. This is
 illustrated in the graphical model below.
 
-![](docs/figures/LDS-UZY.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/probml/dynamax/main/docs/figures/LDS-UZY.png">
+</p>
 
 The corresponding joint distribution has the following form (in dynamax,
 we restrict attention to discrete time systems):
