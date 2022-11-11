@@ -239,8 +239,8 @@ class SSM(ABC):
         return lp
 
     # Some SSMs will implement these inference functions.
-    @staticmethod
     def marginal_log_prob(
+        self,
         params: ParameterSet,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
@@ -258,8 +258,8 @@ class SSM(ABC):
         """
         raise NotImplementedError
 
-    @staticmethod
     def filter(
+        self,
         params: ParameterSet,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
@@ -277,8 +277,8 @@ class SSM(ABC):
         """
         raise NotImplementedError
 
-    @staticmethod
     def smoother(
+        self,
         params: ParameterSet,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
