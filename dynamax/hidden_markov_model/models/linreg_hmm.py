@@ -136,18 +136,18 @@ class LinearRegressionHMMEmissions(HMMEmissions):
 
 
 class LinearRegressionHMM(HMM):
-    """An HMM whose emissions come from a linear regression with state-dependent weights.
+    r"""An HMM whose emissions come from a linear regression with state-dependent weights.
     This is also known as a *switching linear regression* model.
 
     Let $y_t \in \mathbb{R}^N$ and $u_t \in \mathbb{R}^M$ denote vector-valued emissions
     and inputs at time $t$, respectively. In this model, the emission distribution is,
 
-    $$p(y_t \mid z_t, u_t, \\theta) = \mathcal{N}(y_{t} \mid W_{z_t} u_t + b_{z_t}, \Sigma_{z_t})$$
+    $$p(y_t \mid z_t, u_t, \theta) = \mathcal{N}(y_{t} \mid W_{z_t} u_t + b_{z_t}, \Sigma_{z_t})$$
 
-    with *emission weights* $W_k \in \mathbb{R}^{N \\times M}$, *emission biases* $b_k \in \mathbb{R}^N$,
-    and *emission covariances* $\Sigma_k \in \mathbb{R}_{\succeq 0}^{N \\times N}$.
+    with *emission weights* $W_k \in \mathbb{R}^{N \times M}$, *emission biases* $b_k \in \mathbb{R}^N$,
+    and *emission covariances* $\Sigma_k \in \mathbb{R}_{\succeq 0}^{N \times N}$.
 
-    The emissions parameters are $\\theta = \{W_k, b_k, \Sigma_k\}_{k=1}^K$.
+    The emissions parameters are $\theta = \{W_k, b_k, \Sigma_k\}_{k=1}^K$.
 
     We do not place a prior on the emission parameters.
 
@@ -158,8 +158,8 @@ class LinearRegressionHMM(HMM):
     :param num_states: number of discrete states $K$
     :param input_dim: input dimension $M$
     :param emission_dim: emission dimension $N$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
 
     """
     def __init__(self,

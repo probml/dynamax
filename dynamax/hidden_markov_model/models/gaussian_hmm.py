@@ -560,28 +560,28 @@ class ParamsGaussianHMM(NamedTuple):
 
 
 class GaussianHMM(HMM):
-    """An HMM with multivariate normal (i.e. Gaussian) emissions.
+    r"""An HMM with multivariate normal (i.e. Gaussian) emissions.
 
     Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
     the emission distribution is,
 
-    $$p(y_t \mid z_t, \\theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma_{z_t})$$
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma_{z_t})$$
 
-    with $\\theta = \{\mu_k, \Sigma_k\}_{k=1}^K$ denoting the *emission means* and *emission covariances*.
+    with $\theta = \{\mu_k, \Sigma_k\}_{k=1}^K$ denoting the *emission means* and *emission covariances*.
 
     The model has a conjugate normal-inverse-Wishart_ prior,
 
-    $$p(\\theta) = \prod_{k=1}^K \mathcal{N}(\mu_k \mid \mu_0, \kappa_0^{-1} \Sigma_k) \mathrm{IW}(\Sigma_{k} \mid \\nu_0, \Psi_0)$$
+    $$p(\theta) = \prod_{k=1}^K \mathcal{N}(\mu_k \mid \mu_0, \kappa_0^{-1} \Sigma_k) \mathrm{IW}(\Sigma_{k} \mid \nu_0, \Psi_0)$$
 
     .. _normal-inverse-Wishart: https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution
 
     :param num_states: number of discrete states $K$
     :param emission_dim: number of conditionally independent emissions $N$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_concentration: $\kappa_0$
-    :param emission_prior_extra_df: $\\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.
+    :param emission_prior_extra_df: $\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.
     :param emission_prior_scale: $\Psi_0$
 
     """
@@ -647,32 +647,32 @@ class ParamsDiagonalGaussianHMM(NamedTuple):
 
 
 class DiagonalGaussianHMM(HMM):
-    """An HMM with conditionally independent normal (i.e. Gaussian) emissions.
+    r"""An HMM with conditionally independent normal (i.e. Gaussian) emissions.
 
     Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
     the emission distribution is,
 
-    $$p(y_t \mid z_t, \\theta) = \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t,n}, \sigma_{z_t,n}^2)$$
+    $$p(y_t \mid z_t, \theta) = \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t,n}, \sigma_{z_t,n}^2)$$
     or equivalently
-    $$p(y_t \mid z_t, \\theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \mathrm{diag}(\sigma_{z_t}^2))$$
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \mathrm{diag}(\sigma_{z_t}^2))$$
 
 
     where $\sigma_k^2 = [\sigma_{k,1}^2, \ldots, \sigma_{k,N}^2]$ are the *emission variances* of each
-    dimension in state $z_t=k$. The complete set of parameters is $\\theta = \{\mu_k, \sigma_k^2\}_{k=1}^K$.
+    dimension in state $z_t=k$. The complete set of parameters is $\theta = \{\mu_k, \sigma_k^2\}_{k=1}^K$.
 
     The model has a conjugate normal-inverse-gamma_ prior,
 
-    $$p(\\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathcal{N}(\mu_{k,n} \mid \mu_0, \kappa_0^{-1} \sigma_{k,n}^2) \mathrm{IGa}(\sigma_{k,n}^2 \mid \\alpha_0, \\beta_0)$$
+    $$p(\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathcal{N}(\mu_{k,n} \mid \mu_0, \kappa_0^{-1} \sigma_{k,n}^2) \mathrm{IGa}(\sigma_{k,n}^2 \mid \alpha_0, \beta_0)$$
 
     .. _normal-inverse-gamma: https://en.wikipedia.org/wiki/Normal-inverse-gamma_distribution
 
     :param num_states: number of discrete states $K$
     :param emission_dim: number of conditionally independent emissions $N$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_mean_concentration: $\kappa_0$
-    :param emission_prior_concentration: $\\alpha_0$
+    :param emission_prior_concentration: $\alpha_0$
     :param emission_prior_scale: $\\beta_0$
 
     """
@@ -738,33 +738,33 @@ class ParamsSphericalGaussianHMM(NamedTuple):
 
 
 class SphericalGaussianHMM(HMM):
-    """An HMM with conditionally independent normal emissions with the same variance along
+    r"""An HMM with conditionally independent normal emissions with the same variance along
     each dimension. These are called *spherical* Gaussian emissions.
 
     Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
     the emission distribution is,
 
-    $$p(y_t \mid z_t, \\theta) = \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t,n}, \sigma_{z_t}^2)$$
+    $$p(y_t \mid z_t, \theta) = \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t,n}, \sigma_{z_t}^2)$$
     or equivalently
-    $$p(y_t \mid z_t, \\theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \sigma_{z_t}^2 I)$$
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \sigma_{z_t}^2 I)$$
 
     where $\sigma_k^2$ is the *emission variance* in state $z_t=k$.
-    The complete set of parameters is $\\theta = \{\mu_k, \sigma_k^2\}_{k=1}^K$.
+    The complete set of parameters is $\theta = \{\mu_k, \sigma_k^2\}_{k=1}^K$.
 
     The model has a non-conjugate, factored prior
 
-    $$p(\\theta) = \prod_{k=1}^K \mathcal{N}(\mu_{k} \mid \mu_0, \Sigma_0) \mathrm{Ga}(\sigma_{k}^2 \mid \\alpha_0, \\beta_0)$$
+    $$p(\theta) = \prod_{k=1}^K \mathcal{N}(\mu_{k} \mid \mu_0, \Sigma_0) \mathrm{Ga}(\sigma_{k}^2 \mid \alpha_0, \beta_0)$$
 
     *Note: In future versions we may implement a conjugate prior for this model.*
 
     :param num_states: number of discrete states $K$
     :param emission_dim: number of conditionally independent emissions $N$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_mean_covariance: $\Sigma_0$
-    :param emission_var_concentration: $\\alpha_0$
-    :param emission_var_rate: $\\beta_0$
+    :param emission_var_concentration: $\alpha_0$
+    :param emission_var_rate: $\beta_0$
     :param m_step_optimizer: ``optax`` optimizer, like Adam.
     :param m_step_num_iters: number of optimizer steps per M-step.
 
@@ -835,30 +835,30 @@ class ParamsSharedCovarianceGaussianHMM(NamedTuple):
 
 
 class SharedCovarianceGaussianHMM(HMM):
-    """An HMM with multivariate normal (i.e. Gaussian) emissions where the covariance
+    r"""An HMM with multivariate normal (i.e. Gaussian) emissions where the covariance
     matrix is shared by all discrete states.
 
     Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
     the emission distribution is,
 
-    $$p(y_t \mid z_t, \\theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma)$$
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma)$$
 
     where $\Sigma$ is the *shared emission covariance*.
 
-    The complete set of parameters is $\\theta = (\{\mu_k\}_{k=1}^K, \Sigma)$.
+    The complete set of parameters is $\theta = (\{\mu_k\}_{k=1}^K, \Sigma)$.
 
     The model has a conjugate prior,
 
-    $$p(\\theta) = \mathrm{IW}(\Sigma \mid \\nu_0, \Psi_0) \prod_{k=1}^K \mathcal{N}(\mu_{k} \mid \mu_0, \kappa_0^{-1} \Sigma)$$
+    $$p(\theta) = \mathrm{IW}(\Sigma \mid \nu_0, \Psi_0) \prod_{k=1}^K \mathcal{N}(\mu_{k} \mid \mu_0, \kappa_0^{-1} \Sigma)$$
 
     :param num_states: number of discrete states $K$
     :param emission_dim: number of conditionally independent emissions $N$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_concentration: $\kappa_0$
     :param emission_prior_scale: $\Psi_0$
-    :param emission_prior_extra_df: $\\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.
+    :param emission_prior_extra_df: $\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.
 
     """
     def __init__(self, num_states: int,
@@ -922,34 +922,34 @@ class ParamsLowRankGaussianHMM(NamedTuple):
 
 
 class LowRankGaussianHMM(HMM):
-    """An HMM with multivariate normal (i.e. Gaussian) emissions where the covariance
+    r"""An HMM with multivariate normal (i.e. Gaussian) emissions where the covariance
     matrix is low rank plus diagonal.
 
     Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
     the emission distribution is,
 
-    $$p(y_t \mid z_t, \\theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma_{z_t})$$
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma_{z_t})$$
 
     where $\Sigma_k$ factors as,
 
-    $$\Sigma_k = U_k U_k^\\top + \mathrm{diag}(d_k)$$
+    $$\Sigma_k = U_k U_k^\top + \mathrm{diag}(d_k)$$
 
-    with *low rank factors* $U_k \in \mathbb{R}^{N \\times M}$ and
+    with *low rank factors* $U_k \in \mathbb{R}^{N \times M}$ and
     *diagonal factor* $d_k \in \mathbb{R}_+^{N}$.
 
-    The complete set of parameters is $\\theta = (\{\mu_k, U_k, d_k\}_{k=1}^K$.
+    The complete set of parameters is $\theta = (\{\mu_k, U_k, d_k\}_{k=1}^K$.
 
     This model does not have a conjugate prior. Instead, we place a gamma prior on the diagonal factors,
 
-    $$p(\\theta) \propto \prod_{k=1}^K \prod_{n=1}^N \mathrm{Ga}(d_{k,n} \mid \\alpha_0, \\beta_0)$$
+    $$p(\theta) \propto \prod_{k=1}^K \prod_{n=1}^N \mathrm{Ga}(d_{k,n} \mid \alpha_0, \beta_0)$$
 
     :param num_states: number of discrete states $K$
     :param emission_dim: number of conditionally independent emissions $N$
     :param emission_rank: rank of the low rank factors, $M$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
-    :param emission_diag_factor_concentration: $\\alpha_0$
-    :param emission_diag_factor_rate: $\\beta_0$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
+    :param emission_diag_factor_concentration: $\alpha_0$
+    :param emission_diag_factor_rate: $\beta_0$
     :param m_step_optimizer: ``optax`` optimizer, like Adam.
     :param m_step_num_iters: number of optimizer steps per M-step.
 

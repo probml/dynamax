@@ -93,21 +93,21 @@ class ParamsPoissonHMM(NamedTuple):
 
 
 class PoissonHMM(HMM):
-    """An HMM with conditionally independent Poisson emissions.
+    r"""An HMM with conditionally independent Poisson emissions.
 
     Let $y_t \in \{0,1\}^N$ denote a vector of count emissions at time $t$. In this model,
     the emission distribution is,
 
-    $$p(y_t \mid z_t, \\theta) = \prod_{n=1}^N \mathrm{Po}(y_{tn} \mid \\theta_{z_t,n})$$
-    $$p(\\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathrm{Ga}(\\theta_{k,n}; \gamma_0, \gamma_1)$$
+    $$p(y_t \mid z_t, \theta) = \prod_{n=1}^N \mathrm{Po}(y_{tn} \mid \theta_{z_t,n})$$
+    $$p(\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathrm{Ga}(\theta_{k,n}; \gamma_0, \gamma_1)$$
 
-    with $\\theta_{k,n} \in \mathbb{R}_+$ for $k=1,\ldots,K$ and $n=1,\ldots,N$ are the
+    with $\theta_{k,n} \in \mathbb{R}_+$ for $k=1,\ldots,K$ and $n=1,\ldots,N$ are the
     *emission rates* and $\gamma_0, \gamma_1$ are their prior concentration and rate, respectively.
 
     :param num_states: number of discrete states $K$
     :param emission_dim: number of conditionally independent emissions $N$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
     :param emission_prior_concentration: $\gamma_0$
     :param emission_prior_rate: $\gamma_1$
 

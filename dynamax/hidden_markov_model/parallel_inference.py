@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from jax import lax, vmap, value_and_grad
 from jaxtyping import Array, Float
-from typing import NamedTuple
+from typing import NamedTuple, Union
 
 from dynamax.hidden_markov_model.inference import HMMPosterior, HMMPosteriorFiltered
 
@@ -18,7 +18,24 @@ def _condition_on(A, ll, axis=-1):
     return A_cond, jnp.log(norm) + ll_max
 
 
-def hmm_filter(initial_probs, transition_matrix, log_likelihoods):
+def hmm_filter(initial_probs: Float[Array, "num_states"],
+               transition_matrix: Float[Array, "num_states num_states"],
+               log_likelihoods: Float[Array, "num_timesteps num_states"]
+) -> HMMPosteriorFiltered:
+    r"""Parallel implementation of the forward filtering algorithm with `jax.lax.associative_scan`.
+
+    *Note: for this function, the transition matrix must be fixed. We may add support
+    for nonstationary transition matrices in a future release.*
+
+    Args:
+        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
+
+    Returns:
+        filtered posterior distribution
+
+    """
     T, K = log_likelihoods.shape
 
     @vmap
@@ -55,15 +72,25 @@ def hmm_filter(initial_probs, transition_matrix, log_likelihoods):
                                 predicted_probs=predicted_probs)
 
 
-def hmm_smoother(initial_probs, transition_matrix, log_likelihoods):
-    """A parallel implementation of `hmm_smoother`.
-    NOTE: This implementation uses the gradient of the HMM log normalizer
-    rather than an explicit implementation of the backward message passing.
+def hmm_smoother(initial_probs: Float[Array, "num_states"],
+                 transition_matrix: Float[Array, "num_states num_states"],
+                 log_likelihoods: Float[Array, "num_timesteps num_states"]
+) -> HMMPosteriorFiltered:
+    r"""Parallel implementation of HMM smoothing with `jax.lax.associative_scan`.
+
+    **Notes:**
+
+    * This implementation uses the automatic differentiation of the HMM log normalizer rather than an explicit implementation of the backward message passing.
+    * The transition matrix must be fixed. We may add support for nonstationary transition matrices in a future release.
 
     Args:
-        initial_probs (_type_): _description_
-        transition_matrix (_type_): _description_
-        log_likelihoods (_type_): _description_
+        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
+
+    Returns:
+        smoothed posterior distribution
+
     """
     def log_normalizer(log_initial_probs, log_transition_matrix, log_likelihoods):
         post = hmm_filter(jnp.exp(log_initial_probs),

@@ -170,33 +170,33 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
 
 
 class GaussianMixtureHMM(HMM):
-    """An HMM with mixture of multivariate normal (i.e. Gaussian) emissions.
+    r"""An HMM with mixture of multivariate normal (i.e. Gaussian) emissions.
 
     Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
     the emission distribution is,
 
-    $$p(y_t \mid z_t, \\theta) = \sum_{c=1}^C w_{k,c} \mathcal{N}(y_{t} \mid \mu_{z_t, c}, \Sigma_{z_t, c})$$
+    $$p(y_t \mid z_t, \theta) = \sum_{c=1}^C w_{k,c} \mathcal{N}(y_{t} \mid \mu_{z_t, c}, \Sigma_{z_t, c})$$
 
-    with $\\theta = \{\{\mu_{k,c}, \Sigma_{k, c}\}_{c=1}^C, w_k \}_{k=1}^K$ denoting
+    with $\theta = \{\{\mu_{k,c}, \Sigma_{k, c}\}_{c=1}^C, w_k \}_{k=1}^K$ denoting
     the *emission means*  and *emission covariances* for each disrete state $k$ and *component* $c$,
     as well as the *emission weights* $w_k \in \Delta_C$, which specify the probability of each
     component in state $k$.
 
     The model has a conjugate normal-inverse-Wishart_ prior,
 
-    $$p(\\theta) = \mathrm{Dir}(w_k \mid \gamma 1_C) \prod_{k=1}^K \prod_{c=1}^C \mathcal{N}(\mu_{k,c} \mid \mu_0, \kappa_0^{-1} \Sigma_{k,c}) \mathrm{IW}(\Sigma_{k, c} \mid \\nu_0, \Psi_0)$$
+    $$p(\theta) = \mathrm{Dir}(w_k \mid \gamma 1_C) \prod_{k=1}^K \prod_{c=1}^C \mathcal{N}(\mu_{k,c} \mid \mu_0, \kappa_0^{-1} \Sigma_{k,c}) \mathrm{IW}(\Sigma_{k, c} \mid \nu_0, \Psi_0)$$
 
     .. _normal-inverse-Wishart: https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution
 
     :param num_states: number of discrete states $K$
     :param num_components: number of mixture components $C$
     :param emission_dim: number of conditionally independent emissions $N$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
     :param emission_weights_concentration=: $\gamma$
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_concentration: $\kappa_0$
-    :param emission_prior_extra_df: $\\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.
+    :param emission_prior_extra_df: $\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\nu_0 = N$.
     :param emission_prior_scale: $\Psi_0$
 
     """
@@ -395,38 +395,38 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
 
 
 class DiagonalGaussianMixtureHMM(HMM):
-    """An HMM with mixture of multivariate normal (i.e. Gaussian) emissions with diagonal covariance.
+    r"""An HMM with mixture of multivariate normal (i.e. Gaussian) emissions with diagonal covariance.
 
     Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
     the emission distribution is,
 
-    $$p(y_t \mid z_t, \\theta) = \sum_{c=1}^C w_{k,c} \mathcal{N}(y_{t} \mid \mu_{z_t, c}, \mathrm{diag}(\sigma_{z_t, c}^2))$$
+    $$p(y_t \mid z_t, \theta) = \sum_{c=1}^C w_{k,c} \mathcal{N}(y_{t} \mid \mu_{z_t, c}, \mathrm{diag}(\sigma_{z_t, c}^2))$$
 
     or, equivalently,
 
-    $$p(y_t \mid z_t, \\theta) = \sum_{c=1}^C w_{k,c} \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t, c, n}, \sigma_{z_t, c, n}^2)$$
+    $$p(y_t \mid z_t, \theta) = \sum_{c=1}^C w_{k,c} \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t, c, n}, \sigma_{z_t, c, n}^2)$$
 
-    The parameters are $\\theta = \{\{\mu_{k,c}, \sigma_{k, c}^2\}_{c=1}^C, w_k \}_{k=1}^K$ denoting
+    The parameters are $\theta = \{\{\mu_{k,c}, \sigma_{k, c}^2\}_{c=1}^C, w_k \}_{k=1}^K$ denoting
     the *emission means*  and *emission variances* for each disrete state $k$ and *component* $c$,
     as well as the *emission weights* $w_k \in \Delta_C$, which specify the probability of each
     component in state $k$.
 
     The model has a conjugate normal-inverse-gamma_ prior,
 
-    $$p(\\theta) = \mathrm{Dir}(w_k \mid \gamma 1_C) \prod_{k=1}^K \prod_{c=1}^C \prod_{n=1}^N \mathcal{N}(\mu_{k,c,n} \mid \mu_0, \kappa_0^{-1} \sigma_{k,c}^2) \mathrm{IGa}(\sigma_{k, c, n}^2 \mid \\alpha_0, \\beta_0)$$
+    $$p(\theta) = \mathrm{Dir}(w_k \mid \gamma 1_C) \prod_{k=1}^K \prod_{c=1}^C \prod_{n=1}^N \mathcal{N}(\mu_{k,c,n} \mid \mu_0, \kappa_0^{-1} \sigma_{k,c}^2) \mathrm{IGa}(\sigma_{k, c, n}^2 \mid \alpha_0, \beta_0)$$
 
     .. _normal-inverse-gamma: https://en.wikipedia.org/wiki/Normal-inverse-gamma_distribution
 
     :param num_states: number of discrete states $K$
     :param num_components: number of mixture components $C$
     :param emission_dim: number of conditionally independent emissions $N$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
     :param emission_weights_concentration=: $\gamma$
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_mean_concentration: $\kappa_0$
-    :param emission_prior_shape: $\\alpha_0$
-    :param emission_prior_scale: $\\beta_0$
+    :param emission_prior_shape: $\alpha_0$
+    :param emission_prior_scale: $\beta_0$
 
     """
     def __init__(self,

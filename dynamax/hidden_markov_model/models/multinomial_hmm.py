@@ -83,24 +83,24 @@ class ParamsMultinomialHMM(NamedTuple):
     emissions: ParamsMultinomialHMMEmissions
 
 class MultinomialHMM(HMM):
-    """An HMM with conditionally independent multinomial emissions.
+    r"""An HMM with conditionally independent multinomial emissions.
 
     Let $y_{t,n} \in \mathbb{N}^C$ denote a vector of $C$ counts for each of $N$
     conditionally independent multinomial emissions at time $t$. In this model,the emission
     distribution is,
 
-    $$p(y_t \mid z_t, \\theta) = \prod_{n=1}^N \mathrm{Mult}(y_{tn} \mid R, \\theta_{z_t,n})$$
-    $$p(\\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathrm{Dir}(\\theta_{k,n}; \gamma 1_C)$$
+    $$p(y_t \mid z_t, \theta) = \prod_{n=1}^N \mathrm{Mult}(y_{tn} \mid R, \theta_{z_t,n})$$
+    $$p(\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathrm{Dir}(\theta_{k,n}; \gamma 1_C)$$
 
-    with $\\theta_{k,n} \in \Delta_C$ for $k=1,\ldots,K$ and $n=1,\ldots,N$ are the
+    with $\theta_{k,n} \in \Delta_C$ for $k=1,\ldots,K$ and $n=1,\ldots,N$ are the
     *emission probabilities* and $\gamma$ is their prior concentration.
 
     :param num_states: number of discrete states $K$
     :param emission_dim: number of conditionally independent emissions $N$
     :param num_classes: number of multinomial classes $C$
     :param num_trials: number of multinomial trials $R$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
     :param emission_prior_concentration: $\gamma$
 
     """

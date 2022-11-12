@@ -95,23 +95,23 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
 
 
 class CategoricalRegressionHMM(HMM):
-    """An HMM whose emissions come from a categorical regression with state-dependent weights.
+    r"""An HMM whose emissions come from a categorical regression with state-dependent weights.
     This is also known as a *switching multiclass logistic regression* model.
 
     Let $y_t \in \{1, \ldots, C\}$ and $u_t \in \mathbb{R}^M$ denote categorical emissions
     and inputs at time $t$, respectively. In this model, the emission distribution is,
 
-    $$p(y_t \mid z_t, u_t, \\theta) = \mathrm{Cat}(y_{t} \mid \mathrm{softmax}(W_{z_t} u_t + b_{z_t}))$$
+    $$p(y_t \mid z_t, u_t, \theta) = \mathrm{Cat}(y_{t} \mid \mathrm{softmax}(W_{z_t} u_t + b_{z_t}))$$
 
-    with *emission weights* $W_k \in \mathbb{R}^{C \\times M}$ and *emission biases* $b_k \in \mathbb{R}^C$.
+    with *emission weights* $W_k \in \mathbb{R}^{C \times M}$ and *emission biases* $b_k \in \mathbb{R}^C$.
 
     This model does not have a prior.
 
     :param num_states: number of discrete states $K$
     :param num_classes: number of emission classes $C$
     :param input_dim: input dimension $M$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
     :param m_step_optimizer: ``optax`` optimizer, like Adam.
     :param m_step_num_iters: number of optimizer steps per M-step.
 

@@ -91,26 +91,26 @@ class ParamsLogisticRegressionHMM(NamedTuple):
 
 
 class LogisticRegressionHMM(HMM):
-    """An HMM whose emissions come from a logistic regression with state-dependent weights.
+    r"""An HMM whose emissions come from a logistic regression with state-dependent weights.
     This is also known as a *switching logistic regression* model.
 
     Let $y_t \in \{0,1\}$ and $u_t \in \mathbb{R}^M$ denote binary emissions
     and inputs at time $t$, respectively. In this model, the emission distribution is,
 
-    $$p(y_t \mid z_t, u_t, \\theta) = \mathrm{Bern}(y_{t} \mid \sigma(w_{z_t}^\\top u_t + b_{z_t}))$$
+    $$p(y_t \mid z_t, u_t, \theta) = \mathrm{Bern}(y_{t} \mid \sigma(w_{z_t}^\top u_t + b_{z_t}))$$
 
     with *emission weights* $w_k \in \mathbb{R}^{M}$ and *emission biases* $b_k \in \mathbb{R}$.
 
     We use $L_2$ regularization on the emission weights, which can be thought of as a
     Gaussian prior,
 
-    $$p(\\theta) \propto \prod_{k=1}^K \prod_{m=1}^M \mathcal{N}(w_{k,m} \mid 0, \\varsigma^2)$$
+    $$p(\theta) \propto \prod_{k=1}^K \prod_{m=1}^M \mathcal{N}(w_{k,m} \mid 0, \varsigma^2)$$
 
     :param num_states: number of discrete states $K$
     :param input_dim: input dimension $M$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
-    :param emission_matrices_scale: $\\varsigma$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
+    :param emission_matrices_scale: $\varsigma$
     :param m_step_optimizer: ``optax`` optimizer, like Adam.
     :param m_step_num_iters: number of optimizer steps per M-step.
 

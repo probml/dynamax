@@ -72,19 +72,19 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
 
 
 class LinearAutoregressiveHMM(HMM):
-    """An autoregressive HMM whose emissions are a linear function of the previous emissions with state-dependent weights.
+    r"""An autoregressive HMM whose emissions are a linear function of the previous emissions with state-dependent weights.
     This is also known as a *switching vector autoregressive* model.
 
     Let $y_t \in \mathbb{R}^N$ denote vector-valued emissions at time $t$.
     In this model, the emission distribution is,
 
-    $$p(y_t \mid y_{1:t-1}, z_t, \\theta) = \mathcal{N}(y_{t} \mid \sum_{\ell = 1}^L W_{z_t, \ell} y_{t-\ell} + b_{z_t}, \Sigma_{z_t})$$
+    $$p(y_t \mid y_{1:t-1}, z_t, \theta) = \mathcal{N}(y_{t} \mid \sum_{\ell = 1}^L W_{z_t, \ell} y_{t-\ell} + b_{z_t}, \Sigma_{z_t})$$
 
-    with *emission weights* $W_{k,\ell} \in \mathbb{R}^{N \\times N}$ for each *lag* $\ell=1,\ldots,L$,
+    with *emission weights* $W_{k,\ell} \in \mathbb{R}^{N \times N}$ for each *lag* $\ell=1,\ldots,L$,
     *emission biases* $b_k \in \mathbb{R}^N$,
-    and *emission covariances* $\Sigma_k \in \mathbb{R}_{\succeq 0}^{N \\times N}$.
+    and *emission covariances* $\Sigma_k \in \mathbb{R}_{\succeq 0}^{N \times N}$.
 
-    The emissions parameters are $\\theta = \{\{W_{k,\ell}\}_{\ell=1}^L, b_k, \Sigma_k\}_{k=1}^K$.
+    The emissions parameters are $\theta = \{\{W_{k,\ell}\}_{\ell=1}^L, b_k, \Sigma_k\}_{k=1}^K$.
 
     We do not place a prior on the emission parameters.
 
@@ -95,8 +95,8 @@ class LinearAutoregressiveHMM(HMM):
     :param num_states: number of discrete states $K$
     :param emission_dim: emission dimension $N$
     :param num_lags: number of lags $L$
-    :param initial_probs_concentration: $\\alpha$
-    :param transition_matrix_concentration: $\\beta$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
 
     """
     def __init__(self,

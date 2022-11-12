@@ -133,6 +133,8 @@ Low-level inference
 .. autofunction:: dynamax.hidden_markov_model.hmm_fixed_lag_smoother
 .. autofunction:: dynamax.hidden_markov_model.hmm_posterior_mode
 .. autofunction:: dynamax.hidden_markov_model.hmm_posterior_sample
+.. autofunction:: dynamax.hidden_markov_model.parallel_hmm_filter
+.. autofunction:: dynamax.hidden_markov_model.parallel_hmm_smoother
 
 Types
 -----
