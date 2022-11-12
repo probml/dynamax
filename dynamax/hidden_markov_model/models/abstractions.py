@@ -24,9 +24,9 @@ from typing_extensions import Protocol
 class HMMParameterSet(Protocol):
     """Container for HMM parameters.
 
-    :param initial: initial distribution parameters
-    :param transitions: transition distribution parameters
-    :param emissions: emission distribution parameters
+    :param initial: (ParameterSet) initial distribution parameters
+    :param transitions: (ParameterSet) transition distribution parameters
+    :param emissions: (ParameterSet) emission distribution parameters
     """
     initial: ParameterSet
     transitions: ParameterSet
@@ -34,11 +34,11 @@ class HMMParameterSet(Protocol):
 
 
 class HMMPropertySet(Protocol):
-    """Container for properties of HMM parameters.
+    """Container for properties of HMM parameter properties.
 
-    :param initial: initial distribution parameters
-    :param transitions: transition distribution parameters
-    :param emissions: emission distribution parameters
+    :param initial: (PropertySet) initial distribution properties
+    :param transitions: (PropertySet) transition distribution properties
+    :param emissions: (PropertySet) emission distribution properties
     """
     initial: PropertySet
     transitions: PropertySet

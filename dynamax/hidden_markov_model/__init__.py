@@ -1,4 +1,4 @@
-from dynamax.hidden_markov_model.models.abstractions import HMMParameterSet, HMM, HMMEmissions, HMMInitialState, HMMTransitions
+from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions, HMMInitialState, HMMTransitions, HMMParameterSet, HMMPropertySet
 from dynamax.hidden_markov_model.models.autoregressive_hmm import LinearAutoregressiveHMM
 from dynamax.hidden_markov_model.models.bernoulli_hmm import BernoulliHMM
 from dynamax.hidden_markov_model.models.categorical_glm_hmm import CategoricalRegressionHMM
