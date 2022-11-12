@@ -6,7 +6,7 @@ from jax import jit
 from functools import partial
 
 from typing import Callable, Optional, Tuple, Union, NamedTuple
-from jaxtyping import Bool, Int, Float, Array
+from jaxtyping import Int, Float, Array
 
 
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
@@ -21,28 +21,29 @@ def get_trans_mat(transition_matrix, transition_fn, t):
             return transition_matrix
 
 class HMMPosteriorFiltered(NamedTuple):
-    """Simple wrapper for properties of an HMM filtering posterior.
+    r"""Simple wrapper for properties of an HMM filtering posterior.
 
-    marginal_loglik: log sum_{hidden(1:t)} prob(hidden(1:t), obs(1:t) | params)
-    filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
-    predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
+    :param marginal_loglik: $p(y_{1:T} \mid \theta) = \log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)$.
+    :param filtered_probs: $p(z_t \mid y_{1:t}, \theta)$ for $t=1,\ldots,T$
+    :param predicted_probs: $p(z_t \mid y_{1:t-1}, \theta)$ for $t=1,\ldots,T$
+
     """
     marginal_loglik: float
     filtered_probs: Float[Array, "num_timesteps num_states"]
     predicted_probs: Float[Array, "num_timesteps num_states"]
 
 class HMMPosterior(NamedTuple):
-    """Simple wrapper for properties of an HMM posterior distribution.
+    r"""Simple wrapper for properties of an HMM posterior distribution.
 
-    marginal_loglik: log sum_{hidden(1:t)} prob(hidden(1:t), obs(1:t) | params)
-    filtered_probs(t,k) = p(hidden(t)=k | obs(1:t))
-    predicted_probs(t,k) = p(hidden(t+1)=k | obs(1:t)) // one-step-ahead
-    smoothed_probs(t,k) = p(hidden(t)=k | obs(1:T))
-    initial_probs[i] = p(hidden(0)=i | obs(1:T))
+    Transition probabilities may be either 2D or 3D depending on whether the
+    transition matrix is fixed or time-varying.
 
-    transition probabilities may be 2d or 3d with either
-    trans_probs[i,j] = \sum_t p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
-    trans_probs[t,i,j] = p(hidden(t)=i, hidden(t+1)=j | obs(1:T))
+    :param marginal_loglik: $p(y_{1:T} \mid \theta) = \log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)$.
+    :param filtered_probs: $p(z_t \mid y_{1:t}, \theta)$ for $t=1,\ldots,T$
+    :param predicted_probs: $p(z_t \mid y_{1:t-1}, \theta)$ for $t=1,\ldots,T$
+    :param smoothed_probs: $p(z_t \mid y_{1:T}, \theta)$ for $t=1,\ldots,T$
+    :param initial_probs: $p(z_1 \mid y_{1:T}, \theta)$ (also present in `smoothed_probs` but here for convenience)
+    :param trans_probs: $p(z_t, z_{t+1} \mid y_{1:T}, \theta)$ for $t=1,\ldots,T-1$. (If the transition matrix is fixed, these probabilities may be summed over $t$. See note above.)
     """
     marginal_loglik: float
     filtered_probs: Float[Array, "num_timesteps num_states"]
@@ -100,16 +101,23 @@ def hmm_filter(
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
-    ) -> HMMPosteriorFiltered:
-    """Forwards filtering.
+) -> HMMPosteriorFiltered:
+    r"""Forwards filtering
+
+    Transition matrix may be either 2D (if transition probabilities are fixed) or 3D
+    if the transition probabilities vary over time. Alternatively, the transition
+    matrix may be specified via `transition_fn`, which takes in a time index $t$ and
+    returns a transition matrix.
 
     Args:
-        initial_distribution(k): prob(hid(1)=k)
-        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
-        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
-        transition_fn(t): returns K*K transition matrix for step t (default None)
+        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
+        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.
 
-    Returns: HMMPosterior object (smoothed_probs=None)
+    Returns:
+        filtered posterior distribution
+
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -141,16 +149,23 @@ def hmm_backward_filter(
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
-    ) -> Tuple[Float, Float[Array, "num_timesteps num_states"]]:
-    """_summary_
+) -> Tuple[Float, Float[Array, "num_timesteps num_states"]]:
+    r"""Run the filter backwards in time. This is the second step of the forward-backward algorithm.
+
+    Transition matrix may be either 2D (if transition probabilities are fixed) or 3D
+    if the transition probabilities vary over time. Alternatively, the transition
+    matrix may be specified via `transition_fn`, which takes in a time index $t$ and
+    returns a transition matrix.
 
     Args:
-        hmm_params (_type_): _description_
-        log_likelihoods (_type_): _description_
+        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
+        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.
 
     Returns:
-        log_marginal_lik
-        backwards_probs(t,k)
+        marginal log likelihood and backward messages.
+
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -182,17 +197,24 @@ def hmm_two_filter_smoother(
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None,
     compute_trans_probs: bool = True
-    ) -> HMMPosterior:
-    """Computed the smoothed state probabilities using the two-filter
-    smoother, a.k.a. the forward-backward algorithm.
+) -> HMMPosterior:
+    r"""Computed the smoothed state probabilities using the two-filter
+    smoother, a.k.a. the **forward-backward algorithm**.
+
+    Transition matrix may be either 2D (if transition probabilities are fixed) or 3D
+    if the transition probabilities vary over time. Alternatively, the transition
+    matrix may be specified via `transition_fn`, which takes in a time index $t$ and
+    returns a transition matrix.
 
     Args:
-        initial_distribution (_type_): _description_
-        transition_matrix (_type_): _description_
-        log_likelihoods (_type_): _description_
+        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
+        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.
 
     Returns:
-        HMMPosterior object
+        posterior distribution
+
     """
     post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transition_fn)
     ll = post.marginal_loglik
@@ -229,20 +251,26 @@ def hmm_smoother(
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None,
     compute_trans_probs: bool = True
-    ) -> HMMPosterior:
-    """Computed the smoothed state probabilities using a general
+) -> HMMPosterior:
+    r"""Computed the smoothed state probabilities using a general
     Bayesian smoother.
 
-    Note: This is the discrete SSM analog of the RTS smoother for
-    linear Gaussian SSMs.
+    Transition matrix may be either 2D (if transition probabilities are fixed) or 3D
+    if the transition probabilities vary over time. Alternatively, the transition
+    matrix may be specified via `transition_fn`, which takes in a time index $t$ and
+    returns a transition matrix.
+
+    *Note: This is the discrete SSM analog of the RTS smoother for linear Gaussian SSMs.*
 
     Args:
-        initial_distribution (_type_): _description_
-        transition_matrix (_type_): _description_
-        log_likelihoods (_type_): _description_
+        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
+        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.
 
     Returns:
-        HMMPosterior object
+        posterior distribution
+
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -298,17 +326,28 @@ def hmm_fixed_lag_smoother(
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     window_size: Int,
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
-    ) -> HMMPosterior:
-    """Compute the smoothed state probabilities using the fixed-lag smoother.
+) -> HMMPosterior:
+    r"""Compute the smoothed state probabilities using the fixed-lag smoother.
+
+    The smoothed probability estimates
+
+    $$p(z_t \mid y_{1:t+L}, u_{1:t+L}, \theta)$$
+
+    Transition matrix may be either 2D (if transition probabilities are fixed) or 3D
+    if the transition probabilities vary over time. Alternatively, the transition
+    matrix may be specified via `transition_fn`, which takes in a time index $t$ and
+    returns a transition matrix.
 
     Args:
-        initial_distribution(k): prob(hid(1)=k)
-        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
-        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
-        window_size(int): size of smoothed window
+        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
+        window_size: the number of future steps to use, $L$
+        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.
 
     Returns:
-        HMMPosterior object
+        posterior distribution
+
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -384,15 +423,13 @@ def hmm_fixed_lag_smoother(
     smoothed_probs = jnp.concatenate((jnp.expand_dims(filtered_probs, axis=0), posts.smoothed_probs))
     filtered_probs = jnp.concatenate((jnp.expand_dims(filtered_probs, axis=0), posts.filtered_probs))
 
-    posts = HMMPosterior(
+    return HMMPosterior(
         marginal_loglik=marginal_loglik,
         filtered_probs=filtered_probs,
         predicted_probs=predicted_probs,
         smoothed_probs=smoothed_probs,
         initial_probs=smoothed_probs[0]
     )
-
-    return posts
 
 
 @partial(jit, static_argnames=["transition_fn"])
@@ -402,11 +439,18 @@ def hmm_posterior_mode(
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
-    ) -> Int[Array, "num_timesteps"]:
-    """Compute the most likely state sequence. This is called the Viterbi algorithm.
+) -> Int[Array, "num_timesteps"]:
+    r"""Compute the most likely state sequence. This is called the Viterbi algorithm.
+
+    Args:
+        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
+        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.
 
     Returns:
-        _description_
+        most likely state sequence
+
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -444,16 +488,19 @@ def hmm_posterior_sample(
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
-    ) -> Int[Array, "num_timesteps"]:
-    """Sample a latent sequence from the posterior.
+) -> Int[Array, "num_timesteps"]:
+    r"""Sample a latent sequence from the posterior.
 
     Args:
-        initial_distribution(k): prob(hid(1)=k)
-        transition_matrix(j,k): prob(hid(t)=k | hid(t-1)=j)
-        log_likelihoods(t,k): p(obs(t) | hid(t)=k)
+        rng: random number generator
+        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
+        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.
+
     Returns:
-        log_prob
-        sampled_states(1:T)
+        :sample of the latent states, $z_{1:T}$
+
     """
     num_timesteps, num_states = log_likelihoods.shape
 
@@ -555,21 +602,17 @@ def compute_transition_probs(
                              Float[Array, "num_states num_states"]],
     hmm_posterior: HMMPosterior,
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
-    ) -> Union[Float[Array, "num_timesteps num_states num_states"],
-               Float[Array, "num_states num_states"]]:
-    """Computer the posterior marginal distributions over (hid(t), hid(t+1)),
-    ..math:
-        q_{tij} = Pr(z_t=i, z_{t+1}=j | obs_{1:T})  for t=1,...,T-1
-    If `reduce_sum` is True, return :math:`\sum_t q_{tij}`.
+) -> Union[Float[Array, "num_timesteps num_states num_states"],
+            Float[Array, "num_states num_states"]]:
+    r"""Compute the posterior marginal distributions $p(z_{t+1}, z_t \mid y_{1:T}, u_{1:T}, \theta)$.
+
     Args:
-        transition_matrix (array): the transition matrix
-        hmm_posterior (HMMPosterior): Output of `hmm_smoother` or `hmm_two_filter_smoother`
-        reduce_sum (bool, optional): Whether or not to return the
-            sum of transition probabilities over time. Defaults to True, which is
-            more memory efficient.
+        transition_matrix: the (possibly time-varying) transition matrix
+        hmm_posterior: Output of `hmm_smoother` or `hmm_two_filter_smoother`
+        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.
+
     Returns:
-        array of transition probabilities. The shape is (num_states, num_states) if
-            reduce_sum==True, otherwise (num_timesteps, num_states, num_states).
+        array of smoothed transition probabilities.
     """
     reduce_sum = transition_matrix is not None and transition_matrix.ndim == 2
     if reduce_sum:

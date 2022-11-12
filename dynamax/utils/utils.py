@@ -66,7 +66,7 @@ def pytree_stack(pytrees):
     return tree_unflatten(treedef, [jnp.stack(vals) for vals in zip(*leaves)])
 
 def random_rotation(seed, n, theta=None):
-    """Helper function to create a rotating linear system.
+    r"""Helper function to create a rotating linear system.
 
     Args:
         seed (jax.random.PRNGKey): JAX random seed.

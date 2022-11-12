@@ -31,7 +31,7 @@ To install the latest releast of dynamax from PyPi:
 .. code-block:: console
 
    pip install dynamax                 # Install dynamax and core dependencies, or
-   pip install dynamax[notebooks]      # Install with dep's for demo notebooks
+   pip install dynamax[notebooks]      # Install with demo notebook dependencies
 
 
 To install the latest development branch:
@@ -83,23 +83,23 @@ The corresponding joint distribution has the following form
 
 .. math::
 
-      p(y_{1:T}, z_{1:T} | u_{1:T}) = p(z_1 | u_1) p(y_1 | z_1, u_1) \prod_{t=1}^T p(z_t | z_{t-1}, u_t) p(y_t | z_t, u_t)
+      p(y_{1:T}, z_{1:T} \mid u_{1:T}) = p(z_1 \mid u_1) \prod_{t=2}^T p(z_t \mid z_{t-1}, u_t) \prod_{t=1}^T p(y_t \mid z_t, u_t)
 
 
-Here :math:`p(z_t | z_{t-1}, u_t)` is called the transition or dynamics model,
-and :math:`p(y_t | z_{t}, u_t)` is called the observation or emission model.
+Here :math:`p(z_t \mid z_{t-1}, u_t)` is called the transition or dynamics model,
+and :math:`p(y_t \mid z_{t}, u_t)` is called the observation or emission model.
 (In both cases, the inputs :math:`u_t` are optional;
 furthermore, the observation model may have auto-regressive dependencies,
-in which case we write  :math:`p(y_t | z_{t}, u_t, y_{1:t-1})`.)
+in which case we write  :math:`p(y_t \mid z_{t}, u_t, y_{1:t-1})`.)
 
 We assume that we see the observations :math:`y_{1:T}`,
 and want to infer the hidden states, either
-using online filtering (i.e., computing  :math:`p(z_t|y_{1:t})`)
-or offline smoothing (i.e., computing  :math:`p(z_t|y_{1:T})`).
+using online filtering (i.e., computing  :math:`p(z_t \mid y_{1:t})`)
+or offline smoothing (i.e., computing  :math:`p(z_t \mid y_{1:T})`).
 We may also be interested in predicting future states,
-:math:`p(z_{t+h}|y_{1:t})`,
+:math:`p(z_{t+h} \mid y_{1:t})`,
 or future observations,
-:math:`p(y_{t+h}|y_{1:t})`,
+:math:`p(y_{t+h} \mid y_{1:t})`,
 where h is the forecast horizon.
 (Note that by using a hidden state  to represent the past observations,
 the model can have "infinite" memory, unlike a standard auto-regressive model.)
@@ -204,7 +204,7 @@ API documentation
 ==================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: API Documentation
 
    api

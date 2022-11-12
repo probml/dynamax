@@ -4,11 +4,12 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties
-from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions
+from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions, HMMParameterSet, HMMPropertySet
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
+from dynamax.types import Scalar
 import optax
-from typing import NamedTuple, Union
+from typing import NamedTuple, Optional, Tuple, Union
 
 
 class ParamsLogisticRegressionHMMEmissions(NamedTuple):
@@ -17,7 +18,6 @@ class ParamsLogisticRegressionHMMEmissions(NamedTuple):
 
 
 class LogisticRegressionHMMEmissions(HMMEmissions):
-
     def __init__(self,
                  num_states,
                  input_dim,
@@ -91,14 +91,38 @@ class ParamsLogisticRegressionHMM(NamedTuple):
 
 
 class LogisticRegressionHMM(HMM):
+    r"""An HMM whose emissions come from a logistic regression with state-dependent weights.
+    This is also known as a *switching logistic regression* model.
+
+    Let $y_t \in \{0,1\}$ and $u_t \in \mathbb{R}^M$ denote binary emissions
+    and inputs at time $t$, respectively. In this model, the emission distribution is,
+
+    $$p(y_t \mid z_t, u_t, \theta) = \mathrm{Bern}(y_{t} \mid \sigma(w_{z_t}^\top u_t + b_{z_t}))$$
+
+    with *emission weights* $w_k \in \mathbb{R}^{M}$ and *emission biases* $b_k \in \mathbb{R}$.
+
+    We use $L_2$ regularization on the emission weights, which can be thought of as a
+    Gaussian prior,
+
+    $$p(\theta) \propto \prod_{k=1}^K \prod_{m=1}^M \mathcal{N}(w_{k,m} \mid 0, \varsigma^2)$$
+
+    :param num_states: number of discrete states $K$
+    :param input_dim: input dimension $M$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
+    :param emission_matrices_scale: $\varsigma$
+    :param m_step_optimizer: ``optax`` optimizer, like Adam.
+    :param m_step_num_iters: number of optimizer steps per M-step.
+
+    """
     def __init__(self,
-                 num_states,
-                 input_dim,
-                 initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1,
-                 emission_matrices_scale=1e8,
-                 m_step_optimizer=optax.adam(1e-2),
-                 m_step_num_iters=50):
+                 num_states: int,
+                 input_dim: int,
+                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 emission_matrices_scale: Scalar=1e8,
+                 m_step_optimizer: optax.GradientTransformation=optax.adam(1e-2),
+                 m_step_num_iters: int=50):
         self.inputs_dim = input_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
@@ -110,35 +134,34 @@ class LogisticRegressionHMM(HMM):
         return (self.inputs_dim,)
 
     def initialize(self,
-                   key=jr.PRNGKey(0),
-                   method="prior",
-                   initial_probs=None,
-                   transition_matrix=None,
-                   emission_weights=None,
-                   emission_biases=None,
-                   emissions=None,
-                   inputs=None):
+                   key: jr.PRNGKey=jr.PRNGKey(0),
+                   method: str="prior",
+                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
+                   emission_weights: Optional[Float[Array, "num_states input_dim"]]=None,
+                   emission_biases: Optional[Float[Array, "num_states"]]=None,
+                   emissions: Optional[Float[Array, "num_timesteps"]]=None,
+                   inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
+        ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.
         Parameters will then be sampled from the prior (if `method==prior`).
 
-        Note: in the future we may support more initialization schemes, like K-Means.
-
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
-            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
-            emission_weights (array, optional): manually specified emission weights. Defaults to None.
-            emission_biases (array, optional): manually specified emission biases. Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
-            inputs (array, optional): inputs for initializing the parameters with kmeans. Defaults to None.
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            initial_probs: manually specified initial state probabilities.
+            transition_matrix: manually specified transition matrix.
+            emission_weights: manually specified emission weights.
+            emission_biases: manually specified emission biases.
+            emissions: emissions for initializing the parameters with kmeans.
+            inputs: inputs for initializing the parameters with kmeans.
 
         Returns:
-            params: nested dataclasses of arrays containing model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+            Model parameters and their properties.
+
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()

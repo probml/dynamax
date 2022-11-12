@@ -2,15 +2,15 @@ from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMInitial
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMDynamics
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSMEmissions
-from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered
-from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMSmoothed
+from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered
+from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMSmoothed
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter
 from dynamax.linear_gaussian_ssm.inference import lgssm_smoother
 from dynamax.linear_gaussian_ssm.inference import lgssm_posterior_sample
 
 from dynamax.linear_gaussian_ssm.info_inference import ParamsLGSSMInfo
-from dynamax.linear_gaussian_ssm.info_inference import PosteriorLGSSMInfoFiltered
-from dynamax.linear_gaussian_ssm.info_inference import PosteriorLGSSMInfoSmoothed
+from dynamax.linear_gaussian_ssm.info_inference import PosteriorGSSMInfoFiltered
+from dynamax.linear_gaussian_ssm.info_inference import PosteriorGSSMInfoSmoothed
 from dynamax.linear_gaussian_ssm.info_inference import lgssm_info_filter
 from dynamax.linear_gaussian_ssm.info_inference import lgssm_info_smoother
 

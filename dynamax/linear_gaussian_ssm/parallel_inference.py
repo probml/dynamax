@@ -7,7 +7,7 @@ from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
 
-from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed, ParamsLGSSM
+from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
 
 def _make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
@@ -68,7 +68,7 @@ def _make_associative_filtering_elements(params, emissions):
 def lgssm_filter(
     params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"]
-) -> PosteriorLGSSMFiltered:
+) -> PosteriorGSSMFiltered:
     """A parallel version of the lgssm filtering algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
@@ -111,7 +111,7 @@ def lgssm_filter(
                                                 filtering_operator, initial_elements
                                                 )
 
-    return PosteriorLGSSMFiltered(marginal_loglik=-logZ[-1],
+    return PosteriorGSSMFiltered(marginal_loglik=-logZ[-1],
         filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
@@ -147,7 +147,7 @@ def _make_associative_smoothing_elements(params, filtered_means, filtered_covari
 def lgssm_smoother(
     params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"]
-) -> PosteriorLGSSMSmoothed:
+) -> PosteriorGSSMSmoothed:
     """A parallel version of the lgssm smoothing algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
@@ -173,7 +173,7 @@ def lgssm_smoother(
     _, smoothed_means, smoothed_covs, *_ = lax.associative_scan(
                                                 smoothing_operator, initial_elements, reverse=True
                                                 )
-    return PosteriorLGSSMSmoothed(
+    return PosteriorGSSMSmoothed(
         marginal_loglik=filtered_posterior.marginal_loglik,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,

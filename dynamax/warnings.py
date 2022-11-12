@@ -14,4 +14,5 @@ logger.addFilter(CheckTypesFilter())
 
 
 # Catch UserWarning: Explicitly requested dtype...
-warnings.filterwarnings("ignore", "Explicitly requested dtype")
+warnings.filterwarnings("ignore", category=UserWarning, message="Explicitly requested dtype")
+warnings.filterwarnings("ignore", category=DeprecationWarning, message="Using or importing the ABCs")

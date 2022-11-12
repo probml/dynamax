@@ -6,17 +6,18 @@ from jax import vmap
 from jaxtyping import Float, Array
 import optax
 from dynamax.parameters import ParameterProperties
+from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions, HMMParameterSet, HMMPropertySet
+from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
+from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
+from dynamax.types import Scalar
 from dynamax.utils.distributions import InverseWishart
 from dynamax.utils.distributions import NormalInverseGamma
 from dynamax.utils.distributions import NormalInverseWishart
 from dynamax.utils.distributions import nig_posterior_update
 from dynamax.utils.distributions import niw_posterior_update
-from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions
-from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
-from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.utils.bijectors import RealToPSDBijector
 from dynamax.utils.utils import pytree_sum
-from typing import NamedTuple, Union
+from typing import NamedTuple, Optional, Tuple, Union
 
 
 class ParamsGaussianHMMEmissions(NamedTuple):
@@ -272,11 +273,11 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
         Note: in the future we may support more initialization schemes, like K-Means.
 
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
             method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_scales (array, optional): manually specified emission scales (sqrt of diagonal of spherical covariance matrix). Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+            emission_means (array, optional): manually specified emission means.
+            emission_scales (array, optional): manually specified emission scales (sqrt of diagonal of spherical covariance matrix).
+            emissions (array, optional): emissions for initializing the parameters with kmeans.
 
         Returns:
             params: nested dataclasses of arrays containing model parameters.
@@ -372,11 +373,11 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         Note: in the future we may support more initialization schemes, like K-Means.
 
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
             method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_covariance (array, optional): manually specified emission covariance. Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+            emission_means (array, optional): manually specified emission means.
+            emission_covariance (array, optional): manually specified emission covariance.
+            emissions (array, optional): emissions for initializing the parameters with kmeans.
 
         Returns:
             params: nested dataclasses of arrays containing model parameters.
@@ -491,12 +492,12 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
         Note: in the future we may support more initialization schemes, like K-Means.
 
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
+            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
             method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_cov_diag_factors (array, optional): manually specified diagonals of the emission covariances. Defaults to None.
-            emission_cov_low_rank_factors (array, optional): manually specified low rank factors of the emission covariances. Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+            emission_means (array, optional): manually specified emission means.
+            emission_cov_diag_factors (array, optional): manually specified diagonals of the emission covariances.
+            emission_cov_low_rank_factors (array, optional): manually specified low rank factors of the emission covariances.
+            emissions (array, optional): emissions for initializing the parameters with kmeans.
 
         Returns:
             params: nested dataclasses of arrays containing model parameters.
@@ -559,14 +560,39 @@ class ParamsGaussianHMM(NamedTuple):
 
 
 class GaussianHMM(HMM):
+    r"""An HMM with multivariate normal (i.e. Gaussian) emissions.
+
+    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
+    the emission distribution is,
+
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma_{z_t})$$
+
+    with $\theta = \{\mu_k, \Sigma_k\}_{k=1}^K$ denoting the *emission means* and *emission covariances*.
+
+    The model has a conjugate normal-inverse-Wishart_ prior,
+
+    $$p(\theta) = \prod_{k=1}^K \mathcal{N}(\mu_k \mid \mu_0, \kappa_0^{-1} \Sigma_k) \mathrm{IW}(\Sigma_{k} \mid \nu_0, \Psi_0)$$
+
+    .. _normal-inverse-Wishart: https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution
+
+    :param num_states: number of discrete states $K$
+    :param emission_dim: number of conditionally independent emissions $N$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
+    :param emission_prior_mean: $\mu_0$
+    :param emission_prior_concentration: $\kappa_0$
+    :param emission_prior_extra_df: $\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.
+    :param emission_prior_scale: $\Psi_0$
+
+    """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1,
-                 emission_prior_mean=0.0,
-                 emission_prior_concentration=1e-4,
-                 emission_prior_scale=1e-4,
-                 emission_prior_extra_df=0.1):
+                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_concentration: Scalar=1e-4,
+                 emission_prior_scale: Union[Scalar, Float[Array, "emission_dim emission_dim"]]=1e-4,
+                 emission_prior_extra_df: Scalar=0.1):
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
@@ -578,33 +604,33 @@ class GaussianHMM(HMM):
 
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
+    def initialize(self,
+                   key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: jnp.array=None,
-                   transition_matrix: jnp.array=None,
-                   emission_means: jnp.array=None,
-                   emission_covariances: jnp.array=None,
-                   emissions: jnp.array=None):
+                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
+                   emission_covariances:  Optional[Float[Array, "num_states emission_dim emission_dim"]]=None,
+                   emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
+        ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.
         Parameters will then be sampled from the prior (if `method==prior`).
 
-        Note: in the future we may support more initialization schemes, like K-Means.
-
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
-            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_covariances (array, optional): manually specified emission covariances. Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            initial_probs: manually specified initial state probabilities.
+            transition_matrix: manually specified transition matrix.
+            emission_means: manually specified emission means.
+            emission_covariances: manually specified emission covariances.
+            emissions: emissions for initializing the parameters with kmeans.
 
         Returns:
-            params: nested dataclasses of arrays containing model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+            Model parameters and their properties.
+
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
@@ -621,14 +647,43 @@ class ParamsDiagonalGaussianHMM(NamedTuple):
 
 
 class DiagonalGaussianHMM(HMM):
+    r"""An HMM with conditionally independent normal (i.e. Gaussian) emissions.
+
+    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
+    the emission distribution is,
+
+    $$p(y_t \mid z_t, \theta) = \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t,n}, \sigma_{z_t,n}^2)$$
+    or equivalently
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \mathrm{diag}(\sigma_{z_t}^2))$$
+
+
+    where $\sigma_k^2 = [\sigma_{k,1}^2, \ldots, \sigma_{k,N}^2]$ are the *emission variances* of each
+    dimension in state $z_t=k$. The complete set of parameters is $\theta = \{\mu_k, \sigma_k^2\}_{k=1}^K$.
+
+    The model has a conjugate normal-inverse-gamma_ prior,
+
+    $$p(\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathcal{N}(\mu_{k,n} \mid \mu_0, \kappa_0^{-1} \sigma_{k,n}^2) \mathrm{IGa}(\sigma_{k,n}^2 \mid \alpha_0, \beta_0)$$
+
+    .. _normal-inverse-gamma: https://en.wikipedia.org/wiki/Normal-inverse-gamma_distribution
+
+    :param num_states: number of discrete states $K$
+    :param emission_dim: number of conditionally independent emissions $N$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
+    :param emission_prior_mean: $\mu_0$
+    :param emission_prior_mean_concentration: $\kappa_0$
+    :param emission_prior_concentration: $\alpha_0$
+    :param emission_prior_scale: $\\beta_0$
+
+    """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1,
-                 emission_prior_mean=0.0,
-                 emission_prior_mean_concentration=1e-4,
-                 emission_prior_concentration=1.1,
-                 emission_prior_scale=1.1):
+                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_mean_concentration: Union[Scalar, Float[Array, "emission_dim"]]=1e-4,
+                 emission_prior_concentration: Scalar=1.1,
+                 emission_prior_scale: Scalar=1.1):
 
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
@@ -644,32 +699,29 @@ class DiagonalGaussianHMM(HMM):
 
     def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: jnp.array=None,
-                   transition_matrix: jnp.array=None,
-                   emission_means: jnp.array=None,
-                   emission_scale_diags: jnp.array=None,
-                   emissions: jnp.array=None,
-                   ):
+                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
+                   emission_scale_diags: Optional[Float[Array, "num_states emission_dim"]]=None,
+                   emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
+        ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.
         Parameters will then be sampled from the prior (if `method==prior`).
 
-        Note: in the future we may support more initialization schemes, like K-Means.
-
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
-            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_scale_diags (array, optional): manually specified emission scales (sqrt of diagonal of covariance matrix). Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            initial_probs: manually specified initial state probabilities.
+            transition_matrix: manually specified transition matrix.
+            emission_means: manually specified emission means.
+            emission_scale_diags: manually specified emission standard deviations $\sigma_{k,n}$
+            emissions: emissions for initializing the parameters with kmeans.
 
         Returns:
-            params: nested dataclasses of arrays containing model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+            Model parameters and their properties.
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
@@ -686,16 +738,47 @@ class ParamsSphericalGaussianHMM(NamedTuple):
 
 
 class SphericalGaussianHMM(HMM):
+    r"""An HMM with conditionally independent normal emissions with the same variance along
+    each dimension. These are called *spherical* Gaussian emissions.
+
+    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
+    the emission distribution is,
+
+    $$p(y_t \mid z_t, \theta) = \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t,n}, \sigma_{z_t}^2)$$
+    or equivalently
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \sigma_{z_t}^2 I)$$
+
+    where $\sigma_k^2$ is the *emission variance* in state $z_t=k$.
+    The complete set of parameters is $\theta = \{\mu_k, \sigma_k^2\}_{k=1}^K$.
+
+    The model has a non-conjugate, factored prior
+
+    $$p(\theta) = \prod_{k=1}^K \mathcal{N}(\mu_{k} \mid \mu_0, \Sigma_0) \mathrm{Ga}(\sigma_{k}^2 \mid \alpha_0, \beta_0)$$
+
+    *Note: In future versions we may implement a conjugate prior for this model.*
+
+    :param num_states: number of discrete states $K$
+    :param emission_dim: number of conditionally independent emissions $N$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
+    :param emission_prior_mean: $\mu_0$
+    :param emission_prior_mean_covariance: $\Sigma_0$
+    :param emission_var_concentration: $\alpha_0$
+    :param emission_var_rate: $\beta_0$
+    :param m_step_optimizer: ``optax`` optimizer, like Adam.
+    :param m_step_num_iters: number of optimizer steps per M-step.
+
+    """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1,
-                 emission_prior_mean=0.0,
-                 emission_prior_mean_covariance=1.0,
-                 emission_var_concentration=1.1,
-                 emission_var_rate=1.1,
-                 m_step_optimizer=optax.adam(1e-2),
-                 m_step_num_iters=50):
+                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_mean_covariance: Union[Scalar, Float[Array, "emission_dim emission_dim"]]=1.0,
+                 emission_var_concentration: Scalar=1.1,
+                 emission_var_rate: Scalar=1.1,
+                 m_step_optimizer: optax.GradientTransformation=optax.adam(1e-2),
+                 m_step_num_iters: int=50):
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
@@ -712,31 +795,30 @@ class SphericalGaussianHMM(HMM):
 
     def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: jnp.array=None,
-                   transition_matrix: jnp.array=None,
-                   emission_means: jnp.array=None,
-                   emission_scales: jnp.array=None,
-                   emissions: jnp.array=None):
+                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
+                   emission_scales: Optional[Float[Array, "num_states"]]=None,
+                   emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
+        ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.
         Parameters will then be sampled from the prior (if `method==prior`).
 
-        Note: in the future we may support more initialization schemes, like K-Means.
-
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
-            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_scales (array, optional): manually specified emission scales (sqrt of diagonal of covariance matrix). Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            initial_probs: manually specified initial state probabilities.
+            transition_matrix: manually specified transition matrix.
+            emission_means: manually specified emission means.
+            emission_scales: manually specified emission scales (sqrt of diagonal of covariance matrix).
+            emissions: emissions for initializing the parameters with kmeans.
 
         Returns:
-            params: nested dataclasses of arrays containing model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+            Model parameters and their properties.
+
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
@@ -753,6 +835,32 @@ class ParamsSharedCovarianceGaussianHMM(NamedTuple):
 
 
 class SharedCovarianceGaussianHMM(HMM):
+    r"""An HMM with multivariate normal (i.e. Gaussian) emissions where the covariance
+    matrix is shared by all discrete states.
+
+    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
+    the emission distribution is,
+
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma)$$
+
+    where $\Sigma$ is the *shared emission covariance*.
+
+    The complete set of parameters is $\theta = (\{\mu_k\}_{k=1}^K, \Sigma)$.
+
+    The model has a conjugate prior,
+
+    $$p(\theta) = \mathrm{IW}(\Sigma \mid \nu_0, \Psi_0) \prod_{k=1}^K \mathcal{N}(\mu_{k} \mid \mu_0, \kappa_0^{-1} \Sigma)$$
+
+    :param num_states: number of discrete states $K$
+    :param emission_dim: number of conditionally independent emissions $N$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
+    :param emission_prior_mean: $\mu_0$
+    :param emission_prior_concentration: $\kappa_0$
+    :param emission_prior_scale: $\Psi_0$
+    :param emission_prior_extra_df: $\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.
+
+    """
     def __init__(self, num_states: int,
                  emission_dim: int,
                  initial_probs_concentration=1.1,
@@ -775,31 +883,29 @@ class SharedCovarianceGaussianHMM(HMM):
 
     def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: jnp.array=None,
-                   transition_matrix: jnp.array=None,
-                   emission_means: jnp.array=None,
-                   emission_covariance: jnp.array=None,
-                   emissions: jnp.array=None):
+                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
+                   emission_covariance:  Optional[Float[Array, "emission_dim emission_dim"]]=None,
+                   emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
+        ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.
         Parameters will then be sampled from the prior (if `method==prior`).
 
-        Note: in the future we may support more initialization schemes, like K-Means.
-
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
-            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_covariance (array, optional): manually specified emission covariance (shared by all states). Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            initial_probs: manually specified initial state probabilities.
+            transition_matrix: manually specified transition matrix.
+            emission_means: manually specified emission means.
+            emission_covariance: manually specified emission covariance.
+            emissions: emissions for initializing the parameters with kmeans.
 
         Returns:
-            params: nested dataclasses of arrays containing model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+            Model parameters and their properties.
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
@@ -816,6 +922,38 @@ class ParamsLowRankGaussianHMM(NamedTuple):
 
 
 class LowRankGaussianHMM(HMM):
+    r"""An HMM with multivariate normal (i.e. Gaussian) emissions where the covariance
+    matrix is low rank plus diagonal.
+
+    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
+    the emission distribution is,
+
+    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma_{z_t})$$
+
+    where $\Sigma_k$ factors as,
+
+    $$\Sigma_k = U_k U_k^\top + \mathrm{diag}(d_k)$$
+
+    with *low rank factors* $U_k \in \mathbb{R}^{N \times M}$ and
+    *diagonal factor* $d_k \in \mathbb{R}_+^{N}$.
+
+    The complete set of parameters is $\theta = (\{\mu_k, U_k, d_k\}_{k=1}^K$.
+
+    This model does not have a conjugate prior. Instead, we place a gamma prior on the diagonal factors,
+
+    $$p(\theta) \propto \prod_{k=1}^K \prod_{n=1}^N \mathrm{Ga}(d_{k,n} \mid \alpha_0, \beta_0)$$
+
+    :param num_states: number of discrete states $K$
+    :param emission_dim: number of conditionally independent emissions $N$
+    :param emission_rank: rank of the low rank factors, $M$
+    :param initial_probs_concentration: $\alpha$
+    :param transition_matrix_concentration: $\beta$
+    :param emission_diag_factor_concentration: $\alpha_0$
+    :param emission_diag_factor_rate: $\beta_0$
+    :param m_step_optimizer: ``optax`` optimizer, like Adam.
+    :param m_step_num_iters: number of optimizer steps per M-step.
+
+    """
     def __init__(self, num_states: int,
                  emission_dim: int,
                  emission_rank: int,
@@ -839,33 +977,31 @@ class LowRankGaussianHMM(HMM):
 
     def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: jnp.array=None,
-                   transition_matrix: jnp.array=None,
-                   emission_means=None,
-                   emission_cov_diag_factors=None,
-                   emission_cov_low_rank_factors=None,
-                   emissions: jnp.array=None):
+                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
+                   emission_cov_diag_factors: Optional[Float[Array, "num_states emission_dim"]]=None,
+                   emission_cov_low_rank_factors: Optional[Float[Array, "num_states emission_dim emission_rank"]]=None,
+                   emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
+        ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.
         Parameters will then be sampled from the prior (if `method==prior`).
 
-        Note: in the future we may support more initialization schemes, like K-Means.
-
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to None.
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
-            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
-            emission_means (array, optional): manually specified emission means. Defaults to None.
-            emission_cov_diag_factors (array, optional): manually specified emission scales (sqrt of diagonal of covariance matrix). Defaults to None.
-            emission_cov_low_rank_factors (array, optional): manually specified emission low rank factors (sqrt of diagonal of covariance matrix). Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            initial_probs: manually specified initial state probabilities.
+            transition_matrix: manually specified transition matrix.
+            emission_means: manually specified emission means.
+            emission_cov_diag_factors: manually specified emission scales (sqrt of diagonal of covariance matrix).
+            emission_cov_low_rank_factors: manually specified emission low rank factors (sqrt of diagonal of covariance matrix).
+            emissions: emissions for initializing the parameters with kmeans.
 
         Returns:
-            params: nested dataclasses of arrays containing model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+            Model parameters and their properties.
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()

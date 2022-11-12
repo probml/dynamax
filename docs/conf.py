@@ -100,3 +100,4 @@ html_static_path = ['_static']
 autosummary_generate = True
 autodoc_typehints = "description"
 add_module_names = False
+autodoc_member_order = "bysource"

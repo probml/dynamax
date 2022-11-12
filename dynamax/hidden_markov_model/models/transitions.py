@@ -52,7 +52,7 @@ class StandardHMMTransitions(HMMTransitions):
     def log_prior(self, params):
         return tfd.Dirichlet(self.transition_matrix_concentration).log_prob(params.transition_matrix).sum()
 
-    def compute_transition_matrices(self, params, inputs=None):
+    def _compute_transition_matrices(self, params, inputs=None):
         return params.transition_matrix
 
     def collect_suff_stats(self, params, posterior, inputs=None):

@@ -7,6 +7,7 @@ import jax.numpy as jnp
 
 from jaxtyping import Array, Float
 from typing import Tuple, Union
+import tensorflow_probability.substrates.jax as tfp
 
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
@@ -14,8 +15,9 @@ from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM, NonlinearGaussia
 from dynamax.parameters import ParameterProperties
 from dynamax.ssm import SSM
 from dynamax.utils.bijectors import RealToPSDBijector
+from dynamax.types import PRNGKey
 
-import tensorflow_probability.substrates.jax as tfp
+
 tfd = tfp.distributions
 tfb = tfp.bijectors
 MVN = tfd.MultivariateNormalFullCovariance
@@ -35,7 +37,7 @@ def lgssm_to_nlgssm(params: ParamsLGSSM) -> ParamsNLGSSM:
 
 
 def random_lgssm_args(
-    key: Union[int, jr.PRNGKey] = 0,
+    key: Union[int, PRNGKey] = 0,
     num_timesteps: int = 15,
     state_dim: int = 4,
     emission_dim: int = 2
