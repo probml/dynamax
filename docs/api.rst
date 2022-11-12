@@ -37,6 +37,30 @@ Abstract classes
 
 High-level models
 -----------------
+
+The HMM implementations below cover common emission distributions and,
+if the emissions are exponential family distributions, the models implement
+closed form EM updates. For HMMs with emissions outside the non-exponential family,
+these models default to a generic M-step implemented in :class:`HMMEmissions`.
+
+Unless otherwise specified, these models have standard initial distributions and
+transition distributions with conjugate, Bayesian priors on their parameters.
+
+**Initial distribution:**
+
+$$p(z_1 \mid \pi_1) = \mathrm{Cat}(z_1 \mid \pi_1)$$
+$$p(\pi_1) = \mathrm{Dir}(\pi_1 \mid \alpha 1_K)$$
+
+where $\alpha$ is the prior concentration on the initial distribution $\pi_1$.
+
+**Transition distribution:**
+
+$$p(z_t \mid z_{t-1}, \theta) = \mathrm{Cat}(z_t \mid A_{z_{t-1}})$$
+$$p(A) = \prod_{k=1}^K \mathrm{Dir}(A_k \mid \beta 1_K)$$
+
+where $\beta$ is the prior concentration on the rows of the transition matrix $A$.
+
+
 .. autoclass:: dynamax.hidden_markov_model.BernoulliHMM
   :show-inheritance:
   :members: initialize
@@ -51,7 +75,12 @@ High-level models
 .. autoclass:: dynamax.hidden_markov_model.SharedCovarianceGaussianHMM
 .. autoclass:: dynamax.hidden_markov_model.LowRankGaussianHMM
 .. autoclass:: dynamax.hidden_markov_model.MultinomialHMM
+  :show-inheritance:
+  :members: initialize
+
 .. autoclass:: dynamax.hidden_markov_model.PoissonHMM
+  :show-inheritance:
+  :members: initialize
 
 .. autoclass:: dynamax.hidden_markov_model.GaussianMixtureHMM
 .. autoclass:: dynamax.hidden_markov_model.DiagonalGaussianMixtureHMM

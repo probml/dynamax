@@ -107,22 +107,6 @@ class CategoricalHMMEmissions(HMMEmissions):
 class CategoricalHMM(HMM):
     """An HMM with conditionally independent categorical emissions.
 
-    **Initial distribution:**
-
-    $$p(z_1 \mid \pi_1) = \mathrm{Cat}(z_1 \mid \pi_1)$$
-    $$p(\pi_1) = \mathrm{Dir}(\pi_1 \mid \\alpha 1_K)$$
-
-    where $\\alpha$ is the prior concentration on the initial distribution $\pi_1$.
-
-    **Transition distribution:**
-
-    $$p(z_t \mid z_{t-1}, \\theta) = \mathrm{Cat}(z_t \mid A_{z_{t-1}})$$
-    $$p(A) = \prod_{k=1}^K \mathrm{Dir}(A_k \mid \\beta 1_K)$$
-
-    where $\\beta$ is the prior concentration on the rows of the transition matrix $A$.
-
-    **Emission distribution:**
-
     Let $y_t \in \{1,\ldots,C\}^N$ denote a vector of $N$ conditionally independent
     categorical emissions from $C$ classes at time $t$. In this model,the emission
     distribution is,
@@ -135,10 +119,10 @@ class CategoricalHMM(HMM):
 
     :param num_states: number of discrete states $K$
     :param emission_dim: number of conditionally independent emissions $N$
+    :param num_classes: number of multinomial classes $C$
     :param initial_probs_concentration: $\\alpha$
     :param transition_matrix_concentration: $\\beta$
-    :param emission_prior_concentration0: $a_0$
-    :param emission_prior_concentration1: $a_1$
+    :param emission_prior_concentration: $\gamma$
 
     """
     def __init__(self, num_states: int,

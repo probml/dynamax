@@ -94,22 +94,6 @@ class BernoulliHMMEmissions(HMMEmissions):
 class BernoulliHMM(HMM):
     """An HMM with conditionally independent Bernoulli emissions.
 
-    **Initial distribution:**
-
-    $$p(z_1 \mid \pi_1) = \mathrm{Cat}(z_1 \mid \pi_1)$$
-    $$p(\pi_1) = \mathrm{Dir}(\pi_1 \mid \\alpha 1_K)$$
-
-    where $\\alpha$ is the prior concentration on the initial distribution $\pi_1$.
-
-    **Transition distribution:**
-
-    $$p(z_t \mid z_{t-1}, \\theta) = \mathrm{Cat}(z_t \mid A_{z_{t-1}})$$
-    $$p(A) = \prod_{k=1}^K \mathrm{Dir}(A_k \mid \\beta 1_K)$$
-
-    where $\\beta$ is the prior concentration on the rows of the transition matrix $A$.
-
-    **Emission distribution:**
-
     Let $y_t \in \{0,1\}^N$ denote a binary vector of emissions at time $t$. In this model,
     the emission distribution is,
 
