@@ -29,7 +29,7 @@ class ParamsGGSSM(NamedTuple):
     $$p(z_1) = N(x_1 | m, S)$$
 
     :param initial_mean: $m$
-    :params initial_covariance: $S$
+    :param initial_covariance: $S$
     :param dynamics_function: $f$
     :param dynamics_covariance: $Q$
     :param emissions_mean_function: $h$
@@ -65,6 +65,12 @@ class GeneralizedGaussianSSM(SSM):
     * $x_t$ = hidden variables of size `state_dim`,
     * $y_t$ = observed variables of size `emission_dim`
     * $u_t$ = input covariates of size `input_dim` (defaults to 0).
+    * $f$ = dynamics (transition) function
+    * $h$ = emission (observation) function
+    * $Q$ = covariance matrix of dynamics (system) noise
+    * $R$ = covariance function for emission (observation) noise
+    * $m$ = mean of initial state
+    * $S$ = covariance matrix of initial state
 
     """
 

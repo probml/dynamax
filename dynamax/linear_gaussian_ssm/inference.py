@@ -85,7 +85,7 @@ class PosteriorGSSMFiltered(NamedTuple):
     :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[x_t | y_{1:t}, u_{1:t}]$
 
     """
-    marginal_loglik: Float[Array, ""] # Scalar
+    marginal_loglik: Scalar
     filtered_means: Float[Array, "ntime state_dim"]
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
 
@@ -241,7 +241,7 @@ def lgssm_filter(
         inputs: optional array of inputs.
     
     Returns:
-        post: filtered posterior object.
+        PosteriorGSSMFiltered: filtered posterior object
 
     """
     num_timesteps = len(emissions)
@@ -295,7 +295,7 @@ def lgssm_smoother(
         inputs: array of inputs.
 
     Returns:
-        post: smoothed posterior object.
+        PosteriorGSSMSmoothed: smoothed posterior object.
 
     """
     num_timesteps = len(emissions)
@@ -365,7 +365,7 @@ def lgssm_posterior_sample(
         inputs: optional sequence of inptus.
 
     Returns:
-        states: one sample of $x_{1:T}$ from the posterior distribution on latent states.
+        Float[Array, "ntime state_dim"]: one sample of $x_{1:T}$ from the posterior distribution on latent states.
     """
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
