@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dynamax.linear_gaussian_ssm.models &#8212; dynamax documentation</title>
+    <title>dynamax.linear_gaussian_ssm.models</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -60,8 +60,6 @@
   
   <img src="../../../_static/logo.gif" class="logo" alt="logo">
   
-  
-  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
   
 </a>
 </div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
@@ -180,11 +178,6 @@
 <ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../../../api.html">
-   API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../../api.html#state-space-model-base-class">
    State Space Model (Base class)
   </a>
  </li>
@@ -242,6 +235,19 @@
         
         <!-- Source interaction buttons -->
 
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        
+        
+    </div>
+</div>
+
 
         <!-- Full screen (wrap in <a> to have style consistency -->
         <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
@@ -270,28 +276,31 @@
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_map</span>
-<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
+<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">PyTree</span>
 <span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="k">as</span> <span class="nn">tfd</span>
 <span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormalFullCovariance</span> <span class="k">as</span> <span class="n">MVN</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Protocol</span>
 
 <span class="kn">from</span> <span class="nn">dynamax.ssm</span> <span class="kn">import</span> <span class="n">SSM</span>
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_posterior_sample</span>
 <span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">ParamsLGSSM</span><span class="p">,</span> <span class="n">ParamsLGSSMInitial</span><span class="p">,</span> <span class="n">ParamsLGSSMDynamics</span><span class="p">,</span> <span class="n">ParamsLGSSMEmissions</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">PosteriorLGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorLGSSMSmoothed</span>
-<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterProperties</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGSSMSmoothed</span>
+<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterProperties</span><span class="p">,</span> <span class="n">ParameterSet</span>
+<span class="kn">from</span> <span class="nn">dynamax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">Scalar</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.bijectors</span> <span class="kn">import</span> <span class="n">RealToPSDBijector</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.distributions</span> <span class="kn">import</span> <span class="n">MatrixNormalInverseWishart</span> <span class="k">as</span> <span class="n">MNIW</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.distributions</span> <span class="kn">import</span> <span class="n">NormalInverseWishart</span> <span class="k">as</span> <span class="n">NIW</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.distributions</span> <span class="kn">import</span> <span class="n">mniw_posterior_update</span><span class="p">,</span> <span class="n">niw_posterior_update</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">pytree_stack</span>
 
-
-<span class="n">SuffStatsLGSSM</span> <span class="o">=</span> <span class="n">Any</span> <span class="c1"># type of sufficient statistics for EM</span>
+<span class="k">class</span> <span class="nc">SuffStatsLGSSM</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A :class:`NamedTuple` with sufficient statistics for LGSSM parameter estimation.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
 
 
 <div class="viewcode-block" id="LinearGaussianSSM"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM">[docs]</a><span class="k">class</span> <span class="nc">LinearGaussianSSM</span><span class="p">(</span><span class="n">SSM</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Linear Gaussian State Space Model.</span>
 
 <span class="sd">    The model is defined as follows</span>
@@ -305,17 +314,35 @@
 <span class="sd">    * $x_t$ is a latent state of size `state_dim`,</span>
 <span class="sd">    * $y_t$ is an emission of size `emission_dim`</span>
 <span class="sd">    * $u_t$ is an input of size `input_dim` (defaults to 0)</span>
+<span class="sd">    * $F$ = dynamics (transition) matrix</span>
+<span class="sd">    * $B$ = optional input-to-state weight matrix</span>
+<span class="sd">    * $b$ = optional input-to-state bias vector</span>
+<span class="sd">    * $Q$ = covariance matrix of dynamics (system) noise</span>
+<span class="sd">    * $H$ = emission (observation) matrix</span>
+<span class="sd">    * $D$ = optional input-to-emission weight matrix</span>
+<span class="sd">    * $d$ = optional input-to-emission bias vector</span>
+<span class="sd">    * $R$ = covariance function for emission (observation) noise</span>
+<span class="sd">    * $m$ = mean of initial state</span>
+<span class="sd">    * $S$ = covariance matrix of initial state</span>
 
 <span class="sd">    The parameters of the model are stored in a :class:`ParamsLGSSM`.</span>
 <span class="sd">    You can create the parameters manually, or by calling :meth:`initialize`.</span>
 
+<span class="sd">    :param state_dim: Dimensionality of latent state.</span>
+<span class="sd">    :param emission_dim: Dimensionality of observation vector.</span>
+<span class="sd">    :param input_dim: Dimensionality of input vector. Defaults to 0.</span>
+<span class="sd">    :param has_dynamics_bias: Whether model contains an offset term $b$. Defaults to True.</span>
+<span class="sd">    :param has_emissions_bias:  Whether model contains an offset term $d$. Defaults to True.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                 <span class="n">state_dim</span><span class="p">,</span>
-                 <span class="n">emission_dim</span><span class="p">,</span>
-                 <span class="n">input_dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                 <span class="n">has_dynamics_bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                 <span class="n">has_emissions_bias</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">state_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">has_dynamics_bias</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">has_emissions_bias</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state_dim</span> <span class="o">=</span> <span class="n">state_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">=</span> <span class="n">input_dim</span>
@@ -332,8 +359,8 @@
 
 <div class="viewcode-block" id="LinearGaussianSSM.initialize"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span> <span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
-        <span class="n">initial_mean</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKey</span> <span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">initial_mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">initial_covariance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">dynamics_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">dynamics_bias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -344,7 +371,24 @@
         <span class="n">emission_input_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">emission_covariance</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParamsLGSSM</span><span class="p">,</span> <span class="n">ParamsLGSSM</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.&quot;&quot;&quot;</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Initialize model parameters that are set to None, and their corresponding properties.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Random number key. Defaults to jr.PRNGKey(0).</span>
+<span class="sd">            initial_mean: parameter $m$. Defaults to None.</span>
+<span class="sd">            initial_covariance: parameter $S$. Defaults to None.</span>
+<span class="sd">            dynamics_weights: parameter $F$. Defaults to None.</span>
+<span class="sd">            dynamics_bias: parameter $b$. Defaults to None.</span>
+<span class="sd">            dynamics_input_weights: parameter $B$. Defaults to None.</span>
+<span class="sd">            dynamics_covariance: parameter $Q$. Defaults to None.</span>
+<span class="sd">            emission_weights: parameter $H$. Defaults to None.</span>
+<span class="sd">            emission_bias: parameter $d$. Defaults to None.</span>
+<span class="sd">            emission_input_weights: parameter $D$. Defaults to None.</span>
+<span class="sd">            emission_covariance: parameter $R$. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple[ParamsLGSSM, ParamsLGSSM]: parameters and their properties.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Arbitrary default values, for demo purposes.</span>
         <span class="n">_initial_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_dim</span><span class="p">)</span>
@@ -427,67 +471,56 @@
             <span class="n">mean</span> <span class="o">+=</span> <span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">bias</span>
         <span class="k">return</span> <span class="n">MVN</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span></div>
 
-
-<div class="viewcode-block" id="LinearGaussianSSM.log_prior"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.log_prior">[docs]</a>    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span>
+<div class="viewcode-block" id="LinearGaussianSSM.marginal_log_prob"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.marginal_log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">marginal_log_prob</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Return the log prior probability of model parameters.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="mf">0.0</span></div>
-
-<div class="viewcode-block" id="LinearGaussianSSM.marginal_log_prob"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.marginal_log_prob">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">marginal_log_prob</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Compute log marginal likelihood of observations.&quot;&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
         <span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">lgssm_filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">filtered_posterior</span><span class="o">.</span><span class="n">marginal_loglik</span></div>
 
-<div class="viewcode-block" id="LinearGaussianSSM.filter"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.filter">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span>
+<div class="viewcode-block" id="LinearGaussianSSM.filter"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorLGSSMFiltered</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Compute filtering distribution.&quot;&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">lgssm_filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="LinearGaussianSSM.smoother"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.smoother">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">smoother</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span>
+<div class="viewcode-block" id="LinearGaussianSSM.smoother"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.smoother">[docs]</a>    <span class="k">def</span> <span class="nf">smoother</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorLGSSMSmoothed</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Compute smoothing distribution.&quot;&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span></div>
 
-    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">posterior_sample</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime state_dim&quot;</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">lgssm_posterior_sample</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="LinearGaussianSSM.posterior_predictive"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.posterior_predictive">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">posterior_predictive</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span>
+<div class="viewcode-block" id="LinearGaussianSSM.posterior_predictive"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.posterior_predictive">[docs]</a>    <span class="k">def</span> <span class="nf">posterior_predictive</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">]]:</span>
-        <span class="sd">&quot;&quot;&quot;Compute marginal posterior predictive for each observation.</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute marginal posterior predictive smoothing distribution for each observation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            params: model parameters.</span>
+<span class="sd">            emissions: sequence of observations.</span>
+<span class="sd">            inputs: optional sequence of inputs.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            means: (T,D) array of E[Y(t,d) | Y(1:T)]</span>
-<span class="sd">            stds: (T,D) array std[Y(t,d) | Y(1:T)]</span>
+<span class="sd">            :posterior predictive means $\mathbb{E}[y_{t,d} \mid y_{1:T}]$ and standard deviations $\mathrm{std}[y_{t,d} \mid y_{1:T}]$</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">lgssm_smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
         <span class="n">H</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">weights</span>
@@ -507,9 +540,6 @@
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;nseq ntime emission_dim&quot;</span><span class="p">],</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;nseq ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">SuffStatsLGSSM</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;The E-step computes sums of expected sufficient statistics under the</span>
-<span class="sd">        posterior. In the generic case, we simply return the posterior itself.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">num_timesteps</span> <span class="o">=</span> <span class="n">emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_timesteps</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
@@ -569,7 +599,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span>
+<div class="viewcode-block" id="LinearGaussianSSM.m_step"><a class="viewcode-back" href="../../../api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.m_step">[docs]</a>    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
         <span class="n">props</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
@@ -607,17 +637,25 @@
             <span class="n">dynamics</span><span class="o">=</span><span class="n">ParamsLGSSMDynamics</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">F</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">input_weights</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">Q</span><span class="p">),</span>
             <span class="n">emissions</span><span class="o">=</span><span class="n">ParamsLGSSMEmissions</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">H</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">input_weights</span><span class="o">=</span><span class="n">D</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">R</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span></div>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span></div></div>
 
 
 <span class="k">class</span> <span class="nc">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">LinearGaussianSSM</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Linear Gaussian State Space Model with conjugate priors for the model parameters.</span>
-<span class="sd">    The parameters are the same as LG-SSM.</span>
-<span class="sd">    The priors are as follows:</span>
-<span class="sd">    p(m, S) = NIW(loc, mean_concentration, df, scale) # normal inverse wishart</span>
-<span class="sd">    p([F, B, b], Q) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart</span>
-<span class="sd">    p([H, D, d], R) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart</span>
+
+<span class="sd">    The parameters are the same as LG-SSM. The priors are as follows:</span>
+
+<span class="sd">    * p(m, S) = NIW(loc, mean_concentration, df, scale) # normal inverse wishart</span>
+<span class="sd">    * p([F, B, b], Q) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart</span>
+<span class="sd">    * p([H, D, d], R) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart</span>
+
+<span class="sd">    :param state_dim: Dimensionality of latent state.</span>
+<span class="sd">    :param emission_dim: Dimensionality of observation vector.</span>
+<span class="sd">    :param input_dim: Dimensionality of input vector. Defaults to 0.</span>
+<span class="sd">    :param has_dynamics_bias: Whether model contains an offset term b. Defaults to True.</span>
+<span class="sd">    :param has_emissions_bias:  Whether model contains an offset term d. Defaults to True.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">state_dim</span><span class="p">,</span>
@@ -661,11 +699,10 @@
     <span class="k">def</span> <span class="nf">covariates_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">,))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the log prior probability of any model parameters.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            lp (Scalar): log prior probability.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
         <span class="n">lp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_prior</span><span class="o">.</span><span class="n">log_prob</span><span class="p">((</span><span class="n">params</span><span class="o">.</span><span class="n">initial</span><span class="o">.</span><span class="n">cov</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">initial</span><span class="o">.</span><span class="n">mean</span><span class="p">))</span>
 
         <span class="c1"># dynamics</span>
@@ -682,10 +719,19 @@
         <span class="n">lp</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior</span><span class="o">.</span><span class="n">log_prob</span><span class="p">((</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">cov</span><span class="p">,</span> <span class="n">emission_matrix</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">lp</span>
 
-    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
+        <span class="n">props</span><span class="p">:</span> <span class="n">ParamsLGSSM</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
+        <span class="n">props</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
+        <span class="n">batch_stats</span><span class="p">:</span> <span class="n">SuffStatsLGSSM</span><span class="p">,</span>
+        <span class="n">m_step_state</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
         <span class="c1"># Sum the statistics across all batches</span>
         <span class="n">stats</span> <span class="o">=</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">batch_stats</span><span class="p">)</span>
         <span class="n">init_stats</span><span class="p">,</span> <span class="n">dynamics_stats</span><span class="p">,</span> <span class="n">emission_stats</span> <span class="o">=</span> <span class="n">stats</span>
@@ -713,8 +759,26 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span>
 
-    <span class="k">def</span> <span class="nf">fit_blocked_gibbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">initial_params</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Estimation using blocked-Gibbs sampler.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">fit_blocked_gibbs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">initial_params</span><span class="p">:</span> <span class="n">ParamsLGSSM</span><span class="p">,</span>
+        <span class="n">sample_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;nbatch ntime emission_dim&quot;</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;nbatch ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParamsLGSSM</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Estimate parameter posterior using block-Gibbs sampler.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: random number key.</span>
+<span class="sd">            initial_params: starting parameters.</span>
+<span class="sd">            sample_size: how many samples to draw.</span>
+<span class="sd">            emissions: set of observation sequences.</span>
+<span class="sd">            inputs: optional set of input sequences.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            parameter object, where each field has `sample_size` copies as leading batch dimension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

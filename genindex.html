@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; dynamax documentation</title>
+    <title>Index</title>
     
   <link rel="stylesheet" href="_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -60,8 +60,6 @@
   
   <img src="_static/logo.gif" class="logo" alt="logo">
   
-  
-  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
   
 </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
@@ -180,11 +178,6 @@
 <ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="api.html">
-   API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="api.html#state-space-model-base-class">
    State Space Model (Base class)
   </a>
  </li>
@@ -242,6 +235,19 @@
         
         <!-- Source interaction buttons -->
 
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        
+        
+    </div>
+</div>
+
 
         <!-- Full screen (wrap in <a> to have style consistency -->
         <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
@@ -267,7 +273,9 @@
 <h1 id="index">Index</h1>
 
 <div class="genindex-jumpbox">
- <a href="#C"><strong>C</strong></a>
+ <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
@@ -282,15 +290,57 @@
  | <a href="#U"><strong>U</strong></a>
  
 </div>
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.BernoulliHMM">BernoulliHMM (class in dynamax.hidden_markov_model)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.CategoricalHMM">CategoricalHMM (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.CategoricalRegressionHMM">CategoricalRegressionHMM (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMMEmissions.collect_suff_stats">collect_suff_stats() (HMMEmissions method)</a>
+
+      <ul>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMInitialState.collect_suff_stats">(HMMInitialState method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMTransitions.collect_suff_stats">(HMMTransitions method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.LinearAutoregressiveHMM.compute_inputs">compute_inputs() (LinearAutoregressiveHMM method)</a>
+</li>
       <li><a href="api.html#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter">conditional_moments_gaussian_filter() (in module dynamax.generalized_gaussian_ssm)</a>
+</li>
+      <li><a href="api.html#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_smoother">conditional_moments_gaussian_smoother() (in module dynamax.generalized_gaussian_ssm)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.DiagonalGaussianHMM">DiagonalGaussianHMM (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.DiagonalGaussianMixtureHMM">DiagonalGaussianMixtureHMM (class in dynamax.hidden_markov_model)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_smoother">conditional_moments_gaussian_smoother() (in module dynamax.generalized_gaussian_ssm)</a>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMMEmissions.distribution">distribution() (HMMEmissions method)</a>
+
+      <ul>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMInitialState.distribution">(HMMInitialState method)</a>
 </li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMTransitions.distribution">(HMMTransitions method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -301,6 +351,8 @@
 
       <ul>
         <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.e_step">(LinearGaussianSSM method)</a>
+</li>
+        <li><a href="api.html#dynamax.ssm.SSM.e_step">(SSM method)</a>
 </li>
       </ul></li>
       <li><a href="api.html#dynamax.generalized_gaussian_ssm.GeneralizedGaussianSSM.emission_distribution">emission_distribution() (GeneralizedGaussianSSM method)</a>
@@ -322,6 +374,8 @@
       <ul>
         <li><a href="api.html#dynamax.hidden_markov_model.HMM.emission_shape">(HMM property)</a>
 </li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMEmissions.emission_shape">(HMMEmissions property)</a>
+</li>
         <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.emission_shape">(LinearGaussianSSM property)</a>
 </li>
         <li><a href="api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM.emission_shape">(NonlinearGaussianSSM property)</a>
@@ -342,7 +396,9 @@
       <li><a href="api.html#dynamax.hidden_markov_model.HMM.filter">filter() (HMM method)</a>
 
       <ul>
-        <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.filter">(LinearGaussianSSM class method)</a>
+        <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.filter">(LinearGaussianSSM method)</a>
+</li>
+        <li><a href="api.html#dynamax.ssm.SSM.filter">(SSM method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -357,6 +413,12 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.GaussianHMM">GaussianHMM (class in dynamax.hidden_markov_model)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.GaussianMixtureHMM">GaussianMixtureHMM (class in dynamax.hidden_markov_model)</a>
+</li>
       <li><a href="api.html#dynamax.generalized_gaussian_ssm.GeneralizedGaussianSSM">GeneralizedGaussianSSM (class in dynamax.generalized_gaussian_ssm)</a>
 </li>
   </ul></td>
@@ -371,8 +433,6 @@
 </li>
       <li><a href="api.html#dynamax.hidden_markov_model.hmm_fixed_lag_smoother">hmm_fixed_lag_smoother() (in module dynamax.hidden_markov_model)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#dynamax.hidden_markov_model.hmm_posterior_mode">hmm_posterior_mode() (in module dynamax.hidden_markov_model)</a>
 </li>
       <li><a href="api.html#dynamax.hidden_markov_model.hmm_posterior_sample">hmm_posterior_sample() (in module dynamax.hidden_markov_model)</a>
@@ -380,6 +440,22 @@
       <li><a href="api.html#dynamax.hidden_markov_model.hmm_smoother">hmm_smoother() (in module dynamax.hidden_markov_model)</a>
 </li>
       <li><a href="api.html#dynamax.hidden_markov_model.hmm_two_filter_smoother">hmm_two_filter_smoother() (in module dynamax.hidden_markov_model)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMMEmissions">HMMEmissions (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMMInitialState">HMMInitialState (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMMParameterSet">HMMParameterSet (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMMPosterior">HMMPosterior (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMMPosteriorFiltered">HMMPosteriorFiltered (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMMPropertySet">HMMPropertySet (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMMTransitions">HMMTransitions (class in dynamax.hidden_markov_model)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -399,12 +475,58 @@
         <li><a href="api.html#dynamax.ssm.SSM.initial_distribution">(SSM method)</a>
 </li>
       </ul></li>
-      <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.initialize">initialize() (LinearGaussianSSM method)</a>
+      <li><a href="api.html#dynamax.hidden_markov_model.BernoulliHMM.initialize">initialize() (BernoulliHMM method)</a>
+
+      <ul>
+        <li><a href="api.html#dynamax.hidden_markov_model.CategoricalHMM.initialize">(CategoricalHMM method)</a>
 </li>
-      <li><a href="api.html#dynamax.hidden_markov_model.HMM.initialize_m_step_state">initialize_m_step_state() (HMM method)</a>
+        <li><a href="api.html#dynamax.hidden_markov_model.CategoricalRegressionHMM.initialize">(CategoricalRegressionHMM method)</a>
 </li>
+        <li><a href="api.html#dynamax.hidden_markov_model.DiagonalGaussianHMM.initialize">(DiagonalGaussianHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.DiagonalGaussianMixtureHMM.initialize">(DiagonalGaussianMixtureHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.GaussianHMM.initialize">(GaussianHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.GaussianMixtureHMM.initialize">(GaussianMixtureHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMEmissions.initialize">(HMMEmissions method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMInitialState.initialize">(HMMInitialState method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMTransitions.initialize">(HMMTransitions method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.LinearAutoregressiveHMM.initialize">(LinearAutoregressiveHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.initialize">(LinearGaussianSSM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.LinearRegressionHMM.initialize">(LinearRegressionHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.LogisticRegressionHMM.initialize">(LogisticRegressionHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.LowRankGaussianHMM.initialize">(LowRankGaussianHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.MultinomialHMM.initialize">(MultinomialHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.PoissonHMM.initialize">(PoissonHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.SharedCovarianceGaussianHMM.initialize">(SharedCovarianceGaussianHMM method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.SphericalGaussianHMM.initialize">(SphericalGaussianHMM method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMM.initialize_m_step_state">initialize_m_step_state() (HMM method)</a>
+
+      <ul>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMEmissions.initialize_m_step_state">(HMMEmissions method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMInitialState.initialize_m_step_state">(HMMInitialState method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMTransitions.initialize_m_step_state">(HMMTransitions method)</a>
+</li>
+      </ul></li>
       <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.inputs_shape">inputs_shape (LinearGaussianSSM property)</a>
 
       <ul>
@@ -433,19 +555,31 @@
 </li>
       <li><a href="api.html#dynamax.linear_gaussian_ssm.lgssm_smoother">lgssm_smoother() (in module dynamax.linear_gaussian_ssm)</a>
 </li>
+      <li><a href="api.html#dynamax.hidden_markov_model.LinearAutoregressiveHMM">LinearAutoregressiveHMM (class in dynamax.hidden_markov_model)</a>
+</li>
       <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM">LinearGaussianSSM (class in dynamax.linear_gaussian_ssm)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.LinearRegressionHMM">LinearRegressionHMM (class in dynamax.hidden_markov_model)</a>
+</li>
       <li><a href="api.html#dynamax.hidden_markov_model.HMM.log_prior">log_prior() (HMM method)</a>
 
       <ul>
-        <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.log_prior">(LinearGaussianSSM method)</a>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMEmissions.log_prior">(HMMEmissions method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMInitialState.log_prior">(HMMInitialState method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMTransitions.log_prior">(HMMTransitions method)</a>
 </li>
         <li><a href="api.html#dynamax.ssm.SSM.log_prior">(SSM method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#dynamax.ssm.SSM.log_prob">log_prob() (SSM method)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.LogisticRegressionHMM">LogisticRegressionHMM (class in dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.LowRankGaussianHMM">LowRankGaussianHMM (class in dynamax.hidden_markov_model)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -453,15 +587,31 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#dynamax.hidden_markov_model.HMM.marginal_log_prob">marginal_log_prob() (HMM method)</a>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMM.m_step">m_step() (HMM method)</a>
 
       <ul>
-        <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.marginal_log_prob">(LinearGaussianSSM class method)</a>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMEmissions.m_step">(HMMEmissions method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMInitialState.m_step">(HMMInitialState method)</a>
+</li>
+        <li><a href="api.html#dynamax.hidden_markov_model.HMMTransitions.m_step">(HMMTransitions method)</a>
+</li>
+        <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.m_step">(LinearGaussianSSM method)</a>
+</li>
+        <li><a href="api.html#dynamax.ssm.SSM.m_step">(SSM method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#dynamax.hidden_markov_model.HMM.most_likely_states">most_likely_states() (HMM method)</a>
+      <li><a href="api.html#dynamax.hidden_markov_model.HMM.marginal_log_prob">marginal_log_prob() (HMM method)</a>
+
+      <ul>
+        <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.marginal_log_prob">(LinearGaussianSSM method)</a>
+</li>
+        <li><a href="api.html#dynamax.ssm.SSM.marginal_log_prob">(SSM method)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#dynamax.hidden_markov_model.MultinomialHMM">MultinomialHMM (class in dynamax.hidden_markov_model)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -477,21 +627,37 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.parallel_hmm_filter">parallel_hmm_filter() (in module dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.hidden_markov_model.parallel_hmm_smoother">parallel_hmm_smoother() (in module dynamax.hidden_markov_model)</a>
+</li>
+      <li><a href="api.html#dynamax.parameters.ParameterProperties">ParameterProperties (class in dynamax.parameters)</a>
+</li>
+      <li><a href="api.html#dynamax.parameters.ParameterSet">ParameterSet (class in dynamax.parameters)</a>
+</li>
+      <li><a href="api.html#dynamax.generalized_gaussian_ssm.ParamsGGSSM">ParamsGGSSM (class in dynamax.generalized_gaussian_ssm)</a>
+</li>
       <li><a href="api.html#dynamax.linear_gaussian_ssm.ParamsLGSSM">ParamsLGSSM (class in dynamax.linear_gaussian_ssm)</a>
 </li>
       <li><a href="api.html#dynamax.linear_gaussian_ssm.ParamsLGSSMDynamics">ParamsLGSSMDynamics (class in dynamax.linear_gaussian_ssm)</a>
 </li>
-      <li><a href="api.html#dynamax.linear_gaussian_ssm.ParamsLGSSMEmissions">ParamsLGSSMEmissions (class in dynamax.linear_gaussian_ssm)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.linear_gaussian_ssm.ParamsLGSSMEmissions">ParamsLGSSMEmissions (class in dynamax.linear_gaussian_ssm)</a>
+</li>
       <li><a href="api.html#dynamax.linear_gaussian_ssm.ParamsLGSSMInitial">ParamsLGSSMInitial (class in dynamax.linear_gaussian_ssm)</a>
 </li>
-      <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.posterior_predictive">posterior_predictive() (LinearGaussianSSM class method)</a>
+      <li><a href="api.html#dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM">ParamsNLGSSM (class in dynamax.nonlinear_gaussian_ssm)</a>
 </li>
-      <li><a href="api.html#dynamax.linear_gaussian_ssm.PosteriorLGSSMFiltered">PosteriorLGSSMFiltered (class in dynamax.linear_gaussian_ssm)</a>
+      <li><a href="api.html#dynamax.hidden_markov_model.PoissonHMM">PoissonHMM (class in dynamax.hidden_markov_model)</a>
 </li>
-      <li><a href="api.html#dynamax.linear_gaussian_ssm.PosteriorLGSSMSmoothed">PosteriorLGSSMSmoothed (class in dynamax.linear_gaussian_ssm)</a>
+      <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.posterior_predictive">posterior_predictive() (LinearGaussianSSM method)</a>
+</li>
+      <li><a href="api.html#dynamax.linear_gaussian_ssm.PosteriorGSSMFiltered">PosteriorGSSMFiltered (class in dynamax.linear_gaussian_ssm)</a>
+</li>
+      <li><a href="api.html#dynamax.linear_gaussian_ssm.PosteriorGSSMSmoothed">PosteriorGSSMSmoothed (class in dynamax.linear_gaussian_ssm)</a>
+</li>
+      <li><a href="api.html#dynamax.parameters.PropertySet">PropertySet (class in dynamax.parameters)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -499,16 +665,26 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#dynamax.ssm.SSM.sample">sample() (SSM method)</a>
+      <li><a href="api.html#dynamax.hidden_markov_model.LinearAutoregressiveHMM.sample">sample() (LinearAutoregressiveHMM method)</a>
+
+      <ul>
+        <li><a href="api.html#dynamax.ssm.SSM.sample">(SSM method)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#dynamax.hidden_markov_model.SharedCovarianceGaussianHMM">SharedCovarianceGaussianHMM (class in dynamax.hidden_markov_model)</a>
 </li>
       <li><a href="api.html#dynamax.hidden_markov_model.HMM.smoother">smoother() (HMM method)</a>
 
       <ul>
-        <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.smoother">(LinearGaussianSSM class method)</a>
+        <li><a href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM.smoother">(LinearGaussianSSM method)</a>
+</li>
+        <li><a href="api.html#dynamax.ssm.SSM.smoother">(SSM method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dynamax.hidden_markov_model.SphericalGaussianHMM">SphericalGaussianHMM (class in dynamax.hidden_markov_model)</a>
+</li>
       <li><a href="api.html#dynamax.ssm.SSM">SSM (class in dynamax.ssm)</a>
 </li>
   </ul></td>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dynamax.nonlinear_gaussian_ssm.inference_ekf &#8212; dynamax documentation</title>
+    <title>dynamax.nonlinear_gaussian_ssm.inference_ekf</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -60,8 +60,6 @@
   
   <img src="../../../_static/logo.gif" class="logo" alt="logo">
   
-  
-  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
   
 </a>
 </div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
@@ -180,11 +178,6 @@
 <ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../../../api.html">
-   API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../../api.html#state-space-model-base-class">
    State Space Model (Base class)
   </a>
  </li>
@@ -242,6 +235,19 @@
         
         <!-- Source interaction buttons -->
 
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        
+        
+    </div>
+</div>
+
 
         <!-- Full screen (wrap in <a> to have style consistency -->
         <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
@@ -271,8 +277,8 @@
 <span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.models</span> <span class="kn">import</span> <span class="n">PosteriorNLGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorNLGSSMSmoothed</span><span class="p">,</span> <span class="n">ParamsNLGSSM</span>
-
+<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.models</span> <span class="kn">import</span> <span class="n">ParamsNLGSSM</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGSSMSmoothed</span>
 
 <span class="c1"># Helper functions</span>
 <span class="n">_get_params</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">x</span>
@@ -281,7 +287,7 @@
 
 
 <span class="k">def</span> <span class="nf">_predict</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Predict next mean and covariance using first-order additive EKF</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Predict next mean and covariance using first-order additive EKF</span>
 
 <span class="sd">        p(x_{t+1}) = \int N(x_t | m, S) N(x_{t+1} | f(x_t, u), Q)</span>
 <span class="sd">                    = N(x_{t+1} | f(m, u), F(m, u) S F(m, u)^T + Q)</span>
@@ -305,7 +311,8 @@
 
 
 <span class="k">def</span> <span class="nf">_condition_on</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">num_iter</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Condition a Gaussian potential on a new observation</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Condition a Gaussian potential on a new observation.</span>
+
 <span class="sd">       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})</span>
 <span class="sd">         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)</span>
 <span class="sd">         = N(x_t | m, S) N(y_t | h_t(x_t, u_t), R_t)</span>
@@ -352,21 +359,18 @@
     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorNLGSSMFiltered</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Run an (iterated) extended Kalman filter to produce the</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Run an (iterated) extended Kalman filter to produce the</span>
 <span class="sd">    marginal likelihood and filtered state estimates.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        params: an NLGSSMParams instance (or object with the same fields)</span>
-<span class="sd">        emissions (T,D_hid): array of observations.</span>
-<span class="sd">        num_iter (int): number of linearizations around posterior for update step.</span>
-<span class="sd">        inputs (T,D_in): array of inputs.</span>
+<span class="sd">        params: model parameters.</span>
+<span class="sd">        emissions: observation sequence.</span>
+<span class="sd">        num_iter: number of linearizations around posterior for update step (default 1).</span>
+<span class="sd">        inputs: optional array of inputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        filtered_posterior: GSSMPosterior instance containing,</span>
-<span class="sd">            marginal_log_lik</span>
-<span class="sd">            filtered_means (T, D_hid)</span>
-<span class="sd">            filtered_covariances (T, D_hid, D_hid)</span>
+<span class="sd">        post: posterior object.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
@@ -400,7 +404,7 @@
     <span class="c1"># Run the extended Kalman filter</span>
     <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">initial_mean</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">initial_covariance</span><span class="p">)</span>
     <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="p">(</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covs</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">PosteriorNLGSSMFiltered</span><span class="p">(</span><span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span> <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">(</span><span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span> <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="iterated_extended_kalman_filter"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.iterated_extended_kalman_filter">[docs]</a><span class="k">def</span> <span class="nf">iterated_extended_kalman_filter</span><span class="p">(</span>
@@ -408,20 +412,18 @@
     <span class="n">emissions</span><span class="p">:</span>  <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorNLGSSMFiltered</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Run an iterated extended Kalman filter (IEKF).</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Run an iterated extended Kalman filter to produce the</span>
+<span class="sd">    marginal likelihood and filtered state estimates.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        params: an NLGSSMParams instance (or object with the same fields)</span>
-<span class="sd">        emissions (T,D_hid): array of observations.</span>
-<span class="sd">        num_iter (int): number of linearizations around smoothed posterior.</span>
-<span class="sd">        inputs (T,D_in): array of inputs.</span>
+<span class="sd">        params: model parameters.</span>
+<span class="sd">        emissions: observation sequence.</span>
+<span class="sd">        num_iter: number of linearizations around posterior for update step (default 2).</span>
+<span class="sd">        inputs: optional array of inputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        filtered_posterior: GSSMPosterior instance containing,</span>
-<span class="sd">            marginal_log_lik</span>
-<span class="sd">            filtered_means (T, D_hid)</span>
-<span class="sd">            filtered_covariances (T, D_hid, D_hid)</span>
+<span class="sd">        post: posterior object.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">extended_kalman_filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_iter</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
@@ -431,25 +433,19 @@
 <div class="viewcode-block" id="extended_kalman_smoother"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.extended_kalman_smoother">[docs]</a><span class="k">def</span> <span class="nf">extended_kalman_smoother</span><span class="p">(</span>
     <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
     <span class="n">emissions</span><span class="p">:</span>  <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
-    <span class="n">filtered_posterior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorNLGSSMFiltered</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">filtered_posterior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorGSSMFiltered</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorNLGSSMSmoothed</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Run an extended Kalman (RTS) smoother.</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Run an extended Kalman (RTS) smoother.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        params: an NLGSSMParams instance (or object with the same fields)</span>
-
-<span class="sd">        emissions (T,D_hid): array of observations.</span>
-
-<span class="sd">        filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.</span>
-<span class="sd">        If None, the smoother computes the filtered posterior directly.</span>
-
-<span class="sd">        inputs (T,D_in): array of inputs.</span>
+<span class="sd">        params: model parameters.</span>
+<span class="sd">        emissions: observation sequence.</span>
+<span class="sd">        filtered_posterior: optional output from filtering step.</span>
+<span class="sd">        inputs: optional array of inputs.</span>
 
 <span class="sd">    Returns:</span>
-
-<span class="sd">        nlgssm_posterior: GSSMPosterior instance containing properties of</span>
-<span class="sd">        filtered and smoothed posterior distributions.</span>
+<span class="sd">        post: posterior object.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
@@ -495,7 +491,7 @@
     <span class="c1"># Reverse the arrays and return</span>
     <span class="n">smoothed_means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">row_stack</span><span class="p">((</span><span class="n">smoothed_means</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_means</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]))</span>
     <span class="n">smoothed_covs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">row_stack</span><span class="p">((</span><span class="n">smoothed_covs</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_covs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="n">PosteriorNLGSSMSmoothed</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">(</span>
         <span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span>
         <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span>
         <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">,</span>
@@ -509,18 +505,17 @@
     <span class="n">emissions</span><span class="p">:</span>  <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorNLGSSMSmoothed</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Run an iterated extended Kalman smoother (IEKS).</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Run an iterated extended Kalman smoother (IEKS).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        params: an NLGSSMParams instance (or object with the same fields)</span>
-<span class="sd">        emissions (T,D_hid): array of observations.</span>
-<span class="sd">        num_iter (int): number of re-linearizations around smoothed posterior.</span>
-<span class="sd">        inputs (T,D_in): array of inputs.</span>
+<span class="sd">        params: model parameters.</span>
+<span class="sd">        emissions: observation sequence.</span>
+<span class="sd">        num_iter: number of linearizations around posterior for update step (default 2).</span>
+<span class="sd">        inputs: optional array of inputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        nlgssm_posterior: GSSMPosterior instance containing properties of</span>
-<span class="sd">            filtered and smoothed posterior distributions.</span>
+<span class="sd">        post: posterior object.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 

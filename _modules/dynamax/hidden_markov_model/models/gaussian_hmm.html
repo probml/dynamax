@@ -1,0 +1,1318 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dynamax.hidden_markov_model.models.gaussian_hmm</title>
+    
+  <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    
+  <link rel="preload" as="script" href="../../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../../../../index.html">
+  
+  <img src="../../../../_static/logo.gif" class="logo" alt="logo">
+  
+  
+</a>
+</div><form class="bd-search d-flex align-items-center" action="../../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  HMMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/hmm/casino_hmm_inference.html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/hmm/casino_hmm_learning.html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/hmm/gaussian_hmm.html">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/kf_tracking.html">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/kf_linreg.html">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/lgssm_learning.html">
+   MAP parameter estimation for an LG-SSM using EM and SGD
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
+   Tracking a spiraling object using the extended / unscented Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
+   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">
+   Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../api.html">
+   State Space Model (Base class)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../api.html#hidden-markov-model">
+   Hidden Markov Model
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../api.html#linear-gaussian-ssm">
+   Linear Gaussian SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../api.html#nonlinear-gaussian-gssm">
+   Nonlinear Gaussian GSSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../api.html#generalized-gaussian-gssm">
+   Generalized Gaussian GSSM
+  </a>
+ </li>
+</ul>
+
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+    </div>
+    <div class="col pl-2 topbar-main">
+        
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        
+        <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        
+        
+    </div>
+</div>
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <h1>Source code for dynamax.hidden_markov_model.models.gaussian_hmm</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
+<span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.bijectors</span> <span class="k">as</span> <span class="nn">tfb</span>
+<span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="k">as</span> <span class="nn">tfd</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Array</span>
+<span class="kn">import</span> <span class="nn">optax</span>
+<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterProperties</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.abstractions</span> <span class="kn">import</span> <span class="n">HMM</span><span class="p">,</span> <span class="n">HMMEmissions</span><span class="p">,</span> <span class="n">HMMParameterSet</span><span class="p">,</span> <span class="n">HMMPropertySet</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.initial</span> <span class="kn">import</span> <span class="n">StandardHMMInitialState</span><span class="p">,</span> <span class="n">ParamsStandardHMMInitialState</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.transitions</span> <span class="kn">import</span> <span class="n">StandardHMMTransitions</span><span class="p">,</span> <span class="n">ParamsStandardHMMTransitions</span>
+<span class="kn">from</span> <span class="nn">dynamax.types</span> <span class="kn">import</span> <span class="n">Scalar</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.distributions</span> <span class="kn">import</span> <span class="n">InverseWishart</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.distributions</span> <span class="kn">import</span> <span class="n">NormalInverseGamma</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.distributions</span> <span class="kn">import</span> <span class="n">NormalInverseWishart</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.distributions</span> <span class="kn">import</span> <span class="n">nig_posterior_update</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.distributions</span> <span class="kn">import</span> <span class="n">niw_posterior_update</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.bijectors</span> <span class="kn">import</span> <span class="n">RealToPSDBijector</span>
+<span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">pytree_sum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+
+<span class="k">class</span> <span class="nc">ParamsGaussianHMMEmissions</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">means</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+    <span class="n">covs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">GaussianHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">num_states</span><span class="p">,</span>
+                 <span class="n">emission_dim</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_scale</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_extra_df</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;_summary_</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            initial_probabilities (_type_): _description_</span>
+<span class="sd">            transition_matrix (_type_): _description_</span>
+<span class="sd">            emission_means (_type_): _description_</span>
+<span class="sd">            emission_covariance_matrices (_type_): _description_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span> <span class="o">=</span> <span class="n">emission_prior_mean</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span> <span class="o">=</span> <span class="n">emission_prior_concentration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span> <span class="o">=</span> <span class="n">emission_prior_scale</span> <span class="k">if</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">emission_prior_scale</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> \
+                <span class="k">else</span> <span class="n">emission_prior_scale</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_df</span> <span class="o">=</span> <span class="n">emission_dim</span> <span class="o">+</span> <span class="n">emission_prior_extra_df</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="n">state</span><span class="p">],</span> <span class="n">params</span><span class="o">.</span><span class="n">covs</span><span class="p">[</span><span class="n">state</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">NormalInverseWishart</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">covs</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">means</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_covariances</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;kmeans&quot;</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">emissions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Need emissions to initialize the model with K-Means!&quot;</span>
+            <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+            <span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span>
+
+            <span class="n">_emission_means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">)</span>
+            <span class="n">_emission_covs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;prior&quot;</span><span class="p">:</span>
+            <span class="n">this_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">prior</span> <span class="o">=</span> <span class="n">NormalInverseWishart</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">_emission_covs</span><span class="p">,</span> <span class="n">_emission_means</span><span class="p">)</span> <span class="o">=</span> <span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">this_key</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid initialization method: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
+
+        <span class="c1"># Only use the values above if the user hasn&#39;t specified their own</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">ParamsGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">_emission_means</span><span class="p">),</span>
+            <span class="n">covs</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_covariances</span><span class="p">,</span> <span class="n">_emission_covs</span><span class="p">))</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">ParamsGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(),</span>
+            <span class="n">covs</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(</span><span class="n">constrainer</span><span class="o">=</span><span class="n">RealToPSDBijector</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span>
+
+    <span class="k">def</span> <span class="nf">collect_suff_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">expected_states</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">sum_w</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;tk-&gt;k&quot;</span><span class="p">,</span> <span class="n">expected_states</span><span class="p">),</span>
+            <span class="n">sum_x</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;tk,ti-&gt;ki&quot;</span><span class="p">,</span> <span class="n">expected_states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">),</span>
+            <span class="n">sum_xxT</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;tk,ti,tj-&gt;kij&quot;</span><span class="p">,</span> <span class="n">expected_states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">props</span><span class="o">.</span><span class="n">covs</span><span class="o">.</span><span class="n">trainable</span> <span class="ow">and</span> <span class="n">props</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">trainable</span><span class="p">:</span>
+            <span class="n">niw_prior</span> <span class="o">=</span> <span class="n">NormalInverseWishart</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span><span class="p">,</span>
+                                            <span class="n">mean_concentration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span><span class="p">,</span>
+                                            <span class="n">df</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_df</span><span class="p">,</span>
+                                            <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span><span class="p">)</span>
+
+            <span class="c1"># Find the posterior parameters of the NIW distribution</span>
+            <span class="k">def</span> <span class="nf">_single_m_step</span><span class="p">(</span><span class="n">stats</span><span class="p">):</span>
+                <span class="n">niw_posterior</span> <span class="o">=</span> <span class="n">niw_posterior_update</span><span class="p">(</span><span class="n">niw_prior</span><span class="p">,</span> <span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sum_x&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sum_xxT&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sum_w&#39;</span><span class="p">]))</span>
+                <span class="k">return</span> <span class="n">niw_posterior</span><span class="o">.</span><span class="n">mode</span><span class="p">()</span>
+
+            <span class="n">emission_stats</span> <span class="o">=</span> <span class="n">pytree_sum</span><span class="p">(</span><span class="n">batch_stats</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">covs</span><span class="p">,</span> <span class="n">means</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">_single_m_step</span><span class="p">)(</span><span class="n">emission_stats</span><span class="p">)</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">means</span><span class="o">=</span><span class="n">means</span><span class="p">,</span> <span class="n">covs</span><span class="o">=</span><span class="n">covs</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">props</span><span class="o">.</span><span class="n">covs</span><span class="o">.</span><span class="n">trainable</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">props</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">trainable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;GaussianHMM.fit_em() does not yet support fixed means and trainable covariance&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">props</span><span class="o">.</span><span class="n">covs</span><span class="o">.</span><span class="n">trainable</span> <span class="ow">and</span> <span class="n">props</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">trainable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;GaussianHMM.fit_em() does not yet support fixed covariance and trainable means&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span>
+
+
+<span class="k">class</span> <span class="nc">ParamsDiagonalGaussianHMMEmissions</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">means</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+    <span class="n">scale_diags</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">DiagonalGaussianHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">num_states</span><span class="p">,</span>
+                 <span class="n">emission_dim</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean_concentration</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_prior_scale</span><span class="o">=</span><span class="mf">1.1</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span> <span class="o">=</span> <span class="n">emission_prior_mean</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean_conc</span> <span class="o">=</span> <span class="n">emission_prior_mean_concentration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span> <span class="o">=</span> <span class="n">emission_prior_concentration</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span> \
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">emission_prior_concentration</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="k">else</span> <span class="n">emission_prior_concentration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span> <span class="o">=</span> <span class="n">emission_prior_scale</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_scale_diags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;kmeans&quot;</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">emissions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Need emissions to initialize the model with K-Means!&quot;</span>
+            <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+            <span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span>
+            <span class="n">_emission_means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">)</span>
+            <span class="n">_emission_scale_diags</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;prior&quot;</span><span class="p">:</span>
+            <span class="n">this_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">prior</span> <span class="o">=</span> <span class="n">NormalInverseGamma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean_conc</span><span class="p">,</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">_emission_vars</span><span class="p">,</span> <span class="n">_emission_means</span><span class="p">)</span> <span class="o">=</span> <span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">this_key</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,))</span>
+            <span class="n">_emission_scale_diags</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">_emission_vars</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid initialization method: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
+
+        <span class="c1"># Only use the values above if the user hasn&#39;t specified their own</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">ParamsDiagonalGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">_emission_means</span><span class="p">),</span>
+            <span class="n">scale_diags</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_scale_diags</span><span class="p">,</span> <span class="n">_emission_scale_diags</span><span class="p">))</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">ParamsDiagonalGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(),</span>
+            <span class="n">scale_diags</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(</span><span class="n">constrainer</span><span class="o">=</span><span class="n">tfb</span><span class="o">.</span><span class="n">Softplus</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span>
+
+    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalDiag</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="n">state</span><span class="p">],</span>
+                                          <span class="n">params</span><span class="o">.</span><span class="n">scale_diags</span><span class="p">[</span><span class="n">state</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">prior</span> <span class="o">=</span>  <span class="n">NormalInverseGamma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean_conc</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">prior</span><span class="o">.</span><span class="n">log_prob</span><span class="p">((</span><span class="n">params</span><span class="o">.</span><span class="n">scale_diags</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+                               <span class="n">params</span><span class="o">.</span><span class="n">means</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">collect_suff_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">expected_states</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span>
+        <span class="n">sum_w</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;tk-&gt;k&quot;</span><span class="p">,</span> <span class="n">expected_states</span><span class="p">)</span>
+        <span class="n">sum_x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;tk,ti-&gt;ki&quot;</span><span class="p">,</span> <span class="n">expected_states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+        <span class="n">sum_xsq</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;tk,ti-&gt;ki&quot;</span><span class="p">,</span> <span class="n">expected_states</span><span class="p">,</span> <span class="n">emissions</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sum_w</span><span class="o">=</span><span class="n">sum_w</span><span class="p">,</span> <span class="n">sum_x</span><span class="o">=</span><span class="n">sum_x</span><span class="p">,</span> <span class="n">sum_xsq</span><span class="o">=</span><span class="n">sum_xsq</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
+        <span class="n">nig_prior</span> <span class="o">=</span> <span class="n">NormalInverseGamma</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span><span class="p">,</span>
+                                       <span class="n">mean_concentration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean_conc</span><span class="p">,</span>
+                                       <span class="n">concentration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span><span class="p">,</span>
+                                       <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_single_m_step</span><span class="p">(</span><span class="n">stats</span><span class="p">):</span>
+            <span class="c1"># Find the posterior parameters of the NIG distribution</span>
+            <span class="n">posterior</span> <span class="o">=</span> <span class="n">nig_posterior_update</span><span class="p">(</span><span class="n">nig_prior</span><span class="p">,</span> <span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sum_x&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sum_xsq&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sum_w&#39;</span><span class="p">]))</span>
+            <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mode</span><span class="p">()</span>
+
+        <span class="n">emission_stats</span> <span class="o">=</span> <span class="n">pytree_sum</span><span class="p">(</span><span class="n">batch_stats</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="nb">vars</span><span class="p">,</span> <span class="n">means</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">_single_m_step</span><span class="p">)(</span><span class="n">emission_stats</span><span class="p">)</span>
+        <span class="n">scale_diags</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">means</span><span class="o">=</span><span class="n">means</span><span class="p">,</span> <span class="n">scale_diags</span><span class="o">=</span><span class="n">scale_diags</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span>
+
+
+<span class="k">class</span> <span class="nc">ParamsSphericalGaussianHMMEmissions</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">means</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+    <span class="n">scales</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">SphericalGaussianHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">num_states</span><span class="p">,</span>
+                 <span class="n">emission_dim</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean_covariance</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                 <span class="n">emission_var_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_var_rate</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
+                 <span class="n">m_step_num_iters</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">m_step_optimizer</span><span class="p">,</span> <span class="n">m_step_num_iters</span><span class="o">=</span><span class="n">m_step_num_iters</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span> <span class="o">=</span> <span class="n">emission_prior_mean</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean_cov</span> <span class="o">=</span> \
+            <span class="n">emission_prior_mean_covariance</span> <span class="k">if</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">emission_prior_mean_covariance</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> \
+                <span class="k">else</span> <span class="n">emission_prior_mean_covariance</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_var_concentration</span> <span class="o">=</span> <span class="n">emission_var_concentration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_var_rate</span> <span class="o">=</span> <span class="n">emission_var_rate</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+
+<span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
+<span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
+<span class="sd">        Parameters will then be sampled from the prior (if `method==prior`).</span>
+
+<span class="sd">        Note: in the future we may support more initialization schemes, like K-Means.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
+<span class="sd">            method (str, optional): method for initializing unspecified parameters. Currently, only &quot;prior&quot; is allowed. Defaults to &quot;prior&quot;.</span>
+<span class="sd">            emission_means (array, optional): manually specified emission means.</span>
+<span class="sd">            emission_scales (array, optional): manually specified emission scales (sqrt of diagonal of spherical covariance matrix).</span>
+<span class="sd">            emissions (array, optional): emissions for initializing the parameters with kmeans.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            params: nested dataclasses of arrays containing model parameters.</span>
+<span class="sd">            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;kmeans&quot;</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">emissions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Need emissions to initialize the model with K-Means!&quot;</span>
+            <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+            <span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span>
+            <span class="n">_emission_means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">)</span>
+            <span class="n">_emission_scales</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,))</span>
+
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;prior&quot;</span><span class="p">:</span>
+            <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">_emission_means</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean_cov</span><span class="p">)</span>\
+                    <span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key1</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,))</span>
+            <span class="n">_emission_vars</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">emission_var_concentration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_var_rate</span><span class="p">)</span>\
+                    <span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,))</span>
+            <span class="n">_emission_scales</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">_emission_vars</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid initialization method: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
+
+        <span class="c1"># Only use the values above if the user hasn&#39;t specified their own</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">ParamsSphericalGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">_emission_means</span><span class="p">),</span>
+            <span class="n">scales</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_scales</span><span class="p">,</span> <span class="n">_emission_scales</span><span class="p">))</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">ParamsSphericalGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(),</span>
+            <span class="n">scales</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(</span><span class="n">constrainer</span><span class="o">=</span><span class="n">tfb</span><span class="o">.</span><span class="n">Softplus</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span>
+
+    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span>
+        <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalDiag</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="n">state</span><span class="p">],</span>
+                                          <span class="n">params</span><span class="o">.</span><span class="n">scales</span><span class="p">[</span><span class="n">state</span><span class="p">]</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">dim</span><span class="p">,)))</span>
+
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean_cov</span><span class="p">)</span>\
+                <span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">means</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">lp</span> <span class="o">+=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_var_concentration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_var_rate</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">scales</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">lp</span>
+
+
+<span class="k">class</span> <span class="nc">ParamsSharedCovarianceGaussianHMMEmissions</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">means</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+    <span class="n">cov</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">SharedCovarianceGaussianHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">num_states</span><span class="p">,</span>
+                 <span class="n">emission_dim</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_scale</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_extra_df</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;_summary_</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            emission_means (_type_): _description_</span>
+<span class="sd">            emission_covariance_matrix (_type_): _description_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span> <span class="o">=</span> <span class="n">emission_prior_mean</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span> <span class="o">=</span> <span class="n">emission_prior_concentration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span> <span class="o">=</span> <span class="n">emission_prior_scale</span> <span class="k">if</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">emission_prior_scale</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> \
+            <span class="k">else</span> <span class="n">emission_prior_scale</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_df</span> <span class="o">=</span> <span class="n">emission_dim</span> <span class="o">+</span> <span class="n">emission_prior_extra_df</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_covariance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+
+<span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
+<span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
+<span class="sd">        Parameters will then be sampled from the prior (if `method==prior`).</span>
+
+<span class="sd">        Note: in the future we may support more initialization schemes, like K-Means.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
+<span class="sd">            method (str, optional): method for initializing unspecified parameters. Currently, only &quot;prior&quot; is allowed. Defaults to &quot;prior&quot;.</span>
+<span class="sd">            emission_means (array, optional): manually specified emission means.</span>
+<span class="sd">            emission_covariance (array, optional): manually specified emission covariance.</span>
+<span class="sd">            emissions (array, optional): emissions for initializing the parameters with kmeans.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            params: nested dataclasses of arrays containing model parameters.</span>
+<span class="sd">            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;kmeans&quot;</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">emissions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Need emissions to initialize the model with K-Means!&quot;</span>
+            <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+            <span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span>
+            <span class="n">_emission_means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">)</span>
+            <span class="n">_emission_cov</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;prior&quot;</span><span class="p">:</span>
+            <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">_emission_cov</span> <span class="o">=</span> <span class="n">InverseWishart</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span><span class="p">)</span>\
+                    <span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key1</span><span class="p">)</span>
+            <span class="n">_emission_means</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span> <span class="o">*</span> <span class="n">_emission_cov</span><span class="p">)</span>\
+                    <span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid initialization method: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
+
+        <span class="c1"># Only use the values above if the user hasn&#39;t specified their own</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">ParamsSharedCovarianceGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">_emission_means</span><span class="p">),</span>
+            <span class="n">cov</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_covariance</span><span class="p">,</span> <span class="n">_emission_cov</span><span class="p">))</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">ParamsSharedCovarianceGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(),</span>
+            <span class="n">cov</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(</span><span class="n">constrainer</span><span class="o">=</span><span class="n">RealToPSDBijector</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span>
+
+    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="n">state</span><span class="p">],</span> <span class="n">params</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">mus</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">means</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">cov</span>
+        <span class="n">mu0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span>
+        <span class="n">kappa0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span>
+        <span class="n">Psi0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span>
+        <span class="n">nu0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_df</span>
+
+        <span class="n">lp</span> <span class="o">=</span> <span class="n">InverseWishart</span><span class="p">(</span><span class="n">nu0</span><span class="p">,</span> <span class="n">Psi0</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
+        <span class="n">lp</span> <span class="o">+=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span><span class="n">mu0</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">/</span> <span class="n">kappa0</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">mus</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">lp</span>
+
+    <span class="k">def</span> <span class="nf">collect_suff_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">expected_states</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span>
+        <span class="n">sum_w</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;tk-&gt;k&quot;</span><span class="p">,</span> <span class="n">expected_states</span><span class="p">)</span>
+        <span class="n">sum_x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;tk,ti-&gt;ki&quot;</span><span class="p">,</span> <span class="n">expected_states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+        <span class="n">sum_xxT</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ti,tj-&gt;ij&quot;</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+        <span class="n">sum_T</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sum_w</span><span class="o">=</span><span class="n">sum_w</span><span class="p">,</span> <span class="n">sum_x</span><span class="o">=</span><span class="n">sum_x</span><span class="p">,</span> <span class="n">sum_xxT</span><span class="o">=</span><span class="n">sum_xxT</span><span class="p">,</span> <span class="n">sum_T</span><span class="o">=</span><span class="n">sum_T</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">stats</span>
+
+    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
+        <span class="n">mu0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_mean</span>
+        <span class="n">kappa0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_conc</span>
+        <span class="n">Psi0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_scale</span>
+        <span class="n">nu0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_df</span>
+
+        <span class="n">emission_stats</span> <span class="o">=</span> <span class="n">pytree_sum</span><span class="p">(</span><span class="n">batch_stats</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">sum_T</span> <span class="o">=</span> <span class="n">emission_stats</span><span class="p">[</span><span class="s1">&#39;sum_T&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">nu0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">sum_w</span> <span class="o">=</span> <span class="n">emission_stats</span><span class="p">[</span><span class="s1">&#39;sum_w&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">kappa0</span>
+        <span class="n">sum_x</span> <span class="o">=</span> <span class="n">emission_stats</span><span class="p">[</span><span class="s1">&#39;sum_x&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">kappa0</span> <span class="o">*</span> <span class="n">mu0</span>
+        <span class="n">sum_xxT</span> <span class="o">=</span> <span class="n">emission_stats</span><span class="p">[</span><span class="s1">&#39;sum_xxT&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">Psi0</span> <span class="o">+</span> <span class="n">kappa0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu0</span><span class="p">,</span> <span class="n">mu0</span><span class="p">)</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ki,k-&gt;ki&#39;</span><span class="p">,</span> <span class="n">sum_x</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="n">sum_w</span><span class="p">)</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="p">(</span><span class="n">sum_xxT</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ki,kj,k-&gt;ij&#39;</span><span class="p">,</span> <span class="n">sum_x</span><span class="p">,</span> <span class="n">sum_x</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="n">sum_w</span><span class="p">))</span> <span class="o">/</span> <span class="n">sum_T</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">means</span><span class="o">=</span><span class="n">means</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">cov</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span>
+
+
+<span class="k">class</span> <span class="nc">ParamsLowRankGaussianHMMEmissions</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">means</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+    <span class="n">cov_diag_factors</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+    <span class="n">cov_low_rank_factors</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim emission_rank&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">LowRankGaussianHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span> <span class="n">emission_rank</span><span class="p">,</span>
+                 <span class="n">emission_diag_factor_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_diag_factor_rate</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
+                 <span class="n">m_step_num_iters</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">m_step_optimizer</span><span class="p">,</span> <span class="n">m_step_num_iters</span><span class="o">=</span><span class="n">m_step_num_iters</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_rank</span> <span class="o">=</span> <span class="n">emission_rank</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_diag_factor_conc</span> <span class="o">=</span> <span class="n">emission_diag_factor_concentration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_diag_factor_rate</span> <span class="o">=</span> <span class="n">emission_diag_factor_rate</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_cov_diag_factors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_cov_low_rank_factors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+
+<span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
+<span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
+<span class="sd">        Parameters will then be sampled from the prior (if `method==prior`).</span>
+
+<span class="sd">        Note: in the future we may support more initialization schemes, like K-Means.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
+<span class="sd">            method (str, optional): method for initializing unspecified parameters. Currently, only &quot;prior&quot; is allowed. Defaults to &quot;prior&quot;.</span>
+<span class="sd">            emission_means (array, optional): manually specified emission means.</span>
+<span class="sd">            emission_cov_diag_factors (array, optional): manually specified diagonals of the emission covariances.</span>
+<span class="sd">            emission_cov_low_rank_factors (array, optional): manually specified low rank factors of the emission covariances.</span>
+<span class="sd">            emissions (array, optional): emissions for initializing the parameters with kmeans.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            params: nested dataclasses of arrays containing model parameters.</span>
+<span class="sd">            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;kmeans&quot;</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">emissions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Need emissions to initialize the model with K-Means!&quot;</span>
+            <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+            <span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span>
+            <span class="n">_emission_means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">)</span>
+            <span class="n">_emission_cov_diag_factors</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span>
+            <span class="n">_emission_cov_low_rank_factors</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_rank</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;prior&quot;</span><span class="p">:</span>
+            <span class="c1"># We don&#39;t have a real prior</span>
+            <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">_emission_means</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span>
+            <span class="n">_emission_cov_diag_factors</span> <span class="o">=</span> \
+                <span class="n">tfd</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_diag_factor_conc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_diag_factor_rate</span><span class="p">)</span>\
+                    <span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">)))</span>
+            <span class="n">_emission_cov_low_rank_factors</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_rank</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid initialization method: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
+
+        <span class="c1"># Only use the values above if the user hasn&#39;t specified their own</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">ParamsLowRankGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">_emission_means</span><span class="p">),</span>
+            <span class="n">cov_diag_factors</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_cov_diag_factors</span><span class="p">,</span> <span class="n">_emission_cov_diag_factors</span><span class="p">),</span>
+            <span class="n">cov_low_rank_factors</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_cov_low_rank_factors</span><span class="p">,</span> <span class="n">_emission_cov_low_rank_factors</span><span class="p">))</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">ParamsLowRankGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">means</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(),</span>
+            <span class="n">cov_diag_factors</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(</span><span class="n">constrainer</span><span class="o">=</span><span class="n">tfb</span><span class="o">.</span><span class="n">Softplus</span><span class="p">()),</span>
+            <span class="n">cov_low_rank_factors</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalDiagPlusLowRankCovariance</span><span class="p">(</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="n">state</span><span class="p">],</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">cov_diag_factors</span><span class="p">[</span><span class="n">state</span><span class="p">],</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">cov_low_rank_factors</span><span class="p">[</span><span class="n">state</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_diag_factor_conc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_diag_factor_rate</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">cov_diag_factors</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">lp</span>
+
+
+<span class="c1">### Now for the models ###</span>
+<span class="k">class</span> <span class="nc">ParamsGaussianHMM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">initial</span><span class="p">:</span> <span class="n">ParamsStandardHMMInitialState</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="n">ParamsStandardHMMTransitions</span>
+    <span class="n">emissions</span><span class="p">:</span> <span class="n">ParamsGaussianHMMEmissions</span>
+
+
+<div class="viewcode-block" id="GaussianHMM"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.GaussianHMM">[docs]</a><span class="k">class</span> <span class="nc">GaussianHMM</span><span class="p">(</span><span class="n">HMM</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;An HMM with multivariate normal (i.e. Gaussian) emissions.</span>
+
+<span class="sd">    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,</span>
+<span class="sd">    the emission distribution is,</span>
+
+<span class="sd">    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma_{z_t})$$</span>
+
+<span class="sd">    with $\theta = \{\mu_k, \Sigma_k\}_{k=1}^K$ denoting the *emission means* and *emission covariances*.</span>
+
+<span class="sd">    The model has a conjugate normal-inverse-Wishart_ prior,</span>
+
+<span class="sd">    $$p(\theta) = \prod_{k=1}^K \mathcal{N}(\mu_k \mid \mu_0, \kappa_0^{-1} \Sigma_k) \mathrm{IW}(\Sigma_{k} \mid \nu_0, \Psi_0)$$</span>
+
+<span class="sd">    .. _normal-inverse-Wishart: https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution</span>
+
+<span class="sd">    :param num_states: number of discrete states $K$</span>
+<span class="sd">    :param emission_dim: number of conditionally independent emissions $N$</span>
+<span class="sd">    :param initial_probs_concentration: $\alpha$</span>
+<span class="sd">    :param transition_matrix_concentration: $\beta$</span>
+<span class="sd">    :param emission_prior_mean: $\mu_0$</span>
+<span class="sd">    :param emission_prior_concentration: $\kappa_0$</span>
+<span class="sd">    :param emission_prior_extra_df: $\nu_0 - N &gt; 0$, the &quot;extra&quot; degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.</span>
+<span class="sd">    :param emission_prior_scale: $\Psi_0$</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">initial_probs_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">emission_prior_concentration</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_scale</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_extra_df</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>
+        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">)</span>
+        <span class="n">emission_component</span> <span class="o">=</span> <span class="n">GaussianHMMEmissions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span>
+                                                  <span class="n">emission_prior_mean</span><span class="o">=</span><span class="n">emission_prior_mean</span><span class="p">,</span>
+                                                  <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="n">emission_prior_concentration</span><span class="p">,</span>
+                                                  <span class="n">emission_prior_scale</span><span class="o">=</span><span class="n">emission_prior_scale</span><span class="p">,</span>
+                                                  <span class="n">emission_prior_extra_df</span><span class="o">=</span><span class="n">emission_prior_extra_df</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_component</span><span class="p">,</span> <span class="n">transition_component</span><span class="p">,</span> <span class="n">emission_component</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GaussianHMM.initialize"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.GaussianHMM.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                   <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">initial_probs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_covariances</span><span class="p">:</span>  <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states emission_dim emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="p">:</span>  <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HMMParameterSet</span><span class="p">,</span> <span class="n">HMMPropertySet</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+
+<span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
+<span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
+<span class="sd">        Parameters will then be sampled from the prior (if `method==prior`).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
+<span class="sd">            method: method for initializing unspecified parameters. Both &quot;prior&quot; and &quot;kmeans&quot; are supported.</span>
+<span class="sd">            initial_probs: manually specified initial state probabilities.</span>
+<span class="sd">            transition_matrix: manually specified transition matrix.</span>
+<span class="sd">            emission_means: manually specified emission means.</span>
+<span class="sd">            emission_covariances: manually specified emission covariances.</span>
+<span class="sd">            emissions: emissions for initializing the parameters with kmeans.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Model parameters and their properties.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span> <span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">emission_means</span><span class="o">=</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">emission_covariances</span><span class="o">=</span><span class="n">emission_covariances</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ParamsGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">),</span> <span class="n">ParamsGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">props</span><span class="p">)</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">ParamsDiagonalGaussianHMM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">initial</span><span class="p">:</span> <span class="n">ParamsStandardHMMInitialState</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="n">ParamsStandardHMMTransitions</span>
+    <span class="n">emissions</span><span class="p">:</span> <span class="n">ParamsDiagonalGaussianHMMEmissions</span>
+
+
+<div class="viewcode-block" id="DiagonalGaussianHMM"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.DiagonalGaussianHMM">[docs]</a><span class="k">class</span> <span class="nc">DiagonalGaussianHMM</span><span class="p">(</span><span class="n">HMM</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;An HMM with conditionally independent normal (i.e. Gaussian) emissions.</span>
+
+<span class="sd">    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,</span>
+<span class="sd">    the emission distribution is,</span>
+
+<span class="sd">    $$p(y_t \mid z_t, \theta) = \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t,n}, \sigma_{z_t,n}^2)$$</span>
+<span class="sd">    or equivalently</span>
+<span class="sd">    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \mathrm{diag}(\sigma_{z_t}^2))$$</span>
+
+
+<span class="sd">    where $\sigma_k^2 = [\sigma_{k,1}^2, \ldots, \sigma_{k,N}^2]$ are the *emission variances* of each</span>
+<span class="sd">    dimension in state $z_t=k$. The complete set of parameters is $\theta = \{\mu_k, \sigma_k^2\}_{k=1}^K$.</span>
+
+<span class="sd">    The model has a conjugate normal-inverse-gamma_ prior,</span>
+
+<span class="sd">    $$p(\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathcal{N}(\mu_{k,n} \mid \mu_0, \kappa_0^{-1} \sigma_{k,n}^2) \mathrm{IGa}(\sigma_{k,n}^2 \mid \alpha_0, \beta_0)$$</span>
+
+<span class="sd">    .. _normal-inverse-gamma: https://en.wikipedia.org/wiki/Normal-inverse-gamma_distribution</span>
+
+<span class="sd">    :param num_states: number of discrete states $K$</span>
+<span class="sd">    :param emission_dim: number of conditionally independent emissions $N$</span>
+<span class="sd">    :param initial_probs_concentration: $\alpha$</span>
+<span class="sd">    :param transition_matrix_concentration: $\beta$</span>
+<span class="sd">    :param emission_prior_mean: $\mu_0$</span>
+<span class="sd">    :param emission_prior_mean_concentration: $\kappa_0$</span>
+<span class="sd">    :param emission_prior_concentration: $\alpha_0$</span>
+<span class="sd">    :param emission_prior_scale: $\\beta_0$</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">initial_probs_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_concentration</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_prior_scale</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1.1</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>
+        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">)</span>
+        <span class="n">emission_component</span> <span class="o">=</span> <span class="n">DiagonalGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span>
+            <span class="n">emission_prior_mean</span><span class="o">=</span><span class="n">emission_prior_mean</span><span class="p">,</span>
+            <span class="n">emission_prior_mean_concentration</span><span class="o">=</span><span class="n">emission_prior_mean_concentration</span><span class="p">,</span>
+            <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="n">emission_prior_concentration</span><span class="p">,</span>
+            <span class="n">emission_prior_scale</span><span class="o">=</span><span class="n">emission_prior_scale</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_component</span><span class="p">,</span> <span class="n">transition_component</span><span class="p">,</span> <span class="n">emission_component</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DiagonalGaussianHMM.initialize"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.DiagonalGaussianHMM.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">initial_probs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_scale_diags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="p">:</span>  <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HMMParameterSet</span><span class="p">,</span> <span class="n">HMMPropertySet</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+
+<span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
+<span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
+<span class="sd">        Parameters will then be sampled from the prior (if `method==prior`).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
+<span class="sd">            method: method for initializing unspecified parameters. Both &quot;prior&quot; and &quot;kmeans&quot; are supported.</span>
+<span class="sd">            initial_probs: manually specified initial state probabilities.</span>
+<span class="sd">            transition_matrix: manually specified transition matrix.</span>
+<span class="sd">            emission_means: manually specified emission means.</span>
+<span class="sd">            emission_scale_diags: manually specified emission standard deviations $\sigma_{k,n}$</span>
+<span class="sd">            emissions: emissions for initializing the parameters with kmeans.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Model parameters and their properties.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span> <span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">emission_means</span><span class="o">=</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">emission_scale_diags</span><span class="o">=</span><span class="n">emission_scale_diags</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ParamsDiagonalGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">),</span> <span class="n">ParamsDiagonalGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">props</span><span class="p">)</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">ParamsSphericalGaussianHMM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">initial</span><span class="p">:</span> <span class="n">ParamsStandardHMMInitialState</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="n">ParamsStandardHMMTransitions</span>
+    <span class="n">emissions</span><span class="p">:</span> <span class="n">ParamsSphericalGaussianHMMEmissions</span>
+
+
+<div class="viewcode-block" id="SphericalGaussianHMM"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.SphericalGaussianHMM">[docs]</a><span class="k">class</span> <span class="nc">SphericalGaussianHMM</span><span class="p">(</span><span class="n">HMM</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;An HMM with conditionally independent normal emissions with the same variance along</span>
+<span class="sd">    each dimension. These are called *spherical* Gaussian emissions.</span>
+
+<span class="sd">    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,</span>
+<span class="sd">    the emission distribution is,</span>
+
+<span class="sd">    $$p(y_t \mid z_t, \theta) = \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t,n}, \sigma_{z_t}^2)$$</span>
+<span class="sd">    or equivalently</span>
+<span class="sd">    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \sigma_{z_t}^2 I)$$</span>
+
+<span class="sd">    where $\sigma_k^2$ is the *emission variance* in state $z_t=k$.</span>
+<span class="sd">    The complete set of parameters is $\theta = \{\mu_k, \sigma_k^2\}_{k=1}^K$.</span>
+
+<span class="sd">    The model has a non-conjugate, factored prior</span>
+
+<span class="sd">    $$p(\theta) = \prod_{k=1}^K \mathcal{N}(\mu_{k} \mid \mu_0, \Sigma_0) \mathrm{Ga}(\sigma_{k}^2 \mid \alpha_0, \beta_0)$$</span>
+
+<span class="sd">    *Note: In future versions we may implement a conjugate prior for this model.*</span>
+
+<span class="sd">    :param num_states: number of discrete states $K$</span>
+<span class="sd">    :param emission_dim: number of conditionally independent emissions $N$</span>
+<span class="sd">    :param initial_probs_concentration: $\alpha$</span>
+<span class="sd">    :param transition_matrix_concentration: $\beta$</span>
+<span class="sd">    :param emission_prior_mean: $\mu_0$</span>
+<span class="sd">    :param emission_prior_mean_covariance: $\Sigma_0$</span>
+<span class="sd">    :param emission_var_concentration: $\alpha_0$</span>
+<span class="sd">    :param emission_var_rate: $\beta_0$</span>
+<span class="sd">    :param m_step_optimizer: ``optax`` optimizer, like Adam.</span>
+<span class="sd">    :param m_step_num_iters: number of optimizer steps per M-step.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">initial_probs_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean_covariance</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                 <span class="n">emission_var_concentration</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_var_rate</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">m_step_optimizer</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
+                 <span class="n">m_step_num_iters</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>
+        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">)</span>
+        <span class="n">emission_component</span> <span class="o">=</span> <span class="n">SphericalGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span>
+            <span class="n">emission_prior_mean</span><span class="o">=</span><span class="n">emission_prior_mean</span><span class="p">,</span>
+            <span class="n">emission_prior_mean_covariance</span><span class="o">=</span><span class="n">emission_prior_mean_covariance</span><span class="p">,</span>
+            <span class="n">emission_var_concentration</span><span class="o">=</span><span class="n">emission_var_concentration</span><span class="p">,</span>
+            <span class="n">emission_var_rate</span><span class="o">=</span><span class="n">emission_var_rate</span><span class="p">,</span>
+            <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">m_step_optimizer</span><span class="p">,</span>
+            <span class="n">m_step_num_iters</span><span class="o">=</span><span class="n">m_step_num_iters</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_component</span><span class="p">,</span> <span class="n">transition_component</span><span class="p">,</span> <span class="n">emission_component</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SphericalGaussianHMM.initialize"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.SphericalGaussianHMM.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">initial_probs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_scales</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="p">:</span>  <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HMMParameterSet</span><span class="p">,</span> <span class="n">HMMPropertySet</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+
+<span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
+<span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
+<span class="sd">        Parameters will then be sampled from the prior (if `method==prior`).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
+<span class="sd">            method: method for initializing unspecified parameters. Both &quot;prior&quot; and &quot;kmeans&quot; are supported.</span>
+<span class="sd">            initial_probs: manually specified initial state probabilities.</span>
+<span class="sd">            transition_matrix: manually specified transition matrix.</span>
+<span class="sd">            emission_means: manually specified emission means.</span>
+<span class="sd">            emission_scales: manually specified emission scales (sqrt of diagonal of covariance matrix).</span>
+<span class="sd">            emissions: emissions for initializing the parameters with kmeans.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Model parameters and their properties.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span> <span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">emission_means</span><span class="o">=</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">emission_scales</span><span class="o">=</span><span class="n">emission_scales</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ParamsSphericalGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">),</span> <span class="n">ParamsSphericalGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">props</span><span class="p">)</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">ParamsSharedCovarianceGaussianHMM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">initial</span><span class="p">:</span> <span class="n">ParamsStandardHMMInitialState</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="n">ParamsStandardHMMTransitions</span>
+    <span class="n">emissions</span><span class="p">:</span> <span class="n">ParamsSharedCovarianceGaussianHMMEmissions</span>
+
+
+<div class="viewcode-block" id="SharedCovarianceGaussianHMM"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.SharedCovarianceGaussianHMM">[docs]</a><span class="k">class</span> <span class="nc">SharedCovarianceGaussianHMM</span><span class="p">(</span><span class="n">HMM</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;An HMM with multivariate normal (i.e. Gaussian) emissions where the covariance</span>
+<span class="sd">    matrix is shared by all discrete states.</span>
+
+<span class="sd">    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,</span>
+<span class="sd">    the emission distribution is,</span>
+
+<span class="sd">    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma)$$</span>
+
+<span class="sd">    where $\Sigma$ is the *shared emission covariance*.</span>
+
+<span class="sd">    The complete set of parameters is $\theta = (\{\mu_k\}_{k=1}^K, \Sigma)$.</span>
+
+<span class="sd">    The model has a conjugate prior,</span>
+
+<span class="sd">    $$p(\theta) = \mathrm{IW}(\Sigma \mid \nu_0, \Psi_0) \prod_{k=1}^K \mathcal{N}(\mu_{k} \mid \mu_0, \kappa_0^{-1} \Sigma)$$</span>
+
+<span class="sd">    :param num_states: number of discrete states $K$</span>
+<span class="sd">    :param emission_dim: number of conditionally independent emissions $N$</span>
+<span class="sd">    :param initial_probs_concentration: $\alpha$</span>
+<span class="sd">    :param transition_matrix_concentration: $\beta$</span>
+<span class="sd">    :param emission_prior_mean: $\mu_0$</span>
+<span class="sd">    :param emission_prior_concentration: $\kappa_0$</span>
+<span class="sd">    :param emission_prior_scale: $\Psi_0$</span>
+<span class="sd">    :param emission_prior_extra_df: $\nu_0 - N &gt; 0$, the &quot;extra&quot; degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_prior_mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_scale</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+                 <span class="n">emission_prior_extra_df</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>
+        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">)</span>
+        <span class="n">emission_component</span> <span class="o">=</span> <span class="n">SharedCovarianceGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span>
+            <span class="n">emission_prior_mean</span><span class="o">=</span><span class="n">emission_prior_mean</span><span class="p">,</span>
+            <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="n">emission_prior_concentration</span><span class="p">,</span>
+            <span class="n">emission_prior_scale</span><span class="o">=</span><span class="n">emission_prior_scale</span><span class="p">,</span>
+            <span class="n">emission_prior_extra_df</span><span class="o">=</span><span class="n">emission_prior_extra_df</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_component</span><span class="p">,</span> <span class="n">transition_component</span><span class="p">,</span> <span class="n">emission_component</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SharedCovarianceGaussianHMM.initialize"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.SharedCovarianceGaussianHMM.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">initial_probs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_covariance</span><span class="p">:</span>  <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="p">:</span>  <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HMMParameterSet</span><span class="p">,</span> <span class="n">HMMPropertySet</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+
+<span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
+<span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
+<span class="sd">        Parameters will then be sampled from the prior (if `method==prior`).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
+<span class="sd">            method: method for initializing unspecified parameters. Both &quot;prior&quot; and &quot;kmeans&quot; are supported.</span>
+<span class="sd">            initial_probs: manually specified initial state probabilities.</span>
+<span class="sd">            transition_matrix: manually specified transition matrix.</span>
+<span class="sd">            emission_means: manually specified emission means.</span>
+<span class="sd">            emission_covariance: manually specified emission covariance.</span>
+<span class="sd">            emissions: emissions for initializing the parameters with kmeans.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Model parameters and their properties.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span> <span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">emission_means</span><span class="o">=</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">emission_covariance</span><span class="o">=</span><span class="n">emission_covariance</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ParamsSharedCovarianceGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">),</span> <span class="n">ParamsSharedCovarianceGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">props</span><span class="p">)</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">ParamsLowRankGaussianHMM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">initial</span><span class="p">:</span> <span class="n">ParamsStandardHMMInitialState</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="n">ParamsStandardHMMTransitions</span>
+    <span class="n">emissions</span><span class="p">:</span> <span class="n">ParamsLowRankGaussianHMMEmissions</span>
+
+
+<div class="viewcode-block" id="LowRankGaussianHMM"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.LowRankGaussianHMM">[docs]</a><span class="k">class</span> <span class="nc">LowRankGaussianHMM</span><span class="p">(</span><span class="n">HMM</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;An HMM with multivariate normal (i.e. Gaussian) emissions where the covariance</span>
+<span class="sd">    matrix is low rank plus diagonal.</span>
+
+<span class="sd">    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,</span>
+<span class="sd">    the emission distribution is,</span>
+
+<span class="sd">    $$p(y_t \mid z_t, \theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \Sigma_{z_t})$$</span>
+
+<span class="sd">    where $\Sigma_k$ factors as,</span>
+
+<span class="sd">    $$\Sigma_k = U_k U_k^\top + \mathrm{diag}(d_k)$$</span>
+
+<span class="sd">    with *low rank factors* $U_k \in \mathbb{R}^{N \times M}$ and</span>
+<span class="sd">    *diagonal factor* $d_k \in \mathbb{R}_+^{N}$.</span>
+
+<span class="sd">    The complete set of parameters is $\theta = (\{\mu_k, U_k, d_k\}_{k=1}^K$.</span>
+
+<span class="sd">    This model does not have a conjugate prior. Instead, we place a gamma prior on the diagonal factors,</span>
+
+<span class="sd">    $$p(\theta) \propto \prod_{k=1}^K \prod_{n=1}^N \mathrm{Ga}(d_{k,n} \mid \alpha_0, \beta_0)$$</span>
+
+<span class="sd">    :param num_states: number of discrete states $K$</span>
+<span class="sd">    :param emission_dim: number of conditionally independent emissions $N$</span>
+<span class="sd">    :param emission_rank: rank of the low rank factors, $M$</span>
+<span class="sd">    :param initial_probs_concentration: $\alpha$</span>
+<span class="sd">    :param transition_matrix_concentration: $\beta$</span>
+<span class="sd">    :param emission_diag_factor_concentration: $\alpha_0$</span>
+<span class="sd">    :param emission_diag_factor_rate: $\beta_0$</span>
+<span class="sd">    :param m_step_optimizer: ``optax`` optimizer, like Adam.</span>
+<span class="sd">    :param m_step_num_iters: number of optimizer steps per M-step.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">emission_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_diag_factor_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">emission_diag_factor_rate</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
+                 <span class="n">m_step_num_iters</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
+        <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>
+        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">)</span>
+        <span class="n">emission_component</span> <span class="o">=</span> <span class="n">LowRankGaussianHMMEmissions</span><span class="p">(</span>
+            <span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span> <span class="n">emission_rank</span><span class="p">,</span>
+            <span class="n">emission_diag_factor_concentration</span><span class="o">=</span><span class="n">emission_diag_factor_concentration</span><span class="p">,</span>
+            <span class="n">emission_diag_factor_rate</span><span class="o">=</span><span class="n">emission_diag_factor_rate</span><span class="p">,</span>
+            <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">m_step_optimizer</span><span class="p">,</span>
+            <span class="n">m_step_num_iters</span><span class="o">=</span><span class="n">m_step_num_iters</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_component</span><span class="p">,</span> <span class="n">transition_component</span><span class="p">,</span> <span class="n">emission_component</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LowRankGaussianHMM.initialize"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.LowRankGaussianHMM.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">initial_probs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_means</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_cov_diag_factors</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_cov_low_rank_factors</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states emission_dim emission_rank&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="p">:</span>  <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HMMParameterSet</span><span class="p">,</span> <span class="n">HMMPropertySet</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+
+<span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
+<span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
+<span class="sd">        Parameters will then be sampled from the prior (if `method==prior`).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
+<span class="sd">            method: method for initializing unspecified parameters. Both &quot;prior&quot; and &quot;kmeans&quot; are supported.</span>
+<span class="sd">            initial_probs: manually specified initial state probabilities.</span>
+<span class="sd">            transition_matrix: manually specified transition matrix.</span>
+<span class="sd">            emission_means: manually specified emission means.</span>
+<span class="sd">            emission_cov_diag_factors: manually specified emission scales (sqrt of diagonal of covariance matrix).</span>
+<span class="sd">            emission_cov_low_rank_factors: manually specified emission low rank factors (sqrt of diagonal of covariance matrix).</span>
+<span class="sd">            emissions: emissions for initializing the parameters with kmeans.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Model parameters and their properties.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span> <span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">emission_means</span><span class="o">=</span><span class="n">emission_means</span><span class="p">,</span> <span class="n">emission_cov_diag_factors</span><span class="o">=</span><span class="n">emission_cov_diag_factors</span><span class="p">,</span> <span class="n">emission_cov_low_rank_factors</span><span class="o">=</span><span class="n">emission_cov_low_rank_factors</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ParamsLowRankGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">),</span> <span class="n">ParamsLowRankGaussianHMM</span><span class="p">(</span><span class="o">**</span><span class="n">props</span><span class="p">)</span></div></div>
+</pre></div>
+
+              </div>
+              
+        </div>
+    </div>
+    
+    
+    <div class='prev-next-bottom'>
+        
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+        
+            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="../../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    
+  </body>
+</html>

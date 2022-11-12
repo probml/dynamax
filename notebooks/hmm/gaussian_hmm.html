@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Gaussian HMM &#8212; dynamax documentation</title>
+    <title>Gaussian HMM</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -65,8 +65,6 @@
   
   <img src="../../_static/logo.gif" class="logo" alt="logo">
   
-  
-  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
   
 </a>
 </div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
@@ -185,11 +183,6 @@
 <ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../../api.html">
-   API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#state-space-model-base-class">
    State Space Model (Base class)
   </a>
  </li>
@@ -245,24 +238,20 @@
         </button>
         
         
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
-            class="fas fa-download"></i></button>
+        <!-- Source interaction buttons -->
 
-    <div class="dropdown-buttons">
-        <!-- ipynb file if we had a myst markdown file -->
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
         
-        <!-- Download raw file -->
-        <a class="dropdown-buttons" href="../../_sources/notebooks/hmm/gaussian_hmm.ipynb.txt"><button type="button"
-                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
-                data-placement="left">.ipynb</button></a>
-        <!-- Download PDF via print -->
-        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
-            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+        
     </div>
 </div>
-
-        <!-- Source interaction buttons -->
 
 
         <!-- Full screen (wrap in <a> to have style consistency -->
@@ -344,8 +333,8 @@
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm">
 <h1>Gaussian HMM<a class="headerlink" href="#gaussian-hmm" title="Permalink to this heading">¶</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-2c35eaf8-7f77-4872-9c31-44b0bae12e96">
-<span class="eqno">(1)<a class="headerlink" href="#equation-2c35eaf8-7f77-4872-9c31-44b0bae12e96" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-e734e74e-c1cf-4ca7-bd4a-e439013b570c">
+<span class="eqno">(1)<a class="headerlink" href="#equation-e734e74e-c1cf-4ca7-bd4a-e439013b570c" title="Permalink to this equation">¶</a></span>\[\begin{align}
 p(x_t \mid z_t, \theta) &amp;= \mathcal{N}(x_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -575,10 +564,10 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f299c919b80&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fa6f6f40340&gt;
 </pre></div>
 </div>
-<img alt="../../_images/8764928b83b0d964c485e00571668d57100def2c7069f578c935e20c25c11cf6.png" src="../../_images/8764928b83b0d964c485e00571668d57100def2c7069f578c935e20c25c11cf6.png" />
+<img alt="../../_images/6650638a13bb220a47af4dca8f5ff35739f2d541ca482958316fd72add144b2f.png" src="../../_images/6650638a13bb220a47af4dca8f5ff35739f2d541ca482958316fd72add144b2f.png" />
 </div>
 </div>
 </section>
@@ -594,8 +583,8 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d986132c9d7ad7f07cf9ee01fd816f5071503b930a68d819a211cb820b0a6f64.png" src="../../_images/d986132c9d7ad7f07cf9ee01fd816f5071503b930a68d819a211cb820b0a6f64.png" />
-<img alt="../../_images/f64de307c9d644b9b627f2af5351fd9a1289531e7868d1e22530c58c7c3bf778.png" src="../../_images/f64de307c9d644b9b627f2af5351fd9a1289531e7868d1e22530c58c7c3bf778.png" />
+<img alt="../../_images/38cdc6f43e8c6926000c5c4fe61e95b8570e7bf1f0a3cc875e3e28ca01572d8d.png" src="../../_images/38cdc6f43e8c6926000c5c4fe61e95b8570e7bf1f0a3cc875e3e28ca01572d8d.png" />
+<img alt="../../_images/881e9bb7fc2c0e56b092e7d51dfff6fec191ef86be1851da72c274c13ca27711.png" src="../../_images/881e9bb7fc2c0e56b092e7d51dfff6fec191ef86be1851da72c274c13ca27711.png" />
 </div>
 </div>
 <div class="cell docutils container">

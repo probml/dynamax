@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dynamax.generalized_gaussian_ssm.inference &#8212; dynamax documentation</title>
+    <title>dynamax.generalized_gaussian_ssm.inference</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -60,8 +60,6 @@
   
   <img src="../../../_static/logo.gif" class="logo" alt="logo">
   
-  
-  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
   
 </a>
 </div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
@@ -180,11 +178,6 @@
 <ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../../../api.html">
-   API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../../api.html#state-space-model-base-class">
    State Space Model (Base class)
   </a>
  </li>
@@ -242,6 +235,19 @@
         
         <!-- Source interaction buttons -->
 
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        
+        
+    </div>
+</div>
+
 
         <!-- Full screen (wrap in <a> to have style consistency -->
         <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
@@ -272,8 +278,8 @@
 <span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Callable</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm.models</span> <span class="kn">import</span> <span class="n">ParamsGGSSM</span><span class="p">,</span>  <span class="n">PosteriorGGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGGSSMSmoothed</span>
-
+<span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm.models</span> <span class="kn">import</span> <span class="n">ParamsGGSSM</span>
+<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGSSMSmoothed</span>
 
 <span class="c1"># Helper functions</span>
 <span class="n">_get_params</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">x</span>
@@ -282,23 +288,15 @@
 <span class="n">_jacfwd_2d</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">jacfwd</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">x</span><span class="p">))</span>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Parameter structures are represented as NamedTuples.</span>
-<span class="sd">(NamedTuples do not easily support inheritance, so we define</span>
-<span class="sd">the CMGFIntegrals &quot;meta-type&quot; below.)</span>
-<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="k">class</span> <span class="nc">EKFIntegrals</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Lightweight container for EKF Gaussian integrals.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot; Lightweight container for EKF Gaussian integrals.&quot;&quot;&quot;</span>
     <span class="n">gaussian_expectation</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
     <span class="n">gaussian_cross_covariance</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span> <span class="n">_jacfwd_2d</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="o">@</span> <span class="n">P</span> <span class="o">@</span> <span class="n">_jacfwd_2d</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
 
 
 <span class="k">class</span> <span class="nc">UKFIntegrals</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Lightweight container for UKF Gaussian integrals.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Lightweight container for UKF Gaussian integrals.&quot;&quot;&quot;</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
     <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span>
     <span class="n">kappa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
@@ -329,9 +327,7 @@
 
 
 <span class="k">class</span> <span class="nc">GHKFIntegrals</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Lightweight container for GHKF Gaussian integrals.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Lightweight container for GHKF Gaussian integrals.&quot;&quot;&quot;</span>
     <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
 
     <span class="k">def</span> <span class="nf">gaussian_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
@@ -448,6 +444,7 @@
 <span class="k">def</span> <span class="nf">_statistical_linear_regression</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">C</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return moment-matching affine coefficients and approximation noise variance</span>
 <span class="sd">    given joint moments.</span>
+
 <span class="sd">        g(x) \approx Ax + b + e where e ~ N(0, Omega)</span>
 <span class="sd">        p(x) = N(x | mu, Sigma)</span>
 <span class="sd">        m = E[g(x)]</span>
@@ -478,22 +475,19 @@
     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGGSSMFiltered</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Run an (iterated) conditional moments Gaussian filter to produce the</span>
 <span class="sd">    marginal likelihood and filtered state estimates.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model_params (GGSSMParams): model parameters.</span>
-<span class="sd">        inf_params (CMGFIntegrals): inference parameters.</span>
-<span class="sd">        emissions (T,D_hid): array of observations.</span>
-<span class="sd">        num_iter (int): number of linearizations around prior/posterior for update step.</span>
-<span class="sd">        inputs (T,D_in): array of inputs.</span>
+<span class="sd">        model_params: model parameters.</span>
+<span class="sd">        inf_params: inference parameters that specify how to compute moments.</span>
+<span class="sd">        emissions: array of observations.</span>
+<span class="sd">        num_iter: optional number of linearizations around prior/posterior for update step (default 1).</span>
+<span class="sd">        inputs: optopnal array of inputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        filtered_posterior: GSSMPosterior instance containing,</span>
-<span class="sd">            marginal_log_lik</span>
-<span class="sd">            filtered_means (T, D_hid)</span>
-<span class="sd">            filtered_covariances (T, D_hid, D_hid)</span>
+<span class="sd">        filtered_posterior: posterior object.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
@@ -528,7 +522,7 @@
     <span class="c1"># Run the general linearization filter</span>
     <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model_params</span><span class="o">.</span><span class="n">initial_mean</span><span class="p">,</span> <span class="n">model_params</span><span class="o">.</span><span class="n">initial_covariance</span><span class="p">)</span>
     <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="p">(</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covs</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">PosteriorGGSSMFiltered</span><span class="p">(</span><span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span> <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">(</span><span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span> <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="iterated_conditional_moments_gaussian_filter"><a class="viewcode-back" href="../../../api.html#dynamax.generalized_gaussian_ssm.iterated_conditional_moments_gaussian_filter">[docs]</a><span class="k">def</span> <span class="nf">iterated_conditional_moments_gaussian_filter</span><span class="p">(</span>
@@ -537,22 +531,18 @@
     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGGSSMFiltered</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Run an iterated conditional moments Gaussian filter.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model_params (GGSSMParams): model parameters.</span>
-<span class="sd">        inf_params (CMGFIntegrals): inference parameters.</span>
-<span class="sd">        emissions (T,D_hid): array of observations.</span>
-<span class="sd">        num_iter (int): number of linearizations around smoothed posterior.</span>
-<span class="sd">        inputs (T,D_in): array of inputs.</span>
+<span class="sd">        model_params: model parameters.</span>
+<span class="sd">        inf_params: inference parameters that specify how to compute moments.</span>
+<span class="sd">        emissions: array of observations.</span>
+<span class="sd">        num_iter: optional number of linearizations around prior/posterior for update step (default 1).</span>
+<span class="sd">        inputs: optional array of inputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        filtered_posterior: GSSMPosterior instance containing,</span>
-<span class="sd">            marginal_log_lik</span>
-<span class="sd">            filtered_means (T, D_hid)</span>
-<span class="sd">            filtered_covariances (T, D_hid, D_hid)</span>
-
+<span class="sd">        filtered_posterior: posterior object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">filtered_posterior</span> <span class="o">=</span> <span class="n">conditional_moments_gaussian_filter</span><span class="p">(</span><span class="n">model_params</span><span class="p">,</span> <span class="n">inf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_iter</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">filtered_posterior</span></div>
@@ -562,26 +552,20 @@
     <span class="n">model_params</span><span class="p">:</span> <span class="n">ParamsGGSSM</span><span class="p">,</span>
     <span class="n">inf_params</span><span class="p">:</span> <span class="n">CMGFIntegrals</span><span class="p">,</span>
     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
-    <span class="n">filtered_posterior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorGGSSMFiltered</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">filtered_posterior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorGSSMFiltered</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGGSSMSmoothed</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Run a conditional moments Gaussian smoother.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model_params (GGSSMParams): model parameters.</span>
-
-<span class="sd">        inf_params (CMGFIntegrals): inference parameters.</span>
-
-<span class="sd">        emissions (T,D_hid): array of observations.</span>
-
-<span class="sd">        filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.</span>
-<span class="sd">        If None, the smoother computes the filtered posterior directly.</span>
-
-<span class="sd">        inputs (T,D_in): array of inputs.</span>
+<span class="sd">        model_params: model parameters.</span>
+<span class="sd">        inf_params: inference parameters that specify how to compute moments.</span>
+<span class="sd">        emissions: array of observations.</span>
+<span class="sd">        num_iter: optional number of linearizations around prior/posterior for update step (default 1).</span>
+<span class="sd">        inputs: optopnal array of inputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        nlgssm_posterior: GSSMPosterior instance containing properties of</span>
-<span class="sd">        filtered and smoothed posterior distributions.</span>
+<span class="sd">        post: posterior object.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
@@ -626,7 +610,7 @@
     <span class="c1"># Reverse the arrays and return</span>
     <span class="n">smoothed_means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">row_stack</span><span class="p">((</span><span class="n">smoothed_means</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_means</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]))</span>
     <span class="n">smoothed_covs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">row_stack</span><span class="p">((</span><span class="n">smoothed_covs</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_covs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="n">PosteriorGGSSMSmoothed</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">(</span>
         <span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span>
         <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span>
         <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">,</span>
@@ -641,19 +625,19 @@
     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGGSSMSmoothed</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Run an iterated conditional moments Gaussian smoother.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model_params (GGSSMParams): model parameters.</span>
-<span class="sd">        inf_params (CMGFIntegrals): inference parameters.</span>
-<span class="sd">        emissions (T,D_hid): array of observations.</span>
-<span class="sd">        num_iter (int): number of re-linearizations around smoothed posterior.</span>
-<span class="sd">        inputs (T,D_in): array of inputs.</span>
+<span class="sd">        model_params: model parameters.</span>
+<span class="sd">        inf_params: inference parameters that specify how to compute moments.</span>
+<span class="sd">        emissions: array of observations.</span>
+<span class="sd">        num_iter: optional number of linearizations around prior/posterior for update step (default 1).</span>
+<span class="sd">        inputs: optopnal array of inputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        nlgssm_posterior: GSSMPosterior instance containing properties of</span>
-<span class="sd">            filtered and smoothed posterior distributions.</span>
+<span class="sd">        post: posterior object.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
         <span class="c1"># Relinearize around smoothed posterior from previous iteration</span>

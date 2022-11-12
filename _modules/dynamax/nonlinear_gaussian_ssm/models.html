@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dynamax.nonlinear_gaussian_ssm.models &#8212; dynamax documentation</title>
+    <title>dynamax.nonlinear_gaussian_ssm.models</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -60,8 +60,6 @@
   
   <img src="../../../_static/logo.gif" class="logo" alt="logo">
   
-  
-  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
   
 </a>
 </div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
@@ -180,11 +178,6 @@
 <ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../../../api.html">
-   API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../../api.html#state-space-model-base-class">
    State Space Model (Base class)
   </a>
  </li>
@@ -242,6 +235,19 @@
         
         <!-- Source interaction buttons -->
 
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        
+        
+    </div>
+</div>
+
 
         <!-- Full screen (wrap in <a> to have style consistency -->
         <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
@@ -269,63 +275,68 @@
 <span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax</span> <span class="k">as</span> <span class="nn">tfp</span>
 <span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormalFullCovariance</span> <span class="k">as</span> <span class="n">MVN</span>
 <span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="k">as</span> <span class="nn">tfd</span>
+
 <span class="kn">from</span> <span class="nn">dynamax.ssm</span> <span class="kn">import</span> <span class="n">SSM</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">PosteriorLGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorLGSSMSmoothed</span>
 
 <span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
 <span class="n">tfb</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">bijectors</span>
 
-<span class="n">PosteriorNLGSSMFiltered</span> <span class="o">=</span> <span class="n">PosteriorLGSSMFiltered</span> <span class="c1"># posterior is same as linear-gaussian case</span>
-<span class="n">PosteriorNLGSSMSmoothed</span> <span class="o">=</span> <span class="n">PosteriorLGSSMSmoothed</span> <span class="c1"># posterior is same as linear-gaussian case</span>
-<span class="n">FnStateToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]]</span>
-<span class="n">FnStateAndInputToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim input_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]]</span>
-<span class="n">FnStateToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span>
-<span class="n">FnStateAndInputToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim input_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span>
+
+<span class="n">FnStateToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]]</span>
+<span class="n">FnStateAndInputToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]]</span>
+<span class="n">FnStateToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span>
+<span class="n">FnStateAndInputToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]</span> <span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span>
 
 
-<span class="k">class</span> <span class="nc">ParamsNLGSSM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Lightweight container for NLGSSM parameters.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ParamsNLGSSM"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM">[docs]</a><span class="k">class</span> <span class="nc">ParamsNLGSSM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parameters for a NLGSSM model.</span>
+
+<span class="sd">    $$p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)$$</span>
+<span class="sd">    $$p(y_t | x_t) = N(y_t | h(x_t, u_t), R_t)$$</span>
+<span class="sd">    $$p(x_1) = N(x_1 | m, S)$$</span>
+
+<span class="sd">    The tuple doubles as a container for the ParameterProperties.</span>
+
+<span class="sd">    :param dynamics_function: $f$</span>
+<span class="sd">    :param dynamics_covariance: $Q$</span>
+<span class="sd">    :param emissions_function: $h$</span>
+<span class="sd">    :param emissions_covariance: $R$</span>
+<span class="sd">    :param initial_mean: $m$</span>
+<span class="sd">    :params initial_covariance: $S$</span>
+
+<span class="sd">    If you have no inputs, the dynamics and emission functions do not to take $u_t$ as an argument.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">initial_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]</span>
     <span class="n">initial_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]</span>
     <span class="n">dynamics_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FnStateToState</span><span class="p">,</span> <span class="n">FnStateAndInputToState</span><span class="p">]</span>
     <span class="n">dynamics_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]</span>
     <span class="n">emission_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FnStateToEmission</span><span class="p">,</span> <span class="n">FnStateAndInputToEmission</span><span class="p">]</span>
-    <span class="n">emission_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]</span>
+    <span class="n">emission_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="NonlinearGaussianSSM"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM">[docs]</a><span class="k">class</span> <span class="nc">NonlinearGaussianSSM</span><span class="p">(</span><span class="n">SSM</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Nonlinear Gaussian State Space Model.</span>
+<span class="sd">    Nonlinear Gaussian State Space Model.</span>
 
 <span class="sd">    The model is defined as follows</span>
-<span class="sd">    .. math::</span>
 
-<span class="sd">        p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)</span>
-<span class="sd">        p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)</span>
-<span class="sd">        p(z_1) = N(z_1 | m, S)</span>
+<span class="sd">    $$p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)$$</span>
+<span class="sd">    $$p(y_t | x_t) = N(y_t | h(x_t, u_t), R_t)$$</span>
+<span class="sd">    $$p(x_1) = N(x_1 | m, S)$$</span>
 
 <span class="sd">    where</span>
 
-<span class="sd">    :math:`z_t` = hidden variables of size ``state_dim``,</span>
-<span class="sd">    :math:`y_t` = observed variables of size ``emission_dim``</span>
-<span class="sd">    :math:`u_t` = input covariates of size ``input_dim`` (defaults to 0).</span>
-
-<span class="sd">    Alternatively, if you have no inputs, we can use the following, simpler model:</span>
-<span class="sd">    .. math::</span>
-
-<span class="sd">        p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}), Q_t)</span>
-<span class="sd">        p(y_t | z_t) = N(y_t | h(z_t), R_t)</span>
-<span class="sd">        p(z_1) = N(z_1 | m, S)</span>
-
-
-<span class="sd">    The parameters of the model are stored in a separate named tuple, with these fields:</span>
-
-<span class="sd">        * f = params.dynamics_function</span>
-<span class="sd">        * Q = params.dynamics_covariance</span>
-<span class="sd">        * h = params.emissions_function</span>
-<span class="sd">        * R = params.emissions_covariance</span>
-<span class="sd">        * m = params.init_mean</span>
-<span class="sd">        * S = params.initial_covariance</span>
+<span class="sd">    * $x_t$ = hidden variables of size `state_dim`,</span>
+<span class="sd">    * $y_t$ = observed variables of size `emission_dim`</span>
+<span class="sd">    * $u_t$ = input covariates of size `input_dim` (defaults to 0).</span>
+<span class="sd">    * $f$ = dynamics (transition) function</span>
+<span class="sd">    * $h$ = emission (observation) function</span>
+<span class="sd">    * $Q$ = covariance matrix of dynamics (system) noise</span>
+<span class="sd">    * $R$ = covariance matrix for emission (observation) noise</span>
+<span class="sd">    * $m$ = mean of initial state</span>
+<span class="sd">    * $S$ = covariance matrix of initial state</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -354,7 +365,8 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamics_function</span>
         <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">mean</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
@@ -366,7 +378,8 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
         <span class="n">h</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">emission_function</span>
         <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">mean</span> <span class="o">=</span> <span class="n">h</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dynamax.hidden_markov_model.models.abstractions &#8212; dynamax documentation</title>
+    <title>dynamax.hidden_markov_model.models.abstractions</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -60,8 +60,6 @@
   
   <img src="../../../../_static/logo.gif" class="logo" alt="logo">
   
-  
-  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
   
 </a>
 </div><form class="bd-search d-flex align-items-center" action="../../../../search.html" method="get">
@@ -180,11 +178,6 @@
 <ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../../../../api.html">
-   API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../../../api.html#state-space-model-base-class">
    State Space Model (Base class)
   </a>
  </li>
@@ -242,6 +235,19 @@
         
         <!-- Source interaction buttons -->
 
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        
+        
+    </div>
+</div>
+
 
         <!-- Full screen (wrap in <a> to have style consistency -->
         <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
@@ -266,7 +272,10 @@
   <h1>Source code for dynamax.hidden_markov_model.models.abstractions</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span><span class="p">,</span> <span class="n">ABC</span>
 <span class="kn">from</span> <span class="nn">dynamax.ssm</span> <span class="kn">import</span> <span class="n">SSM</span>
+<span class="kn">from</span> <span class="nn">dynamax.types</span> <span class="kn">import</span> <span class="n">Scalar</span>
 <span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">to_unconstrained</span><span class="p">,</span> <span class="n">from_unconstrained</span>
+<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">PropertySet</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.inference</span> <span class="kn">import</span> <span class="n">HMMPosterior</span><span class="p">,</span> <span class="n">HMMPosteriorFiltered</span>
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.inference</span> <span class="kn">import</span> <span class="n">hmm_filter</span>
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.inference</span> <span class="kn">import</span> <span class="n">hmm_posterior_mode</span>
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.inference</span> <span class="kn">import</span> <span class="n">hmm_smoother</span>
@@ -274,13 +283,44 @@
 <span class="kn">from</span> <span class="nn">dynamax.utils.optimize</span> <span class="kn">import</span> <span class="n">run_gradient_descent</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">pytree_slice</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
 <span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_map</span>
+<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PyTree</span>
 <span class="kn">import</span> <span class="nn">optax</span>
+<span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax</span> <span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">tfd</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Protocol</span>
 
 
-<span class="k">class</span> <span class="nc">HMMInitialState</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="HMMParameterSet"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMParameterSet">[docs]</a><span class="k">class</span> <span class="nc">HMMParameterSet</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Container for HMM parameters.</span>
+
+<span class="sd">    :param initial: (ParameterSet) initial distribution parameters</span>
+<span class="sd">    :param transitions: (ParameterSet) transition distribution parameters</span>
+<span class="sd">    :param emissions: (ParameterSet) emission distribution parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">initial</span><span class="p">:</span> <span class="n">ParameterSet</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="n">ParameterSet</span>
+    <span class="n">emissions</span><span class="p">:</span> <span class="n">ParameterSet</span></div>
+
+
+<div class="viewcode-block" id="HMMPropertySet"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMPropertySet">[docs]</a><span class="k">class</span> <span class="nc">HMMPropertySet</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Container for properties of HMM parameter properties.</span>
+
+<span class="sd">    :param initial: (PropertySet) initial distribution properties</span>
+<span class="sd">    :param transitions: (PropertySet) transition distribution properties</span>
+<span class="sd">    :param emissions: (PropertySet) emission distribution properties</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">initial</span><span class="p">:</span> <span class="n">PropertySet</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="n">PropertySet</span>
+    <span class="n">emissions</span><span class="p">:</span> <span class="n">PropertySet</span></div>
+
+
+
+<div class="viewcode-block" id="HMMInitialState"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMInitialState">[docs]</a><span class="k">class</span> <span class="nc">HMMInitialState</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Abstract class for HMM initial distributions.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
@@ -288,49 +328,99 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_optimizer</span> <span class="o">=</span> <span class="n">m_step_optimizer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_num_iters</span> <span class="o">=</span> <span class="n">m_step_num_iters</span>
 
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="HMMInitialState.distribution"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMInitialState.distribution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                     <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+                     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Return a distribution over the initial latent state</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            dist (tfd.Distribution): conditional distribution of initial state.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<span class="sd">            conditional distribution of initial state.</span>
 
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="HMMInitialState.initialize"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMInitialState.initialize">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                   <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">PropertySet</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            key (_type_, optional): _description_. Defaults to None.</span>
-<span class="sd">            method (str, optional): _description_. Defaults to &quot;prior&quot;.</span>
+<span class="sd">            key: random number generator</span>
+<span class="sd">            method: specifies the type of initialization</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            params</span>
-<span class="sd">            props</span>
+<span class="sd">            tuple of parameters and their corresponding properties</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<div class="viewcode-block" id="HMMInitialState.log_prior"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMInitialState.log_prior">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Compute the log prior probability of the initial distribution parameters.</span>
 
-    <span class="k">def</span> <span class="nf">compute_initial_probs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="sd">        Args:</span>
+<span class="sd">            params: initial distribution parameters</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+    <span class="k">def</span> <span class="nf">_compute_initial_probs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span><span class="o">.</span><span class="n">probs_parameter</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">collect_suff_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pytree_slice</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<div class="viewcode-block" id="HMMInitialState.collect_suff_stats"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMInitialState.collect_suff_stats">[docs]</a>    <span class="k">def</span> <span class="nf">collect_suff_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                           <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+                           <span class="n">posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">,</span>
+                           <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Collect sufficient statistics for updating the initial distribution parameters.</span>
 
-    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">):</span>
+<span class="sd">        Args:</span>
+<span class="sd">            params: initial distribution parameters</span>
+<span class="sd">            posterior: posterior distribution over latent states</span>
+<span class="sd">            inputs: optional inputs</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            PyTree of sufficient statistics for updating the initial distribution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pytree_slice</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HMMInitialState.initialize_m_step_state"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMInitialState.initialize_m_step_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+                                <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Initialize any required state for the M step.</span>
 
 <span class="sd">        For example, this might include the optimizer state for Adam.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Extract the remaining unconstrained params, which should only be for the emissions.</span>
         <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_optimizer</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">unc_params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_optimizer</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">unc_params</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<div class="viewcode-block" id="HMMInitialState.m_step"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMInitialState.m_step">[docs]</a>    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+               <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+               <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span>
+               <span class="n">batch_stats</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+               <span class="n">m_step_state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+               <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">1.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Perform an M-step on the initial distribution parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            params: current initial distribution parameters</span>
+<span class="sd">            props: parameter properties</span>
+<span class="sd">            batch_stats: PyTree of sufficient statistics from each sequence, as output by :meth:`collect_suff_stats`.</span>
+<span class="sd">            m_step_state: any state required for the M-step</span>
+<span class="sd">            scale: how to scale the objective</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Parameters that maximize the expected log joint probability.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Extract the remaining unconstrained params, which should only be for the emissions.</span>
         <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
@@ -341,7 +431,7 @@
 
             <span class="k">def</span> <span class="nf">_single_expected_log_like</span><span class="p">(</span><span class="n">stats</span><span class="p">):</span>
                 <span class="n">expected_initial_state</span><span class="p">,</span> <span class="n">inpt</span> <span class="o">=</span> <span class="n">stats</span>
-                <span class="n">log_initial_prob</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compute_initial_probs</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">inpt</span><span class="p">))</span>
+                <span class="n">log_initial_prob</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compute_initial_probs</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">inpt</span><span class="p">))</span>
                 <span class="n">lp</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">expected_initial_state</span> <span class="o">*</span> <span class="n">log_initial_prob</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">lp</span>
 
@@ -360,11 +450,12 @@
 
         <span class="c1"># Return the updated parameters and optimizer state</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span></div></div>
 
 
-<span class="k">class</span> <span class="nc">HMMTransitions</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="HMMTransitions"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMTransitions">[docs]</a><span class="k">class</span> <span class="nc">HMMTransitions</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Abstract class for HMM transitions.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
@@ -372,36 +463,54 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_optimizer</span> <span class="o">=</span> <span class="n">m_step_optimizer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_num_iters</span> <span class="o">=</span> <span class="n">m_step_num_iters</span>
 
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a distribution over the next state given the current state.</span>
+<div class="viewcode-block" id="HMMTransitions.distribution"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMTransitions.distribution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                     <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+                     <span class="n">state</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return a distribution over the next latent state</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            state (PyTree): current latent state.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            dist (tfd.Distribution): conditional distribution of current emission.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<span class="sd">            params: transition parameters</span>
+<span class="sd">            state: current latent state</span>
+<span class="sd">            inputs: current inputs</span>
 
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            conditional distribution of next state.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="HMMTransitions.initialize"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMTransitions.initialize">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                   <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">PropertySet</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            key (_type_, optional): _description_. Defaults to None.</span>
-<span class="sd">            method (str, optional): _description_. Defaults to &quot;prior&quot;.</span>
+<span class="sd">            key: random number generator</span>
+<span class="sd">            method: specifies the type of initialization</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            params</span>
-<span class="sd">            props</span>
+<span class="sd">            tuple of parameters and their corresponding properties</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<div class="viewcode-block" id="HMMTransitions.log_prior"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMTransitions.log_prior">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Compute the log prior probability of the transition distribution parameters.</span>
 
-    <span class="k">def</span> <span class="nf">compute_transition_matrices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="sd">        Args:</span>
+<span class="sd">            params: transition distribution parameters</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+    <span class="k">def</span> <span class="nf">_compute_transition_matrices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">inpt</span><span class="p">:</span> \
                 <span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">state</span><span class="p">:</span> \
@@ -413,19 +522,54 @@
             <span class="n">g</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">state</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span><span class="o">.</span><span class="n">probs_parameter</span><span class="p">())</span>
             <span class="k">return</span> <span class="n">g</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">collect_suff_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">trans_probs</span><span class="p">,</span> <span class="n">pytree_slice</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+<div class="viewcode-block" id="HMMTransitions.collect_suff_stats"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMTransitions.collect_suff_stats">[docs]</a>    <span class="k">def</span> <span class="nf">collect_suff_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                           <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+                           <span class="n">posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">,</span>
+                           <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Collect sufficient statistics for updating the transition distribution parameters.</span>
 
-    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">):</span>
+<span class="sd">        Args:</span>
+<span class="sd">            params: transition distribution parameters</span>
+<span class="sd">            posterior: posterior distribution over latent states</span>
+<span class="sd">            inputs: optional inputs</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            PyTree of sufficient statistics for updating the transition distribution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">trans_probs</span><span class="p">,</span> <span class="n">pytree_slice</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="HMMTransitions.initialize_m_step_state"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMTransitions.initialize_m_step_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span><span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Initialize any required state for the M step.</span>
 
 <span class="sd">        For example, this might include the optimizer state for Adam.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Extract the remaining unconstrained params, which should only be for the emissions.</span>
         <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_optimizer</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">unc_params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_optimizer</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">unc_params</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<div class="viewcode-block" id="HMMTransitions.m_step"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMTransitions.m_step">[docs]</a>    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+               <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+               <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span>
+               <span class="n">batch_stats</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+               <span class="n">m_step_state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+               <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">1.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Perform an M-step on the transition distribution parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            params: current transition distribution parameters</span>
+<span class="sd">            props: parameter properties</span>
+<span class="sd">            batch_stats: PyTree of sufficient statistics from each sequence, as output by :meth:`collect_suff_stats`.</span>
+<span class="sd">            m_step_state: any state required for the M-step</span>
+<span class="sd">            scale: how to scale the objective</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Parameters that maximize the expected log joint probability.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
 
         <span class="c1"># Minimize the negative expected log joint probability</span>
@@ -434,7 +578,7 @@
 
             <span class="k">def</span> <span class="nf">_single_expected_log_like</span><span class="p">(</span><span class="n">stats</span><span class="p">):</span>
                 <span class="n">expected_transitions</span><span class="p">,</span> <span class="n">inputs</span> <span class="o">=</span> <span class="n">stats</span>
-                <span class="n">log_trans_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compute_transition_matrices</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
+                <span class="n">log_trans_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compute_transition_matrices</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
                 <span class="n">lp</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">expected_transitions</span> <span class="o">*</span> <span class="n">log_trans_matrix</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">lp</span>
 
@@ -453,10 +597,10 @@
 
         <span class="c1"># Return the updated parameters and optimizer state</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span></div></div>
 
 
-<span class="k">class</span> <span class="nc">HMMEmissions</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="HMMEmissions"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMEmissions">[docs]</a><span class="k">class</span> <span class="nc">HMMEmissions</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Abstract class for HMM emissions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -467,43 +611,62 @@
 
     <span class="nd">@property</span>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Return a pytree matching the pytree of tuples specifying the shape(s)</span>
 <span class="sd">        of a single time step&#39;s emissions.</span>
+
 <span class="sd">        For example, a Gaussian HMM with D dimensional emissions would return (D,).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a distribution over emissions given current state.</span>
+<div class="viewcode-block" id="HMMEmissions.distribution"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMEmissions.distribution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                     <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+                     <span class="n">state</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return a distribution over the emission</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            state (PyTree): current latent state.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            dist (tfd.Distribution): conditional distribution of current emission.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<span class="sd">            params: emission parameters</span>
+<span class="sd">            state: current latent state</span>
+<span class="sd">            inputs: current inputs</span>
 
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            conditional distribution of the emission</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="HMMEmissions.initialize"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMEmissions.initialize">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                   <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">PropertySet</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            key (_type_, optional): _description_. Defaults to None.</span>
-<span class="sd">            method (str, optional): _description_. Defaults to &quot;prior&quot;.</span>
+<span class="sd">            key: random number generator</span>
+<span class="sd">            method: specifies the type of initialization</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            params</span>
-<span class="sd">            props</span>
+<span class="sd">            tuple of parameters and their corresponding properties</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<div class="viewcode-block" id="HMMEmissions.log_prior"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMEmissions.log_prior">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Compute the log prior probability of the transition distribution parameters.</span>
 
-    <span class="k">def</span> <span class="nf">compute_conditional_logliks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="sd">        Args:</span>
+<span class="sd">            params: transition distribution parameters</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+    <span class="k">def</span> <span class="nf">_compute_conditional_logliks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># Compute the log probability for each time step by</span>
         <span class="c1"># performing a nested vmap over emission time steps and states.</span>
         <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">emission</span><span class="p">,</span> <span class="n">inpt</span><span class="p">:</span> \
@@ -511,19 +674,56 @@
                 <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">vmap</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">collect_suff_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span>
+<div class="viewcode-block" id="HMMEmissions.collect_suff_stats"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMEmissions.collect_suff_stats">[docs]</a>    <span class="k">def</span> <span class="nf">collect_suff_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                           <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+                           <span class="n">posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">,</span>
+                           <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
+                           <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Collect sufficient statistics for updating the emission distribution parameters.</span>
 
-    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">):</span>
+<span class="sd">        Args:</span>
+<span class="sd">            params: emission distribution parameters</span>
+<span class="sd">            posterior: posterior distribution over latent states</span>
+<span class="sd">            emissions: observed emissions</span>
+<span class="sd">            inputs: optional inputs</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            PyTree of sufficient statistics for updating the emission distribution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span></div>
+
+<div class="viewcode-block" id="HMMEmissions.initialize_m_step_state"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMEmissions.initialize_m_step_state">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_m_step_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span><span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Initialize any required state for the M step.</span>
 
 <span class="sd">        For example, this might include the optimizer state for Adam.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Extract the remaining unconstrained params, which should only be for the emissions.</span>
         <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_optimizer</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">unc_params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_optimizer</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">unc_params</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<div class="viewcode-block" id="HMMEmissions.m_step"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMMEmissions.m_step">[docs]</a>    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+               <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
+               <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span>
+               <span class="n">batch_stats</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+               <span class="n">m_step_state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+               <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">1.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Perform an M-step on the emission distribution parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            params: current emission distribution parameters</span>
+<span class="sd">            props: parameter properties</span>
+<span class="sd">            batch_stats: PyTree of sufficient statistics from each sequence, as output by :meth:`collect_suff_stats`.</span>
+<span class="sd">            m_step_state: any state required for the M-step</span>
+<span class="sd">            scale: how to scale the objective</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Parameters that maximize the expected log joint probability.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Extract the remaining unconstrained params, which should only be for the emissions.</span>
         <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
@@ -534,7 +734,7 @@
 
             <span class="k">def</span> <span class="nf">_single_expected_log_like</span><span class="p">(</span><span class="n">stats</span><span class="p">):</span>
                 <span class="n">expected_states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span> <span class="o">=</span> <span class="n">stats</span>
-                <span class="n">log_likelihoods</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_conditional_logliks</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+                <span class="n">log_likelihoods</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_conditional_logliks</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
                 <span class="n">lp</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">expected_states</span> <span class="o">*</span> <span class="n">log_likelihoods</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">lp</span>
 
@@ -553,54 +753,47 @@
 
         <span class="c1"># Return the updated parameters and optimizer state</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span></div></div>
 
 
 <div class="viewcode-block" id="HMM"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMM">[docs]</a><span class="k">class</span> <span class="nc">HMM</span><span class="p">(</span><span class="n">SSM</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Hidden Markov Model.</span>
+    <span class="sd">&quot;&quot;&quot;Abstract base class of Hidden Markov Models (HMMs).</span>
 
 <span class="sd">    The model is defined as follows</span>
-<span class="sd">    .. math::</span>
 
-<span class="sd">        p(z_t=k | z_{t-1}=j, u_t) = A(j, k; t, u_t)</span>
-<span class="sd">        p(y_t | z_t=k) = Pr(y_t | B(k; t, u_t))</span>
-<span class="sd">        p(z_1=k) = pi(k)</span>
+<span class="sd">    $$z_1 \mid u_1 \sim \mathrm{Cat}(\pi_0(u_1, \\theta_{\mathsf{init}}))$$</span>
+<span class="sd">    $$z_t \mid z_{t-1}, u_t, \\theta \sim \mathrm{Cat}(\pi(z_{t-1}, u_t, \\theta_{\mathsf{trans}}))$$</span>
+<span class="sd">    $$y_t | z_t, u_t, \\theta \sim p(y_t \mid z_t, u_t, \\theta_{\mathsf{emis}})$$</span>
 
-<span class="sd">    where</span>
+<span class="sd">    where $z_t \in \{1,\ldots,K\}$ is a *discrete* latent state.</span>
+<span class="sd">    There are parameters for the initial distribution, the transition distribution,</span>
+<span class="sd">    and the emission distribution:</span>
 
-<span class="sd">    :math:`z_t` = discrete hidden variable with ``num_states`` possible values,</span>
-<span class="sd">    :math:`y_t` = observed variables of size ``emission_dim``</span>
-<span class="sd">    :math:`u_t` = input covariates of size ``input_dim`` (defaults to 0).</span>
+<span class="sd">    $$\\theta = (\\theta_{\mathsf{init}}, \\theta_{\mathsf{trans}}, \\theta_{\mathsf{emis}})$$</span>
 
+<span class="sd">    For &quot;standard&quot; models, we will assume the initial distribution is fixed and the transitions</span>
+<span class="sd">    follow a simple transition matrix,</span>
 
-<span class="sd">    The parameters of the model are stored in a separate named tuple, with these fields:</span>
+<span class="sd">    $$z_1 \mid u_1 \sim \mathrm{Cat}(\pi_0)$$</span>
+<span class="sd">    $$z_t \mid z_{t-1}=k \sim \mathrm{Cat}(\pi_{z_k})$$</span>
 
-<span class="sd">        * pi = params.initial</span>
-<span class="sd">        * A = params.transitions</span>
-<span class="sd">        * B = params.emissions</span>
+<span class="sd">    where $\\theta_{\mathsf{init}} = \pi_0$ and $\\theta_{\mathsf{trans}} = \{\pi_k\}_{k=1}^K$.</span>
 
-<span class="sd">    Many possible emission distributions Pr() are supported. Each of these define a different</span>
-<span class="sd">    set of emission parameters B. For example, if we have a Gaussian HMM, then each discrete</span>
-<span class="sd">    state :math:`k` is associated with a different mean :math:`\mu_k` and covariance :math:`\Sigma_k`.</span>
-<span class="sd">    Parameters may also be indexed by time :math:`k`, and may also depend on inputs :math:`u_t`.</span>
+<span class="sd">    The parameters are stored in a :class:`HMMParameterSet` object.</span>
+
+<span class="sd">    We have implemented many subclasses of `HMM` for various emission distributions.</span>
+
+<span class="sd">    :param num_states: number of discrete states</span>
+<span class="sd">    :param initial_component: object encapsulating the initial distribution</span>
+<span class="sd">    :param transition_component: object encapsulating the transition distribution</span>
+<span class="sd">    :param emission_component: object encapsulating the emission distribution</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">num_states</span> <span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                  <span class="n">initial_component</span> <span class="p">:</span> <span class="n">HMMInitialState</span><span class="p">,</span>
                  <span class="n">transition_component</span> <span class="p">:</span> <span class="n">HMMTransitions</span><span class="p">,</span>
                  <span class="n">emission_component</span> <span class="p">:</span> <span class="n">HMMEmissions</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Abstract base class for HMMs.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            num_states (_type_): _description_</span>
-<span class="sd">            initial_component (_type_): _description_</span>
-<span class="sd">            transition_component (_type_): _description_</span>
-<span class="sd">            emission_component (_type_): _description_</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span> <span class="o">=</span> <span class="n">initial_component</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span> <span class="o">=</span> <span class="n">transition_component</span>
@@ -609,10 +802,6 @@
     <span class="c1"># Implement the SSM abstract methods by passing on to the components</span>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a pytree matching the pytree of tuples specifying the shape(s)</span>
-<span class="sd">        of a single time step&#39;s emissions.</span>
-<span class="sd">        For example, a Gaussian HMM with D dimensional emissions would return (D,).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">emission_shape</span>
 
 <div class="viewcode-block" id="HMM.initial_distribution"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMM.initial_distribution">[docs]</a>    <span class="k">def</span> <span class="nf">initial_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -632,26 +821,22 @@
 
     <span class="c1"># The inference functions all need the same arguments</span>
     <span class="k">def</span> <span class="nf">_inference_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">compute_initial_probs</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">initial</span><span class="p">,</span> <span class="n">inputs</span><span class="p">),</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">compute_transition_matrices</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">transitions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">),</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">compute_conditional_logliks</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">_compute_initial_probs</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">initial</span><span class="p">,</span> <span class="n">inputs</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">_compute_transition_matrices</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">transitions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">_compute_conditional_logliks</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
 
     <span class="c1"># Convenience wrappers for the inference code</span>
 <div class="viewcode-block" id="HMM.marginal_log_prob"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMM.marginal_log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">marginal_log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute log marginal likelihood of observations.&quot;&quot;&quot;</span>
         <span class="n">post</span> <span class="o">=</span> <span class="n">hmm_filter</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_inference_args</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">post</span><span class="o">.</span><span class="n">marginal_loglik</span></div>
 
-<div class="viewcode-block" id="HMM.most_likely_states"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMM.most_likely_states">[docs]</a>    <span class="k">def</span> <span class="nf">most_likely_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute most likely state path with the Viterbi algorithm.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">hmm_posterior_mode</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_inference_args</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span></div>
+    <span class="k">def</span> <span class="nf">most_likely_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">hmm_posterior_mode</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_inference_args</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
 
 <div class="viewcode-block" id="HMM.filter"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMM.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute filtering distribution.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">hmm_filter</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_inference_args</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="HMM.smoother"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMM.smoother">[docs]</a>    <span class="k">def</span> <span class="nf">smoother</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute smoothing distribution.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">hmm_smoother</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_inference_args</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span></div>
 
     <span class="c1"># Expectation-maximization (EM) code</span>
@@ -677,7 +862,7 @@
         <span class="n">emissions_m_step_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize_m_step_state</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="p">,</span> <span class="n">props</span><span class="o">.</span><span class="n">emissions</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">initial_m_step_state</span><span class="p">,</span> <span class="n">transitions_m_step_state</span><span class="p">,</span> <span class="n">emissions_m_step_state</span></div>
 
-    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
+<div class="viewcode-block" id="HMM.m_step"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.HMM.m_step">[docs]</a>    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
         <span class="n">batch_initial_stats</span><span class="p">,</span> <span class="n">batch_transition_stats</span><span class="p">,</span> <span class="n">batch_emission_stats</span> <span class="o">=</span> <span class="n">batch_stats</span>
         <span class="n">initial_m_step_state</span><span class="p">,</span> <span class="n">transitions_m_step_state</span><span class="p">,</span> <span class="n">emissions_m_step_state</span> <span class="o">=</span> <span class="n">m_step_state</span>
 
@@ -686,7 +871,7 @@
         <span class="n">emission_params</span><span class="p">,</span> <span class="n">emissions_m_step_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">m_step</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="p">,</span> <span class="n">props</span><span class="o">.</span><span class="n">emissions</span><span class="p">,</span> <span class="n">batch_emission_stats</span><span class="p">,</span> <span class="n">emissions_m_step_state</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="n">initial_params</span><span class="p">,</span> <span class="n">transitions</span><span class="o">=</span><span class="n">transition_params</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emission_params</span><span class="p">)</span>
         <span class="n">m_step_state</span> <span class="o">=</span> <span class="n">initial_m_step_state</span><span class="p">,</span> <span class="n">transitions_m_step_state</span><span class="p">,</span> <span class="n">emissions_m_step_state</span>
-        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span></div>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span></div></div>
 
 
 <span class="c1"># class ExponentialFamilyHMM(HMM):</span>

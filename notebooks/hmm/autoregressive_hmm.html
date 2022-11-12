@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Autoregressive (AR) HMM Demo &#8212; dynamax documentation</title>
+    <title>Autoregressive (AR) HMM Demo</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -65,8 +65,6 @@
   
   <img src="../../_static/logo.gif" class="logo" alt="logo">
   
-  
-  <h1 class="site-logo" id="site-title">dynamax documentation</h1>
   
 </a>
 </div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
@@ -185,11 +183,6 @@
 <ul class="nav sidenav_l1">
  <li class="toctree-l1">
   <a class="reference internal" href="../../api.html">
-   API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#state-space-model-base-class">
    State Space Model (Base class)
   </a>
  </li>
@@ -245,24 +238,20 @@
         </button>
         
         
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
-            class="fas fa-download"></i></button>
+        <!-- Source interaction buttons -->
 
-    <div class="dropdown-buttons">
-        <!-- ipynb file if we had a myst markdown file -->
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
         
-        <!-- Download raw file -->
-        <a class="dropdown-buttons" href="../../_sources/notebooks/hmm/autoregressive_hmm.ipynb.txt"><button type="button"
-                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
-                data-placement="left">.ipynb</button></a>
-        <!-- Download PDF via print -->
-        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
-            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+        
     </div>
 </div>
-
-        <!-- Source interaction buttons -->
 
 
         <!-- Full screen (wrap in <a> to have style consistency -->
@@ -365,8 +354,8 @@
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
 Let <span class="math notranslate nohighlight">\(x_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
 <p>The autoregressive hidden Markov model has the following likelihood,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-9e448cb2-a056-4f58-8d6e-d220af733067">
-<span class="eqno">(1)<a class="headerlink" href="#equation-9e448cb2-a056-4f58-8d6e-d220af733067" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-51de7afb-9cf9-42f8-9189-1818bf42a90a">
+<span class="eqno">(1)<a class="headerlink" href="#equation-51de7afb-9cf9-42f8-9189-1818bf42a90a" title="Permalink to this equation">¶</a></span>\[\begin{align}
 x_t \mid x_{t-1}, z_t &amp;\sim
 \mathcal{N}\left(A_{z_t} x_{t-1} + b_{z_t}, Q_{z_t} \right).
 \end{align}\]</div>
@@ -452,7 +441,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f3d8ccdbd90&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f34f0c87400&gt;
 </pre></div>
 </div>
 <img alt="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" src="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" />
@@ -646,7 +635,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/4c3ecfa9065840db32781ac95e8d1a97188871b815c574bbcef5e7afb45afb13.png" src="../../_images/4c3ecfa9065840db32781ac95e8d1a97188871b815c574bbcef5e7afb45afb13.png" />
+<img alt="../../_images/5f231f827db08e0a88adc7d7f83907ad07233f8f8c934ef2f45b5b8d2054597f.png" src="../../_images/5f231f827db08e0a88adc7d7f83907ad07233f8f8c934ef2f45b5b8d2054597f.png" />
 </div>
 </div>
 </section>
@@ -693,7 +682,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/4160ee967014e1ae8fff7b984698aaa7fb0a9f520dd63e3cb298f512b6f2e3ef.png" src="../../_images/4160ee967014e1ae8fff7b984698aaa7fb0a9f520dd63e3cb298f512b6f2e3ef.png" />
+<img alt="../../_images/e9ba2d383d08d508e533c329c4c1fedc02a6ea3b52de9c57d705a23bc1b474e1.png" src="../../_images/e9ba2d383d08d508e533c329c4c1fedc02a6ea3b52de9c57d705a23bc1b474e1.png" />
 </div>
 </div>
 </section>
@@ -721,7 +710,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/001e660a4d1bcae2cd7c226f47185691dde54a7f4e196693b49fc21786cc1944.png" src="../../_images/001e660a4d1bcae2cd7c226f47185691dde54a7f4e196693b49fc21786cc1944.png" />
+<img alt="../../_images/986966f1efe7a61ff30ee14f446861fdc9a2f0f9def6b737f44897da7dd0fdb3.png" src="../../_images/986966f1efe7a61ff30ee14f446861fdc9a2f0f9def6b737f44897da7dd0fdb3.png" />
 </div>
 </div>
 </section>
@@ -749,7 +738,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8ed8288a8652b3d192697ba78f3571e741f15ced777786cfe39780975f4c0390.png" src="../../_images/8ed8288a8652b3d192697ba78f3571e741f15ced777786cfe39780975f4c0390.png" />
+<img alt="../../_images/717e6e911f687bfb6ba2a86b9d08ac5a65af471f874430b0b17c9d72b76de834.png" src="../../_images/717e6e911f687bfb6ba2a86b9d08ac5a65af471f874430b0b17c9d72b76de834.png" />
 </div>
 </div>
 </section>
