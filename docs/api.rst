@@ -98,7 +98,12 @@ where $\beta$ is the prior concentration on the rows of the transition matrix $A
   :members: initialize
 
 .. autoclass:: dynamax.hidden_markov_model.GaussianMixtureHMM
+  :show-inheritance:
+  :members: initialize
+
 .. autoclass:: dynamax.hidden_markov_model.DiagonalGaussianMixtureHMM
+  :show-inheritance:
+  :members: initialize
 
 .. autoclass:: dynamax.hidden_markov_model.LinearRegressionHMM
 .. autoclass:: dynamax.hidden_markov_model.LinearAutoregressiveHMM
