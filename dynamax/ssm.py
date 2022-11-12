@@ -25,7 +25,7 @@ class Posterior(Protocol):
 
 
 class SSM(ABC):
-    """A base class for state space models. Such models consist of parameters, which
+    r"""A base class for state space models. Such models consist of parameters, which
     we may learn, as well as hyperparameters, which specify static properties of the
     model. This base class allows parameters to be indicated a standardized way
     so that they can easily be converted to/from unconstrained form for optimization.
@@ -84,14 +84,14 @@ class SSM(ABC):
         params: ParameterSet,
         inputs: Optional[Float[Array, "input_dim"]]
     ) -> tfd.Distribution:
-        """Return an initial distribution over latent states.
+        r"""Return an initial distribution over latent states.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             inputs: optional  inputs  $u_t$
 
         Returns:
-            distribution over initial latent state, $p(x_1 \mid \\theta)$.
+            distribution over initial latent state, $p(x_1 \mid \theta)$.
 
         """
         raise NotImplementedError
@@ -103,15 +103,15 @@ class SSM(ABC):
         state: Float[Array, "state_dim"],
         inputs: Optional[Float[Array, "input_dim"]]
     ) -> tfd.Distribution:
-        """Return a distribution over next latent state given current state.
+        r"""Return a distribution over next latent state given current state.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             state: current latent state $x_t$
             inputs: current inputs  $u_t$
 
         Returns:
-            conditional distribution of next latent state $p(x_{t+1} \mid x_t, u_t, \\theta)$.
+            conditional distribution of next latent state $p(x_{t+1} \mid x_t, u_t, \theta)$.
 
         """
         raise NotImplementedError
@@ -123,15 +123,15 @@ class SSM(ABC):
         state: Float[Array, "state_dim"],
         inputs: Optional[Float[Array, "input_dim"]]=None
     ) -> tfd.Distribution:
-        """Return a distribution over emissions given current state.
+        r"""Return a distribution over emissions given current state.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             state: current latent state $x_t$
             inputs: current inputs  $u_t$
 
         Returns:
-            conditional distribution of current emission $p(y_t \mid x_t, u_t, \\theta)$
+            conditional distribution of current emission $p(y_t \mid x_t, u_t, \theta)$
 
         """
         raise NotImplementedError
@@ -140,7 +140,7 @@ class SSM(ABC):
         self,
         params: ParameterSet
     ) -> Scalar:
-        """Return the log prior probability of any model parameters.
+        r"""Return the log prior probability of any model parameters.
 
         Returns:
             lp (Scalar): log prior probability.
@@ -150,7 +150,7 @@ class SSM(ABC):
     @property
     @abstractmethod
     def emission_shape(self) -> Tuple[int]:
-        """Return a pytree matching the pytree of tuples specifying the shape of a single time step's emissions.
+        r"""Return a pytree matching the pytree of tuples specifying the shape of a single time step's emissions.
 
         For example, a `GaussianHMM` with $D$ dimensional emissions would return `(D,)`.
 
@@ -159,7 +159,7 @@ class SSM(ABC):
 
     @property
     def inputs_shape(self) -> Optional[Tuple[int]]:
-        """Return a pytree matching the pytree of tuples specifying the shape of a single time step's inputs.
+        r"""Return a pytree matching the pytree of tuples specifying the shape of a single time step's inputs.
 
         """
         return None
@@ -173,10 +173,10 @@ class SSM(ABC):
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> Tuple[Float[Array, "num_timesteps state_dim"],
               Float[Array, "num_timesteps emission_dim"]]:
-        """Sample states $x_{1:T}$ and emissions $y_{1:T}$ given parameters $\\theta$ and (optionally) inputs $u_{1:T}$.
+        r"""Sample states $x_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             key: random number generator
             num_timesteps: number of timesteps $T$
             inputs: inputs $u_{1:T}$
@@ -216,7 +216,7 @@ class SSM(ABC):
         emissions: Float[Array, "num_timesteps emission_dim"],
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> Scalar:
-        """Compute the log joint probability of the states and observations"""
+        r"""Compute the log joint probability of the states and observations"""
 
         def _step(carry, args):
             lp, prev_state = carry
@@ -246,10 +246,10 @@ class SSM(ABC):
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> Scalar:
-        """Compute log marginal likelihood of observations, $\log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \\theta)$.
+        r"""Compute log marginal likelihood of observations, $\log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)$.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             state: current latent state $z_t$
             inputs: current inputs  $u_t$
 
@@ -265,10 +265,10 @@ class SSM(ABC):
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> Posterior:
-        """Compute filtering distributions, $p(z_t \mid y_{1:t}, u_{1:t}, \\theta)$ for $t=1,\ldots,T$.
+        r"""Compute filtering distributions, $p(z_t \mid y_{1:t}, u_{1:t}, \theta)$ for $t=1,\ldots,T$.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             state: current latent state $z_t$
             inputs: current inputs  $u_t$
 
@@ -284,10 +284,10 @@ class SSM(ABC):
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> Posterior:
-        """Compute smoothing distribution, $p(z_t \mid y_{1:T}, u_{1:T}, \\theta)$ for $t=1,\ldots,T$.
+        r"""Compute smoothing distribution, $p(z_t \mid y_{1:T}, u_{1:T}, \theta)$ for $t=1,\ldots,T$.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             state: current latent state $z_t$
             inputs: current inputs  $u_t$
 
@@ -304,10 +304,10 @@ class SSM(ABC):
         emissions: Float[Array, "num_timesteps emission_dim"],
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> PyTree:
-        """Perform an E-step to compute expected sufficient statistics under the posterior, $p(z_{1:T} \mid y_{1:T}, u_{1:T}, \\theta)$.
+        r"""Perform an E-step to compute expected sufficient statistics under the posterior, $p(z_{1:T} \mid y_{1:T}, u_{1:T}, \theta)$.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             emissions: emissions $y_{1:T}$
             inputs: optional inputs $u_{1:T}$
 
@@ -324,14 +324,14 @@ class SSM(ABC):
         batch_stats: PyTree,
         m_step_state: Any
     ) -> ParameterSet:
-        """Perform an M-step to find parameters that maximize the expected log joint probability.
+        r"""Perform an M-step to find parameters that maximize the expected log joint probability.
 
         Specifically, compute
 
-        $$\\theta^\star = \mathrm{argmax}_\\theta \; \mathbb{E}_{p(z_{1:T} \mid y_{1:T}, u_{1:T}, \\theta)} \\big[\log p(y_{1:T}, z_{1:T}, \\theta \mid u_{1:T}) \\big]$$
+        $$\theta^\star = \mathrm{argmax}_\theta \; \mathbb{E}_{p(z_{1:T} \mid y_{1:T}, u_{1:T}, \theta)} \big[\log p(y_{1:T}, z_{1:T}, \theta \mid u_{1:T}) \big]$$
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             props: properties specifying which parameters should be learned
             batch_stats: sufficient statistics from each sequence
             m_step_state: any required state for optimizing the model parameters.
@@ -353,18 +353,18 @@ class SSM(ABC):
         num_iters: int=50,
         verbose: bool=True
     ) -> Tuple[ParameterSet, Float[Array, "num_iters"]]:
-        """Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).
+        r"""Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).
 
         EM aims to find parameters that maximize the marginal log probability,
 
-        $$\\theta^\star = \mathrm{argmax}_\\theta \; \log p(y_{1:T}, \\theta \mid u_{1:T})$$
+        $$\theta^\star = \mathrm{argmax}_\theta \; \log p(y_{1:T}, \theta \mid u_{1:T})$$
 
         It does so by iteratively forming a lower bound (the "E-step") and then maximizing it (the "M-step").
 
         *Note:* ``emissions`` *and* ``inputs`` *can either be single sequences or batches of sequences.*
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             props: properties specifying which parameters should be learned
             emissions: one or more sequences of emissions
             inputs: one or more sequences of corresponding inputs
@@ -409,11 +409,11 @@ class SSM(ABC):
         shuffle: bool=False,
         key: PRNGKey=jr.PRNGKey(0)
     ) -> Tuple[ParameterSet, Float[Array, "niter"]]:
-        """Compute parameter MLE/ MAP estimate using Stochastic Gradient Descent (SGD).
+        r"""Compute parameter MLE/ MAP estimate using Stochastic Gradient Descent (SGD).
 
         SGD aims to find parameters that maximize the marginal log probability,
 
-        $$\\theta^\star = \mathrm{argmax}_\\theta \; \log p(y_{1:T}, \\theta \mid u_{1:T})$$
+        $$\theta^\star = \mathrm{argmax}_\theta \; \log p(y_{1:T}, \theta \mid u_{1:T})$$
 
         by minimizing the _negative_ of that quantity.
 
@@ -423,7 +423,7 @@ class SSM(ABC):
         One pass through the entire set of sequences is called an *epoch*.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             props: properties specifying which parameters should be learned
             emissions: one or more sequences of emissions
             inputs: one or more sequences of corresponding inputs

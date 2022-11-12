@@ -28,7 +28,7 @@ class SuffStatsLGSSM(Protocol):
 
 
 class LinearGaussianSSM(SSM):
-    """
+    r"""
     Linear Gaussian State Space Model.
 
     The model is defined as follows
@@ -59,8 +59,8 @@ class LinearGaussianSSM(SSM):
     :param state_dim: Dimensionality of latent state.
     :param emission_dim: Dimensionality of observation vector.
     :param input_dim: Dimensionality of input vector. Defaults to 0.
-    :param has_dynamics_bias: Whether model contains an offset term b. Defaults to True.
-    :param has_emissions_bias:  Whether model contains an offset term d. Defaults to True.
+    :param has_dynamics_bias: Whether model contains an offset term $b$. Defaults to True.
+    :param has_emissions_bias:  Whether model contains an offset term $d$. Defaults to True.
 
     """
     def __init__(
@@ -99,7 +99,7 @@ class LinearGaussianSSM(SSM):
         emission_input_weights=None,
         emission_covariance=None
     ) -> Tuple[ParamsLGSSM, ParamsLGSSM]:
-        """Initialize model parameters that are set to None, and their corresponding properties.
+        r"""Initialize model parameters that are set to None, and their corresponding properties.
 
         Args:
             key: Random number key. Defaults to jr.PRNGKey(0).
@@ -239,7 +239,7 @@ class LinearGaussianSSM(SSM):
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> Tuple[Float[Array, "ntime emission_dim"], Float[Array, "ntime emission_dim"]]:
-        """Compute marginal posterior predictive smoothing distribution for each observation.
+        r"""Compute marginal posterior predictive smoothing distribution for each observation.
 
         Args:
             params: model parameters.
@@ -247,7 +247,7 @@ class LinearGaussianSSM(SSM):
             inputs: optional sequence of inputs.
 
         Returns:
-            :posterior predictive means $\mathbb{E}[y_{t,d} | y_{1:T}]$ and standard deviations $\mathrm{std}[y_{t,d} | y_{1:T}]$
+            :posterior predictive means $\mathbb{E}[y_{t,d} \mid y_{1:T}]$ and standard deviations $\mathrm{std}[y_{t,d} \mid y_{1:T}]$
 
         """
         posterior = lgssm_smoother(params, emissions, inputs)
@@ -369,7 +369,7 @@ class LinearGaussianSSM(SSM):
 
 
 class LinearGaussianConjugateSSM(LinearGaussianSSM):
-    """
+    r"""
     Linear Gaussian State Space Model with conjugate priors for the model parameters.
 
     The parameters are the same as LG-SSM. The priors are as follows:
@@ -495,7 +495,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         emissions: Float[Array, "nbatch ntime emission_dim"],
         inputs: Optional[Float[Array, "nbatch ntime input_dim"]]=None
     ) -> ParamsLGSSM:
-        """Estimate parameter posterior using block-Gibbs sampler.
+        r"""Estimate parameter posterior using block-Gibbs sampler.
 
         Args:
             key: random number key.

@@ -15,7 +15,7 @@ _process_input = lambda x, y: jnp.zeros((y,1)) if x is None else x
 
 
 def _predict(m, P, f, F, Q, u):
-    """Predict next mean and covariance using first-order additive EKF
+    r"""Predict next mean and covariance using first-order additive EKF
 
         p(x_{t+1}) = \int N(x_t | m, S) N(x_{t+1} | f(x_t, u), Q)
                     = N(x_{t+1} | f(m, u), F(m, u) S F(m, u)^T + Q)
@@ -39,8 +39,8 @@ def _predict(m, P, f, F, Q, u):
 
 
 def _condition_on(m, P, h, H, R, u, y, num_iter):
-    """Condition a Gaussian potential on a new observation.
-    
+    r"""Condition a Gaussian potential on a new observation.
+
        p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
          propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
          = N(x_t | m, S) N(y_t | h_t(x_t, u_t), R_t)
@@ -88,7 +88,7 @@ def extended_kalman_filter(
     num_iter: int = 1,
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> PosteriorGSSMFiltered:
-    """Run an (iterated) extended Kalman filter to produce the
+    r"""Run an (iterated) extended Kalman filter to produce the
     marginal likelihood and filtered state estimates.
 
     Args:
@@ -141,7 +141,7 @@ def iterated_extended_kalman_filter(
     num_iter: int = 2,
     inputs: Optional[Float[Array, "ntime input_dim"]] = None
 ) -> PosteriorGSSMFiltered:
-    """Run an iterated extended Kalman filter to produce the
+    r"""Run an iterated extended Kalman filter to produce the
     marginal likelihood and filtered state estimates.
 
     Args:
@@ -164,7 +164,7 @@ def extended_kalman_smoother(
     filtered_posterior: Optional[PosteriorGSSMFiltered] = None,
     inputs: Optional[Float[Array, "ntime input_dim"]] = None
 ) -> PosteriorGSSMSmoothed:
-    """Run an extended Kalman (RTS) smoother.
+    r"""Run an extended Kalman (RTS) smoother.
 
     Args:
         params: model parameters.
@@ -234,7 +234,7 @@ def iterated_extended_kalman_smoother(
     num_iter: int = 2,
     inputs: Optional[Float[Array, "ntime input_dim"]] = None
 ) -> PosteriorGSSMSmoothed:
-    """Run an iterated extended Kalman smoother (IEKS).
+    r"""Run an iterated extended Kalman smoother (IEKS).
 
     Args:
         params: model parameters.

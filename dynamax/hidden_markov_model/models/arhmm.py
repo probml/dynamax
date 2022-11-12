@@ -130,7 +130,7 @@ class LinearAutoregressiveHMM(HMM):
                    emission_covariances:  Optional[Float[Array, "num_states emission_dim emission_dim"]]=None,
                    emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
         ) -> Tuple[HMMParameterSet, HMMPropertySet]:
-        """Initialize the model parameters and their corresponding properties.
+        r"""Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.
@@ -141,7 +141,7 @@ class LinearAutoregressiveHMM(HMM):
             method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
             initial_probs: manually specified initial state probabilities.
             transition_matrix: manually specified transition matrix.
-            emission_weights: manually specified emission weights. The weights are stored as matrices $W_k = [W_{k,1}, \ldots, W_{k,L}] \in \mathbb{R}^{N \\times N \cdot L}$.
+            emission_weights: manually specified emission weights. The weights are stored as matrices $W_k = [W_{k,1}, \ldots, W_{k,L}] \in \mathbb{R}^{N \times N \cdot L}$.
             emission_biases: manually specified emission biases.
             emission_covariances: manually specified emission covariances.
             emissions: emissions for initializing the parameters with kmeans.
@@ -163,10 +163,10 @@ class LinearAutoregressiveHMM(HMM):
                num_timesteps: int,
                prev_emissions: Optional[Float[Array, "num_lags emission_dim"]]=None,
     ) -> Tuple[Float[Array, "num_timesteps state_dim"], Float[Array, "num_timesteps emission_dim"]]:
-        """Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\\theta$.
+        r"""Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$.
 
         Args:
-            params: model parameters $\\theta$
+            params: model parameters $\theta$
             key: random number generator
             num_timesteps: number of timesteps $T$
             prev_emissions: (optionally) preceding emissions $y_{-L+1:0}$. Defaults to zeros.
@@ -208,14 +208,14 @@ class LinearAutoregressiveHMM(HMM):
                        emissions: Float[Array, "num_timesteps emission_dim"],
                        prev_emissions: Optional[Float[Array, "num_lags emission_dim"]]=None
     ) -> Float[Array, "num_timesteps emission_dim_times_num_lags"]:
-        """Helper function to compute the matrix of lagged emissions.
+        r"""Helper function to compute the matrix of lagged emissions.
 
         Args:
-            emissions: $(T \\times N)$ array of emissions
-            prev_emissions: $(L \\times N)$ array of previous emissions. Defaults to zeros.
+            emissions: $(T \times N)$ array of emissions
+            prev_emissions: $(L \times N)$ array of previous emissions. Defaults to zeros.
 
         Returns:
-            $(T \\times N \cdot L)$ array of lagged emissions. These are the inputs to the fitting functions.
+            $(T \times N \cdot L)$ array of lagged emissions. These are the inputs to the fitting functions.
         """
         if prev_emissions is None:
             # Default to zeros

@@ -12,7 +12,7 @@ from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
 
 class ParamsLGSSMInitial(NamedTuple):
-    """Parameters of the initial distribution
+    r"""Parameters of the initial distribution
 
     $$p(x_1) = \mathcal{N}(x_1 \mid \mu_1, Q_1)$$
 
@@ -27,7 +27,7 @@ class ParamsLGSSMInitial(NamedTuple):
 
 
 class ParamsLGSSMDynamics(NamedTuple):
-    """Parameters of the emission distribution
+    r"""Parameters of the emission distribution
 
     $$p(x_{t+1} \mid x_t, u_t) = \mathcal{N}(x_{t+1} \mid F x_t + B u_t + b, Q)$$
 
@@ -46,7 +46,7 @@ class ParamsLGSSMDynamics(NamedTuple):
 
 
 class ParamsLGSSMEmissions(NamedTuple):
-    """Parameters of the emission distribution
+    r"""Parameters of the emission distribution
 
     $$p(y_t \mid x_t, u_t) = \mathcal{N}(y_t \mid H x_t + D u_t + d, R)$$
 
@@ -65,7 +65,7 @@ class ParamsLGSSMEmissions(NamedTuple):
 
 
 class ParamsLGSSM(NamedTuple):
-    """Parameters of a linear Gaussian SSM.
+    r"""Parameters of a linear Gaussian SSM.
 
     :param initial: initial distribution parameters
     :param dynamics: dynamics distribution parameters
@@ -78,11 +78,11 @@ class ParamsLGSSM(NamedTuple):
 
 
 class PosteriorGSSMFiltered(NamedTuple):
-    """Marginals of the Gaussian filtering posterior.
+    r"""Marginals of the Gaussian filtering posterior.
 
     :param marginal_loglik: marginal log likelihood, $p(y_{1:T} \mid u_{1:T})$
-    :param filtered_means: array of filtered means $\mathbb{E}[x_t | y_{1:t}, u_{1:t}]$
-    :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[x_t | y_{1:t}, u_{1:t}]$
+    :param filtered_means: array of filtered means $\mathbb{E}[x_t \mid y_{1:t}, u_{1:t}]$
+    :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[x_t \mid y_{1:t}, u_{1:t}]$
 
     """
     marginal_loglik: Scalar
@@ -91,14 +91,14 @@ class PosteriorGSSMFiltered(NamedTuple):
 
 
 class PosteriorGSSMSmoothed(NamedTuple):
-    """Marginals of the Gaussian filtering and smoothing posterior.
+    r"""Marginals of the Gaussian filtering and smoothing posterior.
 
     :param marginal_loglik: marginal log likelihood, $p(y_{1:T} \mid u_{1:T})$
-    :param filtered_means: array of filtered means $\mathbb{E}[x_t | y_{1:t}, u_{1:t}]$
-    :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[x_t | y_{1:t}, u_{1:t}]$
-    :param smoothed_means: array of smoothed means $\mathbb{E}[x_t | y_{1:T}, u_{1:T}]$
-    :param smoothed_covariances: array of smoothed marginal covariances, $\mathrm{Cov}[x_t | y_{1:T}, u_{1:T}]$
-    :param smoothed_cross_covariances: array of smoothed cross products, $\mathbb{E}[x_t x_{t+1}^T | y_{1:T}, u_{1:T}]$
+    :param filtered_means: array of filtered means $\mathbb{E}[x_t \mid y_{1:t}, u_{1:t}]$
+    :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[x_t \mid y_{1:t}, u_{1:t}]$
+    :param smoothed_means: array of smoothed means $\mathbb{E}[x_t \mid y_{1:T}, u_{1:T}]$
+    :param smoothed_covariances: array of smoothed marginal covariances, $\mathrm{Cov}[x_t \mid y_{1:T}, u_{1:T}]$
+    :param smoothed_cross_covariances: array of smoothed cross products, $\mathbb{E}[x_t x_{t+1}^T \mid y_{1:T}, u_{1:T}]$
 
     """
     marginal_loglik: Scalar
@@ -114,10 +114,10 @@ _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
 def _predict(m, S, F, B, b, Q, u):
-    """Predict next mean and covariance under a linear Gaussian model.
+    r"""Predict next mean and covariance under a linear Gaussian model.
 
-        p(x_{t+1}) = int N(x_t | m, S) N(x_{t+1} | Fx_t + Bu + b, Q)
-                    = N(x_{t+1} | Fm + Bu, F S F^T + Q)
+        p(x_{t+1}) = int N(x_t \mid m, S) N(x_{t+1} \mid Fx_t + Bu + b, Q)
+                    = N(x_{t+1} \mid Fm + Bu, F S F^T + Q)
 
     Args:
         m (D_hid,): prior mean.
@@ -138,11 +138,11 @@ def _predict(m, S, F, B, b, Q, u):
 
 
 def _condition_on(m, P, H, D, d, R, u, y):
-    """Condition a Gaussian potential on a new linear Gaussian observation
-       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
-         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
-         = N(x_t | m, P) N(y_t | H_t x_t + D_t u_t + d_t, R_t)
-         = N(x_t | mm, PP)
+    r"""Condition a Gaussian potential on a new linear Gaussian observation
+       p(x_t \mid y_t, u_t, y_{1:t-1}, u_{1:t-1})
+         propto p(x_t \mid y_{1:t-1}, u_{1:t-1}) p(y_t \mid x_t, u_t)
+         = N(x_t \mid m, P) N(y_t \mid H_t x_t + D_t u_t + d_t, R_t)
+         = N(x_t \mid mm, PP)
      where
          mm = m + K*(y - yhat) = mu_cond
          yhat = H*m + D*u + d
@@ -233,13 +233,13 @@ def lgssm_filter(
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> PosteriorGSSMFiltered:
-    """Run a Kalman filter to produce the marginal likelihood and filtered state estimates.
+    r"""Run a Kalman filter to produce the marginal likelihood and filtered state estimates.
 
     Args:
         params: model parameters
         emissions: array of observations.
         inputs: optional array of inputs.
-    
+
     Returns:
         PosteriorGSSMFiltered: filtered posterior object
 
@@ -285,7 +285,7 @@ def lgssm_smoother(
     emissions: Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> PosteriorGSSMSmoothed:
-    """Run forward-filtering, backward-smoother to compute expectations
+    r"""Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
 
@@ -356,7 +356,7 @@ def lgssm_posterior_sample(
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> Float[Array, "ntime state_dim"]:
-    """Run forward-filtering, backward-sampling to draw samples from $p(x_{1:T} | y_{1:T}, u_{1:T})$.
+    r"""Run forward-filtering, backward-sampling to draw samples from $p(x_{1:T} \mid y_{1:T}, u_{1:T})$.
 
     Args:
         key: random number key.
