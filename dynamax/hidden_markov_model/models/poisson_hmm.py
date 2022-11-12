@@ -119,16 +119,6 @@ class PoissonHMM(HMM):
                  transition_matrix_concentration=1.1,
                  emission_prior_concentration=1.1,
                  emission_prior_rate=0.1):
-        """_summary_
-
-        Args:
-            num_states (_type_): _description_
-            emission_dim (_type_): _description_
-            initial_probs_concentration (float, optional): _description_. Defaults to 1.1.
-            transition_matrix_concentration (float, optional): _description_. Defaults to 1.1.
-            emission_prior_concentration (float, optional): _description_. Defaults to 1.1.
-            emission_prior_rate (float, optional): _description_. Defaults to 0.1.
-        """
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
         transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
