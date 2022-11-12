@@ -39,7 +39,7 @@ To install the latest releast of dynamax from PyPi:
 
 ``` {.console}
 pip install dynamax                 # Install dynamax and core dependencies, or
-pip install dynamax[notebooks]      # Install with dep's for demo notebooks
+pip install dynamax[notebooks]      # Install with demo notebook dependencies
 ```
 
 To install the latest development branch:
