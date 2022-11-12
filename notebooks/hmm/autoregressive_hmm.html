@@ -354,8 +354,8 @@
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
 Let <span class="math notranslate nohighlight">\(x_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
 <p>The autoregressive hidden Markov model has the following likelihood,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-d4f7f6ce-28d0-4787-a0f4-0355c70e5995">
-<span class="eqno">(1)<a class="headerlink" href="#equation-d4f7f6ce-28d0-4787-a0f4-0355c70e5995" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-9295e565-cf78-423c-9b26-735c16fac9e8">
+<span class="eqno">(1)<a class="headerlink" href="#equation-9295e565-cf78-423c-9b26-735c16fac9e8" title="Permalink to this equation">¶</a></span>\[\begin{align}
 x_t \mid x_{t-1}, z_t &amp;\sim
 \mathcal{N}\left(A_{z_t} x_{t-1} + b_{z_t}, Q_{z_t} \right).
 \end{align}\]</div>
@@ -441,7 +441,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f4cdc32f490&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7ff56c08e490&gt;
 </pre></div>
 </div>
 <img alt="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" src="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" />
@@ -543,7 +543,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;$x_2$&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/37c3912479a00ce564fd136232909055219fb3556de9a33090b5f25e0721d221.png" src="../../_images/37c3912479a00ce564fd136232909055219fb3556de9a33090b5f25e0721d221.png" />
+<img alt="../../_images/37440369c074b69e7ac7f5ae9a003c9b14a3281dd601480a1b98a8be20c667ab.png" src="../../_images/37440369c074b69e7ac7f5ae9a003c9b14a3281dd601480a1b98a8be20c667ab.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the the corresponding AR state while the solid lines are the actual observations sampled from the HMM.</p>
@@ -575,7 +575,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" src="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" />
+<img alt="../../_images/9aa8941eeb8cbd572d0e605c2a61fe0b7686d242cb6658d0cba3c18c168b42e1.png" src="../../_images/9aa8941eeb8cbd572d0e605c2a61fe0b7686d242cb6658d0cba3c18c168b42e1.png" />
 </div>
 </div>
 </section>
@@ -635,7 +635,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6b04035e34178462910f12c19212183114452983cf7d561829f74fefd6961467.png" src="../../_images/6b04035e34178462910f12c19212183114452983cf7d561829f74fefd6961467.png" />
+<img alt="../../_images/c8a9ba0a9c4cb0fa2ab47313f4f5b8532afc5b9788169748ea7cee5a7c11af89.png" src="../../_images/c8a9ba0a9c4cb0fa2ab47313f4f5b8532afc5b9788169748ea7cee5a7c11af89.png" />
 </div>
 </div>
 </section>
@@ -682,7 +682,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/250bace5e2563b553b80042e9c93bf3b63eeaf420d96c20dc40b30952859c647.png" src="../../_images/250bace5e2563b553b80042e9c93bf3b63eeaf420d96c20dc40b30952859c647.png" />
+<img alt="../../_images/25a16680435a00a536cc2d2aab4d9eef215853e4d936121add1c57aaf6ceed82.png" src="../../_images/25a16680435a00a536cc2d2aab4d9eef215853e4d936121add1c57aaf6ceed82.png" />
 </div>
 </div>
 </section>
@@ -710,7 +710,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8f75c1c0ac7914534d235dea8d1a34ad7d8e6e9165f472c5e55ae6e1448c09c0.png" src="../../_images/8f75c1c0ac7914534d235dea8d1a34ad7d8e6e9165f472c5e55ae6e1448c09c0.png" />
+<img alt="../../_images/18997d1fcef67de4d646fb8c16c7ebe7922672597d9dac9bb944d46663d9a493.png" src="../../_images/18997d1fcef67de4d646fb8c16c7ebe7922672597d9dac9bb944d46663d9a493.png" />
 </div>
 </div>
 </section>
@@ -738,7 +738,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/1ebd340d22ff3d4444089d7dbb22f21149247c31a54d8e1f6e01413a3347e109.png" src="../../_images/1ebd340d22ff3d4444089d7dbb22f21149247c31a54d8e1f6e01413a3347e109.png" />
+<img alt="../../_images/f036b1ec08c793fd486ae1335195a4b186ae7cbf58892d150010b08a4e20c6ec.png" src="../../_images/f036b1ec08c793fd486ae1335195a4b186ae7cbf58892d150010b08a4e20c6ec.png" />
 </div>
 </div>
 </section>
