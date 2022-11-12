@@ -74,6 +74,9 @@ where $\beta$ is the prior concentration on the rows of the transition matrix $A
   :members: initialize
 
 .. autoclass:: dynamax.hidden_markov_model.DiagonalGaussianHMM
+  :show-inheritance:
+  :members: initialize
+
 .. autoclass:: dynamax.hidden_markov_model.SphericalGaussianHMM
 .. autoclass:: dynamax.hidden_markov_model.SharedCovarianceGaussianHMM
 .. autoclass:: dynamax.hidden_markov_model.LowRankGaussianHMM

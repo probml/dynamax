@@ -644,6 +644,35 @@ class ParamsDiagonalGaussianHMM(NamedTuple):
 
 
 class DiagonalGaussianHMM(HMM):
+    """An HMM with conditionally independent normal (i.e. Gaussian) emissions.
+
+    Let $y_t \in \mathbb{R}^N$ denote a vector-valued emissions at time $t$. In this model,
+    the emission distribution is,
+
+    $$p(y_t \mid z_t, \\theta) = \prod_{n=1}^N \mathcal{N}(y_{t,n} \mid \mu_{z_t,n}, \sigma_{z_t,n}^2)$$
+    or equivalently
+    $$p(y_t \mid z_t, \\theta) = \mathcal{N}(y_{t} \mid \mu_{z_t}, \mathrm{diag}(\sigma_{z_t}^2))$$
+
+
+    where $\sigma_k^2 = [\sigma_{k,1}^2, \ldots, \sigma_{k,N}^2]$ are the *emission variances* of each
+    dimension in state $z_t=k$. The complete set of parameters is $\\theta = \{\mu_k, \sigma_k^2\}_{k=1}^K$.
+
+    The model has a conjugate normal-inverse-gamma_ prior,
+
+    $$p(\\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathcal{N}(\mu_{k,n} \mid \mu_0, \kappa_0^{-1} \sigma_{k,n}^2) \mathrm{IGa}(\sigma_{k,n}^2 \mid \\alpha_0, \\beta_0)$$
+
+    .. _normal-inverse-gamma: https://en.wikipedia.org/wiki/Normal-inverse-gamma_distribution
+
+    :param num_states: number of discrete states $K$
+    :param emission_dim: number of conditionally independent emissions $N$
+    :param initial_probs_concentration: $\\alpha$
+    :param transition_matrix_concentration: $\\beta$
+    :param emission_prior_mean: $\mu_0$
+    :param emission_prior_mean_concentration: $\kappa_0$
+    :param emission_prior_concentration: $\\alpha_0$
+    :param emission_prior_scale: $\\beta_0$
+
+    """
     def __init__(self, num_states: int,
                  emission_dim: int,
                  initial_probs_concentration=1.1,
