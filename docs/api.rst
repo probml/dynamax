@@ -19,10 +19,24 @@ aliases for immutable datastructures (in our case,  :class:`NamedTuple`).
 Hidden Markov Model
 ===================
 
-High-level classes
+Abstract classes
 ------------------
 
 .. autoclass:: dynamax.hidden_markov_model.HMM
+  :show-inheritance:
+  :members:
+
+.. autoclass:: dynamax.hidden_markov_model.HMMInitialState
+  :members:
+
+.. autoclass:: dynamax.hidden_markov_model.HMMTransitions
+  :members:
+
+.. autoclass:: dynamax.hidden_markov_model.HMMEmissions
+  :members:
+
+High-level models
+-----------------
 .. autoclass:: dynamax.hidden_markov_model.BernoulliHMM
 .. autoclass:: dynamax.hidden_markov_model.CategoricalHMM
 .. autoclass:: dynamax.hidden_markov_model.GaussianHMM
@@ -54,6 +68,12 @@ Low-level inference
 .. autofunction:: dynamax.hidden_markov_model.hmm_fixed_lag_smoother
 .. autofunction:: dynamax.hidden_markov_model.hmm_posterior_mode
 .. autofunction:: dynamax.hidden_markov_model.hmm_posterior_sample
+
+Types
+-----
+
+.. autoclass:: dynamax.hidden_markov_model.HMMParameterSet
+
 
 Linear Gaussian SSM
 ====================

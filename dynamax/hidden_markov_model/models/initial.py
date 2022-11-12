@@ -52,7 +52,7 @@ class StandardHMMInitialState(HMMInitialState):
     def log_prior(self, params):
         return tfd.Dirichlet(self.initial_probs_concentration).log_prob(params.probs)
 
-    def compute_initial_probs(self, params, inputs=None):
+    def _compute_initial_probs(self, params, inputs=None):
         return params.probs
 
     def collect_suff_stats(self, params, posterior, inputs=None):
