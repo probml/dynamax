@@ -13,7 +13,7 @@ from typing_extensions import Protocol
 from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
-from dynamax.linear_gaussian_ssm.inference import PosteriorLGSSMFiltered, PosteriorLGSSMSmoothed
+from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
 from dynamax.parameters import ParameterProperties, ParameterSet
 from dynamax.types import PRNGKey, Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
@@ -33,13 +33,13 @@ class LinearGaussianSSM(SSM):
 
     The model is defined as follows
 
-    $$p(z_1) = \mathcal{N}(z_1 \mid m, S)$$
-    $$p(z_t \mid z_{t-1}, u_t) = \mathcal{N}(z_t \mid F_t z_{t-1} + B_t u_t + b_t, Q_t)$$
-    $$p(y_t \mid z_t) = \mathcal{N}(y_t \mid H_t z_t + D_t u_t + d_t, R_t)$$
+    $$p(x_1) = \mathcal{N}(x_1 \mid m, S)$$
+    $$p(x_t \mid x_{t-1}, u_t) = \mathcal{N}(x_t \mid F_t x_{t-1} + B_t u_t + b_t, Q_t)$$
+    $$p(y_t \mid x_t) = \mathcal{N}(y_t \mid H_t x_t + D_t u_t + d_t, R_t)$$
 
     where
 
-    * $z_t$ is a latent state of size `state_dim`,
+    * $x_t$ is a latent state of size `state_dim`,
     * $y_t$ is an emission of size `emission_dim`
     * $u_t$ is an input of size `input_dim` (defaults to 0)
 
@@ -204,7 +204,7 @@ class LinearGaussianSSM(SSM):
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
-    ) -> PosteriorLGSSMFiltered:
+    ) -> PosteriorGSSMFiltered:
         return lgssm_filter(params, emissions, inputs)
 
     def smoother(
@@ -212,7 +212,7 @@ class LinearGaussianSSM(SSM):
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
-    ) -> PosteriorLGSSMSmoothed:
+    ) -> PosteriorGSSMSmoothed:
         return lgssm_smoother(params, emissions, inputs)
 
     def posterior_sample(

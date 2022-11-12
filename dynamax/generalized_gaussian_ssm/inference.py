@@ -6,8 +6,8 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union, Callable
 
-from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM,  PosteriorGGSSMFiltered, PosteriorGGSSMSmoothed
-
+from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
+from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
 
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
@@ -16,23 +16,15 @@ _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
 _jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
 
 
-"""
-Parameter structures are represented as NamedTuples.
-(NamedTuples do not easily support inheritance, so we define
-the CMGFIntegrals "meta-type" below.)
-"""
+
 class EKFIntegrals(NamedTuple):
-    """
-    Lightweight container for EKF Gaussian integrals.
-    """
+    """ Lightweight container for EKF Gaussian integrals."""
     gaussian_expectation: Callable = lambda f, m, P: jnp.atleast_1d(f(m))
     gaussian_cross_covariance: Callable = lambda f, g, m, P: _jacfwd_2d(f, m) @ P @ _jacfwd_2d(g, m).T
 
 
 class UKFIntegrals(NamedTuple):
-    """
-    Lightweight container for UKF Gaussian integrals.
-    """
+    """Lightweight container for UKF Gaussian integrals."""
     alpha: float = jnp.sqrt(3)
     beta: float = 2.0
     kappa: float = 1.0
@@ -63,9 +55,7 @@ class UKFIntegrals(NamedTuple):
 
 
 class GHKFIntegrals(NamedTuple):
-    """
-    Lightweight container for GHKF Gaussian integrals.
-    """
+    """Lightweight container for GHKF Gaussian integrals."""
     order: int = 10
 
     def gaussian_expectation(self, f, m, P):
@@ -182,6 +172,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
 def _statistical_linear_regression(mu, Sigma, m, S, C):
     """Return moment-matching affine coefficients and approximation noise variance
     given joint moments.
+
         g(x) \approx Ax + b + e where e ~ N(0, Omega)
         p(x) = N(x | mu, Sigma)
         m = E[g(x)]
@@ -212,22 +203,19 @@ def conditional_moments_gaussian_filter(
     emissions: Float[Array, "ntime emission_dim"],
     num_iter: int = 1,
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGGSSMFiltered:
+) -> PosteriorGSSMFiltered:
     """Run an (iterated) conditional moments Gaussian filter to produce the
     marginal likelihood and filtered state estimates.
 
     Args:
-        model_params (GGSSMParams): model parameters.
-        inf_params (CMGFIntegrals): inference parameters.
-        emissions (T,D_hid): array of observations.
-        num_iter (int): number of linearizations around prior/posterior for update step.
-        inputs (T,D_in): array of inputs.
+        model_params: model parameters.
+        inf_params: inference parameters that specify how to compute moments.
+        emissions: array of observations.
+        num_iter: optional number of linearizations around prior/posterior for update step (default 1).
+        inputs: optopnal array of inputs.
 
     Returns:
-        filtered_posterior: GSSMPosterior instance containing,
-            marginal_log_lik
-            filtered_means (T, D_hid)
-            filtered_covariances (T, D_hid, D_hid)
+        filtered_posterior: posterior object.
 
     """
     num_timesteps = len(emissions)
@@ -262,7 +250,7 @@ def conditional_moments_gaussian_filter(
     # Run the general linearization filter
     carry = (0.0, model_params.initial_mean, model_params.initial_covariance)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return PosteriorGGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 def iterated_conditional_moments_gaussian_filter(
@@ -271,22 +259,18 @@ def iterated_conditional_moments_gaussian_filter(
     emissions: Float[Array, "ntime emission_dim"],
     num_iter: int = 2,
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGGSSMFiltered:
+) -> PosteriorGSSMFiltered:
     """Run an iterated conditional moments Gaussian filter.
 
     Args:
-        model_params (GGSSMParams): model parameters.
-        inf_params (CMGFIntegrals): inference parameters.
-        emissions (T,D_hid): array of observations.
-        num_iter (int): number of linearizations around smoothed posterior.
-        inputs (T,D_in): array of inputs.
+        model_params: model parameters.
+        inf_params: inference parameters that specify how to compute moments.
+        emissions: array of observations.
+        num_iter: optional number of linearizations around prior/posterior for update step (default 1).
+        inputs: optional array of inputs.
 
     Returns:
-        filtered_posterior: GSSMPosterior instance containing,
-            marginal_log_lik
-            filtered_means (T, D_hid)
-            filtered_covariances (T, D_hid, D_hid)
-
+        filtered_posterior: posterior object.
     """
     filtered_posterior = conditional_moments_gaussian_filter(model_params, inf_params, emissions, num_iter, inputs)
     return filtered_posterior
@@ -296,26 +280,20 @@ def conditional_moments_gaussian_smoother(
     model_params: ParamsGGSSM,
     inf_params: CMGFIntegrals,
     emissions: Float[Array, "ntime emission_dim"],
-    filtered_posterior: Optional[PosteriorGGSSMFiltered]=None,
+    filtered_posterior: Optional[PosteriorGSSMFiltered]=None,
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGGSSMSmoothed:
+) -> PosteriorGSSMSmoothed:
     """Run a conditional moments Gaussian smoother.
 
     Args:
-        model_params (GGSSMParams): model parameters.
-
-        inf_params (CMGFIntegrals): inference parameters.
-
-        emissions (T,D_hid): array of observations.
-
-        filtered_posterior (GSSMPosterior): filtered posterior to use for smoothing.
-        If None, the smoother computes the filtered posterior directly.
-
-        inputs (T,D_in): array of inputs.
+        model_params: model parameters.
+        inf_params: inference parameters that specify how to compute moments.
+        emissions: array of observations.
+        num_iter: optional number of linearizations around prior/posterior for update step (default 1).
+        inputs: optopnal array of inputs.
 
     Returns:
-        nlgssm_posterior: GSSMPosterior instance containing properties of
-        filtered and smoothed posterior distributions.
+        post: posterior object.
 
     """
     num_timesteps = len(emissions)
@@ -360,7 +338,7 @@ def conditional_moments_gaussian_smoother(
     # Reverse the arrays and return
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    return PosteriorGGSSMSmoothed(
+    return PosteriorGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
@@ -375,19 +353,19 @@ def iterated_conditional_moments_gaussian_smoother(
     emissions: Float[Array, "ntime emission_dim"],
     num_iter: int = 2,
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGGSSMSmoothed:
+) -> PosteriorGSSMSmoothed:
     """Run an iterated conditional moments Gaussian smoother.
 
     Args:
-        model_params (GGSSMParams): model parameters.
-        inf_params (CMGFIntegrals): inference parameters.
-        emissions (T,D_hid): array of observations.
-        num_iter (int): number of re-linearizations around smoothed posterior.
-        inputs (T,D_in): array of inputs.
+        model_params: model parameters.
+        inf_params: inference parameters that specify how to compute moments.
+        emissions: array of observations.
+        num_iter: optional number of linearizations around prior/posterior for update step (default 1).
+        inputs: optopnal array of inputs.
 
     Returns:
-        nlgssm_posterior: GSSMPosterior instance containing properties of
-            filtered and smoothed posterior distributions.
+        post: posterior object.
+
     """
     def _step(carry, _):
         # Relinearize around smoothed posterior from previous iteration

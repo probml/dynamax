@@ -22,7 +22,7 @@ class ParamsLGSSMInfo(NamedTuple):
     emission_bias: Optional[Float[Array, "emission_dim"]] = None
 
 
-class PosteriorLGSSMInfoFiltered(NamedTuple):
+class PosteriorGSSMInfoFiltered(NamedTuple):
     """Marginals of the Gaussian filtering posterior in information form.
 
     Attributes:
@@ -37,7 +37,7 @@ class PosteriorLGSSMInfoFiltered(NamedTuple):
     filtered_precisions: Float[Array, "ntime state_dim state_dim"]
 
 
-class PosteriorLGSSMInfoSmoothed(NamedTuple):
+class PosteriorGSSMInfoSmoothed(NamedTuple):
     """"Marginals of the Gaussian filtering and smoothed posterior in information form.
     """
     marginal_loglik: Float[Array, ""] # Scalar
@@ -167,7 +167,7 @@ def lgssm_info_filter(
     params: ParamsLGSSMInfo,
     emissions: Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]] = None
-) -> PosteriorLGSSMInfoFiltered:
+) -> PosteriorGSSMInfoFiltered:
     """Run a Kalman filter to produce the filtered state estimates.
 
     Args:
@@ -213,14 +213,14 @@ def lgssm_info_filter(
     initial_eta = params.initial_precision @ params.initial_mean
     carry = (0.0, initial_eta, params.initial_precision)
     (ll, _, _), (filtered_etas, filtered_precisions) = lax.scan(_filter_step, carry, jnp.arange(num_timesteps))
-    return PosteriorLGSSMInfoFiltered(marginal_loglik=ll, filtered_etas=filtered_etas, filtered_precisions=filtered_precisions)
+    return PosteriorGSSMInfoFiltered(marginal_loglik=ll, filtered_etas=filtered_etas, filtered_precisions=filtered_precisions)
 
 
 def lgssm_info_smoother(
     params: ParamsLGSSMInfo,
     emissions: Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]] = None
-) -> PosteriorLGSSMInfoSmoothed:
+) -> PosteriorGSSMInfoSmoothed:
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. This
     is the information form of the Rauch-Tung-Striebel (RTS) smoother.
@@ -276,7 +276,7 @@ def lgssm_info_smoother(
     # Reverse the arrays and return
     smoothed_etas = jnp.row_stack((smoothed_etas[::-1], filtered_etas[-1][None, ...]))
     smoothed_precisions = jnp.row_stack((smoothed_precisions[::-1], filtered_precisions[-1][None, ...]))
-    return PosteriorLGSSMInfoSmoothed(
+    return PosteriorGSSMInfoSmoothed(
         marginal_loglik=ll,
         filtered_etas=filtered_etas,
         filtered_precisions=filtered_precisions,

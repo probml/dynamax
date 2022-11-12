@@ -77,8 +77,9 @@ Types
 .. autoclass:: dynamax.linear_gaussian_ssm.ParamsLGSSMInitial
 .. autoclass:: dynamax.linear_gaussian_ssm.ParamsLGSSMDynamics
 .. autoclass:: dynamax.linear_gaussian_ssm.ParamsLGSSMEmissions
-.. autoclass:: dynamax.linear_gaussian_ssm.PosteriorLGSSMFiltered
-.. autoclass:: dynamax.linear_gaussian_ssm.PosteriorLGSSMSmoothed
+
+.. autoclass:: dynamax.linear_gaussian_ssm.PosteriorGSSMFiltered
+.. autoclass:: dynamax.linear_gaussian_ssm.PosteriorGSSMSmoothed
 
 Nonlinear Gaussian GSSM
 ========================
@@ -101,6 +102,12 @@ Low-level inference
 .. autofunction:: dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter
 .. autofunction:: dynamax.nonlinear_gaussian_ssm.unscented_kalman_smoother
 
+Types
+-----
+
+.. autoclass:: dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM
+
+
 Generalized Gaussian GSSM
 ==========================
 
@@ -117,3 +124,8 @@ Low-level inference
 .. autofunction:: dynamax.generalized_gaussian_ssm.iterated_conditional_moments_gaussian_filter
 .. autofunction:: dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_smoother
 .. autofunction:: dynamax.generalized_gaussian_ssm.iterated_conditional_moments_gaussian_smoother
+
+Types
+-----
+
+.. autoclass:: dynamax.generalized_gaussian_ssm.ParamsGGSSM

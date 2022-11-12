@@ -29,11 +29,11 @@ class ParamsLGSSMInitial(NamedTuple):
 class ParamsLGSSMDynamics(NamedTuple):
     """Parameters of the emission distribution
 
-    $$p(x_{t+1} \mid x_t, u_t) = \mathcal{N}(x_{t+1} \mid Ax_t + B u_t + b, Q)$$
+    $$p(x_{t+1} \mid x_t, u_t) = \mathcal{N}(x_{t+1} \mid F x_t + B u_t + b, Q)$$
 
     The tuple doubles as a container for the ParameterProperties.
 
-    :param weights: dynamics weights $A$
+    :param weights: dynamics weights $F$
     :param bias: dynamics bias $b$
     :param input_weights: dynamics input weights $B$
     :param cov: dynamics covariance $Q$
@@ -48,11 +48,11 @@ class ParamsLGSSMDynamics(NamedTuple):
 class ParamsLGSSMEmissions(NamedTuple):
     """Parameters of the emission distribution
 
-    $$p(y_t \mid x_t, u_t) = \mathcal{N}(y_t \mid Cx_t + D u_t + d, R)$$
+    $$p(y_t \mid x_t, u_t) = \mathcal{N}(y_t \mid H x_t + D u_t + d, R)$$
 
     The tuple doubles as a container for the ParameterProperties.
 
-    :param weights: emission weights $C$
+    :param weights: emission weights $H$
     :param bias: emission bias $d$
     :param input_weights: emission input weights $D$
     :param cov: emission covariance $R$
@@ -77,7 +77,7 @@ class ParamsLGSSM(NamedTuple):
     emissions: ParamsLGSSMEmissions
 
 
-class PosteriorLGSSMFiltered(NamedTuple):
+class PosteriorGSSMFiltered(NamedTuple):
     """Marginals of the Gaussian filtering posterior.
 
     :param marginal_loglik: marginal log likelihood, $p(y_{1:T} \mid u_{1:T})$
@@ -90,7 +90,7 @@ class PosteriorLGSSMFiltered(NamedTuple):
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
 
 
-class PosteriorLGSSMSmoothed(NamedTuple):
+class PosteriorGSSMSmoothed(NamedTuple):
     """Marginals of the Gaussian filtering and smoothing posterior.
 
     :param marginal_loglik: marginal log likelihood, $p(y_{1:T} \mid u_{1:T})$
@@ -101,7 +101,7 @@ class PosteriorLGSSMSmoothed(NamedTuple):
     :param smoothed_cross_covariances: array of smoothed cross products, $\mathbb{E}[x_t x_{t+1}^T | y_{1:T}, u_{1:T}]$
 
     """
-    marginal_loglik: Float[Array, ""] # Scalar
+    marginal_loglik: Scalar
     filtered_means: Float[Array, "ntime state_dim"]
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
     smoothed_means: Float[Array, "ntime state_dim"]
@@ -232,7 +232,7 @@ def lgssm_filter(
     params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorLGSSMFiltered:
+) -> PosteriorGSSMFiltered:
     """Run a Kalman filter to produce the marginal likelihood and filtered state estimates.
 
     Args:
@@ -276,7 +276,7 @@ def lgssm_filter(
     # Run the Kalman filter
     carry = (0.0, params.initial.mean, params.initial.cov)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return PosteriorLGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
 @preprocess_args
@@ -284,7 +284,7 @@ def lgssm_smoother(
     params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorLGSSMSmoothed:
+) -> PosteriorGSSMSmoothed:
     """Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -340,7 +340,7 @@ def lgssm_smoother(
     smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
     smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
     smoothed_cross = smoothed_cross[::-1]
-    return PosteriorLGSSMSmoothed(
+    return PosteriorGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
@@ -356,7 +356,7 @@ def lgssm_posterior_sample(
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
 ) -> Float[Array, "ntime state_dim"]:
-    """Run forward-filtering, backward-sampling to draw samples from $p(z_{1:T} | y_{1:T}, u_{1:T})$.
+    """Run forward-filtering, backward-sampling to draw samples from $p(x_{1:T} | y_{1:T}, u_{1:T})$.
 
     Args:
         key: random number key.
@@ -365,7 +365,7 @@ def lgssm_posterior_sample(
         inputs: optional sequence of inptus.
 
     Returns:
-        states: one sample of $z_{1:T}$ from the posterior distribution on latent states.
+        states: one sample of $x_{1:T}$ from the posterior distribution on latent states.
     """
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs

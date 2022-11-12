@@ -20,9 +20,7 @@ from dynamax.utils.utils import ensure_array_has_batch_dim
 
 
 class Posterior(Protocol):
-    """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.
-
-    """
+    """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes."""
     pass
 
 
@@ -81,10 +79,11 @@ class SSM(ABC):
     """
 
     @abstractmethod
-    def initial_distribution(self,
-                             params: ParameterSet,
-                             inputs: Optional[Float[Array, "input_dim"]]) \
-                                 -> tfd.Distribution:
+    def initial_distribution(
+        self,
+        params: ParameterSet,
+        inputs: Optional[Float[Array, "input_dim"]]
+    ) -> tfd.Distribution:
         """Return an initial distribution over latent states.
 
         Args:
@@ -99,11 +98,12 @@ class SSM(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def transition_distribution(self,
-                                params: ParameterSet,
-                                state: Float[Array, "state_dim"],
-                                inputs: Optional[Float[Array, "input_dim"]]) \
-                                    -> tfd.Distribution:
+    def transition_distribution(
+        self,
+        params: ParameterSet,
+        state: Float[Array, "state_dim"],
+        inputs: Optional[Float[Array, "input_dim"]]
+    ) -> tfd.Distribution:
         """Return a distribution over next latent state given current state.
 
         Args:
@@ -118,11 +118,12 @@ class SSM(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def emission_distribution(self,
-                              params: ParameterSet,
-                              state: Float[Array, "state_dim"],
-                              inputs: Optional[Float[Array, "input_dim"]]=None) \
-                                  -> tfd.Distribution:
+    def emission_distribution(
+        self,
+        params: ParameterSet,
+        state: Float[Array, "state_dim"],
+        inputs: Optional[Float[Array, "input_dim"]]=None
+    ) -> tfd.Distribution:
         """Return a distribution over emissions given current state.
 
         Args:
@@ -165,12 +166,13 @@ class SSM(ABC):
         return None
 
     # All SSMs support sampling
-    def sample(self,
-               params: ParameterSet,
-               key: jr.PRNGKey,
-               num_timesteps: int,
-               inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    )-> Tuple[Float[Array, "num_timesteps state_dim"],
+    def sample(
+        self,
+        params: ParameterSet,
+        key: PRNGKey,
+        num_timesteps: int,
+        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+    ) -> Tuple[Float[Array, "num_timesteps state_dim"],
               Float[Array, "num_timesteps emission_dim"]]:
         """Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\\theta$ and (optionally) inputs $u_{1:T}$.
 
@@ -297,10 +299,11 @@ class SSM(ABC):
         raise NotImplementedError
 
     # Learning algorithms
-    def e_step(self,
-               params: ParameterSet,
-               emissions: Float[Array, "num_timesteps emission_dim"],
-               inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+    def e_step(
+        self,
+        params: ParameterSet,
+        emissions: Float[Array, "num_timesteps emission_dim"],
+        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> PyTree:
         """Perform an E-step to compute expected sufficient statistics under the posterior, $p(z_{1:T} \mid y_{1:T}, u_{1:T}, \\theta)$.
 
@@ -315,11 +318,12 @@ class SSM(ABC):
         """
         raise NotImplementedError
 
-    def m_step(self,
-               params: ParameterSet,
-               props: PropertySet,
-               batch_stats: PyTree,
-               m_step_state: Any
+    def m_step(
+        self,
+        params: ParameterSet,
+        props: PropertySet,
+        batch_stats: PyTree,
+        m_step_state: Any
     ) -> ParameterSet:
         """Perform an M-step to find parameters that maximize the expected log joint probability.
 
