@@ -114,17 +114,17 @@ class BernoulliHMM(HMM):
     the emission distribution is,
 
     $$p(y_t \mid z_t, \\theta) = \prod_{n=1}^N \mathrm{Bern}(y_{tn} \mid \\theta_{z_t,n})$$
-    $$p(\\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathrm{Beta}(\\theta_{k,n}; a_0, a_1)$$
+    $$p(\\theta) = \prod_{k=1}^K \prod_{n=1}^N \mathrm{Beta}(\\theta_{k,n}; \gamma_0, \gamma_1)$$
 
     with $\\theta_{k,n} \in [0,1]$ for $k=1,\ldots,K$ and $n=1,\ldots,N$ are the
-    *emission probabilities* and $a_0, a_1$ are their prior pseudocounts.
+    *emission probabilities* and $\gamma_0, \gamma_1$ are their prior pseudocounts.
 
     :param num_states: number of discrete states $K$
     :param emission_dim: number of conditionally independent emissions $N$
     :param initial_probs_concentration: $\\alpha$
     :param transition_matrix_concentration: $\\beta$
-    :param emission_prior_concentration0: $a_0$
-    :param emission_prior_concentration1: $a_1$
+    :param emission_prior_concentration0: $\gamma_0$
+    :param emission_prior_concentration1: $\gamma_1$
 
     """
     def __init__(self, num_states: int,

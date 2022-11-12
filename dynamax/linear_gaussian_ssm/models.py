@@ -247,10 +247,8 @@ class LinearGaussianSSM(SSM):
             inputs: optional sequence of inputs.
 
         Returns:
-        {
-            'means': (T,D) array of E[Y(t,d) | Y(1:T)]
-            'stds': (T,D) array std[Y(t,d) | Y(1:T)]
-        }
+            :posterior predictive means $\mathbb{E}[y_{t,d} | y_{1:T}]$ and standard deviations $\mathrm{std}[y_{t,d} | y_{1:T}]$
+
         """
         posterior = lgssm_smoother(params, emissions, inputs)
         H = params.emissions.weights
@@ -375,7 +373,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
     Linear Gaussian State Space Model with conjugate priors for the model parameters.
 
     The parameters are the same as LG-SSM. The priors are as follows:
-    
+
     * p(m, S) = NIW(loc, mean_concentration, df, scale) # normal inverse wishart
     * p([F, B, b], Q) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart
     * p([H, D, d], R) = MNIW(loc, col_precision, df, scale) # matrix normal inverse wishart
@@ -498,7 +496,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         inputs: Optional[Float[Array, "nbatch ntime input_dim"]]=None
     ) -> ParamsLGSSM:
         """Estimate parameter posterior using block-Gibbs sampler.
-        
+
         Args:
             key: random number key.
             initial_params: starting parameters.
