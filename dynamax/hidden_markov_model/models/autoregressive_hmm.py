@@ -1,15 +1,17 @@
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, tree_map
-from typing import NamedTuple
-from dynamax.hidden_markov_model.models.abstractions import HMM
+from jaxtyping import Float, Array
+from dynamax.hidden_markov_model.models.abstractions import HMM, HMMParameterSet, HMMPropertySet
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.hidden_markov_model.models.linreg_hmm import LinearRegressionHMMEmissions, ParamsLinearRegressionHMMEmissions
 from dynamax.parameters import ParameterProperties
+from dynamax.types import Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
-
 from tensorflow_probability.substrates import jax as tfp
+from typing import NamedTuple, Optional, Tuple, Union
+
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
@@ -21,11 +23,6 @@ class ParamsLinearAutoregressiveHMM(NamedTuple):
 
 
 class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
-    """A linear autoregressive HMM (ARHMM) is a special case of a
-    linear regression HMM where the inputs (i.e. features)
-    are functions of the past emissions.
-    """
-
     def __init__(self,
                  num_states,
                  emission_dim,
@@ -75,12 +72,39 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
 
 
 class LinearAutoregressiveHMM(HMM):
+    """An autoregressive HMM whose emissions are a linear function of the previous emissions with state-dependent weights.
+    This is also known as a *switching vector autoregressive* model.
+
+    Let $y_t \in \mathbb{R}^N$ denote vector-valued emissions at time $t$.
+    In this model, the emission distribution is,
+
+    $$p(y_t \mid y_{1:t-1}, z_t, \\theta) = \mathcal{N}(y_{t} \mid \sum_{\ell = 1}^L W_{z_t, \ell} y_{t-\ell} + b_{z_t}, \Sigma_{z_t})$$
+
+    with *emission weights* $W_{k,\ell} \in \mathbb{R}^{N \\times N}$ for each *lag* $\ell=1,\ldots,L$,
+    *emission biases* $b_k \in \mathbb{R}^N$,
+    and *emission covariances* $\Sigma_k \in \mathbb{R}_{\succeq 0}^{N \\times N}$.
+
+    The emissions parameters are $\\theta = \{\{W_{k,\ell}\}_{\ell=1}^L, b_k, \Sigma_k\}_{k=1}^K$.
+
+    We do not place a prior on the emission parameters.
+
+    *Note: in the future we add a* matrix-normal-inverse-Wishart_ *prior (see pg 576).*
+
+    .. _matrix-normal-inverse-Wishart: https://github.com/probml/pml2-book
+
+    :param num_states: number of discrete states $K$
+    :param emission_dim: emission dimension $N$
+    :param num_lags: number of lags $L$
+    :param initial_probs_concentration: $\\alpha$
+    :param transition_matrix_concentration: $\\beta$
+
+    """
     def __init__(self,
-                 num_states,
-                 emission_dim,
-                 num_lags=1,
-                 initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1
+                 num_states: int,
+                 emission_dim: int,
+                 num_lags: int=1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1
                  ):
         self.emission_dim = emission_dim
         self.num_lags = num_lags
@@ -96,37 +120,35 @@ class LinearAutoregressiveHMM(HMM):
         """
         return (self.num_lags * self.emission_dim,)
 
-
     def initialize(self,
-                   key=jr.PRNGKey(0),
-                   method="prior",
-                   initial_probs=None,
-                   transition_matrix=None,
-                   emission_weights=None,
-                   emission_biases=None,
-                   emission_covariances=None,
-                   emissions=None):
+                   key: jr.PRNGKey=jr.PRNGKey(0),
+                   method: str="prior",
+                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
+                   emission_weights: Optional[Float[Array, "num_states emission_dim emission_dim_times_num_lags"]]=None,
+                   emission_biases: Optional[Float[Array, "num_states emission_dim"]]=None,
+                   emission_covariances:  Optional[Float[Array, "num_states emission_dim emission_dim"]]=None,
+                   emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
+        ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.
         Parameters will then be sampled from the prior (if `method==prior`).
 
-        Note: in the future we may support more initialization schemes, like K-Means.
-
         Args:
-            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).
-            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".
-            initial_probs (array, optional): manually specified initial state probabilities. Defaults to None.
-            transition_matrix (array, optional): manually specified transition matrix. Defaults to None.
-            emission_weights (array, optional): manually specified emission weights. Defaults to None.
-            emission_biases (array, optional): manually specified emission biases. Defaults to None.
-            emission_covariance (array, optional): manually specified emission covariance. Defaults to None.
-            emissions (array, optional): emissions for initializing the parameters with kmeans. Defaults to None.
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            initial_probs: manually specified initial state probabilities.
+            transition_matrix: manually specified transition matrix.
+            emission_weights: manually specified emission weights. The weights are stored as matrices $W_k = [W_{k,1}, \ldots, W_{k,L}] \in \mathbb{R}^{N \\times N \cdot L}$.
+            emission_biases: manually specified emission biases.
+            emission_covariances: manually specified emission covariances.
+            emissions: emissions for initializing the parameters with kmeans.
 
         Returns:
-            params: nested dataclasses of arrays containing model parameters.
-            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.
+            Model parameters and their properties.
+
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
@@ -135,8 +157,23 @@ class LinearAutoregressiveHMM(HMM):
         params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_weights=emission_weights, emission_biases=emission_biases, emission_covariances=emission_covariances, emissions=emissions)
         return ParamsLinearAutoregressiveHMM(**params), ParamsLinearAutoregressiveHMM(**props)
 
-    def sample(self, params, key, num_timesteps, prev_emissions=None):
-        """
+    def sample(self,
+               params: HMMParameterSet,
+               key: jr.PRNGKey,
+               num_timesteps: int,
+               prev_emissions: Optional[Float[Array, "num_lags emission_dim"]]=None,
+    ) -> Tuple[Float[Array, "num_timesteps state_dim"], Float[Array, "num_timesteps emission_dim"]]:
+        """Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\\theta$.
+
+        Args:
+            params: model parameters $\\theta$
+            key: random number generator
+            num_timesteps: number of timesteps $T$
+            prev_emissions: (optionally) preceding emissions $y_{-L+1:0}$. Defaults to zeros.
+
+        Returns:
+            latent states and emissions
+
         """
         if prev_emissions is None:
             # Default to zeros
@@ -167,15 +204,18 @@ class LinearAutoregressiveHMM(HMM):
         emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
         return states, emissions
 
-    def compute_inputs(self, emissions, prev_emissions=None):
-        """Helper function to compute the matrix of lagged emissions. These are the
-        inputs to the fitting functions.
+    def compute_inputs(self,
+                       emissions: Float[Array, "num_timesteps emission_dim"],
+                       prev_emissions: Optional[Float[Array, "num_lags emission_dim"]]=None
+    ) -> Float[Array, "num_timesteps emission_dim_times_num_lags"]:
+        """Helper function to compute the matrix of lagged emissions.
 
         Args:
-            emissions (array): (T, D) array of emissions
+            emissions: $(T \\times N)$ array of emissions
+            prev_emissions: $(L \\times N)$ array of previous emissions. Defaults to zeros.
 
         Returns:
-            lagged emissions (array): (T, D*num_lags) array of lagged emissions
+            $(T \\times N \cdot L)$ array of lagged emissions. These are the inputs to the fitting functions.
         """
         if prev_emissions is None:
             # Default to zeros

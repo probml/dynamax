@@ -106,10 +106,20 @@ where $\beta$ is the prior concentration on the rows of the transition matrix $A
   :members: initialize
 
 .. autoclass:: dynamax.hidden_markov_model.LinearRegressionHMM
-.. autoclass:: dynamax.hidden_markov_model.LinearAutoregressiveHMM
-.. autoclass:: dynamax.hidden_markov_model.LogisticRegressionHMM
-.. autoclass:: dynamax.hidden_markov_model.CategoricalRegressionHMM
+  :show-inheritance:
+  :members: initialize
 
+.. autoclass:: dynamax.hidden_markov_model.LogisticRegressionHMM
+  :show-inheritance:
+  :members: initialize
+
+.. autoclass:: dynamax.hidden_markov_model.CategoricalRegressionHMM
+  :show-inheritance:
+  :members: initialize
+
+.. autoclass:: dynamax.hidden_markov_model.LinearAutoregressiveHMM
+  :show-inheritance:
+  :members: initialize, sample, compute_inputs
 
 Low-level inference
 -------------------
