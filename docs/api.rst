@@ -38,6 +38,8 @@ Abstract classes
 High-level models
 -----------------
 .. autoclass:: dynamax.hidden_markov_model.BernoulliHMM
+  :members: initialize
+
 .. autoclass:: dynamax.hidden_markov_model.CategoricalHMM
 .. autoclass:: dynamax.hidden_markov_model.GaussianHMM
 .. autoclass:: dynamax.hidden_markov_model.DiagonalGaussianHMM
