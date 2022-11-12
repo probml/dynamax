@@ -42,6 +42,16 @@ class LinearGaussianSSM(SSM):
     * $x_t$ is a latent state of size `state_dim`,
     * $y_t$ is an emission of size `emission_dim`
     * $u_t$ is an input of size `input_dim` (defaults to 0)
+    * $F$ = dynamics (transition) matrix
+    * $B$ = optional input-to-state weight matrix
+    * $b$ = optional input-to-state bias vector
+    * $Q$ = covariance matrix of dynamics (system) noise
+    * $H$ = emission (observation) matrix
+    * $D$ = optional input-to-emission weight matrix
+    * $d$ = optional input-to-emission bias vector
+    * $R$ = covariance function for emission (observation) noise
+    * $m$ = mean of initial state
+    * $S$ = covariance matrix of initial state
 
     The parameters of the model are stored in a :class:`ParamsLGSSM`.
     You can create the parameters manually, or by calling :meth:`initialize`.
@@ -105,8 +115,7 @@ class LinearGaussianSSM(SSM):
             emission_covariance: parameter $R$. Defaults to None.
 
         Returns:
-            params: parameter object.
-            props: parameter properties object.
+            Tuple[ParamsLGSSM, ParamsLGSSM]: parameters and their properties.
         """
 
         # Arbitrary default values, for demo purposes.
@@ -238,8 +247,10 @@ class LinearGaussianSSM(SSM):
             inputs: optional sequence of inputs.
 
         Returns:
-            means: (T,D) array of E[Y(t,d) | Y(1:T)]
-            stds: (T,D) array std[Y(t,d) | Y(1:T)]
+        {
+            'means': (T,D) array of E[Y(t,d) | Y(1:T)]
+            'stds': (T,D) array std[Y(t,d) | Y(1:T)]
+        }
         """
         posterior = lgssm_smoother(params, emissions, inputs)
         H = params.emissions.weights

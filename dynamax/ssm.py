@@ -88,11 +88,10 @@ class SSM(ABC):
 
         Args:
             params: model parameters $\\theta$
-            state: current latent state $z_t$
-            inputs: current inputs  $u_t$
+            inputs: optional  inputs  $u_t$
 
         Returns:
-            distribution over initial latent state, $p(z_1 \mid \\theta)$.
+            distribution over initial latent state, $p(x_1 \mid \\theta)$.
 
         """
         raise NotImplementedError
@@ -108,11 +107,11 @@ class SSM(ABC):
 
         Args:
             params: model parameters $\\theta$
-            state: current latent state $z_t$
+            state: current latent state $x_t$
             inputs: current inputs  $u_t$
 
         Returns:
-            conditional distribution of next latent state $p(z_{t+1} \mid z_t, u_t, \\theta)$.
+            conditional distribution of next latent state $p(x_{t+1} \mid x_t, u_t, \\theta)$.
 
         """
         raise NotImplementedError
@@ -128,11 +127,11 @@ class SSM(ABC):
 
         Args:
             params: model parameters $\\theta$
-            state: current latent state $z_t$
+            state: current latent state $x_t$
             inputs: current inputs  $u_t$
 
         Returns:
-            conditional distribution of current emission $p(y_t \mid z_t, u_t, \\theta)$
+            conditional distribution of current emission $p(y_t \mid x_t, u_t, \\theta)$
 
         """
         raise NotImplementedError
@@ -174,7 +173,7 @@ class SSM(ABC):
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> Tuple[Float[Array, "num_timesteps state_dim"],
               Float[Array, "num_timesteps emission_dim"]]:
-        """Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\\theta$ and (optionally) inputs $u_{1:T}$.
+        """Sample states $x_{1:T}$ and emissions $y_{1:T}$ given parameters $\\theta$ and (optionally) inputs $u_{1:T}$.
 
         Args:
             params: model parameters $\\theta$

@@ -82,6 +82,7 @@ High-level class
 ----------------
 
 .. autoclass:: dynamax.linear_gaussian_ssm.LinearGaussianSSM
+  :members:
 
 Low-level inference
 -------------------
