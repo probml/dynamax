@@ -128,7 +128,6 @@ a runnable version of this code.)
 .. code-block:: python
 
    from functools import partial
-   import numpy as np
    import jax.numpy as jnp
    import jax.random as jr
    from jax import vmap
