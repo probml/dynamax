@@ -359,8 +359,8 @@
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
 Let <span class="math notranslate nohighlight">\(x_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
 <p>The autoregressive hidden Markov model has the following likelihood,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-59b54534-8f61-43a2-b86c-cb1d1052e418">
-<span class="eqno">(1)<a class="headerlink" href="#equation-59b54534-8f61-43a2-b86c-cb1d1052e418" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-1511dbbb-9993-48c6-a54d-70e7beda2999">
+<span class="eqno">(1)<a class="headerlink" href="#equation-1511dbbb-9993-48c6-a54d-70e7beda2999" title="Permalink to this equation">¶</a></span>\[\begin{align}
 x_t \mid x_{t-1}, z_t &amp;\sim
 \mathcal{N}\left(A_{z_t} x_{t-1} + b_{z_t}, Q_{z_t} \right).
 \end{align}\]</div>
@@ -371,7 +371,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
     <span class="kn">import</span> <span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
-    <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
+    <span class="o">%</span><span class="k">pip</span> install -q dynamax[notebooks]
     <span class="kn">import</span> <span class="nn">dynamax</span>
 </pre></div>
 </div>
@@ -446,7 +446,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f1138e07580&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f811850a520&gt;
 </pre></div>
 </div>
 <img alt="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" src="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" />
@@ -640,7 +640,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/1a5b14108ef7f7b2a6cb53da66e92163e27a37ff603471d84d803fede3a3cfcf.png" src="../../_images/1a5b14108ef7f7b2a6cb53da66e92163e27a37ff603471d84d803fede3a3cfcf.png" />
+<img alt="../../_images/fbc155737ba57b519beaa30cb84afa2546429ea02ac159d92be19f84ac898ef8.png" src="../../_images/fbc155737ba57b519beaa30cb84afa2546429ea02ac159d92be19f84ac898ef8.png" />
 </div>
 </div>
 </section>
@@ -687,7 +687,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9a31a05f981622c7a30be3a6cb4a9507bd1add6e79abf63f0868133d017ee591.png" src="../../_images/9a31a05f981622c7a30be3a6cb4a9507bd1add6e79abf63f0868133d017ee591.png" />
+<img alt="../../_images/9d56184016d92016ea5f002c6600868fe8dd5d3610d05e27db175a8832d8bee6.png" src="../../_images/9d56184016d92016ea5f002c6600868fe8dd5d3610d05e27db175a8832d8bee6.png" />
 </div>
 </div>
 </section>
@@ -715,7 +715,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6b3274fc1cca819b7377d58674dbe4e2743b2b9d39e29c527cbb390c161848b0.png" src="../../_images/6b3274fc1cca819b7377d58674dbe4e2743b2b9d39e29c527cbb390c161848b0.png" />
+<img alt="../../_images/3f2d2a919670c0b4c7e4c68643c0bc595fb624b6bd05632107937bc916546bf5.png" src="../../_images/3f2d2a919670c0b4c7e4c68643c0bc595fb624b6bd05632107937bc916546bf5.png" />
 </div>
 </div>
 </section>
@@ -743,7 +743,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/1c910f5e095a0bfbe4dab03bec5212a911cdbbd87eb974d83f3b40d12d807f47.png" src="../../_images/1c910f5e095a0bfbe4dab03bec5212a911cdbbd87eb974d83f3b40d12d807f47.png" />
+<img alt="../../_images/7a9fcfa40825201e31ddeaff74365e630413f3d675bd231b6662bbbd1b1548ef.png" src="../../_images/7a9fcfa40825201e31ddeaff74365e630413f3d675bd231b6662bbbd1b1548ef.png" />
 </div>
 </div>
 </section>

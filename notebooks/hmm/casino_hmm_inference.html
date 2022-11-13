@@ -39,6 +39,8 @@
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Casino HMM: learning (parameter estimation)" href="casino_hmm_learning.html" />
@@ -303,24 +305,33 @@
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#make-model">
-   Make model
+  <a class="reference internal nav-link" href="#make-a-categorical-hmm">
+   Make a Categorical HMM
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#sample-data-from-model">
    Sample data from model
   </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#vectorizing-computation">
+     Vectorizing computation
+    </a>
+   </li>
+  </ul>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#filtering-forwards-algorithm">
    Filtering (forwards algorithm)
   </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#plotting-code">
-   Plotting code
-  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#plot-the-filtering-distribution">
+     Plot the filtering distribution
+    </a>
+   </li>
+  </ul>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#smoothing-forwards-backwards-algorithm">
@@ -328,8 +339,13 @@
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#map-sequence-viterbi-algorithm">
-   MAP sequence (Viterbi algorithm)
+  <a class="reference internal nav-link" href="#most-likely-state-sequence-viterbi-algorithm">
+   Most likely state sequence (Viterbi algorithm)
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#conclusion">
+   Conclusion
   </a>
  </li>
 </ul>
@@ -346,9 +362,14 @@
   <section class="tex2jax_ignore mathjax_ignore" id="casino-hmm-inference-state-estimation">
 <h1>Casino HMM: Inference (state estimation)<a class="headerlink" href="#casino-hmm-inference-state-estimation" title="Permalink to this heading">¶</a></h1>
 <p>We use a simple example of an HMM from known as the “occasionally dishonest casino”.
-This is from the book
-“Biological Sequence Analysis: Probabilistic Models of Proteins and Nucleic Acids”
-by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
+This is from the book:</p>
+<blockquote>
+<div><p>“Biological Sequence Analysis: Probabilistic Models of Proteins and Nucleic Acids” by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
+</div></blockquote>
+<p>For this example, suppose you are playing dice at a shady casino – an Old West saloon perhaps. You suspect that one of the players is cheating. Most of the time, they use a standard die in which all six faces are equally probable, but every so often they secretly switch to a weighted die that comes up 6 half the time. To avoid getting caught, they don’t switch dice very often: once they switch, they tend to keep using the same die for ten to twenty rolls.</p>
+<p><img alt="Casino HMM" src="https://github.com/probml/dynamax/blob/main/docs/figures/casino.png?raw=true" /></p>
+<p>The figure above formalizes this game. If the player is rolling the fair die, they continue to do so with 0.95 probability, but they switch to the loaded die with probability 0.05. They continue using the loaded die with probability 0.9, and switch back to the fair die with probability 0.1.</p>
+<p><strong>Can you infer which die the player is using on the basis of the outcomes alone?</strong>  We’ll show how using a categorical hidden Markov model (HMM) and the <code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code> class.</p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
@@ -357,7 +378,7 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
-    <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
+    <span class="o">%</span><span class="k">pip</span> install -q dynamax[notebooks]
     <span class="kn">import</span> <span class="nn">dynamax</span>
 </pre></div>
 </div>
@@ -369,6 +390,7 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span> <span class="nn">jax.nn</span> <span class="kn">import</span> <span class="n">one_hot</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">CategoricalHMM</span>
@@ -382,260 +404,308 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 </div>
 </div>
 </section>
-<section id="make-model">
-<h2>Make model<a class="headerlink" href="#make-model" title="Permalink to this heading">¶</a></h2>
-<p><img alt="Casino HMM" src="https://github.com/probml/dynamax/blob/main/docs/figures/casino.png?raw=true" /></p>
+<section id="make-a-categorical-hmm">
+<h2>Make a Categorical HMM<a class="headerlink" href="#make-a-categorical-hmm" title="Permalink to this heading">¶</a></h2>
+<p>First, we’ll construct a categorical hidden Markov model (HMM). The model has discrete latent states <span class="math notranslate nohighlight">\(z_t \in \{1,2\}\)</span> to specify which of the two dice is used on the <span class="math notranslate nohighlight">\(t\)</span>-th roll. You observe the outcomes, or “emissions,” <span class="math notranslate nohighlight">\(y_t \in \{1,\ldots,6\}\)</span>. The categorical HMM specifies a joint distribution over the latent states and emissions,</p>
+<div class="amsmath math notranslate nohighlight" id="equation-e1239899-44c5-4a0a-86db-91bcc9dc10ea">
+<span class="eqno">(1)<a class="headerlink" href="#equation-e1239899-44c5-4a0a-86db-91bcc9dc10ea" title="Permalink to this equation">¶</a></span>\[\begin{align}
+p(y_{1:T}, z_{1:T} \mid \theta) 
+&amp;= \mathrm{Cat}(z_1 \mid \pi) 
+\prod_{t=2}^T \mathrm{Cat}(z_t \mid A_{z_{t-1}}) 
+\prod_{t=1}^T \mathrm{Cat}(y_t \mid B_{z_t})
+\end{align}\]</div>
+<p>It’s called a <em>categorical</em> HMM because the emissions <span class="math notranslate nohighlight">\(y_t\)</span> follow a <a class="reference external" href="https://en.wikipedia.org/wiki/Categorical_distribution">categorical distribution</a>, which we denote by <span class="math notranslate nohighlight">\(\mathrm{Cat}\)</span>. The parameters <span class="math notranslate nohighlight">\(\theta = (\pi, A, B)\)</span> consist of the <em>initial distribution</em> <span class="math notranslate nohighlight">\(\pi\)</span>, the <em>transition matrix</em> <span class="math notranslate nohighlight">\(A\)</span>, and the <em>emission probabilities</em> <span class="math notranslate nohighlight">\(B\)</span>. The notation <span class="math notranslate nohighlight">\(A_{z_t}\)</span> denotes the <span class="math notranslate nohighlight">\(z_t\)</span>-th row of the matrix <span class="math notranslate nohighlight">\(A\)</span>, which is a vector of length 2 specifying the distribution over the next state, <span class="math notranslate nohighlight">\(z_{t+1}\)</span>. Likewise, <span class="math notranslate nohighlight">\(B_{z_t}\)</span> denotes the <span class="math notranslate nohighlight">\(z_t\)</span>-th row of the matrix <span class="math notranslate nohighlight">\(B\)</span>, which is a vector of length 6 specifying the distribution over outcomes for the corresponding die.</p>
+<p>In this example, we assume we know all of these parameters. Let’s start by instantiating them in code.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">init_dist</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
-<span class="n">A</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.90</span><span class="p">]])</span>
-<span class="n">B</span> <span class="o">=</span> <span class="n">probs</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-        <span class="p">[</span>
-            <span class="p">[</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">],</span>  <span class="c1"># fair die</span>
-            <span class="p">[</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span> <span class="o">/</span> <span class="mi">10</span><span class="p">],</span>  <span class="c1"># loaded die</span>
-        <span class="p">]</span>
-    <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">init_dist</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+<span class="n">transition_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span> 
+                               <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.90</span><span class="p">]])</span>
+<span class="n">emission_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">],</span>    <span class="c1"># fair die</span>
+                            <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="o">/</span><span class="mi">10</span><span class="p">]])</span>  <span class="c1"># loaded die</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A.shape: </span><span class="si">{</span><span class="n">transition_matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;B.shape: </span><span class="si">{</span><span class="n">emission_probs</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(2, 6)
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>A.shape: (2, 2)
+B.shape: (2, 6)
 </pre></div>
 </div>
 </div>
 </div>
+<p>The <code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code> object implements a categorical hidden Markov model. This object actually allows for a more general situation in which you observe many conditionally independent categorical emissions at once. This can lead to a little confusion, so we’ll go into some detail on this point.</p>
+<p>In this example, <span class="math notranslate nohighlight">\(z_t\)</span> can take on two values. We call this the <em>number of states</em>, and it corresponds to the number of different types of dice the player rolls. In a more general scenario, you could imagine the player rolling multiple dice at once. We call the number of simultaneously rolled dice the <em>number of emissions</em>. Finally, we call the number of possible outcomes (i.e. number of faces on each die) the <em>number of classes</em>.</p>
+<p>The code below constructs a <code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code> and uses its <code class="docutils literal notranslate"><span class="pre">initialize</span></code> function to create a structure called <code class="docutils literal notranslate"><span class="pre">params</span></code>, which combines the parameters of the model in a format that the model needs for downstream analysis.</p>
+<p><em>Note: since the model allows for arbitrary numbers of emissions (again, think number of simultaneously rolled dice), we need to reshape the emission probs to be (num_states x num_emissions x num_classes).</em></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_states</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">num_emissions</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># 1d output</span>
-<span class="n">num_classes</span> <span class="o">=</span> <span class="mi">6</span> <span class="c1"># size of output alphabet</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_states</span> <span class="o">=</span> <span class="mi">2</span>      <span class="c1"># two types of dice (fair and loaded)</span>
+<span class="n">num_emissions</span> <span class="o">=</span> <span class="mi">1</span>   <span class="c1"># only one die is rolled at a time</span>
+<span class="n">num_classes</span> <span class="o">=</span> <span class="mi">6</span>     <span class="c1"># each die has six faces</span>
 
+<span class="c1"># Construct the HMM</span>
 <span class="n">hmm</span> <span class="o">=</span> <span class="n">CategoricalHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">)</span>
+
+<span class="c1"># Initialize the parameters struct with known values</span>
 <span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">initial_probs</span><span class="o">=</span><span class="n">init_dist</span><span class="p">,</span>
-                           <span class="n">transition_matrix</span><span class="o">=</span><span class="n">A</span><span class="p">,</span>
-                           <span class="n">emission_probs</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">))</span>
+                           <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">,</span>
+                           <span class="n">emission_probs</span><span class="o">=</span><span class="n">emission_probs</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">params</span></code> organizes the model parameters in the specific way that <code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code> expects. Technically, its a <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NamedTuple"><code class="docutils literal notranslate"><span class="pre">NamedTuple</span></code></a>. You can print the params to see how they’re organized, but they aren’t really meant for human consumption.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">params</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ParamsCategoricalHMM(initial=ParamsStandardHMMInitialState(probs=DeviceArray([0.5, 0.5], dtype=float32)), transitions=ParamsStandardHMMTransitions(transition_matrix=DeviceArray([[0.95, 0.05],
+             [0.1 , 0.9 ]], dtype=float32)), emissions=ParamsCategoricalHMMEmissions(probs=DeviceArray([[[0.16666667, 0.16666667, 0.16666667, 0.16666667,
+               0.16666667, 0.16666667]],
+
+             [[0.1       , 0.1       , 0.1       , 0.1       ,
+               0.1       , 0.5       ]]], dtype=float32)))
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>This is an important point!</strong> The parameters are <em>immutable</em>, which means you can’t directly edit them, as illustrated below. This is by design: JAX prefers immutable datatypes. (If you’re new to JAX, please see <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html">Thinking in JAX</a>.) Instead, use the <code class="docutils literal notranslate"><span class="pre">initialize</span></code> function to create structures with desired values.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">initial</span><span class="o">.</span><span class="n">probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Caught exception:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Caught exception: can&#39;t set attribute
+</pre></div>
+</div>
+</div>
+</div>
+<p><em>Note: you may have observed that <code class="docutils literal notranslate"><span class="pre">initialize</span></code> actually returns two things: a structure of parameters and a corresponding structure that specifies their properties. The latter is necesary for model fitting. We won’t use them here, but we will in the next notebook!</em></p>
 </section>
 <section id="sample-data-from-model">
 <h2>Sample data from model<a class="headerlink" href="#sample-data-from-model" title="Permalink to this heading">¶</a></h2>
+<p>Now that we’ve initialize the model parameters, we can use them to draw samples from the HMM. The <code class="docutils literal notranslate"><span class="pre">hmm.sample()</span></code> function takes in the parameters, a JAX pseudorandom number generator (see <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#random-numbers">here</a>), and a number of time steps to sample.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_timesteps</span> <span class="o">=</span> <span class="mi">300</span>
-<span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">),</span> <span class="n">n_timesteps</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">300</span>
+<span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">),</span> <span class="n">num_timesteps</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="n">true_states</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;true_states.shape: </span><span class="si">{</span><span class="n">true_states</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emissions.shape: </span><span class="si">{</span><span class="n">emissions</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;First few states:    &quot;</span><span class="p">,</span> <span class="n">true_states</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;First few emissions: &quot;</span><span class="p">,</span> <span class="n">emissions</span><span class="p">[:</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(300,)
-(300, 1)
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>true_states.shape: (300,)
+emissions.shape: (300, 1)
+
+First few states:     [1 1 1 1 1]
+First few emissions:  [5 0 5 5 5]
 </pre></div>
 </div>
 </div>
 </div>
+<p><em>Note: the emissions have a last dimension of 1. This is because <code class="docutils literal notranslate"><span class="pre">num_emissions</span></code> is 1. If we rolled multiple dice simultaneously, the emisions shape would be <code class="docutils literal notranslate"><span class="pre">num_timesteps</span> <span class="pre">x</span> <span class="pre">num_emissions</span></code>.</em></p>
+<section id="vectorizing-computation">
+<h3>Vectorizing computation<a class="headerlink" href="#vectorizing-computation" title="Permalink to this heading">¶</a></h3>
+<p>JAX offers powerful tools for vectorizing and parallelizing computation. For example, we can use <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/quickstart.html#auto-vectorization-with-vmap">vmap</a> to sample many sequences at once.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># To sample multiple sequences, just use vmap</span>
 <span class="n">num_batches</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">300</span>
 
 <span class="n">batch_states</span><span class="p">,</span> <span class="n">batch_emissions</span> <span class="o">=</span> \
     <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="o">=</span><span class="n">num_timesteps</span><span class="p">))(</span>
         <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">num_batches</span><span class="p">))</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="n">batch_states</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># (5, 300)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">batch_emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># (5, 300, 1)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;batch_states.shape: </span><span class="si">{</span><span class="n">batch_states</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;batch_emissions.shape: </span><span class="si">{</span><span class="n">batch_emissions</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(5, 300)
-(5, 300, 1)
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>batch_states.shape: (5, 300)
+batch_emissions.shape: (5, 300, 1)
 </pre></div>
 </div>
 </div>
+</div>
+<p>Let’s plot a sequence of emissions and color-code them by the latent state (fair vs loaded). As expected, the loaded die comes up six much more often than the fair die.</p>
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_sequence</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">):</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">one_hot</span><span class="p">(</span><span class="n">emissions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> 
+               <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Greys&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">extent</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">-</span><span class="mf">.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">.5</span><span class="p">),</span> 
+               <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Greys&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;emission&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>    <span class="c1"># b/c python is zero indexed!</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;sampled sequence (white=fair, gray=loaded)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">print_seq</span><span class="p">(</span><span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">):</span>
-    <span class="n">T</span> <span class="o">=</span> <span class="mi">70</span>
-    <span class="n">to_string</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;hid: &quot;</span><span class="p">,</span> <span class="n">to_string</span><span class="p">(</span><span class="n">true_states</span><span class="p">[:</span><span class="n">T</span><span class="p">]))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;obs: &quot;</span><span class="p">,</span> <span class="n">to_string</span><span class="p">(</span><span class="n">emissions</span><span class="p">[:</span><span class="n">T</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))</span>
-    
-<span class="n">print_seq</span><span class="p">(</span><span class="n">batch_states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">print_seq</span><span class="p">(</span><span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_sequence</span><span class="p">(</span><span class="n">batch_states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>hid:  [2222211111111111111111111111111112222222222111111111111111111111111112]
-obs:  [6636644222425254541366534156435555311662663315351616222626113131426326]
-hid:  [2222222221111111111111111111111122222222222222222222222222222111112221]
-obs:  [6166665666644432314213244562342433654325363462364513646626146325646366]
-</pre></div>
+<img alt="../../_images/ad170e2ed422f3fbb4ef2fce31e9566eaf8ce0bd0fade4e6e40fe540cc4c76b7.png" src="../../_images/ad170e2ed422f3fbb4ef2fce31e9566eaf8ce0bd0fade4e6e40fe540cc4c76b7.png" />
 </div>
 </div>
-</div>
+<p>The difference in outcomes is borne out in the empirical frequencies of seeing a six in each state.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># count fraction of times we see 6 in each state</span>
-<span class="n">obs</span> <span class="o">=</span> <span class="n">emissions</span> <span class="o">+</span> <span class="mi">1</span>
-<span class="n">hid</span> <span class="o">=</span> <span class="n">true_states</span> <span class="o">+</span> <span class="mi">1</span> 
-<span class="n">p0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">obs</span><span class="p">[</span><span class="n">hid</span><span class="o">==</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)</span> <span class="c1"># fair</span>
-<span class="n">p1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">obs</span><span class="p">[</span><span class="n">hid</span><span class="o">==</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)</span> <span class="c1"># loaded</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;empirical frequencies: &#39;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">]))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;expected frequencies: &#39;</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span> <span class="mf">5.0</span><span class="o">/</span><span class="mi">10</span><span class="p">])</span>
+<span class="c1"># remember that python is zero-indexed, so we have to add one!</span>
+<span class="n">p0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">emissions</span><span class="p">[</span><span class="n">true_states</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)</span>   <span class="c1"># fair</span>
+<span class="n">p1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">emissions</span><span class="p">[</span><span class="n">true_states</span><span class="o">==</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)</span>   <span class="c1"># loaded</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;empirical frequencies: &quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;expected frequencies:  &quot;</span><span class="p">,</span> <span class="n">emission_probs</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>empirical frequencies:  [0.14970061 0.46616542]
-expected frequencies:  [0.16666666666666666, 0.5]
+expected frequencies:   [0.16666667 0.5       ]
 </pre></div>
 </div>
 </div>
 </div>
+</section>
 </section>
 <section id="filtering-forwards-algorithm">
 <h2>Filtering (forwards algorithm)<a class="headerlink" href="#filtering-forwards-algorithm" title="Permalink to this heading">¶</a></h2>
+<p>In an HMM, <em>filtering</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given emissions up to and including time <span class="math notranslate nohighlight">\(t\)</span>. Mathematically, the filtering distributions are,</p>
+<div class="amsmath math notranslate nohighlight" id="equation-f7ad0651-5090-4331-90de-071e08a56580">
+<span class="eqno">(2)<a class="headerlink" href="#equation-f7ad0651-5090-4331-90de-071e08a56580" title="Permalink to this equation">¶</a></span>\[\begin{align}
+p(z_t \mid y_{1:t}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} p(z_{1:t}, y_{1:t} \mid \theta)
+\end{align}\]</div>
+<p>The forward filtering algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.2) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion. It also returns an estimate of the <em>marginal likelihood</em>, <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta)\)</span>, which is useful for model comparison and fitting.</p>
+<p>In code, you can run the filtering algorithm like this.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">marginal_loglik</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">filtered_probs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;marginal likelihood: </span><span class="si">{</span><span class="n">posterior</span><span class="o">.</span><span class="n">marginal_loglik</span><span class="si">:</span><span class="s2"> .2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;posterior.filtered_probs.shape: </span><span class="si">{</span><span class="n">posterior</span><span class="o">.</span><span class="n">filtered_probs</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>-517.9524
-(300, 2)
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>marginal likelihood: -517.95
+posterior.filtered_probs.shape: (300, 2)
 </pre></div>
 </div>
+</div>
+</div>
+<section id="plot-the-filtering-distribution">
+<h3>Plot the filtering distribution<a class="headerlink" href="#plot-the-filtering-distribution" title="Permalink to this heading">¶</a></h3>
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_posterior_probs</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">states</span><span class="p">):</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">extent</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> 
+               <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Greys&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">probs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>   <span class="c1"># probability of the loaded state (z=1)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;p(loaded)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span>
+</pre></div>
+</div>
+</div>
+</details>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_posterior_probs</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">true_states</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Filtering Distribution&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Filtering Distribution&#39;)
+</pre></div>
+</div>
+<img alt="../../_images/6e55b89ea9ff2d23694730a223224a34c568c854cc6be72ea52459e7a30504fe.png" src="../../_images/6e55b89ea9ff2d23694730a223224a34c568c854cc6be72ea52459e7a30504fe.png" />
 </div>
 </div>
 </section>
-<section id="plotting-code">
-<h2>Plotting code<a class="headerlink" href="#plotting-code" title="Permalink to this heading">¶</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Helper functions for plotting</span>
-<span class="k">def</span> <span class="nf">find_dishonest_intervals</span><span class="p">(</span><span class="n">states</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Find the span of timesteps that the</span>
-<span class="sd">    simulated systems turns to be in state 1</span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    states: array(n_timesteps)</span>
-<span class="sd">        Result of running the system with two</span>
-<span class="sd">        latent states</span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    list of tuples with span of values</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">states</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
-    <span class="n">changepoints</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">]),</span> 
-                                    <span class="n">jnp</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">states</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> 
-                                    <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">)])])</span>
-    <span class="n">starts</span><span class="p">,</span> <span class="n">ends</span> <span class="o">=</span> <span class="n">changepoints</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">changepoints</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-
-    <span class="c1"># Return the (start, end) pairs where the start state is 1</span>
-    <span class="n">dishonest</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">starts</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
-    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">starts</span><span class="p">[</span><span class="n">dishonest</span><span class="p">],</span> <span class="n">ends</span><span class="p">[</span><span class="n">dishonest</span><span class="p">]))</span>
-
-
-<span class="k">def</span> <span class="nf">plot_inference</span><span class="p">(</span><span class="n">inference_values</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">map_estimate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Plot the estimated smoothing/filtering/map of a sequence of hidden states.</span>
-<span class="sd">    &quot;Vertical gray bars denote times when the hidden</span>
-<span class="sd">    state corresponded to state 1. Blue lines represent the</span>
-<span class="sd">    posterior probability of being in that state given diﬀerent subsets</span>
-<span class="sd">    of observed data.&quot; See Markov and Hidden Markov models section for more info</span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    inference_values: array(n_timesteps, state_size)</span>
-<span class="sd">        Result of running smoothing method</span>
-<span class="sd">    states: array(n_timesteps)</span>
-<span class="sd">        Latent simulation</span>
-<span class="sd">    ax: matplotlib.axes</span>
-<span class="sd">    state: int</span>
-<span class="sd">        Decide which state to highlight</span>
-<span class="sd">    map_estimate: bool</span>
-<span class="sd">        Whether to plot steps (simple plot if False)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">n_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inference_values</span><span class="p">)</span>
-    <span class="n">xspan</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_timesteps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">spans</span> <span class="o">=</span> <span class="n">find_dishonest_intervals</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">map_estimate</span><span class="p">:</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">xspan</span><span class="p">,</span> <span class="n">inference_values</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s2">&quot;post&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xspan</span><span class="p">,</span> <span class="n">inference_values</span><span class="p">[:,</span> <span class="n">state</span><span class="p">])</span>
-
-    <span class="k">for</span> <span class="n">span</span> <span class="ow">in</span> <span class="n">spans</span><span class="p">:</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="o">*</span><span class="n">span</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s2">&quot;tab:gray&quot;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_timesteps</span><span class="p">)</span>
-    <span class="c1"># ax.set_ylim(0, 1)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Observation number&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-<span class="n">plot_inference</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">true_states</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;p(loaded)&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Filtered&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-<span class="c1"># pml.savefig(&quot;hmm_casino_filter&quot;)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../../_images/bcaede48ce44beb68ab573213bd0ad9786311bd442630d0fd186815a1e10435b.png" src="../../_images/bcaede48ce44beb68ab573213bd0ad9786311bd442630d0fd186815a1e10435b.png" />
-</div>
-</div>
 </section>
 <section id="smoothing-forwards-backwards-algorithm">
 <h2>Smoothing (forwards-backwards algorithm)<a class="headerlink" href="#smoothing-forwards-backwards-algorithm" title="Permalink to this heading">¶</a></h2>
+<p><em>Smoothing</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given all emissions, including those that come after. Mathematically, the smoothing distributions are,</p>
+<div class="amsmath math notranslate nohighlight" id="equation-404ee3c3-3920-4db3-8a45-4973657fc725">
+<span class="eqno">(3)<a class="headerlink" href="#equation-404ee3c3-3920-4db3-8a45-4973657fc725" title="Permalink to this equation">¶</a></span>\[\begin{align}
+p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{z_{t+1}} \cdots \sum_{z_T} p(z_{1:t}, y_{1:t} \mid \theta).
+\end{align}\]</div>
+<p>The forward-backward algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.4) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion.</p>
+<p>In code, you can run the forward-backward smoothing algorithm like this.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;posterior.smoothed_probs.shape: </span><span class="si">{</span><span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(300, 2)
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>posterior.smoothed_probs.shape: (300, 2)
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-<span class="n">plot_inference</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">,</span> <span class="n">true_states</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;p(loaded)&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Smoothed&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-<span class="c1"># pml.savefig(&quot;hmm_casino_smooth&quot;)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_posterior_probs</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">,</span> <span class="n">true_states</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Smoothed Distribution&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/637f7ffb2219ebe81d944310e215ae856f5eea9e49ba820e29757f3ea5d8ad28.png" src="../../_images/637f7ffb2219ebe81d944310e215ae856f5eea9e49ba820e29757f3ea5d8ad28.png" />
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Smoothed Distribution&#39;)
+</pre></div>
+</div>
+<img alt="../../_images/56b1c76ad8f32787a78d364ece8de043b52305560b009b44e8a39ac135882d3d.png" src="../../_images/56b1c76ad8f32787a78d364ece8de043b52305560b009b44e8a39ac135882d3d.png" />
 </div>
 </div>
+<p>Compare the smoothed probabilities to the filtered ones. See how the sharp rises in probability (e.g. around time step 235) are attenuated in the smoothing distribution? That’s because the filtering distribution is sensitive to when the die comes up six, thinking it might indicate a switch to the loaded die. The smoothing distributions benefit from future outcomes, which suggest that the six was just a chance event.</p>
 </section>
-<section id="map-sequence-viterbi-algorithm">
-<h2>MAP sequence (Viterbi algorithm)<a class="headerlink" href="#map-sequence-viterbi-algorithm" title="Permalink to this heading">¶</a></h2>
+<section id="most-likely-state-sequence-viterbi-algorithm">
+<h2>Most likely state sequence (Viterbi algorithm)<a class="headerlink" href="#most-likely-state-sequence-viterbi-algorithm" title="Permalink to this heading">¶</a></h2>
+<p>Finally, we can compute the most likely state sequence (aka <em>maximum a posteriori</em> or “MAP” sequence) using the Viterbi algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.7). This dynamic programming algorithm solves for</p>
+<div class="amsmath math notranslate nohighlight" id="equation-fedc6341-7190-4977-ab07-76c40adc5600">
+<span class="eqno">(4)<a class="headerlink" href="#equation-fedc6341-7190-4977-ab07-76c40adc5600" title="Permalink to this equation">¶</a></span>\[\begin{align}
+z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta).
+\end{align}\]</div>
+<p>You can compute the MAP sequence with the following code.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">most_likely_states</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">most_likely_states</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
@@ -643,20 +713,47 @@ expected frequencies:  [0.16666666666666666, 0.5]
 </div>
 </div>
 </div>
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_map_sequence</span><span class="p">(</span><span class="n">most_likely_states</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">loaded_index</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">extent</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">),</span> 
+               <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Greys&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">most_likely_states</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;MAP state&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Viterbi estimate&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span>
+</pre></div>
+</div>
+</div>
+</details>
+</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-<span class="n">plot_inference</span><span class="p">(</span><span class="n">most_likely_states</span><span class="p">,</span> <span class="n">true_states</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">map_estimate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;MAP state&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Viterbi&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_map_sequence</span><span class="p">(</span><span class="n">most_likely_states</span><span class="p">,</span> <span class="n">true_states</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/472091791ebf6671f4d4227c8c760098505b0f58f31f070458e74787a713e511.png" src="../../_images/472091791ebf6671f4d4227c8c760098505b0f58f31f070458e74787a713e511.png" />
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(&lt;Figure size 640x480 with 1 Axes&gt;,
+ &lt;AxesSubplot: title={&#39;center&#39;: &#39;Viterbi estimate&#39;}, xlabel=&#39;time&#39;, ylabel=&#39;MAP state&#39;&gt;)
+</pre></div>
+</div>
+<img alt="../../_images/d36f0c35c87798922f4e50c3c95f0a95b69e4444f2611179f1e452180e54c39e.png" src="../../_images/d36f0c35c87798922f4e50c3c95f0a95b69e4444f2611179f1e452180e54c39e.png" />
 </div>
 </div>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">¶</a></h2>
+<p>This notebook showed how to construct a simple categorical HMM, initialize its parameters, sample data, and use it to perform state inference (i.e. filtering, smoothing, and finding the most likely states). However, often we do not know the model paramters and instead need to estimate them from data. The next notebook shows how to do exactly that.</p>
 </section>
 </section>
 

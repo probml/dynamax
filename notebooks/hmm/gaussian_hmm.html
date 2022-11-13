@@ -315,8 +315,8 @@
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#randomly-initialize-a-new-model-and-fit-to-data">
-   Randomly initialize a new model and fit to data
+  <a class="reference internal nav-link" href="#initialize-a-new-model-and-fit-to-data">
+   Initialize a new model and fit to data
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
@@ -338,14 +338,14 @@
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm">
 <h1>Gaussian HMM<a class="headerlink" href="#gaussian-hmm" title="Permalink to this heading">¶</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-1b470689-c7df-41ed-a3eb-975d2f621b62">
-<span class="eqno">(1)<a class="headerlink" href="#equation-1b470689-c7df-41ed-a3eb-975d2f621b62" title="Permalink to this equation">¶</a></span>\[\begin{align}
-p(x_t \mid z_t, \theta) &amp;= \mathcal{N}(x_t \mid \mu_{z_t}, \Sigma_{z_t})
+<div class="amsmath math notranslate nohighlight" id="equation-fc419afc-eaa1-4d13-8f17-d405fbf250c0">
+<span class="eqno">(1)<a class="headerlink" href="#equation-fc419afc-eaa1-4d13-8f17-d405fbf250c0" title="Permalink to this equation">¶</a></span>\[\begin{align}
+p(y_t \mid z_t, \theta) &amp;= \mathcal{N}(y_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
 <p>Dynamax implements a variety of Gaussian HMMs with different constraints on the parameters (e.g. diagonal, spherical, and tied covariances).
 It also includes prior distributions on the parameters. For example, it uses a conjugate <a class="reference external" href="https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution">normal-inverse Wishart (NIW)</a> prior for the standard case.</p>
-<p>This notebook shows how to fit such models using standard (“full batch”) expectation-maximization (EM), as well as with stochastic (“mini batch”) EM. For datasets with many conditionally independent emission sequences, stochastic EM often converges much more quickly. It’s a useful trick to have in your toolkit!</p>
+<p>This notebook shows how to fit such models using expectation-maximization (EM).</p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
 <div class="cell tag_hide-cell docutils container">
@@ -359,7 +359,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
     <span class="kn">import</span> <span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
-    <span class="o">%</span><span class="k">pip</span> install -qq git+https://github.com/probml/dynamax.git
+    <span class="o">%</span><span class="k">pip</span> install -q dynamax[notebooks]
     <span class="kn">import</span> <span class="nn">dynamax</span>
 </pre></div>
 </div>
@@ -458,8 +458,8 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <h2>Generate sample data<a class="headerlink" href="#generate-sample-data" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_batches</span> <span class="o">=</span> <span class="mi">18</span>
-<span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">5000</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_batches</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">1000</span>
 
 <span class="c1"># Make an HMM and sample data and true underlying states</span>
 <span class="n">num_states</span> <span class="o">=</span> <span class="mi">5</span>
@@ -491,23 +491,23 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <span class="n">i_batch</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="n">plot_gaussian_hmm</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">batch_true_states</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;True HMM&quot;</span><span class="p">)</span>
 
-<span class="c1"># Plot emissions vs. time, ith background colored by true state</span>
+<span class="c1"># Plot emissions vs. time with background colored by true state</span>
 <span class="n">plot_gaussian_hmm_data</span><span class="p">(</span><span class="n">hmm</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">batch_true_states</span><span class="p">[</span><span class="n">i_batch</span><span class="p">],</span> <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">600</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9a8c7d2e65e8a39d5139fcda013e2602a90202b018566f723217e121e7775f91.png" src="../../_images/9a8c7d2e65e8a39d5139fcda013e2602a90202b018566f723217e121e7775f91.png" />
-<img alt="../../_images/7349944314622faef14a25aadee1443700759b26d7e3ad9615723aa3ff9f2fb0.png" src="../../_images/7349944314622faef14a25aadee1443700759b26d7e3ad9615723aa3ff9f2fb0.png" />
+<img alt="../../_images/c7347827fc3b4794bbf4aa02f8267301eba1fad7a2dc6b9cccff30cc7465f4bb.png" src="../../_images/c7347827fc3b4794bbf4aa02f8267301eba1fad7a2dc6b9cccff30cc7465f4bb.png" />
+<img alt="../../_images/3ea9b7eda8c87598ad662d39adde77ea1ff28c3cee1d9cd3814cac080064ab95.png" src="../../_images/3ea9b7eda8c87598ad662d39adde77ea1ff28c3cee1d9cd3814cac080064ab95.png" />
 </div>
 </div>
 </section>
-<section id="randomly-initialize-a-new-model-and-fit-to-data">
-<h2>Randomly initialize a new model and fit to data<a class="headerlink" href="#randomly-initialize-a-new-model-and-fit-to-data" title="Permalink to this heading">¶</a></h2>
+<section id="initialize-a-new-model-and-fit-to-data">
+<h2>Initialize a new model and fit to data<a class="headerlink" href="#initialize-a-new-model-and-fit-to-data" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fit with standard (full batch) EM</span>
-<span class="n">test_hmm</span> <span class="o">=</span> <span class="n">GaussianHMM</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
+<span class="n">test_hmm</span> <span class="o">=</span> <span class="n">GaussianHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Fitting via standard (full batch) EM...&#39;</span><span class="p">)</span>
 <span class="n">num_iters</span> <span class="o">=</span> <span class="mi">50</span>
@@ -539,29 +539,15 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div><div class="output text_html">
     <div>
       <progress value='50' class='' max='50' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [50/50 00:04&lt;00:00]
+      100.00% [50/50 00:02&lt;00:00]
     </div>
     </div></div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># print(&#39;Fitting via stochastic (mini-batch) EM...&#39;)</span>
-<span class="c1"># num_iters = 50</span>
-<span class="c1"># minibatch_size = 3</span>
-
-<span class="c1"># sem_params, props = test_hmm.initialize(key=jr.PRNGKey(1), method=&quot;kmeans&quot;, emissions=batch_emissions)</span>
-<span class="c1"># emissions_generator = batch_emissions.reshape(num_batches // minibatch_size, minibatch_size, num_timesteps, emission_dim)</span>
-<span class="c1"># sem_params, sem_lps = test_hmm.fit_stochastic_em(sem_params, props, emissions_generator, num_epochs=num_iters)</span>
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot log probs vs num_iterations</span>
 <span class="n">offset</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">em_lps</span><span class="p">)</span><span class="o">-</span><span class="n">offset</span><span class="p">),</span> <span class="n">em_lps</span><span class="p">[</span><span class="n">offset</span><span class="p">:],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Exact EM&#39;</span><span class="p">)</span>
-<span class="c1"># plt.plot(jnp.arange(len(sem_lps)-offset), sem_lps[offset:], label=&#39;Stochastic EM&#39;)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;num epochs&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;log prob&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
@@ -569,10 +555,10 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f4dc5f56e80&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f1954dd8310&gt;
 </pre></div>
 </div>
-<img alt="../../_images/33709bf7abf9ce1bcdc89449f669ec63a53c3ad1a69873f5c42aaa3c68189d21.png" src="../../_images/33709bf7abf9ce1bcdc89449f669ec63a53c3ad1a69873f5c42aaa3c68189d21.png" />
+<img alt="../../_images/8cb5dcf56011dfd3f715c0658401598ececa8aa1bbceffd860cad8664cd608a5.png" src="../../_images/8cb5dcf56011dfd3f715c0658401598ececa8aa1bbceffd860cad8664cd608a5.png" />
 </div>
 </div>
 </section>
@@ -588,17 +574,8 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/bc295c7ce62998714c8b02e465d921ae755c1b99d3ec9712bc2dbe09e270e1af.png" src="../../_images/bc295c7ce62998714c8b02e465d921ae755c1b99d3ec9712bc2dbe09e270e1af.png" />
-<img alt="../../_images/e5ba29eeedd8f60bed8a59e886c2d1af2fa6c43d6868b0e91b745ba2d07c1d85.png" src="../../_images/e5ba29eeedd8f60bed8a59e886c2d1af2fa6c43d6868b0e91b745ba2d07c1d85.png" />
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># sem_most_likely_states = test_hmm.most_likely_states(sem_params, batch_emissions[i_batch])</span>
-<span class="c1"># plot_gaussian_hmm(test_hmm, sem_params, batch_emissions[i_batch], sem_most_likely_states, title=&quot;HMM Stoch Fit&quot;, alpha=0.1)</span>
-<span class="c1"># plot_gaussian_hmm_data(test_hmm, sem_params, batch_emissions[i_batch], sem_most_likely_states, xlim=(0, 100))</span>
-</pre></div>
-</div>
+<img alt="../../_images/10765f2cfc93835b019637723d6a3af2951b8315cd6274683e3a3435df961b57.png" src="../../_images/10765f2cfc93835b019637723d6a3af2951b8315cd6274683e3a3435df961b57.png" />
+<img alt="../../_images/e8084317a9ea3f39ab5de251c9eb8c14a0ffd29306733777fed5885cb5d8532d.png" src="../../_images/e8084317a9ea3f39ab5de251c9eb8c14a0ffd29306733777fed5885cb5d8532d.png" />
 </div>
 </div>
 </section>

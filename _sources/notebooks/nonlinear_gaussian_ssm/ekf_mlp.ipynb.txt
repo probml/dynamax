@@ -41,6 +41,20 @@
   },
   {
    "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "try:\n",
+    "    import dynamax\n",
+    "except ModuleNotFoundError:\n",
+    "    print('installing dynamax')\n",
+    "    %pip install -q dynamax[notebooks]\n",
+    "    import dynamax"
+   ]
+  },
+  {
+   "cell_type": "code",
    "execution_count": 1,
    "metadata": {},
    "outputs": [],
@@ -53,20 +67,6 @@
     "from matplotlib import pyplot as plt\n",
     "from typing import Sequence\n",
     "from functools import partial"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 2,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "try:\n",
-    "    import dynamax\n",
-    "except ModuleNotFoundError:\n",
-    "    print('installing dynamax')\n",
-    "    %pip install -qq git+https://github.com/probml/dynamax.git\n",
-    "    import dynamax"
    ]
   },
   {

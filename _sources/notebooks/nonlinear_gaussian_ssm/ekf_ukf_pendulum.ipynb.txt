@@ -115,8 +115,8 @@
     "    import dynamax\n",
     "except ModuleNotFoundError:\n",
     "    print('installing dynamax')\n",
-    "    %pip install git+https://github.com/probml/dynamax.git\n",
-    "    import dynamax\n"
+    "    %pip install -q dynamax[notebooks]\n",
+    "    import dynamax"
    ]
   },
   {
