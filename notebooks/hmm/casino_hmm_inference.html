@@ -361,18 +361,25 @@
                 
   <section class="tex2jax_ignore mathjax_ignore" id="casino-hmm-inference-state-estimation">
 <h1>Casino HMM: Inference (state estimation)<a class="headerlink" href="#casino-hmm-inference-state-estimation" title="Permalink to this heading">¶</a></h1>
-<p>We use a simple example of an HMM from known as the “occasionally dishonest casino”.
+<p>We use a simple example of an HMM known as the “occasionally dishonest casino”.
 This is from the book:</p>
 <blockquote>
 <div><p>“Biological Sequence Analysis: Probabilistic Models of Proteins and Nucleic Acids” by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 </div></blockquote>
-<p>For this example, suppose you are playing dice at a shady casino – an Old West saloon perhaps. You suspect that one of the players is cheating. Most of the time, they use a standard die in which all six faces are equally probable, but every so often they secretly switch to a weighted die that comes up 6 half the time. To avoid getting caught, they don’t switch dice very often: once they switch, they tend to keep using the same die for ten to twenty rolls.</p>
-<p><img alt="Casino HMM" src="https://github.com/probml/dynamax/blob/main/docs/figures/casino.png?raw=true" /></p>
+<p>Imagine you are playing dice at a shady casino – an Old West saloon, perhaps. You suspect that one of the players is cheating. Most of the time, they use a standard die in which all six faces are equally probable, but every so often they secretly switch to a weighted die that comes up 6 half the time. To avoid getting caught, they don’t switch dice very often: once they switch, they tend to keep using the same die for a while.</p>
+<p align="center">
+  <img src="https://github.com/probml/dynamax/blob/main/docs/figures/casino.png?raw=true">
+</p>
 <p>The figure above formalizes this game. If the player is rolling the fair die, they continue to do so with 0.95 probability, but they switch to the loaded die with probability 0.05. They continue using the loaded die with probability 0.9, and switch back to the fair die with probability 0.1.</p>
 <p><strong>Can you infer which die the player is using on the basis of the outcomes alone?</strong>  We’ll show how using a categorical hidden Markov model (HMM) and the <code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code> class.</p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
-<div class="cell docutils container">
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
@@ -383,15 +390,17 @@ This is from the book:</p>
 </pre></div>
 </div>
 </div>
+</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
 <span class="kn">from</span> <span class="nn">jax.nn</span> <span class="kn">import</span> <span class="n">one_hot</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">CategoricalHMM</span>
 </pre></div>
@@ -407,8 +416,8 @@ This is from the book:</p>
 <section id="make-a-categorical-hmm">
 <h2>Make a Categorical HMM<a class="headerlink" href="#make-a-categorical-hmm" title="Permalink to this heading">¶</a></h2>
 <p>First, we’ll construct a categorical hidden Markov model (HMM). The model has discrete latent states <span class="math notranslate nohighlight">\(z_t \in \{1,2\}\)</span> to specify which of the two dice is used on the <span class="math notranslate nohighlight">\(t\)</span>-th roll. You observe the outcomes, or “emissions,” <span class="math notranslate nohighlight">\(y_t \in \{1,\ldots,6\}\)</span>. The categorical HMM specifies a joint distribution over the latent states and emissions,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-e1239899-44c5-4a0a-86db-91bcc9dc10ea">
-<span class="eqno">(1)<a class="headerlink" href="#equation-e1239899-44c5-4a0a-86db-91bcc9dc10ea" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-f6dca3fe-763d-43ad-85c0-f746c3d94324">
+<span class="eqno">(1)<a class="headerlink" href="#equation-f6dca3fe-763d-43ad-85c0-f746c3d94324" title="Permalink to this equation">¶</a></span>\[\begin{align}
 p(y_{1:T}, z_{1:T} \mid \theta) 
 &amp;= \mathrm{Cat}(z_1 \mid \pi) 
 \prod_{t=2}^T \mathrm{Cat}(z_t \mid A_{z_{t-1}}) 
@@ -418,7 +427,7 @@ p(y_{1:T}, z_{1:T} \mid \theta)
 <p>In this example, we assume we know all of these parameters. Let’s start by instantiating them in code.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">init_dist</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
 <span class="n">transition_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span> 
                                <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.90</span><span class="p">]])</span>
 <span class="n">emission_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">],</span>    <span class="c1"># fair die</span>
@@ -439,7 +448,10 @@ B.shape: (2, 6)
 <p>The <code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code> object implements a categorical hidden Markov model. This object actually allows for a more general situation in which you observe many conditionally independent categorical emissions at once. This can lead to a little confusion, so we’ll go into some detail on this point.</p>
 <p>In this example, <span class="math notranslate nohighlight">\(z_t\)</span> can take on two values. We call this the <em>number of states</em>, and it corresponds to the number of different types of dice the player rolls. In a more general scenario, you could imagine the player rolling multiple dice at once. We call the number of simultaneously rolled dice the <em>number of emissions</em>. Finally, we call the number of possible outcomes (i.e. number of faces on each die) the <em>number of classes</em>.</p>
 <p>The code below constructs a <code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code> and uses its <code class="docutils literal notranslate"><span class="pre">initialize</span></code> function to create a structure called <code class="docutils literal notranslate"><span class="pre">params</span></code>, which combines the parameters of the model in a format that the model needs for downstream analysis.</p>
-<p><em>Note: since the model allows for arbitrary numbers of emissions (again, think number of simultaneously rolled dice), we need to reshape the emission probs to be (num_states x num_emissions x num_classes).</em></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Since the model allows for arbitrary numbers of emissions (again, think number of simultaneously rolled dice), we need to reshape the emission probs to be (num_states x num_emissions x num_classes).</p>
+</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_states</span> <span class="o">=</span> <span class="mi">2</span>      <span class="c1"># two types of dice (fair and loaded)</span>
@@ -450,7 +462,7 @@ B.shape: (2, 6)
 <span class="n">hmm</span> <span class="o">=</span> <span class="n">CategoricalHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">)</span>
 
 <span class="c1"># Initialize the parameters struct with known values</span>
-<span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">initial_probs</span><span class="o">=</span><span class="n">init_dist</span><span class="p">,</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">,</span>
                            <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">,</span>
                            <span class="n">emission_probs</span><span class="o">=</span><span class="n">emission_probs</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">))</span>
 </pre></div>
@@ -460,12 +472,12 @@ B.shape: (2, 6)
 <p><code class="docutils literal notranslate"><span class="pre">params</span></code> organizes the model parameters in the specific way that <code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code> expects. Technically, its a <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NamedTuple"><code class="docutils literal notranslate"><span class="pre">NamedTuple</span></code></a>. You can print the params to see how they’re organized, but they aren’t really meant for human consumption.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">params</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ParamsCategoricalHMM(initial=ParamsStandardHMMInitialState(probs=DeviceArray([0.5, 0.5], dtype=float32)), transitions=ParamsStandardHMMTransitions(transition_matrix=DeviceArray([[0.95, 0.05],
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ParamsCategoricalHMM(initial=ParamsStandardHMMInitialState(probs=DeviceArray([0.5, 0.5], dtype=float32)), transitions=ParamsStandardHMMTransitions(transition_matrix=DeviceArray([[0.95, 0.05],
              [0.1 , 0.9 ]], dtype=float32)), emissions=ParamsCategoricalHMMEmissions(probs=DeviceArray([[[0.16666667, 0.16666667, 0.16666667, 0.16666667,
                0.16666667, 0.16666667]],
 
@@ -475,7 +487,10 @@ B.shape: (2, 6)
 </div>
 </div>
 </div>
-<p><strong>This is an important point!</strong> The parameters are <em>immutable</em>, which means you can’t directly edit them, as illustrated below. This is by design: JAX prefers immutable datatypes. (If you’re new to JAX, please see <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html">Thinking in JAX</a>.) Instead, use the <code class="docutils literal notranslate"><span class="pre">initialize</span></code> function to create structures with desired values.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The parameters are <em>immutable</em>, which means you can’t directly edit them, as illustrated below. This is by design: JAX prefers immutable datatypes. (If you’re new to JAX, please see <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html">Thinking in JAX</a>.) Instead, use the <code class="docutils literal notranslate"><span class="pre">initialize</span></code> function to create structures with desired values.</p>
+</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
@@ -491,7 +506,10 @@ B.shape: (2, 6)
 </div>
 </div>
 </div>
-<p><em>Note: you may have observed that <code class="docutils literal notranslate"><span class="pre">initialize</span></code> actually returns two things: a structure of parameters and a corresponding structure that specifies their properties. The latter is necesary for model fitting. We won’t use them here, but we will in the next notebook!</em></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You may have observed that <code class="docutils literal notranslate"><span class="pre">initialize</span></code> actually returns two things: a structure of parameters and a corresponding structure that specifies their properties. The latter is necesary for model fitting. We won’t use them here, but we will in the next notebook!</p>
+</div>
 </section>
 <section id="sample-data-from-model">
 <h2>Sample data from model<a class="headerlink" href="#sample-data-from-model" title="Permalink to this heading">¶</a></h2>
@@ -519,7 +537,10 @@ First few emissions:  [5 0 5 5 5]
 </div>
 </div>
 </div>
-<p><em>Note: the emissions have a last dimension of 1. This is because <code class="docutils literal notranslate"><span class="pre">num_emissions</span></code> is 1. If we rolled multiple dice simultaneously, the emisions shape would be <code class="docutils literal notranslate"><span class="pre">num_timesteps</span> <span class="pre">x</span> <span class="pre">num_emissions</span></code>.</em></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The emissions have a last dimension of 1 since <code class="docutils literal notranslate"><span class="pre">num_emissions</span></code> is 1 in this example. If we rolled multiple dice simultaneously, the emisions shape would be <code class="docutils literal notranslate"><span class="pre">num_timesteps</span> <span class="pre">x</span> <span class="pre">num_emissions</span></code>.</p>
+</div>
 <section id="vectorizing-computation">
 <h3>Vectorizing computation<a class="headerlink" href="#vectorizing-computation" title="Permalink to this heading">¶</a></h3>
 <p>JAX offers powerful tools for vectorizing and parallelizing computation. For example, we can use <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/quickstart.html#auto-vectorization-with-vmap">vmap</a> to sample many sequences at once.</p>
@@ -600,8 +621,8 @@ expected frequencies:   [0.16666667 0.5       ]
 <section id="filtering-forwards-algorithm">
 <h2>Filtering (forwards algorithm)<a class="headerlink" href="#filtering-forwards-algorithm" title="Permalink to this heading">¶</a></h2>
 <p>In an HMM, <em>filtering</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given emissions up to and including time <span class="math notranslate nohighlight">\(t\)</span>. Mathematically, the filtering distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-f7ad0651-5090-4331-90de-071e08a56580">
-<span class="eqno">(2)<a class="headerlink" href="#equation-f7ad0651-5090-4331-90de-071e08a56580" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-ebe8e543-67e9-41ff-9b2a-3c6cefededad">
+<span class="eqno">(2)<a class="headerlink" href="#equation-ebe8e543-67e9-41ff-9b2a-3c6cefededad" title="Permalink to this equation">¶</a></span>\[\begin{align}
 p(z_t \mid y_{1:t}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} p(z_{1:t}, y_{1:t} \mid \theta)
 \end{align}\]</div>
 <p>The forward filtering algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.2) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion. It also returns an estimate of the <em>marginal likelihood</em>, <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta)\)</span>, which is useful for model comparison and fitting.</p>
@@ -647,14 +668,11 @@ posterior.filtered_probs.shape: (300, 2)
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_posterior_probs</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">filtered_probs</span><span class="p">,</span> <span class="n">true_states</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Filtering Distribution&quot;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Filtering Distribution&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Filtering Distribution&#39;)
-</pre></div>
-</div>
 <img alt="../../_images/6e55b89ea9ff2d23694730a223224a34c568c854cc6be72ea52459e7a30504fe.png" src="../../_images/6e55b89ea9ff2d23694730a223224a34c568c854cc6be72ea52459e7a30504fe.png" />
 </div>
 </div>
@@ -663,9 +681,9 @@ posterior.filtered_probs.shape: (300, 2)
 <section id="smoothing-forwards-backwards-algorithm">
 <h2>Smoothing (forwards-backwards algorithm)<a class="headerlink" href="#smoothing-forwards-backwards-algorithm" title="Permalink to this heading">¶</a></h2>
 <p><em>Smoothing</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given all emissions, including those that come after. Mathematically, the smoothing distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-404ee3c3-3920-4db3-8a45-4973657fc725">
-<span class="eqno">(3)<a class="headerlink" href="#equation-404ee3c3-3920-4db3-8a45-4973657fc725" title="Permalink to this equation">¶</a></span>\[\begin{align}
-p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{z_{t+1}} \cdots \sum_{z_T} p(z_{1:t}, y_{1:t} \mid \theta).
+<div class="amsmath math notranslate nohighlight" id="equation-7572526a-9f2f-4e3f-94b8-7b364ca3a14d">
+<span class="eqno">(3)<a class="headerlink" href="#equation-7572526a-9f2f-4e3f-94b8-7b364ca3a14d" title="Permalink to this equation">¶</a></span>\[\begin{align}
+p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{z_{t+1}} \cdots \sum_{z_T} p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>The forward-backward algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.4) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion.</p>
 <p>In code, you can run the forward-backward smoothing algorithm like this.</p>
@@ -685,14 +703,11 @@ p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_posterior_probs</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="p">,</span> <span class="n">true_states</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Smoothed Distribution&quot;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Smoothed Distribution&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Smoothed Distribution&#39;)
-</pre></div>
-</div>
 <img alt="../../_images/56b1c76ad8f32787a78d364ece8de043b52305560b009b44e8a39ac135882d3d.png" src="../../_images/56b1c76ad8f32787a78d364ece8de043b52305560b009b44e8a39ac135882d3d.png" />
 </div>
 </div>
@@ -701,8 +716,8 @@ p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{
 <section id="most-likely-state-sequence-viterbi-algorithm">
 <h2>Most likely state sequence (Viterbi algorithm)<a class="headerlink" href="#most-likely-state-sequence-viterbi-algorithm" title="Permalink to this heading">¶</a></h2>
 <p>Finally, we can compute the most likely state sequence (aka <em>maximum a posteriori</em> or “MAP” sequence) using the Viterbi algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.7). This dynamic programming algorithm solves for</p>
-<div class="amsmath math notranslate nohighlight" id="equation-fedc6341-7190-4977-ab07-76c40adc5600">
-<span class="eqno">(4)<a class="headerlink" href="#equation-fedc6341-7190-4977-ab07-76c40adc5600" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-2424c69e-ded0-4326-afa1-056309d88d79">
+<span class="eqno">(4)<a class="headerlink" href="#equation-2424c69e-ded0-4326-afa1-056309d88d79" title="Permalink to this equation">¶</a></span>\[\begin{align}
 z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>You can compute the MAP sequence with the following code.</p>
@@ -730,7 +745,6 @@ z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta)
     <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Viterbi estimate&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span>
 </pre></div>
 </div>
 </div>
@@ -743,10 +757,6 @@ z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(&lt;Figure size 640x480 with 1 Axes&gt;,
- &lt;AxesSubplot: title={&#39;center&#39;: &#39;Viterbi estimate&#39;}, xlabel=&#39;time&#39;, ylabel=&#39;MAP state&#39;&gt;)
-</pre></div>
-</div>
 <img alt="../../_images/d36f0c35c87798922f4e50c3c95f0a95b69e4444f2611179f1e452180e54c39e.png" src="../../_images/d36f0c35c87798922f4e50c3c95f0a95b69e4444f2611179f1e452180e54c39e.png" />
 </div>
 </div>
