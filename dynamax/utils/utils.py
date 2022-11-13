@@ -6,6 +6,9 @@ from jax import vmap
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
 import jax
 import jaxlib
+from jaxtyping import Array, Int
+from scipy.optimize import linear_sum_assignment
+from typing import Optional
 
 def has_tpu():
     try:
@@ -141,3 +144,55 @@ def ensure_array_has_batch_dim(tree, instance_shapes):
         return None
     else:
         return tree_map(_expand_dim, tree, instance_shapes)
+
+
+def compute_state_overlap(
+    z1: Int[Array, "num_timesteps"],
+    z2: Int[Array, "num_timesteps"]
+):
+    """
+    Compute a matrix describing the state-wise overlap between two state vectors
+    ``z1`` and ``z2``.
+
+    The state vectors should both of shape ``(T,)`` and be integer typed.
+
+    Args:
+        z1: The first state vector.
+        z2: The second state vector.
+
+    Returns:
+        overlap matrix: Matrix of cumulative overlap events.
+    """
+    assert z1.shape == z2.shape
+    assert z1.min() >= 0 and z2.min() >= 0
+
+    K = max(z1.max(), z2.max()) + 1
+
+    overlap = jnp.sum(
+        (z1[:, None] == jnp.arange(K))[:, :, None]
+        & (z2[:, None] == jnp.arange(K))[:, None, :],
+        axis=0,
+    )
+    return overlap
+
+
+def find_permutation(
+    z1: Int[Array, "num_timesteps"],
+    z2: Int[Array, "num_timesteps"]
+):
+    """
+    Find the permutation of the state labels in sequence ``z1`` so that they
+    best align with the labels in ``z2``.
+
+    Args:
+        z1: The first state vector.
+        z2: The second state vector.
+
+    Returns:
+        permutation such that ``jnp.take(perm, z1)`` best aligns with ``z2``.
+        Thus, ``len(perm) = min(z1.max(), z2.max()) + 1``.
+
+    """
+    overlap = compute_state_overlap(z1, z2)
+    _, perm = linear_sum_assignment(-overlap)
+    return perm
