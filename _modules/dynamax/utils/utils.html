@@ -1,0 +1,510 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dynamax.utils.utils</title>
+    
+  <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="../../../_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="../../../_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.d3f166471bb80abb5163.js">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="../../../index.html">
+  
+  <img src="../../../_static/logo.gif" class="logo" alt="logo">
+  
+  
+</a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+    <p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  HMMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/casino_hmm_inference.html">
+   Casino HMM: Inference (state estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/casino_hmm_learning.html">
+   Casino HMM: learning (parameter estimation)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/gaussian_hmm.html">
+   Gaussian HMM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/hmm/autoregressive_hmm.html">
+   Autoregressive (AR) HMM Demo
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Linear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/kf_tracking.html">
+   Tracking an object using the Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/kf_linreg.html">
+   Online linear regression using Kalman filtering
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">
+   Parallel filtering and smoothing in an LG-SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_learning.html">
+   MAP parameter estimation for an LG-SSM using EM and SGD
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/linear_gaussian_ssm/lgssm_hmc.html">
+   Bayesian parameter estimation for an LG-SSM using HMC
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Nonlinear Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
+   Tracking a spiraling object using the extended / unscented Kalman filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
+   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">
+   Online learning for an MLP using extended Kalman filtering
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  Generalized Gaussian SSMs
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
+   Online Logistic Regression using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
+   Online learning of an MLP Classifier using conditional moments Gaussian filter
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html">
+   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
+  </a>
+ </li>
+</ul>
+<p class="caption collapsible-parent" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav sidenav_l1">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html">
+   State Space Model (Base class)
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#hidden-markov-model">
+   Hidden Markov Model
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#linear-gaussian-ssm">
+   Linear Gaussian SSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#nonlinear-gaussian-gssm">
+   Nonlinear Gaussian GSSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#generalized-gaussian-gssm">
+   Generalized Gaussian GSSM
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api.html#utilities">
+   Utilities
+  </a>
+ </li>
+</ul>
+
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+    </div>
+    <div class="col pl-2 topbar-main">
+        
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        
+        <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        
+        
+    </div>
+</div>
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <h1>Source code for dynamax.utils.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jit</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_map</span><span class="p">,</span> <span class="n">tree_leaves</span><span class="p">,</span> <span class="n">tree_flatten</span><span class="p">,</span> <span class="n">tree_unflatten</span>
+<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jaxlib</span>
+<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Int</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">linear_sum_assignment</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="k">def</span> <span class="nf">has_tpu</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">devices</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">jaxlib</span><span class="o">.</span><span class="n">xla_extension</span><span class="o">.</span><span class="n">TpuDevice</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="nd">@jit</span>
+<span class="k">def</span> <span class="nf">pad_sequences</span><span class="p">(</span><span class="n">observations</span><span class="p">,</span> <span class="n">valid_lens</span><span class="p">,</span> <span class="n">pad_val</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pad ragged sequences to a fixed length.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    observations : array(N, seq_len)</span>
+<span class="sd">        All observation sequences</span>
+<span class="sd">    valid_lens : array(N, seq_len)</span>
+<span class="sd">        Consists of the valid length of each observation sequence</span>
+<span class="sd">    pad_val : int</span>
+<span class="sd">        Value that the invalid observable events of the observation sequence will be replaced</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    * array(n, max_len)</span>
+<span class="sd">        Ragged dataset</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="nb">len</span><span class="p">):</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seq</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">idx</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">pad_val</span><span class="p">)</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">observations</span><span class="p">,</span> <span class="n">valid_lens</span><span class="p">),</span> <span class="n">valid_lens</span>
+    <span class="k">return</span> <span class="n">dataset</span>
+
+
+<span class="k">def</span> <span class="nf">monotonically_increasing</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">thresh</span> <span class="o">=</span> <span class="n">atol</span> <span class="o">+</span> <span class="n">rtol</span><span class="o">*</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">thresh</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">pytree_len</span><span class="p">(</span><span class="n">pytree</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">pytree</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">tree_leaves</span><span class="p">(</span><span class="n">pytree</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">pytree_sum</span><span class="p">(</span><span class="n">pytree</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="n">keepdims</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">),</span> <span class="n">pytree</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">pytree_slice</span><span class="p">(</span><span class="n">pytree</span><span class="p">,</span> <span class="n">slc</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">pytree</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">pytree_stack</span><span class="p">(</span><span class="n">pytrees</span><span class="p">):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">treedef</span> <span class="o">=</span> <span class="n">tree_flatten</span><span class="p">(</span><span class="n">pytrees</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">leaves</span> <span class="o">=</span> <span class="p">[</span><span class="n">tree_leaves</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span> <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">pytrees</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">tree_unflatten</span><span class="p">(</span><span class="n">treedef</span><span class="p">,</span> <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="k">for</span> <span class="n">vals</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">leaves</span><span class="p">)])</span>
+
+<span class="k">def</span> <span class="nf">random_rotation</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Helper function to create a rotating linear system.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        seed (jax.random.PRNGKey): JAX random seed.</span>
+<span class="sd">        n (int): Dimension of the rotation matrix.</span>
+<span class="sd">        theta (float, optional): If specified, this is the angle of the rotation, otherwise</span>
+<span class="sd">            a random angle sampled from a standard Gaussian scaled by ::math::`\pi / 2`. Defaults to None.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        [type]: [description]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Sample a random, slow rotation</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">jr</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jr</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">rot</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)],</span> <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)]])</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">at</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">rot</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">qr</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">q</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">instance_shapes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add a batch dimension to a PyTree, if necessary.</span>
+
+<span class="sd">    Example: If `tree` is an array of shape (T, D) where `T` is</span>
+<span class="sd">    the number of time steps and `D` is the emission dimension,</span>
+<span class="sd">    and if `instance_shapes` is a tuple (D,), then the return</span>
+<span class="sd">    value is the array with an added batch dimension, with</span>
+<span class="sd">    shape (1, T, D).</span>
+
+<span class="sd">    Example: If `tree` is an array of shape (N,TD) and</span>
+<span class="sd">    `instance_shapes` is a tuple (D,), then the return</span>
+<span class="sd">    value is simply `tree`, since it already has a batch</span>
+<span class="sd">    dimension (of length N).</span>
+
+<span class="sd">    Example: If `tree = (A, B)` is a tuple of arrays with</span>
+<span class="sd">    `A.shape = (100,2)` `B.shape = (100,4)`, and</span>
+<span class="sd">    `instances_shapes = ((2,), (4,))`, then the return value</span>
+<span class="sd">    is equivalent to `(jnp.expand_dims(A, 0), jnp.expand_dims(B, 0))`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tree (_type_): PyTree whose leaves&#39; shapes are either</span>
+<span class="sd">            (batch, length) + instance_shape or (length,) + instance_shape.</span>
+<span class="sd">            If the latter, this function adds a batch dimension of 1 to</span>
+<span class="sd">            each leaf node.</span>
+
+<span class="sd">        instance_shape (_type_): matching PyTree where the &quot;leaves&quot; are</span>
+<span class="sd">            tuples of integers specifying the shape of one &quot;instance&quot; or</span>
+<span class="sd">            entry in the array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_expand_dim</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shp</span><span class="p">):</span>
+        <span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="n">ndim</span><span class="p">,</span> <span class="s2">&quot;array does not match expected shape!&quot;</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">([(</span><span class="n">d1</span> <span class="o">==</span> <span class="n">d2</span><span class="p">)</span> <span class="k">for</span> <span class="n">d1</span><span class="p">,</span> <span class="n">d2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">ndim</span><span class="p">:],</span> <span class="n">shp</span><span class="p">)]),</span> \
+            <span class="s2">&quot;array does not match expected shape!&quot;</span>
+
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">ndim</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># x already has a batch dim</span>
+            <span class="k">return</span> <span class="n">x</span>
+        <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">ndim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># x has a leading time dimension but no batch dim</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;array has too many dimensions!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tree</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">_expand_dim</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">instance_shapes</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">compute_state_overlap</span><span class="p">(</span>
+    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">],</span>
+    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">]</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute a matrix describing the state-wise overlap between two state vectors</span>
+<span class="sd">    ``z1`` and ``z2``.</span>
+
+<span class="sd">    The state vectors should both of shape ``(T,)`` and be integer typed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        z1: The first state vector.</span>
+<span class="sd">        z2: The second state vector.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        overlap matrix: Matrix of cumulative overlap events.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">z1</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">z2</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">assert</span> <span class="n">z1</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">z2</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+
+    <span class="n">K</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">z1</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">z2</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="n">overlap</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">z1</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">==</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">K</span><span class="p">))[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">z2</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">==</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">K</span><span class="p">))[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">overlap</span>
+
+
+<div class="viewcode-block" id="find_permutation"><a class="viewcode-back" href="../../../api.html#dynamax.utils.utils.find_permutation">[docs]</a><span class="k">def</span> <span class="nf">find_permutation</span><span class="p">(</span>
+    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">],</span>
+    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">]</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find the permutation of the state labels in sequence ``z1`` so that they</span>
+<span class="sd">    best align with the labels in ``z2``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        z1: The first state vector.</span>
+<span class="sd">        z2: The second state vector.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        permutation such that ``jnp.take(perm, z1)`` best aligns with ``z2``.</span>
+<span class="sd">        Thus, ``len(perm) = min(z1.max(), z2.max()) + 1``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">overlap</span> <span class="o">=</span> <span class="n">compute_state_overlap</span><span class="p">(</span><span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">perm</span> <span class="o">=</span> <span class="n">linear_sum_assignment</span><span class="p">(</span><span class="o">-</span><span class="n">overlap</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">perm</span></div>
+</pre></div>
+
+              </div>
+              
+        </div>
+    </div>
+    
+    
+    <div class='prev-next-bottom'>
+        
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
+        
+            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="../../../_static/js/index.d3f166471bb80abb5163.js"></script>
+
+
+    
+  </body>
+</html>

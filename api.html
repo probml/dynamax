@@ -205,6 +205,11 @@
    Generalized Gaussian GSSM
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="#utilities">
+   Utilities
+  </a>
+ </li>
 </ul>
 
 </nav> <!-- To handle the deprecated key -->
@@ -1725,6 +1730,22 @@
       </a>
      </li>
     </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#utilities">
+   Utilities
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h2 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#dynamax.utils.utils.find_permutation">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       find_permutation()
+      </span>
+     </code>
+    </a>
    </li>
   </ul>
  </li>
@@ -4993,6 +5014,28 @@ marginal likelihood and filtered state estimates.</p>
 </dd></dl>
 
 </section>
+</section>
+<section id="utilities">
+<h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamax.utils.utils.find_permutation">
+<span class="sig-name descname"><span class="pre">find_permutation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dynamax/utils/utils.html#find_permutation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamax.utils.utils.find_permutation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the permutation of the state labels in sequence <code class="docutils literal notranslate"><span class="pre">z1</span></code> so that they
+best align with the labels in <code class="docutils literal notranslate"><span class="pre">z2</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>z1</strong> (<em>Int</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps'</em><em>]</em>) – The first state vector.</p></li>
+<li><p><strong>z2</strong> (<em>Int</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps'</em><em>]</em>) – The second state vector.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>permutation such that <code class="docutils literal notranslate"><span class="pre">jnp.take(perm,</span> <span class="pre">z1)</span></code> best aligns with <code class="docutils literal notranslate"><span class="pre">z2</span></code>.
+Thus, <code class="docutils literal notranslate"><span class="pre">len(perm)</span> <span class="pre">=</span> <span class="pre">min(z1.max(),</span> <span class="pre">z2.max())</span> <span class="pre">+</span> <span class="pre">1</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 

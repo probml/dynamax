@@ -205,6 +205,11 @@
    Generalized Gaussian GSSM
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api.html#utilities">
+   Utilities
+  </a>
+ </li>
 </ul>
 
 </nav> <!-- To handle the deprecated key -->
@@ -427,25 +432,45 @@ a runnable version of this code.)</p>
 <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
 <span class="n">num_states</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="n">emission_dim</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">1000</span>
 
 <span class="c1"># Make a Gaussian HMM and sample data from it</span>
-<span class="n">true_hmm</span> <span class="o">=</span> <span class="n">GaussianHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
-<span class="n">true_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">true_hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
-<span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">true_hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
+<span class="n">hmm</span> <span class="o">=</span> <span class="n">GaussianHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
+<span class="n">true_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
+<span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
 
 <span class="c1"># Make a new Gaussian HMM and fit it with EM</span>
-<span class="n">test_hmm</span> <span class="o">=</span> <span class="n">GaussianHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
-<span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">test_hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">)</span>
-<span class="n">params</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">test_hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 
 <span class="c1"># Plot the marginal log probs across EM iterations</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lls</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;EM iterations&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;marginal log prob.&quot;</span><span class="p">)</span>
+
+<span class="c1"># Use fitted model for posterior inference</span>
+<span class="n">post</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">post</span><span class="o">.</span><span class="n">smoothed_probs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># (1000, 3)</span>
 </pre></div>
 </div>
-<p>We can also call the low-level inference code directly.</p>
+<p>JAX allows you to easily vectorize these operations with <cite>vmap</cite>.
+For example, you can sample and then fit to a batch of emissions as shown below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
+
+<span class="n">num_seq</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">batch_true_states</span><span class="p">,</span> <span class="n">batch_emissions</span> <span class="o">=</span> \
+   <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="o">=</span><span class="n">num_timesteps</span><span class="p">))(</span>
+      <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">num_seq</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">batch_true_states</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># (200,1000) and (200,1000,2)</span>
+
+<span class="c1"># Make a new Gaussian HMM and fit it with EM</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">batch_emissions</span><span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also call the low-level inference code (e.g. <code class="xref py py-meth docutils literal notranslate"><span class="pre">hmm_smoother()</span></code>) directly,
+without first having to construct the HMM object.</p>
 </section>
 </section>
 <section id="notebooks">
@@ -622,6 +647,10 @@ a runnable version of this code.)</p>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.generalized_gaussian_ssm.ParamsGGSSM"><code class="docutils literal notranslate"><span class="pre">ParamsGGSSM</span></code></a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html#utilities">Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#dynamax.utils.utils.find_permutation"><code class="docutils literal notranslate"><span class="pre">find_permutation()</span></code></a></li>
 </ul>
 </li>
 </ul>
