@@ -9,11 +9,11 @@ from dynamax.utils.utils import has_tpu
 
 if has_tpu():
     def allclose(x, y):
-        print(jnp.max(x - y))
+        print(jnp.max(abs(x - y)))
         return True # hack!
 else:
     def allclose(x,y):
-        print(jnp.max(x-y))
+        print(jnp.max(abs(x-y)))
         return jnp.allclose(x, y, atol=1e-1)
 
 
