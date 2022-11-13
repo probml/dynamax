@@ -131,19 +131,15 @@ key1, key2, key3 = jr.split(jr.PRNGKey(0), 3)
 num_states = 3
 emission_dim = 2
 num_timesteps = 1000
-num_seq = 200
 
 # Make a Gaussian HMM and sample data from it
 hmm = GaussianHMM(num_states, emission_dim)
 true_params, _ = hmm.initialize(key1)
-batch_true_states, batch_emissions = \
-    vmap(partial(hmm.sample, true_params, num_timesteps=num_timesteps))(
-        jr.split(key2, num_seq))
-print(batch_true_states.shape, batch_emissions.shape) # (200,1000) and (200,1000,2)
+true_states, emissions = hmm.sample(true_params, key2, num_timesteps)
 
 # Make a new Gaussian HMM and fit it with EM
-params, props = hmm.initialize(key3, method="kmeans", emissions=batch_emissions) # new random parameters
-params, lls = hmm.fit_em(params, props, batch_emissions, num_iters=20)
+params, props = hmm.initialize(key3, method="kmeans", emissions=emissions)
+params, lls = hmm.fit_em(params, props, emissions, num_iters=20)
 
 # Plot the marginal log probs across EM iterations
 plt.plot(lls)
@@ -151,11 +147,27 @@ plt.xlabel("EM iterations")
 plt.ylabel("marginal log prob.")
 
 # Use fitted model for posterior inference
-post = hmm.smoother(params, batch_emissions[0])
+post = hmm.smoother(params, emissions)
 print(post.smoothed_probs.shape) # (1000, 3)
 ```
 
-We can also call the low-level inference code directly.
+JAX allows you to easily vectorize these operations with `vmap`.
+For example, you can sample and fit to a batch of emissions as shown below.
+
+``` {.python}
+num_seq = 200
+batch_true_states, batch_emissions = \
+    vmap(partial(hmm.sample, true_params, num_timesteps=num_timesteps))(
+        jr.split(key2, num_seq))
+print(batch_true_states.shape, batch_emissions.shape) # (200,1000) and (200,1000,2)
+
+# Make a new Gaussian HMM and fit it with EM
+params, props = hmm.initialize(key3, method="kmeans", emissions=batch_emissions)
+params, lls = hmm.fit_em(params, props, batch_emissions, num_iters=20)
+```
+
+These examples demonstrate the dynamax models, but we can also call the low-level
+inference code directly.
 
 
 ## About
