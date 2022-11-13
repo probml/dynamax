@@ -6,8 +6,9 @@ from jax import vmap
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
 import jax
 import jaxlib
+from jaxtyping import Array, Int
 from scipy.optimize import linear_sum_assignment
-from typing import Optional, Sequence
+from typing import Optional
 
 def has_tpu():
     try:
@@ -146,8 +147,8 @@ def ensure_array_has_batch_dim(tree, instance_shapes):
 
 
 def compute_state_overlap(
-    z1: Sequence[int],
-    z2: Sequence[int]
+    z1: Int[Array, "num_timesteps"],
+    z2: Int[Array, "num_timesteps"]
 ):
     """
     Compute a matrix describing the state-wise overlap between two state vectors
@@ -176,8 +177,8 @@ def compute_state_overlap(
 
 
 def find_permutation(
-    z1: Sequence[int],
-    z2: Sequence[int],
+    z1: Int[Array, "num_timesteps"],
+    z2: Int[Array, "num_timesteps"]
 ):
     """
     Find the permutation of the state labels in sequence ``z1`` so that they
