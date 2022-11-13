@@ -218,3 +218,9 @@ Types
 -----
 
 .. autoclass:: dynamax.generalized_gaussian_ssm.ParamsGGSSM
+
+Utilities
+=========
+
+.. autofunction:: dynamax.utils.utils.find_permutation
+

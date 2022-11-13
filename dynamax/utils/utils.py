@@ -183,16 +183,13 @@ def find_permutation(
     Find the permutation of the state labels in sequence ``z1`` so that they
     best align with the labels in ``z2``.
 
-    This function returns a permutation ``perm`` such that ``jnp.take(perm, z1)``
-    is as close as possible to ``z2``. Thus, ``len(perm) = min(z1.max(), z2.max()) + 1``.
-
-
     Args:
         z1: The first state vector.
         z2: The second state vector.
 
     Returns:
-        overlap matrix: Matrix of cumulative overlap events.
+        permutation such that ``jnp.take(perm, z1)`` best aligns with ``z2``.
+        Thus, ``len(perm) = min(z1.max(), z2.max()) + 1``.
 
     """
     overlap = compute_state_overlap(z1, z2)
