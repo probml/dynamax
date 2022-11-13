@@ -119,10 +119,8 @@ notebook](https://github.com/probml/dynamax/blob/main/docs/notebooks/hmm/gaussia
 for a runnable version of this code.)
 
 ``` {.python}
-from functools import partial
 import jax.numpy as jnp
 import jax.random as jr
-from jax import vmap
 import matplotlib.pyplot as plt
 from dynamax.hidden_markov_model import GaussianHMM
 
@@ -154,6 +152,9 @@ JAX allows you to easily vectorize these operations with `vmap`.
 For example, you can sample and fit to a batch of emissions as shown below.
 
 ``` {.python}
+from functools import partial
+from jax import vmap
+
 num_seq = 200
 batch_true_states, batch_emissions = \
     vmap(partial(hmm.sample, true_params, num_timesteps=num_timesteps))(
