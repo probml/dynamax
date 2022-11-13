@@ -4,11 +4,16 @@ from jax import jit
 import jax.numpy as jnp
 import jax.random as jr
 from jax.tree_util import tree_map
-from jaxtyping import Array, Float, PyTree
 import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from typing import Any, Optional, Tuple
+
+
+from jaxtyping import Array, Float, jaxtyped
+#from beartype import beartype as typechecker
+from typeguard import typechecked as typechecker
+from typing import Any, Optional, Tuple, Union
 from typing_extensions import Protocol
+
 
 from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
@@ -26,7 +31,8 @@ class SuffStatsLGSSM(Protocol):
     """A :class:`NamedTuple` with sufficient statistics for LGSSM parameter estimation."""
     pass
 
-
+#@jaxtyped
+@typechecker
 class LinearGaussianSSM(SSM):
     r"""
     Linear Gaussian State Space Model.
@@ -265,9 +271,11 @@ class LinearGaussianSSM(SSM):
     def e_step(
         self,
         params: ParamsLGSSM,
-        emissions: Float[Array, "nseq ntime emission_dim"],
-        inputs: Optional[Float[Array, "nseq ntime input_dim"]]=None
-    ) -> Tuple[SuffStatsLGSSM, float]:
+        emissions: Union[Float[Array, "num_timesteps emission_dim"],
+                         Float[Array, "num_batches num_timesteps emission_dim"]],
+        inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
+                               Float[Array, "num_batches num_timesteps input_dim"]]]=None,
+    ) -> Tuple[SuffStatsLGSSM, Scalar]:
         num_timesteps = emissions.shape[0]
         if inputs is None:
             inputs = jnp.zeros((num_timesteps, 0))
@@ -368,6 +376,8 @@ class LinearGaussianSSM(SSM):
         return params, m_step_state
 
 
+#@jaxtyped
+@typechecker
 class LinearGaussianConjugateSSM(LinearGaussianSSM):
     r"""
     Linear Gaussian State Space Model with conjugate priors for the model parameters.
@@ -392,7 +402,9 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
                  has_dynamics_bias=True,
                  has_emissions_bias=True,
                  **kw_priors):
-        super().__init__(state_dim, emission_dim, input_dim, has_dynamics_bias, has_emissions_bias)
+        super().__init__(state_dim=state_dim, emission_dim=emission_dim, input_dim=input_dim,
+        has_dynamics_bias=has_dynamics_bias, has_emissions_bias=has_emissions_bias)
+
 
         # Initialize prior distributions
         def default_prior(arg, default):
@@ -459,7 +471,8 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         params: ParamsLGSSM,
         props: ParamsLGSSM,
         batch_stats: SuffStatsLGSSM,
-        m_step_state: Any):
+        m_step_state: Any
+    ):
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
         init_stats, dynamics_stats, emission_stats = stats

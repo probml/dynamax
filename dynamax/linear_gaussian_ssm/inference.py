@@ -5,12 +5,17 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from functools import wraps
 import inspect
 
-from jaxtyping import Array, Float
+from jaxtyping import Array, Float, jaxtyped
 from typing import NamedTuple, Optional, Union
+#from beartype import beartype as typechecker
+from typeguard import typechecked as typechecker
+
 
 from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
 
+@jaxtyped
+@typechecker
 class ParamsLGSSMInitial(NamedTuple):
     r"""Parameters of the initial distribution
 
@@ -25,7 +30,8 @@ class ParamsLGSSMInitial(NamedTuple):
     mean: Union[Float[Array, "state_dim"], ParameterProperties]
     cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
 
-
+@jaxtyped
+@typechecker
 class ParamsLGSSMDynamics(NamedTuple):
     r"""Parameters of the emission distribution
 
@@ -44,7 +50,8 @@ class ParamsLGSSMDynamics(NamedTuple):
     input_weights: Union[Float[Array, "state_dim input_dim"], ParameterProperties]
     cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
 
-
+@jaxtyped
+@typechecker
 class ParamsLGSSMEmissions(NamedTuple):
     r"""Parameters of the emission distribution
 
@@ -64,6 +71,8 @@ class ParamsLGSSMEmissions(NamedTuple):
     cov: Union[Float[Array, "emission_dim emission_dim"], ParameterProperties]
 
 
+@jaxtyped
+@typechecker
 class ParamsLGSSM(NamedTuple):
     r"""Parameters of a linear Gaussian SSM.
 
@@ -77,6 +86,8 @@ class ParamsLGSSM(NamedTuple):
     emissions: ParamsLGSSMEmissions
 
 
+@jaxtyped
+@typechecker
 class PosteriorGSSMFiltered(NamedTuple):
     r"""Marginals of the Gaussian filtering posterior.
 
@@ -90,6 +101,8 @@ class PosteriorGSSMFiltered(NamedTuple):
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
 
 
+@jaxtyped
+@typechecker
 class PosteriorGSSMSmoothed(NamedTuple):
     r"""Marginals of the Gaussian filtering and smoothing posterior.
 
@@ -106,7 +119,7 @@ class PosteriorGSSMSmoothed(NamedTuple):
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
     smoothed_means: Float[Array, "ntime state_dim"]
     smoothed_covariances: Float[Array, "ntime state_dim state_dim"]
-    smoothed_cross_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
+    smoothed_cross_covariances: Optional[Float[Array, "ntime_minus1 state_dim state_dim"]] = None
 
 
 # Helper functions
@@ -227,6 +240,8 @@ def preprocess_args(f):
     return wrapper
 
 
+@jaxtyped
+@typechecker
 @preprocess_args
 def lgssm_filter(
     params: ParamsLGSSM,
@@ -279,6 +294,8 @@ def lgssm_filter(
     return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
+@jaxtyped
+@typechecker
 @preprocess_args
 def lgssm_smoother(
     params: ParamsLGSSM,
@@ -350,6 +367,8 @@ def lgssm_smoother(
     )
 
 
+@jaxtyped
+@typechecker
 def lgssm_posterior_sample(
     key: PRNGKey,
     params: ParamsLGSSM,

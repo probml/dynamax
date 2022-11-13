@@ -5,9 +5,12 @@ from jax import vmap
 from jax import jit
 from functools import partial
 
-from typing import Callable, Optional, Tuple, Union, NamedTuple
-from jaxtyping import Int, Float, Array
+from typing import Callable, Optional, Tuple, Union, NamedTuple, Any
+from jaxtyping import Int, Float, Array, jaxtyped
+from beartype import beartype as typechecker
+#from typeguard import typechecked as typechecker
 
+from dynamax.types import Scalar
 
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 
@@ -20,6 +23,8 @@ def get_trans_mat(transition_matrix, transition_fn, t):
         else:
             return transition_matrix
 
+@jaxtyped
+@typechecker
 class HMMPosteriorFiltered(NamedTuple):
     r"""Simple wrapper for properties of an HMM filtering posterior.
 
@@ -28,10 +33,12 @@ class HMMPosteriorFiltered(NamedTuple):
     :param predicted_probs: $p(z_t \mid y_{1:t-1}, \theta)$ for $t=1,\ldots,T$
 
     """
-    marginal_loglik: float
+    marginal_loglik: Scalar # Union[Scalar, Float[Array, "num_timesteps"]]
     filtered_probs: Float[Array, "num_timesteps num_states"]
     predicted_probs: Float[Array, "num_timesteps num_states"]
 
+@jaxtyped
+@typechecker
 class HMMPosterior(NamedTuple):
     r"""Simple wrapper for properties of an HMM posterior distribution.
 
@@ -45,13 +52,34 @@ class HMMPosterior(NamedTuple):
     :param initial_probs: $p(z_1 \mid y_{1:T}, \theta)$ (also present in `smoothed_probs` but here for convenience)
     :param trans_probs: $p(z_t, z_{t+1} \mid y_{1:T}, \theta)$ for $t=1,\ldots,T-1$. (If the transition matrix is fixed, these probabilities may be summed over $t$. See note above.)
     """
-    marginal_loglik: float
+    marginal_loglik: Scalar # Union[Scalar, Float[Array, "num_timesteps"]]
     filtered_probs: Float[Array, "num_timesteps num_states"]
     predicted_probs: Float[Array, "num_timesteps num_states"]
     smoothed_probs: Float[Array, "num_timesteps num_states"]
     initial_probs: Float[Array, "num_states"]
     trans_probs: Optional[Union[Float[Array, "num_timesteps num_states num_states"],
                                 Float[Array, "num_states num_states"]]] = None
+
+
+class HMMPosteriorUntyped(NamedTuple): # hack for fixed lag smoother scan typing issue
+    r"""Simple wrapper for properties of an HMM posterior distribution.
+
+    Transition probabilities may be either 2D or 3D depending on whether the
+    transition matrix is fixed or time-varying.
+
+    :param marginal_loglik: $p(y_{1:T} \mid \theta) = \log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)$.
+    :param filtered_probs: $p(z_t \mid y_{1:t}, \theta)$ for $t=1,\ldots,T$
+    :param predicted_probs: $p(z_t \mid y_{1:t-1}, \theta)$ for $t=1,\ldots,T$
+    :param smoothed_probs: $p(z_t \mid y_{1:T}, \theta)$ for $t=1,\ldots,T$
+    :param initial_probs: $p(z_1 \mid y_{1:T}, \theta)$ (also present in `smoothed_probs` but here for convenience)
+    :param trans_probs: $p(z_t, z_{t+1} \mid y_{1:T}, \theta)$ for $t=1,\ldots,T-1$. (If the transition matrix is fixed, these probabilities may be summed over $t$. See note above.)
+    """
+    marginal_loglik: Any
+    filtered_probs: Any
+    predicted_probs: Any
+    smoothed_probs: Any
+    initial_probs: Any
+    trans_probs: Optional[Any] = None
 
 
 def _normalize(u, axis=0, eps=1e-15):
@@ -326,7 +354,7 @@ def hmm_fixed_lag_smoother(
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     window_size: Int,
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
-) -> HMMPosterior:
+) -> HMMPosteriorUntyped:
     r"""Compute the smoothed state probabilities using the fixed-lag smoother.
 
     The smoothed probability estimates
@@ -394,7 +422,7 @@ def hmm_fixed_lag_smoother(
 
         smoothed_probs = vmap(compute_posterior, (0, 0))(filtered_probs, betas)
 
-        post = HMMPosterior(
+        post = HMMPosteriorUntyped(
             marginal_loglik=log_normalizers.sum(),
             filtered_probs=filtered_probs,
             predicted_probs=predicted_probs,
@@ -418,12 +446,12 @@ def hmm_fixed_lag_smoother(
     _, posts = lax.scan(_step, carry, jnp.arange(1, num_timesteps))
 
     # Include initial values
-    marginal_loglik = jnp.concatenate((jnp.array([log_normalizers.sum()]), posts.marginal_loglik))
+    marginal_loglik =  jnp.concatenate((jnp.array([log_normalizers.sum()]), posts.marginal_loglik))
     predicted_probs = jnp.concatenate((jnp.expand_dims(predicted_probs, axis=0), posts.predicted_probs))
     smoothed_probs = jnp.concatenate((jnp.expand_dims(filtered_probs, axis=0), posts.smoothed_probs))
     filtered_probs = jnp.concatenate((jnp.expand_dims(filtered_probs, axis=0), posts.filtered_probs))
 
-    return HMMPosterior(
+    return HMMPosteriorUntyped(
         marginal_loglik=marginal_loglik,
         filtered_probs=filtered_probs,
         predicted_probs=predicted_probs,

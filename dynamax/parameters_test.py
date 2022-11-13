@@ -2,11 +2,16 @@ import copy
 import jax.numpy as jnp
 from jax import jit, value_and_grad, lax
 from jax.tree_util import tree_map, tree_leaves
-from jaxtyping import Float, Array
-from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained, log_det_jac_constrain
 import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
+
+from jaxtyping import Array, Float, jaxtyped
+from beartype import beartype as typechecker
 from typing import NamedTuple, Union
+
+from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained, log_det_jac_constrain
+
+
 
 
 class InitialParams(NamedTuple):

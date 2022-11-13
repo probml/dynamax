@@ -23,6 +23,9 @@ class Posterior(Protocol):
     """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes."""
     pass
 
+class SuffStatsSSM(Protocol):
+    """A :class:`NamedTuple` with sufficient statics stored as :class:`jax.DeviceArray` in the leaf nodes."""
+    pass
 
 class SSM(ABC):
     r"""A base class for state space models. Such models consist of parameters, which
@@ -303,7 +306,7 @@ class SSM(ABC):
         params: ParameterSet,
         emissions: Float[Array, "num_timesteps emission_dim"],
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> PyTree:
+    ) -> Tuple[SuffStatsSSM, Scalar]:
         r"""Perform an E-step to compute expected sufficient statistics under the posterior, $p(z_{1:T} \mid y_{1:T}, u_{1:T}, \theta)$.
 
         Args:
@@ -321,7 +324,7 @@ class SSM(ABC):
         self,
         params: ParameterSet,
         props: PropertySet,
-        batch_stats: PyTree,
+        batch_stats: SuffStatsSSM,
         m_step_state: Any
     ) -> ParameterSet:
         r"""Perform an M-step to find parameters that maximize the expected log joint probability.
