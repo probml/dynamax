@@ -31,6 +31,11 @@ class SuffStatsLGSSM(Protocol):
     """A :class:`NamedTuple` with sufficient statistics for LGSSM parameter estimation."""
     pass
 
+# Adding jaxtyping decorator causes this error
+#class LinearGaussianConjugateSSM(LinearGaussianSSM):
+#E   TypeError: __init__() takes 2 positional arguments but 4 were give
+# See https://github.com/google/jaxtyping/issues/43
+
 #@jaxtyped
 @typechecker
 class LinearGaussianSSM(SSM):
@@ -341,7 +346,7 @@ class LinearGaussianSSM(SSM):
         props: ParamsLGSSM,
         batch_stats: SuffStatsLGSSM,
         m_step_state: Any
-    ) -> ParamsLGSSM:
+    ) -> Tuple[ParamsLGSSM, Any]:
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics

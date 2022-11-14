@@ -7,15 +7,11 @@ import inspect
 
 from jaxtyping import Array, Float, jaxtyped
 from typing import NamedTuple, Optional, Union
-#from beartype import beartype as typechecker
-from typeguard import typechecked as typechecker
 
 
 from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
 
-@jaxtyped
-@typechecker
 class ParamsLGSSMInitial(NamedTuple):
     r"""Parameters of the initial distribution
 
@@ -32,13 +28,6 @@ class ParamsLGSSMInitial(NamedTuple):
     # Because we may map from constrained to unconstrained form, the covariance may also be a 1d vector.
     cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
 
-
-class ParamsLGSSMInitialUntyped(NamedTuple):
-    mean: Union[Float[Array, "state_dim"], ParameterProperties]
-    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
-
-@jaxtyped
-@typechecker
 class ParamsLGSSMDynamics(NamedTuple):
     r"""Parameters of the emission distribution
 
@@ -57,14 +46,6 @@ class ParamsLGSSMDynamics(NamedTuple):
     input_weights: Union[Float[Array, "state_dim input_dim"], Float[Array, "ntime state_dim input_dim"], ParameterProperties]
     cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
 
-class ParamsLGSSMDynamicsUntyped(NamedTuple):
-    weights: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], ParameterProperties]
-    bias: Union[Float[Array, "state_dim"], Float[Array, "ntime state_dim"], ParameterProperties]
-    input_weights: Union[Float[Array, "state_dim input_dim"], Float[Array, "ntime state_dim input_dim"], ParameterProperties]
-    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
-
-@jaxtyped
-@typechecker
 class ParamsLGSSMEmissions(NamedTuple):
     r"""Parameters of the emission distribution
 
@@ -83,15 +64,6 @@ class ParamsLGSSMEmissions(NamedTuple):
     input_weights: Union[Float[Array, "emission_dim input_dim"], Float[Array, "ntime emission_dim input_dim"], ParameterProperties]
     cov: Union[Float[Array, "emission_dim emission_dim"], Float[Array, "ntime emission_dim emission_dim"], Float[Array, "emission_dim_triu"], ParameterProperties]
 
-class ParamsLGSSMEmissionsUntyped(NamedTuple):
-    weights: Union[Float[Array, "emission_dim state_dim"], Float[Array, "ntime emission_dim state_dim"], ParameterProperties]
-    bias: Union[Float[Array, "emission_dim"], Float[Array, "ntime emission_dim"], ParameterProperties]
-    input_weights: Union[Float[Array, "emission_dim input_dim"], Float[Array, "ntime emission_dim input_dim"], ParameterProperties]
-    cov: Union[Float[Array, "emission_dim emission_dim"], Float[Array, "ntime emission_dim emission_dim"], Float[Array, "emission_dim_triu"], ParameterProperties]
-
-
-@jaxtyped
-@typechecker
 class ParamsLGSSM(NamedTuple):
     r"""Parameters of a linear Gaussian SSM.
 
@@ -105,13 +77,6 @@ class ParamsLGSSM(NamedTuple):
     emissions: ParamsLGSSMEmissions
 
 
-class ParamsLGSSMUntyped(NamedTuple):
-    initial: ParamsLGSSMInitialUntyped
-    dynamics: ParamsLGSSMDynamicsUntyped
-    emissions: ParamsLGSSMEmissionsUntyped
-
-@jaxtyped
-@typechecker
 class PosteriorGSSMFiltered(NamedTuple):
     r"""Marginals of the Gaussian filtering posterior.
 
@@ -124,9 +89,6 @@ class PosteriorGSSMFiltered(NamedTuple):
     filtered_means: Float[Array, "ntime state_dim"]
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
 
-
-@jaxtyped
-@typechecker
 class PosteriorGSSMSmoothed(NamedTuple):
     r"""Marginals of the Gaussian filtering and smoothing posterior.
 
@@ -263,9 +225,6 @@ def preprocess_args(f):
         return f(full_params, emissions, inputs=inputs)
     return wrapper
 
-
-@jaxtyped
-@typechecker
 @preprocess_args
 def lgssm_filter(
     params: ParamsLGSSM,
@@ -318,8 +277,6 @@ def lgssm_filter(
     return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
-@jaxtyped
-@typechecker
 @preprocess_args
 def lgssm_smoother(
     params: ParamsLGSSM,
@@ -390,9 +347,6 @@ def lgssm_smoother(
         smoothed_cross_covariances=smoothed_cross,
     )
 
-
-@jaxtyped
-@typechecker
 def lgssm_posterior_sample(
     key: PRNGKey,
     params: ParamsLGSSM,

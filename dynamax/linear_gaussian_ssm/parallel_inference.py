@@ -6,9 +6,8 @@ import jax.scipy as jsc
 from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
-from copy import deepcopy
 
-from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM, ParamsLGSSMUntyped
+from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
 
 def _make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""

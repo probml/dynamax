@@ -6,8 +6,7 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 from typing import Optional, Union
 from typing_extensions import Protocol
 from jaxtyping import Array, Float, jaxtyped
-#from beartype import beartype as typechecker
-from typeguard import typechecked as typechecker
+
 
 from dynamax.types import PRNGKey, Scalar
 
@@ -21,7 +20,6 @@ class PropertySet(Protocol):
     """A matching :class:`NamedTuple` with :class:`ParameterProperties` stored in the leaf nodes."""
     pass
 
-#@typechecker
 @register_pytree_node_class
 class ParameterProperties:
     """A PyTree containing parameter metadata (properties).
@@ -47,7 +45,7 @@ class ParameterProperties:
     def tree_unflatten(cls, aux_data, children):
         return cls(*aux_data)
 
-#@typechecker 
+
 def to_unconstrained(params: ParameterSet, props: PropertySet) -> ParameterSet:
     """Convert the constrained parameters to unconstrained form.
 
@@ -67,7 +65,7 @@ def to_unconstrained(params: ParameterSet, props: PropertySet) -> ParameterSet:
     is_leaf = lambda node: isinstance(node, (ParameterProperties,))
     return tree_map(to_unc, params, props, is_leaf=is_leaf)
 
-#@typechecker
+
 def from_unconstrained(unc_params: ParameterSet, props: PropertySet) -> ParameterSet:
     """Convert the unconstrained parameters to constrained form.
 
