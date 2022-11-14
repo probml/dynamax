@@ -3,7 +3,6 @@ from functools import partial
 from jax import jit
 import jax.numpy as jnp
 import jax.random as jr
-from jax import scipy as jsc
 from jax.tree_util import tree_map
 from jaxtyping import Array, Float, PyTree
 import tensorflow_probability.substrates.jax.distributions as tfd

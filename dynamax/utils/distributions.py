@@ -1,7 +1,6 @@
 import jax.numpy as jnp
 from jax import vmap
 from jax.scipy.linalg import solve_triangular
-from jax import scipy as jsc
 from tensorflow_probability.substrates import jax as tfp
 
 tfd = tfp.distributions

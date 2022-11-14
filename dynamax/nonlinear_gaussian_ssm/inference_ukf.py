@@ -1,5 +1,4 @@
 import jax.numpy as jnp
-from jax import scipy as jsc
 from jax import lax
 from jax import vmap
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
