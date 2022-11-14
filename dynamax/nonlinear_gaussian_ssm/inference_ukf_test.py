@@ -1,4 +1,5 @@
 import jax.numpy as jnp
+import jax.random as jr
 
 from dynamax.nonlinear_gaussian_ssm.inference_ukf import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.sarkka_lib import ukf, uks
@@ -11,6 +12,7 @@ if has_tpu():
         return jnp.allclose(x, y, atol=1e-1)
 else:
     def allclose(x,y):
+        print(jnp.max(x-y))
         return jnp.allclose(x, y, atol=1e-1)
 
 def test_ukf_nonlinear(key=0, num_timesteps=15):

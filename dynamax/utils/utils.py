@@ -200,4 +200,5 @@ def find_permutation(
 
 def psd_solve(A,b):
     """A wrapper for coordinating the linalg solvers used in the library for psd matrices."""
+    A = A + 1e-6
     return jnp.linalg.solve(A,b)
