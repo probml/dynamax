@@ -7,7 +7,7 @@ from jax.tree_util import tree_map
 from jaxtyping import Array, Float, PyTree
 import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Union
 from typing_extensions import Protocol
 
 from dynamax.ssm import SSM
@@ -33,13 +33,13 @@ class LinearGaussianSSM(SSM):
 
     The model is defined as follows
 
-    $$p(x_1) = \mathcal{N}(x_1 \mid m, S)$$
-    $$p(x_t \mid x_{t-1}, u_t) = \mathcal{N}(x_t \mid F_t x_{t-1} + B_t u_t + b_t, Q_t)$$
-    $$p(y_t \mid x_t) = \mathcal{N}(y_t \mid H_t x_t + D_t u_t + d_t, R_t)$$
+    $$p(z_1) = \mathcal{N}(z_1 \mid m, S)$$
+    $$p(z_t \mid z_{t-1}, u_t) = \mathcal{N}(z_t \mid F_t z_{t-1} + B_t u_t + b_t, Q_t)$$
+    $$p(y_t \mid z_t) = \mathcal{N}(y_t \mid H_t z_t + D_t u_t + d_t, R_t)$$
 
     where
 
-    * $x_t$ is a latent state of size `state_dim`,
+    * $z_t$ is a latent state of size `state_dim`,
     * $y_t$ is an emission of size `emission_dim`
     * $u_t$ is an input of size `input_dim` (defaults to 0)
     * $F$ = dynamics (transition) matrix
@@ -265,9 +265,11 @@ class LinearGaussianSSM(SSM):
     def e_step(
         self,
         params: ParamsLGSSM,
-        emissions: Float[Array, "nseq ntime emission_dim"],
-        inputs: Optional[Float[Array, "nseq ntime input_dim"]]=None
-    ) -> Tuple[SuffStatsLGSSM, float]:
+        emissions: Union[Float[Array, "num_timesteps emission_dim"],
+                         Float[Array, "num_batches num_timesteps emission_dim"]],
+        inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
+                               Float[Array, "num_batches num_timesteps input_dim"]]]=None,
+    ) -> Tuple[SuffStatsLGSSM, Scalar]:
         num_timesteps = emissions.shape[0]
         if inputs is None:
             inputs = jnp.zeros((num_timesteps, 0))
@@ -333,7 +335,7 @@ class LinearGaussianSSM(SSM):
         props: ParamsLGSSM,
         batch_stats: SuffStatsLGSSM,
         m_step_state: Any
-    ) -> ParamsLGSSM:
+    ) -> Tuple[ParamsLGSSM, Any]:
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
@@ -392,7 +394,8 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
                  has_dynamics_bias=True,
                  has_emissions_bias=True,
                  **kw_priors):
-        super().__init__(state_dim, emission_dim, input_dim, has_dynamics_bias, has_emissions_bias)
+        super().__init__(state_dim=state_dim, emission_dim=emission_dim, input_dim=input_dim,
+             has_dynamics_bias=has_dynamics_bias, has_emissions_bias=has_emissions_bias)
 
         # Initialize prior distributions
         def default_prior(arg, default):
