@@ -83,7 +83,7 @@ CMGFIntegrals = Union[EKFIntegrals, UKFIntegrals, GHKFIntegrals]
 
 def _predict(m, P, f, Q, u, g_ev, g_cov):
     """Predict next mean and covariance under an additive-noise Gaussian filter
-
+    
         p(x_{t+1}) = N(x_{t+1} | mu_pred, Sigma_pred)
         where
             mu_pred = gev(f, m, P)
@@ -115,7 +115,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
     return mu_pred, Sigma_pred, cross_pred
 
 
-def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
+def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, emission_dist):
     """Condition a Gaussian potential on a new observation with arbitrary
        likelihood with given functions for conditional moments and make a
        Gaussian approximation.
@@ -141,6 +141,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
         g_ev (Callable): Gaussian expectation value function.
         g_cov (Callable): Gaussian cross covariance function.
         num_iter (int): number of re-linearizations around posterior for update step.
+        emission_dist: the observation pdf q. Constructed from specified mean and covariance.
 
      Returns:
         log_likelihood (Scalar): prediction log likelihood for observation y
@@ -156,7 +157,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter):
         prior_mean, prior_cov = carry
         yhat = g_ev(m_Y, prior_mean, prior_cov)
         S = g_ev(Cov_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
-        log_likelihood = MVN(yhat, S).log_prob(jnp.atleast_1d(y))
+        log_likelihood = emission_dist(yhat, S).log_prob(jnp.atleast_1d(y)).sum()
         C = g_cov(identity_fn, m_Y, prior_mean, prior_cov)
         K = jnp.linalg.solve(S, C.T).T
         posterior_mean = prior_mean + K @ (y - yhat)
@@ -230,6 +231,9 @@ def conditional_moments_gaussian_filter(
     g_ev = inf_params.gaussian_expectation
     g_cov = inf_params.gaussian_cross_covariance
 
+    # Emission distribution
+    emission_dist = model_params.emission_dist
+
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
 
@@ -239,7 +243,7 @@ def conditional_moments_gaussian_filter(
         y = emissions[t]
 
         # Condition on the emission
-        log_likelihood, filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, m_Y, Cov_Y, u, y, g_ev, g_cov, num_iter)
+        log_likelihood, filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, m_Y, Cov_Y, u, y, g_ev, g_cov, num_iter, emission_dist)
         ll += log_likelihood
 
         # Predict the next state

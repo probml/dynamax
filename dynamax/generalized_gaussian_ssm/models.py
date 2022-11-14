@@ -46,7 +46,7 @@ class ParamsGGSSM(NamedTuple):
 
     emission_mean_function: Union[FnStateToEmission, FnStateAndInputToEmission]
     emission_cov_function: Union[FnStateToEmission2, FnStateAndInputToEmission2]
-    emission_dist: EmissionDistFn = MVN
+    emission_dist: EmissionDistFn = lambda mean, cov: MVN(loc=mean, covariance_matrix=cov)
 
 
 
