@@ -32,12 +32,12 @@ class ParamsGGSSM(NamedTuple):
 
     :param initial_mean: $m$
     :param initial_covariance: $S$
-    :param dynamics_function: $f$. This has the signature $f: ZxU \rightarrow Y$ or $h: Z \rightarrow Y$.
+    :param dynamics_function: $f$. This has the signature $f: Z * U -> Y$ or $h: Z -> Y$.
     :param dynamics_covariance: $Q$
-    :param emission_mean_function: $h$. This has the signature $h: ZxU \rightarrow Z$ or $h: Z \rightarrow Z$.
-    :param emission_cov_function: $R$
+    :param emission_mean_function: $h$. This has the signature $h: Z * U -> Z$ or $h: Z -> Z$.
+    :param emission_cov_function: $R$. This has the signature $R: Z * U -> Z*Z$ or $R: Z -> Z*Z$.
     :param emission_dist: the observation distribution $q$. This is a callable that takes the predicted
-              mean and covariance of Y, and returns a tfp distribution object.
+              mean and covariance of Y, and returns a tfp distribution object: $q: Z * (Z*Z) -> Dist(Y)$.
 
 
     """
