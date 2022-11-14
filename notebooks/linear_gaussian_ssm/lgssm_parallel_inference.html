@@ -344,11 +344,12 @@ we have a GPU device.</p>
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
+<span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
-    <span class="o">%</span><span class="k">pip</span> install -q dynamax[notebooks]
+    <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 </pre></div>
 </div>
@@ -540,22 +541,22 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.6226022243499756
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.6311724185943604
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time parallel = 0.27269530296325684
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time parallel = 0.3021240234375
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time serial = 0.6202592849731445
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time serial = 1.1476542949676514
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time parallel = 0.3117802143096924
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time parallel = 0.3436298370361328
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time serial = 0.6236062049865723
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time serial = 0.6371808052062988
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time parallel = 0.35683178901672363
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time parallel = 0.3948831558227539
 </pre></div>
 </div>
 </div>
@@ -575,7 +576,7 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/48122e6522688b50739c4de84cd9ddfdb7f0e43ea107a263aad555f33961f380.png" src="../../_images/48122e6522688b50739c4de84cd9ddfdb7f0e43ea107a263aad555f33961f380.png" />
+<img alt="../../_images/09ec624015e6d25facf4d73fed9b1d47b97733762f09af0a2e97beb72451f447.png" src="../../_images/09ec624015e6d25facf4d73fed9b1d47b97733762f09af0a2e97beb72451f447.png" />
 </div>
 </div>
 </section>

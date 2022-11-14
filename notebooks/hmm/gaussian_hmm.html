@@ -360,8 +360,8 @@
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm-cross-validation-and-model-selection">
 <h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Permalink to this heading">¶</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-05788209-ada8-4623-8f57-4ac854a265b6">
-<span class="eqno">(1)<a class="headerlink" href="#equation-05788209-ada8-4623-8f57-4ac854a265b6" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-7987dbde-445e-4950-907c-50d1e2a6a686">
+<span class="eqno">(1)<a class="headerlink" href="#equation-7987dbde-445e-4950-907c-50d1e2a6a686" title="Permalink to this equation">¶</a></span>\[\begin{align}
 p(y_t \mid z_t, \theta) &amp;= \mathcal{N}(y_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the emission parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -629,7 +629,7 @@ determining the number of discrete states.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;avg. validation log prob.&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/0658c1f461f7e1fe2bedeee0e65d1163d2cab953ec2a850a1cbcbd0a1bc09be1.png" src="../../_images/0658c1f461f7e1fe2bedeee0e65d1163d2cab953ec2a850a1cbcbd0a1bc09be1.png" />
+<img alt="../../_images/27e4a7f5cd9795c8352b5fe047b3ae8f02a8357220e7b5755c6bed255c600b3c.png" src="../../_images/27e4a7f5cd9795c8352b5fe047b3ae8f02a8357220e7b5755c6bed255c600b3c.png" />
 </div>
 </div>
 <p>There’s no right answer for how to choose the number of states, but reasonable heuristics include:</p>
@@ -707,10 +707,10 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fb8152351c0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f1efb0baeb0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/8e63e9db350a5dffa3e42a311f1e47f0a9a7daa4a17c28bae85303145b9a293a.png" src="../../_images/8e63e9db350a5dffa3e42a311f1e47f0a9a7daa4a17c28bae85303145b9a293a.png" />
+<img alt="../../_images/0231aa6a98b617f5584e9d9628e1d272a4914a96bce5be1f8d36b1271f2b4c6d.png" src="../../_images/0231aa6a98b617f5584e9d9628e1d272a4914a96bce5be1f8d36b1271f2b4c6d.png" />
 </div>
 </div>
 </section>
@@ -727,7 +727,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/404fbdf92733e6299ae0dc2902548b9aeeb69ca2f636b5182e72ddac603b493f.png" src="../../_images/404fbdf92733e6299ae0dc2902548b9aeeb69ca2f636b5182e72ddac603b493f.png" />
+<img alt="../../_images/6b2a8ea193c2ab2f86c3b1e52a74155b5dc89a2598e380636552d72169f9bc8c.png" src="../../_images/6b2a8ea193c2ab2f86c3b1e52a74155b5dc89a2598e380636552d72169f9bc8c.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -737,7 +737,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/f28f2a516ef8f07b55015b62dfc3b9d63e2977e76f80f829fff11f586946bd09.png" src="../../_images/f28f2a516ef8f07b55015b62dfc3b9d63e2977e76f80f829fff11f586946bd09.png" />
+<img alt="../../_images/d69145039e6e213a4639cae81bdbf8e3f03389ef85b6a37172140f29469c0f1f.png" src="../../_images/d69145039e6e213a4639cae81bdbf8e3f03389ef85b6a37172140f29469c0f1f.png" />
 </div>
 </div>
 <div class="admonition important">
@@ -791,7 +791,7 @@ determining the number of discrete states.</p>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Marginal log probabilities of test data:
                    GaussianHMM:  92.7
            DiagonalGaussianHMM:  109.0
-          SphericalGaussianHMM:  102.3
+          SphericalGaussianHMM:  102.2
    SharedCovarianceGaussianHMM:  103.7
                     True Model:  109.8
 </pre></div>

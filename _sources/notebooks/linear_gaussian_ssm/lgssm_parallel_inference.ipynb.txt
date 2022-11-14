@@ -36,6 +36,7 @@
    },
    "outputs": [],
    "source": [
+    "%%capture\n",
     "try:\n",
     "    import dynamax\n",
     "except ModuleNotFoundError:\n",
