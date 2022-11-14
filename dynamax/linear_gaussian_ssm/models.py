@@ -20,7 +20,7 @@ from dynamax.utils.bijectors import RealToPSDBijector
 from dynamax.utils.distributions import MatrixNormalInverseWishart as MNIW
 from dynamax.utils.distributions import NormalInverseWishart as NIW
 from dynamax.utils.distributions import mniw_posterior_update, niw_posterior_update
-from dynamax.utils.utils import pytree_stack
+from dynamax.utils.utils import pytree_stack, linear_solve
 
 class SuffStatsLGSSM(Protocol):
     """A :class:`NamedTuple` with sufficient statistics for LGSSM parameter estimation."""
@@ -339,7 +339,7 @@ class LinearGaussianSSM(SSM):
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
             # Solve a linear regression given sufficient statistics
-            W = jnp.linalg.solve(ExxT, ExyT).T
+            W = linear_solve(ExxT, ExyT).T
             Sigma = (EyyT - W @ ExyT - ExyT.T @ W.T + W @ ExxT @ W.T) / N
             return W, Sigma
 

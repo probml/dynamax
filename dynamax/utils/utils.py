@@ -196,3 +196,8 @@ def find_permutation(
     overlap = compute_state_overlap(z1, z2)
     _, perm = linear_sum_assignment(-overlap)
     return perm
+
+
+def linear_solve(A,b):
+    """A wrapper for coordinating the linalg solvers used in the library."""
+    return jnp.linalg.solve(A,b)
