@@ -1,8 +1,11 @@
 import jax.numpy as jnp
+from jax import scipy as jsc
 from jax import lax, vmap, value_and_grad
 from jax.scipy.linalg import solve_triangular
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional
+
+from dynamax.utils.utils import linear_solve
 
 
 class ParamsLGSSMInfo(NamedTuple):
@@ -57,7 +60,7 @@ def info_to_moment_form(etas, Lambdas):
         means (N,D)
         covs (N,D,D)
     """
-    means = vmap(jnp.linalg.solve)(Lambdas, etas)
+    means = vmap(lambda A, b:linear_solve(A, b))(Lambdas, etas)
     covs = jnp.linalg.inv(Lambdas)
     return means, covs
 
@@ -79,7 +82,7 @@ def _mvn_info_log_prob(eta, Lambda, x):
     """
     D = len(Lambda)
     lp = x.T @ eta - 0.5 * x.T @ Lambda @ x
-    lp += -0.5 * eta.T @ jnp.linalg.solve(Lambda, eta)
+    lp += -0.5 * eta.T @ linear_solve(Lambda, eta)
     sign, logdet = jnp.linalg.slogdet(Lambda)
     lp += -0.5 * (D * jnp.log(2 * jnp.pi) - sign * logdet)
     return lp
@@ -118,7 +121,7 @@ def _info_predict(eta, Lambda, F, Q_prec, B, u, b):
         eta_pred (D_hid,): predicted precision weighted mean.
         Lambda_pred (D_hid,D_hid): predicted precision.
     """
-    K = jnp.linalg.solve(Lambda + F.T @ Q_prec @ F, F.T @ Q_prec).T
+    K = linear_solve(Lambda + F.T @ Q_prec @ F, F.T @ Q_prec).T
     I = jnp.eye(F.shape[0])
     ## This version should be more stable than:
     # Lambda_pred = (I - K @ F.T) @ Q_prec
@@ -260,7 +263,7 @@ def lgssm_info_smoother(
 
         # This is the information form version of the 'reverse' Kalman gain
         # See Eq 8.11 of Saarka's "Bayesian Filtering and Smoothing"
-        G = jnp.linalg.solve(Q_prec + smoothed_prec_next - pred_prec, Q_prec @ F)
+        G = linear_solve(Q_prec + smoothed_prec_next - pred_prec, Q_prec @ F)
 
         # Compute the smoothed parameter estimates
         smoothed_prec = filtered_prec + F.T @ Q_prec @ (F - G)
@@ -395,18 +398,18 @@ def lds_to_block_tridiag(lds, data, inputs):
     T = len(data)
 
     # diagonal blocks of precision matrix
-    J_diag = jnp.array([jnp.dot(C(t).T, jnp.linalg.solve(R(t), C(t))) for t in range(T)])
+    J_diag = jnp.array([jnp.dot(C(t).T, linear_solve(R(t), C(t))) for t in range(T)])
     J_diag = J_diag.at[0].add(jnp.linalg.inv(Q0))
-    J_diag = J_diag.at[:-1].add(jnp.array([jnp.dot(A(t).T, jnp.linalg.solve(Q(t), A(t))) for t in range(T - 1)]))
+    J_diag = J_diag.at[:-1].add(jnp.array([jnp.dot(A(t).T, linear_solve(Q(t), A(t))) for t in range(T - 1)]))
     J_diag = J_diag.at[1:].add(jnp.array([jnp.linalg.inv(Q(t)) for t in range(0, T - 1)]))
 
     # lower diagonal blocks of precision matrix
-    J_lower_diag = jnp.array([-jnp.linalg.solve(Q(t), A(t)) for t in range(T - 1)])
+    J_lower_diag = jnp.array([-linear_solve(Q(t), A(t)) for t in range(T - 1)])
 
     # linear potential
-    h = jnp.array([jnp.dot(data[t] - D(t) @ inputs[t], jnp.linalg.solve(R(t), C(t))) for t in range(T)])
-    h = h.at[0].add(jnp.linalg.solve(Q0, m0))
-    h = h.at[:-1].add(jnp.array([-jnp.dot(A(t).T, jnp.linalg.solve(Q(t), B(t) @ inputs[t])) for t in range(T - 1)]))
-    h = h.at[1:].add(jnp.array([jnp.linalg.solve(Q(t), B(t) @ inputs[t]) for t in range(T - 1)]))
+    h = jnp.array([jnp.dot(data[t] - D(t) @ inputs[t], linear_solve(R(t), C(t))) for t in range(T)])
+    h = h.at[0].add(linear_solve(Q0, m0))
+    h = h.at[:-1].add(jnp.array([-jnp.dot(A(t).T, linear_solve(Q(t), B(t) @ inputs[t])) for t in range(T - 1)]))
+    h = h.at[1:].add(jnp.array([linear_solve(Q(t), B(t) @ inputs[t]) for t in range(T - 1)]))
 
     return J_diag, J_lower_diag, h

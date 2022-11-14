@@ -5,6 +5,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional
 
+from dynamax.utils.utils import linear_solve
 from dynamax.nonlinear_gaussian_ssm.models import  ParamsNLGSSM
 from dynamax.linear_gaussian_ssm.models import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
 
@@ -129,7 +130,7 @@ def _condition_on(m, P, h, R, lamb, w_mean, w_cov, u, y):
     ll = MVN(pred_mean, pred_cov).log_prob(y)
 
     # Compute filtered mean and covariace
-    K = jnp.linalg.solve(pred_cov, pred_cross.T).T  # Filter gain
+    K = linear_solve(pred_cov, pred_cross.T).T  # Filter gain
     m_cond = m + K @ (y - pred_mean)
     P_cond = P - K @ pred_cov @ K.T
     return ll, m_cond, P_cond
@@ -243,7 +244,7 @@ def unscented_kalman_smoother(
 
         # Prediction step
         m_pred, S_pred, S_cross = _predict(filtered_mean, filtered_cov, f, Q, lamb, w_mean, w_cov, u)
-        G = jnp.linalg.solve(S_pred, S_cross.T).T
+        G = linear_solve(S_pred, S_cross.T).T
 
         # Compute smoothed mean and covariance
         smoothed_mean = filtered_mean + G @ (smoothed_mean_next - m_pred)
