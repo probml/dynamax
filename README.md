@@ -4,10 +4,6 @@
 
 ![Test Status](https://github.com/probml/dynamax/actions/workflows/run_tests.yml/badge.svg?branch=main)
 
-
-***Note: the code is currently under active development, and the API will soon change. Please wait for the official release
-on 11/14/22 before using.***
-
 Dynamax is a library for probabilistic state space models (SSMs) written
 in [JAX](https://github.com/google/jax). It has code for inference
 (state estimation) and learning (parameter estimation) in a variety of
