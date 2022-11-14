@@ -229,6 +229,7 @@ API documentation
    :maxdepth: 3
    :caption: API Documentation
 
+   types
    api
 
 
