@@ -1,8 +1,8 @@
 # Contributing
 
-Contributions (pull requests) are very welcome! Here's how to get started.
+Contributions (pull requests) are very welcome! 
 
----
+## How to contribute
 
 First fork the library on GitHub.
 
@@ -30,6 +30,13 @@ git push
 ```
 
 Finally, open a pull request on GitHub!
+
+## What to contribute
+
+Please see this [list of open issues](https://github.com/probml/dynamax/issues),
+especially ones tagges as "help wanted".
+
+
 
 ## Contributor License Agreement
 

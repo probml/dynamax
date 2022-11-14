@@ -165,6 +165,10 @@ params, lls = hmm.fit_em(params, props, batch_emissions, num_iters=20)
 These examples demonstrate the dynamax models, but we can also call the low-level
 inference code directly.
 
+## Contributing
+
+Please see [this page](https://github.com/probml/dynamax/blob/main/CONTRIBUTING.md) for details
+on how to contribute.
 
 ## About
 Core team: Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, Kevin Murphy.
