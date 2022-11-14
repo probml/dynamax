@@ -4523,7 +4523,7 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <div class="math notranslate nohighlight">
 \[p(z_1) = N(z_1 | m, S)\]</div>
 </p>
-<p>where</p>
+<p>where the model parameters are</p>
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(z_t\)</span> = hidden variables of size <cite>state_dim</cite>,</p></li>
 <li><p><span class="math notranslate nohighlight">\(y_t\)</span> = observed variables of size <cite>emission_dim</cite></p></li>
@@ -4535,6 +4535,7 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <li><p><span class="math notranslate nohighlight">\(m\)</span> = mean of initial state</p></li>
 <li><p><span class="math notranslate nohighlight">\(S\)</span> = covariance matrix of initial state</p></li>
 </ul>
+<p>These parameters of the model are stored in a separate object of type <a class="reference internal" href="#dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM" title="dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParamsNLGSSM</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -4776,7 +4777,7 @@ filtered state estimates.</p>
 <div class="math notranslate nohighlight">
 \[p(z_1) = N(z_1 | m, S)\]</div>
 </p>
-<p>The tuple doubles as a container for the ParameterProperties.</p>
+<p>If you have no inputs, the dynamics and emission functions do not to take <span class="math notranslate nohighlight">\(u_t\)</span> as an argument.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -4785,16 +4786,12 @@ filtered state estimates.</p>
 <li><p><strong>emissions_function</strong> – <span class="math notranslate nohighlight">\(h\)</span></p></li>
 <li><p><strong>emissions_covariance</strong> – <span class="math notranslate nohighlight">\(R\)</span></p></li>
 <li><p><strong>initial_mean</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – <span class="math notranslate nohighlight">\(m\)</span></p></li>
-<li><p><strong>initial_covariance</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em>) – </p></li>
+<li><p><strong>initial_covariance</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em>) – <span class="math notranslate nohighlight">\(S\)</span></p></li>
 <li><p><strong>emission_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>emission_covariance</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Params initial_covariance<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="math notranslate nohighlight">\(S\)</span></p>
-</dd>
 </dl>
-<p>If you have no inputs, the dynamics and emission functions do not to take <span class="math notranslate nohighlight">\(u_t\)</span> as an argument.</p>
 </dd></dl>
 
 </section>
@@ -4817,7 +4814,7 @@ filtered state estimates.</p>
 <div class="math notranslate nohighlight">
 \[p(z_1) = N(z_1 | m, S)\]</div>
 </p>
-<p>where</p>
+<p>where the model parameters are</p>
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(z_t\)</span> = hidden variables of size <cite>state_dim</cite>,</p></li>
 <li><p><span class="math notranslate nohighlight">\(y_t\)</span> = observed variables of size <cite>emission_dim</cite></p></li>
@@ -4829,6 +4826,8 @@ filtered state estimates.</p>
 <li><p><span class="math notranslate nohighlight">\(m\)</span> = mean of initial state</p></li>
 <li><p><span class="math notranslate nohighlight">\(S\)</span> = covariance matrix of initial state</p></li>
 </ul>
+<p>The parameters of the model are stored in a separate object of type <a class="reference internal" href="#dynamax.generalized_gaussian_ssm.ParamsGGSSM" title="dynamax.generalized_gaussian_ssm.ParamsGGSSM"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParamsGGSSM</span></code></a>.</p>
+<p>For example usage, see <a class="reference external" href="https://github.com/probml/dynamax/blob/main/dynamax/generalized_gaussian_ssm/models_test.py">https://github.com/probml/dynamax/blob/main/dynamax/generalized_gaussian_ssm/models_test.py</a>.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.GeneralizedGaussianSSM.emission_shape">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emission_shape</span></span><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.GeneralizedGaussianSSM.emission_shape" title="Permalink to this definition">¶</a></dt>
@@ -5002,9 +5001,9 @@ marginal likelihood and filtered state estimates.</p>
 <h2>Types<a class="headerlink" href="#id11" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="dynamax.generalized_gaussian_ssm.ParamsGGSSM">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ParamsGGSSM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_covariance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_covariance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_mean_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_cov_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_dist=&lt;class</span> <span class="pre">'tensorflow_probability.substrates.jax.distributions.mvn_full_covariance.MultivariateNormalFullCovariance'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dynamax/generalized_gaussian_ssm/models.html#ParamsGGSSM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.ParamsGGSSM" title="Permalink to this definition">¶</a></dt>
-<dd><p>Container for GGSSM parameters. Differs from NLGSSM in terms of emission model.</p>
-<p>The tuple doubles as a container for the ParameterProperties.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ParamsGGSSM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_covariance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_covariance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_mean_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_cov_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_dist=&lt;function</span> <span class="pre">ParamsGGSSM.&lt;lambda&gt;&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dynamax/generalized_gaussian_ssm/models.html#ParamsGGSSM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamax.generalized_gaussian_ssm.ParamsGGSSM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Container for Generalized Gaussian SSM parameters.
+Specifically, it defines the following model:</p>
 <p><div class="math notranslate nohighlight">
 \[p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)\]</div>
 
@@ -5014,22 +5013,22 @@ marginal likelihood and filtered state estimates.</p>
 <div class="math notranslate nohighlight">
 \[p(z_1) = N(z_1 | m, S)\]</div>
 </p>
+<p>This differs from NLGSSM in by allowing a general emission model.
+If you have no inputs, the dynamics and emission functions do not to take <span class="math notranslate nohighlight">\(u_t\)</span> as an argument.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>initial_mean</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – <span class="math notranslate nohighlight">\(m\)</span></p></li>
 <li><p><strong>initial_covariance</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em>) – <span class="math notranslate nohighlight">\(S\)</span></p></li>
-<li><p><strong>dynamics_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>]</em>) – <span class="math notranslate nohighlight">\(f\)</span></p></li>
+<li><p><strong>dynamics_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>]</em>) – <span class="math notranslate nohighlight">\(f\)</span>. This has the signature <span class="math notranslate nohighlight">\(f: Z * U -&gt; Y\)</span> or <span class="math notranslate nohighlight">\(h: Z -&gt; Y\)</span>.</p></li>
 <li><p><strong>dynamics_covariance</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em>) – <span class="math notranslate nohighlight">\(Q\)</span></p></li>
-<li><p><strong>emissions_mean_function</strong> – <span class="math notranslate nohighlight">\(h\)</span></p></li>
-<li><p><strong>emissions_cov_function</strong> – <span class="math notranslate nohighlight">\(R\)</span></p></li>
-<li><p><strong>emission_dist</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em><em>]</em><em>, </em><em>Distribution</em><em>]</em>) – the observation pdf <span class="math notranslate nohighlight">\(q\)</span>. Constructed from specified mean and covariance.</p></li>
-<li><p><strong>emission_mean_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>emission_cov_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>emission_mean_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>]</em><em>]</em>) – <span class="math notranslate nohighlight">\(h\)</span>. This has the signature <span class="math notranslate nohighlight">\(h: Z * U -&gt; Z\)</span> or <span class="math notranslate nohighlight">\(h: Z -&gt; Z\)</span>.</p></li>
+<li><p><strong>emission_cov_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em><em>]</em><em>]</em>) – <span class="math notranslate nohighlight">\(R\)</span>. This has the signature <span class="math notranslate nohighlight">\(R: Z * U -&gt; Z*Z\)</span> or <span class="math notranslate nohighlight">\(R: Z -&gt; Z*Z\)</span>.</p></li>
+<li><p><strong>emission_dist</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em><em>]</em><em>, </em><em>Distribution</em><em>]</em>) – the observation distribution <span class="math notranslate nohighlight">\(q\)</span>. This is a callable that takes the predicted
+mean and covariance of Y, and returns a tfp distribution object: <span class="math notranslate nohighlight">\(q: Z * (Z*Z) -&gt; Dist(Y)\)</span>.</p></li>
 </ul>
 </dd>
 </dl>
-<p>If you have no inputs, the dynamics and emission functions do not to take <span class="math notranslate nohighlight">\(u_t\)</span> as an argument.</p>
 </dd></dl>
 
 </section>

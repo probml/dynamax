@@ -473,6 +473,11 @@
     <span class="n">overlap</span> <span class="o">=</span> <span class="n">compute_state_overlap</span><span class="p">(</span><span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">)</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">perm</span> <span class="o">=</span> <span class="n">linear_sum_assignment</span><span class="p">(</span><span class="o">-</span><span class="n">overlap</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">perm</span></div>
+
+
+<span class="k">def</span> <span class="nf">psd_solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">b</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A wrapper for coordinating the linalg solvers used in the library for psd matrices.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
 </pre></div>
 
               </div>

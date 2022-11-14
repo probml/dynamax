@@ -297,23 +297,26 @@
 
 <div class="viewcode-block" id="ParamsGGSSM"><a class="viewcode-back" href="../../../api.html#dynamax.generalized_gaussian_ssm.ParamsGGSSM">[docs]</a><span class="k">class</span> <span class="nc">ParamsGGSSM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Container for GGSSM parameters. Differs from NLGSSM in terms of emission model.</span>
-<span class="sd">    </span>
-<span class="sd">    The tuple doubles as a container for the ParameterProperties.</span>
+<span class="sd">    Container for Generalized Gaussian SSM parameters. </span>
+<span class="sd">    Specifically, it defines the following model:</span>
 
 <span class="sd">    $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$</span>
 <span class="sd">    $$p(y_t | z_t) = q(y_t | h(z_t, u_t), R(z_t, u_t))$$</span>
 <span class="sd">    $$p(z_1) = N(z_1 | m, S)$$</span>
 
+<span class="sd">    This differs from NLGSSM in by allowing a general emission model.</span>
+<span class="sd">    If you have no inputs, the dynamics and emission functions do not to take $u_t$ as an argument.</span>
+
 <span class="sd">    :param initial_mean: $m$</span>
 <span class="sd">    :param initial_covariance: $S$</span>
-<span class="sd">    :param dynamics_function: $f$</span>
+<span class="sd">    :param dynamics_function: $f$. This has the signature $f: Z * U -&gt; Y$ or $h: Z -&gt; Y$.</span>
 <span class="sd">    :param dynamics_covariance: $Q$</span>
-<span class="sd">    :param emissions_mean_function: $h$</span>
-<span class="sd">    :param emissions_cov_function: $R$</span>
-<span class="sd">    :param emission_dist: the observation pdf $q$. Constructed from specified mean and covariance.</span>
+<span class="sd">    :param emission_mean_function: $h$. This has the signature $h: Z * U -&gt; Z$ or $h: Z -&gt; Z$.</span>
+<span class="sd">    :param emission_cov_function: $R$. This has the signature $R: Z * U -&gt; Z*Z$ or $R: Z -&gt; Z*Z$.</span>
+<span class="sd">    :param emission_dist: the observation distribution $q$. This is a callable that takes the predicted</span>
+<span class="sd">              mean and covariance of Y, and returns a tfp distribution object: $q: Z * (Z*Z) -&gt; Dist(Y)$.</span>
 
-<span class="sd">    If you have no inputs, the dynamics and emission functions do not to take $u_t$ as an argument.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">initial_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">]</span>
@@ -323,7 +326,7 @@
 
     <span class="n">emission_mean_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FnStateToEmission</span><span class="p">,</span> <span class="n">FnStateAndInputToEmission</span><span class="p">]</span>
     <span class="n">emission_cov_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FnStateToEmission2</span><span class="p">,</span> <span class="n">FnStateAndInputToEmission2</span><span class="p">]</span>
-    <span class="n">emission_dist</span><span class="p">:</span> <span class="n">EmissionDistFn</span> <span class="o">=</span> <span class="n">MVN</span></div>
+    <span class="n">emission_dist</span><span class="p">:</span> <span class="n">EmissionDistFn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">MVN</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">cov</span><span class="p">)</span></div>
 
 
 
@@ -337,7 +340,7 @@
 <span class="sd">    $$p(y_t | z_t) = q(y_t | h(z_t, u_t), R(z_t, u_t))$$</span>
 <span class="sd">    $$p(z_1) = N(z_1 | m, S)$$</span>
 
-<span class="sd">    where</span>
+<span class="sd">    where the model parameters are</span>
 
 <span class="sd">    * $z_t$ = hidden variables of size `state_dim`,</span>
 <span class="sd">    * $y_t$ = observed variables of size `emission_dim`</span>
@@ -348,6 +351,10 @@
 <span class="sd">    * $R$ = covariance function for emission (observation) noise</span>
 <span class="sd">    * $m$ = mean of initial state</span>
 <span class="sd">    * $S$ = covariance matrix of initial state</span>
+
+<span class="sd">    The parameters of the model are stored in a separate object of type :class:`ParamsGGSSM`.</span>
+
+<span class="sd">    For example usage, see https://github.com/probml/dynamax/blob/main/dynamax/generalized_gaussian_ssm/models_test.py.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 

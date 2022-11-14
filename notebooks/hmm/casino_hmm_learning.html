@@ -421,11 +421,6 @@ p(\theta) &amp;= \mathrm{Dir}(\pi \mid \alpha 1_K) \prod_{k=1}^K \mathrm{Dir}(A_
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="sample-data-from-true-model">
@@ -609,7 +604,7 @@ emission probs:
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8032d5f17642fc2a22665b547b33157c45283a15261edc9f9d30591daf9c7513.png" src="../../_images/8032d5f17642fc2a22665b547b33157c45283a15261edc9f9d30591daf9c7513.png" />
+<img alt="../../_images/e9640b089e9c5bdd9454b4fe519214f0b72fc5b0b1f3dbeebc825f9f35c93f29.png" src="../../_images/e9640b089e9c5bdd9454b4fe519214f0b72fc5b0b1f3dbeebc825f9f35c93f29.png" />
 </div>
 </div>
 <p>As you can see, stochastic gradient descent converges much more quickly that full-batch gradient descent in this example. Intuitively, that’s because SGD takes multiple steps per <em>epoch</em> (i.e. each complete sweep through the dataset), whereas full-batch gradient descent takes only one.</p>
@@ -727,7 +722,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/16a7e3fe9226a0c0610b20188fe6833922c9c11fc6ac7eb6ac342729c3b99472.png" src="../../_images/16a7e3fe9226a0c0610b20188fe6833922c9c11fc6ac7eb6ac342729c3b99472.png" />
+<img alt="../../_images/179dd43fcac3a85eb5aa6037e5d5277ba1604b93ef924ba91f8f20206ee6eae8.png" src="../../_images/179dd43fcac3a85eb5aa6037e5d5277ba1604b93ef924ba91f8f20206ee6eae8.png" />
 </div>
 </div>
 <p>Not only does EM converge much faster on this example (here, in only a handful of iterations), it also converges to a better estimate of the parameters. Indeed, it essentially matches the loss obtained by the parameters that truly generated the data. We see that its parameter estimates are nearly the same as the true parameters.</p>

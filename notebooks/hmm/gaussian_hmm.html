@@ -360,8 +360,8 @@
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm-cross-validation-and-model-selection">
 <h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Permalink to this heading">¶</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-af591661-7ea4-4830-adea-459729091e56">
-<span class="eqno">(1)<a class="headerlink" href="#equation-af591661-7ea4-4830-adea-459729091e56" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-cdb3ca94-79ac-433a-8639-0032d71aa776">
+<span class="eqno">(1)<a class="headerlink" href="#equation-cdb3ca94-79ac-433a-8639-0032d71aa776" title="Permalink to this equation">¶</a></span>\[\begin{align}
 p(y_t \mid z_t, \theta) &amp;= \mathcal{N}(y_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the emission parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -408,11 +408,6 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">SphericalGaussianHMM</span>
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">SharedCovarianceGaussianHMM</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.plotting</span> <span class="kn">import</span> <span class="n">CMAP</span><span class="p">,</span> <span class="n">COLORS</span><span class="p">,</span> <span class="n">white_to_color_cmap</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -629,7 +624,7 @@ determining the number of discrete states.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;avg. validation log prob.&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/4d74397bfbe71da2810ac8a58630b890a0cd545c47655d59d9ff5d6ef3bc493f.png" src="../../_images/4d74397bfbe71da2810ac8a58630b890a0cd545c47655d59d9ff5d6ef3bc493f.png" />
+<img alt="../../_images/f2ba5a49602ec4805c6d0fdcefab098b30068ac5fbeb653e1adda65e8d8dc4bc.png" src="../../_images/f2ba5a49602ec4805c6d0fdcefab098b30068ac5fbeb653e1adda65e8d8dc4bc.png" />
 </div>
 </div>
 <p>There’s no right answer for how to choose the number of states, but reasonable heuristics include:</p>
@@ -685,7 +680,7 @@ determining the number of discrete states.</p>
 </div><div class="output text_html">
     <div>
       <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [100/100 00:01&lt;00:00]
+      100.00% [100/100 00:02&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -707,10 +702,10 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fb20549ccd0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f1f23281fd0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/ecfaecf09ca71b86764f8b7e46530c6202134e717fbfab1cf26ee2e2620ab397.png" src="../../_images/ecfaecf09ca71b86764f8b7e46530c6202134e717fbfab1cf26ee2e2620ab397.png" />
+<img alt="../../_images/126eedefabf0aa9b7fdaefc23f59041ddca5615a6dc9d3d8dda1dea2cc6ca2e7.png" src="../../_images/126eedefabf0aa9b7fdaefc23f59041ddca5615a6dc9d3d8dda1dea2cc6ca2e7.png" />
 </div>
 </div>
 </section>
@@ -727,7 +722,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8a31234d498063c0e6b7ca42aa79b8561749ac207871ecc5e652614fdcac8ad8.png" src="../../_images/8a31234d498063c0e6b7ca42aa79b8561749ac207871ecc5e652614fdcac8ad8.png" />
+<img alt="../../_images/dafc65514e1e4bd45148b177fb73c73d9d4c016e3a8ffaf530b2367ef19cdd38.png" src="../../_images/dafc65514e1e4bd45148b177fb73c73d9d4c016e3a8ffaf530b2367ef19cdd38.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -737,7 +732,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/56606fdeff9c85e203420e69f55f917150b318c3081a066241f4368e8b360dd1.png" src="../../_images/56606fdeff9c85e203420e69f55f917150b318c3081a066241f4368e8b360dd1.png" />
+<img alt="../../_images/0b5b96715011ec2089a19ab4d88b9243ac307594ea709f919eecdab8f46d4374.png" src="../../_images/0b5b96715011ec2089a19ab4d88b9243ac307594ea709f919eecdab8f46d4374.png" />
 </div>
 </div>
 <div class="admonition important">
