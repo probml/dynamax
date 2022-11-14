@@ -103,9 +103,8 @@ or future observations,
 where h is the forecast horizon.
 (Note that by using a hidden state  to represent the past observations,
 the model can have "infinite" memory, unlike a standard auto-regressive model.)
-All of these computations can be done efficiently using our library,
-as we discuss below.
-In addition, we can estimate the parameters of the transition and emission models,
+All of these computations can be done efficiently using Dynamax.
+Moreover, you can use Dynamax to estimate the parameters of the transition and emission models,
 as we discuss below.
 
 More information can be found in these books:
@@ -113,10 +112,8 @@ More information can be found in these books:
    * "Machine Learning: Advanced Topics", K. Murphy, MIT Press 2023. Available at https://probml.github.io/pml-book/book2.html.
    * "Bayesian Filtering and Smoothing", S. Särkkä, Cambridge University Press, 2013. Available at https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
 
-
-
-Example usage
----------------
+Quickstart
+----------
 
 Dynamax includes classes for many kinds of SSM.
 You can use these models to simulate data, and you can fit the models using standard
@@ -178,8 +175,11 @@ You can also call the low-level inference code (e.g. :meth:`hmm_smoother`) direc
 without first having to construct the HMM object.
 
 
-Notebooks
-==================
+Tutorials
+=========
+
+The tutorials below will introduce you to state space models in Dynamax.
+If you're new to these models, we recommend you start at the top and work your way through!
 
 .. toctree::
    :maxdepth: 1
