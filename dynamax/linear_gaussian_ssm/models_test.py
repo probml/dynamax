@@ -8,7 +8,7 @@ from dynamax.utils.utils import monotonically_increasing, has_tpu
 NUM_TIMESTEPS = 100
 
 CONFIGS = [
-    (LinearGaussianSSM, dict(state_dim=2, emission_dim=10), None),
+    (LinearGaussianSSM, dict(state_dim=2, emission_dim=3), None),
     (LinearGaussianConjugateSSM, dict(state_dim=2, emission_dim=10), None),
 ]
 

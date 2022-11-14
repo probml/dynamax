@@ -21,7 +21,7 @@ class PropertySet(Protocol):
     """A matching :class:`NamedTuple` with :class:`ParameterProperties` stored in the leaf nodes."""
     pass
 
-@typechecker
+#@typechecker
 @register_pytree_node_class
 class ParameterProperties:
     """A PyTree containing parameter metadata (properties).
@@ -47,7 +47,7 @@ class ParameterProperties:
     def tree_unflatten(cls, aux_data, children):
         return cls(*aux_data)
 
-@typechecker # fails on ParameterSet
+#@typechecker 
 def to_unconstrained(params: ParameterSet, props: PropertySet) -> ParameterSet:
     """Convert the constrained parameters to unconstrained form.
 
@@ -67,7 +67,7 @@ def to_unconstrained(params: ParameterSet, props: PropertySet) -> ParameterSet:
     is_leaf = lambda node: isinstance(node, (ParameterProperties,))
     return tree_map(to_unc, params, props, is_leaf=is_leaf)
 
-@typechecker
+#@typechecker
 def from_unconstrained(unc_params: ParameterSet, props: PropertySet) -> ParameterSet:
     """Convert the unconstrained parameters to constrained form.
 

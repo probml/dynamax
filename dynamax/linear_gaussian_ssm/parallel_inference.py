@@ -6,8 +6,9 @@ import jax.scipy as jsc
 from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
+from copy import deepcopy
 
-from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
+from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM, ParamsLGSSMUntyped
 
 def _make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
@@ -60,7 +61,14 @@ def _make_associative_filtering_elements(params, emissions):
         return A, b, C, J, eta, logZ
 
     first_elems = _first_filtering_element(params, emissions[0])
-    generic_elems = vmap(_generic_filtering_element, (None, 0))(params, emissions[1:])
+
+    # causes run-time type failure because params get replicated to wrong shape
+    #generic_elems = vmap(_generic_filtering_element, (None, 0))(params, emissions[1:])
+
+    def f(y):
+        return _generic_filtering_element(params, y)
+    generic_elems = vmap(f)(emissions[1:])
+    
     combined_elems = tuple(jnp.concatenate((first_elm[None,...], gen_elm))
                            for first_elm, gen_elm in zip(first_elems, generic_elems))
     return combined_elems
@@ -76,6 +84,7 @@ def lgssm_filter(
     Note: This function does not yet handle `inputs` to the system.
     """
     #TODO: Add input handling.
+
     initial_elements = _make_associative_filtering_elements(params, emissions)
 
     @vmap
@@ -136,9 +145,15 @@ def _make_associative_smoothing_elements(params, filtered_means, filtered_covari
         return E, g, L
 
     last_elems = _last_smoothing_element(filtered_means[-1], filtered_covariances[-1])
-    generic_elems = vmap(_generic_smoothing_element, (None, 0, 0))(
-        params, filtered_means[:-1], filtered_covariances[:-1]
-        )
+    
+    # causes run-time type failure
+    #generic_elems = vmap(_generic_smoothing_element, (None, 0, 0))(
+    #    params, filtered_means[:-1], filtered_covariances[:-1]) 
+    
+    def f(m, C):
+        return _generic_smoothing_element(params, m, C)
+    generic_elems = vmap(f)(filtered_means[:-1], filtered_covariances[:-1])
+
     combined_elems = tuple(jnp.append(gen_elm, last_elm[None,:], axis=0)
                            for gen_elm, last_elm in zip(generic_elems, last_elems))
     return combined_elems
@@ -154,6 +169,7 @@ def lgssm_smoother(
 
     Note: This function does not yet handle `inputs` to the system.
     """
+
     filtered_posterior = lgssm_filter(params, emissions)
     filtered_means = filtered_posterior.filtered_means
     filtered_covs = filtered_posterior.filtered_covariances

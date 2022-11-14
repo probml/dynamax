@@ -28,7 +28,14 @@ class ParamsLGSSMInitial(NamedTuple):
 
     """
     mean: Union[Float[Array, "state_dim"], ParameterProperties]
-    cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
+    #cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
+    # Because we may map from constrained to unconstrained form, the covariance may also be a 1d vector.
+    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
+
+
+class ParamsLGSSMInitialUntyped(NamedTuple):
+    mean: Union[Float[Array, "state_dim"], ParameterProperties]
+    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
 
 @jaxtyped
 @typechecker
@@ -45,10 +52,16 @@ class ParamsLGSSMDynamics(NamedTuple):
     :param cov: dynamics covariance $Q$
 
     """
-    weights: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
-    bias: Union[Float[Array, "state_dim"], ParameterProperties]
-    input_weights: Union[Float[Array, "state_dim input_dim"], ParameterProperties]
-    cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
+    weights: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], ParameterProperties]
+    bias: Union[Float[Array, "state_dim"], Float[Array, "ntime state_dim"], ParameterProperties]
+    input_weights: Union[Float[Array, "state_dim input_dim"], Float[Array, "ntime state_dim input_dim"], ParameterProperties]
+    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
+
+class ParamsLGSSMDynamicsUntyped(NamedTuple):
+    weights: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], ParameterProperties]
+    bias: Union[Float[Array, "state_dim"], Float[Array, "ntime state_dim"], ParameterProperties]
+    input_weights: Union[Float[Array, "state_dim input_dim"], Float[Array, "ntime state_dim input_dim"], ParameterProperties]
+    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
 
 @jaxtyped
 @typechecker
@@ -65,10 +78,16 @@ class ParamsLGSSMEmissions(NamedTuple):
     :param cov: emission covariance $R$
 
     """
-    weights: Union[Float[Array, "emission_dim state_dim"], ParameterProperties]
-    bias: Union[Float[Array, "emission_dim"], ParameterProperties]
-    input_weights: Union[Float[Array, "emission_dim input_dim"], ParameterProperties]
-    cov: Union[Float[Array, "emission_dim emission_dim"], ParameterProperties]
+    weights: Union[Float[Array, "emission_dim state_dim"], Float[Array, "ntime emission_dim state_dim"], ParameterProperties]
+    bias: Union[Float[Array, "emission_dim"], Float[Array, "ntime emission_dim"], ParameterProperties]
+    input_weights: Union[Float[Array, "emission_dim input_dim"], Float[Array, "ntime emission_dim input_dim"], ParameterProperties]
+    cov: Union[Float[Array, "emission_dim emission_dim"], Float[Array, "ntime emission_dim emission_dim"], Float[Array, "emission_dim_triu"], ParameterProperties]
+
+class ParamsLGSSMEmissionsUntyped(NamedTuple):
+    weights: Union[Float[Array, "emission_dim state_dim"], Float[Array, "ntime emission_dim state_dim"], ParameterProperties]
+    bias: Union[Float[Array, "emission_dim"], Float[Array, "ntime emission_dim"], ParameterProperties]
+    input_weights: Union[Float[Array, "emission_dim input_dim"], Float[Array, "ntime emission_dim input_dim"], ParameterProperties]
+    cov: Union[Float[Array, "emission_dim emission_dim"], Float[Array, "ntime emission_dim emission_dim"], Float[Array, "emission_dim_triu"], ParameterProperties]
 
 
 @jaxtyped
@@ -85,6 +104,11 @@ class ParamsLGSSM(NamedTuple):
     dynamics: ParamsLGSSMDynamics
     emissions: ParamsLGSSMEmissions
 
+
+class ParamsLGSSMUntyped(NamedTuple):
+    initial: ParamsLGSSMInitialUntyped
+    dynamics: ParamsLGSSMDynamicsUntyped
+    emissions: ParamsLGSSMEmissionsUntyped
 
 @jaxtyped
 @typechecker
