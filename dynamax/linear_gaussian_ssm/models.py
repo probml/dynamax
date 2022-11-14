@@ -9,8 +9,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 
 
 from jaxtyping import Array, Float, jaxtyped
-#from beartype import beartype as typechecker
-from typeguard import typechecked as typechecker
+
 from typing import Any, Optional, Tuple, Union
 from typing_extensions import Protocol
 
@@ -31,13 +30,8 @@ class SuffStatsLGSSM(Protocol):
     """A :class:`NamedTuple` with sufficient statistics for LGSSM parameter estimation."""
     pass
 
-# Adding jaxtyping decorator causes this error
-#class LinearGaussianConjugateSSM(LinearGaussianSSM):
-#E   TypeError: __init__() takes 2 positional arguments but 4 were give
-# See https://github.com/google/jaxtyping/issues/43
 
-#@jaxtyped
-@typechecker
+
 class LinearGaussianSSM(SSM):
     r"""
     Linear Gaussian State Space Model.
@@ -381,8 +375,6 @@ class LinearGaussianSSM(SSM):
         return params, m_step_state
 
 
-#@jaxtyped
-@typechecker
 class LinearGaussianConjugateSSM(LinearGaussianSSM):
     r"""
     Linear Gaussian State Space Model with conjugate priors for the model parameters.
