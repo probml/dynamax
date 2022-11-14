@@ -13,17 +13,31 @@ class ParamsStandardHMMTransitions(NamedTuple):
 
 
 class StandardHMMTransitions(HMMTransitions):
-    """Standard model for HMM transitions.
+    r"""Standard model for HMM transitions.
 
-    We place a symmetric Dirichlet prior over the rows of the transition matrix.
+    We place a Dirichlet prior over the rows of the transition matrix $A$,
+
+    $$A_k \sim \mathrm{Dir}(\beta 1_K + \kappa e_k)$$
+
+    where
+
+    * $1_K$ denotes a length-$K$ vector of ones,
+    * $e_k$ denotes the one-hot vector with a 1 in the $k$-th position,
+    * $\beta \in \mathbb{R}_+$ is the concentration, and
+    * $\kappa \in \mathbb{R}_+$ is the `stickiness`.
+
+
+
     """
-    def __init__(self, num_states, transition_matrix_concentration=1.1):
+    def __init__(self, num_states, concentration=1.1, stickiness=0.0):
         """
         Args:
             transition_matrix[j,k]: prob(hidden(t) = k | hidden(t-1)j)
         """
         self.num_states = num_states
-        self.transition_matrix_concentration = transition_matrix_concentration * jnp.ones(num_states)
+        self.concentration = \
+            concentration * jnp.ones((num_states, num_states)) + \
+                stickiness * jnp.eye(num_states)
 
     def distribution(self, params, state, inputs=None):
         return tfd.Categorical(probs=params.transition_matrix[state])
@@ -41,8 +55,7 @@ class StandardHMMTransitions(HMMTransitions):
         """
         if transition_matrix is None:
             this_key, key = jr.split(key)
-            transition_matrix = tfd.Dirichlet(self.transition_matrix_concentration)\
-                .sample(seed=this_key, sample_shape=(self.num_states,))
+            transition_matrix = tfd.Dirichlet(self.concentration).sample(seed=this_key)
 
         # Package the results into dictionaries
         params = ParamsStandardHMMTransitions(transition_matrix=transition_matrix)
@@ -50,7 +63,7 @@ class StandardHMMTransitions(HMMTransitions):
         return params, props
 
     def log_prior(self, params):
-        return tfd.Dirichlet(self.transition_matrix_concentration).log_prob(params.transition_matrix).sum()
+        return tfd.Dirichlet(self.concentration).log_prob(params.transition_matrix).sum()
 
     def _compute_transition_matrices(self, params, inputs=None):
         return params.transition_matrix
@@ -67,6 +80,6 @@ class StandardHMMTransitions(HMMTransitions):
                 transition_matrix = jnp.array([[1.0]])
             else:
                 expected_trans_counts = batch_stats.sum(axis=0)
-                transition_matrix = tfd.Dirichlet(self.transition_matrix_concentration + expected_trans_counts).mode()
+                transition_matrix = tfd.Dirichlet(self.concentration + expected_trans_counts).mode()
             params = params._replace(transition_matrix=transition_matrix)
         return params, m_step_state

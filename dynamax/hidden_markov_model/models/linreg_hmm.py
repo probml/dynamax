@@ -160,6 +160,7 @@ class LinearRegressionHMM(HMM):
     :param emission_dim: emission dimension $N$
     :param initial_probs_concentration: $\alpha$
     :param transition_matrix_concentration: $\beta$
+    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
 
     """
     def __init__(self,
@@ -167,11 +168,12 @@ class LinearRegressionHMM(HMM):
                  input_dim: int,
                  emission_dim: int,
                  initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1):
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_stickiness: Scalar=0.0):
         self.emission_dim = emission_dim
         self.input_dim = input_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = LinearRegressionHMMEmissions(num_states, input_dim, emission_dim)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 

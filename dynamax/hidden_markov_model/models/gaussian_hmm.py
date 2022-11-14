@@ -579,6 +579,7 @@ class GaussianHMM(HMM):
     :param emission_dim: number of conditionally independent emissions $N$
     :param initial_probs_concentration: $\alpha$
     :param transition_matrix_concentration: $\beta$
+    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_concentration: $\kappa_0$
     :param emission_prior_extra_df: $\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\\nu_0 = N$.
@@ -589,13 +590,14 @@ class GaussianHMM(HMM):
                  emission_dim: int,
                  initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
                  transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_stickiness: Scalar=0.0,
                  emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
                  emission_prior_concentration: Scalar=1e-4,
                  emission_prior_scale: Union[Scalar, Float[Array, "emission_dim emission_dim"]]=1e-4,
                  emission_prior_extra_df: Scalar=0.1):
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = GaussianHMMEmissions(num_states, emission_dim,
                                                   emission_prior_mean=emission_prior_mean,
                                                   emission_prior_concentration=emission_prior_concentration,
@@ -670,6 +672,7 @@ class DiagonalGaussianHMM(HMM):
     :param emission_dim: number of conditionally independent emissions $N$
     :param initial_probs_concentration: $\alpha$
     :param transition_matrix_concentration: $\beta$
+    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_mean_concentration: $\kappa_0$
     :param emission_prior_concentration: $\alpha_0$
@@ -680,6 +683,7 @@ class DiagonalGaussianHMM(HMM):
                  emission_dim: int,
                  initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
                  transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_stickiness: Scalar=0.0,
                  emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
                  emission_prior_mean_concentration: Union[Scalar, Float[Array, "emission_dim"]]=1e-4,
                  emission_prior_concentration: Scalar=1.1,
@@ -687,7 +691,7 @@ class DiagonalGaussianHMM(HMM):
 
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = DiagonalGaussianHMMEmissions(
             num_states, emission_dim,
             emission_prior_mean=emission_prior_mean,
@@ -761,6 +765,7 @@ class SphericalGaussianHMM(HMM):
     :param emission_dim: number of conditionally independent emissions $N$
     :param initial_probs_concentration: $\alpha$
     :param transition_matrix_concentration: $\beta$
+    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_mean_covariance: $\Sigma_0$
     :param emission_var_concentration: $\alpha_0$
@@ -773,6 +778,7 @@ class SphericalGaussianHMM(HMM):
                  emission_dim: int,
                  initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
                  transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_stickiness: Scalar=0.0,
                  emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
                  emission_prior_mean_covariance: Union[Scalar, Float[Array, "emission_dim emission_dim"]]=1.0,
                  emission_var_concentration: Scalar=1.1,
@@ -781,7 +787,7 @@ class SphericalGaussianHMM(HMM):
                  m_step_num_iters: int=50):
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = SphericalGaussianHMMEmissions(
             num_states, emission_dim,
             emission_prior_mean=emission_prior_mean,
@@ -855,6 +861,7 @@ class SharedCovarianceGaussianHMM(HMM):
     :param emission_dim: number of conditionally independent emissions $N$
     :param initial_probs_concentration: $\alpha$
     :param transition_matrix_concentration: $\beta$
+    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
     :param emission_prior_mean: $\mu_0$
     :param emission_prior_concentration: $\kappa_0$
     :param emission_prior_scale: $\Psi_0$
@@ -863,16 +870,17 @@ class SharedCovarianceGaussianHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1,
-                 emission_prior_mean=0.0,
-                 emission_prior_concentration=1e-4,
-                 emission_prior_scale=1e-4,
-                 emission_prior_extra_df=0.1):
+                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_stickiness: Scalar=0.0,
+                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_concentration: Scalar=1e-4,
+                 emission_prior_scale: Scalar=1e-4,
+                 emission_prior_extra_df: Scalar=0.1):
 
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = SharedCovarianceGaussianHMMEmissions(
             num_states, emission_dim,
             emission_prior_mean=emission_prior_mean,
@@ -948,6 +956,7 @@ class LowRankGaussianHMM(HMM):
     :param emission_rank: rank of the low rank factors, $M$
     :param initial_probs_concentration: $\alpha$
     :param transition_matrix_concentration: $\beta$
+    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
     :param emission_diag_factor_concentration: $\alpha_0$
     :param emission_diag_factor_rate: $\beta_0$
     :param m_step_optimizer: ``optax`` optimizer, like Adam.
@@ -957,16 +966,17 @@ class LowRankGaussianHMM(HMM):
     def __init__(self, num_states: int,
                  emission_dim: int,
                  emission_rank: int,
-                 initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1,
-                 emission_diag_factor_concentration=1.1,
-                 emission_diag_factor_rate=1.1,
-                 m_step_optimizer=optax.adam(1e-2),
-                 m_step_num_iters=50):
+                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_stickiness: Scalar=0.0,
+                 emission_diag_factor_concentration: Scalar=1.1,
+                 emission_diag_factor_rate: Scalar=1.1,
+                 m_step_optimizer: optax.GradientTransformation=optax.adam(1e-2),
+                 m_step_num_iters: int=50):
 
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = LowRankGaussianHMMEmissions(
             num_states, emission_dim, emission_rank,
             emission_diag_factor_concentration=emission_diag_factor_concentration,

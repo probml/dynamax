@@ -56,9 +56,14 @@ where $\alpha$ is the prior concentration on the initial distribution $\pi_1$.
 **Transition distribution:**
 
 $$p(z_t \mid z_{t-1}, \theta) = \mathrm{Cat}(z_t \mid A_{z_{t-1}})$$
-$$p(A) = \prod_{k=1}^K \mathrm{Dir}(A_k \mid \beta 1_K)$$
+$$p(A) = \prod_{k=1}^K \mathrm{Dir}(A_k \mid \beta 1_K + \kappa e_k)$$
 
-where $\beta$ is the prior concentration on the rows of the transition matrix $A$.
+where $\beta$ is the prior concentration on the rows of the transition matrix $A$
+and $\kappa$ is the `stickiness`, which biases the prior toward transition matrices
+with larger values along the diagonal.
+
+These hyperparameters can be specified in the HMM constructors, and they
+default to weak priors without any stickiness.
 
 
 .. autoclass:: dynamax.hidden_markov_model.BernoulliHMM

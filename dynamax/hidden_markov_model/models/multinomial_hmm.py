@@ -1,14 +1,19 @@
+from typing import NamedTuple, Optional, Tuple, Union
+
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-from jaxtyping import Float, Array
-from dynamax.parameters import ParameterProperties, ParameterSet, PropertySet
+from jaxtyping import Array, Float
+
 from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions
-from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
-from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
+from dynamax.hidden_markov_model.models.initial import ParamsStandardHMMInitialState
+from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState
+from dynamax.hidden_markov_model.models.transitions import ParamsStandardHMMTransitions
+from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions
+from dynamax.parameters import ParameterProperties, ParameterSet, PropertySet
+from dynamax.types import Scalar
 from dynamax.utils.utils import pytree_sum
-from typing import NamedTuple, Optional, Tuple, Union
 
 
 class ParamsMultinomialHMMEmissions(NamedTuple):
@@ -101,6 +106,7 @@ class MultinomialHMM(HMM):
     :param num_trials: number of multinomial trials $R$
     :param initial_probs_concentration: $\alpha$
     :param transition_matrix_concentration: $\beta$
+    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
     :param emission_prior_concentration: $\gamma$
 
     """
@@ -109,14 +115,15 @@ class MultinomialHMM(HMM):
                  emission_dim,
                  num_classes,
                  num_trials,
-                 initial_probs_concentration=1.1,
-                 transition_matrix_concentration=1.1,
-                 emission_prior_concentration=1.1):
+                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_stickiness: Scalar=0.0,
+                 emission_prior_concentration: Scalar=1.1):
         self.emission_dim = emission_dim
         self.num_classes = num_classes
         self.num_trials = num_trials
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = MultinomialHMMEmissions(num_states, emission_dim, num_classes, num_trials, emission_prior_concentration=emission_prior_concentration)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 

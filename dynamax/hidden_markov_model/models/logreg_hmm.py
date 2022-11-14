@@ -110,6 +110,7 @@ class LogisticRegressionHMM(HMM):
     :param input_dim: input dimension $M$
     :param initial_probs_concentration: $\alpha$
     :param transition_matrix_concentration: $\beta$
+    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
     :param emission_matrices_scale: $\varsigma$
     :param m_step_optimizer: ``optax`` optimizer, like Adam.
     :param m_step_num_iters: number of optimizer steps per M-step.
@@ -120,12 +121,13 @@ class LogisticRegressionHMM(HMM):
                  input_dim: int,
                  initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
                  transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_stickiness: Scalar=0.0,
                  emission_matrices_scale: Scalar=1e8,
                  m_step_optimizer: optax.GradientTransformation=optax.adam(1e-2),
                  m_step_num_iters: int=50):
         self.inputs_dim = input_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = LogisticRegressionHMMEmissions(num_states, input_dim, emission_matrices_scale=emission_matrices_scale, m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 

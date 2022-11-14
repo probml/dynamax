@@ -97,6 +97,7 @@ class LinearAutoregressiveHMM(HMM):
     :param num_lags: number of lags $L$
     :param initial_probs_concentration: $\alpha$
     :param transition_matrix_concentration: $\beta$
+    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
 
     """
     def __init__(self,
@@ -104,12 +105,12 @@ class LinearAutoregressiveHMM(HMM):
                  emission_dim: int,
                  num_lags: int=1,
                  initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1
-                 ):
+                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 transition_matrix_stickiness: Scalar=0.0):
         self.emission_dim = emission_dim
         self.num_lags = num_lags
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, transition_matrix_concentration=transition_matrix_concentration)
+        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = LinearAutoregressiveHMMEmissions(num_states, emission_dim, num_lags=num_lags)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
