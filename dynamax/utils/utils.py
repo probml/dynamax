@@ -198,6 +198,6 @@ def find_permutation(
     return perm
 
 
-def linear_solve(A,b):
-    """A wrapper for coordinating the linalg solvers used in the library."""
+def psd_solve(A,b):
+    """A wrapper for coordinating the linalg solvers used in the library for psd matrices."""
     return jnp.linalg.solve(A,b)

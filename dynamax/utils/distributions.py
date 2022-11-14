@@ -6,7 +6,7 @@ from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
-from dynamax.utils.utils import linear_solve
+from dynamax.utils.utils import psd_solve
 
 
 class InverseWishart(tfd.TransformedDistribution):
@@ -319,7 +319,7 @@ def mniw_posterior_update(mniw_prior, sufficient_stats):
     Sxx = V_pri + SxxT
     Sxy = SxyT + V_pri @ M_pri.T
     Syy = SyyT + M_pri @ V_pri @ M_pri.T
-    M_pos = linear_solve(Sxx, Sxy).T
+    M_pos = psd_solve(Sxx, Sxy).T
     V_pos = Sxx
     nu_pos = nu_pri + N
     Psi_pos = Psi_pri + Syy - M_pos @ Sxy
