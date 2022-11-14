@@ -8,6 +8,7 @@ from functools import partial
 from typing import Callable, Optional, Tuple, Union, NamedTuple
 from jaxtyping import Int, Float, Array
 
+from dynamax.types import Scalar, PRNGKey
 
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 
@@ -28,7 +29,7 @@ class HMMPosteriorFiltered(NamedTuple):
     :param predicted_probs: $p(z_t \mid y_{1:t-1}, \theta)$ for $t=1,\ldots,T$
 
     """
-    marginal_loglik: float
+    marginal_loglik: Scalar
     filtered_probs: Float[Array, "num_timesteps num_states"]
     predicted_probs: Float[Array, "num_timesteps num_states"]
 
@@ -45,7 +46,7 @@ class HMMPosterior(NamedTuple):
     :param initial_probs: $p(z_1 \mid y_{1:T}, \theta)$ (also present in `smoothed_probs` but here for convenience)
     :param trans_probs: $p(z_t, z_{t+1} \mid y_{1:T}, \theta)$ for $t=1,\ldots,T-1$. (If the transition matrix is fixed, these probabilities may be summed over $t$. See note above.)
     """
-    marginal_loglik: float
+    marginal_loglik: Scalar
     filtered_probs: Float[Array, "num_timesteps num_states"]
     predicted_probs: Float[Array, "num_timesteps num_states"]
     smoothed_probs: Float[Array, "num_timesteps num_states"]

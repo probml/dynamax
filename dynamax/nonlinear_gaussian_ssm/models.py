@@ -19,9 +19,9 @@ FnStateAndInputToEmission = Callable[ [Float[Array, "state_dim"], Float[Array, "
 class ParamsNLGSSM(NamedTuple):
     """Parameters for a NLGSSM model.
 
-    $$p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)$$
-    $$p(y_t | x_t) = N(y_t | h(x_t, u_t), R_t)$$
-    $$p(x_1) = N(x_1 | m, S)$$
+    $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$
+    $$p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)$$
+    $$p(z_1) = N(z_1 | m, S)$$
 
     The tuple doubles as a container for the ParameterProperties.
 
@@ -50,13 +50,13 @@ class NonlinearGaussianSSM(SSM):
 
     The model is defined as follows
 
-    $$p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)$$
-    $$p(y_t | x_t) = N(y_t | h(x_t, u_t), R_t)$$
-    $$p(x_1) = N(x_1 | m, S)$$
+    $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$
+    $$p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)$$
+    $$p(z_1) = N(z_1 | m, S)$$
 
     where
 
-    * $x_t$ = hidden variables of size `state_dim`,
+    * $z_t$ = hidden variables of size `state_dim`,
     * $y_t$ = observed variables of size `emission_dim`
     * $u_t$ = input covariates of size `input_dim` (defaults to 0).
     * $f$ = dynamics (transition) function

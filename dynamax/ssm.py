@@ -23,6 +23,9 @@ class Posterior(Protocol):
     """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes."""
     pass
 
+class SuffStatsSSM(Protocol):
+    """A :class:`NamedTuple` with sufficient statics stored as :class:`jax.DeviceArray` in the leaf nodes."""
+    pass
 
 class SSM(ABC):
     r"""A base class for state space models. Such models consist of parameters, which
@@ -91,7 +94,7 @@ class SSM(ABC):
             inputs: optional  inputs  $u_t$
 
         Returns:
-            distribution over initial latent state, $p(x_1 \mid \theta)$.
+            distribution over initial latent state, $p(z_1 \mid \theta)$.
 
         """
         raise NotImplementedError
@@ -107,11 +110,11 @@ class SSM(ABC):
 
         Args:
             params: model parameters $\theta$
-            state: current latent state $x_t$
+            state: current latent state $z_t$
             inputs: current inputs  $u_t$
 
         Returns:
-            conditional distribution of next latent state $p(x_{t+1} \mid x_t, u_t, \theta)$.
+            conditional distribution of next latent state $p(z_{t+1} \mid z_t, u_t, \theta)$.
 
         """
         raise NotImplementedError
@@ -127,11 +130,11 @@ class SSM(ABC):
 
         Args:
             params: model parameters $\theta$
-            state: current latent state $x_t$
+            state: current latent state $z_t$
             inputs: current inputs  $u_t$
 
         Returns:
-            conditional distribution of current emission $p(y_t \mid x_t, u_t, \theta)$
+            conditional distribution of current emission $p(y_t \mid z_t, u_t, \theta)$
 
         """
         raise NotImplementedError
@@ -173,7 +176,7 @@ class SSM(ABC):
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> Tuple[Float[Array, "num_timesteps state_dim"],
               Float[Array, "num_timesteps emission_dim"]]:
-        r"""Sample states $x_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.
+        r"""Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.
 
         Args:
             params: model parameters $\theta$
@@ -303,7 +306,7 @@ class SSM(ABC):
         params: ParameterSet,
         emissions: Float[Array, "num_timesteps emission_dim"],
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> PyTree:
+    ) -> Tuple[SuffStatsSSM, Scalar]:
         r"""Perform an E-step to compute expected sufficient statistics under the posterior, $p(z_{1:T} \mid y_{1:T}, u_{1:T}, \theta)$.
 
         Args:
@@ -321,7 +324,7 @@ class SSM(ABC):
         self,
         params: ParameterSet,
         props: PropertySet,
-        batch_stats: PyTree,
+        batch_stats: SuffStatsSSM,
         m_step_state: Any
     ) -> ParameterSet:
         r"""Perform an M-step to find parameters that maximize the expected log joint probability.

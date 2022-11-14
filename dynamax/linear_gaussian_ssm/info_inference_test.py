@@ -118,7 +118,9 @@ class TestInfoKFLinReg:
 
     n_obs = 21
     x = jnp.linspace(0, 20, n_obs)
-    X = jnp.column_stack((jnp.ones_like(x), x))  # Design matrix.
+    X = jnp.column_stack((jnp.ones_like(x), x))  # Design matrix. (N,2)
+    state_dim = X.shape[1] # 2
+    emission_dim = 1
     F = jnp.eye(2)
     Q = jnp.zeros((2, 2))  # No parameter drift.
     Q_prec = jnp.diag(jnp.repeat(1e32, 2))  # Can't use infinite precision.
@@ -135,11 +137,12 @@ class TestInfoKFLinReg:
              -2.264 , -0.4508,  1.1672,  6.6524,  4.1452,  5.2677,
               6.3403,  9.6264, 14.7842])
     inputs = jnp.zeros((len(y), 1))
+    input_dim = inputs.shape[1]
 
     lgssm_moment = ParamsLGSSM(
             initial=ParamsLGSSMInitial(mean=mu0,cov=Sigma0),
-            dynamics=ParamsLGSSMDynamics(weights=F, bias=jnp.zeros(1), input_weights=jnp.zeros((mu0.shape[0], 1)), cov=Q),
-            emissions=ParamsLGSSMEmissions(weights=X[:, None, :], bias=jnp.zeros(1), input_weights=jnp.zeros(1), cov=R)
+            dynamics=ParamsLGSSMDynamics(weights=F, bias=jnp.zeros(state_dim), input_weights=jnp.zeros((state_dim, input_dim)), cov=Q),
+            emissions=ParamsLGSSMEmissions(weights=X[:, None, :], bias=jnp.zeros(emission_dim), input_weights=jnp.zeros((emission_dim, input_dim)), cov=R)
             )
 
     lgssm_info = ParamsLGSSMInfo(

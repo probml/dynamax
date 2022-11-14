@@ -23,7 +23,8 @@ class ParamsLGSSMInitial(NamedTuple):
 
     """
     mean: Union[Float[Array, "state_dim"], ParameterProperties]
-    cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
+    # unconstrained parameters are stored as a vector.
+    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
 
 
 class ParamsLGSSMDynamics(NamedTuple):
@@ -39,10 +40,10 @@ class ParamsLGSSMDynamics(NamedTuple):
     :param cov: dynamics covariance $Q$
 
     """
-    weights: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
-    bias: Union[Float[Array, "state_dim"], ParameterProperties]
-    input_weights: Union[Float[Array, "state_dim input_dim"], ParameterProperties]
-    cov: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
+    weights: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], ParameterProperties]
+    bias: Union[Float[Array, "state_dim"], Float[Array, "ntime state_dim"], ParameterProperties]
+    input_weights: Union[Float[Array, "state_dim input_dim"], Float[Array, "ntime state_dim input_dim"], ParameterProperties]
+    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
 
 
 class ParamsLGSSMEmissions(NamedTuple):
@@ -58,10 +59,11 @@ class ParamsLGSSMEmissions(NamedTuple):
     :param cov: emission covariance $R$
 
     """
-    weights: Union[Float[Array, "emission_dim state_dim"], ParameterProperties]
-    bias: Union[Float[Array, "emission_dim"], ParameterProperties]
-    input_weights: Union[Float[Array, "emission_dim input_dim"], ParameterProperties]
-    cov: Union[Float[Array, "emission_dim emission_dim"], ParameterProperties]
+    weights: Union[Float[Array, "emission_dim state_dim"], Float[Array, "ntime emission_dim state_dim"], ParameterProperties]
+    bias: Union[Float[Array, "emission_dim"], Float[Array, "ntime emission_dim"], ParameterProperties]
+    input_weights: Union[Float[Array, "emission_dim input_dim"], Float[Array, "ntime emission_dim input_dim"], ParameterProperties]
+    cov: Union[Float[Array, "emission_dim emission_dim"], Float[Array, "ntime emission_dim emission_dim"], Float[Array, "emission_dim_triu"], ParameterProperties]
+
 
 
 class ParamsLGSSM(NamedTuple):
@@ -106,7 +108,7 @@ class PosteriorGSSMSmoothed(NamedTuple):
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
     smoothed_means: Float[Array, "ntime state_dim"]
     smoothed_covariances: Float[Array, "ntime state_dim state_dim"]
-    smoothed_cross_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
+    smoothed_cross_covariances: Optional[Float[Array, "ntime_minus1 state_dim state_dim"]] = None
 
 
 # Helper functions
