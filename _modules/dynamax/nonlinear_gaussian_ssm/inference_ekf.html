@@ -294,8 +294,8 @@
 <span class="k">def</span> <span class="nf">_predict</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Predict next mean and covariance using first-order additive EKF</span>
 
-<span class="sd">        p(x_{t+1}) = \int N(x_t | m, S) N(x_{t+1} | f(x_t, u), Q)</span>
-<span class="sd">                    = N(x_{t+1} | f(m, u), F(m, u) S F(m, u)^T + Q)</span>
+<span class="sd">        p(z_{t+1}) = \int N(z_t | m, S) N(z_{t+1} | f(z_t, u), Q)</span>
+<span class="sd">                    = N(z_{t+1} | f(m, u), F(m, u) S F(m, u)^T + Q)</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        m (D_hid,): prior mean.</span>
@@ -318,10 +318,10 @@
 <span class="k">def</span> <span class="nf">_condition_on</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">num_iter</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Condition a Gaussian potential on a new observation.</span>
 
-<span class="sd">       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})</span>
-<span class="sd">         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)</span>
-<span class="sd">         = N(x_t | m, S) N(y_t | h_t(x_t, u_t), R_t)</span>
-<span class="sd">         = N(x_t | mm, SS)</span>
+<span class="sd">       p(z_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})</span>
+<span class="sd">         propto p(z_t | y_{1:t-1}, u_{1:t-1}) p(y_t | z_t, u_t)</span>
+<span class="sd">         = N(z_t | m, S) N(y_t | h_t(z_t, u_t), R_t)</span>
+<span class="sd">         = N(z_t | mm, SS)</span>
 <span class="sd">     where</span>
 <span class="sd">         mm = m + K*(y - yhat) = mu_cond</span>
 <span class="sd">         yhat = h(m, u)</span>

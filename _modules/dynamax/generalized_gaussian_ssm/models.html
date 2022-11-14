@@ -301,9 +301,9 @@
 <span class="sd">    </span>
 <span class="sd">    The tuple doubles as a container for the ParameterProperties.</span>
 
-<span class="sd">    $$p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)$$</span>
-<span class="sd">    $$p(y_t | x_t) = q(y_t | h(x_t, u_t), R(x_t, u_t))$$</span>
-<span class="sd">    $$p(z_1) = N(x_1 | m, S)$$</span>
+<span class="sd">    $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$</span>
+<span class="sd">    $$p(y_t | z_t) = q(y_t | h(z_t, u_t), R(z_t, u_t))$$</span>
+<span class="sd">    $$p(z_1) = N(z_1 | m, S)$$</span>
 
 <span class="sd">    :param initial_mean: $m$</span>
 <span class="sd">    :param initial_covariance: $S$</span>
@@ -333,13 +333,13 @@
 
 <span class="sd">    The model is defined as follows</span>
 
-<span class="sd">    $$p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)$$</span>
-<span class="sd">    $$p(y_t | x_t) = q(y_t | h(x_t, u_t), R(x_t, u_t))$$</span>
-<span class="sd">    $$p(z_1) = N(x_1 | m, S)$$</span>
+<span class="sd">    $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$</span>
+<span class="sd">    $$p(y_t | z_t) = q(y_t | h(z_t, u_t), R(z_t, u_t))$$</span>
+<span class="sd">    $$p(z_1) = N(z_1 | m, S)$$</span>
 
 <span class="sd">    where</span>
 
-<span class="sd">    * $x_t$ = hidden variables of size `state_dim`,</span>
+<span class="sd">    * $z_t$ = hidden variables of size `state_dim`,</span>
 <span class="sd">    * $y_t$ = observed variables of size `emission_dim`</span>
 <span class="sd">    * $u_t$ = input covariates of size `input_dim` (defaults to 0).</span>
 <span class="sd">    * $f$ = dynamics (transition) function</span>

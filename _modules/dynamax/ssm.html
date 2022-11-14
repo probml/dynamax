@@ -300,6 +300,9 @@
     <span class="sd">&quot;&quot;&quot;A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.&quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
+<span class="k">class</span> <span class="nc">SuffStatsSSM</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A :class:`NamedTuple` with sufficient statics stored as :class:`jax.DeviceArray` in the leaf nodes.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
 
 <div class="viewcode-block" id="SSM"><a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM">[docs]</a><span class="k">class</span> <span class="nc">SSM</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">&quot;&quot;&quot;A base class for state space models. Such models consist of parameters, which</span>
@@ -368,7 +371,7 @@
 <span class="sd">            inputs: optional  inputs  $u_t$</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            distribution over initial latent state, $p(x_1 \mid \theta)$.</span>
+<span class="sd">            distribution over initial latent state, $p(z_1 \mid \theta)$.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
@@ -384,11 +387,11 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
-<span class="sd">            state: current latent state $x_t$</span>
+<span class="sd">            state: current latent state $z_t$</span>
 <span class="sd">            inputs: current inputs  $u_t$</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            conditional distribution of next latent state $p(x_{t+1} \mid x_t, u_t, \theta)$.</span>
+<span class="sd">            conditional distribution of next latent state $p(z_{t+1} \mid z_t, u_t, \theta)$.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
@@ -404,11 +407,11 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
-<span class="sd">            state: current latent state $x_t$</span>
+<span class="sd">            state: current latent state $z_t$</span>
 <span class="sd">            inputs: current inputs  $u_t$</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            conditional distribution of current emission $p(y_t \mid x_t, u_t, \theta)$</span>
+<span class="sd">            conditional distribution of current emission $p(y_t \mid z_t, u_t, \theta)$</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
@@ -450,7 +453,7 @@
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps state_dim&quot;</span><span class="p">],</span>
               <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">]]:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample states $x_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
@@ -580,7 +583,7 @@
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">SuffStatsSSM</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]:</span>
         <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Perform an E-step to compute expected sufficient statistics under the posterior, $p(z_{1:T} \mid y_{1:T}, u_{1:T}, \theta)$.</span>
 
 <span class="sd">        Args:</span>
@@ -598,7 +601,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span>
-        <span class="n">batch_stats</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+        <span class="n">batch_stats</span><span class="p">:</span> <span class="n">SuffStatsSSM</span><span class="p">,</span>
         <span class="n">m_step_state</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Perform an M-step to find parameters that maximize the expected log joint probability.</span>

@@ -285,6 +285,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">NamedTuple</span>
 <span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Array</span>
 
+<span class="kn">from</span> <span class="nn">dynamax.types</span> <span class="kn">import</span> <span class="n">Scalar</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">_get_params</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">x</span>
 
@@ -305,7 +306,7 @@
 <span class="sd">    :param predicted_probs: $p(z_t \mid y_{1:t-1}, \theta)$ for $t=1,\ldots,T$</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">marginal_loglik</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">marginal_loglik</span><span class="p">:</span> <span class="n">Scalar</span>
     <span class="n">filtered_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span>
     <span class="n">predicted_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span></div>
 
@@ -322,7 +323,7 @@
 <span class="sd">    :param initial_probs: $p(z_1 \mid y_{1:T}, \theta)$ (also present in `smoothed_probs` but here for convenience)</span>
 <span class="sd">    :param trans_probs: $p(z_t, z_{t+1} \mid y_{1:T}, \theta)$ for $t=1,\ldots,T-1$. (If the transition matrix is fixed, these probabilities may be summed over $t$. See note above.)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">marginal_loglik</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">marginal_loglik</span><span class="p">:</span> <span class="n">Scalar</span>
     <span class="n">filtered_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span>
     <span class="n">predicted_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span>
     <span class="n">smoothed_probs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps num_states&quot;</span><span class="p">]</span>

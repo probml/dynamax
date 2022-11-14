@@ -292,15 +292,15 @@
     </a>
    </li>
    <li class="toc-h2 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#example-usage">
-     Example usage
+    <a class="reference internal nav-link" href="#quickstart">
+     Quickstart
     </a>
    </li>
   </ul>
  </li>
  <li class="toc-h1 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#notebooks">
-   Notebooks
+  <a class="reference internal nav-link" href="#tutorials">
+   Tutorials
   </a>
   <ul class="nav section-nav flex-column">
   </ul>
@@ -404,9 +404,8 @@ or future observations,
 where h is the forecast horizon.
 (Note that by using a hidden state  to represent the past observations,
 the model can have “infinite” memory, unlike a standard auto-regressive model.)
-All of these computations can be done efficiently using our library,
-as we discuss below.
-In addition, we can estimate the parameters of the transition and emission models,
+All of these computations can be done efficiently using Dynamax.
+Moreover, you can use Dynamax to estimate the parameters of the transition and emission models,
 as we discuss below.</p>
 <p>More information can be found in these books:</p>
 <blockquote>
@@ -416,8 +415,8 @@ as we discuss below.</p>
 </ul>
 </div></blockquote>
 </section>
-<section id="example-usage">
-<h2>Example usage<a class="headerlink" href="#example-usage" title="Permalink to this heading">¶</a></h2>
+<section id="quickstart">
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading">¶</a></h2>
 <p>Dynamax includes classes for many kinds of SSM.
 You can use these models to simulate data, and you can fit the models using standard
 learning algorithms like expectation-maximization (EM) and stochastic gradient descent (SGD).
@@ -473,8 +472,10 @@ For example, you can sample and then fit to a batch of emissions as shown below.
 without first having to construct the HMM object.</p>
 </section>
 </section>
-<section id="notebooks">
-<h1>Notebooks<a class="headerlink" href="#notebooks" title="Permalink to this heading">¶</a></h1>
+<section id="tutorials">
+<h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this heading">¶</a></h1>
+<p>The tutorials below will introduce you to state space models in Dynamax.
+If you’re new to these models, we recommend you start at the top and work your way through!</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">HMMs</span></p>
 <ul>

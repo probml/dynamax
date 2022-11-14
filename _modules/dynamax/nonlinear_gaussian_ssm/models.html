@@ -296,9 +296,9 @@
 <div class="viewcode-block" id="ParamsNLGSSM"><a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM">[docs]</a><span class="k">class</span> <span class="nc">ParamsNLGSSM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parameters for a NLGSSM model.</span>
 
-<span class="sd">    $$p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)$$</span>
-<span class="sd">    $$p(y_t | x_t) = N(y_t | h(x_t, u_t), R_t)$$</span>
-<span class="sd">    $$p(x_1) = N(x_1 | m, S)$$</span>
+<span class="sd">    $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$</span>
+<span class="sd">    $$p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)$$</span>
+<span class="sd">    $$p(z_1) = N(z_1 | m, S)$$</span>
 
 <span class="sd">    The tuple doubles as a container for the ParameterProperties.</span>
 
@@ -327,13 +327,13 @@
 
 <span class="sd">    The model is defined as follows</span>
 
-<span class="sd">    $$p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)$$</span>
-<span class="sd">    $$p(y_t | x_t) = N(y_t | h(x_t, u_t), R_t)$$</span>
-<span class="sd">    $$p(x_1) = N(x_1 | m, S)$$</span>
+<span class="sd">    $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$</span>
+<span class="sd">    $$p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)$$</span>
+<span class="sd">    $$p(z_1) = N(z_1 | m, S)$$</span>
 
 <span class="sd">    where</span>
 
-<span class="sd">    * $x_t$ = hidden variables of size `state_dim`,</span>
+<span class="sd">    * $z_t$ = hidden variables of size `state_dim`,</span>
 <span class="sd">    * $y_t$ = observed variables of size `emission_dim`</span>
 <span class="sd">    * $u_t$ = input covariates of size `input_dim` (defaults to 0).</span>
 <span class="sd">    * $f$ = dynamics (transition) function</span>

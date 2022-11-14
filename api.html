@@ -1821,7 +1821,7 @@ and compute log joint probabilities from the base class functions:</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(x_1 \mid \theta)\)</span>.</p>
+<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(z_1 \mid \theta)\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -1837,12 +1837,12 @@ and compute log joint probabilities from the base class functions:</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(x_{t+1} \mid x_t, u_t, \theta)\)</span>.</p>
+<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(z_{t+1} \mid z_t, u_t, \theta)\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -1858,12 +1858,12 @@ and compute log joint probabilities from the base class functions:</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid x_t, u_t, \theta)\)</span></p>
+<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid z_t, u_t, \theta)\)</span></p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -1904,7 +1904,7 @@ and compute log joint probabilities from the base class functions:</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamax.ssm.SSM.sample">
 <span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_timesteps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dynamax/ssm.html#SSM.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamax.ssm.SSM.sample" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sample states <span class="math notranslate nohighlight">\(x_{1:T}\)</span> and emissions <span class="math notranslate nohighlight">\(y_{1:T}\)</span> given parameters <span class="math notranslate nohighlight">\(\theta\)</span> and (optionally) inputs <span class="math notranslate nohighlight">\(u_{1:T}\)</span>.</p>
+<dd><p>Sample states <span class="math notranslate nohighlight">\(z_{1:T}\)</span> and emissions <span class="math notranslate nohighlight">\(y_{1:T}\)</span> given parameters <span class="math notranslate nohighlight">\(\theta\)</span> and (optionally) inputs <span class="math notranslate nohighlight">\(u_{1:T}\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2024,7 +2024,7 @@ and compute log joint probabilities from the base class functions:</p>
 <dd class="field-even"><p>Expected sufficient statistics under the posterior.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>PyTree</em></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><em>Tuple</em></a>[<em>SuffStatsSSM</em>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a>, <em>Float</em>[Array, ‘’]]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2042,7 +2042,7 @@ and compute log joint probabilities from the base class functions:</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
 <li><p><strong>props</strong> (<a class="reference internal" href="#dynamax.parameters.PropertySet" title="dynamax.parameters.PropertySet"><em>PropertySet</em></a>) – properties specifying which parameters should be learned</p></li>
-<li><p><strong>batch_stats</strong> (<em>PyTree</em>) – sufficient statistics from each sequence</p></li>
+<li><p><strong>batch_stats</strong> (<em>SuffStatsSSM</em>) – sufficient statistics from each sequence</p></li>
 <li><p><strong>m_step_state</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><em>Any</em></a>) – any required state for optimizing the model parameters.</p></li>
 </ul>
 </dd>
@@ -2224,7 +2224,7 @@ follow a simple transition matrix,</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(x_1 \mid \theta)\)</span>.</p>
+<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(z_1 \mid \theta)\)</span>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2237,12 +2237,12 @@ follow a simple transition matrix,</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(x_{t+1} \mid x_t, u_t, \theta)\)</span>.</p>
+<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(z_{t+1} \mid z_t, u_t, \theta)\)</span>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2255,12 +2255,12 @@ follow a simple transition matrix,</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid x_t, u_t, \theta)\)</span></p>
+<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid z_t, u_t, \theta)\)</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3767,7 +3767,7 @@ transition matrix is fixed or time-varying.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>marginal_loglik</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta) = \log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)\)</span>.</p></li>
+<li><p><strong>marginal_loglik</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>]</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta) = \log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)\)</span>.</p></li>
 <li><p><strong>filtered_probs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(z_t \mid y_{1:t}, \theta)\)</span> for <span class="math notranslate nohighlight">\(t=1,\ldots,T\)</span></p></li>
 <li><p><strong>predicted_probs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(z_t \mid y_{1:t-1}, \theta)\)</span> for <span class="math notranslate nohighlight">\(t=1,\ldots,T\)</span></p></li>
 <li><p><strong>smoothed_probs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(z_t \mid y_{1:T}, \theta)\)</span> for <span class="math notranslate nohighlight">\(t=1,\ldots,T\)</span></p></li>
@@ -3785,7 +3785,7 @@ transition matrix is fixed or time-varying.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>marginal_loglik</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta) = \log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)\)</span>.</p></li>
+<li><p><strong>marginal_loglik</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>]</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta) = \log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)\)</span>.</p></li>
 <li><p><strong>filtered_probs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(z_t \mid y_{1:t}, \theta)\)</span> for <span class="math notranslate nohighlight">\(t=1,\ldots,T\)</span></p></li>
 <li><p><strong>predicted_probs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(z_t \mid y_{1:t-1}, \theta)\)</span> for <span class="math notranslate nohighlight">\(t=1,\ldots,T\)</span></p></li>
 </ul>
@@ -4048,17 +4048,17 @@ for nonstationary transition matrices in a future release.</em></p>
 <dd><p>Linear Gaussian State Space Model.</p>
 <p>The model is defined as follows</p>
 <p><div class="math notranslate nohighlight">
-\[p(x_1) = \mathcal{N}(x_1 \mid m, S)\]</div>
+\[p(z_1) = \mathcal{N}(z_1 \mid m, S)\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(x_t \mid x_{t-1}, u_t) = \mathcal{N}(x_t \mid F_t x_{t-1} + B_t u_t + b_t, Q_t)\]</div>
+\[p(z_t \mid z_{t-1}, u_t) = \mathcal{N}(z_t \mid F_t z_{t-1} + B_t u_t + b_t, Q_t)\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(y_t \mid x_t) = \mathcal{N}(y_t \mid H_t x_t + D_t u_t + d_t, R_t)\]</div>
+\[p(y_t \mid z_t) = \mathcal{N}(y_t \mid H_t z_t + D_t u_t + d_t, R_t)\]</div>
 </p>
 <p>where</p>
 <ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(x_t\)</span> is a latent state of size <cite>state_dim</cite>,</p></li>
+<li><p><span class="math notranslate nohighlight">\(z_t\)</span> is a latent state of size <cite>state_dim</cite>,</p></li>
 <li><p><span class="math notranslate nohighlight">\(y_t\)</span> is an emission of size <cite>emission_dim</cite></p></li>
 <li><p><span class="math notranslate nohighlight">\(u_t\)</span> is an input of size <cite>input_dim</cite> (defaults to 0)</p></li>
 <li><p><span class="math notranslate nohighlight">\(F\)</span> = dynamics (transition) matrix</p></li>
@@ -4139,7 +4139,7 @@ You can create the parameters manually, or by calling <a class="reference intern
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(x_1 \mid \theta)\)</span>.</p>
+<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(z_1 \mid \theta)\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -4155,12 +4155,12 @@ You can create the parameters manually, or by calling <a class="reference intern
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.linear_gaussian_ssm.ParamsLGSSM" title="dynamax.linear_gaussian_ssm.inference.ParamsLGSSM"><em>ParamsLGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>]</em><em>]</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(x_{t+1} \mid x_t, u_t, \theta)\)</span>.</p>
+<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(z_{t+1} \mid z_t, u_t, \theta)\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -4176,12 +4176,12 @@ You can create the parameters manually, or by calling <a class="reference intern
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.linear_gaussian_ssm.ParamsLGSSM" title="dynamax.linear_gaussian_ssm.inference.ParamsLGSSM"><em>ParamsLGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>]</em><em>]</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid x_t, u_t, \theta)\)</span></p>
+<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid z_t, u_t, \theta)\)</span></p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -4284,15 +4284,15 @@ You can create the parameters manually, or by calling <a class="reference intern
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.linear_gaussian_ssm.ParamsLGSSM" title="dynamax.linear_gaussian_ssm.inference.ParamsLGSSM"><em>ParamsLGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'nseq ntime emission_dim'</em><em>]</em>) – emissions <span class="math notranslate nohighlight">\(y_{1:T}\)</span></p></li>
-<li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'nseq ntime input_dim'</em><em>]</em><em>]</em>) – optional inputs <span class="math notranslate nohighlight">\(u_{1:T}\)</span></p></li>
+<li><p><strong>emissions</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps emission_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_batches num_timesteps emission_dim'</em><em>]</em><em>]</em>) – emissions <span class="math notranslate nohighlight">\(y_{1:T}\)</span></p></li>
+<li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps input_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_batches num_timesteps input_dim'</em><em>]</em><em>]</em><em>]</em>) – optional inputs <span class="math notranslate nohighlight">\(u_{1:T}\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Expected sufficient statistics under the posterior.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><em>Tuple</em></a>[<em>SuffStatsLGSSM</em>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><em>Tuple</em></a>[<em>SuffStatsLGSSM</em>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a>, <em>Float</em>[Array, ‘’]]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -4318,7 +4318,7 @@ You can create the parameters manually, or by calling <a class="reference intern
 <dd class="field-even"><p>new parameters</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#dynamax.linear_gaussian_ssm.ParamsLGSSM" title="dynamax.linear_gaussian_ssm.inference.ParamsLGSSM"><em>ParamsLGSSM</em></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><em>Tuple</em></a>[<a class="reference internal" href="#dynamax.linear_gaussian_ssm.ParamsLGSSM" title="dynamax.linear_gaussian_ssm.inference.ParamsLGSSM"><em>ParamsLGSSM</em></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><em>Any</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -4424,7 +4424,7 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mean</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – <span class="math notranslate nohighlight">\(\mu_1\)</span></p></li>
-<li><p><strong>cov</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – <span class="math notranslate nohighlight">\(Q_1\)</span></p></li>
+<li><p><strong>cov</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim_triu'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – <span class="math notranslate nohighlight">\(Q_1\)</span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4441,10 +4441,10 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>weights</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – dynamics weights <span class="math notranslate nohighlight">\(F\)</span></p></li>
-<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – dynamics bias <span class="math notranslate nohighlight">\(b\)</span></p></li>
-<li><p><strong>input_weights</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim input_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – dynamics input weights <span class="math notranslate nohighlight">\(B\)</span></p></li>
-<li><p><strong>cov</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – dynamics covariance <span class="math notranslate nohighlight">\(Q\)</span></p></li>
+<li><p><strong>weights</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim state_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – dynamics weights <span class="math notranslate nohighlight">\(F\)</span></p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – dynamics bias <span class="math notranslate nohighlight">\(b\)</span></p></li>
+<li><p><strong>input_weights</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim input_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim input_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – dynamics input weights <span class="math notranslate nohighlight">\(B\)</span></p></li>
+<li><p><strong>cov</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim_triu'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – dynamics covariance <span class="math notranslate nohighlight">\(Q\)</span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4461,10 +4461,10 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>weights</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim state_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – emission weights <span class="math notranslate nohighlight">\(H\)</span></p></li>
-<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – emission bias <span class="math notranslate nohighlight">\(d\)</span></p></li>
-<li><p><strong>input_weights</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim input_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – emission input weights <span class="math notranslate nohighlight">\(D\)</span></p></li>
-<li><p><strong>cov</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – emission covariance <span class="math notranslate nohighlight">\(R\)</span></p></li>
+<li><p><strong>weights</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim state_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – emission weights <span class="math notranslate nohighlight">\(H\)</span></p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – emission bias <span class="math notranslate nohighlight">\(d\)</span></p></li>
+<li><p><strong>input_weights</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim input_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim input_dim'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – emission input weights <span class="math notranslate nohighlight">\(D\)</span></p></li>
+<li><p><strong>cov</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim emission_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim_triu'</em><em>]</em><em>, </em><a class="reference internal" href="#dynamax.parameters.ParameterProperties" title="dynamax.parameters.ParameterProperties"><em>ParameterProperties</em></a><em>]</em>) – emission covariance <span class="math notranslate nohighlight">\(R\)</span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4497,7 +4497,7 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <li><p><strong>filtered_covariances</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim state_dim'</em><em>]</em>) – array of filtered covariances <span class="math notranslate nohighlight">\(\mathrm{Cov}[x_t \mid y_{1:t}, u_{1:t}]\)</span></p></li>
 <li><p><strong>smoothed_means</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim'</em><em>]</em>) – array of smoothed means <span class="math notranslate nohighlight">\(\mathbb{E}[x_t \mid y_{1:T}, u_{1:T}]\)</span></p></li>
 <li><p><strong>smoothed_covariances</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim state_dim'</em><em>]</em>) – array of smoothed marginal covariances, <span class="math notranslate nohighlight">\(\mathrm{Cov}[x_t \mid y_{1:T}, u_{1:T}]\)</span></p></li>
-<li><p><strong>smoothed_cross_covariances</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim state_dim'</em><em>]</em><em>]</em>) – array of smoothed cross products, <span class="math notranslate nohighlight">\(\mathbb{E}[x_t x_{t+1}^T \mid y_{1:T}, u_{1:T}]\)</span></p></li>
+<li><p><strong>smoothed_cross_covariances</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime_minus1 state_dim state_dim'</em><em>]</em><em>]</em>) – array of smoothed cross products, <span class="math notranslate nohighlight">\(\mathbb{E}[x_t x_{t+1}^T \mid y_{1:T}, u_{1:T}]\)</span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4515,17 +4515,17 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <dd><p>Nonlinear Gaussian State Space Model.</p>
 <p>The model is defined as follows</p>
 <p><div class="math notranslate nohighlight">
-\[p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)\]</div>
+\[p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(y_t | x_t) = N(y_t | h(x_t, u_t), R_t)\]</div>
+\[p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(x_1) = N(x_1 | m, S)\]</div>
+\[p(z_1) = N(z_1 | m, S)\]</div>
 </p>
 <p>where</p>
 <ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(x_t\)</span> = hidden variables of size <cite>state_dim</cite>,</p></li>
+<li><p><span class="math notranslate nohighlight">\(z_t\)</span> = hidden variables of size <cite>state_dim</cite>,</p></li>
 <li><p><span class="math notranslate nohighlight">\(y_t\)</span> = observed variables of size <cite>emission_dim</cite></p></li>
 <li><p><span class="math notranslate nohighlight">\(u_t\)</span> = input covariates of size <cite>input_dim</cite> (defaults to 0).</p></li>
 <li><p><span class="math notranslate nohighlight">\(f\)</span> = dynamics (transition) function</p></li>
@@ -4569,7 +4569,7 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(x_1 \mid \theta)\)</span>.</p>
+<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(z_1 \mid \theta)\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -4585,12 +4585,12 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM" title="dynamax.nonlinear_gaussian_ssm.models.ParamsNLGSSM"><em>ParamsNLGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(x_{t+1} \mid x_t, u_t, \theta)\)</span>.</p>
+<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(z_{t+1} \mid z_t, u_t, \theta)\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -4606,12 +4606,12 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM" title="dynamax.nonlinear_gaussian_ssm.models.ParamsNLGSSM"><em>ParamsNLGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid x_t, u_t, \theta)\)</span></p>
+<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid z_t, u_t, \theta)\)</span></p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -4768,13 +4768,13 @@ filtered state estimates.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ParamsNLGSSM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_covariance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamics_covariance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emission_covariance</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dynamax/nonlinear_gaussian_ssm/models.html#ParamsNLGSSM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parameters for a NLGSSM model.</p>
 <p><div class="math notranslate nohighlight">
-\[p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)\]</div>
+\[p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(y_t | x_t) = N(y_t | h(x_t, u_t), R_t)\]</div>
+\[p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(x_1) = N(x_1 | m, S)\]</div>
+\[p(z_1) = N(z_1 | m, S)\]</div>
 </p>
 <p>The tuple doubles as a container for the ParameterProperties.</p>
 <dl class="field-list simple">
@@ -4809,17 +4809,17 @@ filtered state estimates.</p>
 <dd><p>Generalized Gaussian State Space Model.</p>
 <p>The model is defined as follows</p>
 <p><div class="math notranslate nohighlight">
-\[p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)\]</div>
+\[p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(y_t | x_t) = q(y_t | h(x_t, u_t), R(x_t, u_t))\]</div>
+\[p(y_t | z_t) = q(y_t | h(z_t, u_t), R(z_t, u_t))\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(z_1) = N(x_1 | m, S)\]</div>
+\[p(z_1) = N(z_1 | m, S)\]</div>
 </p>
 <p>where</p>
 <ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(x_t\)</span> = hidden variables of size <cite>state_dim</cite>,</p></li>
+<li><p><span class="math notranslate nohighlight">\(z_t\)</span> = hidden variables of size <cite>state_dim</cite>,</p></li>
 <li><p><span class="math notranslate nohighlight">\(y_t\)</span> = observed variables of size <cite>emission_dim</cite></p></li>
 <li><p><span class="math notranslate nohighlight">\(u_t\)</span> = input covariates of size <cite>input_dim</cite> (defaults to 0).</p></li>
 <li><p><span class="math notranslate nohighlight">\(f\)</span> = dynamics (transition) function</p></li>
@@ -4848,7 +4848,7 @@ filtered state estimates.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(x_1 \mid \theta)\)</span>.</p>
+<dd class="field-even"><p>distribution over initial latent state, <span class="math notranslate nohighlight">\(p(z_1 \mid \theta)\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -4864,12 +4864,12 @@ filtered state estimates.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.generalized_gaussian_ssm.ParamsGGSSM" title="dynamax.generalized_gaussian_ssm.models.ParamsGGSSM"><em>ParamsGGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(x_{t+1} \mid x_t, u_t, \theta)\)</span>.</p>
+<dd class="field-even"><p>conditional distribution of next latent state <span class="math notranslate nohighlight">\(p(z_{t+1} \mid z_t, u_t, \theta)\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -4885,12 +4885,12 @@ filtered state estimates.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.generalized_gaussian_ssm.ParamsGGSSM" title="dynamax.generalized_gaussian_ssm.models.ParamsGGSSM"><em>ParamsGGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
-<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(x_t\)</span></p></li>
+<li><p><strong>state</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><em>Optional</em></a><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid x_t, u_t, \theta)\)</span></p>
+<dd class="field-even"><p>conditional distribution of current emission <span class="math notranslate nohighlight">\(p(y_t \mid z_t, u_t, \theta)\)</span></p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Distribution</em></p>
@@ -5006,13 +5006,13 @@ marginal likelihood and filtered state estimates.</p>
 <dd><p>Container for GGSSM parameters. Differs from NLGSSM in terms of emission model.</p>
 <p>The tuple doubles as a container for the ParameterProperties.</p>
 <p><div class="math notranslate nohighlight">
-\[p(x_t | x_{t-1}, u_t) = N(x_t | f(x_{t-1}, u_t), Q_t)\]</div>
+\[p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(y_t | x_t) = q(y_t | h(x_t, u_t), R(x_t, u_t))\]</div>
+\[p(y_t | z_t) = q(y_t | h(z_t, u_t), R(z_t, u_t))\]</div>
 
 <div class="math notranslate nohighlight">
-\[p(z_1) = N(x_1 | m, S)\]</div>
+\[p(z_1) = N(z_1 | m, S)\]</div>
 </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

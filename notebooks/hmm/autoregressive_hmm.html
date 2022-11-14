@@ -300,6 +300,18 @@
         <nav id="bd-toc-nav">
             <ul class="nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#setup">
+   Setup
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#helper-functions-for-plotting">
+     Helper functions for plotting
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#manually-construct-an-arhmm">
    Manually construct an ARHMM
   </a>
@@ -336,12 +348,17 @@
      Plot the true and inferred discrete states
     </a>
    </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#sample-the-fitted-model">
-     Sample the fitted model
-    </a>
-   </li>
   </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#sample-new-data-from-the-fitted-model">
+   Sample new data from the fitted model
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#conclusion">
+   Conclusion
+  </a>
  </li>
 </ul>
 
@@ -357,25 +374,35 @@
   <section class="tex2jax_ignore mathjax_ignore" id="autoregressive-ar-hmm-demo">
 <h1>Autoregressive (AR) HMM Demo<a class="headerlink" href="#autoregressive-ar-hmm-demo" title="Permalink to this heading">¶</a></h1>
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
-Let <span class="math notranslate nohighlight">\(x_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
+Let <span class="math notranslate nohighlight">\(y_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
 <p>The autoregressive hidden Markov model has the following likelihood,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-3934f1bc-237a-42e2-ab87-2e66ef89b9b8">
-<span class="eqno">(1)<a class="headerlink" href="#equation-3934f1bc-237a-42e2-ab87-2e66ef89b9b8" title="Permalink to this equation">¶</a></span>\[\begin{align}
-x_t \mid x_{t-1}, z_t &amp;\sim
-\mathcal{N}\left(A_{z_t} x_{t-1} + b_{z_t}, Q_{z_t} \right).
-\end{align}\]</div>
-<p>(Higher-order autoregressive processes are also implemented.)</p>
-<div class="cell docutils container">
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+y_t \mid y_{t-1}, z_t &amp;\sim
+\mathcal{N}\left(A_{z_t} y_{t-1} + b_{z_t}, Q_{z_t} \right).
+\end{align*}\]</div>
+<p>(Higher-order autoregressive processes are also supported.)</p>
+<p>This notebook will also show how inputs are passed into SSMs in Dynamax.</p>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
+<span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
-    <span class="o">%</span><span class="k">pip</span> install -q dynamax[notebooks]
+    <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 </pre></div>
 </div>
 </div>
+</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -383,6 +410,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">LinearAutoregressiveHMM</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.plotting</span> <span class="kn">import</span> <span class="n">gradient_cmap</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">random_rotation</span>
@@ -395,9 +423,8 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 </div>
-<section id="manually-construct-an-arhmm">
-<h2>Manually construct an ARHMM<a class="headerlink" href="#manually-construct-an-arhmm" title="Permalink to this heading">¶</a></h2>
-<p>First, some helper functions for plotting…</p>
+<section id="helper-functions-for-plotting">
+<h3>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Permalink to this heading">¶</a></h3>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -419,7 +446,6 @@ x_t \mid x_{t-1}, z_t &amp;\sim
     <span class="s2">&quot;pink&quot;</span>
 <span class="p">]</span>
 
-
 <span class="n">colors</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">xkcd_palette</span><span class="p">(</span><span class="n">color_names</span><span class="p">)</span>
 <span class="n">cmap</span> <span class="o">=</span> <span class="n">gradient_cmap</span><span class="p">(</span><span class="n">colors</span><span class="p">)</span>
 </pre></div>
@@ -427,6 +453,10 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </details>
 </div>
+</section>
+</section>
+<section id="manually-construct-an-arhmm">
+<h2>Manually construct an ARHMM<a class="headerlink" href="#manually-construct-an-arhmm" title="Permalink to this heading">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make a transition matrix</span>
@@ -446,7 +476,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fb310805520&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f5c84d4d6a0&gt;
 </pre></div>
 </div>
 <img alt="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" src="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" />
@@ -514,7 +544,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make an Autoregressive (AR) HMM</span>
-<span class="n">true_arhmm</span> <span class="o">=</span> <span class="n">LinearAutoregressiveHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span> <span class="n">num_lags</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">true_arhmm</span> <span class="o">=</span> <span class="n">LinearAutoregressiveHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span> <span class="n">num_lags</span><span class="o">=</span><span class="n">num_lags</span><span class="p">)</span>
 <span class="n">true_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">initial_probs</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_states</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_states</span><span class="p">,</span>
                                        <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">,</span>
                                        <span class="n">emission_weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
@@ -524,8 +554,8 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <span class="n">time_bins</span> <span class="o">=</span> <span class="mi">10000</span>
 <span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">time_bins</span><span class="p">)</span>
 
-<span class="c1"># Compute the lagged emissions (aka covariates)</span>
-<span class="n">covariates</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">compute_inputs</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+<span class="c1"># Compute the lagged emissions (aka inputs)</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">compute_inputs</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -573,14 +603,14 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 
 <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">plot_slice</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">lim</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;$x_{{</span><span class="si">{}</span><span class="s2">}}$&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">lim</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;$y_{{</span><span class="si">{}</span><span class="s2">}}$&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)])</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" src="../../_images/e23906e72656f1a54deb2eb8ba8e6fbe94f99f8036dd236921b933053fc8de88.png" />
+<img alt="../../_images/4037bb68c1d25baa2b9e4060658531f22dff45cfb5929bc50fdd6f94001b48f7.png" src="../../_images/4037bb68c1d25baa2b9e4060658531f22dff45cfb5929bc50fdd6f94001b48f7.png" />
 </div>
 </div>
 </section>
@@ -597,7 +627,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
 
 <span class="c1"># Fit with EM</span>
-<span class="n">fitted_params</span><span class="p">,</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
+<span class="n">fitted_params</span><span class="p">,</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -629,7 +659,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <h3>Plot the log likelihoods against the true likelihood, for comparison<a class="headerlink" href="#plot-the-log-likelihoods-against-the-true-likelihood-for-comparison" title="Permalink to this heading">¶</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">true_lp</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">true_lp</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lps</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;EM&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">true_lp</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lps</span><span class="p">)),</span> <span class="s1">&#39;:k&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;True&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;EM Iteration&quot;</span><span class="p">)</span>
@@ -640,7 +670,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/3edd1930810c5751af5d4d94f093f1206f719de870ea5cfaa0cd2d40fd8f4a20.png" src="../../_images/3edd1930810c5751af5d4d94f093f1206f719de870ea5cfaa0cd2d40fd8f4a20.png" />
+<img alt="../../_images/bba7b51e79a6b29eda5dfe40fe908a8cab51f3d07f9f6af41556298c27ae0cd7.png" src="../../_images/bba7b51e79a6b29eda5dfe40fe908a8cab51f3d07f9f6af41556298c27ae0cd7.png" />
 </div>
 </div>
 </section>
@@ -648,8 +678,8 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 <h3>Find the most likely states<a class="headerlink" href="#find-the-most-likely-states" title="Permalink to this heading">¶</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
-<span class="n">most_likely_states</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">most_likely_states</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">covariates</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+<span class="n">most_likely_states</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">most_likely_states</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -687,7 +717,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/61bad41e1b8f8fd69192911dfe8a76ca24dd87f77a6186bad176ee3a25d35fac.png" src="../../_images/61bad41e1b8f8fd69192911dfe8a76ca24dd87f77a6186bad176ee3a25d35fac.png" />
+<img alt="../../_images/e76e016c3be45e831b4375b097fe56fc566ab1651aa8cda9239b11f61d428b4a.png" src="../../_images/e76e016c3be45e831b4375b097fe56fc566ab1651aa8cda9239b11f61d428b4a.png" />
 </div>
 </div>
 </section>
@@ -715,12 +745,14 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/0741227120263494df01784eca0ad4c8bae01925750b2d8e98ba86567fcf73c4.png" src="../../_images/0741227120263494df01784eca0ad4c8bae01925750b2d8e98ba86567fcf73c4.png" />
+<img alt="../../_images/093f0c1b93585fc511125e483c1422b5d110b777c5e4b9c2295c6ffcb3bc713c.png" src="../../_images/093f0c1b93585fc511125e483c1422b5d110b777c5e4b9c2295c6ffcb3bc713c.png" />
 </div>
 </div>
 </section>
-<section id="sample-the-fitted-model">
-<h3>Sample the fitted model<a class="headerlink" href="#sample-the-fitted-model" title="Permalink to this heading">¶</a></h3>
+</section>
+<section id="sample-new-data-from-the-fitted-model">
+<h2>Sample new data from the fitted model<a class="headerlink" href="#sample-new-data-from-the-fitted-model" title="Permalink to this heading">¶</a></h2>
+<p>A good (and difficult!) test of a generative model is its ability to simulate data that looks like the real data. Let’s simulate new data from an ARHMM with the fitted parameter and see what it looks like.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sampled_states</span><span class="p">,</span> <span class="n">sampled_emissions</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">time_bins</span><span class="p">)</span>
@@ -743,10 +775,13 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6c0c8241a9a5edc5d5755959950d57a123a2b6f3592a18437993712504642b75.png" src="../../_images/6c0c8241a9a5edc5d5755959950d57a123a2b6f3592a18437993712504642b75.png" />
+<img alt="../../_images/fd0931f1d9c694d0dda2cb55b69c5872d8d930702133a69006a505f63ea9d3b4.png" src="../../_images/fd0931f1d9c694d0dda2cb55b69c5872d8d930702133a69006a505f63ea9d3b4.png" />
 </div>
 </div>
 </section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">¶</a></h2>
+<p>This notebook showed how to sample and fit an autoregressive HMM. These models can produce complex multivariate time series by switching between different autoregressive regimes. In this model, the each discrete state has <em>linear</em> autoregressive dynamics, but one could imagine extending this model to <em>nonlinear</em> dynamics (perhaps in a future version of Dynamax!). For now, this notebook should provide a good launchpad for fitting ARHMMs to real data.</p>
 </section>
 </section>
 
