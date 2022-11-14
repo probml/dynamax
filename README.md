@@ -27,7 +27,7 @@ sequential Monte Carlo (SMC)).
 
 ## Documentation
 
-For examples and API, see the docs: https://probml.github.io/dynamax/.
+For tutorials and API documentation, see: https://probml.github.io/dynamax/.
 
 ## Installation and Testing
 
