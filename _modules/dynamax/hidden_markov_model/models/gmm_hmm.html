@@ -80,7 +80,7 @@
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="../../../../notebooks/hmm/casino_hmm_learning.html">
-   Casino HMM: learning (parameter estimation)
+   Casino HMM: Learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
@@ -470,6 +470,7 @@
 <span class="sd">    :param emission_dim: number of conditionally independent emissions $N$</span>
 <span class="sd">    :param initial_probs_concentration: $\alpha$</span>
 <span class="sd">    :param transition_matrix_concentration: $\beta$</span>
+<span class="sd">    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.</span>
 <span class="sd">    :param emission_weights_concentration=: $\gamma$</span>
 <span class="sd">    :param emission_prior_mean: $\mu_0$</span>
 <span class="sd">    :param emission_prior_concentration: $\kappa_0$</span>
@@ -483,6 +484,7 @@
                  <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                  <span class="n">initial_probs_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
                  <span class="n">transition_matrix_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_stickiness</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                  <span class="n">emission_weights_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_components&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
                  <span class="n">emission_prior_mean</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                  <span class="n">emission_prior_mean_concentration</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
@@ -491,7 +493,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_components</span> <span class="o">=</span> <span class="n">num_components</span>
         <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>
-        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">)</span>
+        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">,</span> <span class="n">stickiness</span><span class="o">=</span><span class="n">transition_matrix_stickiness</span><span class="p">)</span>
         <span class="n">emission_component</span> <span class="o">=</span> <span class="n">GaussianMixtureHMMEmissions</span><span class="p">(</span>
             <span class="n">num_states</span><span class="p">,</span> <span class="n">num_components</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span>
             <span class="n">emission_weights_concentration</span><span class="o">=</span><span class="n">emission_weights_concentration</span><span class="p">,</span>
@@ -699,6 +701,7 @@
 <span class="sd">    :param emission_dim: number of conditionally independent emissions $N$</span>
 <span class="sd">    :param initial_probs_concentration: $\alpha$</span>
 <span class="sd">    :param transition_matrix_concentration: $\beta$</span>
+<span class="sd">    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.</span>
 <span class="sd">    :param emission_weights_concentration=: $\gamma$</span>
 <span class="sd">    :param emission_prior_mean: $\mu_0$</span>
 <span class="sd">    :param emission_prior_mean_concentration: $\kappa_0$</span>
@@ -712,6 +715,7 @@
                  <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                  <span class="n">initial_probs_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
                  <span class="n">transition_matrix_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_stickiness</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                  <span class="n">emission_weights_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_components&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
                  <span class="n">emission_prior_mean</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                  <span class="n">emission_prior_mean_concentration</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
@@ -720,7 +724,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_components</span> <span class="o">=</span> <span class="n">num_components</span>
         <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>
-        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">)</span>
+        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">,</span> <span class="n">stickiness</span><span class="o">=</span><span class="n">transition_matrix_stickiness</span><span class="p">)</span>
         <span class="n">emission_component</span> <span class="o">=</span> <span class="n">DiagonalGaussianMixtureHMMEmissions</span><span class="p">(</span>
             <span class="n">num_states</span><span class="p">,</span> <span class="n">num_components</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span>
             <span class="n">emission_weights_concentration</span><span class="o">=</span><span class="n">emission_weights_concentration</span><span class="p">,</span>

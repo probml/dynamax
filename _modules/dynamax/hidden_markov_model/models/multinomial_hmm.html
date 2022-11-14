@@ -80,7 +80,7 @@
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="../../../../notebooks/hmm/casino_hmm_learning.html">
-   Casino HMM: learning (parameter estimation)
+   Casino HMM: Learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
@@ -275,17 +275,22 @@
               <div>
                 
   <h1>Source code for dynamax.hidden_markov_model.models.multinomial_hmm</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
 <span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.bijectors</span> <span class="k">as</span> <span class="nn">tfb</span>
 <span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="k">as</span> <span class="nn">tfd</span>
-<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Array</span>
-<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterProperties</span><span class="p">,</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">PropertySet</span>
+<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
+
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.abstractions</span> <span class="kn">import</span> <span class="n">HMM</span><span class="p">,</span> <span class="n">HMMEmissions</span>
-<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.initial</span> <span class="kn">import</span> <span class="n">StandardHMMInitialState</span><span class="p">,</span> <span class="n">ParamsStandardHMMInitialState</span>
-<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.transitions</span> <span class="kn">import</span> <span class="n">StandardHMMTransitions</span><span class="p">,</span> <span class="n">ParamsStandardHMMTransitions</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.initial</span> <span class="kn">import</span> <span class="n">ParamsStandardHMMInitialState</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.initial</span> <span class="kn">import</span> <span class="n">StandardHMMInitialState</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.transitions</span> <span class="kn">import</span> <span class="n">ParamsStandardHMMTransitions</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.transitions</span> <span class="kn">import</span> <span class="n">StandardHMMTransitions</span>
+<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterProperties</span><span class="p">,</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">PropertySet</span>
+<span class="kn">from</span> <span class="nn">dynamax.types</span> <span class="kn">import</span> <span class="n">Scalar</span>
 <span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">pytree_sum</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 
 <span class="k">class</span> <span class="nc">ParamsMultinomialHMMEmissions</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -378,6 +383,7 @@
 <span class="sd">    :param num_trials: number of multinomial trials $R$</span>
 <span class="sd">    :param initial_probs_concentration: $\alpha$</span>
 <span class="sd">    :param transition_matrix_concentration: $\beta$</span>
+<span class="sd">    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.</span>
 <span class="sd">    :param emission_prior_concentration: $\gamma$</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -386,14 +392,15 @@
                  <span class="n">emission_dim</span><span class="p">,</span>
                  <span class="n">num_classes</span><span class="p">,</span>
                  <span class="n">num_trials</span><span class="p">,</span>
-                 <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
-                 <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
-                 <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">):</span>
+                 <span class="n">initial_probs_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_stickiness</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">emission_prior_concentration</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1.1</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="n">num_classes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_trials</span> <span class="o">=</span> <span class="n">num_trials</span>
         <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>
-        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">transition_matrix_concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">)</span>
+        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">,</span> <span class="n">stickiness</span><span class="o">=</span><span class="n">transition_matrix_stickiness</span><span class="p">)</span>
         <span class="n">emission_component</span> <span class="o">=</span> <span class="n">MultinomialHMMEmissions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">,</span> <span class="n">num_trials</span><span class="p">,</span> <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="n">emission_prior_concentration</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_component</span><span class="p">,</span> <span class="n">transition_component</span><span class="p">,</span> <span class="n">emission_component</span><span class="p">)</span>
 

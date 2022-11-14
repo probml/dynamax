@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Casino HMM: learning (parameter estimation)</title>
+    <title>Casino HMM: Learning (parameter estimation)</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -39,6 +39,8 @@
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Gaussian HMM" href="gaussian_hmm.html" />
@@ -83,7 +85,7 @@
  </li>
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
-   Casino HMM: learning (parameter estimation)
+   Casino HMM: Learning (parameter estimation)
   </a>
  </li>
  <li class="toctree-l1">
@@ -308,18 +310,22 @@
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#learning">
-   Learning
+  <a class="reference internal nav-link" href="#learning-with-gradient-descent">
+   Learning with Gradient Descent
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#full-batch-gradient-descent">
-     Full-Batch Gradient Descent
+    <a class="reference internal nav-link" href="#gradient-descent-is-a-special-case-of-stochastic-gradient-descent">
+     Gradient descent is a special case of
+     <em>
+      stochastic
+     </em>
+     gradient descent
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#mini-batch-gradient-descent">
-     Mini-Batch Gradient Descent
+    <a class="reference internal nav-link" href="#stochastic-gradient-descent-with-mini-batches">
+     Stochastic Gradient Descent with Mini-Batches
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
@@ -327,7 +333,17 @@
      Expectation-Maximization
     </a>
    </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#compare-the-learning-curves">
+     Compare the learning curves
+    </a>
+   </li>
   </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#conclusion">
+   Conclusion
+  </a>
  </li>
 </ul>
 
@@ -341,17 +357,43 @@
               <div>
                 
   <section class="tex2jax_ignore mathjax_ignore" id="casino-hmm-learning-parameter-estimation">
-<h1>Casino HMM: learning (parameter estimation)<a class="headerlink" href="#casino-hmm-learning-parameter-estimation" title="Permalink to this heading">¶</a></h1>
-<p>We use a simple example of an HMM from known as the “occasionally dishonest casino”.
-This is from sec 3.2 of the book
-“Biological Sequence Analysis: Probabilistic Models of Proteins and Nucleic Acids”
-by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
-<p>We sample data from the model, then fit the model to the data, using EM and SGD.</p>
-<p>The figure below shows the graphical model, with the parameter nodes explicitly added.</p>
-<p><img alt="HMM with parameters" src="https://github.com/probml/dynamax/blob/main/docs/figures/hmmDgmPlatesY.png?raw=true" /></p>
+<h1>Casino HMM: Learning (parameter estimation)<a class="headerlink" href="#casino-hmm-learning-parameter-estimation" title="Permalink to this heading">¶</a></h1>
+<p>This notebook continues the “occasionally dishonest casino” example from the preceding notebook.
+There, we assumed we knew the parameters of the model: the probability of switching between fair and loaded dice and the probabilities of the different outcomes (1,…,6) for each die.</p>
+<p>Here, our goal is <strong>learn these parameters from data</strong>.  We will sample data from the model as before, but now we will estimate the parameters using eith stochastic gradient descent (SGD) or expectation-maximization (EM).</p>
+<p>The figure below shows the <em>graphical model</em>, complete with the parameter nodes.</p>
+<p align="center">
+  <img src="https://github.com/probml/dynamax/blob/main/docs/figures/hmmDgmPlatesY.png?raw=true">
+</p>
+The filled in nodes are those which are observed (i.e. the emissions), and the unfilled nodes are ones that must be inferred (i.e. the latent states and parameters).  
+<p>In Dynamax, the <a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.hidden_markov_model.CategoricalHMM"><code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code></a> assumes conjugate, Dirichlet prior distributions on the model parameters. Let <span class="math notranslate nohighlight">\(K\)</span> denote the number of discrete states (<span class="math notranslate nohighlight">\(K=2\)</span> in the casino example, either fair or loaded), and let <span class="math notranslate nohighlight">\(C\)</span> the number of categories the emissions can assume (<span class="math notranslate nohighlight">\(C=6\)</span> in the casino example, the number of faces of each die). The priors are:</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+\pi &amp;\sim \mathrm{Dir}(\alpha 1_K) \\
+A_k &amp;\sim \mathrm{Dir}(\beta 1_K) \quad \text{for } k=1,\ldots, K \\
+B_k &amp;\sim \mathrm{Dir}(\gamma 1_C) \quad \text{for } k=1,\ldots, K
+\end{align*}\]</div>
+<p>Thus, the full prior distribution is,</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+p(\theta) &amp;= \mathrm{Dir}(\pi \mid \alpha 1_K) \prod_{k=1}^K \mathrm{Dir}(A_k \mid \beta 1_K) \, \mathrm{Dir}(B_k \mid \gamma 1_C)
+\end{align*}\]</div>
+<p>The hyperparameters can be specified in the <a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.hidden_markov_model.CategoricalHMM"><code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code></a> constructor..</p>
+<p>The <strong>learning objective</strong> is to find parameters tham maximize the marginal probability,</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+\theta^\star &amp;= \text{arg max}_{\theta} \; p(\theta \mid y_{1:T}) \\
+&amp;= \text{arg max}_{\theta} \; p(\theta, y_{1:T})
+\end{align*}\]</div>
+<p>This is called the <em>maximum a posteriori</em> (MAP) estimate. Dynamax supports two algorithms for MAP estimation: expectation-maximization (EM) and stochastic gradient descent (SGD), which are described below.</p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
-<div class="cell docutils container">
+<div class="cell tag_hide-cell docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell content</span>
+<span class="expanded">Hide code cell content</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
@@ -362,16 +404,18 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 </pre></div>
 </div>
 </div>
+</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
-<span class="kn">import</span> <span class="nn">optax</span>
-<span class="kn">from</span> <span class="nn">graphviz</span> <span class="kn">import</span> <span class="n">Digraph</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">optax</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
+
 <span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">CategoricalHMM</span>
 </pre></div>
 </div>
@@ -382,77 +426,30 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#try:</span>
-<span class="c1">#    import graphviz</span>
-<span class="c1">#except ModuleNotFoundError:</span>
-<span class="c1">#    %pip install graphviz</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">hmm_plot_graphviz</span><span class="p">(</span><span class="n">trans_mat</span><span class="p">,</span> <span class="n">obs_mat</span><span class="p">,</span> <span class="n">states</span><span class="o">=</span><span class="p">[],</span> <span class="n">observations</span><span class="o">=</span><span class="p">[]):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Visualizes HMM transition matrix and observation matrix using graphhiz.</span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    trans_mat, obs_mat, init_dist: arrays</span>
-<span class="sd">    states: List(num_hidden)</span>
-<span class="sd">        Names of hidden states</span>
-<span class="sd">    observations: List(num_obs)</span>
-<span class="sd">        Names of observable events</span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    dot object, that can be displayed in colab</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">n_states</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n_obs</span> <span class="o">=</span> <span class="n">obs_mat</span><span class="o">.</span><span class="n">shape</span>
-
-    <span class="n">dot</span> <span class="o">=</span> <span class="n">Digraph</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="s2">&quot;HMM&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">states</span><span class="p">:</span>
-        <span class="n">states</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;State </span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_states</span><span class="p">)]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">observations</span><span class="p">:</span>
-        <span class="n">observations</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Obs </span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_obs</span><span class="p">)]</span>
-
-    <span class="c1"># Creates hidden state nodes</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">states</span><span class="p">):</span>
-        <span class="n">table</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;&lt;TR&gt;&lt;TD&gt;</span><span class="si">{</span><span class="n">observations</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="si">}</span><span class="s1">&lt;/TD&gt;&lt;TD&gt;</span><span class="si">{</span><span class="s2">&quot;</span><span class="si">%.2f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">prob</span><span class="si">}</span><span class="s1">&lt;/TD&gt;&lt;/TR&gt;&#39;</span> <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">obs_mat</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">])]</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;&lt;&lt;TABLE&gt;&lt;TR&gt;&lt;TD BGCOLOR=&quot;lightblue&quot; COLSPAN=&quot;2&quot;&gt;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&lt;/TD&gt;&lt;/TR&gt;</span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/TABLE&gt;&gt;&quot;&quot;&quot;</span>
-        <span class="n">dot</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;s</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
-
-    <span class="c1"># Writes transition probabilities</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_states</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_states</span><span class="p">):</span>
-            <span class="n">dot</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;s</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;s</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%.2f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">trans_mat</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]))</span>
-    <span class="n">dot</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="n">rankdir</span><span class="o">=</span><span class="s2">&quot;LR&quot;</span><span class="p">)</span>
-    <span class="c1"># dot.render(file_name, view=True)</span>
-    <span class="k">return</span> <span class="n">dot</span>
-</pre></div>
-</div>
-</div>
-</div>
 </section>
 <section id="sample-data-from-true-model">
 <h2>Sample data from true model<a class="headerlink" href="#sample-data-from-true-model" title="Permalink to this heading">¶</a></h2>
+<p>First we construct an HMM and sample data from it, just as in the preceding notebook.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_states</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">num_emissions</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">num_classes</span> <span class="o">=</span> <span class="mi">6</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_states</span> <span class="o">=</span> <span class="mi">2</span>      <span class="c1"># two types of dice (fair and loaded)</span>
+<span class="n">num_emissions</span> <span class="o">=</span> <span class="mi">1</span>   <span class="c1"># only one die is rolled at a time</span>
+<span class="n">num_classes</span> <span class="o">=</span> <span class="mi">6</span>     <span class="c1"># each die has six faces</span>
 
-<span class="n">initial_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
-<span class="n">transition_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.90</span><span class="p">]])</span>
-<span class="n">emission_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-    <span class="p">[[</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">6</span><span class="p">],</span>        <span class="c1"># fair die</span>
-     <span class="p">[</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span> <span class="o">/</span> <span class="mi">10</span><span class="p">]]</span>  <span class="c1"># loaded die</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">)</span>
+<span class="n">initial_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+<span class="n">transition_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span> 
+                               <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.90</span><span class="p">]])</span>
+<span class="n">emission_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span>  <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">],</span>    <span class="c1"># fair die</span>
+                            <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="o">/</span><span class="mi">10</span><span class="p">]])</span>  <span class="c1"># loaded die</span>
+
+
+<span class="c1"># Construct the HMM</span>
 <span class="n">hmm</span> <span class="o">=</span> <span class="n">CategoricalHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">)</span>
+
+<span class="c1"># Initialize the parameters struct with known values</span>
 <span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">,</span>
                            <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">,</span>
-                           <span class="n">emission_probs</span><span class="o">=</span><span class="n">emission_probs</span><span class="p">)</span>
+                           <span class="n">emission_probs</span><span class="o">=</span><span class="n">emission_probs</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -467,221 +464,213 @@ by R. Durbin, S. Eddy, A. Krogh and G. Mitchison (1998).</p>
     <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="o">=</span><span class="n">num_timesteps</span><span class="p">))(</span>
         <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">),</span> <span class="n">num_batches</span><span class="p">))</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="n">batch_states</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> 
-<span class="nb">print</span><span class="p">(</span><span class="n">batch_emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">batch_emissions</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;batch_states.shape:    </span><span class="si">{</span><span class="n">batch_states</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> 
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;batch_emissions.shape: </span><span class="si">{</span><span class="n">batch_emissions</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> 
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(5, 5000)
-(5, 5000, 1)
-25000
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>batch_states.shape:    (5, 5000)
+batch_emissions.shape: (5, 5000, 1)
 </pre></div>
 </div>
 </div>
 </div>
+<p>We’ll write a simple function to print the parameters in a more digestible format.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">extract_params</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
-    <span class="n">A</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">transition_matrix</span>
-    <span class="n">B</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">probs</span> <span class="c1"># (nstates, 1, noutputs)</span>
-    <span class="n">pi</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">initial</span><span class="o">.</span><span class="n">probs</span>
-    <span class="k">return</span> <span class="n">pi</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
-
-<span class="k">def</span> <span class="nf">print_floats</span><span class="p">(</span><span class="n">probs</span><span class="p">):</span>
-    <span class="nb">str</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{:.3f}</span><span class="s1">,&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">probs</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
-
-<span class="k">def</span> <span class="nf">print_params</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
-    <span class="n">pi</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">extract_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;initial dist: &#39;</span><span class="p">);</span>
-    <span class="n">print_floats</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;transition matrix&#39;</span><span class="p">)</span>
-    <span class="n">nstates</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nstates</span><span class="p">):</span>
-        <span class="n">print_floats</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">k</span><span class="p">,:])</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;emission matrix&#39;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nstates</span><span class="p">):</span>
-        <span class="n">print_floats</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">k</span><span class="p">,:])</span>
-
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">print_params</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">jnp</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">formatter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;float&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot;</span><span class="si">{0:0.3f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)})</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;initial probs:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">initial</span><span class="o">.</span><span class="n">probs</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;transition matrix:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">transition_matrix</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;emission probs:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">probs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:])</span> <span class="c1"># since num_emissions = 1</span>
+    
 <span class="n">print_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial dist: 
-[&#39;0.500,&#39;, &#39;0.500,&#39;]
-transition matrix
-[&#39;0.950,&#39;, &#39;0.050,&#39;]
-[&#39;0.100,&#39;, &#39;0.900,&#39;]
-emission matrix
-[&#39;0.167,&#39;, &#39;0.167,&#39;, &#39;0.167,&#39;, &#39;0.167,&#39;, &#39;0.167,&#39;, &#39;0.167,&#39;]
-[&#39;0.100,&#39;, &#39;0.100,&#39;, &#39;0.100,&#39;, &#39;0.100,&#39;, &#39;0.100,&#39;, &#39;0.500,&#39;]
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#dotfile = hmm_plot_graphviz(params[&quot;transitions&quot;][&quot;transition_matrix&quot;], params[&quot;emissions&quot;][&quot;probs&quot;])</span>
-<span class="c1">#dotfile.render(&quot;hmm-casino-true-dot&quot;)</span>
-<span class="c1">#dotfile</span>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial probs:
+[0.500 0.500]
+transition matrix:
+[[0.950 0.050]
+ [0.100 0.900]]
+emission probs:
+[[0.167 0.167 0.167 0.167 0.167 0.167]
+ [0.100 0.100 0.100 0.100 0.100 0.500]]
 </pre></div>
 </div>
 </div>
 </div>
 </section>
-<section id="learning">
-<h2>Learning<a class="headerlink" href="#learning" title="Permalink to this heading">¶</a></h2>
+<section id="learning-with-gradient-descent">
+<h2>Learning with Gradient Descent<a class="headerlink" href="#learning-with-gradient-descent" title="Permalink to this heading">¶</a></h2>
+<p>Perhaps the simplest learning algorithm is to directly maximize the marginal probability with gradient ascent. Since optimization algorithms are typically formulated as <em>minimization</em> algorithms, we will instead use gradient <em>descent</em> to solve the equivalent problem of <em>minimizing the negative log marginal probability</em>, <span class="math notranslate nohighlight">\(-\log p(y_{1:T}, \theta)\)</span>. On each iteration, we compute the objective, take its gradient, and update our parameters by taking a step in the direction of steepest descent.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Even though JAX code looks just like regular numpy code, it supports automatic differentiation, making gradient descent straightforward to implement.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The first step is to randomly initialize new parameters. You can do that by calling <code class="docutils literal notranslate"><span class="pre">hmm.initialize(key)</span></code>,
+where <code class="docutils literal notranslate"><span class="pre">key</span></code> is a JAX pseudorandom number generator (PRNG) key. When no other keyword arguments are supplied, this function will return parameters randomly sampled from the prior.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Since we expect the states to persist for some time, we add a little stickiness to the prior distribution on transition probabilities via the <code class="docutils literal notranslate"><span class="pre">transition_matrix_stickiness</span></code> hyperparameter. This hyperparameter changes the prior to,</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+A_k &amp;\sim \mathrm{Dir}(\beta 1_K + \kappa e_k) \quad \text{for } k=1,\ldots, K
+\end{align*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\kappa \in \mathbb{R}_+\)</span> is the stickiness paramter and <span class="math notranslate nohighlight">\(e_k\)</span> is the one-hot vector with a one in the <span class="math notranslate nohighlight">\(k\)</span>-th position.</p>
+</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_epochs</span> <span class="o">=</span> <span class="mi">400</span>
-<span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">1e-2</span>
-<span class="n">momentum</span> <span class="o">=</span> <span class="mf">0.95</span>
-<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optax</span><span class="o">.</span><span class="n">sgd</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="n">momentum</span><span class="p">)</span>
-<span class="n">shuffle</span> <span class="o">=</span> <span class="kc">True</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hmm</span> <span class="o">=</span> <span class="n">CategoricalHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">,</span>
+                     <span class="n">transition_matrix_stickiness</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+
+<span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">fbgd_params</span><span class="p">,</span> <span class="n">fbgd_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Randomly initialized parameters&quot;</span><span class="p">)</span>
+<span class="n">print_params</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Randomly initialized parameters
+initial probs:
+[0.793 0.207]
+transition matrix:
+[[0.978 0.022]
+ [0.252 0.748]]
+emission probs:
+[[0.145 0.115 0.024 0.136 0.187 0.393]
+ [0.010 0.119 0.416 0.325 0.068 0.061]]
 </pre></div>
 </div>
 </div>
 </div>
-<section id="full-batch-gradient-descent">
-<h3>Full-Batch Gradient Descent<a class="headerlink" href="#full-batch-gradient-descent" title="Permalink to this heading">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Notice that <code class="docutils literal notranslate"><span class="pre">initialize</span></code> returns two things, the parameters and their properties. Among other things, the properties allow you to specify which parameters should be learned. You can set the <code class="docutils literal notranslate"><span class="pre">trainable</span></code> flag to False if you want to fix certain parmeters.</p>
+</div>
+<section id="gradient-descent-is-a-special-case-of-stochastic-gradient-descent">
+<h3>Gradient descent is a special case of <em>stochastic</em> gradient descent<a class="headerlink" href="#gradient-descent-is-a-special-case-of-stochastic-gradient-descent" title="Permalink to this heading">¶</a></h3>
+<p>Gradient descent is a special case of stochastic gradient descent (SGD) in which each iteration uses all the data to compute the descent direction for parameter updates. In contrast, SGD uses only a <em>minibatch</em> of data in each update. You can think of gradient descent as the special case where the minibatch is really the entire dataset. That’s why we sometimes call it <em>full batch</em> gradient descent. When you’re working with very large datasets (e.g. datasets with many sequences), however, minibatches can be very informative, and SGD can converge more quickly than full batch gradient descent.</p>
+<p>Dynamax models have a <code class="docutils literal notranslate"><span class="pre">fit_sgd</span></code> function that runs SGD. If you want to run full batch gradient descent, all you have to do set <code class="docutils literal notranslate"><span class="pre">batch_size=num_batches</span></code>, as below.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">fbgd_params</span><span class="p">,</span> <span class="n">fbgd_param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">fbgd_params</span><span class="p">,</span> <span class="n">losses_fbgd</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">,</span> 
-                                       <span class="n">fbgd_param_props</span><span class="p">,</span> 
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fbgd_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="n">fbgd_params</span><span class="p">,</span> <span class="n">fbgd_losses</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">,</span> 
+                                       <span class="n">fbgd_props</span><span class="p">,</span> 
                                        <span class="n">batch_emissions</span><span class="p">,</span> 
-                                       <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> 
+                                       <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">sgd</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mf">0.95</span><span class="p">),</span>
                                        <span class="n">batch_size</span><span class="o">=</span><span class="n">num_batches</span><span class="p">,</span> 
-                                       <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">,</span> 
-                                       <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span> 
-                                       <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+                                       <span class="n">num_epochs</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> 
+                                       <span class="n">key</span><span class="o">=</span><span class="n">fbgd_key</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_params</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial dist: 
-[&#39;0.662,&#39;, &#39;0.338,&#39;]
-transition matrix
-[&#39;0.938,&#39;, &#39;0.062,&#39;]
-[&#39;0.025,&#39;, &#39;0.975,&#39;]
-emission matrix
-[&#39;0.183,&#39;, &#39;0.158,&#39;, &#39;0.183,&#39;, &#39;0.232,&#39;, &#39;0.206,&#39;, &#39;0.038,&#39;]
-[&#39;0.144,&#39;, &#39;0.147,&#39;, &#39;0.140,&#39;, &#39;0.133,&#39;, &#39;0.134,&#39;, &#39;0.302,&#39;]
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">losses_fbgd</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x7f54ecd4cdf0&gt;]
-</pre></div>
-</div>
-<img alt="../../_images/22dfca5f96043a520d433188374197ab1191b56685772e1d483942b6b2b4b6cf.png" src="../../_images/22dfca5f96043a520d433188374197ab1191b56685772e1d483942b6b2b4b6cf.png" />
 </div>
 </div>
 </section>
-<section id="mini-batch-gradient-descent">
-<h3>Mini-Batch Gradient Descent<a class="headerlink" href="#mini-batch-gradient-descent" title="Permalink to this heading">¶</a></h3>
+<section id="stochastic-gradient-descent-with-mini-batches">
+<h3>Stochastic Gradient Descent with Mini-Batches<a class="headerlink" href="#stochastic-gradient-descent-with-mini-batches" title="Permalink to this heading">¶</a></h3>
+<p>Now let’s run it with stochastic gradient descent using a batch size of two sequences per mini-batch.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">mbgd_params</span><span class="p">,</span> <span class="n">mbgd_param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">mbgd_params</span><span class="p">,</span> <span class="n">losses_mbgd</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">mbgd_params</span><span class="p">,</span> 
-                                       <span class="n">mbgd_param_props</span><span class="p">,</span> 
-                                       <span class="n">batch_emissions</span><span class="p">,</span> 
-                                       <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> 
-                                       <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
-                                       <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">,</span> 
-                                       <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span> 
-                                       <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">sgd_params</span><span class="p">,</span> <span class="n">sgd_param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="n">sgd_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="n">sgd_params</span><span class="p">,</span> <span class="n">sgd_losses</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">sgd_params</span><span class="p">,</span> 
+                                     <span class="n">sgd_param_props</span><span class="p">,</span> 
+                                     <span class="n">batch_emissions</span><span class="p">,</span> 
+                                     <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">sgd</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mf">0.95</span><span class="p">),</span>
+                                     <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
+                                     <span class="n">num_epochs</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> 
+                                     <span class="n">key</span><span class="o">=</span><span class="n">sgd_key</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_params</span><span class="p">(</span><span class="n">mbgd_params</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fbgd_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;full batch GD&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sgd_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;SGD (mini-batch size = 2)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;epoch&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Full Batch Gradient Descent Learning Curve&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial dist: 
-[&#39;0.661,&#39;, &#39;0.339,&#39;]
-transition matrix
-[&#39;0.905,&#39;, &#39;0.095,&#39;]
-[&#39;0.025,&#39;, &#39;0.975,&#39;]
-emission matrix
-[&#39;0.185,&#39;, &#39;0.202,&#39;, &#39;0.201,&#39;, &#39;0.184,&#39;, &#39;0.186,&#39;, &#39;0.041,&#39;]
-[&#39;0.139,&#39;, &#39;0.134,&#39;, &#39;0.131,&#39;, &#39;0.134,&#39;, &#39;0.131,&#39;, &#39;0.330,&#39;]
-</pre></div>
+<img alt="../../_images/8032d5f17642fc2a22665b547b33157c45283a15261edc9f9d30591daf9c7513.png" src="../../_images/8032d5f17642fc2a22665b547b33157c45283a15261edc9f9d30591daf9c7513.png" />
 </div>
 </div>
-</div>
+<p>As you can see, stochastic gradient descent converges much more quickly that full-batch gradient descent in this example. Intuitively, that’s because SGD takes multiple steps per <em>epoch</em> (i.e. each complete sweep through the dataset), whereas full-batch gradient descent takes only one.</p>
+<p>The algorithms appear to have converged, but have they learned the correct parameters? Let’s see…</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">losses_mbgd</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Print the paramters after learning</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Full batch gradient descent params:&quot;</span><span class="p">)</span>
+<span class="n">print_params</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stochastic gradient descent params:&quot;</span><span class="p">)</span>
+<span class="n">print_params</span><span class="p">(</span><span class="n">sgd_params</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x7f54f4157940&gt;]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Full batch gradient descent params:
+initial probs:
+[0.793 0.207]
+transition matrix:
+[[0.961 0.039]
+ [0.292 0.708]]
+emission probs:
+[[0.162 0.142 0.115 0.131 0.145 0.306]
+ [0.013 0.170 0.406 0.249 0.093 0.070]]
+
+Stochastic gradient descent params:
+initial probs:
+[0.793 0.207]
+transition matrix:
+[[0.964 0.036]
+ [0.344 0.656]]
+emission probs:
+[[0.165 0.143 0.124 0.130 0.150 0.287]
+ [0.014 0.229 0.315 0.258 0.110 0.074]]
 </pre></div>
 </div>
-<img alt="../../_images/96b1611a2207b47215128f92b3c8e73221270b337ef406ea10bd8b04055e7a99.png" src="../../_images/96b1611a2207b47215128f92b3c8e73221270b337ef406ea10bd8b04055e7a99.png" />
 </div>
 </div>
+<p>Ok, but not perfect!</p>
 </section>
 <section id="expectation-maximization">
 <h3>Expectation-Maximization<a class="headerlink" href="#expectation-maximization" title="Permalink to this heading">¶</a></h3>
+<p>The more traditional way to estimate the parameters of an HMM is by expectation-maximization (EM). EM alternates between two steps:</p>
+<ul class="simple">
+<li><p><strong>E-step:</strong> Inferring the posterior distribution of latent states <span class="math notranslate nohighlight">\(z_{1:T}\)</span> given the parameters <span class="math notranslate nohighlight">\(\theta = (\pi, A, B)\)</span>. This step essentially runs the HMM forward-backward algorithm from the preceding notebook!</p></li>
+<li><p><strong>M-step:</strong> Updating the parameters to maximize the expected log probability.
+By iteratively performing these two steps, the algorithm converges to a local maximum of the marginal probability, <span class="math notranslate nohighlight">\(p(y_{1:T}, \theta)\)</span>, and hence to a MAP estimate of the parameters.</p></li>
+</ul>
+<p>In practice, EM often converges much quicker than SGD, especially when the models are “nice” (e.g. constructed with exponential family emission distributions). That is why dynamax has closed form M-steps for a variety of HMMs.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">em_params</span><span class="p">,</span> <span class="n">em_param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;parameters before learning&#39;</span><span class="p">)</span>
-<span class="n">print_params</span><span class="p">(</span><span class="n">em_params</span><span class="p">)</span>
-
-<span class="n">em_params</span><span class="p">,</span> <span class="n">log_liks</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">em_params</span><span class="p">,</span> 
-                                 <span class="n">em_param_props</span><span class="p">,</span> 
-                                 <span class="n">batch_emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> 
-                                 <span class="n">num_iters</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">)</span>
-<span class="n">losses_em</span> <span class="o">=</span> <span class="o">-</span><span class="n">log_liks</span> <span class="o">/</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">size</span> <span class="c1"># divide by (num sequences * num time steps), so scale is comparable to sgd</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;parameters after learning&#39;</span><span class="p">)</span>
-<span class="n">print_params</span><span class="p">(</span><span class="n">em_params</span><span class="p">)</span>
+<span class="n">em_params</span><span class="p">,</span> <span class="n">log_probs</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">em_params</span><span class="p">,</span> 
+                                  <span class="n">em_param_props</span><span class="p">,</span> 
+                                  <span class="n">batch_emissions</span><span class="p">,</span> 
+                                  <span class="n">num_iters</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>parameters before learning
-initial dist: 
-[&#39;0.663,&#39;, &#39;0.337,&#39;]
-transition matrix
-[&#39;0.970,&#39;, &#39;0.030,&#39;]
-[&#39;0.074,&#39;, &#39;0.926,&#39;]
-emission matrix
-[&#39;0.133,&#39;, &#39;0.114,&#39;, &#39;0.119,&#39;, &#39;0.249,&#39;, &#39;0.355,&#39;, &#39;0.030,&#39;]
-[&#39;0.099,&#39;, &#39;0.529,&#39;, &#39;0.096,&#39;, &#39;0.035,&#39;, &#39;0.151,&#39;, &#39;0.090,&#39;]
-</pre></div>
-</div>
 <div class="output text_html">
 <style>
     /* Turns off some styling */
@@ -703,34 +692,74 @@ emission matrix
       <progress value='400' class='' max='400' style='width:300px; height:20px; vertical-align: middle;'></progress>
       100.00% [400/400 00:02&lt;00:00]
     </div>
-    </div><div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>parameters after learning
-initial dist: 
-[&#39;0.163,&#39;, &#39;0.837,&#39;]
-transition matrix
-[&#39;0.946,&#39;, &#39;0.054,&#39;]
-[&#39;0.094,&#39;, &#39;0.906,&#39;]
-emission matrix
-[&#39;0.171,&#39;, &#39;0.173,&#39;, &#39;0.171,&#39;, &#39;0.164,&#39;, &#39;0.164,&#39;, &#39;0.157,&#39;]
-[&#39;0.109,&#39;, &#39;0.106,&#39;, &#39;0.101,&#39;, &#39;0.110,&#39;, &#39;0.105,&#39;, &#39;0.469,&#39;]
-</pre></div>
+    </div></div>
 </div>
-</div>
+</section>
+<section id="compare-the-learning-curves">
+<h3>Compare the learning curves<a class="headerlink" href="#compare-the-learning-curves" title="Permalink to this heading">¶</a></h3>
+<p>Finally, let’s compare the learning curve of EM to those of SGD. For comparison, we plot the loss associated with the true parameters that generated the data.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>To compare the log probabilities returned by <code class="docutils literal notranslate"><span class="pre">fit_em</span></code> to the losses returned by <code class="docutils literal notranslate"><span class="pre">fit_sgd</span></code>, you need to negate the log probabilities and divide by the total number of emissions. This is because optimization library defaults typically assume the loss is scaled to be <span class="math notranslate nohighlight">\(\mathcal{O}(1)\)</span>.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">losses_em</span><span class="p">[:</span><span class="mi">10</span><span class="p">])</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compute the &quot;losses&quot; from EM </span>
+<span class="n">em_losses</span> <span class="o">=</span> <span class="o">-</span><span class="n">log_probs</span> <span class="o">/</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">size</span> 
+
+<span class="c1"># Compute the loss if you used the parameters that generated the data</span>
+<span class="n">true_loss</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">hmm</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">,</span> <span class="n">params</span><span class="p">))(</span><span class="n">batch_emissions</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">true_loss</span> <span class="o">+=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">log_prior</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<span class="n">true_loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">true_loss</span> <span class="o">/</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">size</span>
+
+<span class="c1"># Plot the learning curves</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fbgd_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;full batch GD&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sgd_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;SGD (mini-batch size = 2)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">em_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;EM&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">true_loss</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;True Params&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;epoch&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Learning Curve Comparison&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&lt;matplotlib.lines.Line2D at 0x7f54ec828b50&gt;]
+<img alt="../../_images/16a7e3fe9226a0c0610b20188fe6833922c9c11fc6ac7eb6ac342729c3b99472.png" src="../../_images/16a7e3fe9226a0c0610b20188fe6833922c9c11fc6ac7eb6ac342729c3b99472.png" />
+</div>
+</div>
+<p>Not only does EM converge much faster on this example (here, in only a handful of iterations), it also converges to a better estimate of the parameters. Indeed, it essentially matches the loss obtained by the parameters that truly generated the data. We see that its parameter estimates are nearly the same as the true parameters.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_params</span><span class="p">(</span><span class="n">em_params</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../../_images/0f2fd9b9774ae2b0eba2b9c6dfec34db56c4c17f44700ec09a270865c7d22f92.png" src="../../_images/0f2fd9b9774ae2b0eba2b9c6dfec34db56c4c17f44700ec09a270865c7d22f92.png" />
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial probs:
+[0.628 0.372]
+transition matrix:
+[[0.909 0.091]
+ [0.053 0.947]]
+emission probs:
+[[0.110 0.106 0.101 0.110 0.105 0.468]
+ [0.171 0.173 0.171 0.164 0.164 0.157]]
+</pre></div>
+</div>
 </div>
 </div>
 </section>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">¶</a></h2>
+<p>This notebook showed how to learn the parameters of an HMM using SGD (with full batch or with mini-batches) and EM. For many HMMs, especially the exponential family HMMs with exact M-steps implemented in Dynamax, EM tends to converge very quickly.</p>
+<p>This notebook glossed over some important details:</p>
+<ul class="simple">
+<li><p>Both SGD and EM are prone to getting stuck in local optima. For example, if you change the key for the random initialization, you may find that the learned parameters are not as good. There are a few ways around that problem. One is to use a heuristic to initialize the parameters more intelligently. Another is to use many random initializations of the model and keep the one that achieves the best loss.</p></li>
+<li><p>This notebook did not address the important question of <em>how to determine the number of discrete states</em>. We often use cross-validation for that purpose, as described next.</p></li>
+</ul>
+<p>So far, we have focused on HMMs with discrete emissions from a categorical distribution. The next notebook will illustrate a Gaussian HMM for continuous data. We will also discuss some of the concerns above.</p>
 </section>
 </section>
 
