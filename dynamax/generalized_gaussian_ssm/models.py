@@ -20,23 +20,26 @@ EmissionDistFn = Callable[ [Float[Array, "state_dim"], Float[Array, "state_dim s
 
 class ParamsGGSSM(NamedTuple):
     """
-    Container for GGSSM parameters. Differs from NLGSSM in terms of emission model.
-    
-    The tuple doubles as a container for the ParameterProperties.
+    Container for Generalized Gaussian SSM parameters. 
+    Specifically, it defines the following model:
 
     $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$
     $$p(y_t | z_t) = q(y_t | h(z_t, u_t), R(z_t, u_t))$$
     $$p(z_1) = N(z_1 | m, S)$$
 
+    This differs from NLGSSM in by allowing a general emission model.
+    If you have no inputs, the dynamics and emission functions do not to take $u_t$ as an argument.
+
     :param initial_mean: $m$
     :param initial_covariance: $S$
-    :param dynamics_function: $f$
+    :param dynamics_function: $f$. This has the signature $f: ZxU \rightarrow Y$ or $h: Z \rightarrow Y$.
     :param dynamics_covariance: $Q$
-    :param emissions_mean_function: $h$
-    :param emissions_cov_function: $R$
-    :param emission_dist: the observation pdf $q$. Constructed from specified mean and covariance.
+    :param emission_mean_function: $h$. This has the signature $h: ZxU \rightarrow Z$ or $h: Z \rightarrow Z$.
+    :param emission_cov_function: $R$
+    :param emission_dist: the observation distribution $q$. This is a callable that takes the predicted
+              mean and covariance of Y, and returns a tfp distribution object.
 
-    If you have no inputs, the dynamics and emission functions do not to take $u_t$ as an argument.
+
     """
 
     initial_mean: Float[Array, "state_dim"]
@@ -60,7 +63,7 @@ class GeneralizedGaussianSSM(SSM):
     $$p(y_t | z_t) = q(y_t | h(z_t, u_t), R(z_t, u_t))$$
     $$p(z_1) = N(z_1 | m, S)$$
 
-    where
+    where the model parameters are
 
     * $z_t$ = hidden variables of size `state_dim`,
     * $y_t$ = observed variables of size `emission_dim`
@@ -71,6 +74,10 @@ class GeneralizedGaussianSSM(SSM):
     * $R$ = covariance function for emission (observation) noise
     * $m$ = mean of initial state
     * $S$ = covariance matrix of initial state
+
+    The parameters of the model are stored in a separate object of type :class:`ParamsGGSSM`.
+
+    For example usage, see https://github.com/probml/dynamax/blob/main/dynamax/generalized_gaussian_ssm/models_test.py.
 
     """
 

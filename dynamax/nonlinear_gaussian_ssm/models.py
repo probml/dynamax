@@ -23,16 +23,14 @@ class ParamsNLGSSM(NamedTuple):
     $$p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)$$
     $$p(z_1) = N(z_1 | m, S)$$
 
-    The tuple doubles as a container for the ParameterProperties.
+    If you have no inputs, the dynamics and emission functions do not to take $u_t$ as an argument.
 
     :param dynamics_function: $f$
     :param dynamics_covariance: $Q$
     :param emissions_function: $h$
     :param emissions_covariance: $R$
     :param initial_mean: $m$
-    :params initial_covariance: $S$
-
-    If you have no inputs, the dynamics and emission functions do not to take $u_t$ as an argument.
+    :param initial_covariance: $S$
 
     """
 
@@ -54,7 +52,7 @@ class NonlinearGaussianSSM(SSM):
     $$p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)$$
     $$p(z_1) = N(z_1 | m, S)$$
 
-    where
+    where the model parameters are
 
     * $z_t$ = hidden variables of size `state_dim`,
     * $y_t$ = observed variables of size `emission_dim`
@@ -66,6 +64,8 @@ class NonlinearGaussianSSM(SSM):
     * $m$ = mean of initial state
     * $S$ = covariance matrix of initial state
 
+
+    These parameters of the model are stored in a separate object of type :class:`ParamsNLGSSM`.
     """
 
 
