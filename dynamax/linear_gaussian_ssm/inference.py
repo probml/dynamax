@@ -1,6 +1,5 @@
 import jax.numpy as jnp
 import jax.random as jr
-from jax import scipy as jsc
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from functools import wraps
@@ -9,7 +8,7 @@ import inspect
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union
 
-from dynamax.utils.utils import linear_solve
+from dynamax.utils.utils import psd_solve
 from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
 
@@ -171,7 +170,7 @@ def _condition_on(m, P, H, D, d, R, u, y):
     """
     # Compute the Kalman gain
     S = R + H @ P @ H.T
-    K = linear_solve(S, H @ P).T
+    K = psd_solve(S, H @ P).T
     Sigma_cond = P - K @ S @ K.T
     mu_cond = m + K @ (y - D @ u - d - H @ m)
     return mu_cond, Sigma_cond
@@ -324,7 +323,7 @@ def lgssm_smoother(
 
         # This is like the Kalman gain but in reverse
         # See Eq 8.11 of Saarka's "Bayesian Filtering and Smoothing"
-        G = linear_solve(Q + F @ filtered_cov @ F.T, F @ filtered_cov).T
+        G = psd_solve(Q + F @ filtered_cov @ F.T, F @ filtered_cov).T
 
         # Compute the smoothed mean and covariance
         smoothed_mean = filtered_mean + G @ (smoothed_mean_next - F @ filtered_mean - B @ u - b)
