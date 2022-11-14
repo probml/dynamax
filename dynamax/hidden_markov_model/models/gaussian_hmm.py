@@ -143,8 +143,8 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
                  emission_dim,
                  emission_prior_mean=0.0,
                  emission_prior_mean_concentration=1e-4,
-                 emission_prior_concentration=1.1,
-                 emission_prior_scale=1.1):
+                 emission_prior_concentration=0.1,
+                 emission_prior_scale=0.1):
 
         self.num_states = num_states
         self.emission_dim = emission_dim
@@ -686,8 +686,8 @@ class DiagonalGaussianHMM(HMM):
                  transition_matrix_stickiness: Scalar=0.0,
                  emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
                  emission_prior_mean_concentration: Union[Scalar, Float[Array, "emission_dim"]]=1e-4,
-                 emission_prior_concentration: Scalar=1.1,
-                 emission_prior_scale: Scalar=1.1):
+                 emission_prior_concentration: Scalar=0.1,
+                 emission_prior_scale: Scalar=0.1):
 
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
