@@ -2,13 +2,12 @@ from itertools import product
 from numpy.polynomial.hermite_e import hermegauss
 from jax import jacfwd, vmap, lax
 import jax.numpy as jnp
-from jax import scipy as jsc
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union, Callable
 
-from dynamax.utils.utils import linear_solve
+from dynamax.utils.utils import psd_solve
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
 
@@ -162,7 +161,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, em
         S = g_ev(Cov_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
         log_likelihood = emission_dist(yhat, S).log_prob(jnp.atleast_1d(y)).sum()
         C = g_cov(identity_fn, m_Y, prior_mean, prior_cov)
-        K = linear_solve(S, C.T).T
+        K = psd_solve(S, C.T).T
         posterior_mean = prior_mean + K @ (y - yhat)
         posterior_cov = prior_cov - K @ S @ K.T
         return (posterior_mean, posterior_cov), log_likelihood
@@ -195,7 +194,7 @@ def _statistical_linear_regression(mu, Sigma, m, S, C):
         b (D_obs):
         Omega (D_obs, D_obs):
     """
-    A = linear_solve(Sigma.T, C).T
+    A = psd_solve(Sigma.T, C).T
     b = m - A @ mu
     Omega = S - A @ Sigma @ A.T
     return A, b, Omega
@@ -329,7 +328,7 @@ def conditional_moments_gaussian_smoother(
 
         # Prediction step
         pred_mean, pred_cov, pred_cross = _predict(filtered_mean, filtered_cov, f, Q, u, g_ev, g_cov)
-        G = linear_solve(pred_cov, pred_cross.T).T
+        G = psd_solve(pred_cov, pred_cross.T).T
 
         # Compute smoothed mean and covariance
         smoothed_mean = filtered_mean + G @ (smoothed_mean_next - pred_mean)
