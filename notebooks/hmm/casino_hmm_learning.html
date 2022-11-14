@@ -43,7 +43,7 @@
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Gaussian HMM" href="gaussian_hmm.html" />
+    <link rel="next" title="Gaussian HMM: Cross-validation and Model Selection" href="gaussian_hmm.html" />
     <link rel="prev" title="Casino HMM: Inference (state estimation)" href="casino_hmm_inference.html" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -90,7 +90,7 @@
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="gaussian_hmm.html">
-   Gaussian HMM
+   Gaussian HMM: Cross-validation and Model Selection
   </a>
  </li>
  <li class="toctree-l1">
@@ -395,11 +395,12 @@ p(\theta) &amp;= \mathrm{Dir}(\pi \mid \alpha 1_K) \prod_{k=1}^K \mathrm{Dir}(A_
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
+<span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
-    <span class="o">%</span><span class="k">pip</span> install -q dynamax[notebooks]
+    <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
     <span class="kn">import</span> <span class="nn">dynamax</span>
 </pre></div>
 </div>
@@ -726,7 +727,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/16a7e3fe9226a0c0610b20188fe6833922c9c11fc6ac7eb6ac342729c3b99472.png" src="../../_images/16a7e3fe9226a0c0610b20188fe6833922c9c11fc6ac7eb6ac342729c3b99472.png" />
+<img alt="../../_images/2e013e4e4ef3990bd40f961fbd8288fe624ab398e2c1d11bec1ae190e44746a4.png" src="../../_images/2e013e4e4ef3990bd40f961fbd8288fe624ab398e2c1d11bec1ae190e44746a4.png" />
 </div>
 </div>
 <p>Not only does EM converge much faster on this example (here, in only a handful of iterations), it also converges to a better estimate of the parameters. Indeed, it essentially matches the loss obtained by the parameters that truly generated the data. We see that its parameter estimates are nearly the same as the true parameters.</p>
@@ -773,7 +774,7 @@ emission probs:
     <div class='prev-next-bottom'>
         
     <a class='left-prev' id="prev-link" href="casino_hmm_inference.html" title="previous page">Casino HMM: Inference (state estimation)</a>
-    <a class='right-next' id="next-link" href="gaussian_hmm.html" title="next page">Gaussian HMM</a>
+    <a class='right-next' id="next-link" href="gaussian_hmm.html" title="next page">Gaussian HMM: Cross-validation and Model Selection</a>
 
     </div>
     <footer class="footer mt-5 mt-md-0">

@@ -85,7 +85,7 @@
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="../../../../notebooks/hmm/gaussian_hmm.html">
-   Gaussian HMM
+   Gaussian HMM: Cross-validation and Model Selection
   </a>
  </li>
  <li class="toctree-l1">
@@ -420,8 +420,8 @@
                  <span class="n">emission_dim</span><span class="p">,</span>
                  <span class="n">emission_prior_mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                  <span class="n">emission_prior_mean_concentration</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
-                 <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
-                 <span class="n">emission_prior_scale</span><span class="o">=</span><span class="mf">1.1</span><span class="p">):</span>
+                 <span class="n">emission_prior_concentration</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                 <span class="n">emission_prior_scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
@@ -963,8 +963,8 @@
                  <span class="n">transition_matrix_stickiness</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                  <span class="n">emission_prior_mean</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                  <span class="n">emission_prior_mean_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
-                 <span class="n">emission_prior_concentration</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
-                 <span class="n">emission_prior_scale</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">1.1</span><span class="p">):</span>
+                 <span class="n">emission_prior_concentration</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                 <span class="n">emission_prior_scale</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
         <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>

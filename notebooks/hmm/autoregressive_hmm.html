@@ -44,7 +44,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Tracking an object using the Kalman filter" href="../linear_gaussian_ssm/kf_tracking.html" />
-    <link rel="prev" title="Gaussian HMM" href="gaussian_hmm.html" />
+    <link rel="prev" title="Gaussian HMM: Cross-validation and Model Selection" href="gaussian_hmm.html" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
@@ -90,7 +90,7 @@
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="gaussian_hmm.html">
-   Gaussian HMM
+   Gaussian HMM: Cross-validation and Model Selection
   </a>
  </li>
  <li class="toctree-l1 current active">
@@ -359,8 +359,8 @@
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
 Let <span class="math notranslate nohighlight">\(x_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
 <p>The autoregressive hidden Markov model has the following likelihood,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-97f1aebc-a454-4e0b-bb70-99335fed63a6">
-<span class="eqno">(1)<a class="headerlink" href="#equation-97f1aebc-a454-4e0b-bb70-99335fed63a6" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-3934f1bc-237a-42e2-ab87-2e66ef89b9b8">
+<span class="eqno">(1)<a class="headerlink" href="#equation-3934f1bc-237a-42e2-ab87-2e66ef89b9b8" title="Permalink to this equation">¶</a></span>\[\begin{align}
 x_t \mid x_{t-1}, z_t &amp;\sim
 \mathcal{N}\left(A_{z_t} x_{t-1} + b_{z_t}, Q_{z_t} \right).
 \end{align}\]</div>
@@ -446,7 +446,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f00e09484f0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fb310805520&gt;
 </pre></div>
 </div>
 <img alt="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" src="../../_images/7cfaceb8474ff073b231ed66fa635c965faf5d6e2bb318e38525f0e9fcea4b3f.png" />
@@ -640,7 +640,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c945186d735b39b30f059574d9e490b9b3abcdf753beb3c9913c2532f099b08b.png" src="../../_images/c945186d735b39b30f059574d9e490b9b3abcdf753beb3c9913c2532f099b08b.png" />
+<img alt="../../_images/3edd1930810c5751af5d4d94f093f1206f719de870ea5cfaa0cd2d40fd8f4a20.png" src="../../_images/3edd1930810c5751af5d4d94f093f1206f719de870ea5cfaa0cd2d40fd8f4a20.png" />
 </div>
 </div>
 </section>
@@ -687,7 +687,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/82b76b203e46e76fdf1e7d33ad2880c9c9a0765064d64b70904b417a00efd374.png" src="../../_images/82b76b203e46e76fdf1e7d33ad2880c9c9a0765064d64b70904b417a00efd374.png" />
+<img alt="../../_images/61bad41e1b8f8fd69192911dfe8a76ca24dd87f77a6186bad176ee3a25d35fac.png" src="../../_images/61bad41e1b8f8fd69192911dfe8a76ca24dd87f77a6186bad176ee3a25d35fac.png" />
 </div>
 </div>
 </section>
@@ -715,7 +715,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/01b6e2a5f9ea5d9b75f31801481516091e89c65b9e8cd4d2669a9d6f130d6462.png" src="../../_images/01b6e2a5f9ea5d9b75f31801481516091e89c65b9e8cd4d2669a9d6f130d6462.png" />
+<img alt="../../_images/0741227120263494df01784eca0ad4c8bae01925750b2d8e98ba86567fcf73c4.png" src="../../_images/0741227120263494df01784eca0ad4c8bae01925750b2d8e98ba86567fcf73c4.png" />
 </div>
 </div>
 </section>
@@ -743,7 +743,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/57bb61f0a29b0e958d625cbdcab1199ca80d659cca74b137cd29d6153d121ff9.png" src="../../_images/57bb61f0a29b0e958d625cbdcab1199ca80d659cca74b137cd29d6153d121ff9.png" />
+<img alt="../../_images/6c0c8241a9a5edc5d5755959950d57a123a2b6f3592a18437993712504642b75.png" src="../../_images/6c0c8241a9a5edc5d5755959950d57a123a2b6f3592a18437993712504642b75.png" />
 </div>
 </div>
 </section>
@@ -759,7 +759,7 @@ x_t \mid x_{t-1}, z_t &amp;\sim
     
     <div class='prev-next-bottom'>
         
-    <a class='left-prev' id="prev-link" href="gaussian_hmm.html" title="previous page">Gaussian HMM</a>
+    <a class='left-prev' id="prev-link" href="gaussian_hmm.html" title="previous page">Gaussian HMM: Cross-validation and Model Selection</a>
     <a class='right-next' id="next-link" href="../linear_gaussian_ssm/kf_tracking.html" title="next page">Tracking an object using the Kalman filter</a>
 
     </div>
