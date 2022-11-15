@@ -9,10 +9,12 @@ from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, 
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.types import Scalar
 import optax
-from typing import NamedTuple, Optional, Tuple, Union
+from chex import dataclass
+from typing import Optional, Tuple, Union
 
 
-class ParamsLogisticRegressionHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLogisticRegressionHMMEmissions:
     weights: Union[Float[Array, "state_dim input_dim"], ParameterProperties]
     biases: Union[Float[Array, "state_dim"], ParameterProperties]
 
@@ -84,7 +86,8 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
         return tfd.Bernoulli(logits=logits)
 
 
-class ParamsLogisticRegressionHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLogisticRegressionHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsLogisticRegressionHMMEmissions

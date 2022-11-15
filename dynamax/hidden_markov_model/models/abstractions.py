@@ -597,7 +597,7 @@ class HMM(SSM):
         initial_params, initial_m_step_state = self.initial_component.m_step(params.initial, props.initial, batch_initial_stats, initial_m_step_state)
         transition_params, transitions_m_step_state = self.transition_component.m_step(params.transitions, props.transitions, batch_transition_stats, transitions_m_step_state)
         emission_params, emissions_m_step_state = self.emission_component.m_step(params.emissions, props.emissions, batch_emission_stats, emissions_m_step_state)
-        params = params._replace(initial=initial_params, transitions=transition_params, emissions=emission_params)
+        params = params.replace(initial=initial_params, transitions=transition_params, emissions=emission_params)
         m_step_state = initial_m_step_state, transitions_m_step_state, emissions_m_step_state
         return params, m_step_state
 

@@ -2,12 +2,14 @@ import jax.numpy as jnp
 from jax import lax, vmap, value_and_grad
 from jax.scipy.linalg import solve_triangular
 from jaxtyping import Array, Float
-from typing import NamedTuple, Optional
+from chex import dataclass
+from typing import Optional
 
 from dynamax.utils.utils import psd_solve
 
 
-class ParamsLGSSMInfo(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLGSSMInfo:
     """Lightweight container for passing LGSSM parameters in information form to inference algorithms."""
     initial_mean: Float[Array, "state_dim"]
     dynamics_weights: Float[Array, "state_dim state_dim"]
@@ -24,7 +26,8 @@ class ParamsLGSSMInfo(NamedTuple):
     emission_bias: Optional[Float[Array, "emission_dim"]] = None
 
 
-class PosteriorGSSMInfoFiltered(NamedTuple):
+@dataclass(frozen=True)
+class PosteriorGSSMInfoFiltered:
     r"""Marginals of the Gaussian filtering posterior in information form.
 
     Attributes:
@@ -39,7 +42,8 @@ class PosteriorGSSMInfoFiltered(NamedTuple):
     filtered_precisions: Float[Array, "ntime state_dim state_dim"]
 
 
-class PosteriorGSSMInfoSmoothed(NamedTuple):
+@dataclass(frozen=True)
+class PosteriorGSSMInfoSmoothed:
     """"Marginals of the Gaussian filtering and smoothed posterior in information form.
     """
     marginal_loglik: Float[Array, ""] # Scalar
@@ -241,7 +245,7 @@ def lgssm_info_smoother(
 
     # Run the Kalman filter
     filtered_posterior = lgssm_info_filter(params, emissions, inputs)
-    ll, filtered_etas, filtered_precisions, *_ = filtered_posterior
+    ll, filtered_etas, filtered_precisions, *_ = filtered_posterior.to_tuple()
 
     # Run the smoother backward in time
     def _smooth_step(carry, args):

@@ -5,10 +5,12 @@ import tensorflow_probability.substrates.jax.bijectors as tfb
 from dynamax.hidden_markov_model.models.abstractions import HMMTransitions
 from dynamax.parameters import ParameterProperties
 from jaxtyping import Float, Array
-from typing import NamedTuple, Union
+from chex import dataclass
+from typing import Union
 
 
-class ParamsStandardHMMTransitions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsStandardHMMTransitions:
     transition_matrix: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
 
 
@@ -81,5 +83,5 @@ class StandardHMMTransitions(HMMTransitions):
             else:
                 expected_trans_counts = batch_stats.sum(axis=0)
                 transition_matrix = tfd.Dirichlet(self.concentration + expected_trans_counts).mode()
-            params = params._replace(transition_matrix=transition_matrix)
+            params = params.replace(transition_matrix=transition_matrix)
         return params, m_step_state

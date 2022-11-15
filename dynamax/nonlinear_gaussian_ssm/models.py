@@ -1,5 +1,6 @@
 from jaxtyping import Array, Float
-from typing import NamedTuple, Optional, Union, Callable
+from chex import dataclass
+from typing import Optional, Union, Callable
 import tensorflow_probability.substrates.jax as tfp
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 import tensorflow_probability.substrates.jax.distributions as tfd
@@ -16,7 +17,8 @@ FnStateToEmission = Callable[ [Float[Array, "state_dim"]], Float[Array, "emissio
 FnStateAndInputToEmission = Callable[ [Float[Array, "state_dim"], Float[Array, "input_dim"] ], Float[Array, "emission_dim"]]
 
 
-class ParamsNLGSSM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsNLGSSM:
     """Parameters for a NLGSSM model.
 
     $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$

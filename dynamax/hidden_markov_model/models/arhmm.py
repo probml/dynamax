@@ -10,13 +10,15 @@ from dynamax.parameters import ParameterProperties
 from dynamax.types import Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
 from tensorflow_probability.substrates import jax as tfp
-from typing import NamedTuple, Optional, Tuple, Union
+from chex import dataclass
+from typing import Optional, Tuple, Union
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
 
-class ParamsLinearAutoregressiveHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLinearAutoregressiveHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsLinearRegressionHMMEmissions

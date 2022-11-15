@@ -1,7 +1,8 @@
 
 from jaxtyping import Array, Float
 import tensorflow_probability.substrates.jax as tfp
-from typing import NamedTuple, Optional, Union, Callable
+from chex import dataclass
+from typing import Optional, Union, Callable
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -18,7 +19,8 @@ FnStateAndInputToEmission2 = Callable[[Float[Array, "state_dim"], Float[Array, "
 EmissionDistFn = Callable[ [Float[Array, "state_dim"], Float[Array, "state_dim state_dim"]], tfd.Distribution]
 
 
-class ParamsGGSSM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsGGSSM:
     """
     Container for Generalized Gaussian SSM parameters. 
     Specifically, it defines the following model:

@@ -17,10 +17,12 @@ from dynamax.utils.distributions import nig_posterior_update
 from dynamax.utils.distributions import niw_posterior_update
 from dynamax.utils.bijectors import RealToPSDBijector
 from dynamax.utils.utils import pytree_sum
-from typing import NamedTuple, Optional, Tuple, Union
+from chex import dataclass
+from typing import Optional, Tuple, Union
 
 
-class ParamsGaussianHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsGaussianHMMEmissions:
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     covs: Union[Float[Array, "state_dim emission_dim emission_dim"], ParameterProperties]
 
@@ -120,7 +122,7 @@ class GaussianHMMEmissions(HMMEmissions):
 
             emission_stats = pytree_sum(batch_stats, axis=0)
             covs, means = vmap(_single_m_step)(emission_stats)
-            params = params._replace(means=means, covs=covs)
+            params = params.replace(means=means, covs=covs)
 
         elif props.covs.trainable and not props.means.trainable:
             raise NotImplementedError("GaussianHMM.fit_em() does not yet support fixed means and trainable covariance")
@@ -131,7 +133,8 @@ class GaussianHMMEmissions(HMMEmissions):
         return params, m_step_state
 
 
-class ParamsDiagonalGaussianHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsDiagonalGaussianHMMEmissions:
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     scale_diags: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
 
@@ -225,11 +228,12 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
         emission_stats = pytree_sum(batch_stats, axis=0)
         vars, means = vmap(_single_m_step)(emission_stats)
         scale_diags = jnp.sqrt(vars)
-        params = params._replace(means=means, scale_diags=scale_diags)
+        params = params.replace(means=means, scale_diags=scale_diags)
         return params, m_step_state
 
 
-class ParamsSphericalGaussianHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsSphericalGaussianHMMEmissions:
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     scales: Union[Float[Array, "state_dim"], ParameterProperties]
 
@@ -327,7 +331,8 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
         return lp
 
 
-class ParamsSharedCovarianceGaussianHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsSharedCovarianceGaussianHMMEmissions:
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     cov: Union[Float[Array, "emission_dim emission_dim"], ParameterProperties]
 
@@ -453,11 +458,12 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         sum_xxT = emission_stats['sum_xxT'] + Psi0 + kappa0 * jnp.outer(mu0, mu0)
         means = jnp.einsum('ki,k->ki', sum_x, 1/sum_w)
         cov = (sum_xxT - jnp.einsum('ki,kj,k->ij', sum_x, sum_x, 1/sum_w)) / sum_T
-        params = params._replace(means=means, cov=cov)
+        params = params.replace(means=means, cov=cov)
         return params, m_step_state
 
 
-class ParamsLowRankGaussianHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLowRankGaussianHMMEmissions:
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     cov_diag_factors: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     cov_low_rank_factors: Union[Float[Array, "state_dim emission_dim emission_rank"], ParameterProperties]
@@ -553,7 +559,8 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
 
 
 ### Now for the models ###
-class ParamsGaussianHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsGaussianHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsGaussianHMMEmissions
@@ -642,7 +649,8 @@ class GaussianHMM(HMM):
         return ParamsGaussianHMM(**params), ParamsGaussianHMM(**props)
 
 
-class ParamsDiagonalGaussianHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsDiagonalGaussianHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsDiagonalGaussianHMMEmissions
@@ -735,7 +743,8 @@ class DiagonalGaussianHMM(HMM):
         return ParamsDiagonalGaussianHMM(**params), ParamsDiagonalGaussianHMM(**props)
 
 
-class ParamsSphericalGaussianHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsSphericalGaussianHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsSphericalGaussianHMMEmissions
@@ -834,7 +843,8 @@ class SphericalGaussianHMM(HMM):
         return ParamsSphericalGaussianHMM(**params), ParamsSphericalGaussianHMM(**props)
 
 
-class ParamsSharedCovarianceGaussianHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsSharedCovarianceGaussianHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsSharedCovarianceGaussianHMMEmissions
@@ -923,7 +933,8 @@ class SharedCovarianceGaussianHMM(HMM):
         return ParamsSharedCovarianceGaussianHMM(**params), ParamsSharedCovarianceGaussianHMM(**props)
 
 
-class ParamsLowRankGaussianHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLowRankGaussianHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsLowRankGaussianHMMEmissions

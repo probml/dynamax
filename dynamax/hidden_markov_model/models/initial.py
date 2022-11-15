@@ -5,10 +5,12 @@ import jax.random as jr
 from jaxtyping import Float, Array
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from typing import NamedTuple, Union
+from chex import dataclass
+from typing import Union
 
 
-class ParamsStandardHMMInitialState(NamedTuple):
+@dataclass(frozen=True)
+class ParamsStandardHMMInitialState:
     probs: Union[Float[Array, "state_dim"], ParameterProperties]
 
 
@@ -68,6 +70,6 @@ class StandardHMMInitialState(HMMInitialState):
             else:
                 expected_initial_counts = batch_stats.sum(axis=0)
                 probs = tfd.Dirichlet(self.initial_probs_concentration + expected_initial_counts).mode()
-            params = params._replace(probs=probs)
+            params = params.replace(probs=probs)
         return params, m_step_state
 

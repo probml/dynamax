@@ -6,20 +6,25 @@ from jaxtyping import Float, Array
 from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained, log_det_jac_constrain
 import optax
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from typing import NamedTuple, Union
+from chex import dataclass
+from typing import Union
 
 
-class InitialParams(NamedTuple):
+@dataclass(frozen=True)
+class InitialParams:
     probs: Union[Float[Array, "state_dim"], ParameterProperties]
 
-class TransitionsParams(NamedTuple):
+@dataclass(frozen=True)
+class TransitionsParams:
     transition_matrix: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
 
-class EmissionsParams(NamedTuple):
+@dataclass(frozen=True)
+class EmissionsParams:
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     scales: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
 
-class Params(NamedTuple):
+@dataclass(frozen=True)
+class Params:
     initial: InitialParams
     transitions: TransitionsParams
     emissions: EmissionsParams
@@ -63,12 +68,12 @@ def test_parameter_pytree_jittable():
     assert get_trainable._cache_size() == 1
 
     # change param values, don't jit
-    params = params._replace(initial=params.initial._replace(probs=jnp.zeros(3)))
+    params = params.replace(initial=params.initial.replace(probs=jnp.zeros(3)))
     get_trainable(params, props)
     assert get_trainable._cache_size() == 1
 
     # change param dtype, jit
-    params = params._replace(initial=params.initial._replace(probs=jnp.zeros(3, dtype=int)))
+    params = params.replace(initial=params.initial.replace(probs=jnp.zeros(3, dtype=int)))
     get_trainable(params, props)
     assert get_trainable._cache_size() == 2
 

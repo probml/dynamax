@@ -5,6 +5,7 @@ from jax import vmap
 from jax import jit
 from functools import partial
 
+from chex import dataclass
 from typing import Callable, Optional, Tuple, Union, NamedTuple
 from jaxtyping import Int, Float, Array
 
@@ -21,7 +22,8 @@ def get_trans_mat(transition_matrix, transition_fn, t):
         else:
             return transition_matrix
 
-class HMMPosteriorFiltered(NamedTuple):
+@dataclass(frozen=True)
+class HMMPosteriorFiltered:
     r"""Simple wrapper for properties of an HMM filtering posterior.
 
     :param marginal_loglik: $p(y_{1:T} \mid \theta) = \log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)$.
@@ -33,7 +35,8 @@ class HMMPosteriorFiltered(NamedTuple):
     filtered_probs: Float[Array, "num_timesteps num_states"]
     predicted_probs: Float[Array, "num_timesteps num_states"]
 
-class HMMPosterior(NamedTuple):
+@dataclass(frozen=True)
+class HMMPosterior:
     r"""Simple wrapper for properties of an HMM posterior distribution.
 
     Transition probabilities may be either 2D or 3D depending on whether the
@@ -239,7 +242,7 @@ def hmm_two_filter_smoother(
     # Compute the transition probabilities if specified
     if compute_trans_probs:
         trans_probs = compute_transition_probs(transition_matrix, posterior, transition_fn)
-        posterior = posterior._replace(trans_probs=trans_probs)
+        posterior = posterior.replace(trans_probs=trans_probs)
 
     return posterior
 
@@ -315,7 +318,7 @@ def hmm_smoother(
     # Compute the transition probabilities if specified
     if compute_trans_probs:
         trans_probs = compute_transition_probs(transition_matrix, posterior, transition_fn)
-        posterior = posterior._replace(trans_probs=trans_probs)
+        posterior = posterior.replace(trans_probs=trans_probs)
 
     return posterior
 

@@ -1,4 +1,5 @@
-from typing import NamedTuple, Optional, Tuple, Union
+from chex import dataclass
+from typing import Optional, Tuple, Union
 
 import jax.numpy as jnp
 import jax.random as jr
@@ -16,11 +17,13 @@ from dynamax.types import Scalar
 from dynamax.utils.utils import pytree_sum
 
 
-class ParamsBernoulliHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsBernoulliHMMEmissions:
     probs: Union[Float[Array, "emission_dim"], ParameterProperties]
 
 
-class ParamsBernoulliHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsBernoulliHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsBernoulliHMMEmissions
@@ -92,7 +95,7 @@ class BernoulliHMMEmissions(HMMEmissions):
             probs = tfd.Beta(
                 self.emission_prior_concentration1 + sum_x,
                 self.emission_prior_concentration0 + sum_1mx).mode()
-            params = params._replace(probs=probs)
+            params = params.replace(probs=probs)
         return params, m_step_state
 
 

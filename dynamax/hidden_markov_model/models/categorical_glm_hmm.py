@@ -8,15 +8,18 @@ from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, 
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.types import Scalar
 import optax
-from typing import NamedTuple, Optional, Tuple, Union
+from chex import dataclass
+from typing import Optional, Tuple, Union
 
 
-class ParamsCategoricalRegressionHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsCategoricalRegressionHMMEmissions:
     weights: Union[Float[Array, "state_dim num_classes feature_dim"], ParameterProperties]
     biases: Union[Float[Array, "state_dim num_classes"], ParameterProperties]
 
 
-class ParamsCategoricalRegressionHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsCategoricalRegressionHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsCategoricalRegressionHMMEmissions

@@ -3,13 +3,15 @@ from jax import lax
 from jax import vmap
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
-from typing import NamedTuple, Optional
+from chex import dataclass
+from typing import Optional
 
 from dynamax.utils.utils import psd_solve
 from dynamax.nonlinear_gaussian_ssm.models import  ParamsNLGSSM
 from dynamax.linear_gaussian_ssm.models import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
 
-class UKFHyperParams(NamedTuple):
+@dataclass(frozen=True)
+class UKFHyperParams:
     """Lightweight container for UKF hyperparameters.
 
     Default values taken from https://github.com/sbitzer/UKF-exposed

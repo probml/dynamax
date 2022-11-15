@@ -1,4 +1,5 @@
-from typing import NamedTuple, Optional, Tuple, Union
+from chex import dataclass
+from typing import Optional, Tuple, Union
 
 import jax.numpy as jnp
 import jax.random as jr
@@ -17,11 +18,13 @@ from dynamax.types import Scalar
 from dynamax.utils.utils import pytree_sum
 
 
-class ParamsCategoricalHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsCategoricalHMMEmissions:
     probs: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
 
 
-class ParamsCategoricalHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsCategoricalHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsCategoricalHMMEmissions
@@ -105,7 +108,7 @@ class CategoricalHMMEmissions(HMMEmissions):
         if props.probs.trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
             probs = tfd.Dirichlet(self.emission_prior_concentration + emission_stats['sum_x']).mode()
-            params = params._replace(probs=probs)
+            params = params.replace(probs=probs)
         return params, m_step_state
 
 

@@ -1,4 +1,5 @@
-from typing import NamedTuple, Optional, Tuple, Union
+from chex import dataclass
+from typing import Optional, Tuple, Union
 
 import jax.numpy as jnp
 import jax.random as jr
@@ -16,7 +17,8 @@ from dynamax.types import Scalar
 from dynamax.utils.utils import pytree_sum
 
 
-class ParamsPoissonHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsPoissonHMMEmissions:
     rates: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
 
 
@@ -87,11 +89,12 @@ class PoissonHMMEmissions(HMMEmissions):
             post_concentration = self.emission_prior_concentration + emission_stats['sum_x']
             post_rate = self.emission_prior_rate + emission_stats['sum_w']
             rates = tfd.Gamma(post_concentration, post_rate).mode()
-            params = params._replace(rates=rates)
+            params = params.replace(rates=rates)
         return params, m_step_state
 
 
-class ParamsPoissonHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsPoissonHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsPoissonHMMEmissions

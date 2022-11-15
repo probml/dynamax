@@ -6,13 +6,15 @@ from functools import wraps
 import inspect
 
 from jaxtyping import Array, Float
-from typing import NamedTuple, Optional, Union
+from chex import dataclass
+from typing import Optional, Union
 
 from dynamax.utils.utils import psd_solve
 from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
 
-class ParamsLGSSMInitial(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLGSSMInitial:
     r"""Parameters of the initial distribution
 
     $$p(x_1) = \mathcal{N}(x_1 \mid \mu_1, Q_1)$$
@@ -28,7 +30,8 @@ class ParamsLGSSMInitial(NamedTuple):
     cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
 
 
-class ParamsLGSSMDynamics(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLGSSMDynamics:
     r"""Parameters of the emission distribution
 
     $$p(x_{t+1} \mid x_t, u_t) = \mathcal{N}(x_{t+1} \mid F x_t + B u_t + b, Q)$$
@@ -47,7 +50,8 @@ class ParamsLGSSMDynamics(NamedTuple):
     cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
 
 
-class ParamsLGSSMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLGSSMEmissions:
     r"""Parameters of the emission distribution
 
     $$p(y_t \mid x_t, u_t) = \mathcal{N}(y_t \mid H x_t + D u_t + d, R)$$
@@ -67,7 +71,8 @@ class ParamsLGSSMEmissions(NamedTuple):
 
 
 
-class ParamsLGSSM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLGSSM:
     r"""Parameters of a linear Gaussian SSM.
 
     :param initial: initial distribution parameters
@@ -80,7 +85,8 @@ class ParamsLGSSM(NamedTuple):
     emissions: ParamsLGSSMEmissions
 
 
-class PosteriorGSSMFiltered(NamedTuple):
+@dataclass(frozen=True)
+class PosteriorGSSMFiltered:
     r"""Marginals of the Gaussian filtering posterior.
 
     :param marginal_loglik: marginal log likelihood, $p(y_{1:T} \mid u_{1:T})$
@@ -93,7 +99,8 @@ class PosteriorGSSMFiltered(NamedTuple):
     filtered_covariances: Float[Array, "ntime state_dim state_dim"]
 
 
-class PosteriorGSSMSmoothed(NamedTuple):
+@dataclass(frozen=True)
+class PosteriorGSSMSmoothed:
     r"""Marginals of the Gaussian filtering and smoothing posterior.
 
     :param marginal_loglik: marginal log likelihood, $p(y_{1:T} \mid u_{1:T})$
@@ -306,7 +313,7 @@ def lgssm_smoother(
 
     # Run the Kalman filter
     filtered_posterior = lgssm_filter(params, emissions, inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Run the smoother backward in time
     def _step(carry, args):
@@ -375,7 +382,7 @@ def lgssm_posterior_sample(
 
     # Run the Kalman filter
     filtered_posterior = lgssm_filter(params, emissions, inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Sample backward in time
     def _step(carry, args):

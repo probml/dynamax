@@ -16,29 +16,34 @@ from dynamax.hidden_markov_model.models.transitions import StandardHMMTransition
 from dynamax.utils.bijectors import RealToPSDBijector
 from dynamax.utils.utils import pytree_sum
 from dynamax.types import Scalar
-from typing import NamedTuple, Optional, Tuple, Union
+from chex import dataclass
+from typing import Optional, Tuple, Union
 
 
 # Types
-class ParamsGaussianMixtureHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsGaussianMixtureHMMEmissions:
     weights: Union[Float[Array, "state_dim num_components"], ParameterProperties]
     means: Union[Float[Array, "state_dim num_components emission_dim"], ParameterProperties]
     covs: Union[Float[Array, "state_dim num_components emission_dim emission_dim"], ParameterProperties]
 
 
-class ParamsGaussianMixtureHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsGaussianMixtureHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsGaussianMixtureHMMEmissions
 
 
-class ParamsDiagonalGaussianMixtureHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsDiagonalGaussianMixtureHMMEmissions:
     weights: Union[Float[Array, "state_dim num_components"], ParameterProperties]
     means: Union[Float[Array, "state_dim num_components emission_dim"], ParameterProperties]
     scale_diags: Union[Float[Array, "state_dim num_components emission_dim"], ParameterProperties]
 
 
-class ParamsDiagonalGaussianMixtureHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsDiagonalGaussianMixtureHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsDiagonalGaussianMixtureHMMEmissions
@@ -165,7 +170,7 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         emission_stats = pytree_sum(batch_stats, axis=0)
         weights, means, covs = vmap(_single_m_step)(
             emission_stats['Sx'], emission_stats['SxxT'], emission_stats['N'])
-        params = params._replace(weights=weights, means=means, covs=covs)
+        params = params.replace(weights=weights, means=means, covs=covs)
         return params, m_step_state
 
 
@@ -392,7 +397,7 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
         emission_stats = pytree_sum(batch_stats, axis=0)
         weights, means, scale_diags = vmap(_single_m_step)(
             emission_stats['Sx'], emission_stats['Sxsq'], emission_stats['N'])
-        params = params._replace(weights=weights, means=means, scale_diags=scale_diags)
+        params = params.replace(weights=weights, means=means, scale_diags=scale_diags)
         return params, m_step_state
 
 

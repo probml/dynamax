@@ -5,7 +5,8 @@ import jax.numpy as jnp
 from jax import lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
-from typing import NamedTuple, Optional, Union, Callable
+from chex import dataclass
+from typing import Optional, Union, Callable
 
 from dynamax.utils.utils import psd_solve
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
@@ -19,13 +20,15 @@ _jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
 
 
 
-class EKFIntegrals(NamedTuple):
+@dataclass(frozen=True)
+class EKFIntegrals:
     """ Lightweight container for EKF Gaussian integrals."""
     gaussian_expectation: Callable = lambda f, m, P: jnp.atleast_1d(f(m))
     gaussian_cross_covariance: Callable = lambda f, g, m, P: _jacfwd_2d(f, m) @ P @ _jacfwd_2d(g, m).T
 
 
-class UKFIntegrals(NamedTuple):
+@dataclass(frozen=True)
+class UKFIntegrals:
     """Lightweight container for UKF Gaussian integrals."""
     alpha: float = jnp.sqrt(3)
     beta: float = 2.0
@@ -56,7 +59,8 @@ class UKFIntegrals(NamedTuple):
         return w_mean, w_cov, sigmas
 
 
-class GHKFIntegrals(NamedTuple):
+@dataclass(frozen=True)
+class GHKFIntegrals:
     """Lightweight container for GHKF Gaussian integrals."""
     order: int = 10
 
@@ -307,7 +311,7 @@ def conditional_moments_gaussian_smoother(
     # Get filtered posterior
     if filtered_posterior is None:
         filtered_posterior = conditional_moments_gaussian_filter(model_params, inf_params, emissions, inputs=inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior
+    ll, filtered_means, filtered_covs, *_ = filtered_posterior.to_tuple()
 
     # Process dynamics function to take in control inputs
     f  = _process_fn(model_params.dynamics_function, inputs)

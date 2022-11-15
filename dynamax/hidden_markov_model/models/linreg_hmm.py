@@ -10,18 +10,21 @@ from dynamax.types import Scalar
 from dynamax.utils.utils import pytree_sum
 from dynamax.utils.bijectors import RealToPSDBijector
 from tensorflow_probability.substrates import jax as tfp
-from typing import NamedTuple, Optional, Tuple, Union
+from chex import dataclass
+from typing import Optional, Tuple, Union
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
-class ParamsLinearRegressionHMMEmissions(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLinearRegressionHMMEmissions:
     weights: Union[Float[Array, "state_dim emission_dim input_dim"], ParameterProperties]
     biases: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     covs: Union[Float[Array, "state_dim emission_dim emission_dim"], ParameterProperties]
 
 
-class ParamsLinearRegressionHMM(NamedTuple):
+@dataclass(frozen=True)
+class ParamsLinearRegressionHMM:
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsLinearRegressionHMMEmissions
@@ -131,7 +134,7 @@ class LinearRegressionHMMEmissions(HMMEmissions):
 
         emission_stats = pytree_sum(batch_stats, axis=0)
         As, bs, Sigmas = vmap(_single_m_step)(emission_stats)
-        params = params._replace(weights=As, biases=bs, covs=Sigmas)
+        params = params.replace(weights=As, biases=bs, covs=Sigmas)
         return params, m_step_state
 
 

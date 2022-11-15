@@ -1,11 +1,13 @@
 import jax.numpy as jnp
 from jax import lax, vmap, value_and_grad
 from jaxtyping import Array, Float
-from typing import NamedTuple, Union
+from chex import dataclass
+from typing import Union
 
 from dynamax.hidden_markov_model.inference import HMMPosterior, HMMPosteriorFiltered
 
-class Message(NamedTuple):
+@dataclass(frozen=True)
+class Message:
     A: Float[Array, "num_timesteps num_states num_states"]
     log_b: Float[Array, "num_timesteps num_states"]
 
