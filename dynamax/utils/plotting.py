@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 from matplotlib.patches import Ellipse, transforms
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib import pyplot as plt
 import seaborn as sns
 
 
