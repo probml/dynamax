@@ -113,8 +113,16 @@ class PosteriorGSSMSmoothed(NamedTuple):
 
 
 # Helper functions
-_get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
+# _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
+def _get_params(x, dim, t):
+    if callable(x):
+        return x(t)
+    elif x.ndim == dim + 1:
+        return x[t]
+    else:
+        return x
 _zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
+
 
 def _predict(m, S, F, B, b, Q, u):
     r"""Predict next mean and covariance under a linear Gaussian model.
