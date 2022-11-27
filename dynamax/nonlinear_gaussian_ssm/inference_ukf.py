@@ -140,7 +140,8 @@ def unscented_kalman_filter(
     params: ParamsNLGSSM,
     emissions: Float[Array, "ntime emission_dim"],
     hyperparams: UKFHyperParams,
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None,
+    outputs: Optional[list[str]]=None,
 ) -> PosteriorGSSMFiltered:
     """Run a unscented Kalman filter to produce the marginal likelihood and
     filtered state estimates.
@@ -155,6 +156,8 @@ def unscented_kalman_filter(
         filtered_posterior: posterior object.
 
     """
+    if outputs is None:
+        outputs = ["filtered_means", "filtered_covariances"]
     num_timesteps = len(emissions)
     state_dim = params.dynamics_covariance.shape[0]
 
@@ -188,12 +191,28 @@ def unscented_kalman_filter(
         # Predict the next state
         pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, lamb, w_mean, w_cov, u)
 
-        return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
+        # Build carry states
+        carry = {
+            "marginal_loglik": ll,
+            "filtered_means": pred_mean,
+            "filtered_covariances": pred_cov,
+        }
+        carry = {key: val for key, val in carry.items() if key in outputs}
 
-    # Run the UKF
+        return (ll, pred_mean, pred_cov), carry
+
+    # Run the Unscented Kalman Filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
-    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    (ll, filtered_mean, filtered_covariance), hist = lax.scan(_step, carry, jnp.arange(num_timesteps))
+
+    # Create posterior object with either final state or states in the history
+    posterior_filtered = {
+        "marginal_loglik": ll,
+        "filtered_means": filtered_mean,
+        "filtered_covariances": filtered_covariance,
+    }
+    posterior_filtered = {**posterior_filtered, **hist}
+    return PosteriorGSSMFiltered(**posterior_filtered)
 
 
 def unscented_kalman_smoother(
@@ -219,7 +238,7 @@ def unscented_kalman_smoother(
 
     # Run the unscented Kalman filter
     ukf_posterior = unscented_kalman_filter(params, emissions, hyperparams, inputs)
-    ll, filtered_means, filtered_covs, *_ = ukf_posterior
+    ll, filtered_means, filtered_covs = ukf_posterior
 
     # Compute lambda and weights from from hyperparameters
     alpha, beta, kappa = hyperparams.alpha, hyperparams.beta, hyperparams.kappa

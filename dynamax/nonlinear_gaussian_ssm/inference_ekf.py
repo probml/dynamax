@@ -104,7 +104,9 @@ def extended_kalman_filter(
 
     """
     num_timesteps = len(emissions)
-    outputs = [] if outputs is None else outputs
+    if outputs is None:
+        outputs = ["filtered_means", "filtered_covariances"]
+
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
     F, H = jacfwd(f), jacfwd(h)
@@ -199,8 +201,7 @@ def extended_kalman_smoother(
 
     # Get filtered posterior
     if filtered_posterior is None:
-        outputs = ["filtered_means", "filtered_covariances"]
-        filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs, outputs=outputs)
+        filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior
 
     # Dynamics and emission functions and their Jacobians
