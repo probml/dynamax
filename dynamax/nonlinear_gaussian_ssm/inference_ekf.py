@@ -199,7 +199,8 @@ def extended_kalman_smoother(
 
     # Get filtered posterior
     if filtered_posterior is None:
-        filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs)
+        outputs = ["filtered_means", "filtered_covariances"]
+        filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs, outputs=outputs)
     ll, filtered_means, filtered_covs, *_ = filtered_posterior
 
     # Dynamics and emission functions and their Jacobians
