@@ -87,7 +87,8 @@ def extended_kalman_filter(
     params: ParamsNLGSSM,
     emissions: Float[Array, "ntime emission_dim"],
     num_iter: int = 1,
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None,
+    outputs: Optional[list[str]] = None,
 ) -> PosteriorGSSMFiltered:
     r"""Run an (iterated) extended Kalman filter to produce the
     marginal likelihood and filtered state estimates.
@@ -103,6 +104,7 @@ def extended_kalman_filter(
 
     """
     num_timesteps = len(emissions)
+    outputs = [] if outputs is None else outputs
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
     F, H = jacfwd(f), jacfwd(h)
@@ -128,12 +130,28 @@ def extended_kalman_filter(
         # Predict the next state
         pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, f, F, Q, u)
 
-        return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
+        # Build carry states
+        carry = {
+            "marginal_loglik": ll,
+            "filtered_means": filtered_mean,
+            "filtered_covariances": filtered_cov,
+        }
+        carry = {key: val for key, val in carry.items() if key in outputs}
+
+        return (ll, pred_mean, pred_cov), carry
 
     # Run the extended Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
-    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    (ll, filtered_mean, filtered_covariance), hist = lax.scan(_step, carry, jnp.arange(num_timesteps))
+
+    # Create posterior object with either final state or states in the history
+    posterior_filtered = {
+        "marginal_loglik": ll,
+        "filtered_means": filtered_mean,
+        "filtered_covariances": filtered_covariance,
+    }
+    posterior_filtered = {**posterior_filtered, **hist}
+    return PosteriorGSSMFiltered(**posterior_filtered)
 
 
 def iterated_extended_kalman_filter(
