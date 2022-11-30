@@ -88,7 +88,7 @@ class PosteriorGSSMFiltered(NamedTuple):
     :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[z_t \mid y_{1:t}, u_{1:t}]$
 
     """
-    marginal_loglik: Scalar
+    marginal_loglik: Union[Scalar, Float[Array, "ntime"]]
     filtered_means: Optional[Float[Array, "ntime state_dim"]] = None
     filtered_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
     predicted_means: Optional[Float[Array, "ntime state_dim"]] = None
