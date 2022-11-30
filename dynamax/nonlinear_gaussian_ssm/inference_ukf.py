@@ -235,7 +235,9 @@ def unscented_kalman_smoother(
 
     # Run the unscented Kalman filter
     ukf_posterior = unscented_kalman_filter(params, emissions, hyperparams, inputs)
-    ll, filtered_means, filtered_covs = ukf_posterior
+    ll = ukf_posterior.marginal_loglik
+    filtered_means = ukf_posterior.filtered_means
+    filtered_covs = ukf_posterior.filtered_covariances
 
     # Compute lambda and weights from from hyperparameters
     alpha, beta, kappa = hyperparams.alpha, hyperparams.beta, hyperparams.kappa
