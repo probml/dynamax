@@ -133,7 +133,7 @@ def extended_kalman_filter(
         # Predict the next state
         pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, f, F, Q, u)
 
-        # Build carry states
+        # Build carry and output states
         carry = (ll, pred_mean, pred_cov)
         outputs = {
             "filtered_means": filtered_mean,
