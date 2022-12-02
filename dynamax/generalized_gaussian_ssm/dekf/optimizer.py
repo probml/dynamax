@@ -7,7 +7,11 @@ from jax import jit
 import chex
 
 from dynamax.generalized_gaussian_ssm.inference import _condition_on, EKFIntegrals, UKFIntegrals, GHKFIntegrals
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import _fully_decoupled_ekf_condition_on, _variational_diagonal_ekf_condition_on
+from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import (
+    _full_covariance_condition_on,
+    _fully_decoupled_ekf_condition_on, 
+    _variational_diagonal_ekf_condition_on
+)
 
 @chex.dataclass
 class CMGFOptimizerParams:
