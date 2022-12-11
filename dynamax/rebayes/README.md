@@ -1,4 +1,4 @@
-# ReBayes = Recursive Bayesian inference for laten states
+# ReBayes = Recursive Bayesian inference for latent states
 
 We provide code for online (recursive) Bayesian inference in a state space model
 with Gaussian random walk dynamics (optionally stationary)
