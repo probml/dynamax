@@ -289,7 +289,9 @@ def hmm_smoother(
         A = get_trans_mat(transition_matrix, transition_fn, t)
 
         # Fold in the next state (Eq. 8.2 of Saarka, 2013)
-        relative_probs_next = smoothed_probs_next / predicted_probs_next
+        # If hard 0. in predicted_probs_next, set relative_probs_next as 0. to avoid NaN values
+        relative_probs_next = jnp.where(jnp.isclose(predicted_probs_next, 0.0), 0.0,
+                                        smoothed_probs_next / predicted_probs_next)
         smoothed_probs = filtered_probs * (A @ relative_probs_next)
         smoothed_probs /= smoothed_probs.sum()
 
@@ -551,7 +553,9 @@ def _compute_sum_transition_probs(
         A = _get_params(transition_matrix, 2, t)
 
         # Compute smoothed transition probabilities (Eq. 8.4 of Saarka, 2013)
-        relative_probs_next = smoothed_probs_next / predicted_probs_next
+        # If hard 0. in predicted_probs_next, set relative_probs_next as 0. to avoid NaN values
+        relative_probs_next = jnp.where(jnp.isclose(predicted_probs_next, 0.0), 0.0,
+                                        smoothed_probs_next / predicted_probs_next)
         smoothed_trans_probs = filtered_probs[:, None] * A * relative_probs_next[None, :]
         smoothed_trans_probs /= smoothed_trans_probs.sum()
         return carry + smoothed_trans_probs, None
