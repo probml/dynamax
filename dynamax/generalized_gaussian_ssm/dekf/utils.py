@@ -57,7 +57,7 @@ def get_mlp_flattened_params(model_dims, key=0):
 
 ### SGD
 
-def fit_optax(params, optimizer, input, output, loss_fn, num_epochs):
+def fit_optax(params, optimizer, input, output, loss_fn, num_epochs, return_history=False):
     opt_state = optimizer.init(params)
 
     @jax.jit
@@ -67,10 +67,17 @@ def fit_optax(params, optimizer, input, output, loss_fn, num_epochs):
         params = optax.apply_updates(params, updates)
         return params, opt_state, loss_value
     
+    if return_history:
+        params_history=[]
+    
     for epoch in range(num_epochs):
         for i, (x, y) in enumerate(zip(input, output)):
             params, opt_state, loss_value = step(params, opt_state, x, y)
+            if return_history:
+                params_history.append(params)
     
+    if return_history:
+        return jnp.array(params_history)
     return params
 
 # Generic loss function
