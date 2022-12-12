@@ -16,12 +16,10 @@ jobs:
     - name: Clone the reference repository
       uses: actions/checkout@v2
 
-    - name: Set up Python 3.7.12
+    - name: Set up Python 3.7
       uses: actions/setup-python@v2
       with:
-        # Change this based on the python version in Google colab
-        # actions/setup-python@v2 does not have 3.7.13
-        python-version: '3.7.12'
+        python-version: '3.7'
 
     - name: Install dependencies
       run: |

@@ -3,7 +3,7 @@ from jax import lax
 from jax import jacfwd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
-from typing import Optional
+from typing import List, Optional
 
 from dynamax.utils.utils import psd_solve
 from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM
@@ -87,7 +87,8 @@ def extended_kalman_filter(
     params: ParamsNLGSSM,
     emissions: Float[Array, "ntime emission_dim"],
     num_iter: int = 1,
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None,
+    output_fields: Optional[List[str]]=["filtered_means", "filtered_covariances", "predicted_means", "predicted_covariances"],
 ) -> PosteriorGSSMFiltered:
     r"""Run an (iterated) extended Kalman filter to produce the
     marginal likelihood and filtered state estimates.
@@ -97,12 +98,16 @@ def extended_kalman_filter(
         emissions: observation sequence.
         num_iter: number of linearizations around posterior for update step (default 1).
         inputs: optional array of inputs.
+        output_fields: list of fields to return in posterior object.
+            These can take the values "filtered_means", "filtered_covariances",
+            "predicted_means", "predicted_covariances", and "marginal_loglik".
 
     Returns:
         post: posterior object.
 
     """
     num_timesteps = len(emissions)
+
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
     F, H = jacfwd(f), jacfwd(h)
@@ -128,12 +133,27 @@ def extended_kalman_filter(
         # Predict the next state
         pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, f, F, Q, u)
 
-        return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
+        # Build carry and output states
+        carry = (ll, pred_mean, pred_cov)
+        outputs = {
+            "filtered_means": filtered_mean,
+            "filtered_covariances": filtered_cov,
+            "predicted_means": pred_mean,
+            "predicted_covariances": pred_cov,
+            "marginal_loglik": ll,
+        }
+        outputs = {key: val for key, val in outputs.items() if key in output_fields}
+
+        return carry, outputs
 
     # Run the extended Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
-    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    (ll, *_), outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    outputs = {"marginal_loglik": ll, **outputs}
+    posterior_filtered = PosteriorGSSMFiltered(
+        **outputs,
+    )
+    return posterior_filtered
 
 
 def iterated_extended_kalman_filter(
@@ -182,7 +202,9 @@ def extended_kalman_smoother(
     # Get filtered posterior
     if filtered_posterior is None:
         filtered_posterior = extended_kalman_filter(params, emissions, inputs=inputs)
-    ll, filtered_means, filtered_covs, *_ = filtered_posterior
+    ll = filtered_posterior.marginal_loglik
+    filtered_means = filtered_posterior.filtered_means
+    filtered_covs = filtered_posterior.filtered_covariances
 
     # Dynamics and emission functions and their Jacobians
     f = params.dynamics_function
