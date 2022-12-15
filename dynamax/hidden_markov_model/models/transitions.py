@@ -83,3 +83,87 @@ class StandardHMMTransitions(HMMTransitions):
                 transition_matrix = tfd.Dirichlet(self.concentration + expected_trans_counts).mode()
             params = params._replace(transition_matrix=transition_matrix)
         return params, m_step_state
+
+
+class StandardHMMSparseTransitions(StandardHMMTransitions):
+    r"""Standard model for HMM with sparse transitions.
+
+    We place a Dirichlet prior over the non-zero entries of the transition matrix $A$,
+
+    $$A_k \sim \mathrm{Dir}(\beta 1_K + \kappa e_k)$$
+
+    where
+
+    * $1_K$ denotes a length-$K$ vector of ones,
+    * $e_k$ denotes the one-hot vector with a 1 in the $k$-th position,
+    * $\beta \in \mathbb{R}_+$ is the concentration, and
+    * $\kappa \in \mathbb{R}_+$ is the `stickiness`.
+
+
+
+    """
+    def __init__(self, num_states, mask, concentration=1.1, stickiness=0.0):
+        """
+        transition_matrix[j,k]: prob(hidden(t) = k | hidden(t-1)j)
+
+        Args:
+            mask (_type_): _description_
+        """
+        self.num_states = num_states
+
+        if mask.shape == (self.num_states, self.num_states):
+            self.mask = mask.astype(bool)
+        else:
+            raise ValueError(f"Mask does not have valid shape for {self.num_states}")
+
+        concentration * jnp.ones((num_states, num_states)) + \
+                stickiness * jnp.eye(num_states)
+        self.concentration = concentration * self.mask
+
+    def distribution(self, params, state, inputs=None):
+        return tfd.Categorical(probs=params.transition_matrix[state])
+
+    def initialize(self, transition_matrix=None):
+        """Initialize the model parameters and their corresponding properties.
+
+        Args:
+            transition_matrix (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
+        def _make_row(col_inds, logits):
+            row_vals = tfb.SoftmaxCentered().forward(logits)
+            row = jnp.zeros(self.num_states).at[col_inds].set(
+                row_vals[col_inds])
+            return row
+
+        if transition_matrix is None:
+            all_col_inds = [jnp.nonzero(row) for row in self.mask]
+            all_logits = jnp.zeros((self.num_states, self.num_states - 1))
+            transition_matrix = jnp.row_stack([
+                _make_row(col_inds, logits) for col_inds, logits in zip(all_col_inds, all_logits)])
+        
+        else:
+            for t, m in zip(jnp.nonzero(transition_matrix), jnp.nonzero(self.mask)):
+                if not jnp.array_equal(t, m):
+                    raise ValueError(
+                        "Provided transition matrix has non-zero values outside of mask.")
+
+        # Package the results into dictionaries
+        params = ParamsStandardHMMTransitions(transition_matrix=transition_matrix)
+        props = ParamsStandardHMMTransitions(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
+        return params, props
+
+    def log_prior(self, params):
+        return tfd.Dirichlet(self.concentration).log_prob(params.transition_matrix).sum()
+
+    def m_step(self, params, props, batch_stats, m_step_state):
+        if props.transition_matrix.trainable:
+            if self.num_states == 1:
+                transition_matrix = jnp.array([[1.0]])
+            else:
+                expected_trans_counts = batch_stats.sum(axis=0)
+                transition_matrix = tfd.Dirichlet(self.concentration + expected_trans_counts).mode()
+            params = params._replace(transition_matrix=transition_matrix)
+        return params, m_step_state
