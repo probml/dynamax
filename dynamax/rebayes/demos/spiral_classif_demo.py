@@ -21,9 +21,9 @@ from jax.flatten_util import ravel_pytree
 
 from dynamax.generalized_gaussian_ssm.inference import conditional_moments_gaussian_filter, EKFIntegrals
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
-
-from dynamax.generalized_gaussian_ssm.dekf.utils import *
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import *
+from dynamax.rebayes.utils import *
+from dynamax.rebayes.diagonal_inference import *
+from dynamax.rebayes.inference import RebayesEKF
 
 def generate_input_grid(input):
     """Generate grid on input space.
@@ -138,7 +138,7 @@ def make_data_and_model():
     eps_nc = 1e-4
     predict_fn = lambda w, x: jnp.clip(jax.nn.sigmoid(apply_fn_nc(w, x)), eps_nc, 1-eps_nc) # Clip to prevent divergence
 
-    return data,  flat_params, predict_fn
+    return data, flat_params, predict_fn
 
 def misclassification_rate(Ytrue, Yprob): # binary labels
     Yhat = (Yprob[:,0] > 0.5)

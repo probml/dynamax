@@ -18,8 +18,8 @@ from jax.flatten_util import ravel_pytree
 from dynamax.generalized_gaussian_ssm.inference import conditional_moments_gaussian_filter, EKFIntegrals
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
 
-from dynamax.generalized_gaussian_ssm.dekf.utils import *
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import *
+from dynamax.rebayes.utils import *
+from dynamax.rebayes.diagonal_inference import *
 
 def generate_linreg_dataset(num_points=100, theta=jnp.array([1, 0.5]), var=0.1, key=1, shuffle=True):
     if isinstance(key, int):

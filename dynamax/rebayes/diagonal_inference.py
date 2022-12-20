@@ -4,7 +4,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 import chex
 from typing import Callable
 
-from dynamax.generalized_gaussian_ssm.dekf.utils import *
+from dynamax.rebayes.utils import *
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered
 
 
