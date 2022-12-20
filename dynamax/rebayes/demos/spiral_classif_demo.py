@@ -184,47 +184,30 @@ def plot_heatmap(data, weights_history, predict_fn, title):
     plt.tight_layout()
 
 
-def full_cov(data,  flat_params, predict_fn):
-    X_nc, Y_nc = data['Xtrain'], data['Ytrain']
-    state_dim_nc = flat_params.size
-    fcekf_params_nc = ParamsGGSSM(
+def initialize_params(flat_params, predict_fn):
+    state_dim = flat_params.size
+    fcekf_params = ParamsGGSSM(
         initial_mean=flat_params,
-        initial_covariance=jnp.eye(state_dim_nc),
+        initial_covariance=jnp.eye(state_dim),
         dynamics_function=lambda w, _: w,
-        dynamics_covariance = jnp.eye(state_dim_nc) * 1e-4,
+        dynamics_covariance = jnp.eye(state_dim) * 1e-4,
         emission_mean_function = lambda w, x: predict_fn(w, x),
         emission_cov_function = lambda w, x: predict_fn(w, x) * (1 - predict_fn(w, x))
     )
-    fcekf_post_nc = conditional_moments_gaussian_filter(fcekf_params_nc, EKFIntegrals(), Y_nc, inputs=X_nc)
-    return fcekf_post_nc.filtered_means 
+
+    def callback(bel, t, x, y):
+        return bel.mean
+
+    return fcekf_params, callback
 
 
-def fully_decoupled(data,  flat_params, predict_fn):
-    X_nc, Y_nc = data['Xtrain'], data['Ytrain']
-    state_dim_nc = flat_params.size
-    dekf_params_nc = DEKFParams(
-        initial_mean=flat_params,
-        initial_cov_diag=jnp.ones((state_dim_nc,)),
-        dynamics_cov_diag=jnp.ones((state_dim_nc,)) * 1e-4,
-        emission_mean_function = lambda w, x: predict_fn(w, x),
-        emission_cov_function = lambda w, x: predict_fn(w, x) * (1 - predict_fn(w, x))
-    )
-    fdekf_post_nc = stationary_dynamics_fully_decoupled_conditional_moments_gaussian_filter(dekf_params_nc, Y_nc, inputs=X_nc)
-    return fdekf_post_nc.filtered_means
+def run_ekf(data, flat_params, predict_fn, type='fcekf'):
+    X, Y = data['Xtrain'], data['Ytrain']
+    ekf_params, callback = initialize_params(flat_params, predict_fn)
+    estimator = RebayesEKF(ekf_params, method = type)
+    _, filtered_means = estimator.scan(X, Y, callback=callback)
 
-
-def variational_diagonal(data,  flat_params, predict_fn):
-    X_nc, Y_nc = data['Xtrain'], data['Ytrain']
-    state_dim_nc = flat_params.size
-    vdekf_params_nc = DEKFParams(
-        initial_mean=flat_params,
-        initial_cov_diag=jnp.ones((state_dim_nc,)) * 5e-1,
-        dynamics_cov_diag=jnp.ones((state_dim_nc,)) * 1e-4,
-        emission_mean_function = lambda w, x: predict_fn(w, x),
-        emission_cov_function = lambda w, x: predict_fn(w, x) * (1 - predict_fn(w, x))
-    )
-    vdekf_post_nc = stationary_dynamics_variational_diagonal_extended_kalman_filter(vdekf_params_nc, Y_nc, inputs=X_nc)
-    return  vdekf_post_nc.filtered_means
+    return filtered_means
 
 
 def sgd_old(data, flat_params, predict_fn):
@@ -279,15 +262,10 @@ def main():
     fig, axs = plt.subplots(2, 2, figsize=(10, 10))
     axi = axs.flatten()
 
-    weights_history = full_cov(data, flat_params, predict_fn)
-    plot_learning_curves(axi[0], data, weights_history, predict_fn, 'full cov')
-    #plot_heatmap(data, weights_history, predict_fn, 'full cov')
-
-    weights_history = fully_decoupled(data, flat_params, predict_fn)
-    plot_learning_curves(axi[1], data, weights_history, predict_fn, 'fully decoupled')
-
-    weights_history = variational_diagonal(data, flat_params, predict_fn)
-    plot_learning_curves(axi[2], data, weights_history, predict_fn, 'variational diagonal')
+    ekf_types = {'fcekf': 'full cov', 'fdekf': 'fully decoupled', 'vdekf': 'variational diagonal'}
+    for ekf_type, ax in zip(ekf_types.keys(), axi[:3]):
+        weights_history = run_ekf(data, flat_params, predict_fn, type=ekf_type)
+        plot_learning_curves(ax, data, weights_history, predict_fn, ekf_types[ekf_type])
 
     weights_history = sgd(data, flat_params, predict_fn)
     plot_learning_curves(axi[3], data, weights_history, predict_fn, 'SGD', xlabel='num epochs')
