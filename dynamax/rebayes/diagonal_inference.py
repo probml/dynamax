@@ -27,6 +27,23 @@ class DEKFParams:
 
 #### Full-covariance
 def _full_covariance_condition_on(m, P, y_cond_mean, y_cond_cov, u, y, num_iter):
+    """Condition on the emission using a full-covariance EKF.
+    Note that this method uses `jnp.linalg.lstsq()` to solve the linear system
+    to avoid numerical issues with `jnp.linalg.solve()`.
+
+    Args:
+        m (D_hid,): Prior mean.
+        P (D_hid, D_hid): Prior covariance.
+        y_cond_mean (Callable): Conditional emission mean function.
+        y_cond_cov (Callable): Conditional emission covariance function.
+        u (D_in,): Control input.
+        y (D_obs,): Emission.
+        num_iter (int): Number of re-linearizations around posterior.
+
+    Returns:
+        mu_cond (D_hid,): Posterior mean.
+        Sigma_cond (D_hid, D_hid): Posterior covariance.
+    """    
     m_Y = lambda x: y_cond_mean(x, u)
     Cov_Y = lambda x: y_cond_cov(x, u)
 
