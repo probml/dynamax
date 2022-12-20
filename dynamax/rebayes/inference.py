@@ -28,11 +28,11 @@ class RebayesEKF:
             Q = ssm_params.dynamics_covariance
         elif method == 'vdekf':
             self.update_fn = _variational_diagonal_ekf_condition_on
-            Sigma0 = jnp.diag(ssm_params.ssm_params.initial_covariance)
+            Sigma0 = jnp.diag(ssm_params.initial_covariance)
             Q = jnp.diag(ssm_params.dynamics_covariance)
         elif method == 'fdekf':
             self.update_fn = _fully_decoupled_ekf_condition_on
-            Sigma0 = jnp.diag(ssm_params.ssm_params.initial_covariance)
+            Sigma0 = jnp.diag(ssm_params.initial_covariance)
             Q = jnp.diag(ssm_params.dynamics_covariance)
         else:
             raise ValueError('unknown method ', method)
