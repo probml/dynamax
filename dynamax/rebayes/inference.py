@@ -5,9 +5,9 @@ import chex
 from typing import Callable
 
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import _fully_decoupled_ekf_condition_on
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import _variational_diagonal_ekf_condition_on
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import _full_covariance_condition_on
+from dynamax.rebayes.diagonal_inference import _fully_decoupled_ekf_condition_on
+from dynamax.rebayes.diagonal_inference import _variational_diagonal_ekf_condition_on
+from dynamax.rebayes.diagonal_inference import _full_covariance_condition_on
 
 
 @chex.dataclass
