@@ -23,7 +23,7 @@ from dynamax.generalized_gaussian_ssm.inference import conditional_moments_gauss
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
 from dynamax.rebayes.utils import *
 from dynamax.rebayes.diagonal_inference import *
-from dynamax.rebayes.inference import RebayesEKF
+from dynamax.rebayes.ekf import RebayesEKF
 
 def generate_input_grid(input):
     """Generate grid on input space.

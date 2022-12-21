@@ -18,7 +18,7 @@ from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
 from dynamax.rebayes.utils import get_mlp_flattened_params
 from dynamax.generalized_gaussian_ssm.inference import conditional_moments_gaussian_filter, EKFIntegrals
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
-from dynamax.rebayes.inference import RebayesEKF
+from dynamax.rebayes.ekf import RebayesEKF
 
 def allclose(u, v):
     return jnp.allclose(u, v, atol=1e-3)
