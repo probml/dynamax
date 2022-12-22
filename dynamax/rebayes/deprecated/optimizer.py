@@ -7,7 +7,7 @@ from jax import jit
 import chex
 
 from dynamax.generalized_gaussian_ssm.inference import _condition_on, EKFIntegrals, UKFIntegrals, GHKFIntegrals
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import (
+from dynamax.rebayes.diagonal_inference import (
     _full_covariance_condition_on,
     _fully_decoupled_ekf_condition_on, 
     _variational_diagonal_ekf_condition_on

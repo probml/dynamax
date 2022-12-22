@@ -5,9 +5,9 @@ import chex
 from typing import Callable
 
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import _fully_decoupled_ekf_condition_on
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import _variational_diagonal_ekf_condition_on
-from dynamax.generalized_gaussian_ssm.dekf.diagonal_inference import _full_covariance_condition_on
+from dynamax.rebayes.diagonal_inference import _fully_decoupled_ekf_condition_on
+from dynamax.rebayes.diagonal_inference import _variational_diagonal_ekf_condition_on
+from dynamax.rebayes.diagonal_inference import _full_covariance_condition_on
 
 
 @chex.dataclass
@@ -28,11 +28,11 @@ class RebayesEKF:
             Q = ssm_params.dynamics_covariance
         elif method == 'vdekf':
             self.update_fn = _variational_diagonal_ekf_condition_on
-            Sigma0 = jnp.diag(ssm_params.ssm_params.initial_covariance)
+            Sigma0 = jnp.diag(ssm_params.initial_covariance)
             Q = jnp.diag(ssm_params.dynamics_covariance)
         elif method == 'fdekf':
             self.update_fn = _fully_decoupled_ekf_condition_on
-            Sigma0 = jnp.diag(ssm_params.ssm_params.initial_covariance)
+            Sigma0 = jnp.diag(ssm_params.initial_covariance)
             Q = jnp.diag(ssm_params.dynamics_covariance)
         else:
             raise ValueError('unknown method ', method)
