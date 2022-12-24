@@ -1,6 +1,7 @@
 """
 Prepcocessing and data augmentation for the datasets.
 """
+import os
 import torchvision
 import numpy as np
 from augly import image
@@ -112,9 +113,12 @@ def generate_rotated_images(images, n_processes, minangle=0, maxangle=180):
     return images_proc, angles
 
 
-def load_rotated_mnist(root="./data", n_processes=90, target_digit=None, minangle=0, maxangle=180):
+def load_rotated_mnist(root="./data", target_digit=None, minangle=0, maxangle=180, n_processes=None):
     """
     """
+    if n_processes is None:
+        n_processes = max(1, os.cpu_count() - 2)
+
     train, test = load_mnist(root=root)
     (X_train, labels_train), (X_test, labels_test) = train, test
 
