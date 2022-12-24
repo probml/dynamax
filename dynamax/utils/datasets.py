@@ -1,7 +1,9 @@
 """
 Prepcocessing and data augmentation for the datasets.
 """
+import torchvision
 import numpy as np
+from augly import image
 from multiprocessing import Pool
 
 class DataAugmentationFactory:
@@ -71,3 +73,62 @@ class DataAugmentationFactory:
         pool.join()
 
         return dataset_proc.reshape(num_elements, -1)
+
+
+def load_mnist(root="./data"):
+    mnist_train = torchvision.datasets.MNIST(root=root, train=True, download=True)
+    images = np.array(mnist_train.data) / 255.0
+    labels = mnist_train.targets
+
+    mnist_test = torchvision.datasets.MNIST(root=root, train=False)
+    images_test = np.array(mnist_test.data) / 255.0
+    labels_test = mnist_test.targets
+
+    train = (images, labels)
+    test = (images_test, labels_test)
+    return train, test
+
+
+def rotate_mnist(X, angle):
+    """
+    Rotate an image by a given angle.
+    We take the image to be a square of size 28x28.
+    TODO: generalize to any size
+    """
+    X_shift = image.aug_np_wrapper(X, image.rotate, degrees=angle)
+    size_im = X_shift.shape[0]
+    size_pad = (28 - size_im) // 2
+    size_pad_mod = (28 - size_im) % 2
+    X_shift = np.pad(X_shift, (size_pad, size_pad + size_pad_mod))
+    
+    return X_shift
+
+def generate_rotated_images(images, n_processes, minangle=0, maxangle=180):
+    n_configs = len(images)
+    processer = DataAugmentationFactory(rotate_mnist)
+    angles = np.random.uniform(minangle, maxangle, n_configs)
+    configs = [{"angle": float(angle)} for angle in angles]
+    images_proc = processer(images, configs, n_processes=n_processes)
+    return images_proc, angles
+
+
+def load_rotated_mnist(root="./data", n_processes=90, target_digit=None, minangle=0, maxangle=180):
+    """
+    """
+    train, test = load_mnist(root=root)
+    (X_train, labels_train), (X_test, labels_test) = train, test
+
+    if target_digit is not None:
+        X_train = X_train[labels_train == target_digit]
+        X_test = X_test[labels_test == target_digit]
+    
+    n_train = len(X_train)
+    X = np.concatenate([X_train, X_test], axis=0)
+    (X, y) = generate_rotated_images(X, n_processes, minangle=minangle, maxangle=maxangle)
+
+    X_train, y_train = X[:n_train], y[:n_train]
+    X_test, y_test = X[n_train:], y[n_train:]
+
+    train = (X_train, y_train)
+    test = (X_test, y_test)
+    return train, test
