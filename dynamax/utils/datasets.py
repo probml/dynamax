@@ -76,8 +76,8 @@ class DataAugmentationFactory:
         return dataset_proc.reshape(num_elements, -1)
 
 
-def load_mnist(root="./data"):
-    mnist_train = torchvision.datasets.MNIST(root=root, train=True, download=True)
+def load_mnist(root="./data", download=False):
+    mnist_train = torchvision.datasets.MNIST(root=root, train=True, download=download)
     images = np.array(mnist_train.data) / 255.0
     labels = mnist_train.targets
 
