@@ -8,7 +8,11 @@ from jax import lax
 import flax.linen as nn
 from jax.flatten_util import ravel_pytree
 from jax.experimental import host_callback
+from jax import jacrev
 
+from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
+
+_jacrev_2d = lambda f, x: jnp.atleast_2d(jacrev(f)(x))
 
 ### MLP
 
@@ -54,6 +58,25 @@ def get_mlp_flattened_params(model_dims, key=0):
     apply_fn = partial(apply, model=model, unflatten_fn=unflatten_fn)
 
     return model, flat_params, unflatten_fn, apply_fn
+
+
+### EKF
+def initialize_params(flat_params, predict_fn):
+    state_dim = flat_params.size
+    fcekf_params = ParamsGGSSM(
+        initial_mean=flat_params,
+        initial_covariance=jnp.eye(state_dim),
+        dynamics_function=lambda w, _: w,
+        dynamics_covariance = jnp.eye(state_dim) * 1e-4,
+        emission_mean_function = lambda w, x: predict_fn(w, x),
+        emission_cov_function = lambda w, x: predict_fn(w, x) * (1 - predict_fn(w, x))
+    )
+
+    def callback(bel, t, x, y):
+        return bel.mean
+
+    return fcekf_params, callback
+
 
 ### SGD
 
