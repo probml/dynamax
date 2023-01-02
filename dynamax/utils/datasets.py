@@ -5,6 +5,7 @@ import os
 import torchvision
 import numpy as np
 from augly import image
+from typing import Tuple, Union
 from multiprocessing import Pool
 
 class DataAugmentationFactory:
@@ -57,12 +58,16 @@ class DataAugmentationFactory:
         configurations: list
             List of configurations to apply to each element. Each
             element is a dict to pass to the processor.
-        n_processes: int
-            Number of cores to use
+        n_processes: [int, None]
+            Number of cores to use. If None, use all available cores.
         """
         num_elements = len(X_dataset)
         if type(configurations) == dict:
             configurations = [configurations] * num_elements
+
+        if n_processes == 1:
+            dataset_proc = self.process_multiple(X_dataset, configurations)
+            return dataset_proc
 
         dataset_proc = np.array_split(X_dataset, n_processes)
         config_split = np.array_split(configurations, n_processes)
@@ -113,7 +118,13 @@ def generate_rotated_images(images, n_processes, minangle=0, maxangle=180):
     return images_proc, angles
 
 
-def load_rotated_mnist(root="./data", target_digit=None, minangle=0, maxangle=180, n_processes=None):
+def load_rotated_mnist(
+    root: str = "./data",
+    target_digit: Union[int, None] = None,
+    minangle: int = 0,
+    maxangle: int = 180,
+    n_processes: Union[int, None] = 1,
+):
     """
     """
     if n_processes is None:
