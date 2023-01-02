@@ -67,7 +67,7 @@ class DataAugmentationFactory:
 
         if n_processes == 1:
             dataset_proc = self.process_multiple(X_dataset, configurations)
-            return dataset_proc
+            return dataset_proc.reshape(num_elements, -1)
 
         dataset_proc = np.array_split(X_dataset, n_processes)
         config_split = np.array_split(configurations, n_processes)
