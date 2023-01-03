@@ -7,7 +7,6 @@ import inspect
 
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union
-
 from dynamax.utils.utils import psd_solve
 from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
@@ -124,6 +123,43 @@ def _get_params(x, dim, t):
     else:
         return x
 _zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
+
+
+def make_lgssm_params(initial_mean,
+                      initial_cov,
+                      dynamics_weights,
+                      dynamics_cov,
+                      emissions_weights,
+                      emissions_cov,
+                      dynamics_bias=None,
+                      dynamics_input_weights=None,
+                      emissions_bias=None,
+                      emissions_input_weights=None):
+    """Helper function to construct a ParamsLGSSM object from arguments."""
+    state_dim = len(initial_mean)
+    emission_dim = emissions_cov.shape[-1]
+    input_dim = max(dynamics_input_weights.shape[-1] if dynamics_input_weights is not None else 0,
+                    emissions_input_weights.shape[-1] if emissions_input_weights is not None else 0)
+
+    params = ParamsLGSSM(
+        initial=ParamsLGSSMInitial(
+            mean=initial_mean,
+            cov=initial_cov
+        ),
+        dynamics=ParamsLGSSMDynamics(
+            weights=dynamics_weights,
+            bias=_zeros_if_none(dynamics_bias,state_dim),
+            input_weights=_zeros_if_none(dynamics_input_weights, (state_dim, input_dim)),
+            cov=dynamics_cov
+        ),
+        emissions=ParamsLGSSMEmissions(
+            weights=emissions_weights,
+            bias=_zeros_if_none(emissions_bias, emission_dim),
+            input_weights=_zeros_if_none(emissions_input_weights, (emission_dim, input_dim)),
+            cov=emissions_cov
+        )
+    )
+    return params
 
 
 def _predict(m, S, F, B, b, Q, u):

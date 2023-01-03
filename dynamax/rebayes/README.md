@@ -1,9 +1,11 @@
 # ReBayes = Recursive Bayesian inference for latent states
 
-We provide code for online (recursive) Bayesian inference in a state space model
-with Gaussian random walk dynamics (optionally stationary)
-and nonlinear observations, where the emission distribution can be non-Gaussian (e.g., Poisson, categorical).
-For approximate inference, we use the extended Kalman filter, generalized so that
-it can work with conditional first and second moments of the observation distribution,
-i.e., E[Y|z] and Cov[Y|z].
+We provide code for online (recursive) Bayesian inference in state space models;
+in contrast to the dynamax code, we do not assume the entire observation sequence is available in advance,
+so the ReBayes API can be used in an interactive loop (e.g., for Bayesian optimization).
+We focus on the special case where the dynamics is the identity function, plus optional Gaussian random drift.
+The observations can be nonlinear and/or non-Gaussian.
+
+This is work in progress; a stable version will be releaed late Spring 2023.
+
 

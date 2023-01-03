@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 from matplotlib.patches import Ellipse, transforms
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib import pyplot as plt
 import seaborn as sns
 
 
@@ -101,4 +102,50 @@ def plot_uncertainty_ellipses(means, Sigmas, ax, n_std=3.0, **kwargs):
     """Loop over means and Sigmas to add ellipses representing uncertainty."""
     for Sigma, mu in zip(Sigmas, means):
         plot_ellipse(Sigma, mu, ax, n_std, **kwargs)
+
+# Some custom params to make prettier plots.
+custom_rcparams_base = {
+        "font.size" : 13.0,
+        "font.sans-serif" : ['Helvetica Neue', 'Lucida Grande', 'Verdana', 'Geneva', 'Lucid', 'Arial', 'Avant Garde', 'sans-serif'],
+        "text.color" : "555555",
+        "axes.facecolor" : "white",   ## axes background color
+        "axes.edgecolor" : "555555",   ## axes edge color
+        "axes.linewidth" : 1,     ## edge linewidth
+        "axes.titlesize" : 14,   ## fontsize of the axes title
+        "axes.titlepad" : 10.0,     ## pad between axes and title in points
+        "axes.labelcolor" : "555555",
+        "axes.spines.top" : False,
+        "axes.spines.right" : False,
+        "axes.prop_cycle" : plt.cycler('color', ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+                                                 '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']),
+        "xtick.color" : "555555",
+        "ytick.color" : "555555",
+        "grid.color" : "eeeeee",    ## grid color
+        "legend.frameon" : False,     ## if True, draw the legend on a background patch
+        "figure.titlesize" : 16,      ## size of the figure title (Figure.suptitle())
+        "figure.facecolor" : "white",     ## figure facecolor
+        "figure.frameon" : False,         ## enable figure frame
+        "figure.subplot.top" : 0.91,   ## the top of the subplots of the figure
+    }
+
+# Some custom params specifically designed for plots in a notebook.
+custom_rcparams_notebook = {
+        **custom_rcparams_base,
+        "figure.figsize": (7.0, 5.0),
+        "axes.labelsize": 14,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+        "legend.fontsize": 12,
+        "grid.linewidth": 1,
+        "lines.linewidth": 1.75,
+        "patch.linewidth": .3,
+        "lines.markersize": 7,
+        "lines.markeredgewidth": 0,
+        "xtick.major.width": 1,
+        "ytick.major.width": 1,
+        "xtick.minor.width": .5,
+        "ytick.minor.width": .5,
+        "xtick.major.pad": 7,
+        "ytick.major.pad": 7
+    }
 
