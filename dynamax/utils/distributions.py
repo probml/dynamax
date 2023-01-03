@@ -1,5 +1,7 @@
 import jax.numpy as jnp
+from jax import lax
 from jax import vmap
+from jax.scipy.special import gammaln
 from jax.scipy.linalg import solve_triangular
 from tensorflow_probability.substrates import jax as tfp
 
@@ -7,6 +9,35 @@ tfd = tfp.distributions
 tfb = tfp.bijectors
 
 from dynamax.utils.utils import psd_solve
+
+
+class SafeDirichlet(tfd.Dirichlet):
+    """A Dirichlet distribution that handles zero concentration"""
+
+    def _log_prob(self, x):
+        """Compute Dirichlet log probability while allowing alpha and x to be zero.
+        
+        """ 
+        def _safe_log_prob():
+            lp = jnp.where(alpha > 0, (alpha - 1) * jnp.log(x), 0.0).sum()
+            lp -= jnp.where(alpha > 0, gammaln(alpha), 0.0).sum()
+            lp += gammaln(alpha.sum())
+            return lp
+
+        alpha = self.concentration
+        is_bad = jnp.any((alpha == 0) & (x > 0))
+        return lax.cond(is_bad, lambda: -jnp.inf, _safe_log_prob)
+
+    def _mode(self):
+        """Compute Dirichlet mode while allowing alpha to be zero.
+        
+        """ 
+        alpha = self.concentration
+        a = jnp.where(alpha > 0, alpha - 1, 0)
+        is_bad = jnp.any(a < 0)
+        return lax.cond(is_bad, 
+                        lambda: jnp.full(a.shape, jnp.nan), 
+                        lambda: a / a.sum())
 
 
 class InverseWishart(tfd.TransformedDistribution):

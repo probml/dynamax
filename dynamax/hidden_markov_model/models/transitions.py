@@ -3,7 +3,8 @@ import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
 from dynamax.hidden_markov_model.models.abstractions import HMMTransitions
-from dynamax.parameters import ParameterProperties
+from dynamax.parameters import ParameterProperties, SparseTransitionsConstrainer
+from dynamax.utils.distributions import SafeDirichlet
 from jaxtyping import Float, Array
 from typing import NamedTuple, Union
 
@@ -132,23 +133,11 @@ class StandardHMMSparseTransitions(StandardHMMTransitions):
         Returns:
             _type_: _description_
         """
-        def _make_row(col_inds, logits):
-            row_vals = tfb.SoftmaxCentered().forward(logits)
-            row = jnp.zeros(self.num_states).at[col_inds].set(
-                row_vals[col_inds])
-            return row
-
-        if transition_matrix is None:
-            all_col_inds = [jnp.nonzero(row) for row in self.mask]
-            all_logits = jnp.zeros((self.num_states, self.num_states - 1))
-            transition_matrix = jnp.row_stack([
-                _make_row(col_inds, logits) for col_inds, logits in zip(all_col_inds, all_logits)])
-        
-        else:
+        if transition_matrix is not None:
             for t, m in zip(jnp.nonzero(transition_matrix), jnp.nonzero(self.mask)):
                 if not jnp.array_equal(t, m):
                     raise ValueError(
-                        "Provided transition matrix has non-zero values outside of mask.")
+                        "Provided transition matrix has non-zero values outside of mask")
 
         # Package the results into dictionaries
         params = ParamsStandardHMMTransitions(transition_matrix=transition_matrix)
@@ -156,7 +145,7 @@ class StandardHMMSparseTransitions(StandardHMMTransitions):
         return params, props
 
     def log_prior(self, params):
-        return tfd.Dirichlet(self.concentration).log_prob(params.transition_matrix).sum()
+        return SafeDirichlet(self.concentration).log_prob(params.transition_matrix).sum()
 
     def m_step(self, params, props, batch_stats, m_step_state):
         if props.transition_matrix.trainable:
@@ -164,6 +153,6 @@ class StandardHMMSparseTransitions(StandardHMMTransitions):
                 transition_matrix = jnp.array([[1.0]])
             else:
                 expected_trans_counts = batch_stats.sum(axis=0)
-                transition_matrix = tfd.Dirichlet(self.concentration + expected_trans_counts).mode()
+                transition_matrix = SafeDirichlet(self.concentration + expected_trans_counts).mode()
             params = params._replace(transition_matrix=transition_matrix)
         return params, m_step_state

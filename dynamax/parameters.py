@@ -47,6 +47,44 @@ class ParameterProperties:
         return cls(*aux_data)
 
 
+class SparseTransitionsConstrainer(object):
+
+    def __init__(self, mask):
+        self._mask = mask
+        self._inds = [jnp.nonzero(row) for row in mask]
+        assert mask.ndim == 2 and mask.shape[0] == mask.shape[1]
+        self._dim = mask.shape[0]
+        
+
+    @property
+    def mask(self):
+        return self._mask
+
+    def inverse(self, logits):
+        """Convert logits for each row into a sparse transition matrix.
+
+        """
+        return jnp.row_stack([
+            jnp.zeros(self._dim).at[inds].set(tfb.SoftmaxCentered().forward(row))
+            for row, inds in zip(logits, self._inds)
+        ])
+
+    def forward(self, transition_matrix):
+        """Convert transition matrix into logits
+
+        """
+        return [
+            tfb.SoftmaxCentered().inverse(row[inds])
+            for row, inds in zip(transition_matrix, self._inds)
+        ]
+
+    def __call__(self, transition_matrix):
+        return self.forward(transition_matrix)
+
+    def forward_log_det_jacobian(self, x):
+        raise NotImplemented
+
+
 def to_unconstrained(params: ParameterSet, props: PropertySet) -> ParameterSet:
     """Convert the constrained parameters to unconstrained form.
 
