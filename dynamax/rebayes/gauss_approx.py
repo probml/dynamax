@@ -10,9 +10,12 @@ Retrieved from https://hal.inria.fr/hal-03501920
 
 import jax
 import chex
+import flax.linen as nn
 import jax.numpy as jnp
+from typing import Callable
 from functools import partial
 from jaxtyping import Array, Float
+from jax.flatten_util import ravel_pytree
 
 
 @chex.dataclass
@@ -21,24 +24,35 @@ class LRVGAState:
     W: Float[Array, "dim_params dim_subspace"]
     Psi: Float[Array, "dim_params"]
 
+@chex.dataclass
+class FlaxLRVGAState:
+    mu: Float[Array, "dim_params"]
+    W: Float[Array, "dim_params dim_subspace"]
+    Psi: Float[Array, "dim_params"]
+    model: nn.Module
+    reconstruct_fn: Callable
 
-def init_state_lrvga(key, X, dim_latent, sigma2_init, eps):
+
+def init_state_lrvga(key, model, X, dim_latent, sigma2_init, eps):
     key_W, key_mu = jax.random.split(key)
-    _, dim_obs = X.shape
+
+    mu_init = model.init(key_mu, X)
+    mu_init, reconstruct_fn = ravel_pytree(mu_init)
+    dim_params = len(mu_init)
+
     psi0 = (1 - eps) / sigma2_init
-    w0 = jnp.sqrt((eps * dim_obs) / (dim_latent * sigma2_init))
+    w0 = jnp.sqrt((eps * dim_params) / (dim_latent * sigma2_init))
     
-    W_init = jax.random.normal(key_W, (dim_obs, dim_latent))
+    W_init = jax.random.normal(key_W, (dim_params, dim_latent))
     W_init = W_init / jnp.linalg.norm(W_init, axis=0) * w0
-    Psi_init = jnp.ones(dim_obs) * psi0
+    Psi_init = jnp.ones(dim_params) * psi0
     
-    # mu_init = jax.random.normal(key_mu, (dim_obs,))
-    mu_init = jnp.zeros((dim_obs,))
-    
-    state_init = LRVGAState(
+    state_init = FlaxLRVGAState(
         mu=mu_init,
         W=W_init,
-        Psi=Psi_init
+        Psi=Psi_init,
+        model=model,
+        reconstruct_fn=reconstruct_fn,
     )
     
     return state_init
@@ -92,7 +106,7 @@ def fa_approx_step(
     return new_state
 
 
-def sample_lrvga(key, state, n_samples=10):
+def sample_lrvga(key, state):
     """
     Sample from a low-rank variational Gaussian approximation.
     This implementation avoids the explicit construction of the
@@ -101,13 +115,15 @@ def sample_lrvga(key, state, n_samples=10):
     We take s ~ N(0, W W^T + Psi I)
 
     Implementation based on §4.2.2 of the L-RVGA paper.
+
+    TODO(?): refactor code into jax.vmap. (It faster?)
     """
     key_x, key_eps = jax.random.split(key)
     dim_full, dim_latent = state.W.shape
     Psi_inv = 1 / state.Psi
 
-    eps_sample = jax.random.normal(key_eps, (n_samples, dim_latent,))
-    x_sample = jax.random.normal(key_x, (n_samples, dim_full)) * jnp.sqrt(Psi_inv)
+    eps_sample = jax.random.normal(key_eps, (dim_latent,))
+    x_sample = jax.random.normal(key_x, (dim_full,)) * jnp.sqrt(Psi_inv)
 
     I_full = jnp.eye(dim_full)
     I_latent = jnp.eye(dim_latent)
@@ -118,10 +134,10 @@ def sample_lrvga(key, state, n_samples=10):
 
     # samples = (I - LW^T)x + Le
     term1 = I_full - jnp.einsum("ji,kj->ik", L_tr, state.W)
-    x_transform = jnp.einsum("ij,nj->ni", term1, x_sample)
-    eps_transform = jnp.einsum("ji,nj->ni", L_tr, eps_sample)
+    x_transform = jnp.einsum("ij,j->i", term1, x_sample)
+    eps_transform = jnp.einsum("ji,j->i", L_tr, eps_sample)
     samples = x_transform + eps_transform
-    return samples
+    return samples + state.mu
 
 
 def compute_lrvga_cov(state, x, y, link_fn, cov_fn):
@@ -132,32 +148,54 @@ def compute_lrvga_cov(state, x, y, link_fn, cov_fn):
     Implementation based on §4.2.4 of the L-RVGA paper.
     """
     raise NotImplementedError("TODO")
+    cov = cov_fn(state.mu, x, y)
+    jax.vmap(jax.jvp, in_axes=(None, None, 0))(link_fn, (state.mu,), (cov,))
     # jax.vjp()
 
 
-@jax.jit
+@partial(jax.vmap, in_axes=(0, None, None))
+def sample_predictions(key, state, x):
+    mu_sample = sample_lrvga(key, state)
+    mu_sample = state.reconstruct_fn(mu_sample)
+    yhat = state.model.apply(mu_sample, x, method=state.model.get_mean)
+    return yhat
+
+
+@partial(jax.vmap, in_axes=(0, None, None, None))
+def sample_grad_expected_log_prob(key, state, x, y):
+    """
+    E[∇ logp(y|x,θ)]
+    """
+    mu_sample = sample_lrvga(key, state)
+    mu_sample = state.reconstruct_fn(mu_sample)
+    grad_log_prob = partial(state.model.apply, method=state.model.log_prob)
+    grad_log_prob = jax.grad(grad_log_prob, argnums=0)
+    grads = grad_log_prob(mu_sample, x, y)
+    grads, _ = ravel_pytree(grads)
+    return grads
+
+
 def mu_update(
-    state: LRVGAState,
+    key,
     x: Float[Array, "dim_obs"],
-    y: float
+    y: float,
+    state: LRVGAState,
+    n_samples: int = 10
 ) -> Float[Array, "dim_obs"]:
     mu = state.mu
     W = state.W
     Psi_inv = 1 / state.Psi
-    _, dim_latent = W.shape
-    I = jnp.eye(dim_latent)
-    
-    # mu_samples = sample_lrvga(key, state, n_samples=10) + mu
-    # yhat = state.apply_fn(mu_samples, x).mean(axis=0)
-    yhat = jnp.einsum("i,i->", mu, x)
+    dim_full, dim_latent = W.shape
+    I = jnp.eye(dim_full)
+
+    keys = jax.random.split(key, n_samples)
+    yhat = sample_predictions(keys, state, x).mean(axis=0)
     err = y - yhat
 
-    M = I + jnp.einsum("ij,i,ik->jk", W, Psi_inv, W)
-    b_matrix = jnp.einsum("ij,i,i->j", W, Psi_inv, x)
-    term_1 = jnp.linalg.solve(M, b_matrix)
-    term_2 = jnp.einsum("ij,j->i", W, term_1)
-    mu = mu + Psi_inv * (x - term_2) * err
-    return mu
+    V = W @ W.T - Psi_inv * I
+    exp_grads_log_prob = sample_grad_expected_log_prob(keys, state, x, y).mean(axis=0)
+    gain = jnp.linalg.solve(V, exp_grads_log_prob)
+    return mu + gain * err
 
 
 def _step_lrvga(state, obs, alpha, beta, n_inner):
