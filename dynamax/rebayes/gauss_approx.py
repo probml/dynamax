@@ -136,9 +136,9 @@ def fa_approx_step(
 
 
 @jax.jit
-def sample_lrvga(key, state):
+def sample_lr_params(key, state):
     """
-    Sample from a low-rank variational Gaussian approximation.
+    Sample parameters from a low-rank variational Gaussian approximation.
     This implementation avoids the explicit construction of the
     (D x D) covariance matrix.
 
@@ -185,7 +185,7 @@ def compute_lrvga_cov(state, x, y, link_fn, cov_fn):
 
 @partial(jax.vmap, in_axes=(0, None, None, None))
 def sample_predictions(key, state, x, config):
-    mu_sample = sample_lrvga(key, state)
+    mu_sample = sample_lr_params(key, state)
     mu_sample = config.reconstruct_fn(mu_sample)
     yhat = config.model.apply(mu_sample, x, method=config.model.get_mean)
     return yhat
@@ -196,7 +196,7 @@ def sample_grad_expected_log_prob(key, state, x, y, config):
     """
     E[∇ logp(y|x,θ)]
     """
-    mu_sample = sample_lrvga(key, state)
+    mu_sample = sample_lr_params(key, state)
     mu_sample = config.reconstruct_fn(mu_sample)
     grad_log_prob = partial(config.model.apply, method=config.model.log_prob)
     grad_log_prob = jax.grad(grad_log_prob, argnums=0)
