@@ -235,6 +235,48 @@ def mu_update(
     return mu_update
 
 
+def fwd_link(params, x, config):
+    """
+    TODO: Generalise to any member of the exponential family
+
+    Returns
+    -------
+    * predicted mean and logvar
+    * predicted standard deviation
+    """
+    params = config.reconstruct_fn(params)
+    nparams = config.model.apply(params, x).ravel()
+    logvar = nparams[1]
+    std = jnp.exp(logvar / 2)
+    return nparams, std
+
+
+def get_coef(params, x, config):
+    c, std = jax.jacfwd(fwd_link, has_aux=True)(params, x, config)
+    return c * std
+
+
+@partial(jax.vmap, in_axes=(0, None, None, None))
+def sample_cov_coeffs(key, x, state, config):
+    params = sample_lr_params(key, state)
+    coef = get_coef(params, x, config)
+    return coef
+
+
+def sample_coeffs(key, x, state, num_samples, config):
+    """
+    Estimate X X^T
+
+    To jit compile, do
+    >>> sample_fn = partial(sample_coeffs, config=config)
+    >>> sample_fn = jax.jit(sample_fn, static_argnums=(3,))
+    """
+    keys = jax.random.split(key, num_samples)
+    coeffs = sample_cov_coeffs(keys, x, state, config)
+    XXtr = jnp.einsum("nji,njk->ik", coeffs, coeffs) / num_samples
+    return XXtr
+
+
 def _step_lrvga(state, obs, alpha, beta, n_inner):
     x, y = obs
 
