@@ -124,7 +124,7 @@ class StandardHMMSparseTransitions(StandardHMMTransitions):
     def distribution(self, params, state, inputs=None):
         return tfd.Categorical(probs=params.transition_matrix[state])
 
-    def initialize(self, transition_matrix=None):
+    def initialize(self, key=None, method="prior", transition_matrix=None):
         """Initialize the model parameters and their corresponding properties.
 
         Args:

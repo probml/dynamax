@@ -6,6 +6,7 @@ from jax.scipy.stats import norm
 from scipy.stats import invgamma
 from tensorflow_probability.substrates import jax as tfp
 
+from dynamax.utils.distributions import SafeDirichlet
 from dynamax.utils.distributions import InverseWishart
 from dynamax.utils.distributions import MatrixNormalInverseWishart
 from dynamax.utils.distributions import MatrixNormalPrecision
@@ -14,6 +15,20 @@ from dynamax.utils.distributions import NormalInverseWishart
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
+
+
+def test_safe_dirichlet_log_prob(dim=6):
+    alpha = jnp.zeros(dim)
+    alpha = alpha.at[:dim-3].set(3.0)
+    p = SafeDirichlet(alpha)
+    x = p.sample(seed=jr.PRNGKey(0)) 
+    assert not jnp.isfinite(p.log_prob(x))
+
+
+def test_safe_dirichlet_sample(dim=3, n_samples=10000):
+    samples = SafeDirichlet(jnp.eye(dim)).sample(
+        seed=jr.PRNGKey(0), sample_shape=(n_samples,))
+    assert samples.shape == (n_samples, dim, dim)
 
 
 def test_inverse_wishart_mode(df=7.0, dim=3, scale_factor=3.0):
