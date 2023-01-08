@@ -235,7 +235,7 @@ def mu_update(
     return mu_update
 
 
-def fwd_link(params, x, config):
+def fwd_link(params, x, model, reconstruct_fn):
     """
     TODO: Generalise to any member of the exponential family
 
@@ -244,37 +244,35 @@ def fwd_link(params, x, config):
     * predicted mean and logvar
     * predicted standard deviation
     """
-    params = config.reconstruct_fn(params)
-    nparams = config.model.apply(params, x).ravel()
+    params = reconstruct_fn(params)
+    nparams = model.apply(params, x).ravel()
     logvar = nparams[1]
     std = jnp.exp(logvar / 2)
     return nparams, std
 
 
-def get_coef(params, x, config):
-    c, std = jax.jacfwd(fwd_link, has_aux=True)(params, x, config)
+def get_coef(params, x, model, reconstruct_fn):
+    c, std = jax.jacfwd(fwd_link, has_aux=True)(params, x, model, reconstruct_fn)
     return c * std
 
 
-@partial(jax.vmap, in_axes=(0, None, None, None))
-def sample_cov_coeffs(key, x, state, config):
+@partial(jax.vmap, in_axes=(0, None, None, None, None))
+def sample_cov_coeffs(key, x, state, model, reconstruct_fn):
     params = sample_lr_params(key, state)
-    coef = get_coef(params, x, config)
+    coef = get_coef(params, x, model, reconstruct_fn)
     return coef
 
 
-def sample_coeffs(key, x, state, num_samples, config):
+@partial(jax.jit, static_argnames=("num_samples", "model", "reconstruct_fn"))
+def sample_half_fisher(key, x, state, num_samples, model, reconstruct_fn):
     """
-    Estimate X X^T
-
-    To jit compile, do
-    >>> sample_fn = partial(sample_coeffs, config=config)
-    >>> sample_fn = jax.jit(sample_fn, static_argnums=(3,))
+    Estimate
+        X X^T ~ E_{q(θ)}[E_{y}[∇^2 log p(y|x,θ)]]
     """
     keys = jax.random.split(key, num_samples)
-    coeffs = sample_cov_coeffs(keys, x, state, config)
-    XXtr = jnp.einsum("nji,njk->ik", coeffs, coeffs) / num_samples
-    return XXtr
+    coeffs = sample_cov_coeffs(keys, x, state, model, reconstruct_fn) / jnp.sqrt(num_samples)
+    # XXtr = jnp.einsum("nji,njk->ik", coeffs, coeffs) / num_samples
+    return coeffs
 
 
 def _step_lrvga(state, obs, alpha, beta, n_inner):
