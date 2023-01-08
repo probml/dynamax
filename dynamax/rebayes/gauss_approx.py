@@ -110,7 +110,7 @@ def fa_approx_step(
     # Construct helper matrices
     M = I + jnp.einsum("ij,i,ik->jk", W, Psi_inv, W)
     M_inv = jnp.linalg.inv(M)
-    V_beta = jnp.einsum("i,j,j,jk->ik", x, x, Psi_inv, W)
+    V_beta = jnp.einsum("...i,...j,j,jk->ik", x, x, Psi_inv, W)
     V_alpha = (
         jnp.einsum("ij,kj,k,kl->il", W_prev, W_prev, Psi_inv, W) +
         jnp.einsum("i,i,ij->ij", Psi_prev, Psi_inv, W)
@@ -121,7 +121,7 @@ def fa_approx_step(
     W_solve = I + jnp.einsum("ij,kj,k,kl->li", M_inv, W, Psi_inv, V)
     W = jnp.linalg.solve(W_solve, V.T).T
     Psi = (
-        beta * jnp.einsum("i,i->i", x, x) +
+        beta * jnp.einsum("...i,...i->i", x, x) +
         alpha * jnp.einsum("ij,ij->i", W_prev, W_prev) + 
         alpha * Psi_prev -
         jnp.einsum("ij,jk,ik->i", W, M_inv, V)
@@ -170,35 +170,22 @@ def sample_lr_params(key, state):
     return samples + state.mu
 
 
-def compute_lrvga_cov(state, x, y, link_fn, cov_fn):
-    """
-    Compute the approximated expected covariance matrix
-    of the posterior distribution.
-
-    Implementation based on §4.2.4 of the L-RVGA paper.
-    """
-    raise NotImplementedError("TODO")
-    cov = cov_fn(state.mu, x, y)
-    jax.vmap(jax.jvp, in_axes=(None, None, 0))(link_fn, (state.mu,), (cov,))
-    # jax.vjp()
-
-
-@partial(jax.vmap, in_axes=(0, None, None, None))
-def sample_predictions(key, state, x, config):
+@partial(jax.vmap, in_axes=(0, None, None, None, None))
+def sample_predictions(key, state, x, model, reconstruct_fn):
     mu_sample = sample_lr_params(key, state)
-    mu_sample = config.reconstruct_fn(mu_sample)
-    yhat = config.model.apply(mu_sample, x, method=config.model.get_mean)
+    mu_sample = reconstruct_fn(mu_sample)
+    yhat = model.apply(mu_sample, x, method=model.get_mean)
     return yhat
 
 
-@partial(jax.vmap, in_axes=(0, None, None, None, None))
-def sample_grad_expected_log_prob(key, state, x, y, config):
+@partial(jax.vmap, in_axes=(0, None, None, None, None, None))
+def sample_grad_expected_log_prob(key, state, x, y, model, reconstruct_fn):
     """
     E[∇ logp(y|x,θ)]
     """
     mu_sample = sample_lr_params(key, state)
-    mu_sample = config.reconstruct_fn(mu_sample)
-    grad_log_prob = partial(config.model.apply, method=config.model.log_prob)
+    mu_sample = reconstruct_fn(mu_sample)
+    grad_log_prob = partial(model.apply, method=model.log_prob)
     grad_log_prob = jax.grad(grad_log_prob, argnums=0)
     grads = grad_log_prob(mu_sample, x, y)
     grads, _ = ravel_pytree(grads)
@@ -210,7 +197,9 @@ def mu_update(
     x: Float[Array, "dim_obs"],
     y: float,
     state: LRVGAState,
-    config: Config,
+    num_samples: int,
+    model: nn.Module,
+    reconstruct_fn: Callable,
 ) -> Float[Array, "dim_obs"]:
     """
     TODO: Optimise for lower compilation time:
@@ -224,15 +213,17 @@ def mu_update(
     dim_full, _ = W.shape
     I = jnp.eye(dim_full)
 
-    keys = jax.random.split(key, config.num_samples)
-    yhat = sample_predictions(keys, state, x, config).mean(axis=0)
+    key_pred, key_grad = jax.random.split(key)
+    keys_pred = jax.random.split(key_pred, num_samples)
+    keys_grad = jax.random.split(key_grad, num_samples)
+    yhat = sample_predictions(keys_pred, state, x, model, reconstruct_fn).mean(axis=0)
     err = y - yhat
 
     V = W @ W.T - Psi_inv * I
-    exp_grads_log_prob = sample_grad_expected_log_prob(keys, state, x, y, config).mean(axis=0)
+    exp_grads_log_prob = sample_grad_expected_log_prob(keys_grad, state, x, y, model, reconstruct_fn).mean(axis=0)
     gain = jnp.linalg.solve(V, exp_grads_log_prob)
-    mu_update = mu + gain * err
-    return mu_update
+    mu_new = mu + gain * err
+    return mu_new
 
 
 def fwd_link(params, x, model, reconstruct_fn):
@@ -266,7 +257,7 @@ def sample_cov_coeffs(key, x, state, model, reconstruct_fn):
 @partial(jax.jit, static_argnames=("num_samples", "model", "reconstruct_fn"))
 def sample_half_fisher(key, x, state, num_samples, model, reconstruct_fn):
     """
-    Estimate
+    Estimate X such that
         X X^T ~ E_{q(θ)}[E_{y}[∇^2 log p(y|x,θ)]]
     """
     keys = jax.random.split(key, num_samples)
@@ -275,33 +266,52 @@ def sample_half_fisher(key, x, state, num_samples, model, reconstruct_fn):
     return coeffs
 
 
-def _step_lrvga(state, obs, alpha, beta, n_inner):
-    x, y = obs
+def _step_lrvga(state, obs, alpha, beta, n_inner, n_samples, model, reconstruct_fn):
+    """
+    Iterated RVGA (§4.2.1). We omit the second iteration of the covariance matrix
+    """
+    key, x, y = obs
+    key_fisher, key_est, key_mu_final = jax.random.split(key, 3)
 
-    # Xt = compute_lrvga_cov(state, x, y)
-    # Then, replace x with Xt
+    X = sample_half_fisher(key_fisher, x, state, n_samples, model, reconstruct_fn)
     def fa_partial(_, new_state):
-        new_state = fa_approx_step(x, new_state, state, alpha, beta)
+        new_state = fa_approx_step(X, new_state, state, alpha, beta)
         return new_state
 
     # Algorithm 1 in §3.2 of L-RVGA states that 1 to 3 loops may be enough in
     # the inner (fa-update) loop
     state_update = jax.lax.fori_loop(0, n_inner, fa_partial, state)
-    mu_new = mu_update(state_update, x, y)
-    state_update = state_update.replace(mu=mu_new)
-    
+    mu_new = mu_update(key_est, x, y, state_update, n_samples, model, reconstruct_fn)
     return state_update, mu_new
+    state_update = state_update.replace(mu=mu_new)
+    # Final mu update
+    mu_new = mu_update(key_mu_final, x, y, state_update, n_samples, model, reconstruct_fn)
+    state_update = state_update.replace(mu=mu_new)
+    return state_update, mu_new
+    
 
 
+@partial(jax.jit,
+    static_argnames=("alpha", "beta", "n_inner", "n_samples", "model", "reconstruct_fn")
+)
 def lrvga(
+    key: jax.random.PRNGKey,
     state_init: LRVGAState,
     X: Float[Array, "num_obs dim_obs"],
     y: Float[Array, "num_obs"],
     alpha: float,
     beta: float,
+    model: nn.Module,
+    reconstruct_fn: Callable,
     n_inner: int = 3,
+    n_samples: int = 6
 ):
-    part_lrvga = partial(_step_lrvga, alpha=alpha, beta=beta, n_inner=n_inner)
-    obs = (X, y)
+    n_steps = len(y)
+    keys = jax.random.split(key, n_steps)
+    part_lrvga = partial(
+        _step_lrvga, alpha=alpha, beta=beta, n_inner=n_inner, n_samples=n_samples,
+        model=model, reconstruct_fn=reconstruct_fn
+    )
+    obs = (keys, X, y)
     state_final, mu_hist = jax.lax.scan(part_lrvga, state_init, obs)
     return state_final, mu_hist
