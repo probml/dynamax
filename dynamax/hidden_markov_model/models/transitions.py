@@ -138,6 +138,10 @@ class StandardHMMSparseTransitions(StandardHMMTransitions):
                 if not jnp.array_equal(t, m):
                     raise ValueError(
                         "Provided transition matrix has non-zero values outside of mask")
+        
+        if transition_matrix is None:
+            this_key, key = jr.split(key)
+            transition_matrix = SafeDirichlet(self.concentration).sample(seed=this_key)
 
         # Package the results into dictionaries
         params = ParamsStandardHMMTransitions(transition_matrix=transition_matrix)

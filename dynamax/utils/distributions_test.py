@@ -22,7 +22,7 @@ def test_safe_dirichlet_log_prob(dim=6):
     alpha = alpha.at[:dim-3].set(3.0)
     p = SafeDirichlet(alpha)
     x = p.sample(seed=jr.PRNGKey(0)) 
-    assert not jnp.isfinite(p.log_prob(x))
+    assert jnp.isfinite(p.log_prob(x))
 
 
 def test_safe_dirichlet_sample(dim=3, n_samples=10000):
