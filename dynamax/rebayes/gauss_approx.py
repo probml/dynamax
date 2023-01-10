@@ -196,6 +196,7 @@ def mu_update(
     key,
     x: Float[Array, "dim_obs"],
     y: float,
+    state_prev: LRVGAState,
     state: LRVGAState,
     num_samples: int,
     model: nn.Module,
@@ -207,23 +208,17 @@ def mu_update(
         2. Refactor sample_grad_expected_log_prob
     TODO: Rewrite the V term using the Woodbury matrix identity
     """
-    mu = state.mu
     W = state.W
     Psi_inv = 1 / state.Psi
     dim_full, _ = W.shape
     I = jnp.eye(dim_full)
 
-    key_pred, key_grad = jax.random.split(key)
-    keys_pred = jax.random.split(key_pred, num_samples)
-    keys_grad = jax.random.split(key_grad, num_samples)
-    yhat = sample_predictions(keys_pred, state, x, model, reconstruct_fn).mean(axis=0)
-    err = y - yhat
+    keys_grad = jax.random.split(key, num_samples)
 
-    V = W @ W.T - Psi_inv * I
-    exp_grads_log_prob = sample_grad_expected_log_prob(keys_grad, state, x, y, model, reconstruct_fn).mean(axis=0)
+    V = W @ W.T + state.Psi * I
+    exp_grads_log_prob = sample_grad_expected_log_prob(keys_grad, state_prev, x, y, model, reconstruct_fn).mean(axis=0)
     gain = jnp.linalg.solve(V, exp_grads_log_prob)
-    mu_new = mu + gain * err
-    return mu_new
+    return gain
 
 
 def fwd_link(params, x, model, reconstruct_fn):
@@ -236,9 +231,9 @@ def fwd_link(params, x, model, reconstruct_fn):
     * predicted standard deviation
     """
     params = reconstruct_fn(params)
+    # TODO: rewrite for possibly multivariate, heteroskedastic model
     nparams = model.apply(params, x).ravel()
-    logvar = nparams[1]
-    std = jnp.exp(logvar / 2)
+    std = model.std
     return nparams, std
 
 
@@ -281,19 +276,17 @@ def _step_lrvga(state, obs, alpha, beta, n_inner, n_samples, model, reconstruct_
     # Algorithm 1 in §3.2 of L-RVGA states that 1 to 3 loops may be enough in
     # the inner (fa-update) loop
     state_update = jax.lax.fori_loop(0, n_inner, fa_partial, state)
-    mu_new = mu_update(key_est, x, y, state_update, n_samples, model, reconstruct_fn)
-    return state_update, mu_new
+    # First mu update
+    mu_add = mu_update(key_est, x, y, state, state_update, n_samples, model, reconstruct_fn)
+    mu_new = state.mu + mu_add
     state_update = state_update.replace(mu=mu_new)
-    # Final mu update
-    mu_new = mu_update(key_mu_final, x, y, state_update, n_samples, model, reconstruct_fn)
+    # Second mu update: we use the updated state to estimate the gradient
+    mu_add = mu_update(key_mu_final, x, y, state_update, state_update, n_samples, model, reconstruct_fn)
+    mu_new = state.mu + mu_add
     state_update = state_update.replace(mu=mu_new)
-    return state_update, mu_new
+    return state_update, state_update.mu
     
 
-
-@partial(jax.jit,
-    static_argnames=("alpha", "beta", "n_inner", "n_samples", "model", "reconstruct_fn")
-)
 def lrvga(
     key: jax.random.PRNGKey,
     state_init: LRVGAState,
