@@ -297,14 +297,19 @@ def lrvga(
     model: nn.Module,
     reconstruct_fn: Callable,
     n_inner: int = 3,
+    n_inner_fa: int = 3,
     n_samples: int = 6
 ):
     n_steps = len(y)
     keys = jax.random.split(key, n_steps)
     part_lrvga = partial(
-        _step_lrvga, alpha=alpha, beta=beta, n_inner=n_inner, n_samples=n_samples,
+        _step_lrvga, alpha=alpha, beta=beta, n_inner=n_inner_fa, n_samples=n_samples,
         model=model, reconstruct_fn=reconstruct_fn
     )
+    def run_lrvga(state, obs):
+        state = jax.lax.fori_loop(0, n_inner, lambda _, state: part_lrvga(state, obs)[0], state)
+        return state, state.mu
+
     obs = (keys, X, y)
-    state_final, mu_hist = jax.lax.scan(part_lrvga, state_init, obs)
+    state_final, mu_hist = jax.lax.scan(run_lrvga, state_init, obs)
     return state_final, mu_hist
