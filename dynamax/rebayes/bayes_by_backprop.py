@@ -39,15 +39,14 @@ def transform(eps, mean, logvar):
     return weight
 
 
-@partial(jax.jit, static_argnames=("num_params", "reconstruct_fn"))
-def sample_params(key, state:BBBParams, num_params, reconstruct_fn:Callable):
+def sample_params(key, state:BBBParams, reconstruct_fn:Callable):
+    num_params = len(get_leaves(state.mean))
     eps = jax.random.normal(key, (num_params,))
     eps = reconstruct_fn(eps)
     params = jax.tree_map(transform, eps, state.mean, state.logvar)
     return params
 
 
-@jax.jit
 def get_leaves(params):
     flat_params, _ = ravel_pytree(params)
     return flat_params
@@ -59,6 +58,7 @@ def cost_fn(
     X: Float[Array, "num_obs dim_obs"],
     y: Float[Array, "num_obs"],
     reconstruct_fn: Callable,
+    model: nn.Module,
     scale_obs=1.0,
     scale_prior=1.0,
 ):
@@ -66,9 +66,8 @@ def cost_fn(
     TODO:
     Add more general way to compute observation-model log-probability
     """
-    
     # Sampled params
-    params = sample_params(key, state, num_params, reconstruct_fn)
+    params = sample_params(key, state, reconstruct_fn)
     params_flat = get_leaves(params)
     
     # Prior log probability (use initialised vals for mean?)
@@ -86,11 +85,11 @@ def cost_fn(
     return logp_variational - logp_prior - logp_obs
 
 
-def lossfn(key, params, X, y, reconstruct_fn, num_samples=10):
+def lossfn(key, params, X, y, model, reconstruct_fn, num_samples=10):
     # TODO: add costfn as input
     keys = jax.random.split(key, num_samples)
-    cost_vmap = jax.vmap(cost_fn, in_axes=(0, None, None, None, None))
-    loss = cost_vmap(keys, params, X, y, reconstruct_fn).mean()
+    cost_vmap = jax.vmap(cost_fn, in_axes=(0, None, None, None, None, None))
+    loss = cost_vmap(keys, params, X, y, reconstruct_fn, model).mean()
     return loss
 
 
@@ -109,7 +108,6 @@ def get_batch_train_ixs(key, num_samples, batch_size):
     return batch_ixs
 
 
-@jax.jit
 def index_values_batch(X, y, ixs):
     """
     Index values of a batch of observations
@@ -119,17 +117,23 @@ def index_values_batch(X, y, ixs):
     return X_batch, y_batch
 
 
-@partial(jax.jit, static_argnames=("lossfn", "reconstruct_fn"))
-def train_step(key, opt_state, X, y, lossfn, reconstruct_fn):
+def train_step(key, opt_state, X, y, lossfn, model, reconstruct_fn):
     params = opt_state.params
     apply_fn = opt_state.apply_fn
     
-    loss, grads = jax.value_and_grad(lossfn, 1)(key, params, X, y, reconstruct_fn)
+    loss, grads = jax.value_and_grad(lossfn, 1)(key, params, X, y, model, reconstruct_fn)
     opt_state_new = opt_state.apply_gradients(grads=grads)
     return opt_state_new, loss
 
 
-def train_epoch(key, state, X, y, batch_size, lossfn, reconstruct_fn):
+@partial(jax.jit, static_argnames=("lossfn", "model", "reconstruct_fn"))
+def split_and_train_step(key, opt_state, X, y, ixs, lossfn, model, reconstruct_fn):
+    X_batch, y_batch = index_values_batch(X, y, ixs)
+    opt_state, loss = train_step(key, opt_state, X_batch, y_batch, lossfn, model, reconstruct_fn)
+    return opt_state, loss
+
+
+def train_epoch(key, state, X, y, batch_size, lossfn, model, reconstruct_fn):
     num_samples = len(X)
     key_batch, keys_train = jax.random.split(key)
     batch_ixs = get_batch_train_ixs(key_batch, num_samples, batch_size)
@@ -139,8 +143,7 @@ def train_epoch(key, state, X, y, batch_size, lossfn, reconstruct_fn):
     
     total_loss = 0
     for key_step, batch_ix in zip(keys_train, batch_ixs):
-        X_batch, y_batch = index_values_batch(X, y, batch_ix)
-        state, loss = train_step(key_step, state, X_batch, y_batch, lossfn, reconstruct_fn)
+        state, loss = split_and_train_step(key_step, state, X, y, batch_ix, lossfn, model, reconstruct_fn)
         total_loss += loss
     
     return total_loss.item(), state
