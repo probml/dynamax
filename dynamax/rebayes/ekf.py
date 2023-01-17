@@ -10,6 +10,8 @@ from dynamax.rebayes.diagonal_inference import _variational_diagonal_ekf_conditi
 from dynamax.rebayes.diagonal_inference import _full_covariance_condition_on
 
 
+_take_diagonal = lambda x: jnp.diag(x) if len(x.shape) == 2 else x
+
 @chex.dataclass
 class GaussianBel:
     mean: chex.Array
@@ -28,12 +30,12 @@ class RebayesEKF:
             Q = ssm_params.dynamics_covariance
         elif method == 'vdekf':
             self.update_fn = _variational_diagonal_ekf_condition_on
-            Sigma0 = jnp.diag(ssm_params.initial_covariance)
-            Q = jnp.diag(ssm_params.dynamics_covariance)
+            Sigma0 = _take_diagonal(ssm_params.initial_covariance)
+            Q = _take_diagonal(ssm_params.dynamics_covariance)
         elif method == 'fdekf':
             self.update_fn = _fully_decoupled_ekf_condition_on
-            Sigma0 = jnp.diag(ssm_params.initial_covariance)
-            Q = jnp.diag(ssm_params.dynamics_covariance)
+            Sigma0 = _take_diagonal(ssm_params.initial_covariance)
+            Q = _take_diagonal(ssm_params.dynamics_covariance)
         else:
             raise ValueError('unknown method ', method)
         self.mu0 = ssm_params.initial_mean
