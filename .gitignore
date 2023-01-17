@@ -13,3 +13,4 @@ dist/
 *-dot
 *.DS_Store
 .vscode/
+.venv
