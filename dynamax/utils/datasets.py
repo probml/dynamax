@@ -152,29 +152,29 @@ def load_rotated_mnist(
     return train, test
 
 
-def load_1d_synthetic_dataset(n_samples=100, test_size=0.5, key=0):
+def load_1d_synthetic_dataset(n_train=100, n_test=100, key=0):
     if isinstance(key, int):
         key = jr.PRNGKey(key)
-    key, subkey = jr.split(key)
+    key1, key2, subkey1, subkey2 = jr.split(key, 4)
 
-    X = jr.uniform(key, shape=(n_samples, 1), minval=0.0, maxval=0.5)
+    X_train = jr.uniform(key1, shape=(2*n_train, 1), minval=0.0, maxval=0.5)
+    X_test = jr.uniform(key2, shape=(n_test, 1), minval=0.0, maxval=0.5)
     
     def generating_function(key, x):
         epsilons = jr.normal(key, shape=(3,))*0.02
         return (x + 0.3*jnp.sin(2*jnp.pi*(x+epsilons[0])) + 
                 0.3*jnp.sin(4*jnp.pi*(x+epsilons[1])) + epsilons[2])
     
-    keys = jr.split(subkey, X.shape[0])
-    y = vmap(generating_function)(keys, X)
+    keys_train = jr.split(subkey1, X_train.shape[0])
+    keys_test = jr.split(subkey2, X_test.shape[0])
+    y_train = vmap(generating_function)(keys_train, X_train)
+    y_test = vmap(generating_function)(keys_test, X_test)
 
-    sorted_idx = jnp.argsort(X.squeeze())
-    threshold = int(n_samples*(1-test_size)/2)
+    sorted_idx = jnp.argsort(X_train.squeeze())
     train_idx = jnp.concatenate([
-        sorted_idx[:threshold], sorted_idx[1-threshold:]
+        sorted_idx[:n_train//2], sorted_idx[2*n_train - n_train//2:]
     ])
-    test_idx = sorted_idx[threshold:1-threshold]
 
-    X_train, y_train = X[train_idx], y[train_idx]
-    X_test, y_test = X[test_idx], y[test_idx]
+    X_train, y_train = X_train[train_idx], y_train[train_idx]
 
     return (X_train, y_train), (X_test, y_test)
