@@ -7,6 +7,9 @@ import numpy as np
 from augly import image
 from typing import Tuple, Union
 from multiprocessing import Pool
+import jax.random as jr
+import jax.numpy as jnp
+from jax import vmap
 
 class DataAugmentationFactory:
     """
@@ -147,3 +150,31 @@ def load_rotated_mnist(
     train = (X_train, y_train)
     test = (X_test, y_test)
     return train, test
+
+
+def load_1d_synthetic_dataset(n_samples=100, test_size=0.5, key=0):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+    key, subkey = jr.split(key)
+
+    X = jr.uniform(key, shape=(n_samples, 1), minval=0.0, maxval=0.5)
+    
+    def generating_function(key, x):
+        epsilons = jr.normal(key, shape=(3,))*0.02
+        return (x + 0.3*jnp.sin(2*jnp.pi*(x+epsilons[0])) + 
+                0.3*jnp.sin(4*jnp.pi*(x+epsilons[1])) + epsilons[2])
+    
+    keys = jr.split(subkey, X.shape[0])
+    y = vmap(generating_function)(keys, X)
+
+    sorted_idx = jnp.argsort(X.squeeze())
+    threshold = int(n_samples*(1-test_size)/2)
+    train_idx = jnp.concatenate([
+        sorted_idx[:threshold], sorted_idx[1-threshold:]
+    ])
+    test_idx = sorted_idx[threshold:1-threshold]
+
+    X_train, y_train = X[train_idx], y[train_idx]
+    X_test, y_test = X[test_idx], y[test_idx]
+
+    return (X_train, y_train), (X_test, y_test)
