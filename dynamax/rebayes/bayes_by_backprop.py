@@ -12,29 +12,31 @@ from jaxtyping import Float, PyTree, Array
 @dataclass
 class BBBParams:
     mean: PyTree[Float]
-    logvar: PyTree[Float]
+    rho: PyTree[Float]
     
 
 def init_bbb_params(key, model, batch_init):
-    key_mean, key_logvar = jax.random.split(key)
+    key_mean, key_rho = jax.random.split(key)
     
     params_mean = model.init(key_mean, batch_init)
     flat_params, reconstruct_fn = ravel_pytree(params_mean)
     num_params = len(flat_params)
-    
-    params_logvar = jax.random.normal(key_logvar, (num_params,))
-    params_logvar = reconstruct_fn(params_logvar)
+
+    # params_rho = jax.random.normal(key_rho, (num_params,)) * 0.1
+    # params_rho = reconstruct_fn(params_rho)
+
+    params_rho = model.init(key_rho, batch_init)
     
     bbb_params = BBBParams(
         mean=params_mean,
-        logvar=params_logvar,
+        rho=params_rho,
     )
     
     return bbb_params, (reconstruct_fn, num_params)
 
 
-def transform(eps, mean, logvar):
-    std = jnp.exp(logvar / 2)
+def transform(eps, mean, rho):
+    std = jnp.log(1 + jnp.exp(rho))
     weight = mean + std * eps
     return weight
 
@@ -43,7 +45,7 @@ def sample_params(key, state:BBBParams, reconstruct_fn:Callable):
     num_params = len(get_leaves(state.mean))
     eps = jax.random.normal(key, (num_params,))
     eps = reconstruct_fn(eps)
-    params = jax.tree_map(transform, eps, state.mean, state.logvar)
+    params = jax.tree_map(transform, eps, state.mean, state.rho)
     return params
 
 
@@ -77,8 +79,8 @@ def cost_fn(
     logp_obs = distrax.Normal(loc=mu_obs, scale=scale_obs).log_prob(y).sum()
     # Variational log-probability
     logp_variational = jax.tree_map(
-        lambda mean, logvar, x: distrax.Normal(loc=mean, scale=jnp.exp(logvar / 2)).log_prob(x),
-        state.mean, state.logvar, params
+        lambda mean, rho, x: distrax.Normal(loc=mean, scale=jnp.log(1 + jnp.exp(rho))).log_prob(x),
+        state.mean, state.rho, params
     )
     logp_variational = get_leaves(logp_variational).sum()
     
