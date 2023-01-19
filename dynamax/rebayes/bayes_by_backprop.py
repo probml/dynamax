@@ -29,9 +29,9 @@ def init_bbb_params(key, model, batch_init):
     flat_params, reconstruct_fn = ravel_pytree(params_mean)
     num_params = len(flat_params)
 
-    params_rho = jax.random.normal(key_rho, (num_params,)) * 1.0
+    params_rho = jax.random.normal(key_rho, (num_params,))
     params_rho = reconstruct_fn(params_rho)
-    
+     #
     bbb_params = BBBParams(
         mean=params_mean,
         rho=params_rho,
@@ -58,16 +58,18 @@ def sample_gauss_params(key, state:BBBParams, reconstruct_fn:Callable):
     return params
 
 
-def sample_rbnn_params(key, state:BBBParams, reconstruct_fn:Callable):
+def sample_rbnn_params(key, state:BBBParams, reconstruct_fn:Callable, scale:float=1.0):
     """
     Sample from a radial Bayesian neural network
-    radial BNN of [2]
+    radial BNN of [2]. We modify the definition of the
+    RBNN to include a scale parameter, which allows us
+    to control the prior uncertainty over the posterior predictive.
     """
     key_eps, key_rho = jax.random.split(key)
     num_params = len(get_leaves(state.mean))
 
     # The radial dimension.
-    r = jax.random.normal(key_rho)
+    r = jax.random.normal(key_rho) * scale
 
     eps = jax.random.normal(key_eps, (num_params,))
     eps = eps / jnp.linalg.norm(eps) * r
