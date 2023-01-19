@@ -1,3 +1,10 @@
+"""
+[2] Farquhar, S., Osborne, M., & Gal, Y. (2019).
+    Radial Bayesian Neural Networks: Beyond Discrete Support
+    In Large-Scale Bayesian Deep Learning. doi:10.48550/ARXIV.1907.00865
+
+"""
+
 import jax
 import distrax
 import jax.numpy as jnp
@@ -22,10 +29,8 @@ def init_bbb_params(key, model, batch_init):
     flat_params, reconstruct_fn = ravel_pytree(params_mean)
     num_params = len(flat_params)
 
-    # params_rho = jax.random.normal(key_rho, (num_params,)) * 0.1
-    # params_rho = reconstruct_fn(params_rho)
-
-    params_rho = model.init(key_rho, batch_init)
+    params_rho = jax.random.normal(key_rho, (num_params,)) * 1.0
+    params_rho = reconstruct_fn(params_rho)
     
     bbb_params = BBBParams(
         mean=params_mean,
@@ -41,10 +46,34 @@ def transform(eps, mean, rho):
     return weight
 
 
-def sample_params(key, state:BBBParams, reconstruct_fn:Callable):
+def sample_gauss_params(key, state:BBBParams, reconstruct_fn:Callable):
+    """
+    Sample from a Gaussian distribution
+    """
     num_params = len(get_leaves(state.mean))
     eps = jax.random.normal(key, (num_params,))
     eps = reconstruct_fn(eps)
+
+    params = jax.tree_map(transform, eps, state.mean, state.rho)
+    return params
+
+
+def sample_rbnn_params(key, state:BBBParams, reconstruct_fn:Callable):
+    """
+    Sample from a radial Bayesian neural network
+    radial BNN of [2]
+    """
+    key_eps, key_rho = jax.random.split(key)
+    num_params = len(get_leaves(state.mean))
+
+    # The radial dimension.
+    r = jax.random.normal(key_rho)
+
+    eps = jax.random.normal(key_eps, (num_params,))
+    eps = eps / jnp.linalg.norm(eps) * r
+    eps = reconstruct_fn(eps)
+
+
     params = jax.tree_map(transform, eps, state.mean, state.rho)
     return params
 
@@ -52,47 +81,6 @@ def sample_params(key, state:BBBParams, reconstruct_fn:Callable):
 def get_leaves(params):
     flat_params, _ = ravel_pytree(params)
     return flat_params
-
-
-def cost_fn(
-    key: jax.random.PRNGKey,
-    state: BBBParams,
-    X: Float[Array, "num_obs dim_obs"],
-    y: Float[Array, "num_obs"],
-    reconstruct_fn: Callable,
-    model: nn.Module,
-    scale_obs=1.0,
-    scale_prior=1.0,
-):
-    """
-    TODO:
-    Add more general way to compute observation-model log-probability
-    """
-    # Sampled params
-    params = sample_params(key, state, reconstruct_fn)
-    params_flat = get_leaves(params)
-    
-    # Prior log probability (use initialised vals for mean?)
-    logp_prior = distrax.Normal(loc=0.0, scale=scale_prior).log_prob(params_flat).sum()
-    # Observation log-probability
-    mu_obs = model.apply(params, X).ravel()
-    logp_obs = distrax.Normal(loc=mu_obs, scale=scale_obs).log_prob(y).sum()
-    # Variational log-probability
-    logp_variational = jax.tree_map(
-        lambda mean, rho, x: distrax.Normal(loc=mean, scale=jnp.log(1 + jnp.exp(rho))).log_prob(x),
-        state.mean, state.rho, params
-    )
-    logp_variational = get_leaves(logp_variational).sum()
-    
-    return logp_variational - logp_prior - logp_obs
-
-
-def lossfn(key, params, X, y, model, reconstruct_fn, num_samples=10):
-    # TODO: add costfn as input
-    keys = jax.random.split(key, num_samples)
-    cost_vmap = jax.vmap(cost_fn, in_axes=(0, None, None, None, None, None))
-    loss = cost_vmap(keys, params, X, y, reconstruct_fn, model).mean()
-    return loss
 
 
 @partial(jax.jit, static_argnames=("num_samples", "batch_size"))
