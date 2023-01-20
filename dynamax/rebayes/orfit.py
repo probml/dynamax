@@ -1,3 +1,11 @@
+"""
+Implementation of the Orthogonal Recursive Fitting (ORFit) [1] algorithm for online learning.
+
+[1] Min, Y., Ahn, K, & Azizan, N. (2022, July).
+One-Pass Learning via Bridging Orthogonal Gradient Descent and Recursive Least-Squares.
+Retrieved from https://arxiv.org/abs/2207.13853
+"""
+
 import jax.numpy as jnp
 from jax import jacrev
 from jax import vmap
@@ -79,5 +87,5 @@ def orthogonal_recursive_fitting(
     
     # Run ORFit
     carry = (initial_mean, U, Sigma)
-    _, (filtered_means, filtered_covs) = scan(_step, carry, jnp.arange(len(xs)))
+    _, (filtered_means, filtered_covs) = scan(_step, carry, jnp.arange(len(inputs)))
     return PosteriorGSSMFiltered(filtered_means=filtered_means, filtered_covariances=filtered_covs)
