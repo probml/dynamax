@@ -31,7 +31,7 @@ def init_bbb_params(key, model, batch_init):
 
     params_rho = jax.random.normal(key_rho, (num_params,))
     params_rho = reconstruct_fn(params_rho)
-     #
+    
     bbb_params = BBBParams(
         mean=params_mean,
         rho=params_rho,
