@@ -88,4 +88,4 @@ def orthogonal_recursive_fitting(
     # Run ORFit
     carry = (initial_mean, U, Sigma)
     _, (filtered_means, filtered_covs) = scan(_step, carry, jnp.arange(len(inputs)))
-    return PosteriorGSSMFiltered(filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    return PosteriorGSSMFiltered(marginal_loglik=None, filtered_means=filtered_means, filtered_covariances=filtered_covs)
