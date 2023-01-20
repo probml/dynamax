@@ -35,7 +35,6 @@ class ORFitParams(NamedTuple):
     """Lightweight container for ORFit parameters.
     """
     initial_mean: Float[Array, "state_dim"]
-    initial_variance: float
     apply_function: FnStateAndInputToEmission
     loss_function: FnStateInputAndOutputToLoss
     memory_size: int
@@ -57,7 +56,7 @@ def orthogonal_recursive_fitting(
         filtered_posterior: posterior object.
     """
     # Initialize parameters
-    initial_mean, initial_variance, apply_fn, loss_fn, memory_limit = model_params
+    initial_mean, apply_fn, loss_fn, memory_limit = model_params
     U, Sigma = jnp.zeros((len(initial_mean), memory_limit)), jnp.zeros((memory_limit,))
 
     def _step(carry, t):
@@ -69,8 +68,8 @@ def orthogonal_recursive_fitting(
         apply_params_fn = lambda w: apply_fn(w, x)
         g = jacrev(current_loss_fn)(params)
         v = jacrev(apply_params_fn)(params)
-        g_tilde = initial_variance * g - _project_to_columns(U, g.ravel())
-        v_prime = initial_variance * v - _project_to_columns(U, v.ravel())
+        g_tilde = g - _project_to_columns(U, g.ravel())
+        v_prime = v - _project_to_columns(U, v.ravel())
         
         # Update the U matrix
         u = _normalize(v_prime)
