@@ -170,6 +170,13 @@ def load_1d_synthetic_dataset(n_train=100, n_test=100, key=0):
     y_train = vmap(generating_function)(keys_train, X_train)
     y_test = vmap(generating_function)(keys_test, X_test)
 
+    # Standardize dataset
+    X_train = (X_train - X_train.mean()) / X_train.std()
+    y_train = (y_train - y_train.mean()) / y_train.std()
+    X_test = (X_test - X_test.mean()) / X_test.std()
+    y_test = (y_test - y_test.mean()) / y_test.std()
+
+
     sorted_idx = jnp.argsort(X_train.squeeze())
     train_idx = jnp.concatenate([
         sorted_idx[:n_train//2], sorted_idx[2*n_train - n_train//2:]
