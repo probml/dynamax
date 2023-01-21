@@ -6,6 +6,8 @@ One-Pass Learning via Bridging Orthogonal Gradient Descent and Recursive Least-S
 Retrieved from https://arxiv.org/abs/2207.13853
 """
 
+import time
+
 import jax.numpy as jnp
 from jax import jacrev
 from jax import vmap
@@ -14,7 +16,6 @@ from jaxtyping import Float, Array
 from typing import Callable, NamedTuple
 
 from dynamax.nonlinear_gaussian_ssm.models import FnStateAndInputToEmission
-from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered
 
 
 FnStateInputAndOutputToLoss = Callable[[Float[Array, "state_dim"], Float[Array, "input_dim"], Float[Array, "output_dim"]], Float[Array, ""]]
@@ -28,7 +29,6 @@ _form_projection_matrix = lambda A: jnp.eye(A.shape[0]) - vmap(_projection_matri
 _project = lambda a, x: _stable_division(a * (a.T @ x), (a.T @ a))
 _project_to_columns = lambda A, x: \
     jnp.where(A.any(), vmap(_project, (1, None))(A, x).sum(axis=0), jnp.zeros(shape=x.shape))
-_svd = lambda a: jnp.linalg.svd(a, full_matrices=False)
 
 
 class ORFitParams(NamedTuple):
@@ -40,11 +40,18 @@ class ORFitParams(NamedTuple):
     memory_size: int
 
 
+class PosteriorORFitFiltered(NamedTuple):
+    """Marginals of the Gaussian filtering posterior.
+    """
+    filtered_means: Float[Array, "ntime state_dim"]
+    filtered_bases: Float[Array, "ntime state_dim memory_size"]
+
+
 def orthogonal_recursive_fitting(
     model_params: ORFitParams,
     emissions: Float[Array, "ntime emission_dim"],
     inputs: Float[Array, "ntime input_dim"]
-) -> PosteriorGSSMFiltered:
+) -> PosteriorORFitFiltered:
     """Vectorized implementation of Orthogonal Recursive Fitting (ORFit) algorithm.
 
     Args:
@@ -66,25 +73,23 @@ def orthogonal_recursive_fitting(
         x, y = inputs[t], emissions[t]
         current_loss_fn = lambda w: loss_fn(w, x, y)
         apply_params_fn = lambda w: apply_fn(w, x)
-        g = jacrev(current_loss_fn)(params)
-        v = jacrev(apply_params_fn)(params)
-        g_tilde = g - _project_to_columns(U, g.ravel())
-        v_prime = v - _project_to_columns(U, v.ravel())
+        g = jacrev(current_loss_fn)(params).squeeze()
+        v = jacrev(apply_params_fn)(params).squeeze()
+        g_tilde = g - _project_to_columns(U, g)
+        v_prime = v - _project_to_columns(U, v)
         
         # Update the U matrix
         u = _normalize(v_prime)
-        U_tilde, Sigma, _ = _svd(jnp.diag(jnp.append(Sigma, u.ravel() @ v_prime.ravel())))
-        U = jnp.hstack((U, u.reshape(-1, 1))) @ U_tilde
-        U, Sigma = U[:, :memory_limit], Sigma[:memory_limit]
+        U = jnp.where(Sigma.min() > u @ v_prime, U, U.at[:, Sigma.argmin()].set(u))
+        Sigma = jnp.where(Sigma.min() > u @ v_prime, Sigma, Sigma.at[Sigma.argmin()].set(u.T @ v_prime))
 
         # Update the parameters
-        eta = _stable_division((apply_params_fn(params) - y), (v.ravel() @ g_tilde.ravel()))
-        params = params - eta * g_tilde.ravel()
-        cov = _form_projection_matrix(U)
+        eta = _stable_division((apply_params_fn(params) - y), (v.T @ g_tilde))
+        params = params - eta * g_tilde
 
-        return (params, U, Sigma), (params, cov)
+        return (params, U, Sigma), (params, U)
     
     # Run ORFit
     carry = (initial_mean, U, Sigma)
-    _, (filtered_means, filtered_covs) = scan(_step, carry, jnp.arange(len(inputs)))
-    return PosteriorGSSMFiltered(marginal_loglik=None, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+    _, (filtered_means, filtered_bases) = scan(_step, carry, jnp.arange(len(inputs)))
+    return PosteriorORFitFiltered(filtered_means=filtered_means, filtered_bases=filtered_bases)
