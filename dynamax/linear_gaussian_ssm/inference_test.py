@@ -1,5 +1,6 @@
 from jax import vmap
 from jax import random as jr
+import jax.scipy.linalg as jla
 import jax.numpy as jnp
 from functools import partial
 
@@ -14,6 +15,63 @@ if has_tpu():
 else:
     def allclose(x,y):
         return jnp.allclose(x, y, atol=1e-1)
+
+def joint_posterior_mvn(params, emissions):
+    """Construct the joint posterior MVN of a LGSSM, by inverting the joint precision matrix which
+    has a known block tridiagonal, toeplitz form.
+
+    Args:
+        params: LGSSMParams object.
+        emissions: Emission data.
+
+    Returns: 
+        means: jnp.ndarray, shape (num_timesteps, state_dim), the joint posterior means.
+        Sigma_diag_blocks: jnp.ndarray, shape (num_timesteps, state_dim, state_dim), the joint posterior covariance diagonal blocks.
+    """
+    Q = params.dynamics.cov
+    R = params.emissions.cov
+    F = params.dynamics.weights
+    H = params.emissions.weights
+    mu0 = params.initial.mean
+    Sigma0 = params.initial.cov
+    num_timesteps = emissions.shape[0]
+    state_dim = params.dynamics.weights.shape[0]
+    emission_dim = params.emissions.weights.shape[0]
+    Qinv = jnp.linalg.inv(Q)
+    Rinv = jnp.linalg.inv(R)
+    Sigma0inv = jnp.linalg.inv(Sigma0)
+
+    # Construct the big precision matrix (block toeplitz tridiagonal)
+    # set up small blocks
+    Omega1 = F.T @ Qinv @ F + H.T @ Rinv @ H + Sigma0inv
+    Omegat = F.T @ Qinv @ F + H.T @ Rinv @ H + Qinv
+    OmegaT = Qinv + H.T @ Rinv @ H
+    OmegaC = - F.T @ Qinv
+
+    # construct big block diagonal matrix
+    blocks = [Omega1] + [Omegat] * (num_timesteps-2) + [OmegaT]
+    Omega_diag = jla.block_diag(*blocks)
+
+    # construct big block super/sub-diagonal matrices and sum
+    aux = jnp.empty((0, state_dim), int)
+    blocks = [OmegaC] * (num_timesteps-1)
+    Omega_superdiag = jla.block_diag(aux, *blocks, aux.T)
+    Omega_subdiag = Omega_superdiag.T
+    Omega = Omega_diag + Omega_superdiag + Omega_subdiag
+
+    # Compute the joint covariance matrix
+    # diagonal blocks are the smoothed covariances (marginals of the full joint)
+    Sigma = jnp.linalg.inv(Omega)
+    covs = jnp.array([Sigma[i:i+state_dim, i:i+state_dim] for i in range(0, num_timesteps*state_dim, state_dim)])
+
+    # Compute the means (these are the smoothing means)
+    # they are the solution to the big linear system Omega @ means = rhs
+    padded = jnp.pad(Sigma0inv @ mu0, (0, (num_timesteps-1)*state_dim ), constant_values=0).reshape(num_timesteps * state_dim, 1)
+    rhs = jla.block_diag(*[H.T @ Rinv] * num_timesteps) @ emissions.reshape((num_timesteps*emission_dim, 1)) + padded
+    means = Sigma @ rhs
+    means = means.reshape((num_timesteps, state_dim))
+
+    return means, covs
 
 def lgssm_dynamax_to_tfp(num_timesteps, params):
     """Create a Tensorflow Probability `LinearGaussianStateSpaceModel` object
@@ -82,11 +140,16 @@ def test_kalman(num_timesteps=5, seed=0):
     tfp_lls, tfp_filtered_means, tfp_filtered_covs, *_ = tfp_lgssm.forward_filter(emissions)
     tfp_smoothed_means, tfp_smoothed_covs = tfp_lgssm.posterior_marginals(emissions)
 
+    # Compare with full joint distribution
+    joint_means, joint_covs = joint_posterior_mvn(params, emissions)
+
     assert allclose(ssm_posterior.filtered_means, tfp_filtered_means)
     assert allclose(ssm_posterior.filtered_covariances, tfp_filtered_covs)
     assert allclose(ssm_posterior.smoothed_means, tfp_smoothed_means)
     assert allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs)
     assert allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
+    assert allclose(ssm_posterior.smoothed_means, joint_means)
+    assert allclose(ssm_posterior.smoothed_covariances, joint_covs)
 
 
 def test_posterior_sampler():
