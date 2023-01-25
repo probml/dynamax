@@ -152,10 +152,10 @@ def load_rotated_mnist(
     return train, test
 
 
-def load_1d_synthetic_dataset(n_train=100, n_test=100, key=0):
+def load_1d_synthetic_dataset(n_train=100, n_test=100, key=0, sort_data=True):
     if isinstance(key, int):
         key = jr.PRNGKey(key)
-    key1, key2, subkey1, subkey2 = jr.split(key, 4)
+    key1, key2, subkey1, subkey2, key_shuffle = jr.split(key, 5)
 
     X_train = jr.uniform(key1, shape=(2*n_train, 1), minval=0.0, maxval=0.5)
     X_test = jr.uniform(key2, shape=(n_test, 1), minval=0.0, maxval=0.5)
@@ -176,12 +176,17 @@ def load_1d_synthetic_dataset(n_train=100, n_test=100, key=0):
     X_test = (X_test - X_test.mean()) / X_test.std()
     y_test = (y_test - y_test.mean()) / y_test.std()
 
-
     sorted_idx = jnp.argsort(X_train.squeeze())
     train_idx = jnp.concatenate([
         sorted_idx[:n_train//2], sorted_idx[2*n_train - n_train//2:]
     ])
 
     X_train, y_train = X_train[train_idx], y_train[train_idx]
+
+    if not sort_data:
+        n_train = len(X_train)
+        ixs = jr.choice(key_shuffle, shape=(n_train,), a=n_train)
+        X_train = X_train[ixs]
+        y_train = y_train[ixs]
 
     return (X_train, y_train), (X_test, y_test)
