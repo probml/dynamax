@@ -18,7 +18,7 @@ else:
 
 def joint_posterior_mvn(params, emissions):
     """Construct the joint posterior MVN of a LGSSM, by inverting the joint precision matrix which
-    has a known block tridiagonal, toeplitz form.
+    has a known block tridiagonal form.
 
     Args:
         params: LGSSMParams object.
@@ -41,7 +41,7 @@ def joint_posterior_mvn(params, emissions):
     Rinv = jnp.linalg.inv(R)
     Sigma0inv = jnp.linalg.inv(Sigma0)
 
-    # Construct the big precision matrix (block toeplitz tridiagonal)
+    # Construct the big precision matrix (block tridiagonal)
     # set up small blocks
     Omega1 = F.T @ Qinv @ F + H.T @ Rinv @ H + Sigma0inv
     Omegat = F.T @ Qinv @ F + H.T @ Rinv @ H + Qinv
@@ -74,6 +74,7 @@ def joint_posterior_mvn(params, emissions):
     return means, covs
 
 def lgssm_dynamax_to_tfp(num_timesteps, params):
+
     """Create a Tensorflow Probability `LinearGaussianStateSpaceModel` object
      from an dynamax `LinearGaussianSSM`.
 
@@ -96,11 +97,11 @@ def lgssm_dynamax_to_tfp(num_timesteps, params):
 
     return tfp_lgssm
 
+def build_lgssm_for_inference():
+    """Construct example LinearGaussianSSM object for testing.
+    """
 
-def test_kalman(num_timesteps=5, seed=0):
-    key = jr.PRNGKey(seed)
-    init_key, sample_key = jr.split(key)
-
+    key = jr.PRNGKey(0)
     state_dim = 4
     emission_dim = 2
     delta = 1.0
@@ -125,41 +126,12 @@ def test_kalman(num_timesteps=5, seed=0):
                                  emission_weights=H,
                                  emission_covariance=R)
 
+    return lgssm, params
 
-    # Sample data and compute posterior
-    _, emissions = lgssm.sample(params, sample_key, num_timesteps)
-    ssm_posterior = lgssm.filter(params, emissions)
-    print(ssm_posterior.filtered_means.shape)
-
-    ssm_posterior = lgssm.smoother(params, emissions)
-    print(ssm_posterior.filtered_means.shape)
-    print(ssm_posterior.smoothed_means.shape)
-
-    # TensorFlow Probability posteriors
-    tfp_lgssm = lgssm_dynamax_to_tfp(num_timesteps, params)
-    tfp_lls, tfp_filtered_means, tfp_filtered_covs, *_ = tfp_lgssm.forward_filter(emissions)
-    tfp_smoothed_means, tfp_smoothed_covs = tfp_lgssm.posterior_marginals(emissions)
-
-    # Compare with full joint distribution
-    joint_means, joint_covs = joint_posterior_mvn(params, emissions)
-
-    assert allclose(ssm_posterior.filtered_means, tfp_filtered_means)
-    assert allclose(ssm_posterior.filtered_covariances, tfp_filtered_covs)
-    assert allclose(ssm_posterior.smoothed_means, tfp_smoothed_means)
-    assert allclose(ssm_posterior.smoothed_covariances, tfp_smoothed_covs)
-    assert allclose(ssm_posterior.marginal_loglik, tfp_lls.sum())
-    assert allclose(ssm_posterior.smoothed_means, joint_means)
-    assert allclose(ssm_posterior.smoothed_covariances, joint_covs)
-
-
-def test_posterior_sampler():
+def build_lgssm_for_sampling():
     state_dim = 1
     emission_dim = 1
-
-    num_timesteps=100
     key = jr.PRNGKey(0)
-    sample_size=500
-
     mu0 = jnp.array([5.0])
     Sigma0 = jnp.eye(state_dim)
     F = jnp.eye(state_dim) * 1.01
@@ -175,22 +147,64 @@ def test_posterior_sampler():
                                  dynamics_covariance=Q,
                                  emission_weights=H,
                                  emission_covariance=R)
+    return lgssm, params
+
+class TestFilteringAndSmoothing():
+
+    ## For inference tests
+    lgssm, params = build_lgssm_for_inference()
+
+     # Sample data and compute dynamax posteriors
+    sample_key = jr.PRNGKey(0)
+    num_timesteps = 15
+    _, emissions = lgssm.sample(params, sample_key, num_timesteps)
+    ssm_posterior = lgssm.filter(params, emissions)
+    print(ssm_posterior.filtered_means.shape)
+
+    ssm_posterior = lgssm.smoother(params, emissions)
+    print(ssm_posterior.filtered_means.shape)
+    print(ssm_posterior.smoothed_means.shape)
+
+    # TensorFlow Probability posteriors
+    tfp_lgssm = lgssm_dynamax_to_tfp(num_timesteps, params)
+    tfp_lls, tfp_filtered_means, tfp_filtered_covs, *_ = tfp_lgssm.forward_filter(emissions)
+    tfp_smoothed_means, tfp_smoothed_covs = tfp_lgssm.posterior_marginals(emissions)
+
+    # Posteriors from full joint distribution
+    joint_means, joint_covs = joint_posterior_mvn(params, emissions)
+
+
+    ## For sampling tests
+    lgssm, params = build_lgssm_for_sampling()
 
     # Generate true observation
+    num_timesteps=100
+    sample_size=500
+    key = jr.PRNGKey(0)
     sample_key, key = jr.split(key)
     states, emissions = lgssm.sample(params, key=sample_key, num_timesteps=num_timesteps)
 
     # Sample from the posterior distribution
     posterior_sample = partial(lgssm.posterior_sample, params=params, emissions=emissions)
     keys = jr.split(key, sample_size)
-    samples = vmap(lambda key: posterior_sample(key=key))(keys)
+    samples = vmap(lambda key, func=posterior_sample: func(key=key))(keys)
 
     # Do the same with TFP
     tfp_lgssm = lgssm_dynamax_to_tfp(num_timesteps, params)
-    tfp_samples = tfp_lgssm.posterior_sample(emissions, seed=key, sample_shape=sample_size)
+    tfp_samples = tfp_lgssm.posterior_sample(emissions, seed=key, sample_shape=sample_size) 
 
-    print(samples.shape) # (N,T,1)
-    print(tfp_samples.shape) # (N,T,1)
+    def test_kalman_tfp(self):
+        assert allclose(self.ssm_posterior.filtered_means, self.tfp_filtered_means)
+        assert allclose(self.ssm_posterior.filtered_covariances, self.tfp_filtered_covs)
+        assert allclose(self.ssm_posterior.smoothed_means, self.tfp_smoothed_means)
+        assert allclose(self.ssm_posterior.smoothed_covariances, self.tfp_smoothed_covs)
+        assert allclose(self.ssm_posterior.marginal_loglik, self.tfp_lls.sum())
 
-    assert allclose(jnp.mean(samples), jnp.mean(tfp_samples))
-    assert allclose(jnp.std(samples), jnp.std(tfp_samples))
+    def test_kalman_vs_joint(self):
+        assert allclose(self.ssm_posterior.smoothed_means, self.joint_means)
+        assert allclose(self.ssm_posterior.smoothed_covariances, self.joint_covs)
+
+    def test_posterior_sampler(self):
+        assert allclose(jnp.mean(self.samples), jnp.mean(self.tfp_samples))
+        assert allclose(jnp.std(self.samples), jnp.std(self.tfp_samples))
+        
