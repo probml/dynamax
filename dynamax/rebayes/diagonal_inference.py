@@ -186,10 +186,10 @@ def _variational_diagonal_ekf_condition_on(m, P_diag, y_cond_mean, y_cond_cov, u
         yhat = jnp.atleast_1d(m_Y(prior_mean))
         R = jnp.atleast_2d(Cov_Y(prior_mean))
         H =  _jacrev_2d(m_Y, prior_mean)
+        K = jnp.linalg.lstsq((R + (prior_cov * H) @ H.T).T, prior_cov * H)
         R_inv = jnp.linalg.lstsq(R, jnp.eye(R.shape[0]))[0]
         posterior_cov = 1/(1/prior_cov + ((H.T @ R_inv) * H.T).sum(-1))
-        posterior_mean = prior_mean + (posterior_cov * H).T @ R_inv @ (y - yhat)
-        # posterior_mean = prior_mean + jnp.diag(posterior_cov) @ H.T @ R_inv @ (y - yhat)
+        posterior_mean = prior_mean + K @(y - yhat)
         return (posterior_mean, posterior_cov), _
 
     # Iterate re-linearization over posterior mean and covariance

@@ -15,7 +15,7 @@ from jax.lax import scan
 from jaxtyping import Float, Array
 from typing import Callable, NamedTuple
 import chex
-from jax_tqdm import scan_tqdm
+# from jax_tqdm import scan_tqdm #TODO: Figure out why this fails in GH Workflow and add back in
 
 from dynamax.nonlinear_gaussian_ssm.models import FnStateAndInputToEmission
 
@@ -154,7 +154,7 @@ class RebayesORFit:
     def scan(self, X, Y, callback=None):
         num_timesteps = X.shape[0]
         
-        @scan_tqdm(num_timesteps)
+        # @scan_tqdm(num_timesteps)
         def step(bel, t):
             bel = self.update(bel, X[t], Y[t])
             out = None
