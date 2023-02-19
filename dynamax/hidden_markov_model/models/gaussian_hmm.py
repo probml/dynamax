@@ -174,7 +174,7 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
         elif method.lower() == "prior":
             this_key, key = jr.split(key)
             prior = NormalInverseGamma(self.emission_prior_mean, self.emission_prior_mean_conc,
-                                       self.emission_prior_scale, self.emission_prior_conc)
+                                       self.emission_prior_conc, self.emission_prior_scale)
             (_emission_vars, _emission_means) = prior.sample(seed=this_key, sample_shape=(self.num_states,))
             _emission_scale_diags = jnp.sqrt(_emission_vars)
 

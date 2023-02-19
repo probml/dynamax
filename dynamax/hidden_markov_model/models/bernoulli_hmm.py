@@ -70,7 +70,7 @@ class BernoulliHMMEmissions(HMMEmissions):
         else:
             assert emission_probs.shape == (self.num_states, self.emission_dim)
             assert jnp.all(emission_probs >= 0)
-            assert jnp.all(emission_probs <= 0)
+            assert jnp.all(emission_probs <= 1)
 
         # Add parameters to the dictionary
         params = ParamsBernoulliHMMEmissions(probs=emission_probs)
