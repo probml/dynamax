@@ -8,17 +8,16 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from jaxtyping import Array, Float
 
 from dynamax.utils.utils import psd_solve
-from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
+from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM, _get_params
 
 def _make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
 
     def _first_filtering_element(params, y):
-        F = params.dynamics.weights
-        H = params.emissions.weights
-        Q = params.dynamics.cov
-        R = params.emissions.cov
-        P0 = params.initial.cov
+        F = _get_params(params.dynamics.weights, 2, 0)
+        H = _get_params(params.emissions.weights, 2, 0)
+        Q = _get_params(params.dynamics.cov, 2, 0)
+        R = _get_params(params.emissions.cov, 2, 0)
 
         S = H @ Q @ H.T + R
         CF, low = jsc.linalg.cho_factor(S)
@@ -35,16 +34,16 @@ def _make_associative_filtering_elements(params, emissions):
         eta = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), y)
         J = F.T @ H.T @ jsc.linalg.cho_solve((CF, low), H @ F)
 
-        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=H @ P0 @ H.T + R).log_prob(y)
+        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=H @ P1 @ H.T + R).log_prob(y)
 
         return A, b, C, J, eta, logZ
 
 
-    def _generic_filtering_element(params, y):
-        F = params.dynamics.weights
-        H = params.emissions.weights
-        Q = params.dynamics.cov
-        R = params.emissions.cov
+    def _generic_filtering_element(params, y, t):
+        F = _get_params(params.dynamics.weights, 2, t)
+        H = _get_params(params.emissions.weights, 2, t+1)
+        Q = _get_params(params.dynamics.cov, 2, t)
+        R = _get_params(params.emissions.cov, 2, t+1)
 
         S = H @ Q @ H.T + R
         CF, low = jsc.linalg.cho_factor(S)
@@ -61,7 +60,7 @@ def _make_associative_filtering_elements(params, emissions):
         return A, b, C, J, eta, logZ
 
     first_elems = _first_filtering_element(params, emissions[0])
-    generic_elems = vmap(_generic_filtering_element, (None, 0))(params, emissions[1:])
+    generic_elems = vmap(_generic_filtering_element, (None, 0, 0))(params, emissions[1:], jnp.arange(len(emissions)-1))
     combined_elems = tuple(jnp.concatenate((first_elm[None,...], gen_elm))
                            for first_elm, gen_elm in zip(first_elems, generic_elems))
     return combined_elems
@@ -123,11 +122,9 @@ def _make_associative_smoothing_elements(params, filtered_means, filtered_covari
     def _last_smoothing_element(m, P):
         return jnp.zeros_like(P), m, P
 
-    def _generic_smoothing_element(params, m, P):
-        F = params.dynamics.weights
-        H = params.emissions.weights
-        Q = params.dynamics.cov
-        R = params.emissions.cov
+    def _generic_smoothing_element(params, m, P, t):
+        F = _get_params(params.dynamics.weights, 2, t)
+        Q = _get_params(params.dynamics.cov, 2, t)
 
         Pp = F @ P @ F.T + Q
 
@@ -137,8 +134,8 @@ def _make_associative_smoothing_elements(params, filtered_means, filtered_covari
         return E, g, L
 
     last_elems = _last_smoothing_element(filtered_means[-1], filtered_covariances[-1])
-    generic_elems = vmap(_generic_smoothing_element, (None, 0, 0))(
-        params, filtered_means[:-1], filtered_covariances[:-1]
+    generic_elems = vmap(_generic_smoothing_element, (None, 0, 0, 0))(
+        params, filtered_means[:-1], filtered_covariances[:-1], jnp.arange(len(filtered_covariances)-1)
         )
     combined_elems = tuple(jnp.append(gen_elm, last_elm[None,:], axis=0)
                            for gen_elm, last_elm in zip(generic_elems, last_elems))
