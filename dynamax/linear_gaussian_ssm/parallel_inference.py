@@ -8,7 +8,15 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from jaxtyping import Array, Float
 
 from dynamax.utils.utils import psd_solve
-from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM, _get_params
+from dynamax.linear_gaussian_ssm import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
+
+def _get_params(x, dim, t):
+    if callable(x):
+        return x(t)
+    elif x.ndim == dim + 1:
+        return x[t]
+    else:
+        return x
 
 def _make_associative_filtering_elements(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
