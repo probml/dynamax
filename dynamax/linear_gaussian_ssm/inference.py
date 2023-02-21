@@ -222,8 +222,50 @@ def _condition_on(m, P, H, D, d, R, u, y):
     return mu_cond, Sigma_cond
 
 
+def preprocess_params_and_inputs(params, num_timesteps, inputs):
+    """Preprocess parameters in case some are set to None."""
+
+    # Make sure all the required parameters are there
+    assert params.initial.mean is not None
+    assert params.initial.cov is not None
+    assert params.dynamics.weights is not None
+    assert params.dynamics.cov is not None
+    assert params.emissions.weights is not None
+    assert params.emissions.cov is not None
+
+    # Get shapes
+    emission_dim, state_dim = params.emissions.weights.shape[-2:]
+
+    # Default the inputs to zero
+    inputs = _zeros_if_none(inputs, (num_timesteps, 0))
+    input_dim = inputs.shape[-1]
+
+    # Default other parameters to zero
+    dynamics_input_weights = _zeros_if_none(params.dynamics.input_weights, (state_dim, input_dim))
+    dynamics_bias = _zeros_if_none(params.dynamics.bias, (state_dim,))
+    emissions_input_weights = _zeros_if_none(params.emissions.input_weights, (emission_dim, input_dim))
+    emissions_bias = _zeros_if_none(params.emissions.bias, (emission_dim,))
+
+    full_params = ParamsLGSSM(
+        initial=ParamsLGSSMInitial(
+            mean=params.initial.mean,
+            cov=params.initial.cov),
+        dynamics=ParamsLGSSMDynamics(
+            weights=params.dynamics.weights,
+            bias=dynamics_bias,
+            input_weights=dynamics_input_weights,
+            cov=params.dynamics.cov),
+        emissions=ParamsLGSSMEmissions(
+            weights=params.emissions.weights,
+            bias=emissions_bias,
+            input_weights=emissions_input_weights,
+            cov=params.emissions.cov)
+        )
+    return full_params, inputs
+
+
 def preprocess_args(f):
-    """Preprocess the parameters and inputs in case some are set to None."""
+    """Preprocess the parameter and input arguments in case some are set to None."""
     sig = inspect.signature(f)
 
     @wraps(f)
@@ -235,43 +277,9 @@ def preprocess_args(f):
         emissions = bound_args.arguments['emissions']
         inputs = bound_args.arguments['inputs']
 
-        # Make sure all the required parameters are there
-        assert params.initial.mean is not None
-        assert params.initial.cov is not None
-        assert params.dynamics.weights is not None
-        assert params.dynamics.cov is not None
-        assert params.emissions.weights is not None
-        assert params.emissions.cov is not None
-
-        # Get shapes
-        emission_dim, state_dim = params.emissions.weights.shape[-2:]
         num_timesteps = len(emissions)
+        full_params, inputs = preprocess_params_and_inputs(params, num_timesteps, inputs)
 
-        # Default the inputs to zero
-        inputs = _zeros_if_none(inputs, (num_timesteps, 0))
-        input_dim = inputs.shape[-1]
-
-        # Default other parameters to zero
-        dynamics_input_weights = _zeros_if_none(params.dynamics.input_weights, (state_dim, input_dim))
-        dynamics_bias = _zeros_if_none(params.dynamics.bias, (state_dim,))
-        emissions_input_weights = _zeros_if_none(params.emissions.input_weights, (emission_dim, input_dim))
-        emissions_bias = _zeros_if_none(params.emissions.bias, (emission_dim,))
-
-        full_params = ParamsLGSSM(
-            initial=ParamsLGSSMInitial(
-                mean=params.initial.mean,
-                cov=params.initial.cov),
-            dynamics=ParamsLGSSMDynamics(
-                weights=params.dynamics.weights,
-                bias=dynamics_bias,
-                input_weights=dynamics_input_weights,
-                cov=params.dynamics.cov),
-            emissions=ParamsLGSSMEmissions(
-                weights=params.emissions.weights,
-                bias=emissions_bias,
-                input_weights=emissions_input_weights,
-                cov=params.emissions.cov)
-            )
         return f(full_params, emissions, inputs=inputs)
     return wrapper
 
