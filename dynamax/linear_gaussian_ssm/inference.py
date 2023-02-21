@@ -5,8 +5,9 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from functools import wraps
 import inspect
 
+from jax.tree_util import tree_map
 from jaxtyping import Array, Float
-from typing import NamedTuple, Optional, Union
+from typing import NamedTuple, Optional, Union, Tuple
 from dynamax.utils.utils import psd_solve
 from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
@@ -282,6 +283,78 @@ def preprocess_args(f):
 
         return f(full_params, emissions, inputs=inputs)
     return wrapper
+
+
+def lgssm_joint_sample(
+    params: ParamsLGSSM,
+    key: PRNGKey,
+    num_timesteps: int,
+    inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+)-> Tuple[Float[Array, "num_timesteps state_dim"],
+          Float[Array, "num_timesteps emission_dim"]]:
+    r"""Sample from the joint distribution to produce state and emission trajectories."""\
+    
+    params, inputs = preprocess_params_and_inputs(params, num_timesteps, inputs)
+
+    def _sample_transition(key, F, B, b, Q, x_tm1, u):
+        mean = F @ x_tm1 + B @ u + b
+        return MVN(mean, Q).sample(seed=key)
+
+    def _sample_emission(key, H, D, d, R, x, u):
+        mean = H @ x + D @ u + d
+        return MVN(mean, R).sample(seed=key)
+    
+    def _sample_initial(key, params, inputs):
+        key1, key2 = jr.split(key)
+
+        initial_state = MVN(params.initial.mean, params.initial.cov).sample(seed=key1)
+
+        H0 = _get_params(params.emissions.weights, 2, 0)
+        D0 = _get_params(params.emissions.input_weights, 2, 0)
+        d0 = _get_params(params.emissions.bias, 1, 0)
+        R0 = _get_params(params.emissions.cov, 2, 0)
+        u0 = tree_map(lambda x: x[0], inputs)
+
+        initial_emission = _sample_emission(key2, H0, D0, d0, R0, initial_state, u0)
+        return initial_state, initial_emission
+
+    def _step(prev_state, args):
+        key, t, inpt = args
+        key1, key2 = jr.split(key, 2)
+
+        # Shorthand: get parameters and inputs for time index t
+        F = _get_params(params.dynamics.weights, 2, t)
+        B = _get_params(params.dynamics.input_weights, 2, t)
+        b = _get_params(params.dynamics.bias, 1, t)
+        Q = _get_params(params.dynamics.cov, 2, t)
+        H = _get_params(params.emissions.weights, 2, t)
+        D = _get_params(params.emissions.input_weights, 2, t)
+        d = _get_params(params.emissions.bias, 1, t)
+        R = _get_params(params.emissions.cov, 2, t)
+
+        # Sample from transition and emission distributions
+        state = _sample_transition(key1, F, B, b, Q, prev_state, inpt)
+        emission = _sample_emission(key2, H, D, d, R, state, inpt)
+
+        return state, (state, emission)
+
+    # Sample the initial state
+    key1, key2 = jr.split(key)
+    
+    initial_state, initial_emission = _sample_initial(key1, params, inputs)
+
+    # Sample the remaining emissions and states
+    next_keys = jr.split(key2, num_timesteps - 1)
+    next_times = jnp.arange(1, num_timesteps)
+    next_inputs = tree_map(lambda x: x[1:], inputs)
+    _, (next_states, next_emissions) = lax.scan(_step, initial_state, (next_keys, next_times, next_inputs))
+
+    # Concatenate the initial state and emission with the following ones
+    expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
+    states = tree_map(expand_and_cat, initial_state, next_states)
+    emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
+
+    return states, emissions
 
 
 @preprocess_args

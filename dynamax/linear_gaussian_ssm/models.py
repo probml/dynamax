@@ -1,6 +1,6 @@
 from fastprogress.fastprogress import progress_bar
 from functools import partial
-from jax import jit, lax
+from jax import jit
 import jax.numpy as jnp
 import jax.random as jr
 from jax.tree_util import tree_map
@@ -11,7 +11,7 @@ from typing import Any, Optional, Tuple, Union
 from typing_extensions import Protocol
 
 from dynamax.ssm import SSM
-from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample, _get_params
+from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
 from dynamax.parameters import ParameterProperties, ParameterSet
@@ -179,82 +179,26 @@ class LinearGaussianSSM(SSM):
         self,
         params: ParamsLGSSM,
         state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None,
-        t: Optional[int]=None,
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> tfd.Distribution:
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
-        weights = _get_params(params.dynamics.weights, 2, t)
-        input_weights = _get_params(params.dynamics.input_weights, 2, t)
-        cov = _get_params(params.dynamics.cov, 2, t)
-
-        mean = weights @ state + input_weights @ inputs
+        mean = params.dynamics.weights @ state + params.dynamics.input_weights @ inputs
         if self.has_dynamics_bias:
-            mean += _get_params(params.dynamics.bias, 1, t)
-        return MVN(mean, cov)
+            mean += params.dynamics.bias
+        return MVN(mean, params.dynamics.cov)
 
     def emission_distribution(
         self,
         params: ParamsLGSSM,
         state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None,
-        t: Optional[int]=None,
+        inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> tfd.Distribution:
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
-        weights = _get_params(params.emissions.weights, 2, t)
-        input_weights = _get_params(params.emissions.input_weights, 2, t)
-        cov = _get_params(params.emissions.cov, 2, t)
-    
-        mean = weights @ state + input_weights @ inputs
+        mean = params.emissions.weights @ state + params.emissions.input_weights @ inputs
         if self.has_emissions_bias:
-            mean += _get_params(params.emissions.bias, 1, t)
-        return MVN(mean, cov)
+            mean += params.emissions.bias
+        return MVN(mean, params.emissions.cov)
 
-    def sample(
-        self,
-        params: ParameterSet,
-        key: PRNGKey,
-        num_timesteps: int,
-        inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> Tuple[Float[Array, "num_timesteps state_dim"],
-              Float[Array, "num_timesteps emission_dim"]]:
-        r"""Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.
-
-        Args:
-            params: model parameters $\theta$
-            key: random number generator
-            num_timesteps: number of timesteps $T$
-            inputs: inputs $u_{1:T}$
-
-        Returns:
-            latent states and emissions
-
-        """
-        def _step(prev_state, args):
-            key, t, inpt = args
-            key1, key2 = jr.split(key, 2)
-            state = self.transition_distribution(params, prev_state, inpt, t).sample(seed=key2)
-            emission = self.emission_distribution(params, state, inpt, t).sample(seed=key1)
-            return state, (state, emission)
-
-        # Sample the initial state
-        key1, key2, key = jr.split(key, 3)
-        initial_input = tree_map(lambda x: x[0], inputs)
-        initial_state = self.initial_distribution(params, initial_input).sample(seed=key1)
-        initial_emission = self.emission_distribution(params, initial_state, initial_input, 0).sample(seed=key2)
-
-        # Sample the remaining emissions and states
-        next_keys = jr.split(key, num_timesteps - 1)
-        next_times = jnp.arange(1,num_timesteps)
-        next_inputs = tree_map(lambda x: x[1:], inputs)
-        _, (next_states, next_emissions) = lax.scan(_step, initial_state, (next_keys, next_times, next_inputs))
-
-        # Concatenate the initial state and emission with the following ones
-        expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
-        states = tree_map(expand_and_cat, initial_state, next_states)
-        emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
-
-        return states, emissions
-    
     def marginal_log_prob(
         self,
         params: ParamsLGSSM,
