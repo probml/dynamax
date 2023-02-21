@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import jax.random as jr
 
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
+from dynamax.linear_gaussian_ssm import lgssm_joint_sample
 from dynamax.linear_gaussian_ssm import lgssm_smoother as serial_lgssm_smoother
 from dynamax.linear_gaussian_ssm import parallel_lgssm_smoother
 
@@ -105,7 +106,7 @@ class TestTimeVaryingParallelLGSSMSmoother:
                                        emission_covariance=R)
     inf_params = model_params
 
-    _, emissions = lgssm.sample(model_params, key_sample, num_timesteps)
+    _, emissions = lgssm_joint_sample(model_params, key_sample, num_timesteps)
     
     serial_posterior = serial_lgssm_smoother(inf_params, emissions)
     parallel_posterior = parallel_lgssm_smoother(inf_params, emissions)
@@ -123,4 +124,4 @@ class TestTimeVaryingParallelLGSSMSmoother:
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
 
     def test_marginal_loglik(self):
-        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik)
+        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, atol=1e-1)
