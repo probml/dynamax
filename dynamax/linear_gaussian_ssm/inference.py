@@ -292,7 +292,16 @@ def lgssm_joint_sample(
     inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
 )-> Tuple[Float[Array, "num_timesteps state_dim"],
           Float[Array, "num_timesteps emission_dim"]]:
-    r"""Sample from the joint distribution to produce state and emission trajectories."""\
+    r"""Sample from the joint distribution to produce state and emission trajectories.
+    
+    Args:
+        params: model parameters
+        inputs: optional array of inputs.
+
+    Returns:
+        latent states and emissions
+
+    """
     
     params, inputs = preprocess_params_and_inputs(params, num_timesteps, inputs)
 
