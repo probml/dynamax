@@ -370,7 +370,8 @@ def lgssm_joint_sample(
 def lgssm_filter(
     params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None,
+    nan_fill_multiplier: float=1e8
 ) -> PosteriorGSSMFiltered:
     r"""Run a Kalman filter to produce the marginal likelihood and filtered state estimates.
 
@@ -386,6 +387,18 @@ def lgssm_filter(
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
+    # Create a vector to replace nans in the emissions
+    # if an entire time trace is nan, replace with the mean across all values
+    # if the entire emission is nan, replace with 0s
+    nan_fill_mean = jnp.nanmean(emissions, axis=0)
+    nan_fill_mean = jnp.where(jnp.isnan(nan_fill_mean), jnp.nanmean(nan_fill_mean), nan_fill_mean)
+    nan_fill_mean = jnp.where(jnp.isnan(nan_fill_mean), 0, nan_fill_mean)
+
+    # Create a vector to set the diagonal of the covariance of the emissions to a large number
+    # wherever there are NaNs in the emissions
+    nan_fill_cov = jnp.nanmax(jnp.nanvar(emissions)) * nan_fill_multiplier
+    nan_fill_cov = jnp.where(jnp.isnan(nan_fill_cov), nan_fill_multiplier, nan_fill_cov)
+
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
 
@@ -400,6 +413,12 @@ def lgssm_filter(
         R = _get_params(params.emissions.cov, 2, t)
         u = inputs[t]
         y = emissions[t]
+
+        # Find NaNs in the emissions and replace them with nan_fill_mean
+        # Then, set the emission covariance to nan_fill_cov to push the filter to ignore these emissions
+        nan_loc = jnp.isnan(y)
+        y = jnp.where(nan_loc, nan_fill_mean, y)
+        R = jnp.where(jnp.diag(nan_loc), nan_fill_cov, R)
 
         # Update the log likelihood
         ll += MVN(H @ pred_mean + D @ u + d, H @ pred_cov @ H.T + R).log_prob(y)
