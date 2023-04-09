@@ -74,6 +74,10 @@ default to weak priors without any stickiness.
   :show-inheritance:
   :members: initialize
 
+.. autoclass:: dynamax.hidden_markov_model.GammaHMM
+  :show-inheritance:
+  :members: initialize
+
 .. autoclass:: dynamax.hidden_markov_model.GaussianHMM
   :show-inheritance:
   :members: initialize

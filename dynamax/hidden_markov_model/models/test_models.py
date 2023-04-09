@@ -13,6 +13,7 @@ CONFIGS = [
     (models.BernoulliHMM, dict(num_states=4, emission_dim=3), None),
     (models.CategoricalHMM, dict(num_states=4, emission_dim=3, num_classes=5), None),
     (models.CategoricalRegressionHMM, dict(num_states=4, num_classes=3, input_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
+    (models.GammaHMM, dict(num_states=4), None),
     (models.GaussianHMM, dict(num_states=4, emission_dim=3, emission_prior_concentration=1.0, emission_prior_scale=1.0), None),
     (models.DiagonalGaussianHMM, dict(num_states=4, emission_dim=3), None),
     (models.SphericalGaussianHMM, dict(num_states=4, emission_dim=3), None),
