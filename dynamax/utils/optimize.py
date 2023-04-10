@@ -85,7 +85,8 @@ def run_gradient_descent(objective,
                          params,
                          optimizer=optax.adam(1e-2),
                          optimizer_state=None,
-                         num_mstep_iters=50):
+                         num_mstep_iters=50,
+                         **kwargs_for_objective):
 
     if optimizer_state is None:
         optimizer_state = optimizer.init(params)
@@ -96,7 +97,7 @@ def run_gradient_descent(objective,
     # One step of the algorithm
     def train_step(carry, args):
         params, optimizer_state = carry
-        loss, grads = loss_grad_fn(params)
+        loss, grads = loss_grad_fn(params, **kwargs_for_objective)
         updates, optimizer_state = optimizer.update(grads, optimizer_state)
         params = optax.apply_updates(params, updates)
         return (params, optimizer_state), loss
