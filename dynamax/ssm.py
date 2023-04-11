@@ -4,7 +4,7 @@ from fastprogress.fastprogress import progress_bar
 from functools import partial
 import jax.numpy as jnp
 import jax.random as jr
-from jax import jit, lax, vmap
+from jax import jit, lax, vmap, debug
 from jax.tree_util import tree_map
 from jaxtyping import Float, Array, PyTree
 import optax
@@ -388,6 +388,8 @@ class SSM(ABC):
             batch_stats, lls = vmap(partial(self.e_step, params))(batch_emissions, batch_inputs)
             lp = self.log_prior(params) + lls.sum()
             params, m_step_state = self.m_step(params, props, batch_stats, m_step_state)
+            # debug.print('e_step: {x}', x=(batch_stats, lls))
+            # debug.print('m_step{y}', y=params)
             return params, m_step_state, lp
 
         log_probs = []
