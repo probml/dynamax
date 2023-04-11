@@ -14,6 +14,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 import time
+import platform
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -26,7 +27,7 @@ import tensorflow_probability as tfp
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
 import torch
-import torch_xla.core.xla_model as xm
+#import torch_xla.core.xla_model as xm
 
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
 
@@ -181,7 +182,11 @@ def kf_pt(params, emissions, return_covs=False, compile=False):
             return carry, filtered_mean
     
     if compile:
-        step = torch.compile(step)
+        if platform.system() == 'Darwin':
+            # https://discuss.pytorch.org/t/torch-compile-seems-to-hang/177089
+            step = torch.compile(step, backend="aot_eager")
+        else:
+            step = torch.compile(step)
     num_timesteps = len(emissions)
     D = len(params['mu0'])
     filtered_means = torch.zeros((num_timesteps, D))
@@ -262,30 +267,35 @@ def time_torch(N, D, compile=False):
     return time.time() - t0
 
 def main():
-    torch_only = False
-    if torch_only:
-        dev = xm.xla_device()
-        print('using device {}'.format(dev))
-        compile = False
-        runtime_torch = time_torch(N, D, compile=compile)
-        print('torch, time={:.3f} compile {} N {} D {}'.format(runtime_torch, compile, N, D))
-        return
+    #torch_only = False
+    #if torch_only:
+    #    dev = xm.xla_device()
+    #    print('using device {}'.format(dev))
+    ##    compile = False
+    #    runtime_torch = time_torch(N, D, compile=compile)
+    #    print('torch, time={:.3f} compile {} N {} D {}'.format(runtime_torch, compile, N, D))
+    #    return
     
     try:
         tpus = jax.devices('tpu')
         dev = tpus[0]
     except:
-        dev = jax.device('cpu')[0]
+        dev = jax.devices('cpu')[0]
     print('using device {}'.format(dev))
     
     compare_dynamax_to_batch()    
     compare_jax_to_dynamax()
     compare_torch_to_jax()
-    N = 1000
+    N = 100
     D = 500
     runtime_jax = time_jax(N, D)
     print('jax, time={:.3f} N {} D {}'.format(runtime_jax, N, D))
+
     compile = False
+    runtime_torch = time_torch(N, D, compile=compile)
+    print('torch, time={:.3f} compile {} N {} D {}'.format(runtime_torch, compile, N, D))
+
+    compile = True
     runtime_torch = time_torch(N, D, compile=compile)
     print('torch, time={:.3f} compile {} N {} D {}'.format(runtime_torch, compile, N, D))
 
