@@ -90,33 +90,6 @@ def _resample(weights, new_states, means, covariances, key):
     next_key = keys[1]
     return weights, new_states, filtered_means, filtered_covs, next_key    
 
-def _kalman_step(mu, Sigma, params, u, y):
-    r"""
-    Perform a Kalman step, given a prior and a linear Gaussian observation model.
-    """
-    F = params.dynamics_weights
-    b = params.dynamics_bias
-    B = params.dynamics_input_weights
-    Q = params.dynamics_covariance
-    H = params.emission_weights
-    d = params.emission_bias
-    D = params.emission_input_weights
-    R = params.emission_covariance
-
-    # prediction
-    mu_pred = F @ mu + B @ u + b
-    Sigma_pred = F @ Sigma @ F.T + Q
-
-    # update
-    S = R + H @ Sigma_pred @ H.T
-    K = psd_solve(S, H @ Sigma_pred).T
-    mu_y = H @ mu_pred + D @ u + d
-    ll = MVN(loc = mu_y, covariance_matrix = S).log_prob(y)
-    mu_cond = mu_pred + K @ (y - mu_y)
-    Sigma_cond = Sigma_pred - K @ S @ K.T
-    return ll, mu_cond, Sigma_cond
-
-
 def _conditional_kalman_step(state, mu, Sigma, params, u, y):
     """
     Perform a Kalman step, given a prior and a linear Gaussian observation model.
