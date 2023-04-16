@@ -16,24 +16,28 @@ from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, PosteriorGSSMFilt
 from dynamax.types import PRNGKey, Scalar
 
 class DiscreteParamsSLDS(NamedTuple):
-    initial: Float[Array, "num_states"]
+    initial_distribution: Float[Array, "num_states"]
     transition_matrix : Float[Array, "num_states num_states"]
     proposal_transition_matrix : Float[Array, "num_states num_states"]
 
-class flatParamsSLDS(NamedTuple):
+class LGParamsSLDS(NamedTuple):
     r"""Parameters of a SLDS, which has a discrete component and a continuous component.
     The discrete component is a Markov model for the hidden discrete state $m_t$.
     The linear_gaussian component is a linear Gaussian state space model for the hidden continuous state $z_t$ and
     emission $y_t$.
     """
+    initial_mean: Float[Array, "num_states state_dim"]
+    initial_cov: Float[Array, "num_states state_dim state_dim"]
     dynamics_weights: Float[Array, "num_states state_dim state_dim"]
-    dynamics_input_weights: Float[Array, "num_states num_states input_dim"]
+    dynamics_cov: Float[Array, "num_states state_dim state_dim"]
     dynamics_bias: Float[Array, "num_states state_dim"]
-    dynamics_covariance: Float[Array, "num_states state_dim state_dim"]
+    dynamics_input_weights: Float[Array, "num_states num_states input_dim"]
     emission_weights: Float[Array, "num_states emission_dim state_dim"]
-    emission_input_weights: Float[Array, "num_states num_emissions input_dim"]
+    emission_cov: Float[Array, "num_states emission_dim emission_dim"]
     emission_bias: Float[Array, "num_states emission_dim"]
-    emission_covariance: Float[Array, "num_states emission_dim emission_dim"]
+    emission_input_weights: Float[Array, "num_states num_emissions input_dim"]
+    initialized: bool = False
+
 
 class ParamsSLDS(NamedTuple):
     r"""Parameters of a SLDS, which has a discrete component and a continuous component.
@@ -42,29 +46,41 @@ class ParamsSLDS(NamedTuple):
     emission $y_t$.
     """
     discrete: DiscreteParamsSLDS
-    linear_gaussian: ParamsLGSSM[Array, "num_states"]
+    linear_gaussian: LGParamsSLDS
 
-    def flatten(self):
-        num_states = self.discrete.transition_matrix.shape[0]
-        flat_dynamics_weights = jnp.array([self.linear_gaussian[x].dynamics.weights for x in range(num_states)])
-        flat_dynamics_input_weights = jnp.array([self.linear_gaussian[x].dynamics.input_weights for x in range(num_states)])
-        flat_dynamics_biases = jnp.array([self.linear_gaussian[x].dynamics.bias for x in range(num_states)])
-        flat_dynamics_covariances = jnp.array([self.linear_gaussian[x].dynamics.cov for x in range(num_states)])
-        flat_emission_weights = jnp.array([self.linear_gaussian[x].emissions.weights for x in range(num_states)])
-        flat_emission_input_weights = jnp.array([self.linear_gaussian[x].emissions.input_weights for x in range(num_states)])
-        flat_emission_biases = jnp.array([self.linear_gaussian[x].emissions.bias for x in range(num_states)])
-        flat_emission_covariances = jnp.array([self.linear_gaussian[x].emissions.cov for x in range(num_states)])
-        flat_params = flatParamsSLDS(
-            dynamics_weights = flat_dynamics_weights,
-            dynamics_input_weights = flat_dynamics_input_weights,
-            dynamics_bias = flat_dynamics_biases,
-            dynamics_covariance = flat_dynamics_covariances,
-            emission_weights = flat_emission_weights,
-            emission_input_weights = flat_emission_input_weights,
-            emission_bias = flat_emission_biases,
-            emission_covariance = flat_emission_covariances
+    def initialize(self, num_states, state_dim, emission_dim, input_dim=1):
+        params = self.linear_gaussian
+        initial_mean = params.initial_mean if params.initial_mean.shape == (num_states, state_dim) else jnp.array([params.initial_mean]*num_states)
+        initial_cov = params.initial_cov if params.initial_cov.shape == (num_states, state_dim, state_dim) else jnp.array([params.initial_cov]*num_states)
+        dynamics_weights = params.dynamics_weights if params.dynamics_weights.shape == (num_states, state_dim, state_dim) else jnp.array([params.dynamics_weights]*num_states)
+        dynamics_cov = params.dynamics_cov if params.dynamics_cov.shape == (num_states, state_dim, state_dim) else jnp.array([params.dynamics_cov]*num_states)
+        dynamics_bias = params.dynamics_bias if params.dynamics_bias is not None else jnp.zeros((num_states, state_dim))
+        dynamics_bias = dynamics_bias if dynamics_bias.shape == (num_states, state_dim) else jnp.array([dynamics_bias]*num_states)
+        dynamics_input_weights = params.dynamics_input_weights if params.dynamics_input_weights is not None else jnp.zeros((num_states, state_dim, input_dim))
+        dynamics_input_weights = dynamics_input_weights if dynamics_input_weights.shape == (num_states, state_dim, input_dim) else jnp.array([dynamics_input_weights]*num_states)
+        emission_weights = params.emission_weights if params.emission_weights.shape == (num_states, emission_dim, state_dim) else jnp.array([params.emission_weights]*num_states)
+        emission_cov = params.emission_cov if params.emission_cov.shape == (num_states, emission_dim, emission_dim) else jnp.array([params.emission_cov]*num_states)
+        emission_bias = params.emission_bias if params.emission_bias is not None else jnp.zeros((num_states, emission_dim))
+        emission_bias = emission_bias if emission_bias.shape == (num_states, emission_dim) else jnp.array([emission_bias]*num_states)
+        emission_input_weights = params.emission_input_weights if params.emission_input_weights is not None else jnp.zeros((num_states, emission_dim, input_dim))
+        emission_input_weights = emission_input_weights if emission_input_weights.shape == (num_states, emission_dim, input_dim) else jnp.array([emission_input_weights]*num_states)
+        return ParamsSLDS(
+            discrete=self.discrete,
+            linear_gaussian=LGParamsSLDS(
+                initial_mean=initial_mean,
+                initial_cov=initial_cov,
+                dynamics_weights=dynamics_weights,
+                dynamics_cov=dynamics_cov,
+                dynamics_bias=dynamics_bias,
+                dynamics_input_weights=dynamics_input_weights,
+                emission_weights=emission_weights,
+                emission_cov=emission_cov,
+                emission_bias=emission_bias,
+                emission_input_weights=emission_input_weights,
+                initialized=True
+            )
         )
-        return flat_params
+
 
 class RBPFiltered(NamedTuple):
     r"""RBPF posterior.
@@ -97,11 +113,11 @@ def _conditional_kalman_step(state, mu, Sigma, params, u, y):
     F = params.dynamics_weights[state]
     b = params.dynamics_bias[state]
     B = params.dynamics_input_weights[state]
-    Q = params.dynamics_covariance[state]
+    Q = params.dynamics_cov[state]
     H = params.emission_weights[state]
     d = params.emission_bias[state]
     D = params.emission_input_weights[state]
-    R = params.emission_covariance[state]
+    R = params.emission_cov[state]
 
     # prediction
     mu_pred = F @ mu + B @ u + b
@@ -120,8 +136,8 @@ def rbpfilter(
     num_particles: int,
     params: ParamsSLDS,
     emissions:  Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]] = None,
     key: PRNGKey = jr.PRNGKey(0),
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None,
     ess_threshold: float = 0.5
 ) -> RBPFiltered:
     '''
@@ -133,8 +149,8 @@ def rbpfilter(
     '''
 
     num_timesteps = len(emissions)
-    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-    flat_params = params.flatten()
+    inputs = jnp.zeros((num_timesteps, 1)) if inputs is None else inputs
+    if not params.linear_gaussian.initialized: raise ValueError("ParamsSLDS must be initialized")
 
     def _step(carry, t):
         r"""
@@ -161,7 +177,7 @@ def rbpfilter(
         new_states = vmap(lambda key, x: jr.choice(key, jnp.arange(num_states), p=params.discrete.proposal_transition_matrix[x]))(keys[1:], prev_states)
 
         # Run KF step conditional on the sampled states
-        lls, filtered_means, filtered_covs = vmap(_conditional_kalman_step, in_axes = (0, 0, 0, None, None, None))(new_states, filtered_means, filtered_covs, flat_params, u, y)
+        lls, filtered_means, filtered_covs = vmap(_conditional_kalman_step, in_axes = (0, 0, 0, None, None, None))(new_states, filtered_means, filtered_covs, params.linear_gaussian, u, y)
 
         # Compute weights
         lls -= jnp.max(lls)
@@ -185,13 +201,14 @@ def rbpfilter(
 
         return carry, outputs
 
-    key1, key2, next_key = jr.split(key, 3)
+    keys = jr.split(key, num_particles+2)
+    next_key = keys[-1]
 
     # Initialize carry
     initial_weights = jnp.ones(shape=(num_particles,)) / num_particles
-    initial_states = jr.choice(key1, jnp.arange(params.discrete.initial.shape[0]), shape=(num_particles,), p = params.discrete.initial)
-    initial_means = jnp.array([MVN(params.linear_gaussian[state].initial.mean, params.linear_gaussian[state].initial.cov).sample(seed=key2) for state in initial_states])
-    initial_covs = jnp.array([params.linear_gaussian[state].initial.cov for state in initial_states])
+    initial_states = jr.choice(keys[0], jnp.arange(params.discrete.initial_distribution.shape[0]), shape=(num_particles,), p = params.discrete.initial_distribution)
+    initial_means = jnp.array([MVN(params.linear_gaussian.initial_mean[initial_states[i]], params.linear_gaussian.initial_cov[initial_states[i]]).sample(seed=keys[i+1]) for i in range(num_particles)])
+    initial_covs = jnp.array([params.linear_gaussian.initial_cov[state] for state in initial_states])
     
     carry = (
         initial_weights,

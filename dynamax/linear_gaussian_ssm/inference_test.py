@@ -173,7 +173,6 @@ class TestFilteringAndSmoothing():
     # Posteriors from full joint distribution
     joint_means, joint_covs = joint_posterior_mvn(params, emissions)
 
-
     ## For sampling tests
     lgssm, params = build_lgssm_for_sampling()
 
