@@ -5,7 +5,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from jaxtyping import Array, Float
 from typing import List, Optional
 
-from dynamax.utils.utils import psd_solve
+from dynamax.utils.utils import psd_solve, symmetrize
 from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
 
@@ -80,7 +80,7 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
     # Iterate re-linearization over posterior mean and covariance
     carry = (m, P)
     (mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter))
-    return mu_cond, Sigma_cond
+    return mu_cond, symmetrize(Sigma_cond)
 
 
 def extended_kalman_filter(
