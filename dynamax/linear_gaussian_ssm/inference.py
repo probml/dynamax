@@ -8,7 +8,7 @@ import inspect
 from jax.tree_util import tree_map
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union, Tuple
-from dynamax.utils.utils import psd_solve
+from dynamax.utils.utils import psd_solve, symmetrize
 from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
 
@@ -220,7 +220,7 @@ def _condition_on(m, P, H, D, d, R, u, y):
     K = psd_solve(S, H @ P).T
     Sigma_cond = P - K @ S @ K.T
     mu_cond = m + K @ (y - D @ u - d - H @ m)
-    return mu_cond, Sigma_cond
+    return mu_cond, symmetrize(Sigma_cond)
 
 
 def preprocess_params_and_inputs(params, num_timesteps, inputs):
