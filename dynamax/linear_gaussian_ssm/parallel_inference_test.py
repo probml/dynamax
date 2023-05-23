@@ -11,9 +11,9 @@ from dynamax.linear_gaussian_ssm import lgssm_posterior_sample as serial_lgssm_p
 from dynamax.linear_gaussian_ssm import parallel_lgssm_posterior_sample
 
 
-def allclose(x,y):
+def allclose(x,y, atol=1e-2):
     m = jnp.abs(jnp.max(x-y))
-    if m > 1e-2:
+    if m > atol:
         print(m)
         return False
     else:
@@ -25,7 +25,8 @@ def make_static_lgssm_params():
     F = jnp.eye(4) + dt * jnp.eye(4, k=2)
     Q = 1. * jnp.kron(jnp.array([[dt**3/3, dt**2/2],
                           [dt**2/2, dt]]),
-                     jnp.eye(2))
+                         jnp.eye(2))
+                         
     H = jnp.eye(2, 4)
     R = 0.5 ** 2 * jnp.eye(2)
     μ0 = jnp.array([0.,0.,1.,-1.])
@@ -87,7 +88,7 @@ class TestParallelLGSSMSmoother:
     key = jr.PRNGKey(1)
 
     params, lgssm = make_static_lgssm_params()    
-    _, emissions = lgssm.sample(params, key, num_timesteps)
+    _, emissions = lgssm_joint_sample(params, key, num_timesteps)
 
     serial_posterior = serial_lgssm_smoother(params, emissions)
     parallel_posterior = parallel_lgssm_smoother(params, emissions)
@@ -119,7 +120,7 @@ class TestTimeVaryingParallelLGSSMSmoother:
     key = jr.PRNGKey(1)
 
     params, lgssm = make_dynamic_lgssm_params(num_timesteps)    
-    _, emissions = lgssm.sample(params, key, num_timesteps)
+    _, emissions = lgssm_joint_sample(params, key, num_timesteps)
 
     serial_posterior = serial_lgssm_smoother(params, emissions)
     parallel_posterior = parallel_lgssm_smoother(params, emissions)
@@ -141,14 +142,14 @@ class TestTimeVaryingParallelLGSSMSmoother:
 
 
 
-class TestParallelLGSSMSampler():
+class TestTimeVaryingParallelLGSSMSampler():
     """Compare parallel and serial lgssm posterior sampling implementations in expectation."""
     
     num_timesteps = 50
     key = jr.PRNGKey(1)
 
     params, lgssm = make_dynamic_lgssm_params(num_timesteps)    
-    _, emissions = lgssm.sample(params, key, num_timesteps)
+    _, emissions = lgssm_joint_sample(params, key, num_timesteps)
 
     num_samples = 1000
     serial_keys = jr.split(jr.PRNGKey(2), num_samples)
