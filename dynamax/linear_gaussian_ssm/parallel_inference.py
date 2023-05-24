@@ -1,6 +1,34 @@
-# Parallel filtering and smoothing for a lgssm.
-# This implementation is adapted from the work of Adrien Correnflos in,
-#  https://github.com/EEA-sensors/sequential-parallelization-examples/
+'''
+Parallel filtering and smoothing for a lgssm.
+
+This implementation is adapted from the work of Adrien Correnflos:
+https://github.com/EEA-sensors/sequential-parallelization-examples/
+
+Note that in the original implementation, the initial state distribution
+applies to t=0, and the first emission occurs at time `t=1` (i.e. after
+the initial state has been transformed by the dynamics), whereas here,
+the first emission occurs at time `t=0` and is produced directly by the
+untransformed initial state (see below).
+
+Sarkka et al.
+
+      F₀,Q₀          F₁,Q₁         F₂,Q₂
+Z₀ ─────────── Z₁ ─────────── Z₂ ─────────── Z₃ ─────...
+               |              |              |
+               | H₁,R₁        | H₂,R₂        | H₃,R₃
+               |              |              |
+               Y₁             Y₂             Y₃
+
+Dynamax
+
+      F₀,Q₀           F₁,Q₁         F₂,Q₂
+Z₀ ─────────── Z₁ ─────────── Z₂ ─────────── Z₃ ─────...
+|              |              |              |
+| H₀,R₀        | H₁,R₁        | H₂,R₂        | H₃,R₃
+|              |              |              |
+Y₀             Y₁             Y₂             Y₃ 
+
+'''
 
 import jax.numpy as jnp
 from jax import vmap, lax
