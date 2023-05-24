@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 import jax.random as jr
-from dynamax.slds.inference import DiscreteParamsSLDS, LGParamsSLDS, ParamsSLDS, rbpfilter
+from dynamax.slds.inference import DiscreteParamsSLDS, LGParamsSLDS, ParamsSLDS, rbpfilter, rbpfilter_optimal
 from functools import partial
 from dynamax.slds.models import SLDS
 import matplotlib.pyplot as plt
@@ -16,7 +16,7 @@ class TestRBPF():
 
     ## Model definitions
     num_states = 3
-    num_particles = 1000
+    num_particles = 10
     state_dim = 4
     emission_dim = 4
 
@@ -73,7 +73,7 @@ class TestRBPF():
     slds = SLDS(num_states, state_dim, emission_dim)
     dstates, cstates, emissions = slds.sample(params, key, 100)
 
-    ## Baseline Implementation
+    ## Baseline Implementation parameters          
     key_base = jr.PRNGKey(31)
     key_mean_init, key_sample, key_state, key_next = jr.split(key_base, 4)
     p_init = jnp.array([0.0, 1.0, 0.0])
@@ -85,32 +85,50 @@ class TestRBPF():
     init_config = (key_next, mu_0, Sigma_0, weights_0, s0)
     params1 = kflib.RBPFParamsDiscrete(A, B, C, Q, R, transition_matrix)
 
-    rbpf_optimal_part = partial(kflib.rbpf_optimal, params=params1, nparticles=num_particles)
-    _, (mu_hist, Sigma_hist, weights_hist, s_hist, Ptk) = jax.lax.scan(rbpf_optimal_part, init_config, emissions)
-    bl_post_mean = jnp.einsum("ts,tsm->tm", weights_hist, mu_hist)
-
-    bl_rbpf_mse = ((bl_post_mean - cstates)[:, [0, 2]] ** 2).mean(axis=0).sum()
-    print(bl_rbpf_mse)
-    latent_hist_est = Ptk.mean(axis=1).argmax(axis=1)
-
-    ## Dynamax Implementation
-    out = rbpfilter(num_particles, params, emissions, key)
-    means = out['means']
-    weights = out['weights']
-    dyn_post_mean = jnp.einsum("ts,tsm->tm", weights, means)
-    dyn_rbpf_mse = ((dyn_post_mean - cstates)[:, [0, 2]] ** 2).mean(axis=0).sum()
-
-
-    plt.scatter(*cstates[:, [0, 2]].T, s=10)
-    plt.scatter(*bl_post_mean[:, [0, 2]].T, s=10)
-    plt.scatter(*dyn_post_mean[:, [0, 2]].T, s=10)
-    plt.legend(['True', 'Baseline', 'Dynamax'])
-    plt.title('Projection onto x-y plane')
-    plt.show()
+    # plt.scatter(*cstates[:, [0, 2]].T, s=10)
+    # plt.scatter(*bl_post_mean[:, [0, 2]].T, s=10)
+    # plt.scatter(*dyn_post_mean[:, [0, 2]].T, s=10)
+    # plt.legend(['True', 'Baseline', 'Dynamax'])
+    # plt.title('Projection onto x-y plane')
+    # plt.show()  
 
     def test_rbpf(self):
-        assert jnp.allclose(self.bl_post_mean, self.dyn_post_mean, atol=10.0)
-        
+        # Baseline
+        rbpf_optimal_part = partial(kflib.rbpf, params=self.params1, nparticles=self.num_particles)
+        _, (mu_hist, Sigma_hist, weights_hist, s_hist, Ptk) = jax.lax.scan(rbpf_optimal_part, self.init_config, self.emissions)
+        bl_post_mean = jnp.einsum("ts,tsm->tm", weights_hist, mu_hist)
+
+        bl_rbpf_mse = ((bl_post_mean - self.cstates)[:, [0, 2]] ** 2).mean(axis=0).sum()
+        # Dynamax
+        out = rbpfilter(self.num_particles, self.params, self.emissions, self.key)
+        means = out['means']
+        weights = out['weights']
+        dyn_post_mean = jnp.einsum("ts,tsm->tm", weights, means)
+        dyn_rbpf_mse = ((dyn_post_mean - self.cstates)[:, [0, 2]] ** 2).mean(axis=0).sum()
+        print(bl_rbpf_mse, dyn_rbpf_mse)
+        assert jnp.allclose(bl_post_mean, dyn_post_mean, atol=10.0)
+
+    def test_rbpf_optimal(self):
+        # Baseline
+        rbpf_optimal_part = partial(kflib.rbpf_optimal, params=self.params1, nparticles=self.num_particles)
+        _, (mu_hist, Sigma_hist, weights_hist, s_hist, Ptk) = jax.lax.scan(rbpf_optimal_part, self.init_config, self.emissions)
+        bl_post_mean = jnp.einsum("ts,tsm->tm", weights_hist, mu_hist)
+        bl_rbpf_mse = ((bl_post_mean - self.cstates)[:, [0, 2]] ** 2).mean(axis=0).sum()
+        latent_hist_est = Ptk.mean(axis=1).argmax(axis=1)
+        # Dynamax
+        out = rbpfilter_optimal(self.num_particles, self.params, self.emissions, self.key)
+        means = out['means']
+        weights = out['weights']
+        dyn_post_mean = jnp.einsum("ts,tsm->tm", weights, means)
+        dyn_rbpf_mse = ((dyn_post_mean - self.cstates)[:, [0, 2]] ** 2).mean(axis=0).sum()
+        print(bl_rbpf_mse, dyn_rbpf_mse)
+        assert jnp.allclose(bl_post_mean, dyn_post_mean, atol=10.0)
+    
+
+if __name__ == '__main__':
+    test = TestRBPF()
+    test.test_rbpf()
+    test.test_rbpf_optimal()
 
 
 

@@ -64,6 +64,7 @@ class ParamsSLDS(NamedTuple):
         emission_bias = emission_bias if emission_bias.shape == (num_states, emission_dim) else jnp.array([emission_bias]*num_states)
         emission_input_weights = params.emission_input_weights if params.emission_input_weights is not None else jnp.zeros((num_states, emission_dim, input_dim))
         emission_input_weights = emission_input_weights if emission_input_weights.shape == (num_states, emission_dim, input_dim) else jnp.array([emission_input_weights]*num_states)
+        
         return ParamsSLDS(
             discrete=self.discrete,
             linear_gaussian=LGParamsSLDS(
@@ -95,16 +96,43 @@ class RBPFiltered(NamedTuple):
     covariances: Optional[Float[Array, "num_particles ntime state_dim state_dim"]] = None
    
 
-def _resample(weights, new_states, means, covariances, key):                                                                  
+def resampling(weights, states, means, covariances, key):                                                                  
     keys = jr.split(key, 2)
     num_particles = weights.shape[0]
     resampled_idx = jr.choice(keys[0], jnp.arange(weights.shape[0]), shape=(num_particles,), p=weights)
-    new_states = jnp.take(new_states, resampled_idx, axis=0)
+    new_states = jnp.take(states, resampled_idx, axis=0)
     filtered_means = jnp.take(means, resampled_idx, axis=0)
     filtered_covs = jnp.take(covariances, resampled_idx, axis=0)
     weights = jnp.ones(shape=(num_particles,)) / num_particles
     next_key = keys[1]
-    return weights, new_states, filtered_means, filtered_covs, next_key    
+    return weights, new_states, filtered_means, filtered_covs, next_key 
+
+@partial(jit, static_argnums=(1,))
+def optimal_resampling(weights, N, key):
+    """Find the threshold for resampling particles using the optimal resampling algorithm of Fearnhead and Clifford (2003).
+    """
+
+    M = weights.shape[0]
+    sorted_weights = jnp.sort(weights)
+    sorted_idx = jnp.argsort(weights)
+
+    lower_diag = jnp.triu(jnp.ones((M, M)), k=0).T
+    ps = lax.dynamic_slice(lower_diag, (M-N, 0), (N-1, M)) @ sorted_weights / jnp.arange(1,N)
+    ps = jnp.flip(ps)
+    bounds = vmap(lambda ind: (sorted_weights[M-ind-1], sorted_weights[M-ind]))(jnp.arange(1, N))
+    preds = vmap(lambda y,x,z : jnp.logical_and(y < x, x < z))(bounds[0], ps, bounds[1])
+    L = jnp.where(preds, jnp.arange(1, N), 0).sum()
+    p = jnp.where(L==0, 1/N, ps[L-1])
+    
+    res_weights = jnp.where(sorted_weights < p, sorted_weights, 0.0)
+    res_weights = res_weights / res_weights.sum()
+    res_idx = jr.choice(key, M, shape=(M,), replace=True, p=res_weights)
+    unsort_res_idx = sorted_idx[res_idx]
+
+    final_idx = jnp.where(sorted_weights < p, unsort_res_idx, sorted_idx)
+    final_weights = jnp.where(sorted_weights < p, p, sorted_weights)
+
+    return final_idx[M-N:], final_weights[M-N:] / final_weights[M-N:].sum() 
 
 def _conditional_kalman_step(state, mu, Sigma, params, u, y):
     """
@@ -187,7 +215,7 @@ def rbpfilter(
 
         # Resample if necessary
         resample_cond = 1.0 / jnp.sum(jnp.square(weights)) < ess_threshold * num_particles
-        weights, new_states, filtered_means, filtered_covs, next_key = lax.cond(resample_cond, _resample, lambda *args: args,
+        weights, new_states, filtered_means, filtered_covs, next_key = lax.cond(resample_cond, resampling, lambda *args: args,
                                                                                 weights, new_states, filtered_means, filtered_covs, next_key)
 
         # Build carry and output states
@@ -195,6 +223,95 @@ def rbpfilter(
         outputs = {
             "weights": weights,
             "states": prev_states,
+            "means": filtered_means,
+            "covariances": filtered_covs
+        }
+
+        return carry, outputs
+
+    keys = jr.split(key, num_particles+2)
+    next_key = keys[-1]
+
+    # Initialize carry
+    initial_weights = jnp.ones(shape=(num_particles,)) / num_particles
+    initial_states = jr.choice(keys[0], jnp.arange(params.discrete.initial_distribution.shape[0]), shape=(num_particles,), p = params.discrete.initial_distribution)
+    initial_means = jnp.array([MVN(params.linear_gaussian.initial_mean[initial_states[i]], params.linear_gaussian.initial_cov[initial_states[i]]).sample(seed=keys[i+1]) for i in range(num_particles)])
+    initial_covs = jnp.array([params.linear_gaussian.initial_cov[state] for state in initial_states])
+    
+    carry = (
+        initial_weights,
+        initial_states, 
+        initial_means,
+        initial_covs, 
+        next_key)
+    
+    _, out = lax.scan(_step, carry, jnp.arange(num_timesteps))
+
+    return out
+
+def rbpfilter_optimal(
+    num_particles: int,
+    params: ParamsSLDS,
+    emissions:  Float[Array, "ntime emission_dim"],
+    key: PRNGKey = jr.PRNGKey(0),
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+) -> RBPFiltered:
+    '''
+    Implementation of the Rao-Blackwellized particle filter, for approximating the 
+    filtering distribution of a switching linear dynamical system. The filter at each iteration
+    samples discrete states from a discrete proposal, and then runs a KF step conditional on the sampled
+    value of the chain. At the end of the update it computes an effective sample size and decide whether
+    resampling is necessary.
+    '''
+
+    num_timesteps = len(emissions)
+    inputs = jnp.zeros((num_timesteps, 1)) if inputs is None else inputs
+    state_dim = params.linear_gaussian.initial_mean.shape[1]
+
+    def _step(carry, t):
+        # prev_states : (num_particles, )
+        # weights : (num_particles, )
+        # pred_means : (num_particles, state_dim)
+        # pred_covs : (num_particles, state_dim, state_dim)
+
+        # Unpack carry
+        weights, prev_states, filtered_means, filtered_covs, key = carry
+        num_states = params.discrete.transition_matrix.shape[0]
+
+        key, next_key = jr.split(key, 2)
+
+        # Get emissions and inputs for time index t
+        u = inputs[t]
+        y = emissions[t]
+
+        # Run KF step conditional on all possible states
+        _vec_kalman_step = lambda mu, Sigma: vmap(_conditional_kalman_step, in_axes=(0, None, None, None, None, None))(jnp.arange(num_states), mu, Sigma ,params.linear_gaussian, u, y)
+        lls, filtered_means, filtered_covs = vmap(_vec_kalman_step, in_axes=(0, 0))(filtered_means, filtered_covs)
+
+        # Compute weights
+        lls -= jnp.max(lls)
+        loglik_weights = jnp.exp(lls)
+        trans_weights = params.discrete.transition_matrix[prev_states, :]
+        weights = jnp.multiply(jnp.einsum('i,ij->ij', weights, trans_weights), loglik_weights)
+        weights /= jnp.sum(weights)
+
+        # Reshape
+        weights = weights.reshape((num_particles * num_states,))
+        states = jnp.tile(jnp.arange(num_states), num_particles)
+        filtered_means = filtered_means.reshape((num_particles * num_states, state_dim))
+        filtered_covs = filtered_covs.reshape((num_particles * num_states, state_dim, state_dim))
+
+        # Optimal resampling
+        res_idx, res_weights = optimal_resampling(weights, num_particles, key)
+        new_states = jnp.take(states, res_idx, axis=0)
+        filtered_means = jnp.take(filtered_means, res_idx, axis=0)
+        filtered_covs = jnp.take(filtered_covs, res_idx, axis=0)
+                                                                                 
+        # Build carry and output states
+        carry = (res_weights, new_states, filtered_means, filtered_covs, next_key)
+        outputs = {
+            "weights": res_weights,
+            "states": new_states,
             "means": filtered_means,
             "covariances": filtered_covs
         }

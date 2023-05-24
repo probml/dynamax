@@ -146,7 +146,6 @@ def rbpf_optimal(current_config, xt, params, nparticles=100):
     
 
     # Resampling
-    
     indices = jnp.arange(nparticles)
     pi = random.choice(key_reindex, indices, shape=(nparticles,), p=weights_t, replace=True)
     
