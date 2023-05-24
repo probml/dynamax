@@ -8,7 +8,7 @@ import inspect
 from jax.tree_util import tree_map
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union, Tuple
-from dynamax.utils.utils import psd_solve
+from dynamax.utils.utils import psd_solve, symmetrize
 from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
 
@@ -220,7 +220,7 @@ def _condition_on(m, P, H, D, d, R, u, y):
     K = psd_solve(S, H @ P).T
     Sigma_cond = P - K @ S @ K.T
     mu_cond = m + K @ (y - D @ u - d - H @ m)
-    return mu_cond, Sigma_cond
+    return mu_cond, symmetrize(Sigma_cond)
 
 
 def preprocess_params_and_inputs(params, num_timesteps, inputs):
@@ -493,7 +493,9 @@ def lgssm_posterior_sample(
     key: PRNGKey,
     params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None,
+    jitter: Optional[Scalar]=0
+    
 ) -> Float[Array, "ntime state_dim"]:
     r"""Run forward-filtering, backward-sampling to draw samples from $p(z_{1:T} \mid y_{1:T}, u_{1:T})$.
 
@@ -502,6 +504,7 @@ def lgssm_posterior_sample(
         params: parameters.
         emissions: sequence of observations.
         inputs: optional sequence of inptus.
+        jitter: padding to add to the diagonal of the covariance matrix before sampling.
 
     Returns:
         Float[Array, "ntime state_dim"]: one sample of $z_{1:T}$ from the posterior distribution on latent states.
@@ -527,6 +530,7 @@ def lgssm_posterior_sample(
 
         # Condition on next state
         smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F, B, b, Q, u, next_state)
+        smoothed_cov = smoothed_cov + jnp.eye(smoothed_cov.shape[-1]) * jitter
         state = MVN(smoothed_mean, smoothed_cov).sample(seed=key)
         return state, state
 

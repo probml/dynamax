@@ -202,3 +202,7 @@ def psd_solve(A,b):
     """A wrapper for coordinating the linalg solvers used in the library for psd matrices."""
     A = A + 1e-6
     return jnp.linalg.solve(A,b)
+
+def symmetrize(A):
+    """Symmetrize one or more matrices."""
+    return 0.5 * (A + jnp.swapaxes(A, -1, -2))
