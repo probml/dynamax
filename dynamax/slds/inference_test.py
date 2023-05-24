@@ -4,8 +4,6 @@ from dynamax.slds.inference import DiscreteParamsSLDS, LGParamsSLDS, ParamsSLDS,
 from functools import partial
 from dynamax.slds.models import SLDS
 import matplotlib.pyplot as plt
-import seaborn as sns
-import matplotlib.pyplot as plt
 import mixture_kalman_filter as kflib
 from functools import partial
 from jax.scipy.special import logit
@@ -84,13 +82,6 @@ class TestRBPF():
     weights_0 = jnp.ones(num_particles) / num_particles
     init_config = (key_next, mu_0, Sigma_0, weights_0, s0)
     params1 = kflib.RBPFParamsDiscrete(A, B, C, Q, R, transition_matrix)
-
-    # plt.scatter(*cstates[:, [0, 2]].T, s=10)
-    # plt.scatter(*bl_post_mean[:, [0, 2]].T, s=10)
-    # plt.scatter(*dyn_post_mean[:, [0, 2]].T, s=10)
-    # plt.legend(['True', 'Baseline', 'Dynamax'])
-    # plt.title('Projection onto x-y plane')
-    # plt.show()  
 
     def test_rbpf(self):
         # Baseline

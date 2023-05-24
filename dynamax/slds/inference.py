@@ -1,19 +1,12 @@
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax, vmap, debug, jit, pmap
+from jax import lax, vmap, jit
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from functools import wraps, partial
-import inspect
-
-from jax.tree_util import tree_map
+from functools import partial
 from jaxtyping import Array, Float, Int
-from typing import NamedTuple, Optional, Union, Tuple
+from typing import NamedTuple, Optional
 from dynamax.utils.utils import psd_solve
-from dynamax.parameters import ParameterProperties
-from dynamax.hidden_markov_model.models.abstractions import HMMParameterSet
-from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, PosteriorGSSMFiltered, _predict
-
-from dynamax.types import PRNGKey, Scalar
+from dynamax.types import PRNGKey
 
 class DiscreteParamsSLDS(NamedTuple):
     initial_distribution: Float[Array, "num_states"]
@@ -49,6 +42,10 @@ class ParamsSLDS(NamedTuple):
     linear_gaussian: LGParamsSLDS
 
     def initialize(self, num_states, state_dim, emission_dim, input_dim=1):
+        """
+        Initialize the parameters of the SLDS. For each parameter that is the same over all models, the parameter
+        is repeated to match the number of states. Also optional paramters are set to zero if not specified.
+        """
         params = self.linear_gaussian
         initial_mean = params.initial_mean if params.initial_mean.shape == (num_states, state_dim) else jnp.array([params.initial_mean]*num_states)
         initial_cov = params.initial_cov if params.initial_cov.shape == (num_states, state_dim, state_dim) else jnp.array([params.initial_cov]*num_states)
@@ -110,12 +107,14 @@ def resampling(weights, states, means, covariances, key):
 @partial(jit, static_argnums=(1,))
 def optimal_resampling(weights, N, key):
     """Find the threshold for resampling particles using the optimal resampling algorithm of Fearnhead and Clifford (2003).
+    Returns inidices of resampled particles and their weights.
     """
-
+    # sort weights
     M = weights.shape[0]
     sorted_weights = jnp.sort(weights)
     sorted_idx = jnp.argsort(weights)
 
+    # compute threshold p and value L of particles to retain
     lower_diag = jnp.triu(jnp.ones((M, M)), k=0).T
     ps = lax.dynamic_slice(lower_diag, (M-N, 0), (N-1, M)) @ sorted_weights / jnp.arange(1,N)
     ps = jnp.flip(ps)
@@ -124,6 +123,7 @@ def optimal_resampling(weights, N, key):
     L = jnp.where(preds, jnp.arange(1, N), 0).sum()
     p = jnp.where(L==0, 1/N, ps[L-1])
     
+    # resample
     res_weights = jnp.where(sorted_weights < p, sorted_weights, 0.0)
     res_weights = res_weights / res_weights.sum()
     res_idx = jr.choice(key, M, shape=(M,), replace=True, p=res_weights)
@@ -167,7 +167,7 @@ def rbpfilter(
     key: PRNGKey = jr.PRNGKey(0),
     inputs: Optional[Float[Array, "ntime input_dim"]] = None,
     ess_threshold: float = 0.5
-) -> RBPFiltered:
+    ):
     '''
     Implementation of the Rao-Blackwellized particle filter, for approximating the 
     filtering distribution of a switching linear dynamical system. The filter at each iteration
@@ -255,13 +255,9 @@ def rbpfilter_optimal(
     emissions:  Float[Array, "ntime emission_dim"],
     key: PRNGKey = jr.PRNGKey(0),
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> RBPFiltered:
+    ):
     '''
-    Implementation of the Rao-Blackwellized particle filter, for approximating the 
-    filtering distribution of a switching linear dynamical system. The filter at each iteration
-    samples discrete states from a discrete proposal, and then runs a KF step conditional on the sampled
-    value of the chain. At the end of the update it computes an effective sample size and decide whether
-    resampling is necessary.
+    Implementation of the Rao-Blackwellized particle filter with optimal resampling
     '''
 
     num_timesteps = len(emissions)
@@ -269,11 +265,15 @@ def rbpfilter_optimal(
     state_dim = params.linear_gaussian.initial_mean.shape[1]
 
     def _step(carry, t):
-        # prev_states : (num_particles, )
-        # weights : (num_particles, )
-        # pred_means : (num_particles, state_dim)
-        # pred_covs : (num_particles, state_dim, state_dim)
+        r"""
+        carry = (weights, prev_states, filtered_means, filtered_covs, key)
 
+        where,
+            prev_states : (num_particles, )
+            weights : (num_particles, )
+            pred_means : (num_particles, state_dim)
+            pred_covs : (num_particles, state_dim, state_dim)
+        """
         # Unpack carry
         weights, prev_states, filtered_means, filtered_covs, key = carry
         num_states = params.discrete.transition_matrix.shape[0]
