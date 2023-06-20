@@ -1,36 +1,41 @@
 
+
 <!DOCTYPE html>
 
-<html lang="en">
+
+<html lang="en" >
+
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Casino HMM: Inference (state estimation)</title>
-    
-  <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
-    
-  <link rel="stylesheet"
-    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    
-      
-  <link rel="stylesheet"
-    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
-  <link rel="stylesheet"
-    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
-
-    
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    
-  <link rel="preload" as="script" href="../../_static/js/index.d3f166471bb80abb5163.js">
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
@@ -38,329 +43,320 @@
     <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/hmm/casino_hmm_inference';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Casino HMM: Learning (parameter estimation)" href="casino_hmm_learning.html" />
     <link rel="prev" title="Welcome to DYNAMAX!" href="../../index.html" />
-
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="en" />
-
-
-
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
-    
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
-    <div class="container-xl">
-      <div class="row">
-          
-<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
     
-        <div class="navbar-brand-box">
-<a class="navbar-brand text-wrap" href="../../index.html">
+    
+    
+    
+  </div>
   
-  <img src="../../_static/logo.gif" class="logo" alt="logo">
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
   
   
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Casino HMM: Inference (state estimation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="casino_hmm_learning.html">Casino HMM: Learning (parameter estimation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gaussian_hmm.html">Gaussian HMM: Cross-validation and Model Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoregressive_hmm.html">Autoregressive (AR) HMM Demo</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Linear Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">Tracking an object using the Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/kf_linreg.html">Online linear regression using Kalman filtering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">Parallel filtering and smoothing in an LG-SSM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/lgssm_learning.html">MAP parameter estimation for an LG-SSM using EM and SGD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/lgssm_hmc.html">Bayesian parameter estimation for an LG-SSM using HMC</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Nonlinear Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">Tracking a spiraling object using the extended / unscented Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">Online learning for an MLP using extended Kalman filtering</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Generalized Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">Online Logistic Regression using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">Online learning of an MLP Classifier using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../types.html">Terminology for types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">State Space Model (Base class)</a></li>
+
+
+
+
+
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-launch-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Launch interactive content">
+    <i class="fas fa-rocket"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/hmm/casino_hmm_inference.ipynb" target="_blank"
+   class="btn btn-sm dropdown-item"
+   title="Launch onBinder"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  
+    <img src="../../_static/images/logo_binder.svg">
+  </span>
+<span class="btn__text-container">Binder</span>
 </a>
-</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form>
-<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-    <p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  HMMs
- </span>
-</p>
-<ul class="current nav sidenav_l1">
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   Casino HMM: Inference (state estimation)
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="casino_hmm_learning.html">
-   Casino HMM: Learning (parameter estimation)
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="gaussian_hmm.html">
-   Gaussian HMM: Cross-validation and Model Selection
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="autoregressive_hmm.html">
-   Autoregressive (AR) HMM Demo
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  Linear Gaussian SSMs
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
-   Tracking an object using the Kalman filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/kf_linreg.html">
-   Online linear regression using Kalman filtering
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_learning.html">
-   MAP parameter estimation for an LG-SSM using EM and SGD
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_hmc.html">
-   Bayesian parameter estimation for an LG-SSM using HMC
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  Nonlinear Gaussian SSMs
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
-   Tracking a spiraling object using the extended / unscented Kalman filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
-   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
-   Online learning for an MLP using extended Kalman filtering
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  Generalized Gaussian SSMs
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
-   Online Logistic Regression using conditional moments Gaussian filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
-   Online learning of an MLP Classifier using conditional moments Gaussian filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
-   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  API Documentation
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html">
-   State Space Model (Base class)
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#hidden-markov-model">
-   Hidden Markov Model
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#linear-gaussian-ssm">
-   Linear Gaussian SSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#nonlinear-gaussian-gssm">
-   Nonlinear Gaussian GSSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#generalized-gaussian-gssm">
-   Generalized Gaussian GSSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#utilities">
-   Utilities
-  </a>
- </li>
-</ul>
+</li>
+      
+      
+      
+      
+      <li><a href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/hmm/casino_hmm_inference.ipynb" target="_blank"
+   class="btn btn-sm dropdown-item"
+   title="Launch onColab"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
 
-</nav> <!-- To handle the deprecated key -->
-
-<div class="navbar_extra_footer">
-  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-</div>
-
+<span class="btn__icon-container">
+  
+    <img src="../../_static/images/logo_colab.png">
+  </span>
+<span class="btn__text-container">Colab</span>
+</a>
+</li>
+      
+  </ul>
 </div>
 
 
-          
+
+<a href="https://github.com/probml/dynamax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
 
 
-          
-<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
-    
-    <div class="row topbar fixed-top container-xl">
-    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
     </div>
-    <div class="col pl-2 topbar-main">
-        
-        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
-            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
-            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
-            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
-            <i class="fas fa-bars"></i>
-            <i class="fas fa-arrow-left"></i>
-            <i class="fas fa-arrow-up"></i>
-        </button>
-        
-        
-        <!-- Source interaction buttons -->
-
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
-        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
-    <div class="dropdown-buttons sourcebuttons">
-        <a class="repository-button"
-            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
-                data-toggle="tooltip" data-placement="left" title="Source repository"><i
-                    class="fab fa-github"></i>repository</button></a>
-        
-        
-    </div>
+  
 </div>
-
-
-        <!-- Full screen (wrap in <a> to have style consistency -->
-        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
-                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
-                title="Fullscreen mode"><i
-                    class="fas fa-expand"></i></button></a>
-
-        <!-- Launch buttons -->
-
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
-        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
-    <div class="dropdown-buttons">
-        
-        <a class="binder-button" href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/hmm/casino_hmm_inference.ipynb"><button type="button"
-                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
-                data-placement="left"><img class="binder-button-logo"
-                    src="../../_static/images/logo_binder.svg"
-                    alt="Interact on binder">Binder</button></a>
-        
-        
-        
-        <a class="colab-button" href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/hmm/casino_hmm_inference.ipynb"><button type="button" class="btn btn-secondary topbarbtn"
-                title="Launch Colab" data-toggle="tooltip" data-placement="left"><img class="colab-button-logo"
-                    src="../../_static/images/logo_colab.png"
-                    alt="Interact on Colab">Colab</button></a>
-        
-        
-    </div>
 </div>
+              
+              
 
-    </div>
-
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Casino HMM: Inference (state estimation)</h1>
     <!-- Table of contents -->
-    <div class="d-none d-md-block col-md-2 bd-toc show">
-        
-        <div class="tocsection onthispage pt-5 pb-3">
-            <i class="fas fa-list"></i> Contents
-        </div>
-        <nav id="bd-toc-nav">
-            <ul class="nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#setup">
-   Setup
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#make-a-categorical-hmm">
-   Make a Categorical HMM
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#sample-data-from-model">
-   Sample data from model
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#vectorizing-computation">
-     Vectorizing computation
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#filtering-forwards-algorithm">
-   Filtering (forwards algorithm)
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#plot-the-filtering-distribution">
-     Plot the filtering distribution
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#smoothing-forwards-backwards-algorithm">
-   Smoothing (forwards-backwards algorithm)
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#most-likely-state-sequence-viterbi-algorithm">
-   Most likely state sequence (Viterbi algorithm)
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#conclusion">
-   Conclusion
-  </a>
- </li>
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#make-a-categorical-hmm">Make a Categorical HMM</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-data-from-model">Sample data from model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vectorizing-computation">Vectorizing computation</a></li>
 </ul>
-
-        </nav>
-        
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#filtering-forwards-algorithm">Filtering (forwards algorithm)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-filtering-distribution">Plot the filtering distribution</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#smoothing-forwards-backwards-algorithm">Smoothing (forwards-backwards algorithm)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#most-likely-state-sequence-viterbi-algorithm">Most likely state sequence (Viterbi algorithm)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+</ul>
+            </nav>
+        </div>
     </div>
 </div>
-    <div id="main-content" class="row">
-        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
-        
-              <div>
+
+              
                 
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
   <section class="tex2jax_ignore mathjax_ignore" id="casino-hmm-inference-state-estimation">
-<h1>Casino HMM: Inference (state estimation)<a class="headerlink" href="#casino-hmm-inference-state-estimation" title="Permalink to this heading">¶</a></h1>
+<h1>Casino HMM: Inference (state estimation)<a class="headerlink" href="#casino-hmm-inference-state-estimation" title="Permalink to this heading">#</a></h1>
 <p>We use a simple example of an HMM known as the “occasionally dishonest casino”.
 This is from the book:</p>
 <blockquote>
@@ -373,7 +369,7 @@ This is from the book:</p>
 <p>The figure above formalizes this game. If the player is rolling the fair die, they continue to do so with 0.95 probability, but they switch to the loaded die with probability 0.05. They continue using the loaded die with probability 0.9, and switch back to the fair die with probability 0.1.</p>
 <p><strong>Can you infer which die the player is using on the basis of the outcomes alone?</strong>  We’ll show how using a categorical hidden Markov model (HMM) and the <code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code> class.</p>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -407,13 +403,18 @@ This is from the book:</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 <section id="make-a-categorical-hmm">
-<h2>Make a Categorical HMM<a class="headerlink" href="#make-a-categorical-hmm" title="Permalink to this heading">¶</a></h2>
+<h2>Make a Categorical HMM<a class="headerlink" href="#make-a-categorical-hmm" title="Permalink to this heading">#</a></h2>
 <p>First, we’ll construct a categorical hidden Markov model (HMM). The model has discrete latent states <span class="math notranslate nohighlight">\(z_t \in \{1,2\}\)</span> to specify which of the two dice is used on the <span class="math notranslate nohighlight">\(t\)</span>-th roll. You observe the outcomes, or “emissions,” <span class="math notranslate nohighlight">\(y_t \in \{1,\ldots,6\}\)</span>. The categorical HMM specifies a joint distribution over the latent states and emissions,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-70a2b520-de51-481b-aeb8-5a5a8086115c">
-<span class="eqno">(1)<a class="headerlink" href="#equation-70a2b520-de51-481b-aeb8-5a5a8086115c" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-b5f6ad3f-32f2-43dc-9be2-98eb1db88fc1">
+<span class="eqno">(1)<a class="headerlink" href="#equation-b5f6ad3f-32f2-43dc-9be2-98eb1db88fc1" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_{1:T}, z_{1:T} \mid \theta) 
 &amp;= \mathrm{Cat}(z_1 \mid \pi) 
 \prod_{t=2}^T \mathrm{Cat}(z_t \mid A_{z_{t-1}}) 
@@ -473,12 +474,12 @@ B.shape: (2, 6)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ParamsCategoricalHMM(initial=ParamsStandardHMMInitialState(probs=DeviceArray([0.5, 0.5], dtype=float32)), transitions=ParamsStandardHMMTransitions(transition_matrix=DeviceArray([[0.95, 0.05],
-             [0.1 , 0.9 ]], dtype=float32)), emissions=ParamsCategoricalHMMEmissions(probs=DeviceArray([[[0.16666667, 0.16666667, 0.16666667, 0.16666667,
-               0.16666667, 0.16666667]],
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ParamsCategoricalHMM(initial=ParamsStandardHMMInitialState(probs=Array([0.5, 0.5], dtype=float32)), transitions=ParamsStandardHMMTransitions(transition_matrix=Array([[0.95, 0.05],
+       [0.1 , 0.9 ]], dtype=float32)), emissions=ParamsCategoricalHMMEmissions(probs=Array([[[0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667,
+         0.16666667]],
 
-             [[0.1       , 0.1       , 0.1       , 0.1       ,
-               0.1       , 0.5       ]]], dtype=float32)))
+       [[0.1       , 0.1       , 0.1       , 0.1       , 0.1       ,
+         0.5       ]]], dtype=float32)))
 </pre></div>
 </div>
 </div>
@@ -508,7 +509,7 @@ B.shape: (2, 6)
 </div>
 </section>
 <section id="sample-data-from-model">
-<h2>Sample data from model<a class="headerlink" href="#sample-data-from-model" title="Permalink to this heading">¶</a></h2>
+<h2>Sample data from model<a class="headerlink" href="#sample-data-from-model" title="Permalink to this heading">#</a></h2>
 <p>Now that we’ve initialize the model parameters, we can use them to draw samples from the HMM. The <code class="docutils literal notranslate"><span class="pre">hmm.sample()</span></code> function takes in the parameters, a JAX pseudorandom number generator (see <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#random-numbers">here</a>), and a number of time steps to sample.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -538,7 +539,7 @@ First few emissions:  [5 0 5 5 5]
 <p>The emissions have a last dimension of 1 since <code class="docutils literal notranslate"><span class="pre">num_emissions</span></code> is 1 in this example. If we rolled multiple dice simultaneously, the emisions shape would be <code class="docutils literal notranslate"><span class="pre">num_timesteps</span> <span class="pre">x</span> <span class="pre">num_emissions</span></code>.</p>
 </div>
 <section id="vectorizing-computation">
-<h3>Vectorizing computation<a class="headerlink" href="#vectorizing-computation" title="Permalink to this heading">¶</a></h3>
+<h3>Vectorizing computation<a class="headerlink" href="#vectorizing-computation" title="Permalink to this heading">#</a></h3>
 <p>JAX offers powerful tools for vectorizing and parallelizing computation. For example, we can use <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/quickstart.html#auto-vectorization-with-vmap">vmap</a> to sample many sequences at once.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -590,7 +591,7 @@ batch_emissions.shape: (5, 300, 1)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ad170e2ed422f3fbb4ef2fce31e9566eaf8ce0bd0fade4e6e40fe540cc4c76b7.png" src="../../_images/ad170e2ed422f3fbb4ef2fce31e9566eaf8ce0bd0fade4e6e40fe540cc4c76b7.png" />
+<img alt="../../_images/3f70164bbe30f5b734cce4319c7c75ef465249e4544031aa2292d88396af948a.png" src="../../_images/3f70164bbe30f5b734cce4319c7c75ef465249e4544031aa2292d88396af948a.png" />
 </div>
 </div>
 <p>The difference in outcomes is borne out in the empirical frequencies of seeing a six in each state.</p>
@@ -615,10 +616,10 @@ expected frequencies:   [0.16666667 0.5       ]
 </section>
 </section>
 <section id="filtering-forwards-algorithm">
-<h2>Filtering (forwards algorithm)<a class="headerlink" href="#filtering-forwards-algorithm" title="Permalink to this heading">¶</a></h2>
+<h2>Filtering (forwards algorithm)<a class="headerlink" href="#filtering-forwards-algorithm" title="Permalink to this heading">#</a></h2>
 <p>In an HMM, <em>filtering</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given emissions up to and including time <span class="math notranslate nohighlight">\(t\)</span>. Mathematically, the filtering distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-2d8c5ef8-787c-439c-a76a-42f44a5a3cb7">
-<span class="eqno">(2)<a class="headerlink" href="#equation-2d8c5ef8-787c-439c-a76a-42f44a5a3cb7" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-beaa9fc8-d40c-4f51-a437-98a0e4e23ad6">
+<span class="eqno">(2)<a class="headerlink" href="#equation-beaa9fc8-d40c-4f51-a437-98a0e4e23ad6" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(z_t \mid y_{1:t}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} p(z_{1:t}, y_{1:t} \mid \theta)
 \end{align}\]</div>
 <p>The forward filtering algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.2) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion. It also returns an estimate of the <em>marginal likelihood</em>, <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta)\)</span>, which is useful for model comparison and fitting.</p>
@@ -639,7 +640,7 @@ posterior.filtered_probs.shape: (300, 2)
 </div>
 </div>
 <section id="plot-the-filtering-distribution">
-<h3>Plot the filtering distribution<a class="headerlink" href="#plot-the-filtering-distribution" title="Permalink to this heading">¶</a></h3>
+<h3>Plot the filtering distribution<a class="headerlink" href="#plot-the-filtering-distribution" title="Permalink to this heading">#</a></h3>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -668,16 +669,16 @@ posterior.filtered_probs.shape: (300, 2)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6e55b89ea9ff2d23694730a223224a34c568c854cc6be72ea52459e7a30504fe.png" src="../../_images/6e55b89ea9ff2d23694730a223224a34c568c854cc6be72ea52459e7a30504fe.png" />
+<img alt="../../_images/c61d00f28619c8b2b29fba2a88b38beaa6691444b04cf1b50149b26f235e2cdd.png" src="../../_images/c61d00f28619c8b2b29fba2a88b38beaa6691444b04cf1b50149b26f235e2cdd.png" />
 </div>
 </div>
 </section>
 </section>
 <section id="smoothing-forwards-backwards-algorithm">
-<h2>Smoothing (forwards-backwards algorithm)<a class="headerlink" href="#smoothing-forwards-backwards-algorithm" title="Permalink to this heading">¶</a></h2>
+<h2>Smoothing (forwards-backwards algorithm)<a class="headerlink" href="#smoothing-forwards-backwards-algorithm" title="Permalink to this heading">#</a></h2>
 <p><em>Smoothing</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given all emissions, including those that come after. Mathematically, the smoothing distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-0bdbc465-0e43-4969-8e78-59682005e3ca">
-<span class="eqno">(3)<a class="headerlink" href="#equation-0bdbc465-0e43-4969-8e78-59682005e3ca" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-79f20b8f-7543-41cb-9bfc-d9393e073725">
+<span class="eqno">(3)<a class="headerlink" href="#equation-79f20b8f-7543-41cb-9bfc-d9393e073725" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{z_{t+1}} \cdots \sum_{z_T} p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>The forward-backward algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.4) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion.</p>
@@ -703,16 +704,16 @@ p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/fab8bc1ebbbfe7b32091cdf5811d772fab8e9dc9b69bfecc9a571ca6a8ccca2d.png" src="../../_images/fab8bc1ebbbfe7b32091cdf5811d772fab8e9dc9b69bfecc9a571ca6a8ccca2d.png" />
+<img alt="../../_images/c281c94298347983495757caf2e00aad3e3a6517676b6ac041e8d39d171aece6.png" src="../../_images/c281c94298347983495757caf2e00aad3e3a6517676b6ac041e8d39d171aece6.png" />
 </div>
 </div>
 <p>Compare the smoothed probabilities to the filtered ones. See how the sharp rises in probability (e.g. around time step 235) are attenuated in the smoothing distribution? That’s because the filtering distribution is sensitive to when the die comes up six, thinking it might indicate a switch to the loaded die. The smoothing distributions benefit from future outcomes, which suggest that the six was just a chance event.</p>
 </section>
 <section id="most-likely-state-sequence-viterbi-algorithm">
-<h2>Most likely state sequence (Viterbi algorithm)<a class="headerlink" href="#most-likely-state-sequence-viterbi-algorithm" title="Permalink to this heading">¶</a></h2>
+<h2>Most likely state sequence (Viterbi algorithm)<a class="headerlink" href="#most-likely-state-sequence-viterbi-algorithm" title="Permalink to this heading">#</a></h2>
 <p>Finally, we can compute the most likely state sequence (aka <em>maximum a posteriori</em> or “MAP” sequence) using the Viterbi algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.7). This dynamic programming algorithm solves for</p>
-<div class="amsmath math notranslate nohighlight" id="equation-001c887e-e7dd-49bb-b034-d4d3701d6ba1">
-<span class="eqno">(4)<a class="headerlink" href="#equation-001c887e-e7dd-49bb-b034-d4d3701d6ba1" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-114876fb-c592-46df-ae87-144d4c2350f5">
+<span class="eqno">(4)<a class="headerlink" href="#equation-114876fb-c592-46df-ae87-144d4c2350f5" title="Permalink to this equation">#</a></span>\[\begin{align}
 z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>You can compute the MAP sequence with the following code.</p>
@@ -745,49 +746,128 @@ z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d36f0c35c87798922f4e50c3c95f0a95b69e4444f2611179f1e452180e54c39e.png" src="../../_images/d36f0c35c87798922f4e50c3c95f0a95b69e4444f2611179f1e452180e54c39e.png" />
+<img alt="../../_images/6d982d6f5c887695bcbc872c1c6a1ca52a4230fb8a450a5d7691ef75cda702ff.png" src="../../_images/6d982d6f5c887695bcbc872c1c6a1ca52a4230fb8a450a5d7691ef75cda702ff.png" />
 </div>
 </div>
 </section>
 <section id="conclusion">
-<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">¶</a></h2>
-<p>This notebook showed how to construct a simple categorical HMM, initialize its parameters, sample data, and use it to perform state inference (i.e. filtering, smoothing, and finding the most likely states). However, often we do not know the model paramters and instead need to estimate them from data. The next notebook shows how to do exactly that.</p>
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">#</a></h2>
+<p>This notebook showed how to construct a simple categorical HMM, initialize its parameters, sample data, and use it to perform state inference (i.e. filtering, smoothing, and finding the most likely states). However, often we do not know the model parameters and instead need to estimate them from data. The next notebook shows how to do exactly that.</p>
 </section>
 </section>
 
 
-              </div>
+                </article>
               
-        </div>
-    </div>
-    
-    
-    <div class='prev-next-bottom'>
-        
-    <a class='left-prev' id="prev-link" href="../../index.html" title="previous page">Welcome to DYNAMAX!</a>
-    <a class='right-next' id="next-link" href="casino_hmm_learning.html" title="next page">Casino HMM: Learning (parameter estimation)</a>
 
-    </div>
-    <footer class="footer mt-5 mt-md-0">
-    <div class="container">
-      <p>
-        
-          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
-        
-            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
-      </p>
-    </div>
-  </footer>
-</main>
-
-
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../../index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Welcome to DYNAMAX!</p>
       </div>
+    </a>
+    <a class="right-next"
+       href="casino_hmm_learning.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Casino HMM: Learning (parameter estimation)</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#make-a-categorical-hmm">Make a Categorical HMM</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-data-from-model">Sample data from model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vectorizing-computation">Vectorizing computation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#filtering-forwards-algorithm">Filtering (forwards algorithm)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-filtering-distribution">Plot the filtering distribution</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#smoothing-forwards-backwards-algorithm">Smoothing (forwards-backwards algorithm)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#most-likely-state-sequence-viterbi-algorithm">Most likely state sequence (Viterbi algorithm)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
     </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
-    
-  <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
-
-
-    
+  <footer class="bd-footer">
+  </footer>
   </body>
 </html>

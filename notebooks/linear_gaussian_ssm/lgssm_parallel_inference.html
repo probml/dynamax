@@ -1,36 +1,41 @@
 
+
 <!DOCTYPE html>
 
-<html lang="en">
+
+<html lang="en" >
+
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Parallel filtering and smoothing in an LG-SSM</title>
-    
-  <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
-    
-  <link rel="stylesheet"
-    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    
-      
-  <link rel="stylesheet"
-    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
-  <link rel="stylesheet"
-    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
-
-    
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    
-  <link rel="preload" as="script" href="../../_static/js/index.d3f166471bb80abb5163.js">
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
@@ -38,305 +43,316 @@
     <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/linear_gaussian_ssm/lgssm_parallel_inference';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="MAP parameter estimation for an LG-SSM using EM and SGD" href="lgssm_learning.html" />
     <link rel="prev" title="Online linear regression using Kalman filtering" href="kf_linreg.html" />
-
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="en" />
-
-
-
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
-    
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
-    <div class="container-xl">
-      <div class="row">
-          
-<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
     
-        <div class="navbar-brand-box">
-<a class="navbar-brand text-wrap" href="../../index.html">
+    
+    
+    
+  </div>
   
-  <img src="../../_static/logo.gif" class="logo" alt="logo">
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
   
   
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../hmm/casino_hmm_inference.html">Casino HMM: Inference (state estimation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmm/casino_hmm_learning.html">Casino HMM: Learning (parameter estimation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmm/gaussian_hmm.html">Gaussian HMM: Cross-validation and Model Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmm/autoregressive_hmm.html">Autoregressive (AR) HMM Demo</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Linear Gaussian SSMs</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="kf_tracking.html">Tracking an object using the Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="kf_linreg.html">Online linear regression using Kalman filtering</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Parallel filtering and smoothing in an LG-SSM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lgssm_learning.html">MAP parameter estimation for an LG-SSM using EM and SGD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lgssm_hmc.html">Bayesian parameter estimation for an LG-SSM using HMC</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Nonlinear Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">Tracking a spiraling object using the extended / unscented Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">Online learning for an MLP using extended Kalman filtering</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Generalized Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">Online Logistic Regression using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">Online learning of an MLP Classifier using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../types.html">Terminology for types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">State Space Model (Base class)</a></li>
+
+
+
+
+
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-launch-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Launch interactive content">
+    <i class="fas fa-rocket"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/linear_gaussian_ssm/lgssm_parallel_inference.ipynb" target="_blank"
+   class="btn btn-sm dropdown-item"
+   title="Launch onBinder"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  
+    <img src="../../_static/images/logo_binder.svg">
+  </span>
+<span class="btn__text-container">Binder</span>
 </a>
-</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form>
-<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-    <p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  HMMs
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/casino_hmm_inference.html">
-   Casino HMM: Inference (state estimation)
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/casino_hmm_learning.html">
-   Casino HMM: Learning (parameter estimation)
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/gaussian_hmm.html">
-   Gaussian HMM: Cross-validation and Model Selection
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../hmm/autoregressive_hmm.html">
-   Autoregressive (AR) HMM Demo
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  Linear Gaussian SSMs
- </span>
-</p>
-<ul class="current nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="kf_tracking.html">
-   Tracking an object using the Kalman filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="kf_linreg.html">
-   Online linear regression using Kalman filtering
-  </a>
- </li>
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   Parallel filtering and smoothing in an LG-SSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="lgssm_learning.html">
-   MAP parameter estimation for an LG-SSM using EM and SGD
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="lgssm_hmc.html">
-   Bayesian parameter estimation for an LG-SSM using HMC
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  Nonlinear Gaussian SSMs
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
-   Tracking a spiraling object using the extended / unscented Kalman filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
-   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
-   Online learning for an MLP using extended Kalman filtering
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  Generalized Gaussian SSMs
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
-   Online Logistic Regression using conditional moments Gaussian filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
-   Online learning of an MLP Classifier using conditional moments Gaussian filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
-   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  API Documentation
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html">
-   State Space Model (Base class)
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#hidden-markov-model">
-   Hidden Markov Model
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#linear-gaussian-ssm">
-   Linear Gaussian SSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#nonlinear-gaussian-gssm">
-   Nonlinear Gaussian GSSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#generalized-gaussian-gssm">
-   Generalized Gaussian GSSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#utilities">
-   Utilities
-  </a>
- </li>
-</ul>
+</li>
+      
+      
+      
+      
+      <li><a href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/linear_gaussian_ssm/lgssm_parallel_inference.ipynb" target="_blank"
+   class="btn btn-sm dropdown-item"
+   title="Launch onColab"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
 
-</nav> <!-- To handle the deprecated key -->
-
-<div class="navbar_extra_footer">
-  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-</div>
-
+<span class="btn__icon-container">
+  
+    <img src="../../_static/images/logo_colab.png">
+  </span>
+<span class="btn__text-container">Colab</span>
+</a>
+</li>
+      
+  </ul>
 </div>
 
 
-          
+
+<a href="https://github.com/probml/dynamax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
 
 
-          
-<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
-    
-    <div class="row topbar fixed-top container-xl">
-    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
     </div>
-    <div class="col pl-2 topbar-main">
-        
-        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
-            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
-            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
-            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
-            <i class="fas fa-bars"></i>
-            <i class="fas fa-arrow-left"></i>
-            <i class="fas fa-arrow-up"></i>
-        </button>
-        
-        
-        <!-- Source interaction buttons -->
-
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
-        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
-    <div class="dropdown-buttons sourcebuttons">
-        <a class="repository-button"
-            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
-                data-toggle="tooltip" data-placement="left" title="Source repository"><i
-                    class="fab fa-github"></i>repository</button></a>
-        
-        
-    </div>
+  
 </div>
-
-
-        <!-- Full screen (wrap in <a> to have style consistency -->
-        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
-                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
-                title="Fullscreen mode"><i
-                    class="fas fa-expand"></i></button></a>
-
-        <!-- Launch buttons -->
-
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
-        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
-    <div class="dropdown-buttons">
-        
-        <a class="binder-button" href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/linear_gaussian_ssm/lgssm_parallel_inference.ipynb"><button type="button"
-                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
-                data-placement="left"><img class="binder-button-logo"
-                    src="../../_static/images/logo_binder.svg"
-                    alt="Interact on binder">Binder</button></a>
-        
-        
-        
-        <a class="colab-button" href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/linear_gaussian_ssm/lgssm_parallel_inference.ipynb"><button type="button" class="btn btn-secondary topbarbtn"
-                title="Launch Colab" data-toggle="tooltip" data-placement="left"><img class="colab-button-logo"
-                    src="../../_static/images/logo_colab.png"
-                    alt="Interact on Colab">Colab</button></a>
-        
-        
-    </div>
 </div>
+              
+              
 
-    </div>
-
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Parallel filtering and smoothing in an LG-SSM</h1>
     <!-- Table of contents -->
-    <div class="d-none d-md-block col-md-2 bd-toc show">
-        
-        <div class="tocsection onthispage pt-5 pb-3">
-            <i class="fas fa-list"></i> Contents
-        </div>
-        <nav id="bd-toc-nav">
-            <ul class="nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#setup">
-   Setup
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#model">
-   Model
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#test-parallel-inference-on-a-single-sequence">
-   Test parallel inference on a single sequence
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#timing-comparison">
-   Timing comparison
-  </a>
- </li>
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model">Model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-parallel-inference-on-a-single-sequence">Test parallel inference on a single sequence</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#timing-comparison">Timing comparison</a></li>
 </ul>
-
-        </nav>
-        
+            </nav>
+        </div>
     </div>
 </div>
-    <div id="main-content" class="row">
-        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
-        
-              <div>
+
+              
                 
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
   <section class="tex2jax_ignore mathjax_ignore" id="parallel-filtering-and-smoothing-in-an-lg-ssm">
-<h1>Parallel filtering and smoothing in an LG-SSM<a class="headerlink" href="#parallel-filtering-and-smoothing-in-an-lg-ssm" title="Permalink to this heading">¶</a></h1>
+<h1>Parallel filtering and smoothing in an LG-SSM<a class="headerlink" href="#parallel-filtering-and-smoothing-in-an-lg-ssm" title="Permalink to this heading">#</a></h1>
 <p>This notebook shows how can reduce the cost of inference from O(T) to O(log T) time, if
 we have a GPU device.</p>
 <p>This code borrows heavily from this <a class="reference external" href="https://github.com/EEA-sensors/sequential-parallelization-examples/blob/main/python/temporal-parallelization-bayes-smoothers/parallel_kalman_jax.ipynb">example notebook</a> from <a class="reference external" href="https://github.com/AdrienCorenflos">Adrien Correnflos</a>. Some small changes have been made so it works with dynamax.</p>
 <p>If you have a GPU, you should be able to get a speedup curve like this:</p>
 <p><img alt="Parallel KF" src="https://github.com/probml/dynamax/blob/main/docs/figures/lgssm_parallel_smoothing_timing.png?raw=true" /></p>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -370,6 +386,11 @@ we have a GPU device.</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -392,7 +413,7 @@ cpu
 </div>
 </section>
 <section id="model">
-<h2>Model<a class="headerlink" href="#model" title="Permalink to this heading">¶</a></h2>
+<h2>Model<a class="headerlink" href="#model" title="Permalink to this heading">#</a></h2>
 <p>The model is a simple tracking model (see Example 3.6 in <em>Bayesian Filtering and Smoothing</em> (S. Särkkä, 2013).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -429,7 +450,7 @@ cpu
 </div>
 </section>
 <section id="test-parallel-inference-on-a-single-sequence">
-<h2>Test parallel inference on a single sequence<a class="headerlink" href="#test-parallel-inference-on-a-single-sequence" title="Permalink to this heading">¶</a></h2>
+<h2>Test parallel inference on a single sequence<a class="headerlink" href="#test-parallel-inference-on-a-single-sequence" title="Permalink to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">100</span>
@@ -475,7 +496,7 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ed165ed0d3bb2f79be1ce75495a9ea3775ebb8acf1d184a69794b25990f51717.png" src="../../_images/ed165ed0d3bb2f79be1ce75495a9ea3775ebb8acf1d184a69794b25990f51717.png" />
+<img alt="../../_images/18da6051c9c8466e2c4761b3b3c44768a3f531aeef432d98cc44fe1edd4794cf.png" src="../../_images/18da6051c9c8466e2c4761b3b3c44768a3f531aeef432d98cc44fe1edd4794cf.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -489,12 +510,12 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c10558dfd6e8a30de4d90aa44d9283957507c901a0b6c9f0fdf633a5043e1535.png" src="../../_images/c10558dfd6e8a30de4d90aa44d9283957507c901a0b6c9f0fdf633a5043e1535.png" />
+<img alt="../../_images/c8a12062d5940256af01221218e562aee25523addf1b83668e475fce8ffca3c7.png" src="../../_images/c8a12062d5940256af01221218e562aee25523addf1b83668e475fce8ffca3c7.png" />
 </div>
 </div>
 </section>
 <section id="timing-comparison">
-<h2>Timing comparison<a class="headerlink" href="#timing-comparison" title="Permalink to this heading">¶</a></h2>
+<h2>Timing comparison<a class="headerlink" href="#timing-comparison" title="Permalink to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -536,22 +557,22 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.8762609958648682
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time serial = 0.5955722332000732
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time parallel = 0.44504284858703613
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=100, 	 time parallel = 0.5052673816680908
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time serial = 0.866692066192627
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time serial = 0.5928356647491455
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time parallel = 0.49582862854003906
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=200, 	 time parallel = 0.5826148986816406
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time serial = 0.8853795528411865
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time serial = 0.6162593364715576
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time parallel = 0.585324764251709
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Num timesteps=500, 	 time parallel = 0.6767008304595947
 </pre></div>
 </div>
 </div>
@@ -571,45 +592,115 @@ cpu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/2ca4f1ec8a4edbe42536445a33ae8c97e2e247305b5777985aaa3c30c0272ab7.png" src="../../_images/2ca4f1ec8a4edbe42536445a33ae8c97e2e247305b5777985aaa3c30c0272ab7.png" />
+<img alt="../../_images/d9ea9f2af8268008b9853f66f767e86bd1783ca8fdbc0b8652186f32def1df9e.png" src="../../_images/d9ea9f2af8268008b9853f66f767e86bd1783ca8fdbc0b8652186f32def1df9e.png" />
 </div>
 </div>
 </section>
 </section>
 
 
-              </div>
+                </article>
               
-        </div>
-    </div>
-    
-    
-    <div class='prev-next-bottom'>
-        
-    <a class='left-prev' id="prev-link" href="kf_linreg.html" title="previous page">Online linear regression using Kalman filtering</a>
-    <a class='right-next' id="next-link" href="lgssm_learning.html" title="next page">MAP parameter estimation for an LG-SSM using EM and SGD</a>
 
-    </div>
-    <footer class="footer mt-5 mt-md-0">
-    <div class="container">
-      <p>
-        
-          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
-        
-            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
-      </p>
-    </div>
-  </footer>
-</main>
-
-
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="kf_linreg.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Online linear regression using Kalman filtering</p>
       </div>
+    </a>
+    <a class="right-next"
+       href="lgssm_learning.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">MAP parameter estimation for an LG-SSM using EM and SGD</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model">Model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-parallel-inference-on-a-single-sequence">Test parallel inference on a single sequence</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#timing-comparison">Timing comparison</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
     </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
-    
-  <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
-
-
-    
+  <footer class="bd-footer">
+  </footer>
   </body>
 </html>

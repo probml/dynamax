@@ -1,36 +1,41 @@
 
+
 <!DOCTYPE html>
 
-<html lang="en">
+
+<html lang="en" >
+
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Gaussian HMM: Cross-validation and Model Selection</title>
-    
-  <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
-    
-  <link rel="stylesheet"
-    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    
-      
-  <link rel="stylesheet"
-    href="../../_static/vendor/open-sans_all/1.44.1/index.css">
-  <link rel="stylesheet"
-    href="../../_static/vendor/lato_latin-ext/1.44.1/index.css">
-
-    
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.40e2e510f6b7d1648584402491bb10fe.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    
-  <link rel="preload" as="script" href="../../_static/js/index.d3f166471bb80abb5163.js">
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
@@ -38,330 +43,321 @@
     <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/sphinx-book-theme.d31b09fe5c1d09cb49b26a786de4a05d.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/hmm/gaussian_hmm';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Autoregressive (AR) HMM Demo" href="autoregressive_hmm.html" />
     <link rel="prev" title="Casino HMM: Learning (parameter estimation)" href="casino_hmm_learning.html" />
-
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="en" />
-
-
-
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
-    
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
-    <div class="container-xl">
-      <div class="row">
-          
-<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
     
-        <div class="navbar-brand-box">
-<a class="navbar-brand text-wrap" href="../../index.html">
+    
+    
+    
+  </div>
   
-  <img src="../../_static/logo.gif" class="logo" alt="logo">
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
   
   
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="casino_hmm_inference.html">Casino HMM: Inference (state estimation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="casino_hmm_learning.html">Casino HMM: Learning (parameter estimation)</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Gaussian HMM: Cross-validation and Model Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoregressive_hmm.html">Autoregressive (AR) HMM Demo</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Linear Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">Tracking an object using the Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/kf_linreg.html">Online linear regression using Kalman filtering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">Parallel filtering and smoothing in an LG-SSM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/lgssm_learning.html">MAP parameter estimation for an LG-SSM using EM and SGD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../linear_gaussian_ssm/lgssm_hmc.html">Bayesian parameter estimation for an LG-SSM using HMC</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Nonlinear Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">Tracking a spiraling object using the extended / unscented Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">Online learning for an MLP using extended Kalman filtering</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Generalized Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">Online Logistic Regression using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">Online learning of an MLP Classifier using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../types.html">Terminology for types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">State Space Model (Base class)</a></li>
+
+
+
+
+
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-launch-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Launch interactive content">
+    <i class="fas fa-rocket"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/hmm/gaussian_hmm.ipynb" target="_blank"
+   class="btn btn-sm dropdown-item"
+   title="Launch onBinder"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  
+    <img src="../../_static/images/logo_binder.svg">
+  </span>
+<span class="btn__text-container">Binder</span>
 </a>
-</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form>
-<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
-    <p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  HMMs
- </span>
-</p>
-<ul class="current nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="casino_hmm_inference.html">
-   Casino HMM: Inference (state estimation)
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="casino_hmm_learning.html">
-   Casino HMM: Learning (parameter estimation)
-  </a>
- </li>
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   Gaussian HMM: Cross-validation and Model Selection
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="autoregressive_hmm.html">
-   Autoregressive (AR) HMM Demo
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  Linear Gaussian SSMs
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/kf_tracking.html">
-   Tracking an object using the Kalman filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/kf_linreg.html">
-   Online linear regression using Kalman filtering
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_parallel_inference.html">
-   Parallel filtering and smoothing in an LG-SSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_learning.html">
-   MAP parameter estimation for an LG-SSM using EM and SGD
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../linear_gaussian_ssm/lgssm_hmc.html">
-   Bayesian parameter estimation for an LG-SSM using HMC
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  Nonlinear Gaussian SSMs
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_spiral.html">
-   Tracking a spiraling object using the extended / unscented Kalman filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">
-   Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../nonlinear_gaussian_ssm/ekf_mlp.html">
-   Online learning for an MLP using extended Kalman filtering
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  Generalized Gaussian SSMs
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">
-   Online Logistic Regression using conditional moments Gaussian filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">
-   Online learning of an MLP Classifier using conditional moments Gaussian filter
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">
-   Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter
-  </a>
- </li>
-</ul>
-<p class="caption collapsible-parent" role="heading">
- <span class="caption-text">
-  API Documentation
- </span>
-</p>
-<ul class="nav sidenav_l1">
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html">
-   State Space Model (Base class)
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#hidden-markov-model">
-   Hidden Markov Model
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#linear-gaussian-ssm">
-   Linear Gaussian SSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#nonlinear-gaussian-gssm">
-   Nonlinear Gaussian GSSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#generalized-gaussian-gssm">
-   Generalized Gaussian GSSM
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html#utilities">
-   Utilities
-  </a>
- </li>
-</ul>
+</li>
+      
+      
+      
+      
+      <li><a href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/hmm/gaussian_hmm.ipynb" target="_blank"
+   class="btn btn-sm dropdown-item"
+   title="Launch onColab"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
 
-</nav> <!-- To handle the deprecated key -->
-
-<div class="navbar_extra_footer">
-  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-</div>
-
-</div>
-
-
-          
-
-
-          
-<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
-    
-    <div class="row topbar fixed-top container-xl">
-    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
-    </div>
-    <div class="col pl-2 topbar-main">
-        
-        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
-            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
-            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
-            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
-            <i class="fas fa-bars"></i>
-            <i class="fas fa-arrow-left"></i>
-            <i class="fas fa-arrow-up"></i>
-        </button>
-        
-        
-        <!-- Source interaction buttons -->
-
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
-        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
-    <div class="dropdown-buttons sourcebuttons">
-        <a class="repository-button"
-            href="https://github.com/probml/dynamax"><button type="button" class="btn btn-secondary topbarbtn"
-                data-toggle="tooltip" data-placement="left" title="Source repository"><i
-                    class="fab fa-github"></i>repository</button></a>
-        
-        
-    </div>
-</div>
-
-
-        <!-- Full screen (wrap in <a> to have style consistency -->
-        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
-                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
-                title="Fullscreen mode"><i
-                    class="fas fa-expand"></i></button></a>
-
-        <!-- Launch buttons -->
-
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
-        aria-label="Launch interactive content"><i class="fas fa-rocket"></i></button>
-    <div class="dropdown-buttons">
-        
-        <a class="binder-button" href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/hmm/gaussian_hmm.ipynb"><button type="button"
-                class="btn btn-secondary topbarbtn" title="Launch Binder" data-toggle="tooltip"
-                data-placement="left"><img class="binder-button-logo"
-                    src="../../_static/images/logo_binder.svg"
-                    alt="Interact on binder">Binder</button></a>
-        
-        
-        
-        <a class="colab-button" href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/hmm/gaussian_hmm.ipynb"><button type="button" class="btn btn-secondary topbarbtn"
-                title="Launch Colab" data-toggle="tooltip" data-placement="left"><img class="colab-button-logo"
-                    src="../../_static/images/logo_colab.png"
-                    alt="Interact on Colab">Colab</button></a>
-        
-        
-    </div>
-</div>
-
-    </div>
-
-    <!-- Table of contents -->
-    <div class="d-none d-md-block col-md-2 bd-toc show">
-        
-        <div class="tocsection onthispage pt-5 pb-3">
-            <i class="fas fa-list"></i> Contents
-        </div>
-        <nav id="bd-toc-nav">
-            <ul class="nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#setup">
-   Setup
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#helper-functions-for-plotting">
-   Helper functions for plotting
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#generate-sample-data">
-   Generate sample data
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#write-a-helper-function-to-perform-leave-one-out-cross-validation">
-   Write a helper function to perform leave-one-out cross-validation
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states">
-     Plot the individual and average validation log likelihods as a function of number of states
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states">
-     Now fit a model to all the training data using the chosen number of states
-    </a>
-   </li>
+<span class="btn__icon-container">
+  
+    <img src="../../_static/images/logo_colab.png">
+  </span>
+<span class="btn__text-container">Colab</span>
+</a>
+</li>
+      
   </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#visualize-the-fitted-model">
-   Visualize the fitted model
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#comparing-gaussian-hmms-with-different-constraints-on-the-covariance">
-   Comparing Gaussian HMMs with different constraints on the covariance
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#conclusion">
-   Conclusion
-  </a>
- </li>
-</ul>
+</div>
 
-        </nav>
-        
+
+
+<a href="https://github.com/probml/dynamax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Gaussian HMM: Cross-validation and Model Selection</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#helper-functions-for-plotting">Helper functions for plotting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-sample-data">Generate sample data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#write-a-helper-function-to-perform-leave-one-out-cross-validation">Write a helper function to perform leave-one-out cross-validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states">Plot the individual and average validation log likelihods as a function of number of states</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states">Now fit a model to all the training data using the chosen number of states</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-fitted-model">Visualize the fitted model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-gaussian-hmms-with-different-constraints-on-the-covariance">Comparing Gaussian HMMs with different constraints on the covariance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+</ul>
+            </nav>
+        </div>
     </div>
 </div>
-    <div id="main-content" class="row">
-        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
-        
-              <div>
+
+              
                 
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm-cross-validation-and-model-selection">
-<h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Permalink to this heading">¶</a></h1>
+<h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Permalink to this heading">#</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-cdb3ca94-79ac-433a-8639-0032d71aa776">
-<span class="eqno">(1)<a class="headerlink" href="#equation-cdb3ca94-79ac-433a-8639-0032d71aa776" title="Permalink to this equation">¶</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-879e157e-4c1d-4f0c-8cad-05a2228a6298">
+<span class="eqno">(1)<a class="headerlink" href="#equation-879e157e-4c1d-4f0c-8cad-05a2228a6298" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_t \mid z_t, \theta) &amp;= \mathcal{N}(y_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the emission parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -374,7 +370,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <li><p>Use the log probability of held-out data to choose among different models</p></li>
 </ol>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -411,10 +407,15 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 <section id="helper-functions-for-plotting">
-<h2>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Permalink to this heading">¶</a></h2>
+<h2>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Permalink to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -473,7 +474,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </section>
 <section id="generate-sample-data">
-<h2>Generate sample data<a class="headerlink" href="#generate-sample-data" title="Permalink to this heading">¶</a></h2>
+<h2>Generate sample data<a class="headerlink" href="#generate-sample-data" title="Permalink to this heading">#</a></h2>
 <p>As in the preceding notebooks, we start by sampling data from the model. Here, we add a slight wrinkle: we will sample training and test data, where the latter is only used for model selection.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -488,7 +489,9 @@ It also includes prior distributions on the parameters. For example, it uses a c
 
 <span class="c1"># Specify parameters of the HMM</span>
 <span class="n">initial_probs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">true_num_states</span><span class="p">)</span> <span class="o">/</span> <span class="n">true_num_states</span>
-<span class="n">transition_matrix</span> <span class="o">=</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">true_num_states</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">true_num_states</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">transition_matrix</span> <span class="o">=</span> <span class="mf">0.80</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">true_num_states</span><span class="p">)</span> \
+    <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">true_num_states</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> \
+    <span class="o">+</span> <span class="mf">0.05</span> <span class="o">/</span> <span class="n">true_num_states</span>
 <span class="n">emission_means</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
     <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">true_num_states</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
     <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">true_num_states</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
@@ -519,7 +522,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/1bc3ff9ae10020f55f1c362a13ec88c0e4c3718523a27c0a9a3c4bd4d14fb9c3.png" src="../../_images/1bc3ff9ae10020f55f1c362a13ec88c0e4c3718523a27c0a9a3c4bd4d14fb9c3.png" />
+<img alt="../../_images/3ac13913497b3f7174d7fee9e1ede4256a8627002d19c6495ab42357213673b6.png" src="../../_images/3ac13913497b3f7174d7fee9e1ede4256a8627002d19c6495ab42357213673b6.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -530,12 +533,12 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/fa4ea32b50a9d574afdd2d9ac0e0fc3d69d07589b0e0520cd05c33c195dde6f8.png" src="../../_images/fa4ea32b50a9d574afdd2d9ac0e0fc3d69d07589b0e0520cd05c33c195dde6f8.png" />
+<img alt="../../_images/492407c50a043f07f5fdaaa3710db407c9e08fa0b357dba1ed3db645c78a26e8.png" src="../../_images/492407c50a043f07f5fdaaa3710db407c9e08fa0b357dba1ed3db645c78a26e8.png" />
 </div>
 </div>
 </section>
 <section id="write-a-helper-function-to-perform-leave-one-out-cross-validation">
-<h2>Write a helper function to perform leave-one-out cross-validation<a class="headerlink" href="#write-a-helper-function-to-perform-leave-one-out-cross-validation" title="Permalink to this heading">¶</a></h2>
+<h2>Write a helper function to perform leave-one-out cross-validation<a class="headerlink" href="#write-a-helper-function-to-perform-leave-one-out-cross-validation" title="Permalink to this heading">#</a></h2>
 <p>This function fits the data into <em>folds</em> where each fold consists of all
 but one of the training sequences. It fits the model to each fold in
 parallel, and then computs the log likelihood of the held-out sequence for
@@ -585,31 +588,63 @@ determining the number of discrete states.</p>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 2 states
 </pre></div>
 </div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
+</pre></div>
+</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 3 states
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 4 states
 </pre></div>
 </div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
+</pre></div>
+</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 5 states
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 6 states
 </pre></div>
 </div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
+</pre></div>
+</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 7 states
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 8 states
 </pre></div>
 </div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
+</pre></div>
+</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 9 states
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
 </pre></div>
 </div>
 </div>
 </div>
 <section id="plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states">
-<h3>Plot the individual and average validation log likelihods as a function of number of states<a class="headerlink" href="#plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states" title="Permalink to this heading">¶</a></h3>
+<h3>Plot the individual and average validation log likelihods as a function of number of states<a class="headerlink" href="#plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states" title="Permalink to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">all_num_states</span><span class="p">,</span> <span class="n">avg_val_lls</span><span class="p">,</span> <span class="s1">&#39;-ko&#39;</span><span class="p">)</span>
@@ -624,7 +659,7 @@ determining the number of discrete states.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;avg. validation log prob.&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/f2ba5a49602ec4805c6d0fdcefab098b30068ac5fbeb653e1adda65e8d8dc4bc.png" src="../../_images/f2ba5a49602ec4805c6d0fdcefab098b30068ac5fbeb653e1adda65e8d8dc4bc.png" />
+<img alt="../../_images/4079e1c464bb4d48cc9825973f64b6495a790e4230943e18b3045b3e8601677b.png" src="../../_images/4079e1c464bb4d48cc9825973f64b6495a790e4230943e18b3045b3e8601677b.png" />
 </div>
 </div>
 <p>There’s no right answer for how to choose the number of states, but reasonable heuristics include:</p>
@@ -649,7 +684,7 @@ determining the number of discrete states.</p>
 </div>
 </section>
 <section id="now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states">
-<h3>Now fit a model to all the training data using the chosen number of states<a class="headerlink" href="#now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states" title="Permalink to this heading">¶</a></h3>
+<h3>Now fit a model to all the training data using the chosen number of states<a class="headerlink" href="#now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states" title="Permalink to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize the parameters using K-Means on the full training set</span>
@@ -661,6 +696,10 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
+</pre></div>
+</div>
 <div class="output text_html">
 <style>
     /* Turns off some styling */
@@ -680,7 +719,7 @@ determining the number of discrete states.</p>
 </div><div class="output text_html">
     <div>
       <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [100/100 00:02&lt;00:00]
+      100.00% [100/100 00:01&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -702,16 +741,16 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f1f23281fd0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f352f542190&gt;
 </pre></div>
 </div>
-<img alt="../../_images/126eedefabf0aa9b7fdaefc23f59041ddca5615a6dc9d3d8dda1dea2cc6ca2e7.png" src="../../_images/126eedefabf0aa9b7fdaefc23f59041ddca5615a6dc9d3d8dda1dea2cc6ca2e7.png" />
+<img alt="../../_images/401c87058d9d735f5cbf8160b9e469dc4423dfd6975762df89a9f14688c44107.png" src="../../_images/401c87058d9d735f5cbf8160b9e469dc4423dfd6975762df89a9f14688c44107.png" />
 </div>
 </div>
 </section>
 </section>
 <section id="visualize-the-fitted-model">
-<h2>Visualize the fitted model<a class="headerlink" href="#visualize-the-fitted-model" title="Permalink to this heading">¶</a></h2>
+<h2>Visualize the fitted model<a class="headerlink" href="#visualize-the-fitted-model" title="Permalink to this heading">#</a></h2>
 <p>We’ll make the same plots as above, but now using the fitted parameters and the chosen number of states.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -722,7 +761,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/dafc65514e1e4bd45148b177fb73c73d9d4c016e3a8ffaf530b2367ef19cdd38.png" src="../../_images/dafc65514e1e4bd45148b177fb73c73d9d4c016e3a8ffaf530b2367ef19cdd38.png" />
+<img alt="../../_images/03705c85d1d67848d77fb8810f62b31320c4a87908ae21710b3e0993cc827b6b.png" src="../../_images/03705c85d1d67848d77fb8810f62b31320c4a87908ae21710b3e0993cc827b6b.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -732,7 +771,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/0b5b96715011ec2089a19ab4d88b9243ac307594ea709f919eecdab8f46d4374.png" src="../../_images/0b5b96715011ec2089a19ab4d88b9243ac307594ea709f919eecdab8f46d4374.png" />
+<img alt="../../_images/c8a301f325c1decd6c9745dcfa2928b6bbde12290c347df0d66fe368a8453eab.png" src="../../_images/c8a301f325c1decd6c9745dcfa2928b6bbde12290c347df0d66fe368a8453eab.png" />
 </div>
 </div>
 <div class="admonition important">
@@ -741,7 +780,7 @@ determining the number of discrete states.</p>
 </div>
 </section>
 <section id="comparing-gaussian-hmms-with-different-constraints-on-the-covariance">
-<h2>Comparing Gaussian HMMs with different constraints on the covariance<a class="headerlink" href="#comparing-gaussian-hmms-with-different-constraints-on-the-covariance" title="Permalink to this heading">¶</a></h2>
+<h2>Comparing Gaussian HMMs with different constraints on the covariance<a class="headerlink" href="#comparing-gaussian-hmms-with-different-constraints-on-the-covariance" title="Permalink to this heading">#</a></h2>
 <p>Dynamax implements Gaussian HMMs with different constraints on the covariance matrices:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.hidden_markov_model.DiagonalGaussianHMM"><code class="docutils literal notranslate"><span class="pre">DiagonalGaussianHMM</span></code></a> assumes the covariance matrices are diagonal (i.e. <span class="math notranslate nohighlight">\(\Sigma_k = \mathrm{diag}([\sigma_{k,1}^2, \ldots, \sigma_{k,D}^2])\)</span>)</p></li>
@@ -783,12 +822,28 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:870: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  warnings.warn(
+</pre></div>
+</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Marginal log probabilities of test data:
-                   GaussianHMM:  92.7
-           DiagonalGaussianHMM:  109.0
-          SphericalGaussianHMM:  102.2
-   SharedCovarianceGaussianHMM:  103.7
-                    True Model:  109.8
+                   GaussianHMM:  106.9
+           DiagonalGaussianHMM:  117.0
+          SphericalGaussianHMM:  112.8
+   SharedCovarianceGaussianHMM:  111.6
+                    True Model:  114.9
 </pre></div>
 </div>
 </div>
@@ -797,7 +852,7 @@ determining the number of discrete states.</p>
 <p>Here, the true parameters were in fact spherical and shared across all states, so it’s perhaps a bit surprising that the more general diagonal covariance model wins out on test data. Keep in mind, however, that there is some amount of randomness in both the sampled data and the initialization of these models, so the particular ordering might change from one random seed to the next. In actual applications, you should compute means and standard errors by running these analyses with multiple random seeds.</p>
 </section>
 <section id="conclusion">
-<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">¶</a></h2>
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">#</a></h2>
 <p>Dynamax provides a family of Gaussian HMMs for multivariate continuous emissions. This notebook showed how to use cross-validation to choose the number of discrete states, and how to compare model families (e.g. <code class="docutils literal notranslate"><span class="pre">GaussianHMM</span></code> vs <code class="docutils literal notranslate"><span class="pre">DiagonalGaussianHMM</span></code>) on test data.</p>
 <p>Now that you have seen HMMs with categorical and Gaussian emissions, you can pattern-match to use the other HMMs. See the <a class="reference external" href="https://probml.github.io/dynamax/api.html#high-level-models">documentation</a> for a complete list.</p>
 <p>The next notebook highlights one more generalization of the standard HMM to <em>autoregressive</em> emissions, where the emissions depend on preceding emissions as well as the current discrete state.</p>
@@ -805,38 +860,115 @@ determining the number of discrete states.</p>
 </section>
 
 
-              </div>
+                </article>
               
-        </div>
-    </div>
-    
-    
-    <div class='prev-next-bottom'>
-        
-    <a class='left-prev' id="prev-link" href="casino_hmm_learning.html" title="previous page">Casino HMM: Learning (parameter estimation)</a>
-    <a class='right-next' id="next-link" href="autoregressive_hmm.html" title="next page">Autoregressive (AR) HMM Demo</a>
 
-    </div>
-    <footer class="footer mt-5 mt-md-0">
-    <div class="container">
-      <p>
-        
-          By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy<br/>
-        
-            &copy; Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.<br/>
-      </p>
-    </div>
-  </footer>
-</main>
-
-
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="casino_hmm_learning.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Casino HMM: Learning (parameter estimation)</p>
       </div>
+    </a>
+    <a class="right-next"
+       href="autoregressive_hmm.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Autoregressive (AR) HMM Demo</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#helper-functions-for-plotting">Helper functions for plotting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-sample-data">Generate sample data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#write-a-helper-function-to-perform-leave-one-out-cross-validation">Write a helper function to perform leave-one-out cross-validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states">Plot the individual and average validation log likelihods as a function of number of states</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states">Now fit a model to all the training data using the chosen number of states</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize-the-fitted-model">Visualize the fitted model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-gaussian-hmms-with-different-constraints-on-the-covariance">Comparing Gaussian HMMs with different constraints on the covariance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
     </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
-    
-  <script src="../../_static/js/index.d3f166471bb80abb5163.js"></script>
-
-
-    
+  <footer class="bd-footer">
+  </footer>
   </body>
 </html>

@@ -1,0 +1,496 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dynamax.hidden_markov_model.models.gamma_hmm</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/dynamax/hidden_markov_model/models/gamma_hmm';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/hmm/casino_hmm_inference.html">Casino HMM: Inference (state estimation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/hmm/casino_hmm_learning.html">Casino HMM: Learning (parameter estimation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/hmm/gaussian_hmm.html">Gaussian HMM: Cross-validation and Model Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/hmm/autoregressive_hmm.html">Autoregressive (AR) HMM Demo</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Linear Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/kf_tracking.html">Tracking an object using the Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/kf_linreg.html">Online linear regression using Kalman filtering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/lgssm_parallel_inference.html">Parallel filtering and smoothing in an LG-SSM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/lgssm_learning.html">MAP parameter estimation for an LG-SSM using EM and SGD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/linear_gaussian_ssm/lgssm_hmc.html">Bayesian parameter estimation for an LG-SSM using HMC</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Nonlinear Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral.html">Tracking a spiraling object using the extended / unscented Kalman filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum.html">Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/nonlinear_gaussian_ssm/ekf_mlp.html">Online learning for an MLP using extended Kalman filtering</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Generalized Gaussian SSMs</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">Online Logistic Regression using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">Online learning of an MLP Classifier using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.html">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../types.html">Terminology for types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api.html">State Space Model (Base class)</a></li>
+
+
+
+
+
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/probml/dynamax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for dynamax.hidden_markov_model.models.gamma_hmm</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
+<span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="k">as</span> <span class="nn">tfd</span>
+<span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.bijectors</span> <span class="k">as</span> <span class="nn">tfb</span>
+<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Array</span>
+<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterProperties</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.abstractions</span> <span class="kn">import</span> <span class="n">HMM</span><span class="p">,</span> <span class="n">HMMEmissions</span><span class="p">,</span> <span class="n">HMMParameterSet</span><span class="p">,</span> <span class="n">HMMPropertySet</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.initial</span> <span class="kn">import</span> <span class="n">StandardHMMInitialState</span><span class="p">,</span> <span class="n">ParamsStandardHMMInitialState</span>
+<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model.models.transitions</span> <span class="kn">import</span> <span class="n">StandardHMMTransitions</span><span class="p">,</span> <span class="n">ParamsStandardHMMTransitions</span>
+<span class="kn">from</span> <span class="nn">dynamax.types</span> <span class="kn">import</span> <span class="n">Scalar</span>
+<span class="kn">import</span> <span class="nn">optax</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+
+<span class="k">class</span> <span class="nc">ParamsGammaHMMEmissions</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+    <span class="n">rate</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">GammaHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">num_states</span><span class="p">,</span>
+                 <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
+                 <span class="n">m_step_num_iters</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">m_step_optimizer</span><span class="p">,</span> <span class="n">m_step_num_iters</span><span class="o">=</span><span class="n">m_step_num_iters</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                   <span class="n">key</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">emission_concentrations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_rates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;kmeans&quot;</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">emissions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Need emissions to initialize the model with K-Means!&quot;</span>
+            <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+            <span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">emissions</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+            <span class="n">_emission_concentrations</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,))</span>
+            <span class="n">_emission_rates</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;prior&quot;</span><span class="p">:</span>
+            <span class="n">_emission_concentrations</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,))</span>
+            <span class="n">_emission_rates</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">exponential</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid initialization method: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
+
+        <span class="c1"># Only use the values above if the user hasn&#39;t specified their own</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">ParamsGammaHMMEmissions</span><span class="p">(</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_concentrations</span><span class="p">,</span> <span class="n">_emission_concentrations</span><span class="p">),</span>
+            <span class="n">rate</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_rates</span><span class="p">,</span> <span class="n">_emission_rates</span><span class="p">))</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">ParamsGammaHMMEmissions</span><span class="p">(</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(</span><span class="n">constrainer</span><span class="o">=</span><span class="n">tfb</span><span class="o">.</span><span class="n">Softplus</span><span class="p">()),</span>
+            <span class="n">rate</span><span class="o">=</span><span class="n">ParameterProperties</span><span class="p">(</span><span class="n">constrainer</span><span class="o">=</span><span class="n">tfb</span><span class="o">.</span><span class="n">Softplus</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span>
+
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+
+    <span class="k">def</span> <span class="nf">distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">concentration</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">concentration</span><span class="p">[</span><span class="n">state</span><span class="p">],</span>
+                         <span class="n">rate</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">rate</span><span class="p">[</span><span class="n">state</span><span class="p">])</span>
+
+
+<span class="k">class</span> <span class="nc">ParamsGammaHMM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">initial</span><span class="p">:</span> <span class="n">ParamsStandardHMMInitialState</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="n">ParamsStandardHMMTransitions</span>
+    <span class="n">emissions</span><span class="p">:</span> <span class="n">ParamsGammaHMMEmissions</span>
+
+
+<div class="viewcode-block" id="GammaHMM"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.GammaHMM">[docs]</a><span class="k">class</span> <span class="nc">GammaHMM</span><span class="p">(</span><span class="n">HMM</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;An HMM whose emissions come from a gamma distribution.</span>
+
+<span class="sd">    Let $y_t \in \mathbb{R}_+$ denote non-negative emissions.</span>
+<span class="sd">    In this model, the emission distribution is,</span>
+
+<span class="sd">    $$p(y_t \mid z_t, \theta) = \mathrm{Ga}(y_{t} \mid \alpha_{z_t}, \beta_{z_t})$$</span>
+
+<span class="sd">    with *emission concentration* $\alpha_k \in \mathbb{R}_+$ and *emission rate* $\beta_k \in \mathbb{R}_+$.</span>
+
+
+<span class="sd">    :param num_states: number of discrete states $K$</span>
+<span class="sd">    :param initial_probs_concentration: $\alpha$</span>
+<span class="sd">    :param transition_matrix_concentration: $\beta$</span>
+<span class="sd">    :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.</span>
+<span class="sd">    :param m_step_optimizer: ``optax`` optimizer, like Adam.</span>
+<span class="sd">    :param m_step_num_iters: number of optimizer steps per M-step.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">initial_probs_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_stickiness</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">m_step_optimizer</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
+                 <span class="n">m_step_num_iters</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+        <span class="n">initial_component</span> <span class="o">=</span> <span class="n">StandardHMMInitialState</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_probs_concentration</span><span class="o">=</span><span class="n">initial_probs_concentration</span><span class="p">)</span>
+        <span class="n">transition_component</span> <span class="o">=</span> <span class="n">StandardHMMTransitions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">concentration</span><span class="o">=</span><span class="n">transition_matrix_concentration</span><span class="p">,</span> <span class="n">stickiness</span><span class="o">=</span><span class="n">transition_matrix_stickiness</span><span class="p">)</span>
+        <span class="n">emission_component</span> <span class="o">=</span> <span class="n">GammaHMMEmissions</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">m_step_optimizer</span><span class="p">,</span> <span class="n">m_step_num_iters</span><span class="o">=</span><span class="n">m_step_num_iters</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">initial_component</span><span class="p">,</span> <span class="n">transition_component</span><span class="p">,</span> <span class="n">emission_component</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GammaHMM.initialize"><a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.GammaHMM.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                   <span class="n">key</span><span class="p">:</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
+                   <span class="n">initial_probs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_concentrations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_rates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emissions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HMMParameterSet</span><span class="p">,</span> <span class="n">HMMPropertySet</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+
+<span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
+<span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
+<span class="sd">        Parameters will then be sampled from the prior (if `method==prior`).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
+<span class="sd">            method: method for initializing unspecified parameters. Both &quot;prior&quot; and &quot;kmeans&quot; are supported.</span>
+<span class="sd">            initial_probs: manually specified initial state probabilities.</span>
+<span class="sd">            transition_matrix: manually specified transition matrix.</span>
+<span class="sd">            emission_concentrations: manually specified emission concentrations.</span>
+<span class="sd">            emission_rates: manually specified emission rates.</span>
+<span class="sd">            emissions: emissions for initializing the parameters with kmeans.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Model parameters and their properties.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span> <span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">emission_concentrations</span><span class="o">=</span><span class="n">emission_concentrations</span><span class="p">,</span> <span class="n">emission_rates</span><span class="o">=</span><span class="n">emission_rates</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ParamsGammaHMM</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">),</span> <span class="n">ParamsGammaHMM</span><span class="p">(</span><span class="o">**</span><span class="n">props</span><span class="p">)</span></div></div>
+</pre></div>
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
