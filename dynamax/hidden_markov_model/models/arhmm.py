@@ -43,7 +43,8 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
             key, subkey = jr.split(key)  # Create a random seed for SKLearn.
-            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=min(jnp.iinfo(jnp.int32).max, 4294967295))  # The lims are set by SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0,
+                                     maxval=min(int(jnp.iinfo(jnp.int32).max), 4294967295))  # The lims are set by SKLearn.
             km = KMeans(self.num_states, random_state=sklearn_key).fit(emissions.reshape(-1, self.emission_dim))
             _emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
             _emission_biases = jnp.array(km.cluster_centers_)
