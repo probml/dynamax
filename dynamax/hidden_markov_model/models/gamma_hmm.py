@@ -40,8 +40,7 @@ class GammaHMMEmissions(HMMEmissions):
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
             key, subkey = jr.split(key)  # Create a random seed for SKLearn.
-            sklearn_key = jr.randint(subkey, shape=(), minval=0,
-                                     maxval=min(int(jnp.iinfo(jnp.int32).max), 4294967295))  # The lims are set by SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
             km = KMeans(self.num_states, random_state=sklearn_key).fit(emissions.reshape(-1, 1))
 
             _emission_concentrations = jnp.ones((self.num_states,))
