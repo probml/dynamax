@@ -52,7 +52,8 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
 
             flat_emissions = emissions.reshape(-1,)
             flat_inputs = inputs.reshape(-1, self.input_dim)
-            km = KMeans(self.num_states).fit(flat_inputs)
+            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+            km = KMeans(self.num_states, random_state=jnp.prod(subkey)).fit(flat_inputs)
             _emission_weights = jnp.zeros((self.num_states, self.input_dim))
             _emission_biases = jnp.array([tfb.Sigmoid().inverse(flat_emissions[km.labels_ == k].mean())
                                           for k in range(self.num_states)])
