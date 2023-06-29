@@ -41,7 +41,7 @@ class GammaHMMEmissions(HMMEmissions):
             from sklearn.cluster import KMeans
             key, subkey = jr.split(key)  # Create a random seed for SKLearn.
             sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-            km = KMeans(self.num_states, random_state=sklearn_key).fit(emissions.reshape(-1, 1))
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, 1))
 
             _emission_concentrations = jnp.ones((self.num_states,))
             _emission_rates = jnp.ravel(1.0 / km.cluster_centers_)

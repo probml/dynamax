@@ -73,7 +73,7 @@ class GaussianHMMEmissions(HMMEmissions):
             from sklearn.cluster import KMeans
             key, subkey = jr.split(key)  # Create a random seed for SKLearn.
             sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-            km = KMeans(self.num_states, random_state=sklearn_key).fit(emissions.reshape(-1, self.emission_dim))
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
 
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_covs = jnp.tile(jnp.eye(self.emission_dim)[None, :, :], (self.num_states, 1, 1))
@@ -171,7 +171,7 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
             from sklearn.cluster import KMeans
             key, subkey = jr.split(key)  # Create a random seed for SKLearn.
             sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-            km = KMeans(self.num_states, random_state=sklearn_key).fit(emissions.reshape(-1, self.emission_dim))
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_scale_diags = jnp.ones((self.num_states, self.emission_dim))
 
@@ -292,7 +292,7 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
             from sklearn.cluster import KMeans
             key, subkey = jr.split(key)  # Create a random seed for SKLearn.
             sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-            km = KMeans(self.num_states, random_state=sklearn_key).fit(emissions.reshape(-1, self.emission_dim))
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_scales = jnp.ones((self.num_states,))
 
@@ -394,7 +394,7 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
             from sklearn.cluster import KMeans
             key, subkey = jr.split(key)  # Create a random seed for SKLearn.
             sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-            km = KMeans(self.num_states, random_state=sklearn_key).fit(emissions.reshape(-1, self.emission_dim))
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_cov = jnp.eye(self.emission_dim)
 
@@ -516,7 +516,7 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
             from sklearn.cluster import KMeans
             key, subkey = jr.split(key)  # Create a random seed for SKLearn.
             sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-            km = KMeans(self.num_states, random_state=sklearn_key).fit(emissions.reshape(-1, self.emission_dim))
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_cov_diag_factors = jnp.ones((self.num_states, self.emission_dim))
             _emission_cov_low_rank_factors = jnp.zeros((self.num_states, self.emission_dim, self.emission_rank))
