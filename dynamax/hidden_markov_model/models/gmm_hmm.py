@@ -78,7 +78,9 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
-            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_weights = jnp.ones((self.num_states, self.num_components)) / self.num_components
             _emission_means = jnp.tile(jnp.array(km.cluster_centers_)[:, None, :], (1, self.num_components, 1))
             _emission_covs = jnp.tile(jnp.eye(self.emission_dim), (self.num_states, self.num_components, 1, 1))
@@ -298,7 +300,9 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
-            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_weights = jnp.ones((self.num_states, self.num_components)) / self.num_components
             _emission_means = jnp.tile(jnp.array(km.cluster_centers_)[:, None, :], (1, self.num_components, 1))
             _emission_scale_diags = jnp.ones((self.num_states, self.num_components, self.emission_dim))
