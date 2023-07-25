@@ -252,13 +252,22 @@ def _condition_on(m, P, H, D, d, R, u, y):
     if R.ndim == 2:
         S = R + H @ P @ H.T
         K = psd_solve(S, H @ P).T
+    else: 
+        # Optimization using see Woodbury identity with A=R, U=H@chol(P), V=U.T, C=I
+        # (see https://en.wikipedia.org/wiki/Woodbury_matrix_identity)
 
-    else: # optimization using Woodbury identity
-        S = jnp.diag(R) + H @ P @ H.T
+        R_inv = jnp.diag(1.0 / R)
+        U = H @ jnp.linalg.cholesky(P)
+        I = jnp.eye(P.shape[0])    
+        S_inv = R_inv - R_inv @ U @ psd_solve(I + U.T @ R_inv @ U, U.T @ R_inv) 
+        """
+        # Could alternatively use U=H and C=P
         R_inv = jnp.diag(1.0 / R)
         P_inv = psd_solve(P, jnp.eye(P.shape[0]))
         S_inv = R_inv - R_inv @ H @ psd_solve(P_inv + H.T @ R_inv @ H, H.T @ R_inv)
+        """
         K = P @ H.T @ S_inv  
+        S = jnp.diag(R) + H @ P @ H.T
 
     Sigma_cond = P - K @ S @ K.T
     mu_cond = m + K @ (y - D @ u - d - H @ m)
