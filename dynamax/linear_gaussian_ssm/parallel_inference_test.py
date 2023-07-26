@@ -47,11 +47,8 @@ def make_static_lgssm_params():
     return params, lgssm
         
 
-def make_dynamic_lgssm_params(num_timesteps):
-    latent_dim = 4
-    observation_dim = 2
-
-    key = jr.PRNGKey(0)
+def make_dynamic_lgssm_params(num_timesteps, latent_dim=4, observation_dim=2, seed=0):
+    key = jr.PRNGKey(seed)
     key, key_f, key_r, key_init = jr.split(key, 4)
 
     dt = 0.1
