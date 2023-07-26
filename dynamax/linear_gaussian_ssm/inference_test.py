@@ -15,6 +15,32 @@ else:
     def allclose(x,y):
         return jnp.allclose(x, y, atol=1e-1)
 
+
+def flatten_diagonal_emission_cov(params):
+    """Flatten a diagonal emission covariance matrix into a vector.
+
+    Args:
+        params: LGSSMParams object.
+
+    Returns:
+        params: LGSSMParams object with flattened diagonal emission covariance.
+    """
+    R = params.emissions.cov
+
+    if R.ndim == 2:
+        R_diag = jnp.diag(R)
+        R_full = jnp.diag(R_diag)
+    else:
+        R_diag = vmap(jnp.diag)(R)
+        R_full = vmap(jnp.diag)(R_diag)
+
+    assert allclose(R, R_full), "R is not diagonal"
+
+    emission_params_diag = params.emissions._replace(cov=R_diag)
+    params = params._replace(emissions=emission_params_diag)
+    return params
+
+
 def joint_posterior_mvn(params, emissions):
     """Construct the joint posterior MVN of a LGSSM, by inverting the joint precision matrix which
     has a known block tridiagonal form.
@@ -72,6 +98,7 @@ def joint_posterior_mvn(params, emissions):
 
     return means, covs
 
+
 def lgssm_dynamax_to_tfp(num_timesteps, params):
 
     """Create a Tensorflow Probability `LinearGaussianStateSpaceModel` object
@@ -95,6 +122,7 @@ def lgssm_dynamax_to_tfp(num_timesteps, params):
     )
 
     return tfp_lgssm
+
 
 def build_lgssm_for_inference():
     """Construct example LinearGaussianSSM object for testing.
@@ -127,6 +155,7 @@ def build_lgssm_for_inference():
 
     return lgssm, params
 
+
 def build_lgssm_for_sampling():
     state_dim = 1
     emission_dim = 1
@@ -148,6 +177,7 @@ def build_lgssm_for_sampling():
                                  emission_covariance=R)
     return lgssm, params
 
+
 class TestFilteringAndSmoothing():
 
     ## For inference tests
@@ -162,8 +192,7 @@ class TestFilteringAndSmoothing():
     print(ssm_posterior.filtered_means.shape)
     print(ssm_posterior.smoothed_means.shape)
     
-    emission_params_diag = params.emissions._replace(cov=jnp.diag(params.emissions.cov))
-    params_diag = params._replace(emissions=emission_params_diag)
+    params_diag = flatten_diagonal_emission_cov(params)
     ssm_posterior_diag = lgssm.smoother(params_diag, emissions)
 
     # TensorFlow Probability posteriors
@@ -190,8 +219,7 @@ class TestFilteringAndSmoothing():
     keys = jr.split(key, sample_size)
     samples = vmap(lambda key, func=posterior_sample: func(key=key))(keys)
     
-    emission_params_diag = params.emissions._replace(cov=jnp.diag(params.emissions.cov))
-    params_diag = params._replace(emissions=emission_params_diag)
+    params_diag = flatten_diagonal_emission_cov(params)
     posterior_sample_diag = partial(lgssm.posterior_sample, params=params_diag, emissions=emissions)
     samples_diag = vmap(lambda key, func=posterior_sample_diag: func(key=key))(keys)
     
