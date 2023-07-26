@@ -32,28 +32,82 @@ Y₀             Y₁             Y₂             Y₃
 
 import jax.numpy as jnp
 from jax import vmap, lax
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
 from typing import NamedTuple
 from dynamax.types import PRNGKey
 from functools import partial
 
+from tensorflow_probability.substrates.jax.distributions import (
+    MultivariateNormalDiagPlusLowRankCovariance as MVNLowRank,
+    MultivariateNormalFullCovariance as MVN)
+
 from jax.scipy.linalg import cho_solve, cho_factor
-from dynamax.utils.utils import symmetrize
+from dynamax.utils.utils import symmetrize, psd_solve
 from dynamax.linear_gaussian_ssm import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
 
 
-def _get_params(x, dim, t):
-    if callable(x):
-        return x(t)
-    elif x.ndim == dim + 1:
-        return x[t]
-    else:
-        return x
+# Helper functions
+def _get_param(t, size, x):
+    if x.shape[0]==size: return x
+    else: return x[t]
+    
+def _get_params_at_timepoint(params, t):
+    emission_dim, state_dim = params.emissions.weights.shape[-2:]
+    F = _get_param(t, state_dim, params.dynamics.weights)
+    b = _get_param(t, state_dim, params.dynamics.bias)
+    Q = _get_param(t, state_dim, params.dynamics.cov)
+    H = _get_param(t+1, emission_dim, params.emissions.weights)
+    d = _get_param(t+1, emission_dim, params.emissions.bias)
+    R = _get_param(t+1, emission_dim, params.emissions.cov)
+    return F, b, Q, H, d, R
+
     
 #---------------------------------------------------------------------------#
 #                                Filtering                                  #
 #---------------------------------------------------------------------------#
+
+def _emissions_scale(Q, H, R):
+    """Compute the scale matrix for the emissions given the state covariance.
+
+        S_inv = inv(H @ Q @ H.T + R)
+
+    Args:
+        Q (state_dim, state_dim): State covariance.
+        H (emission_dim, state_dim): Emission matrix.
+        R (emission_dim, emission_dim) or (emission_dim,): Emission covariance.
+
+    Returns:
+        K (state_dim, emission_dim): Kalman gain.
+    """
+    if R.ndim == 2:
+        S = H @ Q @ H.T + R
+        S_inv = psd_solve(S, jnp.eye(S.shape[0]))
+    else:
+        # Optimization using Woodbury identity with A=R, U=H@chol(Q), V=U.T, C=I
+        # (see https://en.wikipedia.org/wiki/Woodbury_matrix_identity)
+        I = jnp.eye(Q.shape[0])
+        R_inv = jnp.diag(1.0 / R)
+        U = H @ jnp.linalg.cholesky(Q)
+        S_inv = R_inv - R_inv @ U @ psd_solve(I + U.T @ R_inv @ U, U.T @ R_inv) 
+    return S_inv
+
+
+def _marginal_loglik_elem(Q, H, R, y):
+    """Compute marginal log-likelihood elements. 
+    
+    Args:
+        Q (state_dim, state_dim): State covariance.
+        H (emission_dim, state_dim): Emission matrix.
+        R (emission_dim, emission_dim) or (emission_dim,): Emission covariance.
+        y (emission_dim,): Emission.
+    """
+    if R.ndim == 2:
+        S = H @ Q @ H.T + R
+        return -MVN(jnp.zeros_like(y), S).log_prob(y)
+    else:
+        L = H @ jnp.linalg.cholesky(Q)
+        return -MVNLowRank(jnp.zeros_like(y), R, L).log_prob(y)
+
 
 class FilterMessage(NamedTuple):
     """
@@ -65,6 +119,7 @@ class FilterMessage(NamedTuple):
         C: P(z_j | y_{i:j}, z_{i-1}) covariance.
         J:   P(z_{i-1} | y_{i:j}) covariance.
         eta: P(z_{i-1} | y_{i:j}) mean.
+        logZ: log P(y_{i:j}) marginal log-likelihood.
     """
     A:    Float[Array, "ntime state_dim state_dim"]
     b:    Float[Array, "ntime state_dim"]
@@ -78,15 +133,13 @@ def _initialize_filtering_messages(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
 
     def _first_message(params, y):
-        H = _get_params(params.emissions.weights, 2, 0)
-        R = _get_params(params.emissions.cov, 2, 0)
-        d = _get_params(params.emissions.bias, 1, 0)
+        H, d, R = _get_params_at_timepoint(params, -1)[3:]
         m = params.initial.mean
         P = params.initial.cov
 
-        S = H @ P @ H.T + R
-        CF, low = cho_factor(S)
-        K = cho_solve((CF, low), H @ P).T
+        S = H @ P @ H.T + (R if R.ndim==2 else jnp.diag(R))
+        S_inv = _emissions_scale(P, H, R)
+        K = P @ H.T @ S_inv
 
         A = jnp.zeros_like(P)
         b = m + K @ (y - H @ m - d)
@@ -94,31 +147,25 @@ def _initialize_filtering_messages(params, emissions):
         eta = jnp.zeros_like(b)
         J = jnp.eye(len(b))
 
-        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=H @ P @ H.T + R).log_prob(y)
+        logZ = _marginal_loglik_elem(P, H, R, y)
         return A, b, C, J, eta, logZ
 
 
     @partial(vmap, in_axes=(None, 0, 0))
     def _generic_message(params, y, t):
-        F = _get_params(params.dynamics.weights, 2, t)
-        Q = _get_params(params.dynamics.cov, 2, t)
-        b = _get_params(params.dynamics.bias, 1, t)
-        H = _get_params(params.emissions.weights, 2, t+1)
-        R = _get_params(params.emissions.cov, 2, t+1)
-        d = _get_params(params.emissions.bias, 1, t+1)
+        F, b, Q, H, d, R = _get_params_at_timepoint(params, t)
 
-        S = H @ Q @ H.T + R
-        CF, low = cho_factor(S)
-        K = cho_solve((CF, low), H @ Q).T
-
-        eta = F.T @ H.T @ cho_solve((CF, low), y - H @ b - d)
-        J = symmetrize(F.T @ H.T @ cho_solve((CF, low), H @ F))
+        S_inv = _emissions_scale(Q, H, R)
+        K = Q @ H.T @ S_inv
+        
+        eta = F.T @ H.T @ S_inv @ (y - H @ b - d)
+        J = symmetrize(F.T @ H.T @ S_inv @ H @ F)
 
         A = F - K @ H @ F
         b = b + K @ (y - H @ b - d)
         C = symmetrize(Q - K @ H @ Q)
 
-        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=S).log_prob(y)
+        logZ = _marginal_loglik_elem(Q, H, R, y)
         return A, b, C, J, eta, logZ
 
 
@@ -203,9 +250,7 @@ def _initialize_smoothing_messages(params, filtered_means, filtered_covariances)
 
     @partial(vmap, in_axes=(None, 0, 0, 0))
     def _generic_message(params, m, P, t):
-        F = _get_params(params.dynamics.weights, 2, t)
-        Q = _get_params(params.dynamics.cov, 2, t)
-        b = _get_params(params.dynamics.bias, 1, t)
+        F, b, Q = _get_params_at_timepoint(params, t)[:3]
 
         CF, low = cho_factor(F @ P @ F.T + Q)
         E = cho_solve((CF, low), F @ P).T
