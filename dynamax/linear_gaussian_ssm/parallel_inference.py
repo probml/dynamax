@@ -46,21 +46,16 @@ from dynamax.utils.utils import symmetrize, psd_solve
 from dynamax.linear_gaussian_ssm import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
 
 
-# Helper functions
-def _get_param(t, size, x):
-    if x.shape[0]==size: return x
-    else: return x[t]
-    
-def _get_params_at_timepoint(params, t):
-    emission_dim, state_dim = params.emissions.weights.shape[-2:]
-    F = _get_param(t, state_dim, params.dynamics.weights)
-    b = _get_param(t, state_dim, params.dynamics.bias)
-    Q = _get_param(t, state_dim, params.dynamics.cov)
-    H = _get_param(t+1, emission_dim, params.emissions.weights)
-    d = _get_param(t+1, emission_dim, params.emissions.bias)
-    R = _get_param(t+1, emission_dim, params.emissions.cov)
+def _get_params(params, num_timesteps, t):
+    """Helper function to get parameters at time t."""
+    _get_one_param = lambda t,x: x[t] if x.shape[0]==num_timesteps else x
+    F = _get_one_param(t, params.dynamics.weights)
+    b = _get_one_param(t, params.dynamics.bias)
+    Q = _get_one_param(t, params.dynamics.cov)
+    H = _get_one_param(t+1, params.emissions.weights)
+    d = _get_one_param(t+1, params.emissions.bias)
+    R = _get_one_param(t+1, params.emissions.cov)
     return F, b, Q, H, d, R
-
     
 #---------------------------------------------------------------------------#
 #                                Filtering                                  #
@@ -132,8 +127,10 @@ class FilterMessage(NamedTuple):
 def _initialize_filtering_messages(params, emissions):
     """Preprocess observations to construct input for filtering assocative scan."""
 
+    num_timesteps = emissions.shape[0]
+    
     def _first_message(params, y):
-        H, d, R = _get_params_at_timepoint(params, -1)[3:]
+        H, d, R = _get_params(params, num_timesteps, -1)[3:]
         m = params.initial.mean
         P = params.initial.cov
 
@@ -153,7 +150,7 @@ def _initialize_filtering_messages(params, emissions):
 
     @partial(vmap, in_axes=(None, 0, 0))
     def _generic_message(params, y, t):
-        F, b, Q, H, d, R = _get_params_at_timepoint(params, t)
+        F, b, Q, H, d, R = _get_params(params, num_timesteps, t)
 
         S_inv = _emissions_scale(Q, H, R)
         K = Q @ H.T @ S_inv
@@ -167,7 +164,6 @@ def _initialize_filtering_messages(params, emissions):
 
         logZ = _marginal_loglik_elem(Q, H, R, y)
         return A, b, C, J, eta, logZ
-
 
     A0, b0, C0, J0, eta0, logZ0 = _first_message(params, emissions[0])
     At, bt, Ct, Jt, etat, logZt = _generic_message(params, emissions[1:], jnp.arange(len(emissions)-1))
@@ -248,10 +244,11 @@ def _initialize_smoothing_messages(params, filtered_means, filtered_covariances)
     def _last_message(m, P):
         return jnp.zeros_like(P), m, P
 
+    num_timesteps = filtered_means.shape[0]
+
     @partial(vmap, in_axes=(None, 0, 0, 0))
     def _generic_message(params, m, P, t):
-        F, b, Q = _get_params_at_timepoint(params, t)[:3]
-
+        F, b, Q = _get_params(params, num_timesteps, t)[:3]
         CF, low = cho_factor(F @ P @ F.T + Q)
         E = cho_solve((CF, low), F @ P).T
         g  = m - E @ (F @ m + b)

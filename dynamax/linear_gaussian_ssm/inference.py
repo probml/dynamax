@@ -143,20 +143,19 @@ class PosteriorGSSMSmoothed(NamedTuple):
 
 
 # Helper functions
-def _get_param(t, size, x):
-    if x.shape[0]==size: return x
-    else: return x[t]
+
     
-def _get_params_at_timepoint(params, t):
-    emission_dim, state_dim = params.emissions.weights.shape[-2:]
-    F = _get_param(t, state_dim, params.dynamics.weights)
-    B = _get_param(t, state_dim, params.dynamics.input_weights)
-    b = _get_param(t, state_dim, params.dynamics.bias)
-    Q = _get_param(t, state_dim, params.dynamics.cov)
-    H = _get_param(t, emission_dim, params.emissions.weights)
-    D = _get_param(t, emission_dim, params.emissions.input_weights)
-    d = _get_param(t, emission_dim, params.emissions.bias)
-    R = _get_param(t, emission_dim, params.emissions.cov)
+def _get_params(params, num_timesteps, t):
+    """Helper function to get parameters at time t."""
+    _get_one_param = lambda t,x: x[t] if x.shape[0]==num_timesteps else x
+    F = _get_one_param(t, params.dynamics.weights)
+    B = _get_one_param(t, params.dynamics.input_weights)
+    b = _get_one_param(t, params.dynamics.bias)
+    Q = _get_one_param(t, params.dynamics.cov)
+    H = _get_one_param(t, params.emissions.weights)
+    D = _get_one_param(t, params.emissions.input_weights)
+    d = _get_one_param(t, params.emissions.bias)
+    R = _get_one_param(t, params.emissions.cov)
     return F, B, b, Q, H, D, d, R
 
 _zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
@@ -372,7 +371,7 @@ def lgssm_joint_sample(
 
         initial_state = MVN(params.initial.mean, params.initial.cov).sample(seed=key1)
 
-        H0, D0, d0, R0 = _get_params_at_timepoint(params, 0)[4:]
+        H0, D0, d0, R0 = _get_params(params, num_timesteps, 0)[4:]
         u0 = tree_map(lambda x: x[0], inputs)
 
         initial_emission = _sample_emission(key2, H0, D0, d0, R0, initial_state, u0)
@@ -383,7 +382,7 @@ def lgssm_joint_sample(
         key1, key2 = jr.split(key, 2)
 
         # Get parameters and inputs for time index t
-        F, B, b, Q, H, D, d, R = _get_params_at_timepoint(params, t)
+        F, B, b, Q, H, D, d, R = _get_params(params, num_timesteps, t)
 
         # Sample from transition and emission distributions
         state = _sample_transition(key1, F, B, b, Q, prev_state, inpt)
@@ -444,7 +443,7 @@ def lgssm_filter(
         ll, pred_mean, pred_cov = carry
 
         # Shorthand: get parameters and inputs for time index t
-        F, B, b, Q, H, D, d, R = _get_params_at_timepoint(params, t)
+        F, B, b, Q, H, D, d, R = _get_params(params, num_timesteps, t)
         u = inputs[t]
         y = emissions[t]
 
@@ -498,7 +497,7 @@ def lgssm_smoother(
         t, filtered_mean, filtered_cov = args
 
         # Get parameters and inputs for time index t
-        F, B, b, Q = _get_params_at_timepoint(params, t)[:4]
+        F, B, b, Q = _get_params(params, num_timesteps, t)[:4]
         u = inputs[t]
 
         # This is like the Kalman gain but in reverse
@@ -566,7 +565,7 @@ def lgssm_posterior_sample(
         key, filtered_mean, filtered_cov, t = args
 
         # Shorthand: get parameters and inputs for time index t
-        F, B, b, Q = _get_params_at_timepoint(params, t)[:4]
+        F, B, b, Q = _get_params(params, num_timesteps, t)[:4]
         u = inputs[t]
 
         # Condition on next state
