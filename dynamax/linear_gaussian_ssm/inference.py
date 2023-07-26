@@ -222,6 +222,7 @@ def _predict(m, S, F, B, b, Q, u):
     Sigma_pred = F @ S @ F.T + Q
     return mu_pred, Sigma_pred
 
+
 def _condition_on(m, P, H, D, d, R, u, y):
     r"""Condition a Gaussian potential on a new linear Gaussian observation
        p(z_t \mid y_t, u_t, y_{1:t-1}, u_{1:t-1})
@@ -253,7 +254,7 @@ def _condition_on(m, P, H, D, d, R, u, y):
         S = R + H @ P @ H.T
         K = psd_solve(S, H @ P).T
     else: 
-        # Optimization using see Woodbury identity with A=R, U=H@chol(P), V=U.T, C=I
+        # Optimization using Woodbury identity with A=R, U=H@chol(P), V=U.T, C=I
         # (see https://en.wikipedia.org/wiki/Woodbury_matrix_identity)
 
         R_inv = jnp.diag(1.0 / R)
