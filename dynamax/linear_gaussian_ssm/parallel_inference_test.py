@@ -130,7 +130,7 @@ class TestTimeVaryingParallelLGSSMSmoother:
 
     serial_posterior = serial_lgssm_smoother(params, emissions)
     parallel_posterior = parallel_lgssm_smoother(params, emissions)
-    parallel_posterior_diag = parallel_lgssm_smoother(params, emissions)
+    parallel_posterior_diag = parallel_lgssm_smoother(params_diag, emissions)
 
     def test_filtered_means(self):
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
@@ -162,7 +162,7 @@ class TestTimeVaryingParallelLGSSMSampler():
 
     params, lgssm = make_dynamic_lgssm_params(num_timesteps)   
     params_diag = flatten_diagonal_emission_cov(params)
-    _, emissions = lgssm_joint_sample(params, key, num_timesteps)
+    _, emissions = lgssm_joint_sample(params_diag, key, num_timesteps)
 
     num_samples = 1000
     serial_keys = jr.split(jr.PRNGKey(2), num_samples)

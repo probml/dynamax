@@ -364,6 +364,7 @@ def lgssm_joint_sample(
 
     def _sample_emission(key, H, D, d, R, x, u):
         mean = H @ x + D @ u + d
+        R = jnp.diag(R) if R.ndim==1 else R
         return MVN(mean, R).sample(seed=key)
     
     def _sample_initial(key, params, inputs):
