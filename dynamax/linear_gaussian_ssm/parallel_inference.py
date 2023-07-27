@@ -36,6 +36,7 @@ from jaxtyping import Array, Float
 from typing import NamedTuple
 from dynamax.types import PRNGKey
 from functools import partial
+import warnings
 
 from tensorflow_probability.substrates.jax.distributions import (
     MultivariateNormalDiagPlusLowRankCovariance as MVNLowRank,
@@ -46,17 +47,43 @@ from dynamax.utils.utils import symmetrize, psd_solve
 from dynamax.linear_gaussian_ssm import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
 
 
+def _get_one_param(x, dim, t):
+    """Helper function to get one parameter at time t."""
+    if callable(x):
+        return x(t)
+    elif x.ndim == dim + 1:
+        return x[t]
+    else:
+        return x
+
 def _get_params(params, num_timesteps, t):
     """Helper function to get parameters at time t."""
-    _get_one_param = lambda t,x: x[t] if x.shape[0]==num_timesteps else x
-    F = _get_one_param(t, params.dynamics.weights)
-    b = _get_one_param(t, params.dynamics.bias)
-    Q = _get_one_param(t, params.dynamics.cov)
-    H = _get_one_param(t+1, params.emissions.weights)
-    d = _get_one_param(t+1, params.emissions.bias)
-    R = _get_one_param(t+1, params.emissions.cov)
+    assert not callable(params.emissions.cov), "Emission covariance cannot be a callable."
+
+    F = _get_one_param(params.dynamics.weights, 2, t)
+    b = _get_one_param(params.dynamics.bias, 1, t)
+    Q = _get_one_param(params.dynamics.cov, 2, t)
+    H = _get_one_param(params.emissions.weights, 2, t+1)
+    d = _get_one_param(params.emissions.bias, 1, t+1)
+
+    if len(params.emissions.cov.shape) == 1: 
+        R = _get_one_param(params.emissions.cov, 1, t+1)
+    elif len(params.emissions.cov.shape) > 2: 
+        R = _get_one_param(params.emissions.cov, 2, t+1)
+    elif params.emissions.cov.shape[0] != num_timesteps:
+        R = _get_one_param(params.emissions.cov, 2, t+1)
+    elif params.emissions.cov.shape[1] != num_timesteps:
+        R = _get_one_param(params.emissions.cov, 1, t+1)
+    else:
+        R = _get_one_param(params.emissions.cov, 2, t+1)
+        warnings.warn(
+            "Emission covariance has shape (N,N) where N is the number of timesteps. "
+            "The covariance will be interpreted as static and non-diagonal. To "
+            "specify a dynamic and diagonal covariance, pass it as a 3D array.")
+
     return F, b, Q, H, d, R
-    
+
+
 #---------------------------------------------------------------------------#
 #                                Filtering                                  #
 #---------------------------------------------------------------------------#
@@ -81,9 +108,9 @@ def _emissions_scale(Q, H, R):
         # Optimization using Woodbury identity with A=R, U=H@chol(Q), V=U.T, C=I
         # (see https://en.wikipedia.org/wiki/Woodbury_matrix_identity)
         I = jnp.eye(Q.shape[0])
-        R_inv = jnp.diag(1.0 / R)
         U = H @ jnp.linalg.cholesky(Q)
-        S_inv = R_inv - R_inv @ U @ psd_solve(I + U.T @ R_inv @ U, U.T @ R_inv) 
+        X = U / R[:, None]
+        S_inv = jnp.diag(1.0 / R) - X @ psd_solve(I + U.T @ X, X.T) 
     return S_inv
 
 
