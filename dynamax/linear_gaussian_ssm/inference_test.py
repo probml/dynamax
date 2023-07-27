@@ -10,11 +10,11 @@ from dynamax.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.utils.utils import has_tpu
 
 if has_tpu():
-    def allclose(x, y):
-        return jnp.allclose(x, y, atol=1e-1)
+    def allclose(x, y, atol=1e-1):
+        return jnp.allclose(x, y, atol=atol)
 else:
-    def allclose(x,y):
-        return jnp.allclose(x, y, atol=1e-1)
+    def allclose(x, y, atol=1e-1):
+        return jnp.allclose(x, y, atol=atol)
 
 def joint_posterior_mvn(params, emissions):
     """Construct the joint posterior MVN of a LGSSM, by inverting the joint precision matrix which
@@ -165,6 +165,12 @@ class TestFilteringAndSmoothing():
     print(ssm_posterior.filtered_means.shape)
     print(ssm_posterior.smoothed_means.shape)
 
+    # repeat sampling with NaNs in the emissions
+    nan_x = (0, emissions.shape[0], 0, emissions.shape[0])
+    nan_y = (0, emissions.shape[0], emissions.shape[1], emissions.shape[1])
+    emissions_nan = emissions.at[nan_x, nan_y].set(jnp.nan)
+    ssm_posterior_nan = lgssm.smoother(params, emissions_nan)
+
     # TensorFlow Probability posteriors
     tfp_lgssm = lgssm_dynamax_to_tfp(num_timesteps, params)
     tfp_lls, tfp_filtered_means, tfp_filtered_covs, *_ = tfp_lgssm.forward_filter(emissions)
@@ -199,6 +205,12 @@ class TestFilteringAndSmoothing():
         assert allclose(self.ssm_posterior.smoothed_means, self.tfp_smoothed_means)
         assert allclose(self.ssm_posterior.smoothed_covariances, self.tfp_smoothed_covs)
         assert allclose(self.ssm_posterior.marginal_loglik, self.tfp_lls.sum())
+
+    def test_kalman_tfp_nan(self):
+        assert allclose(self.ssm_posterior_nan.filtered_means, self.tfp_filtered_means, atol=1e0)
+        assert allclose(self.ssm_posterior_nan.filtered_covariances, self.tfp_filtered_covs, atol=1e0)
+        assert allclose(self.ssm_posterior_nan.smoothed_means, self.tfp_smoothed_means, atol=1e0)
+        assert allclose(self.ssm_posterior_nan.smoothed_covariances, self.tfp_smoothed_covs, atol=1e0)
 
     def test_kalman_vs_joint(self):
         assert allclose(self.ssm_posterior.smoothed_means, self.joint_means)
