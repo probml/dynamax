@@ -9,6 +9,7 @@ import jaxlib
 from jaxtyping import Array, Int
 from scipy.optimize import linear_sum_assignment
 from typing import Optional
+from jax.scipy.linalg import cho_factor, cho_solve
 
 def has_tpu():
     try:
@@ -198,10 +199,12 @@ def find_permutation(
     return perm
 
 
-def psd_solve(A,b):
+def psd_solve(A, b, diagonal_boost=1e-6):
     """A wrapper for coordinating the linalg solvers used in the library for psd matrices."""
-    A = A + 1e-6
-    return jnp.linalg.solve(A,b)
+    A = symmetrize(A) + diagonal_boost * jnp.eye(A.shape[-1])
+    L, lower = cho_factor(A, lower=True)
+    x = cho_solve((L, lower), b)
+    return x
 
 def symmetrize(A):
     """Symmetrize one or more matrices."""
