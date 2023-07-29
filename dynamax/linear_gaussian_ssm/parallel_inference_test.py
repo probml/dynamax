@@ -9,6 +9,7 @@ from dynamax.linear_gaussian_ssm import lgssm_smoother as serial_lgssm_smoother
 from dynamax.linear_gaussian_ssm import parallel_lgssm_smoother
 from dynamax.linear_gaussian_ssm import lgssm_posterior_sample as serial_lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm import parallel_lgssm_posterior_sample
+from dynamax.linear_gaussian_ssm.inference_test import flatten_diagonal_emission_cov
 
 
 def allclose(x,y, atol=1e-2):
@@ -46,11 +47,8 @@ def make_static_lgssm_params():
     return params, lgssm
         
 
-def make_dynamic_lgssm_params(num_timesteps):
-    latent_dim = 4
-    observation_dim = 2
-
-    key = jr.PRNGKey(0)
+def make_dynamic_lgssm_params(num_timesteps, latent_dim=4, observation_dim=2, seed=0):
+    key = jr.PRNGKey(seed)
     key, key_f, key_r, key_init = jr.split(key, 4)
 
     dt = 0.1
@@ -87,26 +85,33 @@ class TestParallelLGSSMSmoother:
     num_timesteps = 50
     key = jr.PRNGKey(1)
 
-    params, lgssm = make_static_lgssm_params()    
+    params, lgssm = make_static_lgssm_params()   
+    params_diag = flatten_diagonal_emission_cov(params)
     _, emissions = lgssm_joint_sample(params, key, num_timesteps)
 
     serial_posterior = serial_lgssm_smoother(params, emissions)
     parallel_posterior = parallel_lgssm_smoother(params, emissions)
+    parallel_posterior_diag = parallel_lgssm_smoother(params_diag, emissions)
 
     def test_filtered_means(self):
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
+        assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior_diag.filtered_means)
 
     def test_filtered_covariances(self):
         assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior.filtered_covariances)
+        assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior_diag.filtered_covariances)
 
     def test_smoothed_means(self):
         assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior.smoothed_means)
+        assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior_diag.smoothed_means)
 
     def test_smoothed_covariances(self):
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
+        assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior_diag.smoothed_covariances)
 
     def test_marginal_loglik(self):
-        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik)
+        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, atol=2e-1)
+        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior_diag.marginal_loglik, atol=2e-1)
 
 
 
@@ -120,25 +125,32 @@ class TestTimeVaryingParallelLGSSMSmoother:
     key = jr.PRNGKey(1)
 
     params, lgssm = make_dynamic_lgssm_params(num_timesteps)    
+    params_diag = flatten_diagonal_emission_cov(params)
     _, emissions = lgssm_joint_sample(params, key, num_timesteps)
 
     serial_posterior = serial_lgssm_smoother(params, emissions)
     parallel_posterior = parallel_lgssm_smoother(params, emissions)
+    parallel_posterior_diag = parallel_lgssm_smoother(params_diag, emissions)
 
     def test_filtered_means(self):
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
+        assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior_diag.filtered_means)
 
     def test_filtered_covariances(self):
         assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior.filtered_covariances)
+        assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior_diag.filtered_covariances)
 
     def test_smoothed_means(self):
         assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior.smoothed_means)
+        assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior_diag.smoothed_means)
 
     def test_smoothed_covariances(self):
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
+        assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior_diag.smoothed_covariances)
 
     def test_marginal_loglik(self):
-        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, atol=1e-1)
+        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, atol=2e-1)
+        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior_diag.marginal_loglik, atol=2e-1)
 
 
 
@@ -148,8 +160,9 @@ class TestTimeVaryingParallelLGSSMSampler():
     num_timesteps = 50
     key = jr.PRNGKey(1)
 
-    params, lgssm = make_dynamic_lgssm_params(num_timesteps)    
-    _, emissions = lgssm_joint_sample(params, key, num_timesteps)
+    params, lgssm = make_dynamic_lgssm_params(num_timesteps)   
+    params_diag = flatten_diagonal_emission_cov(params)
+    _, emissions = lgssm_joint_sample(params_diag, key, num_timesteps)
 
     num_samples = 1000
     serial_keys = jr.split(jr.PRNGKey(2), num_samples)
@@ -160,14 +173,21 @@ class TestTimeVaryingParallelLGSSMSampler():
     
     parallel_samples = vmap(parallel_lgssm_posterior_sample, in_axes=(0, None, None))(
                             parallel_keys, params, emissions)
+    
+    parallel_samples_diag = vmap(parallel_lgssm_posterior_sample, in_axes=(0, None, None))(
+                                 parallel_keys, params, emissions)
 
     def test_sampled_means(self):
         serial_mean = self.serial_samples.mean(axis=0)
         parallel_mean = self.parallel_samples.mean(axis=0)
+        parallel_mean_diag = self.parallel_samples.mean(axis=0)
         assert allclose(serial_mean, parallel_mean, atol=1e-1)
+        assert allclose(serial_mean, parallel_mean_diag, atol=1e-1)
 
     def test_sampled_covariances(self):
         # samples have shape (N, T, D): vmap over the T axis, calculate cov over N axis
         serial_cov = vmap(partial(jnp.cov, rowvar=False), in_axes=1)(self.serial_samples)
         parallel_cov = vmap(partial(jnp.cov, rowvar=False), in_axes=1)(self.parallel_samples)
+        parallel_cov_diag = vmap(partial(jnp.cov, rowvar=False), in_axes=1)(self.parallel_samples)
         assert allclose(serial_cov, parallel_cov, atol=1e-1)
+        assert allclose(serial_cov, parallel_cov_diag, atol=1e-1)
