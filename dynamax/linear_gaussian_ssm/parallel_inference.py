@@ -248,14 +248,33 @@ def lgssm_smoother(
 
     initial_messages = _initialize_smoothing_messages(params, filtered_means, filtered_covs)
     final_messages = lax.associative_scan(_operator, initial_messages, reverse=True)
-
+    G = initial_messages.E[:-1]
+    smoothed_means = final_messages.g
+    smoothed_covariances = final_messages.L
+    smoothed_cross_covariances = compute_smoothed_cross_covariances(
+        G, smoothed_means[:-1], smoothed_means[1:], smoothed_covariances[1:]
+    )
     return PosteriorGSSMSmoothed(
         marginal_loglik=filtered_posterior.marginal_loglik,
         filtered_means=filtered_means,
         filtered_covariances=filtered_covs,
-        smoothed_means=final_messages.g,
-        smoothed_covariances=final_messages.L
+        smoothed_means=smoothed_means,
+        smoothed_covariances=smoothed_covariances,
+        smoothed_cross_covariances=smoothed_cross_covariances,
     )
+
+
+@vmap
+def compute_smoothed_cross_covariances(
+    G: Float[Array, "state_dim state_dim"],
+    smoothed_mean: Float[Array, "state_dim"],
+    smoothed_mean_next: Float[Array, "state_dim"],
+    smoothed_cov_next: Float[Array, "state_dim state_dim"],
+) -> Float[Array, "state_dim state_dim"]:
+    # Compute the smoothed expectation of z_t z_{t+1}^T
+    # This is precomputed
+    # G = psd_solve(Q + F @ filtered_cov @ F.T, F @ filtered_cov).T
+    return G @ smoothed_cov_next + jnp.outer(smoothed_mean, smoothed_mean_next)
 
 
 #---------------------------------------------------------------------------#

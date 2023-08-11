@@ -12,6 +12,9 @@ from typing_extensions import Protocol
 
 from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
+from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_filter as parallel_lgssm_filter
+from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_smoother as parallel_lgssm_smoother
+from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_posterior_sample as parallel_lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
 from dynamax.parameters import ParameterProperties, ParameterSet
@@ -205,7 +208,8 @@ class LinearGaussianSSM(SSM):
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> Scalar:
-        filtered_posterior = lgssm_filter(params, emissions, inputs)
+        # filtered_posterior = lgssm_filter(params, emissions, inputs)
+        filtered_posterior = parallel_lgssm_filter(params, emissions)
         return filtered_posterior.marginal_loglik
 
     def filter(
@@ -214,7 +218,8 @@ class LinearGaussianSSM(SSM):
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> PosteriorGSSMFiltered:
-        return lgssm_filter(params, emissions, inputs)
+        # return lgssm_filter(params, emissions, inputs)
+        return parallel_lgssm_filter(params, emissions)
 
     def smoother(
         self,
@@ -222,7 +227,8 @@ class LinearGaussianSSM(SSM):
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> PosteriorGSSMSmoothed:
-        return lgssm_smoother(params, emissions, inputs)
+        # return lgssm_smoother(params, emissions, inputs)
+        return parallel_lgssm_smoother(params, emissions)
 
     def posterior_sample(
         self,
@@ -231,7 +237,8 @@ class LinearGaussianSSM(SSM):
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> Float[Array, "ntime state_dim"]:
-        return lgssm_posterior_sample(key, params, emissions, inputs)
+        # return lgssm_posterior_sample(key, params, emissions, inputs)
+        return parallel_lgssm_posterior_sample(key, params, emissions)
 
     def posterior_predictive(
         self,
@@ -250,7 +257,8 @@ class LinearGaussianSSM(SSM):
             :posterior predictive means $\mathbb{E}[y_{t,d} \mid y_{1:T}]$ and standard deviations $\mathrm{std}[y_{t,d} \mid y_{1:T}]$
 
         """
-        posterior = lgssm_smoother(params, emissions, inputs)
+        # posterior = lgssm_smoother(params, emissions, inputs)
+        posterior = parallel_lgssm_smoother(params, emissions)
         H = params.emissions.weights
         b = params.emissions.bias
         R = params.emissions.cov
@@ -275,7 +283,8 @@ class LinearGaussianSSM(SSM):
             inputs = jnp.zeros((num_timesteps, 0))
 
         # Run the smoother to get posterior expectations
-        posterior = lgssm_smoother(params, emissions, inputs)
+        # posterior = lgssm_smoother(params, emissions, inputs)
+        posterior = parallel_lgssm_smoother(params, emissions)
 
         # shorthand
         Ex = posterior.smoothed_means
@@ -580,7 +589,8 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         def one_sample(_params, rng):
             rngs = jr.split(rng, 2)
             # Sample latent states
-            states = lgssm_posterior_sample(rngs[0], _params, emissions, inputs)
+            # states = lgssm_posterior_sample(rngs[0], _params, emissions, inputs)
+            states = parallel_lgssm_posterior_sample(rngs[0], _params, emissions)
             # Sample parameters
             _stats = sufficient_stats_from_sample(states)
             return lgssm_params_sample(rngs[1], _stats)
