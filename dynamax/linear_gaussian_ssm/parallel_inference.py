@@ -34,13 +34,14 @@ import jax.numpy as jnp
 from jax import vmap, lax
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 from dynamax.types import PRNGKey
 from functools import partial
 
 from jax.scipy.linalg import cho_solve, cho_factor
 from dynamax.utils.utils import symmetrize
-from dynamax.linear_gaussian_ssm import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM, preprocess_args
+from dynamax.linear_gaussian_ssm import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
+from dynamax.linear_gaussian_ssm.inference import preprocess_args
 
 
 def _get_params(x, dim, t):
@@ -80,12 +81,12 @@ def _initialize_filtering_messages(params, emissions, inputs):
     def _first_message(params, y, u):
         H = _get_params(params.emissions.weights, 2, 0)
         R = _get_params(params.emissions.cov, 2, 0)
-        D = _get_params(params.emissions.input_weights, 2, t)
+        D = _get_params(params.emissions.input_weights, 2, 0)
         d = _get_params(params.emissions.bias, 1, 0)
         m = params.initial.mean
         P = params.initial.cov
 
-       # Adjust the bias term accoding to the input
+        # Adjust the bias term accoding to the input
         d = d + D @ u
 
         S = H @ P @ H.T + R
@@ -98,7 +99,7 @@ def _initialize_filtering_messages(params, emissions, inputs):
         eta = jnp.zeros_like(b)
         J = jnp.eye(len(b))
 
-        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=H @ P @ H.T + R).log_prob(y)
+        logZ = -MVN(loc=H @ m + d, covariance_matrix=H @ P @ H.T + R).log_prob(y)
         return A, b, C, J, eta, logZ
 
 
@@ -109,13 +110,15 @@ def _initialize_filtering_messages(params, emissions, inputs):
         Q = _get_params(params.dynamics.cov, 2, t)
         b = _get_params(params.dynamics.bias, 1, t)
         H = _get_params(params.emissions.weights, 2, t+1)
-        R = _get_params(params.emissions.cov, 2, t+1)
         D = _get_params(params.emissions.input_weights, 2, t)
+        R = _get_params(params.emissions.cov, 2, t+1)
         d = _get_params(params.emissions.bias, 1, t+1)
 
-       # Adjust the bias terms accoding to the input
+        # Adjust the bias terms accoding to the input
         d = d + D @ u
         b = b + B @ u
+
+        mu_y = H @ b + d
 
         S = H @ Q @ H.T + R
         CF, low = cho_factor(S)
@@ -128,7 +131,7 @@ def _initialize_filtering_messages(params, emissions, inputs):
         b = b + K @ (y - H @ b - d)
         C = symmetrize(Q - K @ H @ Q)
 
-        logZ = -MVN(loc=jnp.zeros_like(y), covariance_matrix=S).log_prob(y)
+        logZ = -MVN(loc=mu_y, covariance_matrix=S).log_prob(y)
         return A, b, C, J, eta, logZ
 
 
@@ -155,8 +158,6 @@ def lgssm_filter(
     """A parallel version of the lgssm filtering algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
-
-    Note: This function does not yet handle `inputs` to the system.
     """
     @vmap
     def _operator(elem1, elem2):
@@ -207,7 +208,7 @@ class SmoothMessage(NamedTuple):
     L: Float[Array, "ntime state_dim state_dim"]
 
 
-def _initialize_smoothing_messages(params, filtered_means, filtered_covariances):
+def _initialize_smoothing_messages(params, inputs, filtered_means, filtered_covariances):
     """Preprocess filtering output to construct input for smoothing assocative scan."""
 
     def _last_message(m, P):
@@ -217,7 +218,12 @@ def _initialize_smoothing_messages(params, filtered_means, filtered_covariances)
     def _generic_message(params, m, P, t):
         F = _get_params(params.dynamics.weights, 2, t)
         Q = _get_params(params.dynamics.cov, 2, t)
+        B = _get_params(params.dynamics.input_weights, 2, t)
         b = _get_params(params.dynamics.bias, 1, t)
+        u = inputs[t]
+
+       # Adjust the bias terms accoding to the input
+        b = b + B @ u
 
         CF, low = cho_factor(F @ P @ F.T + Q)
         E = cho_solve((CF, low), F @ P).T
@@ -244,10 +250,8 @@ def lgssm_smoother(
     """A parallel version of the lgssm smoothing algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
-
-    Note: This function does not yet handle `inputs` to the system.
     """
-    filtered_posterior = lgssm_filter(params, emissions)
+    filtered_posterior = lgssm_filter(params, emissions, inputs)
     filtered_means = filtered_posterior.filtered_means
     filtered_covs = filtered_posterior.filtered_covariances
     
@@ -260,7 +264,7 @@ def lgssm_smoother(
         L = symmetrize(E2 @ L1 @ E2.T + L2)
         return E, g, L
 
-    initial_messages = _initialize_smoothing_messages(params, filtered_means, filtered_covs)
+    initial_messages = _initialize_smoothing_messages(params, inputs, filtered_means, filtered_covs)
     final_messages = lax.associative_scan(_operator, initial_messages, reverse=True)
     G = initial_messages.E[:-1]
     smoothed_means = final_messages.g
@@ -307,13 +311,13 @@ class SampleMessage(NamedTuple):
     h: Float[Array, "ntime state_dim"]
 
 
-def _initialize_sampling_messages(key, params, filtered_means, filtered_covariances):
+def _initialize_sampling_messages(key, params, inputs, filtered_means, filtered_covariances):
     """A parallel version of the lgssm sampling algorithm.
     
     Given parallel smoothing messages `z_i ~ N(E_i z_{i+1} + g_i, L_i)`, 
     the parallel sampling messages are `(E_i,h_i)` where `h_i ~ N(g_i, L_i)`.
     """
-    E, g, L = _initialize_smoothing_messages(params, filtered_means, filtered_covariances)
+    E, g, L = _initialize_smoothing_messages(params, inputs, filtered_means, filtered_covariances)
     return SampleMessage(E=E, h=MVN(g, L).sample(seed=key))
 
 
@@ -326,9 +330,10 @@ def lgssm_posterior_sample(
     """A parallel version of the lgssm sampling algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
-
-    Note: This function does not yet handle `inputs` to the system.
     """
+    num_timesteps = len(emissions)
+    inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
+
     filtered_posterior = lgssm_filter(params, emissions, inputs)
     filtered_means = filtered_posterior.filtered_means
     filtered_covs = filtered_posterior.filtered_covariances
@@ -342,6 +347,6 @@ def lgssm_posterior_sample(
         h = E2 @ h1 + h2
         return E, h
 
-    initial_messages = _initialize_sampling_messages(key, params, filtered_means, filtered_covs)
+    initial_messages = _initialize_sampling_messages(key, params, inputs, filtered_means, filtered_covs)
     _, samples = lax.associative_scan(_operator, initial_messages, reverse=True)
     return samples

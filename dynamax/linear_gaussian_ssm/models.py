@@ -74,8 +74,8 @@ class LinearGaussianSSM(SSM):
         emission_dim: int,
         input_dim: int=0,
         has_dynamics_bias: bool=True,
-        has_emissions_bias: bool=True
-        use_parallel_inference: bool=False,
+        has_emissions_bias: bool=True,
+        use_parallel_inference: bool=False
     ):
         self.state_dim = state_dim
         self.emission_dim = emission_dim

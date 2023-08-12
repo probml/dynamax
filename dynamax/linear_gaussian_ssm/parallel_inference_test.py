@@ -21,27 +21,37 @@ def allclose(x,y, atol=1e-2):
     
 
 def make_static_lgssm_params():
+    latent_dim = 4
+    observation_dim = 2
+    input_dim = 3
+
     dt = 0.1
     F = jnp.eye(4) + dt * jnp.eye(4, k=2)
+    b = 0.1 * jnp.ones(4)
     Q = 1. * jnp.kron(jnp.array([[dt**3/3, dt**2/2],
                           [dt**2/2, dt]]),
                          jnp.eye(2))
                          
     H = jnp.eye(2, 4)
+    d = jnp.ones(2)
     R = 0.5 ** 2 * jnp.eye(2)
-    μ0 = jnp.array([0.,0.,1.,-1.])
+    μ0 = jnp.array([0.,1.,1.,-1.])
     Σ0 = jnp.eye(4)
 
-    latent_dim = 4
-    observation_dim = 2
+    B = jnp.eye(latent_dim, input_dim) * 0
+    D = jnp.eye(observation_dim, input_dim)
 
-    lgssm = LinearGaussianSSM(latent_dim, observation_dim)
+    lgssm = LinearGaussianSSM(latent_dim, observation_dim, input_dim)
     params, _ = lgssm.initialize(jr.PRNGKey(0),
                              initial_mean=μ0,
                              initial_covariance= Σ0,
                              dynamics_weights=F,
+                             dynamics_input_weights=B,
+                             dynamics_bias=b,
                              dynamics_covariance=Q,
                              emission_weights=H,
+                             emission_input_weights=D,
+                             emission_bias=d,
                              emission_covariance=R)
     return params, lgssm
         
@@ -49,6 +59,7 @@ def make_static_lgssm_params():
 def make_dynamic_lgssm_params(num_timesteps):
     latent_dim = 4
     observation_dim = 2
+    input_dim = 2
 
     key = jr.PRNGKey(0)
     key, key_f, key_r, key_init = jr.split(key, 4)
@@ -70,13 +81,18 @@ def make_dynamic_lgssm_params(num_timesteps):
     μ0 = jnp.array([0.,0.,1.,-1.])
     Σ0 = jnp.eye(latent_dim)
 
-    lgssm = LinearGaussianSSM(latent_dim, observation_dim)
+    B = jnp.eye(latent_dim, input_dim)
+    D = jnp.eye(observation_dim, input_dim)
+
+    lgssm = LinearGaussianSSM(latent_dim, observation_dim, input_dim)
     params, _ = lgssm.initialize(key_init,
                                 initial_mean=μ0,
                                 initial_covariance=Σ0,
                                 dynamics_weights=F,
+                                dynamics_input_weights=B,
                                 dynamics_covariance=Q,
                                 emission_weights=H,
+                                emission_input_weights=D,
                                 emission_covariance=R)
     return params, lgssm
 
@@ -85,13 +101,14 @@ class TestParallelLGSSMSmoother:
     """ Compare parallel and serial lgssm smoothing implementations."""
     
     num_timesteps = 50
-    key = jr.PRNGKey(1)
+    keys = jr.split(jr.PRNGKey(1), 2)
 
     params, lgssm = make_static_lgssm_params()    
-    _, emissions = lgssm_joint_sample(params, key, num_timesteps)
+    inputs = jr.normal(keys[0], (num_timesteps, params.dynamics.input_weights.shape[-1]))
+    _, emissions = lgssm_joint_sample(params, keys[1], num_timesteps, inputs)
 
-    serial_posterior = serial_lgssm_smoother(params, emissions)
-    parallel_posterior = parallel_lgssm_smoother(params, emissions)
+    serial_posterior = serial_lgssm_smoother(params, emissions, inputs)
+    parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
 
     def test_filtered_means(self):
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
@@ -117,13 +134,14 @@ class TestTimeVaryingParallelLGSSMSmoother:
     Vary dynamics weights and observation covariances  with time.
     """
     num_timesteps = 50
-    key = jr.PRNGKey(1)
+    keys = jr.split(jr.PRNGKey(1), 2)
 
     params, lgssm = make_dynamic_lgssm_params(num_timesteps)    
-    _, emissions = lgssm_joint_sample(params, key, num_timesteps)
+    inputs = jr.normal(keys[0], (num_timesteps, params.emissions.input_weights.shape[-1]))
+    _, emissions = lgssm_joint_sample(params, keys[1], num_timesteps, inputs)
 
-    serial_posterior = serial_lgssm_smoother(params, emissions)
-    parallel_posterior = parallel_lgssm_smoother(params, emissions)
+    serial_posterior = serial_lgssm_smoother(params, emissions, inputs)
+    parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
 
     def test_filtered_means(self):
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
@@ -146,20 +164,21 @@ class TestTimeVaryingParallelLGSSMSampler():
     """Compare parallel and serial lgssm posterior sampling implementations in expectation."""
     
     num_timesteps = 50
-    key = jr.PRNGKey(1)
+    keys = jr.split(jr.PRNGKey(1), 2)
 
     params, lgssm = make_dynamic_lgssm_params(num_timesteps)    
-    _, emissions = lgssm_joint_sample(params, key, num_timesteps)
+    inputs = jr.normal(keys[0], (num_timesteps, params.emissions.input_weights.shape[-1]))
+    _, emissions = lgssm_joint_sample(params, keys[1], num_timesteps, inputs)
 
     num_samples = 1000
     serial_keys = jr.split(jr.PRNGKey(2), num_samples)
     parallel_keys = jr.split(jr.PRNGKey(3), num_samples)
 
-    serial_samples = vmap(serial_lgssm_posterior_sample, in_axes=(0,None,None))(
-                          serial_keys, params, emissions)
+    serial_samples = vmap(serial_lgssm_posterior_sample, in_axes=(0, None, None, None))(
+                          serial_keys, params, emissions, inputs)
     
-    parallel_samples = vmap(parallel_lgssm_posterior_sample, in_axes=(0, None, None))(
-                            parallel_keys, params, emissions)
+    parallel_samples = vmap(parallel_lgssm_posterior_sample, in_axes=(0, None, None, None))(
+                            parallel_keys, params, emissions, inputs)
 
     def test_sampled_means(self):
         serial_mean = self.serial_samples.mean(axis=0)
