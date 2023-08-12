@@ -415,7 +415,11 @@ def lgssm_filter(
     # Run the Kalman filter
     carry = (0.0, params.initial.mean, params.initial.cov)
     (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
-    return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
+
+    return PosteriorGSSMFiltered(
+        marginal_loglik=ll,
+        filtered_means=filtered_means,
+        filtered_covariances=filtered_covs)
 
 
 @preprocess_args
@@ -495,7 +499,6 @@ def lgssm_posterior_sample(
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None,
     jitter: Optional[Scalar]=0
-    
 ) -> Float[Array, "ntime state_dim"]:
     r"""Run forward-filtering, backward-sampling to draw samples from $p(z_{1:T} \mid y_{1:T}, u_{1:T})$.
 
