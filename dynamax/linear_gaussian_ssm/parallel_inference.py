@@ -183,6 +183,7 @@ def lgssm_filter(
 
     initial_messages = _initialize_filtering_messages(params, emissions, inputs)
     final_messages = lax.associative_scan(_operator, initial_messages)
+    # breakpoint()
 
     return PosteriorGSSMFiltered(
         marginal_loglik=-final_messages.logZ[-1],
@@ -203,6 +204,7 @@ class SmoothMessage(NamedTuple):
         g: P(z_i | y_{1:j}, z_{j+1}) bias.
         L: P(z_i | y_{1:j}, z_{j+1}) covariance.
     """
+    G: Float[Array, "ntime state_dim state_dim"]
     E: Float[Array, "ntime state_dim state_dim"]
     g: Float[Array, "ntime state_dim"]
     L: Float[Array, "ntime state_dim state_dim"]
@@ -212,7 +214,7 @@ def _initialize_smoothing_messages(params, inputs, filtered_means, filtered_cova
     """Preprocess filtering output to construct input for smoothing assocative scan."""
 
     def _last_message(m, P):
-        return jnp.zeros_like(P), m, P
+        return jnp.zeros_like(P), jnp.zeros_like(P), m, P
 
     @partial(vmap, in_axes=(None, 0, 0, 0))
     def _generic_message(params, m, P, t):
@@ -226,15 +228,18 @@ def _initialize_smoothing_messages(params, inputs, filtered_means, filtered_cova
         b = b + B @ u
 
         CF, low = cho_factor(F @ P @ F.T + Q)
-        E = cho_solve((CF, low), F @ P).T
-        g  = m - E @ (F @ m + b)
-        L  = symmetrize(P - E @ F @ P)
-        return E, g, L
+        G = cho_solve((CF, low), F @ P).T
+        g  = m - G @ (F @ m + b)
+        L  = symmetrize(P - G @ F @ P)
+        E = jnp.linalg.solve(Q, F @ L).T
+        gg = m - G @ (F @ m) + E @ b
+        return G, G, g, L
     
-    En, gn, Ln = _last_message(filtered_means[-1], filtered_covariances[-1])
-    Et, gt, Lt = _generic_message(params, filtered_means[:-1], filtered_covariances[:-1], jnp.arange(len(filtered_means)-1))
+    Gn, En, gn, Ln = _last_message(filtered_means[-1], filtered_covariances[-1])
+    Gt, Et, gt, Lt = _generic_message(params, filtered_means[:-1], filtered_covariances[:-1], jnp.arange(len(filtered_means)-1))
     
     return SmoothMessage(
+        G=jnp.concatenate([Gt, Gn[None]]),
         E=jnp.concatenate([Et, En[None]]),
         g=jnp.concatenate([gt, gn[None]]),
         L=jnp.concatenate([Lt, Ln[None]])
@@ -257,17 +262,16 @@ def lgssm_smoother(
     
     @vmap
     def _operator(elem1, elem2):
-        E1, g1, L1 = elem1
-        E2, g2, L2 = elem2
+        _, E1, g1, L1 = elem1
+        _, E2, g2, L2 = elem2
         E = E2 @ E1
         g = E2 @ g1 + g2
         L = symmetrize(E2 @ L1 @ E2.T + L2)
-        return E, g, L
+        return _, E, g, L
 
     initial_messages = _initialize_smoothing_messages(params, inputs, filtered_means, filtered_covs)
-    # breakpoint()
     final_messages = lax.associative_scan(_operator, initial_messages, reverse=True)
-    G = initial_messages.E[:-1]
+    G = initial_messages.G[:-1]
     smoothed_means = final_messages.g
     smoothed_covariances = final_messages.L
     smoothed_cross_covariances = compute_smoothed_cross_covariances(
@@ -318,7 +322,7 @@ def _initialize_sampling_messages(key, params, inputs, filtered_means, filtered_
     Given parallel smoothing messages `z_i ~ N(E_i z_{i+1} + g_i, L_i)`, 
     the parallel sampling messages are `(E_i,h_i)` where `h_i ~ N(g_i, L_i)`.
     """
-    E, g, L = _initialize_smoothing_messages(params, inputs, filtered_means, filtered_covariances)
+    _, E, g, L = _initialize_smoothing_messages(params, inputs, filtered_means, filtered_covariances)
     return SampleMessage(E=E, h=MVN(g, L).sample(seed=key))
 
 

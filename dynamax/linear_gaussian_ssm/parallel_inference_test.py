@@ -11,6 +11,11 @@ from dynamax.linear_gaussian_ssm import lgssm_posterior_sample as serial_lgssm_p
 from dynamax.linear_gaussian_ssm import parallel_lgssm_posterior_sample
 
 
+
+from jax.config import config; config.update("jax_enable_x64", True)
+
+
+
 def allclose(x,y, atol=1e-2):
     m = jnp.abs(jnp.max(x-y))
     if m > atol:
@@ -86,10 +91,10 @@ def make_dynamic_lgssm_params(num_timesteps):
     μ0 = jnp.array([1.,-2.,1.,-1.])
     Σ0 = jnp.eye(latent_dim)
 
-    B = jnp.eye(latent_dim, input_dim) * 0
-    D = jnp.eye(observation_dim, input_dim) * 0
-    b = jr.normal(keys[0], (num_timesteps, latent_dim)) * 0
-    d = jr.normal(keys[1], (num_timesteps, observation_dim)) * 0
+    B = jnp.eye(latent_dim, input_dim)
+    D = jnp.eye(observation_dim, input_dim)
+    b = jr.normal(keys[0], (num_timesteps, latent_dim))
+    d = jr.normal(keys[1], (num_timesteps, observation_dim))
 
     lgssm = LinearGaussianSSM(latent_dim, observation_dim, input_dim)
     params, _ = lgssm.initialize(key_init,
@@ -141,7 +146,6 @@ class TestParallelLGSSMSmoother:
 
 
 
-
 class TestTimeVaryingParallelLGSSMSmoother:
     """Compare parallel and serial time-varying lgssm smoothing implementations.
     
@@ -156,6 +160,8 @@ class TestTimeVaryingParallelLGSSMSmoother:
 
     serial_posterior = serial_lgssm_smoother(params, emissions, inputs)
     parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
+
+    breakpoint()
 
     def test_filtered_means(self):
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)

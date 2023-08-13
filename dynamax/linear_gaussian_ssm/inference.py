@@ -305,8 +305,8 @@ def lgssm_joint_sample(
     
     params, inputs = preprocess_params_and_inputs(params, num_timesteps, inputs)
 
-    def _sample_transition(key, F, B, b, Q, x_tm1, u):
-        mean = F @ x_tm1 + B @ u + b
+    def _sample_transition(key, F, B, b, Q, x, u):
+        mean = F @ x + B @ u + b
         return MVN(mean, Q).sample(seed=key)
 
     def _sample_emission(key, H, D, d, R, x, u):
@@ -327,22 +327,22 @@ def lgssm_joint_sample(
         initial_emission = _sample_emission(key2, H0, D0, d0, R0, initial_state, u0)
         return initial_state, initial_emission
 
-    def _step(prev_state, args):
+    def _step(state_prev, args):
         key, t, inpt = args
         key1, key2 = jr.split(key, 2)
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics.weights, 2, t)
-        B = _get_params(params.dynamics.input_weights, 2, t)
-        b = _get_params(params.dynamics.bias, 1, t)
-        Q = _get_params(params.dynamics.cov, 2, t)
+        F_prev = _get_params(params.dynamics.weights, 2, t - 1)
+        B_prev = _get_params(params.dynamics.input_weights, 2, t - 1)
+        b_prev = _get_params(params.dynamics.bias, 1, t - 1)
+        Q_prev = _get_params(params.dynamics.cov, 2, t - 1)
         H = _get_params(params.emissions.weights, 2, t)
         D = _get_params(params.emissions.input_weights, 2, t)
         d = _get_params(params.emissions.bias, 1, t)
         R = _get_params(params.emissions.cov, 2, t)
 
         # Sample from transition and emission distributions
-        state = _sample_transition(key1, F, B, b, Q, prev_state, inpt)
+        state = _sample_transition(key1, F_prev, B_prev, b_prev, Q_prev, state_prev, inpt)
         emission = _sample_emission(key2, H, D, d, R, state, inpt)
 
         return state, (state, emission)
@@ -410,11 +410,13 @@ def lgssm_filter(
         # Predict the next state
         pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, F, B, b, Q, u)
 
-        return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
+        return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov, ll)
 
     # Run the Kalman filter
     carry = (0.0, params.initial.mean, params.initial.cov)
-    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    (ll, _, _), (filtered_means, filtered_covs, lik) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+
+    # breakpoint()
 
     return PosteriorGSSMFiltered(
         marginal_loglik=ll,
