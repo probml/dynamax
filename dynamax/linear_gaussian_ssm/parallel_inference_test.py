@@ -91,8 +91,9 @@ def make_dynamic_lgssm_params(num_timesteps):
     μ0 = jnp.array([1.,-2.,1.,-1.])
     Σ0 = jnp.eye(latent_dim)
 
-    B = jnp.eye(latent_dim, input_dim)
-    D = jnp.eye(observation_dim, input_dim)
+    B = jnp.eye(latent_dim, input_dim)[None] + 0.1 * jr.normal(keys[6], (num_timesteps, latent_dim, input_dim))
+    # B = B * 0
+    D = jnp.eye(observation_dim, input_dim)[None] + 0.1 * jr.normal(keys[7], (num_timesteps, observation_dim, input_dim))
     b = jr.normal(keys[0], (num_timesteps, latent_dim))
     d = jr.normal(keys[1], (num_timesteps, observation_dim))
 
@@ -119,10 +120,10 @@ class TestParallelLGSSMSmoother:
 
     params, lgssm = make_static_lgssm_params()    
     inputs = jr.normal(keys[0], (num_timesteps, params.dynamics.input_weights.shape[-1]))
-    _, emissions = lgssm_joint_sample(params, keys[1], num_timesteps, inputs)
+    # _, emissions = lgssm_joint_sample(params, keys[1], num_timesteps, inputs)
 
-    serial_posterior = serial_lgssm_smoother(params, emissions, inputs)
-    parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
+    # serial_posterior = serial_lgssm_smoother(params, emissions, inputs)
+    # parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
 
     def test_filtered_means(self):
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)

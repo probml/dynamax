@@ -103,40 +103,42 @@ def _initialize_filtering_messages(params, emissions, inputs):
         return A, b, C, J, eta, logZ
 
 
-    @partial(vmap, in_axes=(None, 0, 0, 0))
-    def _generic_message(params, y, u, t):
-        F = _get_params(params.dynamics.weights, 2, t)
-        B = _get_params(params.dynamics.input_weights, 2, t)
-        Q = _get_params(params.dynamics.cov, 2, t)
-        b = _get_params(params.dynamics.bias, 1, t)
-        H = _get_params(params.emissions.weights, 2, t+1)
+    @partial(vmap, in_axes=(None, 0, 0))
+    def _generic_message(params, y, t):
+        F_prev = _get_params(params.dynamics.weights, 2, t - 1)
+        B_prev = _get_params(params.dynamics.input_weights, 2, t - 1)
+        Q_prev = _get_params(params.dynamics.cov, 2, t - 1)
+        b_prev = _get_params(params.dynamics.bias, 1, t - 1)
+        H = _get_params(params.emissions.weights, 2, t)
         D = _get_params(params.emissions.input_weights, 2, t)
-        R = _get_params(params.emissions.cov, 2, t+1)
-        d = _get_params(params.emissions.bias, 1, t+1)
+        R = _get_params(params.emissions.cov, 2, t)
+        d = _get_params(params.emissions.bias, 1, t)
+        u_prev = inputs[t - 1]
+        u = inputs[t]
 
-        # Adjust the bias terms accoding to the input
+        # Adjust the b_previas terms accoding to the input
         d = d + D @ u
-        b = b + B @ u
+        b_prev = b_prev + B_prev @ u_prev
 
-        mu_y = H @ b + d  # mean of p(y_t|x_{t-1}=0)
+        mu_y = H @ b_prev + d  # mean of p(y_t|x_{t-1}=0)
 
-        S = H @ Q @ H.T + R
-        CF, low = cho_factor(S)
-        K = cho_solve((CF, low), H @ Q).T
+        S = H @ Q_prev @ H.T + R
+        CF_prev, low = cho_factor(S)
+        K = cho_solve((CF_prev, low), H @ Q_prev).T
 
-        eta = F.T @ H.T @ cho_solve((CF, low), y - H @ b - d)
-        J = symmetrize(F.T @ H.T @ cho_solve((CF, low), H @ F))
+        eta = F_prev.T @ H.T @ cho_solve((CF_prev, low), y - H @ b_prev - d)
+        J = symmetrize(F_prev.T @ H.T @ cho_solve((CF_prev, low), H @ F_prev))
 
-        A = F - K @ H @ F
-        b = b + K @ (y - H @ b - d)
-        C = symmetrize(Q - K @ H @ Q)
+        A = F_prev - K @ H @ F_prev
+        b_prev = b_prev + K @ (y - H @ b_prev - d)
+        C = symmetrize(Q_prev - K @ H @ Q_prev)
 
         logZ = -MVN(loc=mu_y, covariance_matrix=S).log_prob(y)
-        return A, b, C, J, eta, logZ
+        return A, b_prev, C, J, eta, logZ
 
 
     A0, b0, C0, J0, eta0, logZ0 = _first_message(params, emissions[0], inputs[0])
-    At, bt, Ct, Jt, etat, logZt = _generic_message(params, emissions[1:], inputs[1:], jnp.arange(len(emissions)-1))
+    At, bt, Ct, Jt, etat, logZt = _generic_message(params, emissions[1:], jnp.arange(1, len(emissions)))
 
     return FilterMessage(
         A=jnp.concatenate([A0[None], At]),

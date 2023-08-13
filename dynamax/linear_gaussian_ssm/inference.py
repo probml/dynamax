@@ -123,6 +123,7 @@ def _get_params(x, dim, t):
         return x[t]
     else:
         return x
+
 _zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
 
@@ -167,7 +168,7 @@ def _predict(m, S, F, B, b, Q, u):
     r"""Predict next mean and covariance under a linear Gaussian model.
 
         p(z_{t+1}) = int N(z_t \mid m, S) N(z_{t+1} \mid Fz_t + Bu + b, Q)
-                    = N(z_{t+1} \mid Fm + Bu, F S F^T + Q)
+                    = N(z_{t+1} \mid Fm + Bu + b, F S F^T + Q)
 
     Args:
         m (D_hid,): prior mean.
@@ -414,7 +415,7 @@ def lgssm_filter(
 
     # Run the Kalman filter
     carry = (0.0, params.initial.mean, params.initial.cov)
-    (ll, _, _), (filtered_means, filtered_covs, lik) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    (ll, _, _), (filtered_means, filtered_covs, cumll) = lax.scan(_step, carry, jnp.arange(num_timesteps))
 
     # breakpoint()
 
