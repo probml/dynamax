@@ -1,4 +1,4 @@
-'''
+"""
 Parallel filtering and smoothing for a lgssm.
 
 This implementation is adapted from the work of Adrien Correnflos:
@@ -28,7 +28,7 @@ Z₀ ─────────── Z₁ ─────────── Z�
 |              |              |              |
 Y₀             Y₁             Y₂             Y₃ 
 
-'''
+"""
 
 import jax.numpy as jnp
 from jax import vmap, lax
@@ -51,10 +51,12 @@ def _get_params(x, dim, t):
         return x[t]
     else:
         return x
-    
-#---------------------------------------------------------------------------#
+
+
+# ---------------------------------------------------------------------------#
 #                                Filtering                                  #
-#---------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------#
+
 
 class FilterMessage(NamedTuple):
     """
@@ -67,11 +69,12 @@ class FilterMessage(NamedTuple):
         J:   P(z_{i-1} | y_{i:j}) covariance.
         eta: P(z_{i-1} | y_{i:j}) mean.
     """
-    A:    Float[Array, "ntime state_dim state_dim"]
-    b:    Float[Array, "ntime state_dim"]
-    C:    Float[Array, "ntime state_dim state_dim"]
-    J:    Float[Array, "ntime state_dim state_dim"]
-    eta:  Float[Array, "ntime state_dim"]
+
+    A: Float[Array, "ntime state_dim state_dim"]
+    b: Float[Array, "ntime state_dim"]
+    C: Float[Array, "ntime state_dim state_dim"]
+    J: Float[Array, "ntime state_dim state_dim"]
+    eta: Float[Array, "ntime state_dim"]
     logZ: Float[Array, "ntime"]
 
 
@@ -101,7 +104,6 @@ def _initialize_filtering_messages(params, emissions, inputs):
 
         logZ = -MVN(loc=H @ m + d, covariance_matrix=H @ P @ H.T + R).log_prob(y)
         return A, b, C, J, eta, logZ
-
 
     @partial(vmap, in_axes=(None, 0, 0))
     def _generic_message(params, y, t):
@@ -136,7 +138,6 @@ def _initialize_filtering_messages(params, emissions, inputs):
         logZ = -MVN(loc=mu_y, covariance_matrix=S).log_prob(y)
         return A, b_prev, C, J, eta, logZ
 
-
     A0, b0, C0, J0, eta0, logZ0 = _first_message(params, emissions[0], inputs[0])
     At, bt, Ct, Jt, etat, logZt = _generic_message(params, emissions[1:], jnp.arange(1, len(emissions)))
 
@@ -146,21 +147,21 @@ def _initialize_filtering_messages(params, emissions, inputs):
         C=jnp.concatenate([C0[None], Ct]),
         J=jnp.concatenate([J0[None], Jt]),
         eta=jnp.concatenate([eta0[None], etat]),
-        logZ=jnp.concatenate([logZ0[None], logZt])
+        logZ=jnp.concatenate([logZ0[None], logZt]),
     )
-
 
 
 @preprocess_args
 def lgssm_filter(
     params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None,
 ) -> PosteriorGSSMFiltered:
     """A parallel version of the lgssm filtering algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
     """
+
     @vmap
     def _operator(elem1, elem2):
         A1, b1, C1, J1, eta1, logZ1 = elem1
@@ -179,8 +180,8 @@ def lgssm_filter(
         J = symmetrize(temp @ J2 @ A1 + J1)
 
         mu = jnp.linalg.solve(C1, b1)
-        t1 = (b1 @ mu - (eta2 + mu) @ jnp.linalg.solve(I_C1J2, C1 @ eta2 + b1))
-        logZ = (logZ1 + logZ2 + 0.5 * jnp.linalg.slogdet(I_C1J2)[1] + 0.5 * t1)
+        t1 = b1 @ mu - (eta2 + mu) @ jnp.linalg.solve(I_C1J2, C1 @ eta2 + b1)
+        logZ = logZ1 + logZ2 + 0.5 * jnp.linalg.slogdet(I_C1J2)[1] + 0.5 * t1
         return FilterMessage(A, b, C, J, eta, logZ)
 
     initial_messages = _initialize_filtering_messages(params, emissions, inputs)
@@ -189,12 +190,14 @@ def lgssm_filter(
     return PosteriorGSSMFiltered(
         marginal_loglik=-final_messages.logZ[-1],
         filtered_means=final_messages.b,
-        filtered_covariances=final_messages.C)
+        filtered_covariances=final_messages.C,
+    )
 
 
-#---------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------#
 #                                 Smoothing                                 #
-#---------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------#
+
 
 class SmoothMessage(NamedTuple):
     """
@@ -205,6 +208,7 @@ class SmoothMessage(NamedTuple):
         g: P(z_i | y_{1:j}, z_{j+1}) bias.
         L: P(z_i | y_{1:j}, z_{j+1}) covariance.
     """
+
     E: Float[Array, "ntime state_dim state_dim"]
     g: Float[Array, "ntime state_dim"]
     L: Float[Array, "ntime state_dim state_dim"]
@@ -229,17 +233,19 @@ def _initialize_smoothing_messages(params, inputs, filtered_means, filtered_cova
 
         CF, low = cho_factor(F @ P @ F.T + Q)
         E = cho_solve((CF, low), F @ P).T
-        g  = m - E @ (F @ m + b)
-        L  = symmetrize(P - E @ F @ P)
+        g = m - E @ (F @ m + b)
+        L = symmetrize(P - E @ F @ P)
         return E, g, L
-    
+
     En, gn, Ln = _last_message(filtered_means[-1], filtered_covariances[-1])
-    Et, gt, Lt = _generic_message(params, filtered_means[:-1], filtered_covariances[:-1], jnp.arange(len(filtered_means)-1))
-    
+    Et, gt, Lt = _generic_message(
+        params, filtered_means[:-1], filtered_covariances[:-1], jnp.arange(len(filtered_means) - 1)
+    )
+
     return SmoothMessage(
         E=jnp.concatenate([Et, En[None]]),
         g=jnp.concatenate([gt, gn[None]]),
-        L=jnp.concatenate([Lt, Ln[None]])
+        L=jnp.concatenate([Lt, Ln[None]]),
     )
 
 
@@ -247,7 +253,7 @@ def _initialize_smoothing_messages(params, inputs, filtered_means, filtered_cova
 def lgssm_smoother(
     params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None,
 ) -> PosteriorGSSMSmoothed:
     """A parallel version of the lgssm smoothing algorithm.
 
@@ -256,7 +262,7 @@ def lgssm_smoother(
     filtered_posterior = lgssm_filter(params, emissions, inputs)
     filtered_means = filtered_posterior.filtered_means
     filtered_covs = filtered_posterior.filtered_covariances
-    
+
     @vmap
     def _operator(elem1, elem2):
         E1, g1, L1 = elem1
@@ -297,9 +303,10 @@ def compute_smoothed_cross_covariances(
     return G @ smoothed_cov_next + jnp.outer(smoothed_mean, smoothed_mean_next)
 
 
-#---------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------#
 #                                 Sampling                                  #
-#---------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------#
+
 
 class SampleMessage(NamedTuple):
     """
@@ -309,14 +316,15 @@ class SampleMessage(NamedTuple):
         E: z_i ~ z_{j+1} weights.
         h: z_i ~ z_{j+1} bias.
     """
+
     E: Float[Array, "ntime state_dim state_dim"]
     h: Float[Array, "ntime state_dim"]
 
 
 def _initialize_sampling_messages(key, params, inputs, filtered_means, filtered_covariances):
     """A parallel version of the lgssm sampling algorithm.
-    
-    Given parallel smoothing messages `z_i ~ N(E_i z_{i+1} + g_i, L_i)`, 
+
+    Given parallel smoothing messages `z_i ~ N(E_i z_{i+1} + g_i, L_i)`,
     the parallel sampling messages are `(E_i,h_i)` where `h_i ~ N(g_i, L_i)`.
     """
     E, g, L = _initialize_smoothing_messages(params, inputs, filtered_means, filtered_covariances)
@@ -327,7 +335,7 @@ def lgssm_posterior_sample(
     key: PRNGKey,
     params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
+    inputs: Optional[Float[Array, "ntime input_dim"]] = None,
 ) -> Float[Array, "ntime state_dim"]:
     """A parallel version of the lgssm sampling algorithm.
 
