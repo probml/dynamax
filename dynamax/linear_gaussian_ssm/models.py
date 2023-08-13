@@ -11,7 +11,9 @@ from typing import Any, Optional, Tuple, Union
 from typing_extensions import Protocol
 
 from dynamax.ssm import SSM
-from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
+from dynamax.linear_gaussian_ssm.inference import lgssm_filter as serial_lgssm_filter
+from dynamax.linear_gaussian_ssm.inference import lgssm_smoother as serial_lgssm_smoother
+from dynamax.linear_gaussian_ssm.inference import lgssm_posterior_sample as serial_lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_filter as parallel_lgssm_filter
 from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_smoother as parallel_lgssm_smoother
 from dynamax.linear_gaussian_ssm.parallel_inference import lgssm_posterior_sample as parallel_lgssm_posterior_sample
@@ -224,7 +226,7 @@ class LinearGaussianSSM(SSM):
         if self.use_parallel_inference:
             return parallel_lgssm_filter(params, emissions, inputs)
         else:
-            return lgssm_filter(params, emissions, inputs)
+            return serial_lgssm_filter(params, emissions, inputs)
 
     def smoother(
         self,
@@ -235,7 +237,7 @@ class LinearGaussianSSM(SSM):
         if self.use_parallel_inference:
             return parallel_lgssm_smoother(params, emissions, inputs)
         else:
-            return lgssm_smoother(params, emissions, inputs)
+            return serial_lgssm_smoother(params, emissions, inputs)
 
     def posterior_sample(
         self,
@@ -247,7 +249,7 @@ class LinearGaussianSSM(SSM):
         if use_parallel_inference:
             return parallel_lgssm_posterior_sample(key, params, emissions, inputs)
         else:
-            return lgssm_posterior_sample(key, params, emissions, inputs)
+            return serial_lgssm_posterior_sample(key, params, emissions, inputs)
 
     def posterior_predictive(
         self,

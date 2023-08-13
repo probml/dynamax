@@ -8,8 +8,10 @@ from dynamax.utils.utils import monotonically_increasing
 NUM_TIMESTEPS = 100
 
 CONFIGS = [
-    (LinearGaussianSSM, dict(state_dim=2, emission_dim=10), None),
-    (LinearGaussianConjugateSSM, dict(state_dim=2, emission_dim=10), None),
+    (LinearGaussianSSM, dict(state_dim=2, emission_dim=10, use_parallel_inference=False), None),
+    (LinearGaussianSSM, dict(state_dim=2, emission_dim=10, use_parallel_inference=True), None),
+    (LinearGaussianConjugateSSM, dict(state_dim=2, emission_dim=10, use_parallel_inference=False), None),
+    (LinearGaussianConjugateSSM, dict(state_dim=2, emission_dim=10, use_parallel_inference=True), None),
 ]
 
 @pytest.mark.parametrize(["cls", "kwargs", "inputs"], CONFIGS)

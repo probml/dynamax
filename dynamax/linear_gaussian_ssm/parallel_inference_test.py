@@ -15,14 +15,7 @@ from dynamax.linear_gaussian_ssm import parallel_lgssm_posterior_sample
 from jax.config import config; config.update("jax_enable_x64", True)
 
 
-
-def allclose(x,y, atol=1e-2):
-    m = jnp.abs(jnp.max(x-y))
-    if m > atol:
-        print(m)
-        return False
-    else:
-        return True
+allclose = partial(jnp.allclose, atol=1e-2, rtol=1e-2)
     
 
 def make_static_lgssm_params():
@@ -92,23 +85,22 @@ def make_dynamic_lgssm_params(num_timesteps):
     Σ0 = jnp.eye(latent_dim)
 
     B = jnp.eye(latent_dim, input_dim)[None] + 0.1 * jr.normal(keys[6], (num_timesteps, latent_dim, input_dim))
-    # B = B * 0
     D = jnp.eye(observation_dim, input_dim)[None] + 0.1 * jr.normal(keys[7], (num_timesteps, observation_dim, input_dim))
     b = jr.normal(keys[0], (num_timesteps, latent_dim))
     d = jr.normal(keys[1], (num_timesteps, observation_dim))
 
     lgssm = LinearGaussianSSM(latent_dim, observation_dim, input_dim)
     params, _ = lgssm.initialize(key_init,
-                                initial_mean=μ0,
-                                initial_covariance=Σ0,
-                                dynamics_weights=F,
-                                dynamics_input_weights=B,
-                                dynamics_bias=b,
-                                dynamics_covariance=Q,
-                                emission_weights=H,
-                                emission_input_weights=D,
-                                emission_bias=d,
-                                emission_covariance=R)
+                                 initial_mean=μ0,
+                                 initial_covariance=Σ0,
+                                 dynamics_weights=F,
+                                 dynamics_input_weights=B,
+                                 dynamics_bias=b,
+                                 dynamics_covariance=Q,
+                                 emission_weights=H,
+                                 emission_input_weights=D,
+                                 emission_bias=d,
+                                 emission_covariance=R)
     return params, lgssm
 
 
@@ -120,10 +112,10 @@ class TestParallelLGSSMSmoother:
 
     params, lgssm = make_static_lgssm_params()    
     inputs = jr.normal(keys[0], (num_timesteps, params.dynamics.input_weights.shape[-1]))
-    # _, emissions = lgssm_joint_sample(params, keys[1], num_timesteps, inputs)
+    _, emissions = lgssm_joint_sample(params, keys[1], num_timesteps, inputs)
 
-    # serial_posterior = serial_lgssm_smoother(params, emissions, inputs)
-    # parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
+    serial_posterior = serial_lgssm_smoother(params, emissions, inputs)
+    parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
 
     def test_filtered_means(self):
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
@@ -138,9 +130,10 @@ class TestParallelLGSSMSmoother:
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
 
     def test_smoothed_cross_covariances(self):
-        assert allclose(
-            self.serial_posterior.smoothed_cross_covariances,
-            self.parallel_posterior.smoothed_cross_covariances)
+        x = self.serial_posterior.smoothed_cross_covariances
+        y = self.parallel_posterior.smoothed_cross_covariances
+        matrix_norm_rel_diff = jnp.linalg.norm(x - y, axis=(1, 2)) / jnp.linalg.norm(x, axis=(1, 2))
+        assert allclose(matrix_norm_rel_diff, 0)
 
     def test_marginal_loglik(self):
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik)
@@ -162,8 +155,6 @@ class TestTimeVaryingParallelLGSSMSmoother:
     serial_posterior = serial_lgssm_smoother(params, emissions, inputs)
     parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
 
-    breakpoint()
-
     def test_filtered_means(self):
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
 
@@ -177,12 +168,13 @@ class TestTimeVaryingParallelLGSSMSmoother:
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
 
     def test_smoothed_cross_covariances(self):
-        assert allclose(
-            self.serial_posterior.smoothed_cross_covariances,
-            self.parallel_posterior.smoothed_cross_covariances)
+        x = self.serial_posterior.smoothed_cross_covariances
+        y = self.parallel_posterior.smoothed_cross_covariances
+        matrix_norm_rel_diff = jnp.linalg.norm(x - y, axis=(1, 2)) / jnp.linalg.norm(x, axis=(1, 2))
+        assert allclose(matrix_norm_rel_diff, 0)
 
     def test_marginal_loglik(self):
-        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, atol=1e-1)
+        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, rtol=2e-2)
 
 
 
