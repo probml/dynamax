@@ -16,12 +16,12 @@ from dynamax.types import PRNGKey, Scalar
 class ParamsLGSSMInitial(NamedTuple):
     r"""Parameters of the initial distribution
 
-    $$p(z_1) = \mathcal{N}(z_1 \mid \mu_1, Q_1)$$
+    $$p(z_0) = \mathcal{N}(z_0 \mid \mu_0, Q_0)$$
 
     The tuple doubles as a container for the ParameterProperties.
 
-    :param mean: $\mu_1$
-    :param cov: $Q_1$
+    :param mean: $\mu_0$
+    :param cov: $Q_0$
 
     """
     mean: Union[Float[Array, "state_dim"], ParameterProperties]
@@ -32,7 +32,7 @@ class ParamsLGSSMInitial(NamedTuple):
 class ParamsLGSSMDynamics(NamedTuple):
     r"""Parameters of the emission distribution
 
-    $$p(z_{t+1} \mid z_t, u_t) = \mathcal{N}(z_{t+1} \mid F z_t + B u_t + b, Q)$$
+    $$p(z_{t+1} \mid z_t, u_{t+1}) = \mathcal{N}(z_{t+1} \mid F_{t+1} z_t + B_{t+1} u_{t+1} + b_{t+1}, Q_{t+1})$$
 
     The tuple doubles as a container for the ParameterProperties.
 
@@ -68,7 +68,7 @@ class ParamsLGSSMDynamics(NamedTuple):
 class ParamsLGSSMEmissions(NamedTuple):
     r"""Parameters of the emission distribution
 
-    $$p(y_t \mid z_t, u_t) = \mathcal{N}(y_t \mid H z_t + D u_t + d, R)$$
+    $$p(y_t \mid z_t, u_t) = \mathcal{N}(y_t \mid H_t z_t + D_t u_t + d_t, R_t)$$
 
     The tuple doubles as a container for the ParameterProperties.
 
@@ -203,8 +203,8 @@ def make_lgssm_params(
 def _predict(m, S, F, B, b, Q, u):
     r"""Predict next mean and covariance under a linear Gaussian model.
 
-        p(z_{t+1}) = int N(z_t \mid m, S) N(z_{t+1} \mid Fz_t + Bu + b, Q)
-                    = N(z_{t+1} \mid Fm + Bu + b, F S F^T + Q)
+        p(z_{t+1}) = \int N(z_t \mid m_t, S_t) N(z_{t+1} \mid F_{t+1} z_t + B_{t+1} u_{t+1} + b_{t+1}, Q_{t+1}) d z_t
+                    = N(z_{t+1} \mid F_{t+1} m_t + B_{t+1} u_{t+1} + b_{t+1}, F_{t+1} S_t F_{t+1}^T + Q_{t+1})
 
     Args:
         m (D_hid,): prior mean.
@@ -228,7 +228,7 @@ def _condition_on(m, P, H, D, d, R, u, y):
     r"""Condition a Gaussian potential on a new linear Gaussian observation
        p(z_t \mid y_t, u_t, y_{1:t-1}, u_{1:t-1})
          propto p(z_t \mid y_{1:t-1}, u_{1:t-1}) p(y_t \mid z_t, u_t)
-         = N(z_t \mid m, P) N(y_t \mid H_t z_t + D_t u_t + d_t, R_t)
+         = N(z_t \mid m_t, P_t) N(y_t \mid H_t z_t + D_t u_t + d_t, R_t)
          = N(z_t \mid mm, PP)
      where
          mm = m + K*(y - yhat) = mu_cond
