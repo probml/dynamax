@@ -71,6 +71,7 @@ class LinearGaussianSSM(SSM):
     Please note that we adopt the convention of Murphy, K. P. (2022), "Probabilistic machine learning: Advanced topics",
     rather than Särkkä, S. (2013), "Bayesian Filtering and Smoothing" for indexing parameters of LGSSM with initial
     index begin 0 instead of 1, which tends to be a source of confusion sometimes.
+    As such, F_0, B_0, b_0, Q_0 are always ignored and the provided prior of the initial state is used.
 
     :param state_dim: Dimensionality of latent state.
     :param emission_dim: Dimensionality of observation vector.
@@ -157,7 +158,8 @@ class LinearGaussianSSM(SSM):
         # Create nested dictionary of params
         params = ParamsLGSSM(
             initial=ParamsLGSSMInitial(
-                mean=default(initial_mean, _initial_mean), cov=default(initial_covariance, _initial_covariance),
+                mean=default(initial_mean, _initial_mean),
+                cov=default(initial_covariance, _initial_covariance),
             ),
             dynamics=ParamsLGSSMDynamics(
                 weights=default(dynamics_weights, _dynamics_weights),
@@ -176,7 +178,8 @@ class LinearGaussianSSM(SSM):
         # The keys of param_props must match those of params!
         props = ParamsLGSSM(
             initial=ParamsLGSSMInitial(
-                mean=ParameterProperties(), cov=ParameterProperties(constrainer=RealToPSDBijector()),
+                mean=ParameterProperties(),
+                cov=ParameterProperties(constrainer=RealToPSDBijector()),
             ),
             dynamics=ParamsLGSSMDynamics(
                 weights=ParameterProperties(),
@@ -194,7 +197,9 @@ class LinearGaussianSSM(SSM):
         return params, props
 
     def initial_distribution(
-        self, params: ParamsLGSSM, inputs: Optional[Float[Array, "ntime input_dim"]] = None,
+        self,
+        params: ParamsLGSSM,
+        inputs: Optional[Float[Array, "ntime input_dim"]] = None,
     ) -> tfd.Distribution:
         return MVN(params.initial.mean, params.initial.cov)
 
@@ -260,7 +265,7 @@ class LinearGaussianSSM(SSM):
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]] = None,
     ) -> Float[Array, "ntime state_dim"]:
-        if use_parallel_inference:
+        if self.use_parallel_inference:
             return parallel_lgssm_posterior_sample(key, params, emissions, inputs)
         else:
             return serial_lgssm_posterior_sample(key, params, emissions, inputs)
@@ -297,10 +302,14 @@ class LinearGaussianSSM(SSM):
         self,
         params: ParamsLGSSM,
         emissions: Union[
-            Float[Array, "num_timesteps emission_dim"], Float[Array, "num_batches num_timesteps emission_dim"],
+            Float[Array, "num_timesteps emission_dim"],
+            Float[Array, "num_batches num_timesteps emission_dim"],
         ],
         inputs: Optional[
-            Union[Float[Array, "num_timesteps input_dim"], Float[Array, "num_batches num_timesteps input_dim"],]
+            Union[
+                Float[Array, "num_timesteps input_dim"],
+                Float[Array, "num_batches num_timesteps input_dim"],
+            ]
         ] = None,
     ) -> Tuple[SuffStatsLGSSM, Scalar]:
         num_timesteps = emissions.shape[0]
@@ -409,7 +418,13 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
     """
 
     def __init__(
-        self, state_dim, emission_dim, input_dim=0, has_dynamics_bias=True, has_emissions_bias=True, **kw_priors,
+        self,
+        state_dim,
+        emission_dim,
+        input_dim=0,
+        has_dynamics_bias=True,
+        has_emissions_bias=True,
+        **kw_priors,
     ):
         super().__init__(
             state_dim=state_dim,
