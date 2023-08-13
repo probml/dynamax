@@ -27,19 +27,19 @@ def make_static_lgssm_params():
 
     dt = 0.1
     F = jnp.eye(4) + dt * jnp.eye(4, k=2)
-    b = 0.1 * jnp.ones(4)
+    b = 0.1 * jnp.arange(4)
     Q = 1. * jnp.kron(jnp.array([[dt**3/3, dt**2/2],
                           [dt**2/2, dt]]),
                          jnp.eye(2))
                          
     H = jnp.eye(2, 4)
-    d = jnp.ones(2)
+    d = 0.1 * jnp.ones(2)
     R = 0.5 ** 2 * jnp.eye(2)
     μ0 = jnp.array([0.,1.,1.,-1.])
     Σ0 = jnp.eye(4)
 
     B = jnp.eye(latent_dim, input_dim) * 0
-    D = jnp.eye(observation_dim, input_dim)
+    D = jnp.eye(observation_dim, input_dim) * 0
 
     lgssm = LinearGaussianSSM(latent_dim, observation_dim, input_dim)
     params, _ = lgssm.initialize(jr.PRNGKey(0),
@@ -61,6 +61,8 @@ def make_dynamic_lgssm_params(num_timesteps):
     observation_dim = 2
     input_dim = 2
 
+    keys = jr.split(jr.PRNGKey(1), 100)
+
     key = jr.PRNGKey(0)
     key, key_f, key_r, key_init = jr.split(key, 4)
 
@@ -73,16 +75,21 @@ def make_dynamic_lgssm_params(num_timesteps):
                                  [dt**2/2, dt]]),
                       jnp.eye(latent_dim // 2))
     assert Q.shape[-1] == latent_dim
-    H = jnp.eye(observation_dim, latent_dim)
+    Q = Q[None] * jr.uniform(keys[3], (num_timesteps, 1, 1))
+
+    # H = jnp.eye(observation_dim, latent_dim)
+    H = jr.normal(keys[4], (num_timesteps, observation_dim, latent_dim))
 
     r_scale = jr.normal(key_r, (num_timesteps,)) * 0.1
     R = (r_scale**2)[:,None,None] * jnp.tile(jnp.eye(observation_dim), (num_timesteps, 1, 1))
     
-    μ0 = jnp.array([0.,0.,1.,-1.])
+    μ0 = jnp.array([1.,-2.,1.,-1.])
     Σ0 = jnp.eye(latent_dim)
 
-    B = jnp.eye(latent_dim, input_dim)
-    D = jnp.eye(observation_dim, input_dim)
+    B = jnp.eye(latent_dim, input_dim) * 0
+    D = jnp.eye(observation_dim, input_dim) * 0
+    b = jr.normal(keys[0], (num_timesteps, latent_dim)) * 0
+    d = jr.normal(keys[1], (num_timesteps, observation_dim)) * 0
 
     lgssm = LinearGaussianSSM(latent_dim, observation_dim, input_dim)
     params, _ = lgssm.initialize(key_init,
@@ -90,9 +97,11 @@ def make_dynamic_lgssm_params(num_timesteps):
                                 initial_covariance=Σ0,
                                 dynamics_weights=F,
                                 dynamics_input_weights=B,
+                                dynamics_bias=b,
                                 dynamics_covariance=Q,
                                 emission_weights=H,
                                 emission_input_weights=D,
+                                emission_bias=d,
                                 emission_covariance=R)
     return params, lgssm
 
@@ -121,6 +130,11 @@ class TestParallelLGSSMSmoother:
 
     def test_smoothed_covariances(self):
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
+
+    def test_smoothed_cross_covariances(self):
+        assert allclose(
+            self.serial_posterior.smoothed_cross_covariances,
+            self.parallel_posterior.smoothed_cross_covariances)
 
     def test_marginal_loglik(self):
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik)
@@ -154,6 +168,11 @@ class TestTimeVaryingParallelLGSSMSmoother:
 
     def test_smoothed_covariances(self):
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
+
+    def test_smoothed_cross_covariances(self):
+        assert allclose(
+            self.serial_posterior.smoothed_cross_covariances,
+            self.parallel_posterior.smoothed_cross_covariances)
 
     def test_marginal_loglik(self):
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, atol=1e-1)

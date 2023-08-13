@@ -118,7 +118,7 @@ def _initialize_filtering_messages(params, emissions, inputs):
         d = d + D @ u
         b = b + B @ u
 
-        mu_y = H @ b + d
+        mu_y = H @ b + d  # mean of p(y_t|x_{t-1}=0)
 
         S = H @ Q @ H.T + R
         CF, low = cho_factor(S)
@@ -217,12 +217,12 @@ def _initialize_smoothing_messages(params, inputs, filtered_means, filtered_cova
     @partial(vmap, in_axes=(None, 0, 0, 0))
     def _generic_message(params, m, P, t):
         F = _get_params(params.dynamics.weights, 2, t)
-        Q = _get_params(params.dynamics.cov, 2, t)
         B = _get_params(params.dynamics.input_weights, 2, t)
         b = _get_params(params.dynamics.bias, 1, t)
+        Q = _get_params(params.dynamics.cov, 2, t)
         u = inputs[t]
 
-       # Adjust the bias terms accoding to the input
+        # Adjust the bias terms accoding to the input
         b = b + B @ u
 
         CF, low = cho_factor(F @ P @ F.T + Q)
@@ -265,6 +265,7 @@ def lgssm_smoother(
         return E, g, L
 
     initial_messages = _initialize_smoothing_messages(params, inputs, filtered_means, filtered_covs)
+    # breakpoint()
     final_messages = lax.associative_scan(_operator, initial_messages, reverse=True)
     G = initial_messages.E[:-1]
     smoothed_means = final_messages.g
