@@ -621,7 +621,9 @@ def lgssm_posterior_sample(
         u_next = inputs[t + 1]
 
         # Condition on next state
-        smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F_next, B_next, b_next, Q_next, u_next, next_state)
+        smoothed_mean, smoothed_cov = _condition_on(
+            filtered_mean, filtered_cov, F_next, B_next, b_next, Q_next, u_next, next_state
+        )
         smoothed_cov = smoothed_cov + jnp.eye(smoothed_cov.shape[-1]) * jitter
         state = MVN(smoothed_mean, smoothed_cov).sample(seed=key)
         return state, state

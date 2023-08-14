@@ -41,7 +41,6 @@ def make_static_lgssm_params():
     μ0 = jnp.array([0.0, 1.0, 1.0, -1.0])
     Σ0 = jnp.eye(4)
 
-
     lgssm = LinearGaussianSSM(latent_dim, observation_dim, input_dim)
     params, _ = lgssm.initialize(
         keys[2],
@@ -68,7 +67,11 @@ def make_dynamic_lgssm_params(num_timesteps):
 
     dt = 0.1
 
-    F = jnp.eye(4)[None] + dt * jnp.eye(4, k=2)[None] + 0.1 * jr.normal(keys[0], (num_timesteps, latent_dim, latent_dim))
+    F = (
+        jnp.eye(4)[None]
+        + dt * jnp.eye(4, k=2)[None]
+        + 0.1 * jr.normal(keys[0], (num_timesteps, latent_dim, latent_dim))
+    )
     B = 0.2 * jr.normal(keys[4], (num_timesteps, latent_dim, input_dim))
     b = 0.2 * jr.normal(keys[6], (num_timesteps, latent_dim))
     q_scale = jr.normal(keys[1], (num_timesteps, 1, 1)) ** 2
@@ -192,7 +195,9 @@ class TestTimeVaryingParallelLGSSMSmoother:
 
     def test_marginal_loglik(self):
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, rtol=2e-2)
-        assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior_diag.marginal_loglik, rtol=2e-2)
+        assert jnp.allclose(
+            self.serial_posterior.marginal_loglik, self.parallel_posterior_diag.marginal_loglik, rtol=2e-2
+        )
 
 
 class TestTimeVaryingParallelLGSSMSampler:
