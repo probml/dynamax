@@ -144,7 +144,8 @@ class LinearGaussianSSM(SSM):
         # Create nested dictionary of params
         params = ParamsLGSSM(
             initial=ParamsLGSSMInitial(
-                mean=default(initial_mean, _initial_mean), cov=default(initial_covariance, _initial_covariance)
+                mean=default(initial_mean, _initial_mean),
+                cov=default(initial_covariance, _initial_covariance),
             ),
             dynamics=ParamsLGSSMDynamics(
                 weights=default(dynamics_weights, _dynamics_weights),
@@ -163,7 +164,8 @@ class LinearGaussianSSM(SSM):
         # The keys of param_props must match those of params!
         props = ParamsLGSSM(
             initial=ParamsLGSSMInitial(
-                mean=ParameterProperties(), cov=ParameterProperties(constrainer=RealToPSDBijector())
+                mean=ParameterProperties(),
+                cov=ParameterProperties(constrainer=RealToPSDBijector()),
             ),
             dynamics=ParamsLGSSMDynamics(
                 weights=ParameterProperties(),
@@ -181,7 +183,9 @@ class LinearGaussianSSM(SSM):
         return params, props
 
     def initial_distribution(
-        self, params: ParamsLGSSM, inputs: Optional[Float[Array, "ntime input_dim"]] = None
+        self,
+        params: ParamsLGSSM,
+        inputs: Optional[Float[Array, "ntime input_dim"]] = None,
     ) -> tfd.Distribution:
         return MVN(params.initial.mean, params.initial.cov)
 
@@ -275,10 +279,14 @@ class LinearGaussianSSM(SSM):
         self,
         params: ParamsLGSSM,
         emissions: Union[
-            Float[Array, "num_timesteps emission_dim"], Float[Array, "num_batches num_timesteps emission_dim"]
+            Float[Array, "num_timesteps emission_dim"],
+            Float[Array, "num_batches num_timesteps emission_dim"],
         ],
         inputs: Optional[
-            Union[Float[Array, "num_timesteps input_dim"], Float[Array, "num_batches num_timesteps input_dim"]]
+            Union[
+                Float[Array, "num_timesteps input_dim"],
+                Float[Array, "num_batches num_timesteps input_dim"],
+            ]
         ] = None,
     ) -> Tuple[SuffStatsLGSSM, Scalar]:
         num_timesteps = emissions.shape[0]

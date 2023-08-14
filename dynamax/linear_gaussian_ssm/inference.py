@@ -47,12 +47,22 @@ class ParamsLGSSMDynamics(NamedTuple):
     :param cov: dynamics covariance $Q$
 
     """
-    weights: Union[ParameterProperties, Float[Array, "state_dim state_dim"], Float[Array, "ntime state_dim state_dim"]]
+    weights: Union[
+        ParameterProperties,
+        Float[Array, "state_dim state_dim"],
+        Float[Array, "ntime state_dim state_dim"],
+    ]
 
-    bias: Union[ParameterProperties, Float[Array, "state_dim"], Float[Array, "ntime state_dim"]]
+    bias: Union[
+        ParameterProperties,
+        Float[Array, "state_dim"],
+        Float[Array, "ntime state_dim"],
+    ]
 
     input_weights: Union[
-        ParameterProperties, Float[Array, "state_dim input_dim"], Float[Array, "ntime state_dim input_dim"]
+        ParameterProperties,
+        Float[Array, "state_dim input_dim"],
+        Float[Array, "ntime state_dim input_dim"],
     ]
 
     cov: Union[
@@ -77,13 +87,21 @@ class ParamsLGSSMEmissions(NamedTuple):
 
     """
     weights: Union[
-        ParameterProperties, Float[Array, "emission_dim state_dim"], Float[Array, "ntime emission_dim state_dim"]
+        ParameterProperties,
+        Float[Array, "emission_dim state_dim"],
+        Float[Array, "ntime emission_dim state_dim"],
     ]
 
-    bias: Union[ParameterProperties, Float[Array, "emission_dim"], Float[Array, "ntime emission_dim"]]
+    bias: Union[
+        ParameterProperties,
+        Float[Array, "emission_dim"],
+        Float[Array, "ntime emission_dim"],
+    ]
 
     input_weights: Union[
-        ParameterProperties, Float[Array, "emission_dim input_dim"], Float[Array, "ntime emission_dim input_dim"]
+        ParameterProperties,
+        Float[Array, "emission_dim input_dim"],
+        Float[Array, "ntime emission_dim input_dim"],
     ]
 
     cov: Union[
