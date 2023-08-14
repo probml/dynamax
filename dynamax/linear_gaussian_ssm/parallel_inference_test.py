@@ -96,9 +96,9 @@ def make_dynamic_lgssm_params(num_timesteps):
     b = jr.normal(keys[0], (num_timesteps, latent_dim))
     d = jr.normal(keys[1], (num_timesteps, observation_dim))
 
-    B = B * 0
-    b = b * 0
-    D = D * 0
+    # B = B * 0
+    # b = b * 0
+    # D = D * 0
     # d = d * 0
 
     lgssm = LinearGaussianSSM(latent_dim, observation_dim, input_dim)
@@ -186,10 +186,7 @@ class TestTimeVaryingParallelLGSSMSmoother:
 
     serial_posterior = serial_lgssm_smoother(params, emissions, inputs)
     parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
-    params.emissions.bias.at[:].set(0)
 
-    dzero_parallel_posterior = parallel_lgssm_smoother(params, emissions, inputs)
-    assert jnp.allclose(dzero_parallel_posterior.marginal_loglik, parallel_posterior.marginal_loglik, rtol=2e-2)
     # =======
     #     params, lgssm = make_dynamic_lgssm_params(num_timesteps)
     #     params_diag = flatten_diagonal_emission_cov(params)

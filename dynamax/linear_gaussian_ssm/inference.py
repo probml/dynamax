@@ -551,7 +551,7 @@ def lgssm_smoother(
 
         # Get parameters and inputs for time index t + 1
         F_next, B_next, b_next, Q_next = _get_params(params, num_timesteps, t + 1)[:4]
-        u_next = inputs[t]
+        u_next = inputs[t + 1]
 
         # This is like the Kalman gain but in reverse
         # See Eq 8.11 of Saarka's "Bayesian Filtering and Smoothing"
