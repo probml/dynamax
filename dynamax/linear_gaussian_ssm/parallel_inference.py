@@ -46,12 +46,12 @@ from tensorflow_probability.substrates.jax.distributions import (
 from jax.scipy.linalg import cho_solve, cho_factor
 from dynamax.utils.utils import symmetrize, psd_solve
 from dynamax.linear_gaussian_ssm import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
-from dynamax.linear_gaussian_ssm.inference import preprocess_args, _get_one_param, _get_params
+from dynamax.linear_gaussian_ssm.inference import preprocess_args, _get_one_param, _get_params, _log_likelihood
 
 
-# ---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------#
 #                                Filtering                                  #
-# ---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------#
 
 
 def _emissions_scale(Q, H, R):
@@ -78,35 +78,6 @@ def _emissions_scale(Q, H, R):
         X = U / R[:, None]
         S_inv = jnp.diag(1.0 / R) - X @ psd_solve(I + U.T @ X, X.T)
     return S_inv
-
-
-# TODO: remove both and use the one defined in inference.py
-def _log_likelihood(pred_mean, pred_cov, H, D, d, R, u, y):
-    m = H @ pred_mean + D @ u + d
-    if R.ndim == 2:
-        S = R + H @ pred_cov @ H.T
-        return MVN(m, S).log_prob(y)
-    else:
-        L = H @ jnp.linalg.cholesky(pred_cov)
-        return MVNLowRank(m, R, L).log_prob(y)
-
-
-def _marginal_loglik_elem(Q, H, R, y, y_loc):
-    """Compute marginal log-likelihood elements.
-
-    Args:
-        Q (state_dim, state_dim): State covariance.
-        H (emission_dim, state_dim): Emission matrix.
-        R (emission_dim, emission_dim) or (emission_dim,): Emission covariance.
-        y (emission_dim,): Emission.
-        y_loc (emission_dim,): Emission mean.
-    """
-    if R.ndim == 2:
-        S = H @ Q @ H.T + R
-        return -MVN(y_loc, S).log_prob(y)
-    else:
-        L = H @ jnp.linalg.cholesky(Q)
-        return -MVNLowRank(y_loc, R, L).log_prob(y)
 
 
 class FilterMessage(NamedTuple):
@@ -139,19 +110,15 @@ def _initialize_filtering_messages(params, emissions, inputs):
         m = params.initial.mean
         P = params.initial.cov
 
-        # Adjust the bias term accoding to the input
-        d = d + D @ u
-
         S = H @ P @ H.T + (R if R.ndim == 2 else jnp.diag(R))
         S_inv = _emissions_scale(P, H, R)
         K = P @ H.T @ S_inv
         A = jnp.zeros_like(P)
-        b = m + K @ (y - H @ m - d)
+        b = m + K @ (y - H @ m - D @ u - d)
         C = symmetrize(P - K @ S @ K.T)
         eta = jnp.zeros_like(b)
         J = jnp.eye(len(b))
-
-        logZ = _marginal_loglik_elem(P, H, R, y, y_loc=H @ m + d)
+        logZ = -_log_likelihood(m, P, H, D, d, R, u, y)
         return A, b, C, J, eta, logZ
 
     @partial(vmap, in_axes=(None, 0, 0))
@@ -160,22 +127,20 @@ def _initialize_filtering_messages(params, emissions, inputs):
         u = inputs[t]
 
         # Adjust the bias terms accoding to the input
-        d = d + D @ u
         b = b + B @ u
-
-        y_loc = H @ b + d  # mean of p(y_t|x_{t-1}=0)
+        m = b
 
         S_inv = _emissions_scale(Q, H, R)
         K = Q @ H.T @ S_inv
 
-        eta = F.T @ H.T @ S_inv @ (y - H @ b - d)
+        eta = F.T @ H.T @ S_inv @ (y - H @ b - D @ u - d)
         J = symmetrize(F.T @ H.T @ S_inv @ H @ F)
 
         A = F - K @ H @ F
-        b = b + K @ (y - H @ b - d)
+        b = b + K @ (y - H @ b - D @ u - d)
         C = symmetrize(Q - K @ H @ Q)
 
-        logZ = _marginal_loglik_elem(Q, H, R, y, y_loc)
+        logZ = -_log_likelihood(m, Q, H, D, d, R, u, y)
         return A, b, C, J, eta, logZ
 
     A0, b0, C0, J0, eta0, logZ0 = _first_message(params, emissions[0], inputs[0])
@@ -234,9 +199,9 @@ def lgssm_filter(
     )
 
 
-# ---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------#
 #                                 Smoothing                                 #
-# ---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------#
 
 
 class SmoothMessage(NamedTuple):
@@ -342,9 +307,9 @@ def compute_smoothed_cross_covariances(
     return G @ smoothed_cov_next + jnp.outer(smoothed_mean, smoothed_mean_next)
 
 
-# ---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------#
 #                                 Sampling                                  #
-# ---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------#
 
 
 class SampleMessage(NamedTuple):
