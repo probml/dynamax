@@ -16,7 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.9
     - name: Install release tooling
       run: |
         pip install twine wheel
@@ -41,7 +41,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.9
     - name: Give PyPI some time to update the index
       run: sleep 240
     - name: Attempt install from PyPI
