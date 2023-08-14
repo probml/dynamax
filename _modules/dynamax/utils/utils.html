@@ -291,6 +291,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Int</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">linear_sum_assignment</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">jax.scipy.linalg</span> <span class="kn">import</span> <span class="n">cho_factor</span><span class="p">,</span> <span class="n">cho_solve</span>
 
 <span class="k">def</span> <span class="nf">has_tpu</span><span class="p">():</span>
     <span class="k">try</span><span class="p">:</span>
@@ -480,10 +481,12 @@ document.write(`
     <span class="k">return</span> <span class="n">perm</span></div>
 
 
-<span class="k">def</span> <span class="nf">psd_solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">b</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">psd_solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">diagonal_boost</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper for coordinating the linalg solvers used in the library for psd matrices.&quot;&quot;&quot;</span>
-    <span class="n">A</span> <span class="o">=</span> <span class="n">A</span> <span class="o">+</span> <span class="mf">1e-6</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">symmetrize</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">+</span> <span class="n">diagonal_boost</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">L</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="n">cho_factor</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">((</span><span class="n">L</span><span class="p">,</span> <span class="n">lower</span><span class="p">),</span> <span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span>
 
 <span class="k">def</span> <span class="nf">symmetrize</span><span class="p">(</span><span class="n">A</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Symmetrize one or more matrices.&quot;&quot;&quot;</span>
