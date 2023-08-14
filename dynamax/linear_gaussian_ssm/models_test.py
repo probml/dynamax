@@ -12,10 +12,11 @@ CONFIGS = [
     (LinearGaussianConjugateSSM, dict(state_dim=2, emission_dim=10), None),
 ]
 
+
 @pytest.mark.parametrize(["cls", "kwargs", "inputs"], CONFIGS)
 def test_sample_and_fit(cls, kwargs, inputs):
     model = cls(**kwargs)
-    #key1, key2 = jr.split(jr.PRNGKey(int(datetime.now().timestamp())))
+    # key1, key2 = jr.split(jr.PRNGKey(int(datetime.now().timestamp())))
     key1, key2 = jr.split(jr.PRNGKey(0))
     params, param_props = model.initialize(key1)
     states, emissions = model.sample(params, key2, num_timesteps=NUM_TIMESTEPS, inputs=inputs)
