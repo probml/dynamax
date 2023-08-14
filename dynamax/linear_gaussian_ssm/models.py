@@ -69,9 +69,10 @@ class LinearGaussianSSM(SSM):
     You can create the parameters manually, or by calling :meth:`initialize`.
 
     Please note that we adopt the convention of Murphy, K. P. (2022), "Probabilistic machine learning: Advanced topics",
-    rather than Särkkä, S. (2013), "Bayesian Filtering and Smoothing" for indexing parameters of LGSSM with initial
-    index begin 0 instead of 1, which tends to be a source of confusion sometimes.
-    As such, F_0, B_0, b_0, Q_0 are always ignored and the provided prior of the initial state is used.
+    rather than Särkkä, S. (2013), "Bayesian Filtering and Smoothing" for indexing parameters of LGSSM, where we start 
+    initial index at 0 instead of 1, which is not exactly in line with the former book. This tends to be a source of
+    confusion sometimes. As such, $F_0$, $B_0$, $b_0$, $Q_0$ are always ignored and the prior specified by $m$ and $S$
+    is used as the distribution of the initial state.
 
     :param state_dim: Dimensionality of latent state.
     :param emission_dim: Dimensionality of observation vector.
