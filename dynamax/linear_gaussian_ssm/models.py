@@ -425,6 +425,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         input_dim=0,
         has_dynamics_bias=True,
         has_emissions_bias=True,
+        use_parallel_inference=False,
         **kw_priors,
     ):
         super().__init__(
@@ -433,6 +434,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             input_dim=input_dim,
             has_dynamics_bias=has_dynamics_bias,
             has_emissions_bias=has_emissions_bias,
+            use_parallel_inference=use_parallel_inference,
         )
 
         # Initialize prior distributions
