@@ -79,7 +79,7 @@ def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
     # Compare predicted_probs to manually computed entries
     for t in range(num_timesteps):
         log_joint_t = big_log_joint(initial_probs, transition_matrix,
-                                    jnp.row_stack([log_lkhds[:t], jnp.zeros(num_states)]))
+                                    jnp.vstack([log_lkhds[:t], jnp.zeros(num_states)]))
 
         log_joint_t -= logsumexp(log_joint_t)
         predicted_probs_t = jnp.exp(logsumexp(log_joint_t, axis=tuple(jnp.arange(t))))
