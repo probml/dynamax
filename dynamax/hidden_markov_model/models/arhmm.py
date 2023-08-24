@@ -187,14 +187,14 @@ class LinearAutoregressiveHMM(HMM):
             key1, key2 = jr.split(key, 2)
             state = self.transition_distribution(params, prev_state).sample(seed=key2)
             emission = self.emission_distribution(params, state, inputs=jnp.ravel(prev_emissions)).sample(seed=key1)
-            next_prev_emissions = jnp.row_stack([emission, prev_emissions[:-1]])
+            next_prev_emissions = jnp.vstack([emission, prev_emissions[:-1]])
             return (state, next_prev_emissions), (state, emission)
 
         # Sample the initial state
         key1, key2, key = jr.split(key, 3)
         initial_state = self.initial_distribution(params).sample(seed=key1)
         initial_emission = self.emission_distribution(params, initial_state, inputs=jnp.ravel(prev_emissions)).sample(seed=key2)
-        initial_prev_emissions = jnp.row_stack([initial_emission, prev_emissions[:-1]])
+        initial_prev_emissions = jnp.vstack([initial_emission, prev_emissions[:-1]])
 
         # Sample the remaining emissions and states
         next_keys = jr.split(key, num_timesteps - 1)

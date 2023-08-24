@@ -242,8 +242,8 @@ def extended_kalman_smoother(
     _, (smoothed_means, smoothed_covs) = lax.scan(_step, init_carry, args)
 
     # Reverse the arrays and return
-    smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
-    smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
+    smoothed_means = jnp.vstack((smoothed_means[::-1], filtered_means[-1][None, ...]))
+    smoothed_covs = jnp.vstack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
     return PosteriorGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,
@@ -311,7 +311,7 @@ def extended_kalman_posterior_sample(
         jnp.arange(num_timesteps - 2, -1, -1),
     )
     _, reversed_states = lax.scan(_step, last_state, args)
-    states = jnp.row_stack([reversed_states[::-1], last_state])
+    states = jnp.vstack([reversed_states[::-1], last_state])
     return states
 
 

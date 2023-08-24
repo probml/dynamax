@@ -276,8 +276,8 @@ def lgssm_info_smoother(
     _, (smoothed_etas, smoothed_precisions) = lax.scan(_smooth_step, init_carry, args)
 
     # Reverse the arrays and return
-    smoothed_etas = jnp.row_stack((smoothed_etas[::-1], filtered_etas[-1][None, ...]))
-    smoothed_precisions = jnp.row_stack((smoothed_precisions[::-1], filtered_precisions[-1][None, ...]))
+    smoothed_etas = jnp.vstack((smoothed_etas[::-1], filtered_etas[-1][None, ...]))
+    smoothed_precisions = jnp.vstack((smoothed_precisions[::-1], filtered_precisions[-1][None, ...]))
     return PosteriorGSSMInfoSmoothed(
         marginal_loglik=ll,
         filtered_etas=filtered_etas,
