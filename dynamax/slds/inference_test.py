@@ -1,8 +1,9 @@
+import sys
+sys.path.append(r'/Users/kostastsampourakis/Desktop/code/Python/projects/dynamax')
 import jax.numpy as jnp
 import jax.random as jr
-from dynamax.slds.inference import DiscreteParamsSLDS, LGParamsSLDS, ParamsSLDS, rbpfilter, rbpfilter_optimal
+from dynamax.slds import SLDS, DiscreteParamsSLDS, LGParamsSLDS, ParamsSLDS, rbpfilter, rbpfilter_optimal
 from functools import partial
-from dynamax.slds.models import SLDS
 import matplotlib.pyplot as plt
 import mixture_kalman_filter as kflib
 from functools import partial
