@@ -1,5 +1,3 @@
-import sys
-sys.path.append(r'/Users/kostastsampourakis/Desktop/code/Python/projects/dynamax')
 import jax.numpy as jnp
 import jax.random as jr
 from dynamax.slds import SLDS, DiscreteParamsSLDS, LGParamsSLDS, ParamsSLDS, rbpfilter, rbpfilter_optimal
