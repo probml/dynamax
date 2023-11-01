@@ -321,7 +321,6 @@ class LinearGaussianSSM(SSM):
 
         return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
-
     def initialize_m_step_state(
             self,
             params: ParamsLGSSM,

@@ -388,6 +388,8 @@ class SSM(ABC):
             batch_stats, lls = vmap(partial(self.e_step, params))(batch_emissions, batch_inputs)
             lp = self.log_prior(params) + lls.sum()
             params, m_step_state = self.m_step(params, props, batch_stats, m_step_state)
+            # debug.print('e_step: {x}', x=(batch_stats, lls))
+            # debug.print('m_step{y}', y=params)
             return params, m_step_state, lp
 
         log_probs = []
