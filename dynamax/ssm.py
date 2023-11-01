@@ -4,7 +4,7 @@ from fastprogress.fastprogress import progress_bar
 from functools import partial
 import jax.numpy as jnp
 import jax.random as jr
-from jax import jit, lax, vmap, debug
+from jax import jit, lax, vmap
 from jax.tree_util import tree_map
 from jaxtyping import Float, Array, PyTree
 import optax
