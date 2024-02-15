@@ -143,7 +143,8 @@ class PoissonHMM(HMM):
                    method="prior",
                    initial_probs: Optional[Float[Array, "num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
-                   emission_rates: Optional[Float[Array, "num_states emission_dim"]]=None
+                   emission_rates: Optional[Float[Array, "num_states emission_dim"]]=None, 
+                   emissions: Optional[Float[Array, "num_timesteps emission_dim"]]=None
     ) -> Tuple[ParameterSet, PropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
@@ -167,5 +168,5 @@ class PoissonHMM(HMM):
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
-        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_rates=emission_rates)
+        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_rates=emission_rates, emissions = emissions)
         return ParamsPoissonHMM(**params), ParamsPoissonHMM(**props)
