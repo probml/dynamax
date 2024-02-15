@@ -45,14 +45,21 @@ class PoissonHMMEmissions(HMMEmissions):
 
     def initialize(self, key=jr.PRNGKey(0),
                    method="prior",
-                   emission_rates=None):
+                   emission_rates=None, 
+                   emissions=None):
         # Initialize the emission probabilities
         if emission_rates is None:
             if method.lower() == "prior":
                 prior = tfd.Gamma(self.emission_prior_concentration, self.emission_prior_rate)
                 emission_rates = prior.sample(seed=key, sample_shape=(self.num_states, self.emission_dim))
             elif method.lower() == "kmeans":
-                raise NotImplementedError("kmeans initialization is not yet implemented!")
+                assert emissions is not None, "Need emissions to initialize the model with K-Means!"
+                from sklearn.cluster import KMeans
+                key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+                sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+                km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
+                ## Cluster centers, also forms the Poisson emission rate 
+                emission_rates = jnp.array(km.cluster_centers_)
             else:
                 raise Exception("invalid initialization method: {}".format(method))
         else:
