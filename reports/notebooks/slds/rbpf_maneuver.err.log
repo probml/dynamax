@@ -1,0 +1,144 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/nbclient/client.py", line 1314, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+    return future.result()
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+import numpy as np
+
+def plot_3d_belief_state(mu_hist, dim, ax, skip=3, npoints=2000, azimuth=-30, elevation=30, h=0.5):
+    nsteps = len(mu_hist)
+    xmin, xmax = mu_hist[..., dim].min(), mu_hist[..., dim].max()
+    xrange = np.linspace(xmin, xmax, npoints).reshape(-1, 1)
+    res = np.apply_along_axis(lambda X: kdeg(xrange, X[..., None], h), 1, mu_hist)
+    densities = res[..., dim]
+    for t in range(0, nsteps, skip):
+        tloc = t * np.ones(npoints)
+        px = densities[t]
+        ax.plot(tloc, xrange, px, c="tab:blue", linewidth=1)
+    ax.set_zlim(0, 1)
+    style3d(ax, 1.8, 1.2, 0.7, 0.8)
+    ax.view_init(elevation, azimuth)
+    ax.set_xlabel(r"$t$", fontsize=13)
+    ax.set_ylabel(r"$x_{"f"d={dim}"",t}$", fontsize=13)
+    ax.set_zlabel(r"$p(x_{d, t} \vert y_{1:t})$", fontsize=13)
+
+def scale_3d(ax, x_scale, y_scale, z_scale, factor):    
+    scale=np.diag(np.array([x_scale, y_scale, z_scale, 1.0]))
+    scale=scale*(1.0/scale.max())    
+    scale[3,3]=factor
+    def short_proj():    
+        return np.dot(Axes3D.get_proj(ax), scale)    
+    return short_proj    
+
+def style3d(ax, x_scale, y_scale, z_scale, factor=0.62):
+    plt.gca().patch.set_facecolor('white')
+    ax.w_xaxis.set_pane_color((0, 0, 0, 0))
+    ax.w_yaxis.set_pane_color((0, 0, 0, 0))
+    ax.w_zaxis.set_pane_color((0, 0, 0, 0))
+    ax.get_proj = scale_3d(ax, x_scale, y_scale, z_scale, factor)
+
+def kdeg(x, X, h):
+    """
+    KDE under a gaussian kernel
+
+    Parameters
+    ----------
+    x: array(eval, D)
+    X: array(obs, D)
+    h: float
+
+    Returns
+    -------
+    array(eval):
+        KDE around the observed values
+    """
+    N, D = X.shape
+    nden, _ = x.shape
+
+    Xhat = X.reshape(D, 1, N)
+    xhat = x.reshape(D, nden, 1)
+    u = xhat - Xhat
+    u = np.linalg.norm(u, ord=2, axis=0) ** 2 / (2 * h ** 2)
+    px = np.exp(-u).sum(axis=1) / (N * h * np.sqrt(2 * np.pi))
+    return px
+
+
+ # Plot target dataset
+dict_figures = {}
+color_dict = {0: "tab:green", 1: "tab:red", 2: "tab:blue"}
+fig, ax = plt.subplots()
+color_states_org = [color_dict[int(state)] for state in dstates]
+ax.scatter(*cstates[:, [0, 2]].T, c="none", edgecolors=color_states_org, s=10)
+ax.scatter(*emissions[:, [0, 2]].T, s=5, c="black", alpha=0.6)
+ax.set_title("Data")
+dict_figures["rbpf-maneuver-data"] = fig
+
+# Plot filtered dataset
+fig, ax = plt.subplots()
+rbpf_mse = ((post_mean - cstates)[:, [0, 2]] ** 2).mean(axis=0).sum()
+color_states_est = [color_dict[int(state)] for state in np.array(est_dstates)]
+ax.scatter(*post_mean[:, [0, 2]].T, c="none", edgecolors=color_states_est, s=10)
+ax.set_title(f"RBPF MSE: {rbpf_mse:.2f}")
+dict_figures["rbpf-maneuver-trace"] = fig
+
+# Plot belief state of discrete system
+rbpf_error_rate = (dstates != est_dstates).mean()
+fig, ax = plt.subplots(figsize=(2.5, 5))
+sns.heatmap(p_est, cmap="viridis", cbar=False)
+plt.title(f"RBPF, error rate: {rbpf_error_rate:0.3}")
+dict_figures["rbpf-maneuver-discrete-belief"] = fig
+
+# Plot ground truth and MAP estimate
+ohe = OneHotEncoder(sparse=False)
+latent_hmap = ohe.fit_transform(dstates[:, None])
+latent_hmap_est = ohe.fit_transform(p_est.argmax(axis=1)[:, None])
+
+fig, ax = plt.subplots(figsize=(2.5, 5))
+sns.heatmap(latent_hmap, cmap="viridis", cbar=False, ax=ax)
+ax.set_title("Data")
+dict_figures["rbpf-maneuver-discrete-ground-truth.pdf"] = fig
+
+fig, ax = plt.subplots(figsize=(2.5, 5))
+sns.heatmap(latent_hmap_est, cmap="viridis", cbar=False, ax=ax)
+ax.set_title(f"MAP (error rate: {rbpf_error_rate:0.4f})")
+dict_figures["rbpf-maneuver-discrete-map"] = fig
+
+# Plot belief for state space
+dims = [0, 2]
+for dim in dims:
+    fig = plt.figure()
+    ax = plt.axes(projection="3d")
+    plot_3d_belief_state(filtered_means, dim, ax, h=1.1)
+    # pml.savefig(f"rbpf-maneuver-belief-states-dim{dim}.pdf", pad_inches=0, bbox_inches="tight")
+    dict_figures[f"rbpf-maneuver-belief-states-dim{dim}.pdf"] = fig
+
+
+plt.rcParams["axes.spines.right"] = False
+plt.rcParams["axes.spines.top"] = False
+plt.show()
+------------------
+
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mTypeError[0m                                 Traceback (most recent call last)
+Cell [0;32mIn[5], line 87[0m
+[1;32m     84[0m dict_figures[[38;5;124m"[39m[38;5;124mrbpf-maneuver-discrete-belief[39m[38;5;124m"[39m] [38;5;241m=[39m fig
+[1;32m     86[0m [38;5;66;03m# Plot ground truth and MAP estimate[39;00m
+[0;32m---> 87[0m ohe [38;5;241m=[39m [43mOneHotEncoder[49m[43m([49m[43msparse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m     88[0m latent_hmap [38;5;241m=[39m ohe[38;5;241m.[39mfit_transform(dstates[:, [38;5;28;01mNone[39;00m])
+[1;32m     89[0m latent_hmap_est [38;5;241m=[39m ohe[38;5;241m.[39mfit_transform(p_est[38;5;241m.[39margmax(axis[38;5;241m=[39m[38;5;241m1[39m)[:, [38;5;28;01mNone[39;00m])
+
+[0;31mTypeError[0m: __init__() got an unexpected keyword argument 'sparse'
+

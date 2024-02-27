@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" >
+<html lang="en" data-content_root="../../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Tracking a spiraling object using the extended / unscented Kalman filter</title>
   
@@ -19,31 +18,29 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/nonlinear_gaussian_ssm/ekf_ukf_spiral';</script>
@@ -60,7 +57,15 @@
 
   
   
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
   
   <input type="checkbox"
           class="sidebar-toggle"
@@ -95,11 +100,14 @@
 </form></div>
   </div>
   
-    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
-    </nav>
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
   
+
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
+      
+      
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -114,9 +122,11 @@
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
         <div class="sidebar-primary-item">
+
   
 
 <a class="navbar-brand logo" href="../../index.html">
+  
   
   
   
@@ -126,12 +136,23 @@
       
     
     
-    <img src="../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
-    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+    <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
 <ul class="nav bd-sidenav">
@@ -291,20 +312,22 @@
 </button>
 
 
+
 <script>
 document.write(`
-  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
-    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
-    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
   </button>
 `);
 </script>
 
+
 <script>
 document.write(`
   <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
   </button>
 `);
 </script>
@@ -345,10 +368,10 @@ document.write(`
               
                 
 <div id="searchbox"></div>
-                <article class="bd-article" role="main">
+                <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="tracking-a-spiraling-object-using-the-extended-unscented-kalman-filter">
-<h1>Tracking a spiraling object using the extended / unscented Kalman filter<a class="headerlink" href="#tracking-a-spiraling-object-using-the-extended-unscented-kalman-filter" title="Permalink to this heading">#</a></h1>
+<h1>Tracking a spiraling object using the extended / unscented Kalman filter<a class="headerlink" href="#tracking-a-spiraling-object-using-the-extended-unscented-kalman-filter" title="Link to this heading">#</a></h1>
 <p>Consider an object moving in <span class="math notranslate nohighlight">\(R^2\)</span>.
 We assume that we observe a noisy version of its location at each time step.
 We want to track the object and possibly forecast its future motion.
@@ -378,7 +401,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 \end{align*}\]</div>
 <p>where <span class="math notranslate nohighlight">\(r_t \sim N(0,R)\)</span> is the observation noise.</p>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">#</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
@@ -405,15 +428,10 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="create-the-model">
-<h2>Create the model<a class="headerlink" href="#create-the-model" title="Permalink to this heading">#</a></h2>
+<h2>Create the model<a class="headerlink" href="#create-the-model" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">state_dim</span> <span class="o">=</span> <span class="mi">2</span>
@@ -437,7 +455,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </section>
 <section id="sample-some-data-from-the-model">
-<h2>Sample some data from the model<a class="headerlink" href="#sample-some-data-from-the-model" title="Permalink to this heading">#</a></h2>
+<h2>Sample some data from the model<a class="headerlink" href="#sample-some-data-from-the-model" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -475,12 +493,12 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Axes: title={&#39;center&#39;: &#39;Noisy obervations from hidden trajectory&#39;}&gt;
 </pre></div>
 </div>
-<img alt="../../_images/7bfc3841ca38ef9064be11bbd84bce0ccee40c2732617dcad016ba345e29c2d1.png" src="../../_images/7bfc3841ca38ef9064be11bbd84bce0ccee40c2732617dcad016ba345e29c2d1.png" />
+<img alt="../../_images/5cb8e2a53c6fcc28ccecc1acc69d76dd946716289d9f1df1be22c749e12ed0e8.png" src="../../_images/5cb8e2a53c6fcc28ccecc1acc69d76dd946716289d9f1df1be22c749e12ed0e8.png" />
 </div>
 </div>
 </section>
 <section id="extended-kalman-filter">
-<h2>Extended Kalman filter<a class="headerlink" href="#extended-kalman-filter" title="Permalink to this heading">#</a></h2>
+<h2>Extended Kalman filter<a class="headerlink" href="#extended-kalman-filter" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#ekf_params = nlgssm.make_inference_args(params)</span>
@@ -501,12 +519,12 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/46bbe6a30190388838faadd8e52f3903d55bb6e9a478a52bdbc6d87aefe934b9.png" src="../../_images/46bbe6a30190388838faadd8e52f3903d55bb6e9a478a52bdbc6d87aefe934b9.png" />
+<img alt="../../_images/541392d80b2c3ea429ecf32d7631ef78f8aceeab8d7eb7c7635b304d33a45c9d.png" src="../../_images/541392d80b2c3ea429ecf32d7631ef78f8aceeab8d7eb7c7635b304d33a45c9d.png" />
 </div>
 </div>
 </section>
 <section id="unscented-kalman-filter">
-<h2>Unscented Kalman filter<a class="headerlink" href="#unscented-kalman-filter" title="Permalink to this heading">#</a></h2>
+<h2>Unscented Kalman filter<a class="headerlink" href="#unscented-kalman-filter" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hyperparams</span> <span class="o">=</span> <span class="n">UKFHyperParams</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -535,10 +553,10 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7eff647bdd90&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7ff08c2203d0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/3a3ad0df99aac8e2de415c1b330fae0659d12c797485508578b98f9c9986b6e5.png" src="../../_images/3a3ad0df99aac8e2de415c1b330fae0659d12c797485508578b98f9c9986b6e5.png" />
+<img alt="../../_images/5567671f3c8c28fc6c08cc47b7ab7e4d46ba052c6835294bd944c1c2677a2a5b.png" src="../../_images/5567671f3c8c28fc6c08cc47b7ab7e4d46ba052c6835294bd944c1c2677a2a5b.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -567,10 +585,10 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7eff6459c9a0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7ff084f8b880&gt;
 </pre></div>
 </div>
-<img alt="../../_images/135c33916d94cea32601a68e4c6ff010ef9963e2816acc58008e26607cbcd6e8.png" src="../../_images/135c33916d94cea32601a68e4c6ff010ef9963e2816acc58008e26607cbcd6e8.png" />
+<img alt="../../_images/f03605d9979e39feb525e93d489c213ab0441a595d76012afc2924c03b26e3c8.png" src="../../_images/f03605d9979e39feb525e93d489c213ab0441a595d76012afc2924c03b26e3c8.png" />
 </div>
 </div>
 </section>
@@ -582,11 +600,10 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 
               
               
-                <footer class="bd-footer-article">
+              
+              
+                <footer class="prev-next-footer">
                   
-<div class="footer-article-items footer-article__inner">
-  
-    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
        href="../linear_gaussian_ssm/lgssm_hmc.html"
@@ -606,10 +623,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
-</div></div>
-  
 </div>
-
                 </footer>
               
             </div>
@@ -617,6 +631,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
 
   <div class="sidebar-secondary-item">
   <div class="page-toc tocsection onthispage">
@@ -650,6 +665,7 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   
   <div class="footer-item">
     
+
   <p class="copyright">
     
       © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
@@ -676,8 +692,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
   </footer>

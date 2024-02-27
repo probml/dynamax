@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" >
+<html lang="en" data-content_root="../../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Autoregressive (AR) HMM Demo</title>
   
@@ -19,31 +18,29 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/hmm/autoregressive_hmm';</script>
@@ -60,7 +57,15 @@
 
   
   
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
   
   <input type="checkbox"
           class="sidebar-toggle"
@@ -95,11 +100,14 @@
 </form></div>
   </div>
   
-    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
-    </nav>
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
   
+
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
+      
+      
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -114,9 +122,11 @@
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
         <div class="sidebar-primary-item">
+
   
 
 <a class="navbar-brand logo" href="../../index.html">
+  
   
   
   
@@ -126,12 +136,23 @@
       
     
     
-    <img src="../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
-    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+    <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
 <ul class="current nav bd-sidenav">
@@ -291,20 +312,22 @@
 </button>
 
 
+
 <script>
 document.write(`
-  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
-    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
-    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
   </button>
 `);
 </script>
 
+
 <script>
 document.write(`
   <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
   </button>
 `);
 </script>
@@ -357,10 +380,10 @@ document.write(`
               
                 
 <div id="searchbox"></div>
-                <article class="bd-article" role="main">
+                <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="autoregressive-ar-hmm-demo">
-<h1>Autoregressive (AR) HMM Demo<a class="headerlink" href="#autoregressive-ar-hmm-demo" title="Permalink to this heading">#</a></h1>
+<h1>Autoregressive (AR) HMM Demo<a class="headerlink" href="#autoregressive-ar-hmm-demo" title="Link to this heading">#</a></h1>
 <p>This notebook demonstrates how to construct and fit a linear autoregressive HMM.
 Let <span class="math notranslate nohighlight">\(y_t\)</span> denote the observation at time <span class="math notranslate nohighlight">\(t\)</span>. Let <span class="math notranslate nohighlight">\(z_t\)</span> denote the corresponding discrete latent state.</p>
 <p>The autoregressive hidden Markov model has the following likelihood,</p>
@@ -372,7 +395,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 <p>(Higher-order autoregressive processes are also supported.)</p>
 <p>This notebook will also show how inputs are passed into SSMs in Dynamax.</p>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">#</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -405,14 +428,9 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 <section id="helper-functions-for-plotting">
-<h3>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Permalink to this heading">#</a></h3>
+<h3>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Link to this heading">#</a></h3>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -444,7 +462,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </section>
 </section>
 <section id="manually-construct-an-arhmm">
-<h2>Manually construct an ARHMM<a class="headerlink" href="#manually-construct-an-arhmm" title="Permalink to this heading">#</a></h2>
+<h2>Manually construct an ARHMM<a class="headerlink" href="#manually-construct-an-arhmm" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make a transition matrix</span>
@@ -464,10 +482,10 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f16e8607fa0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fb1ac786b20&gt;
 </pre></div>
 </div>
-<img alt="../../_images/bda92d5a38e9ff72d108d249cff5ca19d354d26ac95dad9c037d49242cd3fc23.png" src="../../_images/bda92d5a38e9ff72d108d249cff5ca19d354d26ac95dad9c037d49242cd3fc23.png" />
+<img alt="../../_images/8439f8ac737bceaccf4c19b053de4d8dd7cf6580db904aacb8aef2bdde5a359c.png" src="../../_images/8439f8ac737bceaccf4c19b053de4d8dd7cf6580db904aacb8aef2bdde5a359c.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -488,9 +506,15 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/numpy/linalg.py:708: FutureWarning: jnp.linalg.solve: batched 1D solves with b.ndim &gt; 1 are deprecated, and in the future will be treated as a batched 2D solve. Use solve(a, b[..., None])[..., 0] to avoid this warning.
+  warnings.warn(&quot;jnp.linalg.solve: batched 1D solves with b.ndim &gt; 1 are deprecated, &quot;
+</pre></div>
+</div>
+</div>
 </div>
 <section id="plot-dynamics-functions">
-<h3>Plot dynamics functions<a class="headerlink" href="#plot-dynamics-functions" title="Permalink to this heading">#</a></h3>
+<h3>Plot dynamics functions<a class="headerlink" href="#plot-dynamics-functions" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">emission_dim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
@@ -522,13 +546,13 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ff0a571b9b0cae6c5ff97453f8478c9abddaa4dc90bce6f5eda3e9f7b7c5e44f.png" src="../../_images/ff0a571b9b0cae6c5ff97453f8478c9abddaa4dc90bce6f5eda3e9f7b7c5e44f.png" />
+<img alt="../../_images/65d89c7df4b3c3fd0e10ae613855d44d4b3818553735b7d7f0e48f86ec531f5a.png" src="../../_images/65d89c7df4b3c3fd0e10ae613855d44d4b3818553735b7d7f0e48f86ec531f5a.png" />
 </div>
 </div>
 </section>
 </section>
 <section id="sample-emissions-from-the-arhmm">
-<h2>Sample emissions from the ARHMM<a class="headerlink" href="#sample-emissions-from-the-arhmm" title="Permalink to this heading">#</a></h2>
+<h2>Sample emissions from the ARHMM<a class="headerlink" href="#sample-emissions-from-the-arhmm" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make an Autoregressive (AR) HMM</span>
@@ -566,7 +590,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;$x_2$&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/6d28d58e9e1955e8f3b6fbaf9e18ca75ace34b35755be23288de6c7f701c4133.png" src="../../_images/6d28d58e9e1955e8f3b6fbaf9e18ca75ace34b35755be23288de6c7f701c4133.png" />
+<img alt="../../_images/c4e7d098d0dc4f0b37637f862fd7c16f2f15a8ac16ebcfc4a5ef31e4ee76d9e9.png" src="../../_images/c4e7d098d0dc4f0b37637f862fd7c16f2f15a8ac16ebcfc4a5ef31e4ee76d9e9.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the the corresponding AR state while the solid lines are the actual observations sampled from the HMM.</p>
@@ -598,12 +622,12 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e5337d4960debadc5bcc09344e1d2320e9c80277987aef1848488af807d95b3b.png" src="../../_images/e5337d4960debadc5bcc09344e1d2320e9c80277987aef1848488af807d95b3b.png" />
+<img alt="../../_images/7d1e5e5e6aeda38b17fa4db39845eabc69a59053404a97aace63e530f1ed120b.png" src="../../_images/7d1e5e5e6aeda38b17fa4db39845eabc69a59053404a97aace63e530f1ed120b.png" />
 </div>
 </div>
 </section>
 <section id="fit-an-arhmm">
-<h2>Fit an ARHMM<a class="headerlink" href="#fit-an-arhmm" title="Permalink to this heading">#</a></h2>
+<h2>Fit an ARHMM<a class="headerlink" href="#fit-an-arhmm" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Now fit an HMM to the emissions</span>
@@ -620,10 +644,6 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
 <div class="output text_html">
 <style>
     /* Turns off some styling */
@@ -648,7 +668,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
     </div></div>
 </div>
 <section id="plot-the-log-likelihoods-against-the-true-likelihood-for-comparison">
-<h3>Plot the log likelihoods against the true likelihood, for comparison<a class="headerlink" href="#plot-the-log-likelihoods-against-the-true-likelihood-for-comparison" title="Permalink to this heading">#</a></h3>
+<h3>Plot the log likelihoods against the true likelihood, for comparison<a class="headerlink" href="#plot-the-log-likelihoods-against-the-true-likelihood-for-comparison" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">true_lp</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
@@ -662,12 +682,12 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8010ea799ccd6c3945b616f07cd65b982102ff49f25587484b606128fccfd821.png" src="../../_images/8010ea799ccd6c3945b616f07cd65b982102ff49f25587484b606128fccfd821.png" />
+<img alt="../../_images/05d9591f307f58ace2a620bcd652e8a85f6ff3570b1bd80cc82ff3eccae8d7d3.png" src="../../_images/05d9591f307f58ace2a620bcd652e8a85f6ff3570b1bd80cc82ff3eccae8d7d3.png" />
 </div>
 </div>
 </section>
 <section id="find-the-most-likely-states">
-<h3>Find the most likely states<a class="headerlink" href="#find-the-most-likely-states" title="Permalink to this heading">#</a></h3>
+<h3>Find the most likely states<a class="headerlink" href="#find-the-most-likely-states" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">posterior</span> <span class="o">=</span> <span class="n">arhmm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">fitted_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
@@ -709,12 +729,12 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a172683c1a2b377fd95e69f0272bb1b29fce4316ad640c24eebe839508ceed2c.png" src="../../_images/a172683c1a2b377fd95e69f0272bb1b29fce4316ad640c24eebe839508ceed2c.png" />
+<img alt="../../_images/caf61b419c94316c58203b05ca7577cac3186e707ab9d42109e8dd47a74d756c.png" src="../../_images/caf61b419c94316c58203b05ca7577cac3186e707ab9d42109e8dd47a74d756c.png" />
 </div>
 </div>
 </section>
 <section id="plot-the-true-and-inferred-discrete-states">
-<h3>Plot the true and inferred discrete states<a class="headerlink" href="#plot-the-true-and-inferred-discrete-states" title="Permalink to this heading">#</a></h3>
+<h3>Plot the true and inferred discrete states<a class="headerlink" href="#plot-the-true-and-inferred-discrete-states" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_slice</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
@@ -737,13 +757,13 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a6f4f98d7099b30142dc77dd3a47e14ea38b2f5761982dde2da2dd5c463baab5.png" src="../../_images/a6f4f98d7099b30142dc77dd3a47e14ea38b2f5761982dde2da2dd5c463baab5.png" />
+<img alt="../../_images/d1ef29de4287b86ac3d2c906c280f33164f495dc5f14fe2196352637985f3b19.png" src="../../_images/d1ef29de4287b86ac3d2c906c280f33164f495dc5f14fe2196352637985f3b19.png" />
 </div>
 </div>
 </section>
 </section>
 <section id="sample-new-data-from-the-fitted-model">
-<h2>Sample new data from the fitted model<a class="headerlink" href="#sample-new-data-from-the-fitted-model" title="Permalink to this heading">#</a></h2>
+<h2>Sample new data from the fitted model<a class="headerlink" href="#sample-new-data-from-the-fitted-model" title="Link to this heading">#</a></h2>
 <p>A good (and difficult!) test of a generative model is its ability to simulate data that looks like the real data. Let’s simulate new data from an ARHMM with the fitted parameter and see what it looks like.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -767,12 +787,12 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/17908d569fb701f26a4a6599f6d64d9911fe1ea5e9c5060c368cb51ae5f3a35b.png" src="../../_images/17908d569fb701f26a4a6599f6d64d9911fe1ea5e9c5060c368cb51ae5f3a35b.png" />
+<img alt="../../_images/bff72a31235d754074be47b72494cb7a271b41cd1d46c82d0bc223f5d0650b2a.png" src="../../_images/bff72a31235d754074be47b72494cb7a271b41cd1d46c82d0bc223f5d0650b2a.png" />
 </div>
 </div>
 </section>
 <section id="conclusion">
-<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">#</a></h2>
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
 <p>This notebook showed how to sample and fit an autoregressive HMM. These models can produce complex multivariate time series by switching between different autoregressive regimes. In this model, the each discrete state has <em>linear</em> autoregressive dynamics, but one could imagine extending this model to <em>nonlinear</em> dynamics (perhaps in a future version of Dynamax!). For now, this notebook should provide a good launchpad for fitting ARHMMs to real data.</p>
 </section>
 </section>
@@ -783,11 +803,10 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 
               
               
-                <footer class="bd-footer-article">
+              
+              
+                <footer class="prev-next-footer">
                   
-<div class="footer-article-items footer-article__inner">
-  
-    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
        href="gaussian_hmm.html"
@@ -807,10 +826,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
-</div></div>
-  
 </div>
-
                 </footer>
               
             </div>
@@ -818,6 +834,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
 
   <div class="sidebar-secondary-item">
   <div class="page-toc tocsection onthispage">
@@ -863,6 +880,7 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   
   <div class="footer-item">
     
+
   <p class="copyright">
     
       © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
@@ -889,8 +907,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
   </footer>

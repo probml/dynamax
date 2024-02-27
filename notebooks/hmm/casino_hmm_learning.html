@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" >
+<html lang="en" data-content_root="../../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Casino HMM: Learning (parameter estimation)</title>
   
@@ -19,31 +18,29 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/hmm/casino_hmm_learning';</script>
@@ -60,7 +57,15 @@
 
   
   
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
   
   <input type="checkbox"
           class="sidebar-toggle"
@@ -95,11 +100,14 @@
 </form></div>
   </div>
   
-    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
-    </nav>
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
   
+
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
+      
+      
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -114,9 +122,11 @@
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
         <div class="sidebar-primary-item">
+
   
 
 <a class="navbar-brand logo" href="../../index.html">
+  
   
   
   
@@ -126,12 +136,23 @@
       
     
     
-    <img src="../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
-    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+    <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
 <ul class="current nav bd-sidenav">
@@ -291,20 +312,22 @@
 </button>
 
 
+
 <script>
 document.write(`
-  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
-    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
-    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
   </button>
 `);
 </script>
 
+
 <script>
 document.write(`
   <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
   </button>
 `);
 </script>
@@ -350,10 +373,10 @@ document.write(`
               
                 
 <div id="searchbox"></div>
-                <article class="bd-article" role="main">
+                <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="casino-hmm-learning-parameter-estimation">
-<h1>Casino HMM: Learning (parameter estimation)<a class="headerlink" href="#casino-hmm-learning-parameter-estimation" title="Permalink to this heading">#</a></h1>
+<h1>Casino HMM: Learning (parameter estimation)<a class="headerlink" href="#casino-hmm-learning-parameter-estimation" title="Link to this heading">#</a></h1>
 <p>This notebook continues the “occasionally dishonest casino” example from the preceding notebook.
 There, we assumed we knew the parameters of the model: the probability of switching between fair and loaded dice and the probabilities of the different outcomes (1,…,6) for each die.</p>
 <p>Here, our goal is <strong>learn these parameters from data</strong>.  We will sample data from the model as before, but now we will estimate the parameters using either stochastic gradient descent (SGD) or expectation-maximization (EM).</p>
@@ -383,7 +406,7 @@ p(\theta) &amp;= \mathrm{Dir}(\pi \mid \alpha 1_K) \prod_{k=1}^K \mathrm{Dir}(A_
 \end{align*}\]</div>
 <p>This is called the <em>maximum a posteriori</em> (MAP) estimate. Dynamax supports two algorithms for MAP estimation: expectation-maximization (EM) and stochastic gradient descent (SGD), which are described below.</p>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">#</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -417,15 +440,10 @@ p(\theta) &amp;= \mathrm{Dir}(\pi \mid \alpha 1_K) \prod_{k=1}^K \mathrm{Dir}(A_
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="sample-data-from-true-model">
-<h2>Sample data from true model<a class="headerlink" href="#sample-data-from-true-model" title="Permalink to this heading">#</a></h2>
+<h2>Sample data from true model<a class="headerlink" href="#sample-data-from-true-model" title="Link to this heading">#</a></h2>
 <p>First we construct an HMM and sample data from it, just as in the preceding notebook.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -504,7 +522,7 @@ emission probs:
 </div>
 </section>
 <section id="learning-with-gradient-descent">
-<h2>Learning with Gradient Descent<a class="headerlink" href="#learning-with-gradient-descent" title="Permalink to this heading">#</a></h2>
+<h2>Learning with Gradient Descent<a class="headerlink" href="#learning-with-gradient-descent" title="Link to this heading">#</a></h2>
 <p>Perhaps the simplest learning algorithm is to directly maximize the marginal probability with gradient ascent. Since optimization algorithms are typically formulated as <em>minimization</em> algorithms, we will instead use gradient <em>descent</em> to solve the equivalent problem of <em>minimizing the negative log marginal probability</em>, <span class="math notranslate nohighlight">\(-\log p(y_{1:T}, \theta)\)</span>. On each iteration, we compute the objective, take its gradient, and update our parameters by taking a step in the direction of steepest descent.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -556,7 +574,7 @@ emission probs:
 <p>Notice that <code class="docutils literal notranslate"><span class="pre">initialize</span></code> returns two things, the parameters and their properties. Among other things, the properties allow you to specify which parameters should be learned. You can set the <code class="docutils literal notranslate"><span class="pre">trainable</span></code> flag to False if you want to fix certain parmeters.</p>
 </div>
 <section id="gradient-descent-is-a-special-case-of-stochastic-gradient-descent">
-<h3>Gradient descent is a special case of <em>stochastic</em> gradient descent<a class="headerlink" href="#gradient-descent-is-a-special-case-of-stochastic-gradient-descent" title="Permalink to this heading">#</a></h3>
+<h3>Gradient descent is a special case of <em>stochastic</em> gradient descent<a class="headerlink" href="#gradient-descent-is-a-special-case-of-stochastic-gradient-descent" title="Link to this heading">#</a></h3>
 <p>Gradient descent is a special case of stochastic gradient descent (SGD) in which each iteration uses all the data to compute the descent direction for parameter updates. In contrast, SGD uses only a <em>minibatch</em> of data in each update. You can think of gradient descent as the special case where the minibatch is really the entire dataset. That’s why we sometimes call it <em>full batch</em> gradient descent. When you’re working with very large datasets (e.g. datasets with many sequences), however, minibatches can be very informative, and SGD can converge more quickly than full batch gradient descent.</p>
 <p>Dynamax models have a <code class="docutils literal notranslate"><span class="pre">fit_sgd</span></code> function that runs SGD. If you want to run full batch gradient descent, all you have to do set <code class="docutils literal notranslate"><span class="pre">batch_size=num_batches</span></code>, as below.</p>
 <div class="cell docutils container">
@@ -575,7 +593,7 @@ emission probs:
 </div>
 </section>
 <section id="stochastic-gradient-descent-with-mini-batches">
-<h3>Stochastic Gradient Descent with Mini-Batches<a class="headerlink" href="#stochastic-gradient-descent-with-mini-batches" title="Permalink to this heading">#</a></h3>
+<h3>Stochastic Gradient Descent with Mini-Batches<a class="headerlink" href="#stochastic-gradient-descent-with-mini-batches" title="Link to this heading">#</a></h3>
 <p>Now let’s run it with stochastic gradient descent using a batch size of two sequences per mini-batch.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -605,7 +623,7 @@ emission probs:
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8c7e6e7ef80d7acc80200b6945ef4cf46da3d66c9d954f0cf94a2b9330c39f94.png" src="../../_images/8c7e6e7ef80d7acc80200b6945ef4cf46da3d66c9d954f0cf94a2b9330c39f94.png" />
+<img alt="../../_images/e390d5caf543a637c0cf38840a5262cc7bb5120fd6cb698b83ec53391b572261.png" src="../../_images/e390d5caf543a637c0cf38840a5262cc7bb5120fd6cb698b83ec53391b572261.png" />
 </div>
 </div>
 <p>As you can see, stochastic gradient descent converges much more quickly that full-batch gradient descent in this example. Intuitively, that’s because SGD takes multiple steps per <em>epoch</em> (i.e. each complete sweep through the dataset), whereas full-batch gradient descent takes only one.</p>
@@ -648,7 +666,7 @@ emission probs:
 <p>Ok, but not perfect!</p>
 </section>
 <section id="expectation-maximization">
-<h3>Expectation-Maximization<a class="headerlink" href="#expectation-maximization" title="Permalink to this heading">#</a></h3>
+<h3>Expectation-Maximization<a class="headerlink" href="#expectation-maximization" title="Link to this heading">#</a></h3>
 <p>The more traditional way to estimate the parameters of an HMM is by expectation-maximization (EM). EM alternates between two steps:</p>
 <ul class="simple">
 <li><p><strong>E-step:</strong> Inferring the posterior distribution of latent states <span class="math notranslate nohighlight">\(z_{1:T}\)</span> given the parameters <span class="math notranslate nohighlight">\(\theta = (\pi, A, B)\)</span>. This step essentially runs the HMM forward-backward algorithm from the preceding notebook!</p></li>
@@ -687,13 +705,13 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div><div class="output text_html">
     <div>
       <progress value='400' class='' max='400' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [400/400 00:02&lt;00:00]
+      100.00% [400/400 00:01&lt;00:00]
     </div>
     </div></div>
 </div>
 </section>
 <section id="compare-the-learning-curves">
-<h3>Compare the learning curves<a class="headerlink" href="#compare-the-learning-curves" title="Permalink to this heading">#</a></h3>
+<h3>Compare the learning curves<a class="headerlink" href="#compare-the-learning-curves" title="Link to this heading">#</a></h3>
 <p>Finally, let’s compare the learning curve of EM to those of SGD. For comparison, we plot the loss associated with the true parameters that generated the data.</p>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
@@ -723,7 +741,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/347df011cfab6dfe9e40d06883172d0c54690724a220847f222bc21133c47a2c.png" src="../../_images/347df011cfab6dfe9e40d06883172d0c54690724a220847f222bc21133c47a2c.png" />
+<img alt="../../_images/3d544dbb13d14e396eb787f0cfc84d5ee98a679af93f449548fb50e02b2a36c4.png" src="../../_images/3d544dbb13d14e396eb787f0cfc84d5ee98a679af93f449548fb50e02b2a36c4.png" />
 </div>
 </div>
 <p>Not only does EM converge much faster on this example (here, in only a handful of iterations), it also converges to a better estimate of the parameters. Indeed, it essentially matches the loss obtained by the parameters that truly generated the data. We see that its parameter estimates are nearly the same as the true parameters, up to label switching.</p>
@@ -750,7 +768,7 @@ emission probs:
 </section>
 </section>
 <section id="conclusion">
-<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">#</a></h2>
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
 <p>This notebook showed how to learn the parameters of an HMM using SGD (with full batch or with mini-batches) and EM. For many HMMs, especially the exponential family HMMs with exact M-steps implemented in Dynamax, EM tends to converge very quickly.</p>
 <p>This notebook glossed over some important details:</p>
 <ul class="simple">
@@ -767,11 +785,10 @@ emission probs:
 
               
               
-                <footer class="bd-footer-article">
+              
+              
+                <footer class="prev-next-footer">
                   
-<div class="footer-article-items footer-article__inner">
-  
-    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
        href="casino_hmm_inference.html"
@@ -791,10 +808,7 @@ emission probs:
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
-</div></div>
-  
 </div>
-
                 </footer>
               
             </div>
@@ -802,6 +816,7 @@ emission probs:
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
 
   <div class="sidebar-secondary-item">
   <div class="page-toc tocsection onthispage">
@@ -840,6 +855,7 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   
   <div class="footer-item">
     
+
   <p class="copyright">
     
       © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
@@ -866,8 +882,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
   </footer>

@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" >
+<html lang="en" data-content_root="../../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother</title>
   
@@ -19,31 +18,29 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/nonlinear_gaussian_ssm/ekf_ukf_pendulum';</script>
@@ -60,7 +57,15 @@
 
   
   
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
   
   <input type="checkbox"
           class="sidebar-toggle"
@@ -95,11 +100,14 @@
 </form></div>
   </div>
   
-    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
-    </nav>
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
   
+
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
+      
+      
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -114,9 +122,11 @@
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
         <div class="sidebar-primary-item">
+
   
 
 <a class="navbar-brand logo" href="../../index.html">
+  
   
   
   
@@ -126,12 +136,23 @@
       
     
     
-    <img src="../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
-    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+    <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
 <ul class="nav bd-sidenav">
@@ -291,20 +312,22 @@
 </button>
 
 
+
 <script>
 document.write(`
-  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
-    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
-    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
   </button>
 `);
 </script>
 
+
 <script>
 document.write(`
   <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
   </button>
 `);
 </script>
@@ -344,10 +367,10 @@ document.write(`
               
                 
 <div id="searchbox"></div>
-                <article class="bd-article" role="main">
+                <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="tracking-a-1d-pendulum-using-extended-unscented-kalman-filter-smoother">
-<h1>Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother<a class="headerlink" href="#tracking-a-1d-pendulum-using-extended-unscented-kalman-filter-smoother" title="Permalink to this heading">#</a></h1>
+<h1>Tracking a 1d pendulum using Extended / Unscented Kalman filter/ smoother<a class="headerlink" href="#tracking-a-1d-pendulum-using-extended-unscented-kalman-filter-smoother" title="Link to this heading">#</a></h1>
 <p>This notebook demonstrates a simple pendulum tracking example.
 The example is taken from p45 of
 <em>Bayesian Filtering and Smoothing</em> (S. Särkkä, 2013).
@@ -400,7 +423,7 @@ h(z_t) &amp;=  \sin(\alpha_t)  = \sin(z_{t,1}) \\
 r_t &amp;\sim N(0,R)
 \end{align*}\]</div>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">#</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
@@ -430,11 +453,6 @@ r_t &amp;\sim N(0,R)
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -446,7 +464,7 @@ r_t &amp;\sim N(0,R)
 </div>
 </section>
 <section id="sample-data-and-plot-it">
-<h2>Sample data and plot it<a class="headerlink" href="#sample-data-and-plot-it" title="Permalink to this heading">#</a></h2>
+<h2>Sample data and plot it<a class="headerlink" href="#sample-data-and-plot-it" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Some parameters</span>
@@ -527,7 +545,7 @@ r_t &amp;\sim N(0,R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/b43a0fd227715ee0a44b748fbcd9702cd05a8d942ac494e18f75964d6bc822eb.png" src="../../_images/b43a0fd227715ee0a44b748fbcd9702cd05a8d942ac494e18f75964d6bc822eb.png" />
+<img alt="../../_images/88110a41b3fee66652309f189d451d7a269bee178dce112c4c99192b7b43bfc9.png" src="../../_images/88110a41b3fee66652309f189d451d7a269bee178dce112c4c99192b7b43bfc9.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -549,7 +567,7 @@ r_t &amp;\sim N(0,R)
 </div>
 </section>
 <section id="extended-kalman-filter-smoother">
-<h2>Extended Kalman Filter  / smoother<a class="headerlink" href="#extended-kalman-filter-smoother" title="Permalink to this heading">#</a></h2>
+<h2>Extended Kalman Filter  / smoother<a class="headerlink" href="#extended-kalman-filter-smoother" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pendulum_params</span> <span class="o">=</span> <span class="n">PendulumParams</span><span class="p">()</span>
@@ -578,7 +596,7 @@ r_t &amp;\sim N(0,R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e064b8f03f27870c0b14943e0a4fedf3fec84013e4052a38c33552c1b83febb4.png" src="../../_images/e064b8f03f27870c0b14943e0a4fedf3fec84013e4052a38c33552c1b83febb4.png" />
+<img alt="../../_images/7874dc1d16bcbd920962d2773b78e4f24a6a2d1813011a8c5e27321473b2c4e6.png" src="../../_images/7874dc1d16bcbd920962d2773b78e4f24a6a2d1813011a8c5e27321473b2c4e6.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the EKF estimate is         : 0.14
 The std of measurement noise is         : 0.55
 </pre></div>
@@ -594,7 +612,7 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/806686be934d28b2a378817388a817c6898a1266d8be078707d810a99bc6033b.png" src="../../_images/806686be934d28b2a378817388a817c6898a1266d8be078707d810a99bc6033b.png" />
+<img alt="../../_images/78a17d8b8d9d71ab0147757a137cdc57586e3c5c6d89abe43200d89bdb14ff1f.png" src="../../_images/78a17d8b8d9d71ab0147757a137cdc57586e3c5c6d89abe43200d89bdb14ff1f.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the EKS estimate is         : 0.09
 The std of measurement noise is         : 0.55
 </pre></div>
@@ -603,7 +621,7 @@ The std of measurement noise is         : 0.55
 </div>
 </section>
 <section id="unscented-kalman-filter-smoother">
-<h2>Unscented Kalman Filter  / smoother<a class="headerlink" href="#unscented-kalman-filter-smoother" title="Permalink to this heading">#</a></h2>
+<h2>Unscented Kalman Filter  / smoother<a class="headerlink" href="#unscented-kalman-filter-smoother" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pendulum_params</span> <span class="o">=</span> <span class="n">PendulumParams</span><span class="p">()</span>
@@ -634,7 +652,7 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/fa38ffbc85de5fb44fc81031b9561a80af26cd4f41a13e9feafb23d5f7535310.png" src="../../_images/fa38ffbc85de5fb44fc81031b9561a80af26cd4f41a13e9feafb23d5f7535310.png" />
+<img alt="../../_images/4b4447bf2596e7e3b65f174ffd9f48cfb4b9c71e9ffacff5c410abce44882001.png" src="../../_images/4b4447bf2596e7e3b65f174ffd9f48cfb4b9c71e9ffacff5c410abce44882001.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKF estimate is         : 0.14
 The std of measurement noise is         : 0.55
 </pre></div>
@@ -650,7 +668,7 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8a583d02a11bed40d60dd4af64e52ed7c01f54b31ff5d340708c92da03e7b8c5.png" src="../../_images/8a583d02a11bed40d60dd4af64e52ed7c01f54b31ff5d340708c92da03e7b8c5.png" />
+<img alt="../../_images/bd7bfca5abe25a5330be1aead19960c855b3619f281f4bc144364ada172ecf48.png" src="../../_images/bd7bfca5abe25a5330be1aead19960c855b3619f281f4bc144364ada172ecf48.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKS estimate is         : 0.09
 The std of measurement noise is         : 0.55
 </pre></div>
@@ -672,7 +690,7 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/70de64032b50e5070e43a2492c6a7535131ff5cda091f003e7357b80dada8278.png" src="../../_images/70de64032b50e5070e43a2492c6a7535131ff5cda091f003e7357b80dada8278.png" />
+<img alt="../../_images/18d9f6206fd3dade8d87bf916fae8c33741f733f46f8665af805f1a44ecab517.png" src="../../_images/18d9f6206fd3dade8d87bf916fae8c33741f733f46f8665af805f1a44ecab517.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKF estimate is         : 1.07
 The std of measurement noise is         : 0.55
 </pre></div>
@@ -688,11 +706,10 @@ The std of measurement noise is         : 0.55
 
               
               
-                <footer class="bd-footer-article">
+              
+              
+                <footer class="prev-next-footer">
                   
-<div class="footer-article-items footer-article__inner">
-  
-    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
        href="ekf_ukf_spiral.html"
@@ -712,10 +729,7 @@ The std of measurement noise is         : 0.55
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
-</div></div>
-  
 </div>
-
                 </footer>
               
             </div>
@@ -723,6 +737,7 @@ The std of measurement noise is         : 0.55
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
 
   <div class="sidebar-secondary-item">
   <div class="page-toc tocsection onthispage">
@@ -755,6 +770,7 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   
   <div class="footer-item">
     
+
   <p class="copyright">
     
       © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
@@ -781,8 +797,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
   </footer>

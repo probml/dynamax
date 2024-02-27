@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" >
+<html lang="en" data-content_root="../../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Gaussian HMM: Cross-validation and Model Selection</title>
   
@@ -19,31 +18,29 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/hmm/gaussian_hmm';</script>
@@ -60,7 +57,15 @@
 
   
   
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
   
   <input type="checkbox"
           class="sidebar-toggle"
@@ -95,11 +100,14 @@
 </form></div>
   </div>
   
-    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
-    </nav>
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
   
+
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
+      
+      
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -114,9 +122,11 @@
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
         <div class="sidebar-primary-item">
+
   
 
 <a class="navbar-brand logo" href="../../index.html">
+  
   
   
   
@@ -126,12 +136,23 @@
       
     
     
-    <img src="../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
-    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+    <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
 <ul class="current nav bd-sidenav">
@@ -291,20 +312,22 @@
 </button>
 
 
+
 <script>
 document.write(`
-  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
-    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
-    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
   </button>
 `);
 </script>
 
+
 <script>
 document.write(`
   <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
   </button>
 `);
 </script>
@@ -335,7 +358,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#helper-functions-for-plotting">Helper functions for plotting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-sample-data">Generate sample data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#write-a-helper-function-to-perform-leave-one-out-cross-validation">Write a helper function to perform leave-one-out cross-validation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states">Plot the individual and average validation log likelihods as a function of number of states</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-individual-and-average-validation-log-likelihoods-as-a-function-of-number-of-states">Plot the individual and average validation log likelihoods as a function of number of states</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states">Now fit a model to all the training data using the chosen number of states</a></li>
 </ul>
 </li>
@@ -351,13 +374,13 @@ document.write(`
               
                 
 <div id="searchbox"></div>
-                <article class="bd-article" role="main">
+                <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm-cross-validation-and-model-selection">
-<h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Permalink to this heading">#</a></h1>
+<h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Link to this heading">#</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-2c7ae896-ebaa-45cc-b309-9780581acb13">
-<span class="eqno">(1)<a class="headerlink" href="#equation-2c7ae896-ebaa-45cc-b309-9780581acb13" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-b8eb0565-69d9-4566-af7c-e07f06d2b6ac">
+<span class="eqno">(1)<a class="headerlink" href="#equation-b8eb0565-69d9-4566-af7c-e07f06d2b6ac" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_t \mid z_t, \theta) &amp;= \mathcal{N}(y_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the emission parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -370,7 +393,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <li><p>Use the log probability of held-out data to choose among different models</p></li>
 </ol>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">#</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -407,15 +430,10 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="helper-functions-for-plotting">
-<h2>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Permalink to this heading">#</a></h2>
+<h2>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -474,7 +492,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </section>
 <section id="generate-sample-data">
-<h2>Generate sample data<a class="headerlink" href="#generate-sample-data" title="Permalink to this heading">#</a></h2>
+<h2>Generate sample data<a class="headerlink" href="#generate-sample-data" title="Link to this heading">#</a></h2>
 <p>As in the preceding notebooks, we start by sampling data from the model. Here, we add a slight wrinkle: we will sample training and test data, where the latter is only used for model selection.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -522,7 +540,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6f75657f78396bd5265c5f5ed46aaeece4bca1c86b65b4531b24d1c8b6460a9f.png" src="../../_images/6f75657f78396bd5265c5f5ed46aaeece4bca1c86b65b4531b24d1c8b6460a9f.png" />
+<img alt="../../_images/d006c55c7efefb6064e766cfbcef021c45d52dcf69fe28f4ab4fa5f8ae45b50f.png" src="../../_images/d006c55c7efefb6064e766cfbcef021c45d52dcf69fe28f4ab4fa5f8ae45b50f.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -533,15 +551,15 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/34f39e4f23c00bd7ec1af1dd735084b7bade02aec516acf60ef81331bc3400ba.png" src="../../_images/34f39e4f23c00bd7ec1af1dd735084b7bade02aec516acf60ef81331bc3400ba.png" />
+<img alt="../../_images/40804647a8046a16318f5d3e14206c71474669427e4aa12a019c38354b41745c.png" src="../../_images/40804647a8046a16318f5d3e14206c71474669427e4aa12a019c38354b41745c.png" />
 </div>
 </div>
 </section>
 <section id="write-a-helper-function-to-perform-leave-one-out-cross-validation">
-<h2>Write a helper function to perform leave-one-out cross-validation<a class="headerlink" href="#write-a-helper-function-to-perform-leave-one-out-cross-validation" title="Permalink to this heading">#</a></h2>
+<h2>Write a helper function to perform leave-one-out cross-validation<a class="headerlink" href="#write-a-helper-function-to-perform-leave-one-out-cross-validation" title="Link to this heading">#</a></h2>
 <p>This function fits the data into <em>folds</em> where each fold consists of all
 but one of the training sequences. It fits the model to each fold in
-parallel, and then computs the log likelihood of the held-out sequence for
+parallel, and then computes the log likelihood of the held-out sequence for
 each fold. The average held-out log likelihood is what we will use for
 determining the number of discrete states.</p>
 <div class="cell docutils container">
@@ -588,63 +606,31 @@ determining the number of discrete states.</p>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 2 states
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 3 states
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 4 states
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 5 states
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 6 states
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 7 states
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 8 states
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting model with 9 states
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
 </div>
 </div>
-</div>
-<section id="plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states">
-<h3>Plot the individual and average validation log likelihods as a function of number of states<a class="headerlink" href="#plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states" title="Permalink to this heading">#</a></h3>
+<section id="plot-the-individual-and-average-validation-log-likelihoods-as-a-function-of-number-of-states">
+<h3>Plot the individual and average validation log likelihoods as a function of number of states<a class="headerlink" href="#plot-the-individual-and-average-validation-log-likelihoods-as-a-function-of-number-of-states" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">all_num_states</span><span class="p">,</span> <span class="n">avg_val_lls</span><span class="p">,</span> <span class="s1">&#39;-ko&#39;</span><span class="p">)</span>
@@ -659,7 +645,7 @@ determining the number of discrete states.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;avg. validation log prob.&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/ee5602531af72f578f46a761bc67d9d38c238bf8b7a8c7782cc54a86fe270e75.png" src="../../_images/ee5602531af72f578f46a761bc67d9d38c238bf8b7a8c7782cc54a86fe270e75.png" />
+<img alt="../../_images/c887eff480fa116c2d996b216a49c5a36d55b19ba329742cf1b368df3cf7c0cc.png" src="../../_images/c887eff480fa116c2d996b216a49c5a36d55b19ba329742cf1b368df3cf7c0cc.png" />
 </div>
 </div>
 <p>There’s no right answer for how to choose the number of states, but reasonable heuristics include:</p>
@@ -684,7 +670,7 @@ determining the number of discrete states.</p>
 </div>
 </section>
 <section id="now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states">
-<h3>Now fit a model to all the training data using the chosen number of states<a class="headerlink" href="#now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states" title="Permalink to this heading">#</a></h3>
+<h3>Now fit a model to all the training data using the chosen number of states<a class="headerlink" href="#now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize the parameters using K-Means on the full training set</span>
@@ -696,10 +682,6 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
 <div class="output text_html">
 <style>
     /* Turns off some styling */
@@ -719,7 +701,7 @@ determining the number of discrete states.</p>
 </div><div class="output text_html">
     <div>
       <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [100/100 00:01&lt;00:00]
+      100.00% [100/100 00:00&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -741,16 +723,16 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7ffb26b75f40&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd6e8aa0c40&gt;
 </pre></div>
 </div>
-<img alt="../../_images/0b881e82519134a37a2774bb436dd22f24bc528acdaceb56a95690802869043c.png" src="../../_images/0b881e82519134a37a2774bb436dd22f24bc528acdaceb56a95690802869043c.png" />
+<img alt="../../_images/07219e32461e961b9b433dbe79fee60f442d1ac8b3bee711d73ecd963e98096d.png" src="../../_images/07219e32461e961b9b433dbe79fee60f442d1ac8b3bee711d73ecd963e98096d.png" />
 </div>
 </div>
 </section>
 </section>
 <section id="visualize-the-fitted-model">
-<h2>Visualize the fitted model<a class="headerlink" href="#visualize-the-fitted-model" title="Permalink to this heading">#</a></h2>
+<h2>Visualize the fitted model<a class="headerlink" href="#visualize-the-fitted-model" title="Link to this heading">#</a></h2>
 <p>We’ll make the same plots as above, but now using the fitted parameters and the chosen number of states.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -761,7 +743,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/374432d8bb5129e6d4473e8c82f26787a28a70d0c63d135aba1b18f80481d962.png" src="../../_images/374432d8bb5129e6d4473e8c82f26787a28a70d0c63d135aba1b18f80481d962.png" />
+<img alt="../../_images/ca8c036f52d45456f0a9143e62eb095b06190af4409b379ee6ba1c38a35e6224.png" src="../../_images/ca8c036f52d45456f0a9143e62eb095b06190af4409b379ee6ba1c38a35e6224.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -771,7 +753,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/bc3ae37e62836a47d978db626ffbf29264fb3d63acc52244b548e4c0c169d19e.png" src="../../_images/bc3ae37e62836a47d978db626ffbf29264fb3d63acc52244b548e4c0c169d19e.png" />
+<img alt="../../_images/82028bcb8bbbbdc50832b4956e06aa6a3aff0633e9273a2e9c13abac9d5407ca.png" src="../../_images/82028bcb8bbbbdc50832b4956e06aa6a3aff0633e9273a2e9c13abac9d5407ca.png" />
 </div>
 </div>
 <div class="admonition important">
@@ -780,7 +762,7 @@ determining the number of discrete states.</p>
 </div>
 </section>
 <section id="comparing-gaussian-hmms-with-different-constraints-on-the-covariance">
-<h2>Comparing Gaussian HMMs with different constraints on the covariance<a class="headerlink" href="#comparing-gaussian-hmms-with-different-constraints-on-the-covariance" title="Permalink to this heading">#</a></h2>
+<h2>Comparing Gaussian HMMs with different constraints on the covariance<a class="headerlink" href="#comparing-gaussian-hmms-with-different-constraints-on-the-covariance" title="Link to this heading">#</a></h2>
 <p>Dynamax implements Gaussian HMMs with different constraints on the covariance matrices:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.hidden_markov_model.DiagonalGaussianHMM"><code class="docutils literal notranslate"><span class="pre">DiagonalGaussianHMM</span></code></a> assumes the covariance matrices are diagonal (i.e. <span class="math notranslate nohighlight">\(\Sigma_k = \mathrm{diag}([\sigma_{k,1}^2, \ldots, \sigma_{k,D}^2])\)</span>)</p></li>
@@ -822,26 +804,10 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/sklearn/cluster/_kmeans.py:1412: FutureWarning: The default value of `n_init` will change from 10 to &#39;auto&#39; in 1.4. Set the value of `n_init` explicitly to suppress the warning
-  super()._check_params_vs_input(X, default_n_init=10)
-</pre></div>
-</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Marginal log probabilities of test data:
                    GaussianHMM:  106.9
            DiagonalGaussianHMM:  117.0
-          SphericalGaussianHMM:  112.7
+          SphericalGaussianHMM:  112.8
    SharedCovarianceGaussianHMM:  111.6
                     True Model:  114.9
 </pre></div>
@@ -852,7 +818,7 @@ determining the number of discrete states.</p>
 <p>Here, the true parameters were in fact spherical and shared across all states, so it’s perhaps a bit surprising that the more general diagonal covariance model wins out on test data. Keep in mind, however, that there is some amount of randomness in both the sampled data and the initialization of these models, so the particular ordering might change from one random seed to the next. In actual applications, you should compute means and standard errors by running these analyses with multiple random seeds.</p>
 </section>
 <section id="conclusion">
-<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this heading">#</a></h2>
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
 <p>Dynamax provides a family of Gaussian HMMs for multivariate continuous emissions. This notebook showed how to use cross-validation to choose the number of discrete states, and how to compare model families (e.g. <code class="docutils literal notranslate"><span class="pre">GaussianHMM</span></code> vs <code class="docutils literal notranslate"><span class="pre">DiagonalGaussianHMM</span></code>) on test data.</p>
 <p>Now that you have seen HMMs with categorical and Gaussian emissions, you can pattern-match to use the other HMMs. See the <a class="reference external" href="https://probml.github.io/dynamax/api.html#high-level-models">documentation</a> for a complete list.</p>
 <p>The next notebook highlights one more generalization of the standard HMM to <em>autoregressive</em> emissions, where the emissions depend on preceding emissions as well as the current discrete state.</p>
@@ -865,11 +831,10 @@ determining the number of discrete states.</p>
 
               
               
-                <footer class="bd-footer-article">
+              
+              
+                <footer class="prev-next-footer">
                   
-<div class="footer-article-items footer-article__inner">
-  
-    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
        href="casino_hmm_learning.html"
@@ -889,10 +854,7 @@ determining the number of discrete states.</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
-</div></div>
-  
 </div>
-
                 </footer>
               
             </div>
@@ -900,6 +862,7 @@ determining the number of discrete states.</p>
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
 
   <div class="sidebar-secondary-item">
   <div class="page-toc tocsection onthispage">
@@ -911,7 +874,7 @@ determining the number of discrete states.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#helper-functions-for-plotting">Helper functions for plotting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-sample-data">Generate sample data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#write-a-helper-function-to-perform-leave-one-out-cross-validation">Write a helper function to perform leave-one-out cross-validation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-individual-and-average-validation-log-likelihods-as-a-function-of-number-of-states">Plot the individual and average validation log likelihods as a function of number of states</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-individual-and-average-validation-log-likelihoods-as-a-function-of-number-of-states">Plot the individual and average validation log likelihoods as a function of number of states</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#now-fit-a-model-to-all-the-training-data-using-the-chosen-number-of-states">Now fit a model to all the training data using the chosen number of states</a></li>
 </ul>
 </li>
@@ -939,6 +902,7 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   
   <div class="footer-item">
     
+
   <p class="copyright">
     
       © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
@@ -965,8 +929,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
   </footer>

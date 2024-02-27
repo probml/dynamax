@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" >
+<html lang="en" data-content_root="../../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Tracking an object using the Kalman filter</title>
   
@@ -19,31 +18,29 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/linear_gaussian_ssm/kf_tracking';</script>
@@ -60,7 +57,15 @@
 
   
   
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
   
   <input type="checkbox"
           class="sidebar-toggle"
@@ -95,11 +100,14 @@
 </form></div>
   </div>
   
-    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
-    </nav>
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
   
+
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
+      
+      
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -114,9 +122,11 @@
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
         <div class="sidebar-primary-item">
+
   
 
 <a class="navbar-brand logo" href="../../index.html">
+  
   
   
   
@@ -126,12 +136,23 @@
       
     
     
-    <img src="../../_static/logo.gif" class="logo__image only-light" alt="Logo image"/>
-    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt="Logo image"/>`);</script>
+    <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
 <ul class="nav bd-sidenav">
@@ -291,20 +312,22 @@
 </button>
 
 
+
 <script>
 document.write(`
-  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
-    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
-    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
   </button>
 `);
 </script>
 
+
 <script>
 document.write(`
   <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
   </button>
 `);
 </script>
@@ -347,10 +370,10 @@ document.write(`
               
                 
 <div id="searchbox"></div>
-                <article class="bd-article" role="main">
+                <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="tracking-an-object-using-the-kalman-filter">
-<h1>Tracking an object using the Kalman filter<a class="headerlink" href="#tracking-an-object-using-the-kalman-filter" title="Permalink to this heading">#</a></h1>
+<h1>Tracking an object using the Kalman filter<a class="headerlink" href="#tracking-an-object-using-the-kalman-filter" title="Link to this heading">#</a></h1>
 <p>Consider an object moving in <span class="math notranslate nohighlight">\(R^2\)</span>.
 We assume that we observe a noisy version of its location at each time step.
 We want to track the object and possibly forecast its future motion.
@@ -358,14 +381,14 @@ We now show how to do this using a simple linear Gaussian SSM, combined with
 the Kalman filter algorithm.</p>
 <p>Let the hidden state represent
 the position and velocity of the object,
-<span class="math notranslate nohighlight">\(z_t =\begin{pmatrix} u_t &amp; \dot{u}_t &amp; v_t &amp; \dot{v}_t \end{pmatrix}\)</span>.
+<span class="math notranslate nohighlight">\(z_t =\begin{pmatrix} u_t &amp; v_t &amp; \dot{u}_t &amp; \dot{v}_t \end{pmatrix}\)</span>.
 (We use <span class="math notranslate nohighlight">\(u\)</span> and <span class="math notranslate nohighlight">\(v\)</span> for the two coordinates,
 to avoid confusion with the state and observation variables.)
 The process evolves in continuous time, but if we discretize it with step size <span class="math notranslate nohighlight">\(\Delta\)</span>,
 we can write the dynamics as the following linear system:</p>
 <div class="amsmath math notranslate nohighlight">
 \[\begin{align*}
-\underbrace{\begin{pmatrix} u_t\\ \dot{u}_t \\ v_t \\ \dot{v}_t \end{pmatrix}}_{z_t}
+\underbrace{\begin{pmatrix} u_t\\ v_t \\ \dot{u}_t \\ \dot{v}_t \end{pmatrix}}_{z_t}
   = 
 \underbrace{
 \begin{pmatrix}
@@ -375,7 +398,7 @@ we can write the dynamics as the following linear system:</p>
 0 &amp; 0 &amp; 0 &amp; 1
 \end{pmatrix}
 }_{F}
-\underbrace{\begin{pmatrix} u_{t-1} \\ \dot{u}_{t-1} \\ v_{t-1} \\ \dot{v}_{t-1} \end{pmatrix}}_{z_{t-1}}
+\underbrace{\begin{pmatrix} u_{t-1} \\ v_{t-1} \\ \dot{u}_{t-1} \\ \dot{v}_{t-1} \end{pmatrix}}_{z_{t-1}}
 + q_t
 \end{align*}\]</div>
 <p>where <span class="math notranslate nohighlight">\(q_t \in R^4\)</span> is the process noise, which we assume is Gaussian,
@@ -391,18 +414,18 @@ Thus the observation model becomes</p>
     \underbrace{
     \begin{pmatrix}
 1 &amp; 0 &amp; 0 &amp; 0 \\
-0 &amp; 0 &amp; 1 &amp; 0
+0 &amp; 1 &amp; 0 &amp; 0
     \end{pmatrix}
     }_{H}
     \;
-\underbrace{\begin{pmatrix} u_t\\ \dot{u}_t \\ v_t \\ \dot{v}_t \end{pmatrix}}_{z_t}    
+\underbrace{\begin{pmatrix} u_t\\ v_t \\ \dot{u}_t \\ \dot{v}_t \end{pmatrix}}_{z_t}    
  + r_t
 \end{align*}\]</div>
 <p>where <span class="math notranslate nohighlight">\(r_t \sim N(0,R)\)</span> is the observation noise.
 We see that the observation matrix <span class="math notranslate nohighlight">\(H\)</span> simply ``extracts’’ the
 relevant parts  of the state vector.</p>
 <section id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">#</a></h2>
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
@@ -435,15 +458,10 @@ relevant parts  of the state vector.</p>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="create-the-model">
-<h2>Create the model<a class="headerlink" href="#create-the-model" title="Permalink to this heading">#</a></h2>
+<h2>Create the model<a class="headerlink" href="#create-the-model" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">state_dim</span> <span class="o">=</span> <span class="mi">4</span>
@@ -479,7 +497,7 @@ relevant parts  of the state vector.</p>
 </div>
 </section>
 <section id="sample-some-data-from-the-model">
-<h2>Sample some data from the model<a class="headerlink" href="#sample-some-data-from-the-model" title="Permalink to this heading">#</a></h2>
+<h2>Sample some data from the model<a class="headerlink" href="#sample-some-data-from-the-model" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">15</span>
@@ -496,10 +514,10 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fef12794550&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f2064668c10&gt;
 </pre></div>
 </div>
-<img alt="../../_images/d6f41f66f4e4d3bdd5ae2ae52154c40e80b660f22dc37025c5667cc892ff327c.png" src="../../_images/d6f41f66f4e4d3bdd5ae2ae52154c40e80b660f22dc37025c5667cc892ff327c.png" />
+<img alt="../../_images/bcb835b5479573d8ecb2c23fc8ab2d183e7346be773e1ac5a1ca57abb64493bb.png" src="../../_images/bcb835b5479573d8ecb2c23fc8ab2d183e7346be773e1ac5a1ca57abb64493bb.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -554,7 +572,7 @@ relevant parts  of the state vector.</p>
 </div>
 </section>
 <section id="perform-online-filtering">
-<h2>Perform online filtering<a class="headerlink" href="#perform-online-filtering" title="Permalink to this heading">#</a></h2>
+<h2>Perform online filtering<a class="headerlink" href="#perform-online-filtering" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
@@ -567,7 +585,7 @@ relevant parts  of the state vector.</p>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(15, 4)
 (15, 4, 4)
--43.13845
+-44.895382
 </pre></div>
 </div>
 </div>
@@ -593,12 +611,12 @@ relevant parts  of the state vector.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Axes: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/f3cb567e19776821ecada2c710c6575900c47007d60d1111199d993dc54e4efe.png" src="../../_images/f3cb567e19776821ecada2c710c6575900c47007d60d1111199d993dc54e4efe.png" />
+<img alt="../../_images/5e1906a688996d4c96c179798ee9768927f2321a70a618555c3bbae7599eeffe.png" src="../../_images/5e1906a688996d4c96c179798ee9768927f2321a70a618555c3bbae7599eeffe.png" />
 </div>
 </div>
 </section>
 <section id="perform-offline-smoothing">
-<h2>Perform offline smoothing<a class="headerlink" href="#perform-offline-smoothing" title="Permalink to this heading">#</a></h2>
+<h2>Perform offline smoothing<a class="headerlink" href="#perform-offline-smoothing" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lgssm_posterior</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
@@ -627,12 +645,12 @@ relevant parts  of the state vector.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Axes: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/252c662a9ae585c3ec8b3b6d7de7b7309a51519a2176a017faa4f02a62a0549c.png" src="../../_images/252c662a9ae585c3ec8b3b6d7de7b7309a51519a2176a017faa4f02a62a0549c.png" />
+<img alt="../../_images/580a3b8c383de6e41558339827c6f11e469608330137272fd6ec79a214704adb.png" src="../../_images/580a3b8c383de6e41558339827c6f11e469608330137272fd6ec79a214704adb.png" />
 </div>
 </div>
 </section>
 <section id="low-level-interface-to-the-underlying-inference-algorithms">
-<h2>Low-level interface to the underlying inference algorithms<a class="headerlink" href="#low-level-interface-to-the-underlying-inference-algorithms" title="Permalink to this heading">#</a></h2>
+<h2>Low-level interface to the underlying inference algorithms<a class="headerlink" href="#low-level-interface-to-the-underlying-inference-algorithms" title="Link to this heading">#</a></h2>
 <p>We can also call the inference code directly, without having to make an LG-SSM object.
 We just pass the model parameters directly to the function.</p>
 <div class="cell docutils container">
@@ -648,7 +666,7 @@ We just pass the model parameters directly to the function.</p>
 </div>
 </section>
 <section id="tracking-multiple-objects-in-parallel">
-<h2>Tracking multiple objects in parallel<a class="headerlink" href="#tracking-multiple-objects-in-parallel" title="Permalink to this heading">#</a></h2>
+<h2>Tracking multiple objects in parallel<a class="headerlink" href="#tracking-multiple-objects-in-parallel" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate 4 sample trajectories</span>
@@ -732,9 +750,9 @@ We just pass the model parameters directly to the function.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8aaaba325b045eefd2705614ddb1efcbc1ab0c7c096b491823e3f348e830eb46.png" src="../../_images/8aaaba325b045eefd2705614ddb1efcbc1ab0c7c096b491823e3f348e830eb46.png" />
-<img alt="../../_images/2551d105b38eb2f9de1dd4be0b542c5e1281686d967ed2b1b134a342c8bdfbaf.png" src="../../_images/2551d105b38eb2f9de1dd4be0b542c5e1281686d967ed2b1b134a342c8bdfbaf.png" />
-<img alt="../../_images/5c48e0cad1fc6ee6db1f255ff10b0d67102498e6bdb58a560843062936791be3.png" src="../../_images/5c48e0cad1fc6ee6db1f255ff10b0d67102498e6bdb58a560843062936791be3.png" />
+<img alt="../../_images/d1153581339db1bba8bd2442eafb257c34a55bdb361fd84a4521e53e71921d4c.png" src="../../_images/d1153581339db1bba8bd2442eafb257c34a55bdb361fd84a4521e53e71921d4c.png" />
+<img alt="../../_images/c125d554757d621a94778fd4eda49d755467cb3b557d1c8288bae6b16a36b4ba.png" src="../../_images/c125d554757d621a94778fd4eda49d755467cb3b557d1c8288bae6b16a36b4ba.png" />
+<img alt="../../_images/cf0f2555e6cfd8de927c199bdcc2afcf6b2773250bdb5188e40177151e384469.png" src="../../_images/cf0f2555e6cfd8de927c199bdcc2afcf6b2773250bdb5188e40177151e384469.png" />
 </div>
 </div>
 </section>
@@ -746,11 +764,10 @@ We just pass the model parameters directly to the function.</p>
 
               
               
-                <footer class="bd-footer-article">
+              
+              
+                <footer class="prev-next-footer">
                   
-<div class="footer-article-items footer-article__inner">
-  
-    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
        href="../hmm/autoregressive_hmm.html"
@@ -770,10 +787,7 @@ We just pass the model parameters directly to the function.</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
-</div></div>
-  
 </div>
-
                 </footer>
               
             </div>
@@ -781,6 +795,7 @@ We just pass the model parameters directly to the function.</p>
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
 
   <div class="sidebar-secondary-item">
   <div class="page-toc tocsection onthispage">
@@ -816,6 +831,7 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   
   <div class="footer-item">
     
+
   <p class="copyright">
     
       © Copyright 2022, Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, and Kevin Murphy.
@@ -842,8 +858,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
   </footer>
