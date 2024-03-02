@@ -61,6 +61,10 @@ pytest dynamax/hmm/inference_test.py   # Run a specific test
 pytest -k lgssm                        # Run tests with lgssm in the name
 ```
 
+Run example in Colab: <a target="_blank" href="https://colab.research.google.com/github/evelynmitchell/dynamax/blob/master/DynamaxSSM.ipynb">
+<img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 ## What are state space models?
 
 A state space model or SSM is a partially observed Markov model, in
