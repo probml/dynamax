@@ -29,6 +29,12 @@ sequential Monte Carlo (SMC)).
 
 For tutorials and API documentation, see: https://probml.github.io/dynamax/.
 
+For an extension of dynamax that supports structural time series models, 
+see https://github.com/probml/sts-jax.
+
+For an illustration of how to use dynamax inside of [bayeux](https://jax-ml.github.io/bayeux/) to perform Bayesian inference
+for the parameters of an SSM, see https://jax-ml.github.io/bayeux/examples/dynamax_and_bayeux/.
+
 ## Installation and Testing
 
 To install the latest releast of dynamax from PyPi:
