@@ -6,6 +6,7 @@ from jax import vmap
 import dynamax.hidden_markov_model.inference as core
 import dynamax.hidden_markov_model.parallel_inference as parallel
 
+from jax import vmap
 from jax.scipy.special import logsumexp
 
 def big_log_joint(initial_probs, transition_matrix, log_likelihoods):
@@ -259,6 +260,43 @@ def test_hmm_non_stationary(key=0, num_timesteps=10, num_states=5, scale=1):
     assert jnp.allclose(ll, ll2)
     assert jnp.allclose(sample, sample2)
 
+
+def test_hmm_padding(key=0, num_timesteps=10, num_states=5, padding=3):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    initial_probs, transition_matrix, log_lkhds = random_hmm_args(key, num_timesteps + padding, num_states)
+    
+    # Run the HMM filter with a 3d list of transition matrices and a callable
+    post = core.hmm_filter(initial_probs, transition_matrix, log_lkhds[:num_timesteps])
+    post2 = core.hmm_filter(initial_probs, transition_matrix, log_lkhds, num_timesteps=num_timesteps)
+    assert jnp.allclose(post.marginal_loglik, post2.marginal_loglik, atol=1e-4)
+    assert jnp.allclose(post.filtered_probs, post2.filtered_probs[:num_timesteps], atol=1e-4)
+
+    # Run the HMM smoother with a 3d list of transition matrices and a callable
+    post = core.hmm_smoother(initial_probs, transition_matrix, log_lkhds[:num_timesteps])
+    post2 = core.hmm_smoother(initial_probs, transition_matrix, log_lkhds, num_timesteps=num_timesteps)
+    assert jnp.allclose(post.smoothed_probs, post2.smoothed_probs[:num_timesteps], atol=1e-4)
+
+    # Run Viterbi
+    mode = core.hmm_posterior_mode(initial_probs, transition_matrix, log_lkhds[:num_timesteps])
+    mode2 = core.hmm_posterior_mode(initial_probs, transition_matrix, log_lkhds, num_timesteps=num_timesteps)
+    assert jnp.allclose(mode, mode2[:num_timesteps])
+
+
+# Test vmap
+def test_hmm_variable_length_vmap(key=0, max_num_timesteps=10, num_states=5, num_seqs=10):
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    all_args = vmap(random_hmm_args, in_axes=(0, None, None))(
+        jr.split(key, num_seqs), max_num_timesteps, num_states)
+    
+    all_num_timesteps = jr.randint(key, (num_seqs,), 1, max_num_timesteps)
+
+    # Just make sure vmap runs without throwing a concretization error
+    posteriors = vmap(core.hmm_filter)(*all_args, num_timesteps=all_num_timesteps)
+    
 
 def test_parallel_filter(key=0, num_timesteps=100, num_states=3):
     if isinstance(key, int):
