@@ -24,3 +24,4 @@ from dynamax.hidden_markov_model.inference import compute_transition_probs
 
 from dynamax.hidden_markov_model.parallel_inference import hmm_filter as parallel_hmm_filter
 from dynamax.hidden_markov_model.parallel_inference import hmm_smoother as parallel_hmm_smoother
+from dynamax.hidden_markov_model.parallel_inference import hmm_posterior_sample as parallel_hmm_posterior_sample
