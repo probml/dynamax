@@ -82,7 +82,7 @@ illustrated in the graphical model below.
 The corresponding joint distribution has the following form (in dynamax,
 we restrict attention to discrete time systems):
 
-$$p(y_{1:T}, z_{1:T} | u_{1:T}) = p(z_1 | u_1) p(y_1 | z_1, u_1) \prod_{t=1}^T p(z_t | z_{t-1}, u_t) p(y_t | z_t, u_t)$$
+$$p(y_{1:T}, z_{1:T} \mid u_{1:T}) = p(z_1 \mid u_1) \prod_{t=2}^T p(z_t \mid z_{t-1}, u_t) \prod_{t=1}^T p(y_t \mid z_t, u_t)$$
 
 Here $p(z_t | z_{t-1}, u_t)$ is called the transition or dynamics model,
 and $p(y_t | z_{t}, u_t)$ is called the observation or emission model.
