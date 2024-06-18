@@ -14,33 +14,33 @@
   
   <script data-cfasync="false">
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
-    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
 
   
-  <link href="_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=384b581d" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
-  <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=3ee479438cf8b5e0d341"></script>
 
     <script src="_static/documentation_options.js?v=9eb32ce0"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api';</script>
@@ -56,27 +56,23 @@
 
   
   
-  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
-    <i class="fa-solid fa-arrow-up"></i>
-    Back to top
-  </button>
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
   <input type="checkbox"
           class="sidebar-toggle"
-          name="__primary"
-          id="__primary"/>
-  <label class="overlay overlay-primary" for="__primary"></label>
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
   
   <input type="checkbox"
           class="sidebar-toggle"
-          name="__secondary"
-          id="__secondary"/>
-  <label class="overlay overlay-secondary" for="__secondary"></label>
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
   
   <div class="search-button__wrapper">
     <div class="search-button__overlay"></div>
@@ -98,8 +94,13 @@
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
 </form></div>
   </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
     </header>
   
 
@@ -204,7 +205,7 @@
 
       </div>
       
-      <main id="main-content" class="bd-main">
+      <main id="main-content" class="bd-main" role="main">
         
         
 
@@ -213,14 +214,14 @@
           <div class="bd-content">
             <div class="bd-article-container">
               
-              <div class="bd-header-article">
+              <div class="bd-header-article d-print-none">
 <div class="header-article-items header-article__inner">
   
     <div class="header-article-items__start">
       
-        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
   <span class="fa-solid fa-bars"></span>
-</label></div>
+</button></div>
       
     </div>
   
@@ -281,9 +282,9 @@ document.write(`
   </button>
 `);
 </script>
-<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
-</label>
+</button>
 </div></div>
       
     </div>
@@ -693,7 +694,7 @@ and compute log joint probabilities from the base class functions:</p>
 <dd class="field-even"><p>lp (Scalar)</p>
 </dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – </p>
+<dd class="field-odd"><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -740,10 +741,10 @@ and compute log joint probabilities from the base class functions:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – </p></li>
-<li><p><strong>states</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps state_dim'</em><em>]</em>) – </p></li>
-<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps emission_dim'</em><em>]</em>) – </p></li>
-<li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps input_dim'</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>)</p></li>
+<li><p><strong>states</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps state_dim'</em><em>]</em>)</p></li>
+<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps emission_dim'</em><em>]</em>)</p></li>
+<li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps input_dim'</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -762,7 +763,7 @@ and compute log joint probabilities from the base class functions:</p>
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
 <li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>] </em><em>| </em><em>None</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
-<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>) – </p></li>
+<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -784,7 +785,7 @@ and compute log joint probabilities from the base class functions:</p>
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
 <li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>] </em><em>| </em><em>None</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
-<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>) – </p></li>
+<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -806,7 +807,7 @@ and compute log joint probabilities from the base class functions:</p>
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
 <li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>] </em><em>| </em><em>None</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
-<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>) – </p></li>
+<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -919,7 +920,7 @@ One pass through the entire set of sequences is called an <em>epoch</em>.</p>
 <li><p><strong>num_epochs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – number of epochs of SGD to run</p></li>
 <li><p><strong>key</strong> (<a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – a random number generator for selecting minibatches</p></li>
 <li><p><strong>verbose</strong> – whether or not to show a progress bar</p></li>
-<li><p><strong>shuffle</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – </p></li>
+<li><p><strong>shuffle</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1198,8 +1199,8 @@ posterior. In the generic case, we simply return the posterior itself.</p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – </p></li>
-<li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>)</p></li>
+<li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1271,8 +1272,8 @@ posterior. In the generic case, we simply return the posterior itself.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – </p></li>
-<li><p><strong>props</strong> (<a class="reference internal" href="#dynamax.parameters.PropertySet" title="dynamax.parameters.PropertySet"><em>PropertySet</em></a>) – </p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>)</p></li>
+<li><p><strong>props</strong> (<a class="reference internal" href="#dynamax.parameters.PropertySet" title="dynamax.parameters.PropertySet"><em>PropertySet</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1393,8 +1394,8 @@ posterior. In the generic case, we simply return the posterior itself.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – </p></li>
-<li><p><strong>props</strong> (<a class="reference internal" href="#dynamax.parameters.PropertySet" title="dynamax.parameters.PropertySet"><em>PropertySet</em></a>) – </p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>)</p></li>
+<li><p><strong>props</strong> (<a class="reference internal" href="#dynamax.parameters.PropertySet" title="dynamax.parameters.PropertySet"><em>PropertySet</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1527,8 +1528,8 @@ of a single time step’s emissions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>) – </p></li>
-<li><p><strong>props</strong> (<a class="reference internal" href="#dynamax.parameters.PropertySet" title="dynamax.parameters.PropertySet"><em>PropertySet</em></a>) – </p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.parameters.ParameterSet" title="dynamax.parameters.ParameterSet"><em>ParameterSet</em></a>)</p></li>
+<li><p><strong>props</strong> (<a class="reference internal" href="#dynamax.parameters.PropertySet" title="dynamax.parameters.PropertySet"><em>PropertySet</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2232,8 +2233,8 @@ component in state <span class="math notranslate nohighlight">\(k\)</span>.</p>
 <li><p><strong>emission_prior_concentration</strong> – <span class="math notranslate nohighlight">\(\kappa_0\)</span></p></li>
 <li><p><strong>emission_prior_extra_df</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>]</em>) – <span class="math notranslate nohighlight">\(\nu_0 - N &gt; 0\)</span>, the “extra” degrees of freedom, above and beyond the minimum of <span class="math notranslate nohighlight">\(\nu_0 = N\)</span>.</p></li>
 <li><p><strong>emission_prior_scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>] </em><em>| </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em>) – <span class="math notranslate nohighlight">\(\Psi_0\)</span></p></li>
-<li><p><strong>emission_weights_concentration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>] </em><em>| </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_components'</em><em>]</em>) – </p></li>
-<li><p><strong>emission_prior_mean_concentration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>]</em>) – </p></li>
+<li><p><strong>emission_weights_concentration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>] </em><em>| </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_components'</em><em>]</em>)</p></li>
+<li><p><strong>emission_prior_mean_concentration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2304,7 +2305,7 @@ component in state <span class="math notranslate nohighlight">\(k\)</span>.</p>
 <li><p><strong>emission_prior_mean_concentration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>]</em>) – <span class="math notranslate nohighlight">\(\kappa_0\)</span></p></li>
 <li><p><strong>emission_prior_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>]</em>) – <span class="math notranslate nohighlight">\(\alpha_0\)</span></p></li>
 <li><p><strong>emission_prior_scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>]</em>) – <span class="math notranslate nohighlight">\(\beta_0\)</span></p></li>
-<li><p><strong>emission_weights_concentration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>] </em><em>| </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_components'</em><em>]</em>) – </p></li>
+<li><p><strong>emission_weights_concentration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>] </em><em>| </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_components'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2699,7 +2700,7 @@ returns a transition matrix.</p>
 <li><p><strong>transition_matrix</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states num_states'</em><em>] </em><em>| </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(z_{t+1} \mid z_t, u_t, \theta)\)</span></p></li>
 <li><p><strong>log_likelihoods</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(y_t \mid z_t, u_t, \theta)\)</span> for <span class="math notranslate nohighlight">\(t=1,\ldots, T\)</span>.</p></li>
 <li><p><strong>transition_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><em>Callable</em></a><em>[</em><em>[</em><em>Int</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states num_states'</em><em>]</em><em>] </em><em>| </em><em>None</em>) – function that takes in an integer time index and returns a <span class="math notranslate nohighlight">\(K \times K\)</span> transition matrix.</p></li>
-<li><p><strong>compute_trans_probs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – </p></li>
+<li><p><strong>compute_trans_probs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2727,7 +2728,7 @@ returns a transition matrix.</p>
 <li><p><strong>transition_matrix</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states num_states'</em><em>] </em><em>| </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(z_{t+1} \mid z_t, u_t, \theta)\)</span></p></li>
 <li><p><strong>log_likelihoods</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(y_t \mid z_t, u_t, \theta)\)</span> for <span class="math notranslate nohighlight">\(t=1,\ldots, T\)</span>.</p></li>
 <li><p><strong>transition_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><em>Callable</em></a><em>[</em><em>[</em><em>Int</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states num_states'</em><em>]</em><em>] </em><em>| </em><em>None</em>) – function that takes in an integer time index and returns a <span class="math notranslate nohighlight">\(K \times K\)</span> transition matrix.</p></li>
-<li><p><strong>compute_trans_probs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – </p></li>
+<li><p><strong>compute_trans_probs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2827,7 +2828,7 @@ for nonstationary transition matrices in a future release.</em></p>
 <li><p><strong>initial_distribution</strong> – <span class="math notranslate nohighlight">\(p(z_1 \mid u_1, \theta)\)</span></p></li>
 <li><p><strong>transition_matrix</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(z_{t+1} \mid z_t, u_t, \theta)\)</span></p></li>
 <li><p><strong>log_likelihoods</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(y_t \mid z_t, u_t, \theta)\)</span> for <span class="math notranslate nohighlight">\(t=1,\ldots, T\)</span>.</p></li>
-<li><p><strong>initial_probs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states'</em><em>]</em>) – </p></li>
+<li><p><strong>initial_probs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2854,7 +2855,7 @@ for nonstationary transition matrices in a future release.</em></p>
 <li><p><strong>initial_distribution</strong> – <span class="math notranslate nohighlight">\(p(z_1 \mid u_1, \theta)\)</span></p></li>
 <li><p><strong>transition_matrix</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(z_{t+1} \mid z_t, u_t, \theta)\)</span></p></li>
 <li><p><strong>log_likelihoods</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_timesteps num_states'</em><em>]</em>) – <span class="math notranslate nohighlight">\(p(y_t \mid z_t, u_t, \theta)\)</span> for <span class="math notranslate nohighlight">\(t=1,\ldots, T\)</span>.</p></li>
-<li><p><strong>initial_probs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states'</em><em>]</em>) – </p></li>
+<li><p><strong>initial_probs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'num_states'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3084,7 +3085,7 @@ You can create the parameters manually, or by calling <a class="reference intern
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.linear_gaussian_ssm.ParamsLGSSM" title="dynamax.linear_gaussian_ssm.inference.ParamsLGSSM"><em>ParamsLGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
 <li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>] </em><em>| </em><em>None</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
-<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>) – </p></li>
+<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3106,7 +3107,7 @@ You can create the parameters manually, or by calling <a class="reference intern
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.linear_gaussian_ssm.ParamsLGSSM" title="dynamax.linear_gaussian_ssm.inference.ParamsLGSSM"><em>ParamsLGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
 <li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>] </em><em>| </em><em>None</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
-<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>) – </p></li>
+<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3128,7 +3129,7 @@ You can create the parameters manually, or by calling <a class="reference intern
 <li><p><strong>params</strong> (<a class="reference internal" href="#dynamax.linear_gaussian_ssm.ParamsLGSSM" title="dynamax.linear_gaussian_ssm.inference.ParamsLGSSM"><em>ParamsLGSSM</em></a>) – model parameters <span class="math notranslate nohighlight">\(\theta\)</span></p></li>
 <li><p><strong>state</strong> – current latent state <span class="math notranslate nohighlight">\(z_t\)</span></p></li>
 <li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>] </em><em>| </em><em>None</em>) – current inputs  <span class="math notranslate nohighlight">\(u_t\)</span></p></li>
-<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>) – </p></li>
+<li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3366,8 +3367,8 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <li><p><strong>marginal_loglik</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em> | </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>''</em><em>] </em><em>| </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime'</em><em>]</em>) – marginal log likelihood, <span class="math notranslate nohighlight">\(p(y_{1:T} \mid u_{1:T})\)</span></p></li>
 <li><p><strong>filtered_means</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim'</em><em>] </em><em>| </em><em>None</em>) – array of filtered means <span class="math notranslate nohighlight">\(\mathbb{E}[z_t \mid y_{1:t}, u_{1:t}]\)</span></p></li>
 <li><p><strong>filtered_covariances</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim state_dim'</em><em>] </em><em>| </em><em>None</em>) – array of filtered covariances <span class="math notranslate nohighlight">\(\mathrm{Cov}[z_t \mid y_{1:t}, u_{1:t}]\)</span></p></li>
-<li><p><strong>predicted_means</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim'</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>predicted_covariances</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim state_dim'</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>predicted_means</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim'</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>predicted_covariances</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime state_dim state_dim'</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3427,9 +3428,9 @@ implements the Rauch-Tung-Striebel (RTS) smoother.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>state_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – </p></li>
-<li><p><strong>emission_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – </p></li>
-<li><p><strong>input_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – </p></li>
+<li><p><strong>state_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>)</p></li>
+<li><p><strong>emission_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>)</p></li>
+<li><p><strong>input_dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3618,7 +3619,7 @@ filtered state estimates.</p>
 <li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>) – array of observations.</p></li>
 <li><p><strong>hyperparams</strong> (<em>UKFHyperParams</em>) – hyper-parameters.</p></li>
 <li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>] </em><em>| </em><em>None</em>) – optional array of inputs.</p></li>
-<li><p><strong>output_fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><em>List</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>output_fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><em>List</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3641,7 +3642,7 @@ filtered state estimates.</p>
 <li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>) – array of observations.</p></li>
 <li><p><strong>hyperperams</strong> – hyper-parameters.</p></li>
 <li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>] </em><em>| </em><em>None</em>) – optional inputs.</p></li>
-<li><p><strong>hyperparams</strong> (<em>UKFHyperParams</em>) – </p></li>
+<li><p><strong>hyperparams</strong> (<em>UKFHyperParams</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3679,8 +3680,8 @@ filtered state estimates.</p>
 <li><p><strong>emissions_covariance</strong> – <span class="math notranslate nohighlight">\(R\)</span></p></li>
 <li><p><strong>initial_mean</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em>) – <span class="math notranslate nohighlight">\(m\)</span></p></li>
 <li><p><strong>initial_covariance</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim state_dim'</em><em>]</em>) – <span class="math notranslate nohighlight">\(S\)</span></p></li>
-<li><p><strong>emission_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>emission_covariance</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em>) – </p></li>
+<li><p><strong>emission_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><em>Callable</em></a><em>[</em><em>[</em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'state_dim'</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'input_dim'</em><em>]</em><em>]</em><em>, </em><em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim'</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>emission_covariance</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'emission_dim emission_dim'</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3853,7 +3854,7 @@ marginal likelihood and filtered state estimates.</p>
 <li><p><strong>emissions</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime emission_dim'</em><em>]</em>) – array of observations.</p></li>
 <li><p><strong>num_iter</strong> – optional number of linearizations around prior/posterior for update step (default 1).</p></li>
 <li><p><strong>inputs</strong> (<em>Float</em><em>[</em><em>Array</em><em>, </em><em>'ntime input_dim'</em><em>] </em><em>| </em><em>None</em>) – optopnal array of inputs.</p></li>
-<li><p><strong>filtered_posterior</strong> (<a class="reference internal" href="#dynamax.linear_gaussian_ssm.PosteriorGSSMFiltered" title="dynamax.linear_gaussian_ssm.inference.PosteriorGSSMFiltered"><em>PosteriorGSSMFiltered</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>filtered_posterior</strong> (<a class="reference internal" href="#dynamax.linear_gaussian_ssm.PosteriorGSSMFiltered" title="dynamax.linear_gaussian_ssm.inference.PosteriorGSSMFiltered"><em>PosteriorGSSMFiltered</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3956,7 +3957,7 @@ Thus, <code class="docutils literal notranslate"><span class="pre">len(perm)</sp
               
               
               
-                <footer class="prev-next-footer">
+                <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
     <a class="left-prev"
@@ -4287,8 +4288,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
-<script src="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+  <script src="_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341"></script>
 
   <footer class="bd-footer">
   </footer>

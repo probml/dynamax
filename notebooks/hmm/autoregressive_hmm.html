@@ -14,33 +14,33 @@
   
   <script data-cfasync="false">
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
-    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=384b581d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
-  <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=3ee479438cf8b5e0d341"></script>
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
-    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/hmm/autoregressive_hmm';</script>
@@ -57,27 +57,23 @@
 
   
   
-  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
-    <i class="fa-solid fa-arrow-up"></i>
-    Back to top
-  </button>
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
   <input type="checkbox"
           class="sidebar-toggle"
-          name="__primary"
-          id="__primary"/>
-  <label class="overlay overlay-primary" for="__primary"></label>
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
   
   <input type="checkbox"
           class="sidebar-toggle"
-          name="__secondary"
-          id="__secondary"/>
-  <label class="overlay overlay-secondary" for="__secondary"></label>
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
   
   <div class="search-button__wrapper">
     <div class="search-button__overlay"></div>
@@ -99,8 +95,13 @@
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
 </form></div>
   </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
     </header>
   
 
@@ -205,7 +206,7 @@
 
       </div>
       
-      <main id="main-content" class="bd-main">
+      <main id="main-content" class="bd-main" role="main">
         
         
 
@@ -214,14 +215,14 @@
           <div class="bd-content">
             <div class="bd-article-container">
               
-              <div class="bd-header-article">
+              <div class="bd-header-article d-print-none">
 <div class="header-article-items header-article__inner">
   
     <div class="header-article-items__start">
       
-        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
   <span class="fa-solid fa-bars"></span>
-</label></div>
+</button></div>
       
     </div>
   
@@ -246,14 +247,14 @@
       
       <li><a href="https://mybinder.org/v2/gh/probml/dynamax/main?urlpath=tree/docs/notebooks/hmm/autoregressive_hmm.ipynb" target="_blank"
    class="btn btn-sm dropdown-item"
-   title="Launch onBinder"
+   title="Launch on Binder"
    data-bs-placement="left" data-bs-toggle="tooltip"
 >
   
 
 <span class="btn__icon-container">
   
-    <img src="../../_static/images/logo_binder.svg">
+    <img alt="Binder logo" src="../../_static/images/logo_binder.svg">
   </span>
 <span class="btn__text-container">Binder</span>
 </a>
@@ -264,14 +265,14 @@
       
       <li><a href="https://colab.research.google.com/github/probml/dynamax/blob/main/docs/notebooks/hmm/autoregressive_hmm.ipynb" target="_blank"
    class="btn btn-sm dropdown-item"
-   title="Launch onColab"
+   title="Launch on Colab"
    data-bs-placement="left" data-bs-toggle="tooltip"
 >
   
 
 <span class="btn__icon-container">
   
-    <img src="../../_static/images/logo_colab.png">
+    <img alt="Colab logo" src="../../_static/images/logo_colab.png">
   </span>
 <span class="btn__text-container">Colab</span>
 </a>
@@ -331,9 +332,9 @@ document.write(`
   </button>
 `);
 </script>
-<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
-</label>
+</button>
 </div></div>
       
     </div>
@@ -482,10 +483,10 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fb1ac786b20&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fec0864aeb0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/8439f8ac737bceaccf4c19b053de4d8dd7cf6580db904aacb8aef2bdde5a359c.png" src="../../_images/8439f8ac737bceaccf4c19b053de4d8dd7cf6580db904aacb8aef2bdde5a359c.png" />
+<img alt="../../_images/5411d5e47b7b9d4cfbec3d78981bf55b6a1a074c443265a74d74cafc9b32411d.png" src="../../_images/5411d5e47b7b9d4cfbec3d78981bf55b6a1a074c443265a74d74cafc9b32411d.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -507,7 +508,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/numpy/linalg.py:708: FutureWarning: jnp.linalg.solve: batched 1D solves with b.ndim &gt; 1 are deprecated, and in the future will be treated as a batched 2D solve. Use solve(a, b[..., None])[..., 0] to avoid this warning.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/jax/_src/numpy/linalg.py:1342: FutureWarning: jnp.linalg.solve: batched 1D solves with b.ndim &gt; 1 are deprecated, and in the future will be treated as a batched 2D solve. Use solve(a, b[..., None])[..., 0] to avoid this warning.
   warnings.warn(&quot;jnp.linalg.solve: batched 1D solves with b.ndim &gt; 1 are deprecated, &quot;
 </pre></div>
 </div>
@@ -546,7 +547,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/65d89c7df4b3c3fd0e10ae613855d44d4b3818553735b7d7f0e48f86ec531f5a.png" src="../../_images/65d89c7df4b3c3fd0e10ae613855d44d4b3818553735b7d7f0e48f86ec531f5a.png" />
+<img alt="../../_images/4e038750b8f9c9f9bbc65e2726d1cc206d4717b4994b0c1e13c32318bb8fe43a.png" src="../../_images/4e038750b8f9c9f9bbc65e2726d1cc206d4717b4994b0c1e13c32318bb8fe43a.png" />
 </div>
 </div>
 </section>
@@ -571,6 +572,259 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">line</span> <span class="mi">10</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">initial_probs</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_states</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_states</span><span class="p">,</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span>                                        <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">,</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span>                                        <span class="n">emission_weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+<span class="g g-Whitespace">      </span><span class="mi">6</span>                                        <span class="n">emission_biases</span><span class="o">=</span><span class="n">biases</span><span class="p">,</span>
+<span class="g g-Whitespace">      </span><span class="mi">7</span>                                        <span class="n">emission_covariances</span><span class="o">=</span><span class="n">covariances</span><span class="p">)</span>
+<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="n">time_bins</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="ne">---&gt; </span><span class="mi">10</span> <span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">time_bins</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">12</span> <span class="c1"># Compute the lagged emissions (aka inputs)</span>
+<span class="g g-Whitespace">     </span><span class="mi">13</span> <span class="n">inputs</span> <span class="o">=</span> <span class="n">true_arhmm</span><span class="o">.</span><span class="n">compute_inputs</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+
+<span class="nn">File ~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/arhmm.py:196,</span> in <span class="ni">LinearAutoregressiveHMM.sample</span><span class="nt">(self, params, key, num_timesteps, prev_emissions)</span>
+<span class="g g-Whitespace">    </span><span class="mi">194</span> <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">195</span> <span class="n">initial_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key1</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">196</span> <span class="n">initial_emission</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">prev_emissions</span><span class="p">))</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">197</span> <span class="n">initial_prev_emissions</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">initial_emission</span><span class="p">,</span> <span class="n">prev_emissions</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+<span class="g g-Whitespace">    </span><span class="mi">199</span> <span class="c1"># Sample the remaining emissions and states</span>
+
+<span class="nn">File ~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/abstractions.py:542,</span> in <span class="ni">HMM.emission_distribution</span><span class="nt">(self, params, state, inputs)</span>
+<span class="g g-Whitespace">    </span><span class="mi">541</span> <span class="k">def</span> <span class="nf">emission_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="ne">--&gt; </span><span class="mi">542</span>     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">distribution</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+
+<span class="nn">File ~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/linreg_hmm.py:93,</span> in <span class="ni">LinearRegressionHMMEmissions.distribution</span><span class="nt">(self, params, state, inputs)</span>
+<span class="g g-Whitespace">     </span><span class="mi">91</span> <span class="n">prediction</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">state</span><span class="p">]</span> <span class="o">@</span> <span class="n">inputs</span>
+<span class="g g-Whitespace">     </span><span class="mi">92</span> <span class="n">prediction</span> <span class="o">+=</span>  <span class="n">params</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="n">state</span><span class="p">]</span>
+<span class="ne">---&gt; </span><span class="mi">93</span> <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">covs</span><span class="p">[</span><span class="n">state</span><span class="p">])</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/decorator.py:232,</span> in <span class="ni">decorate.&lt;locals&gt;.fun</span><span class="nt">(*args, **kw)</span>
+<span class="g g-Whitespace">    </span><span class="mi">230</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">kwsyntax</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">231</span>     <span class="n">args</span><span class="p">,</span> <span class="n">kw</span> <span class="o">=</span> <span class="n">fix</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="n">sig</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">232</span> <span class="k">return</span> <span class="n">caller</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">extras</span> <span class="o">+</span> <span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:342,</span> in <span class="ni">_DistributionMeta.__new__.&lt;locals&gt;.wrapped_init</span><span class="nt">(***failed resolving arguments***)</span>
+<span class="g g-Whitespace">    </span><span class="mi">339</span> <span class="c1"># Note: if we ever want to have things set in `self` before `__init__` is</span>
+<span class="g g-Whitespace">    </span><span class="mi">340</span> <span class="c1"># called, here is the place to do it.</span>
+<span class="g g-Whitespace">    </span><span class="mi">341</span> <span class="n">self_</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="ne">--&gt; </span><span class="mi">342</span> <span class="n">default_init</span><span class="p">(</span><span class="n">self_</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">343</span> <span class="c1"># Note: if we ever want to override things set in `self` by subclass</span>
+<span class="g g-Whitespace">    </span><span class="mi">344</span> <span class="c1"># `__init__`, here is the place to do it.</span>
+<span class="g g-Whitespace">    </span><span class="mi">345</span> <span class="k">if</span> <span class="n">self_</span><span class="o">.</span><span class="n">_parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">346</span>   <span class="c1"># We prefer subclasses will set `parameters = dict(locals())` because</span>
+<span class="g g-Whitespace">    </span><span class="mi">347</span>   <span class="c1"># this has nearly zero overhead. However, failing to do this, we will</span>
+<span class="g g-Whitespace">    </span><span class="mi">348</span>   <span class="c1"># resolve the input arguments dynamically and only when needed.</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/mvn_full_covariance.py:191,</span> in <span class="ni">MultivariateNormalFullCovariance.__init__</span><span class="nt">(self, loc, covariance_matrix, validate_args, allow_nan_stats, name)</span>
+<span class="g g-Whitespace">    </span><span class="mi">185</span>       <span class="c1"># No need to validate that covariance_matrix is non-singular.</span>
+<span class="g g-Whitespace">    </span><span class="mi">186</span>       <span class="c1"># LinearOperatorLowerTriangular has an assert_non_singular method that</span>
+<span class="g g-Whitespace">    </span><span class="mi">187</span>       <span class="c1"># is called by the Bijector.</span>
+<span class="g g-Whitespace">    </span><span class="mi">188</span>       <span class="c1"># However, cholesky() ignores the upper triangular part, so we do need</span>
+<span class="g g-Whitespace">    </span><span class="mi">189</span>       <span class="c1"># to separately assert symmetric.</span>
+<span class="g g-Whitespace">    </span><span class="mi">190</span>       <span class="n">scale_tril</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">191</span>     <span class="nb">super</span><span class="p">(</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">192</span>         <span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">193</span>         <span class="n">scale_tril</span><span class="o">=</span><span class="n">scale_tril</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">194</span>         <span class="n">validate_args</span><span class="o">=</span><span class="n">validate_args</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">195</span>         <span class="n">allow_nan_stats</span><span class="o">=</span><span class="n">allow_nan_stats</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">196</span>         <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">197</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="n">parameters</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/decorator.py:232,</span> in <span class="ni">decorate.&lt;locals&gt;.fun</span><span class="nt">(*args, **kw)</span>
+<span class="g g-Whitespace">    </span><span class="mi">230</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">kwsyntax</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">231</span>     <span class="n">args</span><span class="p">,</span> <span class="n">kw</span> <span class="o">=</span> <span class="n">fix</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="n">sig</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">232</span> <span class="k">return</span> <span class="n">caller</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">extras</span> <span class="o">+</span> <span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:342,</span> in <span class="ni">_DistributionMeta.__new__.&lt;locals&gt;.wrapped_init</span><span class="nt">(***failed resolving arguments***)</span>
+<span class="g g-Whitespace">    </span><span class="mi">339</span> <span class="c1"># Note: if we ever want to have things set in `self` before `__init__` is</span>
+<span class="g g-Whitespace">    </span><span class="mi">340</span> <span class="c1"># called, here is the place to do it.</span>
+<span class="g g-Whitespace">    </span><span class="mi">341</span> <span class="n">self_</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="ne">--&gt; </span><span class="mi">342</span> <span class="n">default_init</span><span class="p">(</span><span class="n">self_</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">343</span> <span class="c1"># Note: if we ever want to override things set in `self` by subclass</span>
+<span class="g g-Whitespace">    </span><span class="mi">344</span> <span class="c1"># `__init__`, here is the place to do it.</span>
+<span class="g g-Whitespace">    </span><span class="mi">345</span> <span class="k">if</span> <span class="n">self_</span><span class="o">.</span><span class="n">_parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">346</span>   <span class="c1"># We prefer subclasses will set `parameters = dict(locals())` because</span>
+<span class="g g-Whitespace">    </span><span class="mi">347</span>   <span class="c1"># this has nearly zero overhead. However, failing to do this, we will</span>
+<span class="g g-Whitespace">    </span><span class="mi">348</span>   <span class="c1"># resolve the input arguments dynamically and only when needed.</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/mvn_tril.py:228,</span> in <span class="ni">MultivariateNormalTriL.__init__</span><span class="nt">(self, loc, scale_tril, validate_args, allow_nan_stats, experimental_use_kahan_sum, name)</span>
+<span class="g g-Whitespace">    </span><span class="mi">221</span>   <span class="n">linop_cls</span> <span class="o">=</span> <span class="p">(</span><span class="n">KahanLogDetLinOpTriL</span> <span class="k">if</span> <span class="n">experimental_use_kahan_sum</span> <span class="k">else</span>
+<span class="g g-Whitespace">    </span><span class="mi">222</span>                <span class="n">tf</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinearOperatorLowerTriangular</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">223</span>   <span class="n">scale</span> <span class="o">=</span> <span class="n">linop_cls</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">224</span>       <span class="n">scale_tril</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">225</span>       <span class="n">is_non_singular</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">226</span>       <span class="n">is_self_adjoint</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">227</span>       <span class="n">is_positive_definite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">228</span> <span class="nb">super</span><span class="p">(</span><span class="n">MultivariateNormalTriL</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">229</span>     <span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">230</span>     <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">231</span>     <span class="n">validate_args</span><span class="o">=</span><span class="n">validate_args</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">232</span>     <span class="n">allow_nan_stats</span><span class="o">=</span><span class="n">allow_nan_stats</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">233</span>     <span class="n">experimental_use_kahan_sum</span><span class="o">=</span><span class="n">experimental_use_kahan_sum</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">234</span>     <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">235</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="n">parameters</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/decorator.py:232,</span> in <span class="ni">decorate.&lt;locals&gt;.fun</span><span class="nt">(*args, **kw)</span>
+<span class="g g-Whitespace">    </span><span class="mi">230</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">kwsyntax</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">231</span>     <span class="n">args</span><span class="p">,</span> <span class="n">kw</span> <span class="o">=</span> <span class="n">fix</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="n">sig</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">232</span> <span class="k">return</span> <span class="n">caller</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">extras</span> <span class="o">+</span> <span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:342,</span> in <span class="ni">_DistributionMeta.__new__.&lt;locals&gt;.wrapped_init</span><span class="nt">(***failed resolving arguments***)</span>
+<span class="g g-Whitespace">    </span><span class="mi">339</span> <span class="c1"># Note: if we ever want to have things set in `self` before `__init__` is</span>
+<span class="g g-Whitespace">    </span><span class="mi">340</span> <span class="c1"># called, here is the place to do it.</span>
+<span class="g g-Whitespace">    </span><span class="mi">341</span> <span class="n">self_</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="ne">--&gt; </span><span class="mi">342</span> <span class="n">default_init</span><span class="p">(</span><span class="n">self_</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">343</span> <span class="c1"># Note: if we ever want to override things set in `self` by subclass</span>
+<span class="g g-Whitespace">    </span><span class="mi">344</span> <span class="c1"># `__init__`, here is the place to do it.</span>
+<span class="g g-Whitespace">    </span><span class="mi">345</span> <span class="k">if</span> <span class="n">self_</span><span class="o">.</span><span class="n">_parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">346</span>   <span class="c1"># We prefer subclasses will set `parameters = dict(locals())` because</span>
+<span class="g g-Whitespace">    </span><span class="mi">347</span>   <span class="c1"># this has nearly zero overhead. However, failing to do this, we will</span>
+<span class="g g-Whitespace">    </span><span class="mi">348</span>   <span class="c1"># resolve the input arguments dynamically and only when needed.</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/mvn_linear_operator.py:205,</span> in <span class="ni">MultivariateNormalLinearOperator.__init__</span><span class="nt">(self, loc, scale, validate_args, allow_nan_stats, experimental_use_kahan_sum, name)</span>
+<span class="g g-Whitespace">    </span><span class="mi">202</span> <span class="k">if</span> <span class="n">loc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">203</span>   <span class="n">bijector</span> <span class="o">=</span> <span class="n">shift_bijector</span><span class="o">.</span><span class="n">Shift</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">204</span>       <span class="n">shift</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span> <span class="n">validate_args</span><span class="o">=</span><span class="n">validate_args</span><span class="p">)(</span><span class="n">bijector</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">205</span> <span class="nb">super</span><span class="p">(</span><span class="n">MultivariateNormalLinearOperator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">206</span>     <span class="c1"># TODO(b/137665504): Use batch-adding meta-distribution to set the batch</span>
+<span class="g g-Whitespace">    </span><span class="mi">207</span>     <span class="c1"># shape instead of tf.zeros.</span>
+<span class="g g-Whitespace">    </span><span class="mi">208</span>     <span class="c1"># We use `Sample` instead of `Independent` because `Independent`</span>
+<span class="g g-Whitespace">    </span><span class="mi">209</span>     <span class="c1"># requires concatenating `batch_shape` and `event_shape`, which loses</span>
+<span class="g g-Whitespace">    </span><span class="mi">210</span>     <span class="c1"># static `batch_shape` information when `event_shape` is not statically</span>
+<span class="g g-Whitespace">    </span><span class="mi">211</span>     <span class="c1"># known.</span>
+<span class="g g-Whitespace">    </span><span class="mi">212</span>     <span class="n">distribution</span><span class="o">=</span><span class="n">sample</span><span class="o">.</span><span class="n">Sample</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">213</span>         <span class="n">normal</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">214</span>             <span class="n">loc</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">),</span>
+<span class="g g-Whitespace">    </span><span class="mi">215</span>             <span class="n">scale</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">ones</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)),</span>
+<span class="g g-Whitespace">    </span><span class="mi">216</span>         <span class="n">event_shape</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">217</span>         <span class="n">experimental_use_kahan_sum</span><span class="o">=</span><span class="n">experimental_use_kahan_sum</span><span class="p">),</span>
+<span class="g g-Whitespace">    </span><span class="mi">218</span>     <span class="n">bijector</span><span class="o">=</span><span class="n">bijector</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">219</span>     <span class="n">validate_args</span><span class="o">=</span><span class="n">validate_args</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">220</span>     <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">221</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="n">parameters</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/decorator.py:232,</span> in <span class="ni">decorate.&lt;locals&gt;.fun</span><span class="nt">(*args, **kw)</span>
+<span class="g g-Whitespace">    </span><span class="mi">230</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">kwsyntax</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">231</span>     <span class="n">args</span><span class="p">,</span> <span class="n">kw</span> <span class="o">=</span> <span class="n">fix</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="n">sig</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">232</span> <span class="k">return</span> <span class="n">caller</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">extras</span> <span class="o">+</span> <span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:342,</span> in <span class="ni">_DistributionMeta.__new__.&lt;locals&gt;.wrapped_init</span><span class="nt">(***failed resolving arguments***)</span>
+<span class="g g-Whitespace">    </span><span class="mi">339</span> <span class="c1"># Note: if we ever want to have things set in `self` before `__init__` is</span>
+<span class="g g-Whitespace">    </span><span class="mi">340</span> <span class="c1"># called, here is the place to do it.</span>
+<span class="g g-Whitespace">    </span><span class="mi">341</span> <span class="n">self_</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="ne">--&gt; </span><span class="mi">342</span> <span class="n">default_init</span><span class="p">(</span><span class="n">self_</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">343</span> <span class="c1"># Note: if we ever want to override things set in `self` by subclass</span>
+<span class="g g-Whitespace">    </span><span class="mi">344</span> <span class="c1"># `__init__`, here is the place to do it.</span>
+<span class="g g-Whitespace">    </span><span class="mi">345</span> <span class="k">if</span> <span class="n">self_</span><span class="o">.</span><span class="n">_parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">346</span>   <span class="c1"># We prefer subclasses will set `parameters = dict(locals())` because</span>
+<span class="g g-Whitespace">    </span><span class="mi">347</span>   <span class="c1"># this has nearly zero overhead. However, failing to do this, we will</span>
+<span class="g g-Whitespace">    </span><span class="mi">348</span>   <span class="c1"># resolve the input arguments dynamically and only when needed.</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/transformed_distribution.py:244,</span> in <span class="ni">_TransformedDistribution.__init__</span><span class="nt">(self, distribution, bijector, kwargs_split_fn, validate_args, parameters, name)</span>
+<span class="g g-Whitespace">    </span><span class="mi">238</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zero</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;zero&#39;</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">240</span> <span class="c1"># We don&#39;t just want to check isinstance(JointDistribution) because</span>
+<span class="g g-Whitespace">    </span><span class="mi">241</span> <span class="c1"># TransformedDistributions with multipart bijectors are effectively</span>
+<span class="g g-Whitespace">    </span><span class="mi">242</span> <span class="c1"># joint but don&#39;t inherit from JD. The &#39;duck-type&#39; test is that</span>
+<span class="g g-Whitespace">    </span><span class="mi">243</span> <span class="c1"># JDs have a structured dtype.</span>
+<span class="ne">--&gt; </span><span class="mi">244</span> <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bijector</span><span class="o">.</span><span class="n">forward_dtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">245</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_joint</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nest</span><span class="o">.</span><span class="n">is_nested</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">247</span> <span class="nb">super</span><span class="p">(</span><span class="n">_TransformedDistribution</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">248</span>     <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">249</span>     <span class="n">reparameterization_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_distribution</span><span class="o">.</span><span class="n">reparameterization_type</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">252</span>     <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">253</span>     <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/bijectors/bijector.py:1705,</span> in <span class="ni">Bijector.forward_dtype</span><span class="nt">(self, dtype, name, **kwargs)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1701</span>   <span class="n">input_dtype</span> <span class="o">=</span> <span class="n">nest_util</span><span class="o">.</span><span class="n">broadcast_structure</span><span class="p">(</span>
+<span class="g g-Whitespace">   </span><span class="mi">1702</span>       <span class="bp">self</span><span class="o">.</span><span class="n">forward_min_event_ndims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1703</span> <span class="k">else</span><span class="p">:</span>
+<span class="g g-Whitespace">   </span><span class="mi">1704</span>   <span class="c1"># Make sure inputs are compatible with statically-known dtype.</span>
+<span class="ne">-&gt; </span><span class="mi">1705</span>   <span class="n">input_dtype</span> <span class="o">=</span> <span class="n">nest</span><span class="o">.</span><span class="n">map_structure_up_to</span><span class="p">(</span>
+<span class="g g-Whitespace">   </span><span class="mi">1706</span>       <span class="bp">self</span><span class="o">.</span><span class="n">forward_min_event_ndims</span><span class="p">,</span>
+<span class="g g-Whitespace">   </span><span class="mi">1707</span>       <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dtype_util</span><span class="o">.</span><span class="n">convert_to_dtype</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+<span class="g g-Whitespace">   </span><span class="mi">1708</span>       <span class="n">nest_util</span><span class="o">.</span><span class="n">coerce_structure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forward_min_event_ndims</span><span class="p">,</span> <span class="n">dtype</span><span class="p">),</span>
+<span class="g g-Whitespace">   </span><span class="mi">1709</span>       <span class="n">check_types</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1711</span> <span class="n">output_dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_dtype</span><span class="p">(</span><span class="n">input_dtype</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1712</span> <span class="k">try</span><span class="p">:</span>
+<span class="g g-Whitespace">   </span><span class="mi">1713</span>   <span class="c1"># kwargs may alter dtypes themselves, but we currently require</span>
+<span class="g g-Whitespace">   </span><span class="mi">1714</span>   <span class="c1"># structure to be statically known.</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/backend/jax/nest.py:324,</span> in <span class="ni">map_structure_up_to</span><span class="nt">(shallow_structure, func, *structures, **kwargs)</span>
+<span class="g g-Whitespace">    </span><span class="mi">323</span> <span class="k">def</span> <span class="nf">map_structure_up_to</span><span class="p">(</span><span class="n">shallow_structure</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">structures</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="ne">--&gt; </span><span class="mi">324</span>   <span class="k">return</span> <span class="n">map_structure_with_tuple_paths_up_to</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">325</span>       <span class="n">shallow_structure</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">326</span>       <span class="k">lambda</span> <span class="n">_</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">),</span>  <span class="c1"># Discards path.</span>
+<span class="g g-Whitespace">    </span><span class="mi">327</span>       <span class="o">*</span><span class="n">structures</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">328</span>       <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/backend/jax/nest.py:353,</span> in <span class="ni">map_structure_with_tuple_paths_up_to</span><span class="nt">(shallow_structure, func, expand_composites, *structures, **kwargs)</span>
+<span class="g g-Whitespace">    </span><span class="mi">350</span> <span class="k">for</span> <span class="n">input_tree</span> <span class="ow">in</span> <span class="n">structures</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">351</span>   <span class="n">assert_shallow_structure</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">352</span>       <span class="n">shallow_structure</span><span class="p">,</span> <span class="n">input_tree</span><span class="p">,</span> <span class="n">check_types</span><span class="o">=</span><span class="n">check_types</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">353</span> <span class="k">return</span> <span class="n">dm_tree</span><span class="o">.</span><span class="n">map_structure_with_path_up_to</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">354</span>     <span class="n">shallow_structure</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">structures</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tree/__init__.py:778,</span> in <span class="ni">map_structure_with_path_up_to</span><span class="nt">(***failed resolving arguments***)</span>
+<span class="g g-Whitespace">    </span><span class="mi">776</span> <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="g g-Whitespace">    </span><span class="mi">777</span> <span class="k">for</span> <span class="n">path_and_values</span> <span class="ow">in</span> <span class="n">_multiyield_flat_up_to</span><span class="p">(</span><span class="n">shallow_structure</span><span class="p">,</span> <span class="o">*</span><span class="n">structures</span><span class="p">):</span>
+<span class="ne">--&gt; </span><span class="mi">778</span>   <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">path_and_values</span><span class="p">))</span>
+<span class="g g-Whitespace">    </span><span class="mi">779</span> <span class="k">return</span> <span class="n">unflatten_as</span><span class="p">(</span><span class="n">shallow_structure</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/backend/jax/nest.py:326,</span> in <span class="ni">map_structure_up_to.&lt;locals&gt;.&lt;lambda&gt;</span><span class="nt">(_, *args)</span>
+<span class="g g-Whitespace">    </span><span class="mi">323</span> <span class="k">def</span> <span class="nf">map_structure_up_to</span><span class="p">(</span><span class="n">shallow_structure</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">structures</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">324</span>   <span class="k">return</span> <span class="n">map_structure_with_tuple_paths_up_to</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">325</span>       <span class="n">shallow_structure</span><span class="p">,</span>
+<span class="ne">--&gt; </span><span class="mi">326</span>       <span class="k">lambda</span> <span class="n">_</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">),</span>  <span class="c1"># Discards path.</span>
+<span class="g g-Whitespace">    </span><span class="mi">327</span>       <span class="o">*</span><span class="n">structures</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">328</span>       <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/bijectors/bijector.py:1707,</span> in <span class="ni">Bijector.forward_dtype.&lt;locals&gt;.&lt;lambda&gt;</span><span class="nt">(x)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1701</span>   <span class="n">input_dtype</span> <span class="o">=</span> <span class="n">nest_util</span><span class="o">.</span><span class="n">broadcast_structure</span><span class="p">(</span>
+<span class="g g-Whitespace">   </span><span class="mi">1702</span>       <span class="bp">self</span><span class="o">.</span><span class="n">forward_min_event_ndims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1703</span> <span class="k">else</span><span class="p">:</span>
+<span class="g g-Whitespace">   </span><span class="mi">1704</span>   <span class="c1"># Make sure inputs are compatible with statically-known dtype.</span>
+<span class="g g-Whitespace">   </span><span class="mi">1705</span>   <span class="n">input_dtype</span> <span class="o">=</span> <span class="n">nest</span><span class="o">.</span><span class="n">map_structure_up_to</span><span class="p">(</span>
+<span class="g g-Whitespace">   </span><span class="mi">1706</span>       <span class="bp">self</span><span class="o">.</span><span class="n">forward_min_event_ndims</span><span class="p">,</span>
+<span class="ne">-&gt; </span><span class="mi">1707</span>       <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dtype_util</span><span class="o">.</span><span class="n">convert_to_dtype</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+<span class="g g-Whitespace">   </span><span class="mi">1708</span>       <span class="n">nest_util</span><span class="o">.</span><span class="n">coerce_structure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forward_min_event_ndims</span><span class="p">,</span> <span class="n">dtype</span><span class="p">),</span>
+<span class="g g-Whitespace">   </span><span class="mi">1709</span>       <span class="n">check_types</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1711</span> <span class="n">output_dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_dtype</span><span class="p">(</span><span class="n">input_dtype</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1712</span> <span class="k">try</span><span class="p">:</span>
+<span class="g g-Whitespace">   </span><span class="mi">1713</span>   <span class="c1"># kwargs may alter dtypes themselves, but we currently require</span>
+<span class="g g-Whitespace">   </span><span class="mi">1714</span>   <span class="c1"># structure to be statically known.</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/internal/dtype_util.py:247,</span> in <span class="ni">convert_to_dtype</span><span class="nt">(tensor_or_dtype, dtype, dtype_hint)</span>
+<span class="g g-Whitespace">    </span><span class="mi">245</span> <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tensor_or_dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">246</span>   <span class="n">dt</span> <span class="o">=</span> <span class="n">base_dtype</span><span class="p">(</span><span class="n">dtype</span> <span class="ow">or</span> <span class="n">dtype_hint</span> <span class="ow">or</span> <span class="n">tensor_or_dtype</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">247</span> <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">issctype</span><span class="p">(</span><span class="n">tensor_or_dtype</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">248</span>   <span class="n">dt</span> <span class="o">=</span> <span class="n">base_dtype</span><span class="p">(</span><span class="n">dtype</span> <span class="ow">or</span> <span class="n">dtype_hint</span> <span class="ow">or</span> <span class="n">tensor_or_dtype</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">249</span> <span class="k">else</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">250</span>   <span class="c1"># If this is a Python object, call `convert_to_tensor` and grab the dtype.</span>
+<span class="g g-Whitespace">    </span><span class="mi">251</span>   <span class="c1"># Note that this will add ops in graph-mode; we may want to consider</span>
+<span class="g g-Whitespace">    </span><span class="mi">252</span>   <span class="c1"># other ways to handle this case.</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/numpy/__init__.py:397,</span> in <span class="ni">__getattr__</span><span class="nt">(attr)</span>
+<span class="g g-Whitespace">    </span><span class="mi">394</span>     <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">__former_attrs__</span><span class="p">[</span><span class="n">attr</span><span class="p">])</span>
+<span class="g g-Whitespace">    </span><span class="mi">396</span> <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">__expired_attributes__</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">397</span>     <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">398</span>         <span class="sa">f</span><span class="s2">&quot;`np.</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2">` was removed in the NumPy 2.0 release. &quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">399</span>         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">__expired_attributes__</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">400</span>     <span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">402</span> <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;chararray&quot;</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">403</span>     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">404</span>         <span class="s2">&quot;`np.chararray` is deprecated and will be removed from &quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">405</span>         <span class="s2">&quot;the main namespace in the future. Use an array with a string &quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">406</span>         <span class="s2">&quot;or bytes dtype instead.&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="ne">AttributeError</span>: `np.issctype` was removed in the NumPy 2.0 release. Use `issubclass(rep, np.generic)` instead.
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -590,7 +844,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;$x_2$&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/c4e7d098d0dc4f0b37637f862fd7c16f2f15a8ac16ebcfc4a5ef31e4ee76d9e9.png" src="../../_images/c4e7d098d0dc4f0b37637f862fd7c16f2f15a8ac16ebcfc4a5ef31e4ee76d9e9.png" />
+<img alt="../../_images/346d4416b64f48c92ada15d09b912dce057a01ddfc30eb59777fce896ebedbe0.png" src="../../_images/346d4416b64f48c92ada15d09b912dce057a01ddfc30eb59777fce896ebedbe0.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the the corresponding AR state while the solid lines are the actual observations sampled from the HMM.</p>
@@ -622,7 +876,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7d1e5e5e6aeda38b17fa4db39845eabc69a59053404a97aace63e530f1ed120b.png" src="../../_images/7d1e5e5e6aeda38b17fa4db39845eabc69a59053404a97aace63e530f1ed120b.png" />
+<img alt="../../_images/487615603b90dd95bf963592681d2b697aec8e288d136fa941aad4e35ffa8aa3.png" src="../../_images/487615603b90dd95bf963592681d2b697aec8e288d136fa941aad4e35ffa8aa3.png" />
 </div>
 </div>
 </section>
@@ -682,7 +936,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/05d9591f307f58ace2a620bcd652e8a85f6ff3570b1bd80cc82ff3eccae8d7d3.png" src="../../_images/05d9591f307f58ace2a620bcd652e8a85f6ff3570b1bd80cc82ff3eccae8d7d3.png" />
+<img alt="../../_images/89bc0bdaa47121770ebcad4eef9b80f1f8d088716401f4b130aa0e8482e45344.png" src="../../_images/89bc0bdaa47121770ebcad4eef9b80f1f8d088716401f4b130aa0e8482e45344.png" />
 </div>
 </div>
 </section>
@@ -729,7 +983,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/caf61b419c94316c58203b05ca7577cac3186e707ab9d42109e8dd47a74d756c.png" src="../../_images/caf61b419c94316c58203b05ca7577cac3186e707ab9d42109e8dd47a74d756c.png" />
+<img alt="../../_images/3ea28fa5800691180879d1d7122324e9dc1b7920da8b7d1337d094b12c5e23ab.png" src="../../_images/3ea28fa5800691180879d1d7122324e9dc1b7920da8b7d1337d094b12c5e23ab.png" />
 </div>
 </div>
 </section>
@@ -757,7 +1011,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d1ef29de4287b86ac3d2c906c280f33164f495dc5f14fe2196352637985f3b19.png" src="../../_images/d1ef29de4287b86ac3d2c906c280f33164f495dc5f14fe2196352637985f3b19.png" />
+<img alt="../../_images/a5584a750b5364efe309fd7c5ff1434559cfe78e04bba7ebb447dcb6d424ad60.png" src="../../_images/a5584a750b5364efe309fd7c5ff1434559cfe78e04bba7ebb447dcb6d424ad60.png" />
 </div>
 </div>
 </section>
@@ -787,7 +1041,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/bff72a31235d754074be47b72494cb7a271b41cd1d46c82d0bc223f5d0650b2a.png" src="../../_images/bff72a31235d754074be47b72494cb7a271b41cd1d46c82d0bc223f5d0650b2a.png" />
+<img alt="../../_images/cf4c8b2e4ace9adaafedad4f1c4a178a9d1e4f04433a25907025341a61be00f3.png" src="../../_images/cf4c8b2e4ace9adaafedad4f1c4a178a9d1e4f04433a25907025341a61be00f3.png" />
 </div>
 </div>
 </section>
@@ -805,7 +1059,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
               
               
               
-                <footer class="prev-next-footer">
+                <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
     <a class="left-prev"
@@ -907,8 +1161,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341"></script>
 
   <footer class="bd-footer">
   </footer>

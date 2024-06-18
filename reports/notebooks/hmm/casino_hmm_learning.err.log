@@ -1,0 +1,119 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/nbclient/client.py", line 1314, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+    return future.result()
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+hmm = CategoricalHMM(num_states, num_emissions, num_classes,
+                     transition_matrix_stickiness=10.0)
+
+key = jr.PRNGKey(0)
+fbgd_params, fbgd_props = hmm.initialize(key)
+
+print("Randomly initialized parameters")
+print_params(fbgd_params)
+------------------
+
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mOverflowError[0m                             Traceback (most recent call last)
+Cell [0;32mIn[6], line 5[0m
+[1;32m      1[0m hmm [38;5;241m=[39m CategoricalHMM(num_states, num_emissions, num_classes,
+[1;32m      2[0m                      transition_matrix_stickiness[38;5;241m=[39m[38;5;241m10.0[39m)
+[1;32m      4[0m key [38;5;241m=[39m jr[38;5;241m.[39mPRNGKey([38;5;241m0[39m)
+[0;32m----> 5[0m fbgd_params, fbgd_props [38;5;241m=[39m [43mhmm[49m[38;5;241;43m.[39;49m[43minitialize[49m[43m([49m[43mkey[49m[43m)[49m
+[1;32m      7[0m [38;5;28mprint[39m([38;5;124m"[39m[38;5;124mRandomly initialized parameters[39m[38;5;124m"[39m)
+[1;32m      8[0m print_params(fbgd_params)
+
+File [0;32m~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/categorical_hmm.py:174[0m, in [0;36mCategoricalHMM.initialize[0;34m(self, key, method, initial_probs, transition_matrix, emission_probs)[0m
+[1;32m    172[0m key1, key2, key3 [38;5;241m=[39m jr[38;5;241m.[39msplit(key , [38;5;241m3[39m)
+[1;32m    173[0m params, props [38;5;241m=[39m [38;5;28mdict[39m(), [38;5;28mdict[39m()
+[0;32m--> 174[0m params[[38;5;124m"[39m[38;5;124minitial[39m[38;5;124m"[39m], props[[38;5;124m"[39m[38;5;124minitial[39m[38;5;124m"[39m] [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43minitial_component[49m[38;5;241;43m.[39;49m[43minitialize[49m[43m([49m[43mkey1[49m[43m,[49m[43m [49m[43mmethod[49m[38;5;241;43m=[39;49m[43mmethod[49m[43m,[49m[43m [49m[43minitial_probs[49m[38;5;241;43m=[39;49m[43minitial_probs[49m[43m)[49m
+[1;32m    175[0m params[[38;5;124m"[39m[38;5;124mtransitions[39m[38;5;124m"[39m], props[[38;5;124m"[39m[38;5;124mtransitions[39m[38;5;124m"[39m] [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mtransition_component[38;5;241m.[39minitialize(key2, method[38;5;241m=[39mmethod, transition_matrix[38;5;241m=[39mtransition_matrix)
+[1;32m    176[0m params[[38;5;124m"[39m[38;5;124memissions[39m[38;5;124m"[39m], props[[38;5;124m"[39m[38;5;124memissions[39m[38;5;124m"[39m] [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39memission_component[38;5;241m.[39minitialize(key3, method[38;5;241m=[39mmethod, emission_probs[38;5;241m=[39memission_probs)
+
+File [0;32m~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/initial.py:45[0m, in [0;36mStandardHMMInitialState.initialize[0;34m(self, key, method, initial_probs)[0m
+[1;32m     43[0m [38;5;28;01mif[39;00m initial_probs [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m:
+[1;32m     44[0m     this_key, key [38;5;241m=[39m jr[38;5;241m.[39msplit(key)
+[0;32m---> 45[0m     initial_probs [38;5;241m=[39m [43mtfd[49m[38;5;241;43m.[39;49m[43mDirichlet[49m[43m([49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43minitial_probs_concentration[49m[43m)[49m[38;5;241;43m.[39;49m[43msample[49m[43m([49m[43mseed[49m[38;5;241;43m=[39;49m[43mthis_key[49m[43m)[49m
+[1;32m     47[0m [38;5;66;03m# Package the results into dictionaries[39;00m
+[1;32m     48[0m params [38;5;241m=[39m ParamsStandardHMMInitialState(probs[38;5;241m=[39minitial_probs)
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:1205[0m, in [0;36mDistribution.sample[0;34m(self, sample_shape, seed, name, **kwargs)[0m
+[1;32m   1190[0m [38;5;250m[39m[38;5;124;03m"""Generate samples of the specified shape.[39;00m
+[1;32m   1191[0m 
+[1;32m   1192[0m [38;5;124;03mNote that a call to `sample()` without arguments will generate a single[39;00m
+[0;32m   (...)[0m
+[1;32m   1202[0m [38;5;124;03m  samples: a `Tensor` with prepended dimensions `sample_shape`.[39;00m
+[1;32m   1203[0m [38;5;124;03m"""[39;00m
+[1;32m   1204[0m [38;5;28;01mwith[39;00m [38;5;28mself[39m[38;5;241m.[39m_name_and_control_scope(name):
+[0;32m-> 1205[0m   [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_call_sample_n[49m[43m([49m[43msample_shape[49m[43m,[49m[43m [49m[43mseed[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:1182[0m, in [0;36mDistribution._call_sample_n[0;34m(self, sample_shape, seed, **kwargs)[0m
+[1;32m   1178[0m sample_shape [38;5;241m=[39m ps[38;5;241m.[39mconvert_to_shape_tensor(
+[1;32m   1179[0m     ps[38;5;241m.[39mcast(sample_shape, tf[38;5;241m.[39mint32), name[38;5;241m=[39m[38;5;124m'[39m[38;5;124msample_shape[39m[38;5;124m'[39m)
+[1;32m   1180[0m sample_shape, n [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_expand_sample_shape_to_vector(
+[1;32m   1181[0m     sample_shape, [38;5;124m'[39m[38;5;124msample_shape[39m[38;5;124m'[39m)
+[0;32m-> 1182[0m samples [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_sample_n[49m[43m([49m
+[1;32m   1183[0m [43m    [49m[43mn[49m[43m,[49m[43m [49m[43mseed[49m[38;5;241;43m=[39;49m[43mseed[49m[43m([49m[43m)[49m[43m [49m[38;5;28;43;01mif[39;49;00m[43m [49m[38;5;28;43mcallable[39;49m[43m([49m[43mseed[49m[43m)[49m[43m [49m[38;5;28;43;01melse[39;49;00m[43m [49m[43mseed[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m   1184[0m samples [38;5;241m=[39m tf[38;5;241m.[39mnest[38;5;241m.[39mmap_structure(
+[1;32m   1185[0m     [38;5;28;01mlambda[39;00m x: tf[38;5;241m.[39mreshape(x, ps[38;5;241m.[39mconcat([sample_shape, ps[38;5;241m.[39mshape(x)[[38;5;241m1[39m:]], [38;5;241m0[39m)),
+[1;32m   1186[0m     samples)
+[1;32m   1187[0m [38;5;28;01mreturn[39;00m [38;5;28mself[39m[38;5;241m.[39m_set_sample_static_shape(samples, sample_shape, [38;5;241m*[39m[38;5;241m*[39mkwargs)
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/dirichlet.py:233[0m, in [0;36mDirichlet._sample_n[0;34m(self, n, seed)[0m
+[1;32m    229[0m [38;5;28;01mdef[39;00m [38;5;21m_sample_n[39m([38;5;28mself[39m, n, seed[38;5;241m=[39m[38;5;28;01mNone[39;00m):
+[1;32m    230[0m   [38;5;66;03m# We use the log-space gamma sampler to avoid the bump-up-from-0 correction,[39;00m
+[1;32m    231[0m   [38;5;66;03m# and to apply the concentration < 1 recurrence in log-space. This improves[39;00m
+[1;32m    232[0m   [38;5;66;03m# accuracy for small concentrations.[39;00m
+[0;32m--> 233[0m   log_gamma_sample [38;5;241m=[39m [43mgamma_lib[49m[38;5;241;43m.[39;49m[43mrandom_gamma[49m[43m([49m
+[1;32m    234[0m [43m      [49m[43mshape[49m[38;5;241;43m=[39;49m[43m[[49m[43mn[49m[43m][49m[43m,[49m[43m [49m[43mconcentration[49m[38;5;241;43m=[39;49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mconcentration[49m[43m,[49m[43m [49m[43mseed[49m[38;5;241;43m=[39;49m[43mseed[49m[43m,[49m[43m [49m[43mlog_space[49m[38;5;241;43m=[39;49m[38;5;28;43;01mTrue[39;49;00m[43m)[49m
+[1;32m    235[0m   [38;5;28;01mreturn[39;00m tf[38;5;241m.[39mmath[38;5;241m.[39mexp(
+[1;32m    236[0m       log_gamma_sample [38;5;241m-[39m
+[1;32m    237[0m       tf[38;5;241m.[39mmath[38;5;241m.[39mreduce_logsumexp(log_gamma_sample, axis[38;5;241m=[39m[38;5;241m-[39m[38;5;241m1[39m, keepdims[38;5;241m=[39m[38;5;28;01mTrue[39;00m))
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/gamma.py:725[0m, in [0;36mrandom_gamma[0;34m(shape, concentration, rate, log_rate, seed, log_space)[0m
+[1;32m    723[0m [38;5;28;01mdef[39;00m [38;5;21mrandom_gamma[39m(
+[1;32m    724[0m     shape, concentration, rate[38;5;241m=[39m[38;5;28;01mNone[39;00m, log_rate[38;5;241m=[39m[38;5;28;01mNone[39;00m, seed[38;5;241m=[39m[38;5;28;01mNone[39;00m, log_space[38;5;241m=[39m[38;5;28;01mFalse[39;00m):
+[0;32m--> 725[0m   [38;5;28;01mreturn[39;00m [43mrandom_gamma_with_runtime[49m[43m([49m
+[1;32m    726[0m [43m      [49m[43mshape[49m[43m,[49m[43m [49m[43mconcentration[49m[43m,[49m[43m [49m[43mrate[49m[43m,[49m[43m [49m[43mlog_rate[49m[43m,[49m[43m [49m[43mseed[49m[43m,[49m[43m [49m[43mlog_space[49m[43m)[49m[[38;5;241m0[39m]
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/gamma.py:718[0m, in [0;36mrandom_gamma_with_runtime[0;34m(shape, concentration, rate, log_rate, seed, log_space)[0m
+[1;32m    713[0m   log_rate [38;5;241m=[39m tf[38;5;241m.[39mconvert_to_tensor(log_rate, dtype[38;5;241m=[39mdtype)
+[1;32m    714[0m total_shape [38;5;241m=[39m ps[38;5;241m.[39mconcat(
+[1;32m    715[0m     [shape, ps[38;5;241m.[39mbroadcast_shape(ps[38;5;241m.[39mshape(concentration),
+[1;32m    716[0m                                _shape_or_scalar(rate, log_rate))],
+[1;32m    717[0m     axis[38;5;241m=[39m[38;5;241m0[39m)
+[0;32m--> 718[0m seed [38;5;241m=[39m [43msamplers[49m[38;5;241;43m.[39;49m[43msanitize_seed[49m[43m([49m[43mseed[49m[43m,[49m[43m [49m[43msalt[49m[38;5;241;43m=[39;49m[38;5;124;43m'[39;49m[38;5;124;43mrandom_gamma[39;49m[38;5;124;43m'[39;49m[43m)[49m
+[1;32m    719[0m [38;5;28;01mreturn[39;00m _random_gamma_gradient(
+[1;32m    720[0m     total_shape, concentration, rate, log_rate, seed, log_space)
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/internal/samplers.py:144[0m, in [0;36msanitize_seed[0;34m(seed, salt, name)[0m
+[1;32m    142[0m [38;5;28;01mif[39;00m salt [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
+[1;32m    143[0m   salt [38;5;241m=[39m [38;5;28mint[39m(hashlib[38;5;241m.[39msha512([38;5;28mstr[39m(salt)[38;5;241m.[39mencode([38;5;124m'[39m[38;5;124mutf-8[39m[38;5;124m'[39m))[38;5;241m.[39mhexdigest(), [38;5;241m16[39m)
+[0;32m--> 144[0m   seed [38;5;241m=[39m [43mfold_in[49m[43m([49m[43mseed[49m[43m,[49m[43m [49m[43msalt[49m[43m)[49m
+[1;32m    146[0m [38;5;28;01mif[39;00m JAX_MODE:
+[1;32m    147[0m   [38;5;28;01mimport[39;00m [38;5;21;01mjax[39;00m  [38;5;66;03m# pylint: disable=g-import-not-at-top[39;00m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/internal/samplers.py:186[0m, in [0;36mfold_in[0;34m(seed, salt)[0m
+[1;32m    183[0m   [38;5;28;01mfrom[39;00m [38;5;21;01mjax[39;00m [38;5;28;01mimport[39;00m random [38;5;28;01mas[39;00m jaxrand  [38;5;66;03m# pylint: disable=g-import-not-at-top[39;00m
+[1;32m    184[0m   [38;5;28;01mimport[39;00m [38;5;21;01mjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mnumpy[39;00m [38;5;28;01mas[39;00m [38;5;21;01mjnp[39;00m  [38;5;66;03m# pylint: disable=g-import-not-at-top[39;00m
+[1;32m    185[0m   [38;5;28;01mreturn[39;00m jaxrand[38;5;241m.[39mfold_in(
+[0;32m--> 186[0m       seed, jnp[38;5;241m.[39masarray([43msalt[49m[43m [49m[38;5;241;43m&[39;49m[43m [49m[43mnp[49m[38;5;241;43m.[39;49m[43muint32[49m[43m([49m[38;5;241;43m2[39;49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[38;5;241;43m32[39;49m[43m [49m[38;5;241;43m-[39;49m[43m [49m[38;5;241;43m1[39;49m[43m)[49m, dtype[38;5;241m=[39mSEED_DTYPE))
+[1;32m    187[0m [38;5;28;01mif[39;00m [38;5;28misinstance[39m(salt, (six[38;5;241m.[39minteger_types)):
+[1;32m    188[0m   seed [38;5;241m=[39m tf[38;5;241m.[39mbitwise[38;5;241m.[39mbitwise_xor(
+[1;32m    189[0m       seed, np[38;5;241m.[39muint64([salt [38;5;241m&[39m ([38;5;241m2[39m[38;5;241m*[39m[38;5;241m*[39m[38;5;241m64[39m [38;5;241m-[39m [38;5;241m1[39m)])[38;5;241m.[39mview(np[38;5;241m.[39mint32))
+
+[0;31mOverflowError[0m: Python int too large to convert to C long
+

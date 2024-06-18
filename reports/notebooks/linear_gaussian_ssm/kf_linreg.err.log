@@ -1,0 +1,285 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/nbclient/client.py", line 1314, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+    return future.result()
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+lgssm_posterior = lgssm.filter(params, y[:, None]) # reshape y to be (T,1)
+kf_results = (lgssm_posterior.filtered_means, lgssm_posterior.filtered_covariances)
+------------------
+
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mAttributeError[0m                            Traceback (most recent call last)
+Cell [0;32mIn[5], line 1[0m
+[0;32m----> 1[0m lgssm_posterior [38;5;241m=[39m [43mlgssm[49m[38;5;241;43m.[39;49m[43mfilter[49m[43m([49m[43mparams[49m[43m,[49m[43m [49m[43my[49m[43m[[49m[43m:[49m[43m,[49m[43m [49m[38;5;28;43;01mNone[39;49;00m[43m][49m[43m)[49m [38;5;66;03m# reshape y to be (T,1)[39;00m
+[1;32m      2[0m kf_results [38;5;241m=[39m (lgssm_posterior[38;5;241m.[39mfiltered_means, lgssm_posterior[38;5;241m.[39mfiltered_covariances)
+
+File [0;32m~/work/dynamax/dynamax/dynamax/linear_gaussian_ssm/models.py:226[0m, in [0;36mLinearGaussianSSM.filter[0;34m(self, params, emissions, inputs)[0m
+[1;32m    220[0m [38;5;28;01mdef[39;00m [38;5;21mfilter[39m(
+[1;32m    221[0m     [38;5;28mself[39m,
+[1;32m    222[0m     params: ParamsLGSSM,
+[1;32m    223[0m     emissions: Float[Array, [38;5;124m"[39m[38;5;124mntime emission_dim[39m[38;5;124m"[39m],
+[1;32m    224[0m     inputs: Optional[Float[Array, [38;5;124m"[39m[38;5;124mntime input_dim[39m[38;5;124m"[39m]] [38;5;241m=[39m [38;5;28;01mNone[39;00m
+[1;32m    225[0m ) [38;5;241m-[39m[38;5;241m>[39m PosteriorGSSMFiltered:
+[0;32m--> 226[0m     [38;5;28;01mreturn[39;00m [43mlgssm_filter[49m[43m([49m[43mparams[49m[43m,[49m[43m [49m[43memissions[49m[43m,[49m[43m [49m[43minputs[49m[43m)[49m
+
+File [0;32m~/work/dynamax/dynamax/dynamax/linear_gaussian_ssm/inference.py:360[0m, in [0;36mpreprocess_args.<locals>.wrapper[0;34m(*args, **kwargs)[0m
+[1;32m    357[0m num_timesteps [38;5;241m=[39m [38;5;28mlen[39m(emissions)
+[1;32m    358[0m full_params, inputs [38;5;241m=[39m preprocess_params_and_inputs(params, num_timesteps, inputs)
+[0;32m--> 360[0m [38;5;28;01mreturn[39;00m [43mf[49m[43m([49m[43mfull_params[49m[43m,[49m[43m [49m[43memissions[49m[43m,[49m[43m [49m[43minputs[49m[38;5;241;43m=[39;49m[43minputs[49m[43m)[49m
+
+File [0;32m~/work/dynamax/dynamax/dynamax/linear_gaussian_ssm/inference.py:488[0m, in [0;36mlgssm_filter[0;34m(params, emissions, inputs)[0m
+[1;32m    486[0m [38;5;66;03m# Run the Kalman filter[39;00m
+[1;32m    487[0m carry [38;5;241m=[39m ([38;5;241m0.0[39m, params[38;5;241m.[39minitial[38;5;241m.[39mmean, params[38;5;241m.[39minitial[38;5;241m.[39mcov)
+[0;32m--> 488[0m (ll, _, _), (filtered_means, filtered_covs) [38;5;241m=[39m [43mlax[49m[38;5;241;43m.[39;49m[43mscan[49m[43m([49m[43m_step[49m[43m,[49m[43m [49m[43mcarry[49m[43m,[49m[43m [49m[43mjnp[49m[38;5;241;43m.[39;49m[43marange[49m[43m([49m[43mnum_timesteps[49m[43m)[49m[43m)[49m
+[1;32m    489[0m [38;5;28;01mreturn[39;00m PosteriorGSSMFiltered(marginal_loglik[38;5;241m=[39mll, filtered_means[38;5;241m=[39mfiltered_means, filtered_covariances[38;5;241m=[39mfiltered_covs)
+
+    [0;31m[... skipping hidden 9 frame][0m
+
+File [0;32m~/work/dynamax/dynamax/dynamax/linear_gaussian_ssm/inference.py:476[0m, in [0;36mlgssm_filter.<locals>._step[0;34m(carry, t)[0m
+[1;32m    473[0m y [38;5;241m=[39m emissions[t]
+[1;32m    475[0m [38;5;66;03m# Update the log likelihood[39;00m
+[0;32m--> 476[0m ll [38;5;241m+[39m[38;5;241m=[39m [43m_log_likelihood[49m[43m([49m[43mpred_mean[49m[43m,[49m[43m [49m[43mpred_cov[49m[43m,[49m[43m [49m[43mH[49m[43m,[49m[43m [49m[43mD[49m[43m,[49m[43m [49m[43md[49m[43m,[49m[43m [49m[43mR[49m[43m,[49m[43m [49m[43mu[49m[43m,[49m[43m [49m[43my[49m[43m)[49m
+[1;32m    478[0m [38;5;66;03m# Condition on this emission[39;00m
+[1;32m    479[0m filtered_mean, filtered_cov [38;5;241m=[39m _condition_on(pred_mean, pred_cov, H, D, d, R, u, y)
+
+File [0;32m~/work/dynamax/dynamax/dynamax/linear_gaussian_ssm/inference.py:461[0m, in [0;36mlgssm_filter.<locals>._log_likelihood[0;34m(pred_mean, pred_cov, H, D, d, R, u, y)[0m
+[1;32m    459[0m [38;5;28;01mif[39;00m R[38;5;241m.[39mndim[38;5;241m==[39m[38;5;241m2[39m:
+[1;32m    460[0m     S [38;5;241m=[39m R [38;5;241m+[39m H [38;5;241m@[39m pred_cov [38;5;241m@[39m H[38;5;241m.[39mT
+[0;32m--> 461[0m     [38;5;28;01mreturn[39;00m [43mMVN[49m[43m([49m[43mm[49m[43m,[49m[43m [49m[43mS[49m[43m)[49m[38;5;241m.[39mlog_prob(y)
+[1;32m    462[0m [38;5;28;01melse[39;00m:
+[1;32m    463[0m     L [38;5;241m=[39m H [38;5;241m@[39m jnp[38;5;241m.[39mlinalg[38;5;241m.[39mcholesky(pred_cov)
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/decorator.py:232[0m, in [0;36mdecorate.<locals>.fun[0;34m(*args, **kw)[0m
+[1;32m    230[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m kwsyntax:
+[1;32m    231[0m     args, kw [38;5;241m=[39m fix(args, kw, sig)
+[0;32m--> 232[0m [38;5;28;01mreturn[39;00m [43mcaller[49m[43m([49m[43mfunc[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43m([49m[43mextras[49m[43m [49m[38;5;241;43m+[39;49m[43m [49m[43margs[49m[43m)[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkw[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:342[0m, in [0;36m_DistributionMeta.__new__.<locals>.wrapped_init[0;34m(***failed resolving arguments***)[0m
+[1;32m    339[0m [38;5;66;03m# Note: if we ever want to have things set in `self` before `__init__` is[39;00m
+[1;32m    340[0m [38;5;66;03m# called, here is the place to do it.[39;00m
+[1;32m    341[0m self_[38;5;241m.[39m_parameters [38;5;241m=[39m [38;5;28;01mNone[39;00m
+[0;32m--> 342[0m [43mdefault_init[49m[43m([49m[43mself_[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    343[0m [38;5;66;03m# Note: if we ever want to override things set in `self` by subclass[39;00m
+[1;32m    344[0m [38;5;66;03m# `__init__`, here is the place to do it.[39;00m
+[1;32m    345[0m [38;5;28;01mif[39;00m self_[38;5;241m.[39m_parameters [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m:
+[1;32m    346[0m   [38;5;66;03m# We prefer subclasses will set `parameters = dict(locals())` because[39;00m
+[1;32m    347[0m   [38;5;66;03m# this has nearly zero overhead. However, failing to do this, we will[39;00m
+[1;32m    348[0m   [38;5;66;03m# resolve the input arguments dynamically and only when needed.[39;00m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/mvn_full_covariance.py:191[0m, in [0;36mMultivariateNormalFullCovariance.__init__[0;34m(self, loc, covariance_matrix, validate_args, allow_nan_stats, name)[0m
+[1;32m    185[0m       [38;5;66;03m# No need to validate that covariance_matrix is non-singular.[39;00m
+[1;32m    186[0m       [38;5;66;03m# LinearOperatorLowerTriangular has an assert_non_singular method that[39;00m
+[1;32m    187[0m       [38;5;66;03m# is called by the Bijector.[39;00m
+[1;32m    188[0m       [38;5;66;03m# However, cholesky() ignores the upper triangular part, so we do need[39;00m
+[1;32m    189[0m       [38;5;66;03m# to separately assert symmetric.[39;00m
+[1;32m    190[0m       scale_tril [38;5;241m=[39m tf[38;5;241m.[39mlinalg[38;5;241m.[39mcholesky(covariance_matrix)
+[0;32m--> 191[0m     [38;5;28;43msuper[39;49m[43m([49m[43mMultivariateNormalFullCovariance[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[43m)[49m[38;5;241;43m.[39;49m[38;5;21;43m__init__[39;49m[43m([49m
+[1;32m    192[0m [43m        [49m[43mloc[49m[38;5;241;43m=[39;49m[43mloc[49m[43m,[49m
+[1;32m    193[0m [43m        [49m[43mscale_tril[49m[38;5;241;43m=[39;49m[43mscale_tril[49m[43m,[49m
+[1;32m    194[0m [43m        [49m[43mvalidate_args[49m[38;5;241;43m=[39;49m[43mvalidate_args[49m[43m,[49m
+[1;32m    195[0m [43m        [49m[43mallow_nan_stats[49m[38;5;241;43m=[39;49m[43mallow_nan_stats[49m[43m,[49m
+[1;32m    196[0m [43m        [49m[43mname[49m[38;5;241;43m=[39;49m[43mname[49m[43m)[49m
+[1;32m    197[0m [38;5;28mself[39m[38;5;241m.[39m_parameters [38;5;241m=[39m parameters
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/decorator.py:232[0m, in [0;36mdecorate.<locals>.fun[0;34m(*args, **kw)[0m
+[1;32m    230[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m kwsyntax:
+[1;32m    231[0m     args, kw [38;5;241m=[39m fix(args, kw, sig)
+[0;32m--> 232[0m [38;5;28;01mreturn[39;00m [43mcaller[49m[43m([49m[43mfunc[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43m([49m[43mextras[49m[43m [49m[38;5;241;43m+[39;49m[43m [49m[43margs[49m[43m)[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkw[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:342[0m, in [0;36m_DistributionMeta.__new__.<locals>.wrapped_init[0;34m(***failed resolving arguments***)[0m
+[1;32m    339[0m [38;5;66;03m# Note: if we ever want to have things set in `self` before `__init__` is[39;00m
+[1;32m    340[0m [38;5;66;03m# called, here is the place to do it.[39;00m
+[1;32m    341[0m self_[38;5;241m.[39m_parameters [38;5;241m=[39m [38;5;28;01mNone[39;00m
+[0;32m--> 342[0m [43mdefault_init[49m[43m([49m[43mself_[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    343[0m [38;5;66;03m# Note: if we ever want to override things set in `self` by subclass[39;00m
+[1;32m    344[0m [38;5;66;03m# `__init__`, here is the place to do it.[39;00m
+[1;32m    345[0m [38;5;28;01mif[39;00m self_[38;5;241m.[39m_parameters [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m:
+[1;32m    346[0m   [38;5;66;03m# We prefer subclasses will set `parameters = dict(locals())` because[39;00m
+[1;32m    347[0m   [38;5;66;03m# this has nearly zero overhead. However, failing to do this, we will[39;00m
+[1;32m    348[0m   [38;5;66;03m# resolve the input arguments dynamically and only when needed.[39;00m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/mvn_tril.py:228[0m, in [0;36mMultivariateNormalTriL.__init__[0;34m(self, loc, scale_tril, validate_args, allow_nan_stats, experimental_use_kahan_sum, name)[0m
+[1;32m    221[0m   linop_cls [38;5;241m=[39m (KahanLogDetLinOpTriL [38;5;28;01mif[39;00m experimental_use_kahan_sum [38;5;28;01melse[39;00m
+[1;32m    222[0m                tf[38;5;241m.[39mlinalg[38;5;241m.[39mLinearOperatorLowerTriangular)
+[1;32m    223[0m   scale [38;5;241m=[39m linop_cls(
+[1;32m    224[0m       scale_tril,
+[1;32m    225[0m       is_non_singular[38;5;241m=[39m[38;5;28;01mTrue[39;00m,
+[1;32m    226[0m       is_self_adjoint[38;5;241m=[39m[38;5;28;01mFalse[39;00m,
+[1;32m    227[0m       is_positive_definite[38;5;241m=[39m[38;5;28;01mFalse[39;00m)
+[0;32m--> 228[0m [38;5;28;43msuper[39;49m[43m([49m[43mMultivariateNormalTriL[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[43m)[49m[38;5;241;43m.[39;49m[38;5;21;43m__init__[39;49m[43m([49m
+[1;32m    229[0m [43m    [49m[43mloc[49m[38;5;241;43m=[39;49m[43mloc[49m[43m,[49m
+[1;32m    230[0m [43m    [49m[43mscale[49m[38;5;241;43m=[39;49m[43mscale[49m[43m,[49m
+[1;32m    231[0m [43m    [49m[43mvalidate_args[49m[38;5;241;43m=[39;49m[43mvalidate_args[49m[43m,[49m
+[1;32m    232[0m [43m    [49m[43mallow_nan_stats[49m[38;5;241;43m=[39;49m[43mallow_nan_stats[49m[43m,[49m
+[1;32m    233[0m [43m    [49m[43mexperimental_use_kahan_sum[49m[38;5;241;43m=[39;49m[43mexperimental_use_kahan_sum[49m[43m,[49m
+[1;32m    234[0m [43m    [49m[43mname[49m[38;5;241;43m=[39;49m[43mname[49m[43m)[49m
+[1;32m    235[0m [38;5;28mself[39m[38;5;241m.[39m_parameters [38;5;241m=[39m parameters
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/decorator.py:232[0m, in [0;36mdecorate.<locals>.fun[0;34m(*args, **kw)[0m
+[1;32m    230[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m kwsyntax:
+[1;32m    231[0m     args, kw [38;5;241m=[39m fix(args, kw, sig)
+[0;32m--> 232[0m [38;5;28;01mreturn[39;00m [43mcaller[49m[43m([49m[43mfunc[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43m([49m[43mextras[49m[43m [49m[38;5;241;43m+[39;49m[43m [49m[43margs[49m[43m)[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkw[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:342[0m, in [0;36m_DistributionMeta.__new__.<locals>.wrapped_init[0;34m(***failed resolving arguments***)[0m
+[1;32m    339[0m [38;5;66;03m# Note: if we ever want to have things set in `self` before `__init__` is[39;00m
+[1;32m    340[0m [38;5;66;03m# called, here is the place to do it.[39;00m
+[1;32m    341[0m self_[38;5;241m.[39m_parameters [38;5;241m=[39m [38;5;28;01mNone[39;00m
+[0;32m--> 342[0m [43mdefault_init[49m[43m([49m[43mself_[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    343[0m [38;5;66;03m# Note: if we ever want to override things set in `self` by subclass[39;00m
+[1;32m    344[0m [38;5;66;03m# `__init__`, here is the place to do it.[39;00m
+[1;32m    345[0m [38;5;28;01mif[39;00m self_[38;5;241m.[39m_parameters [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m:
+[1;32m    346[0m   [38;5;66;03m# We prefer subclasses will set `parameters = dict(locals())` because[39;00m
+[1;32m    347[0m   [38;5;66;03m# this has nearly zero overhead. However, failing to do this, we will[39;00m
+[1;32m    348[0m   [38;5;66;03m# resolve the input arguments dynamically and only when needed.[39;00m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/mvn_linear_operator.py:205[0m, in [0;36mMultivariateNormalLinearOperator.__init__[0;34m(self, loc, scale, validate_args, allow_nan_stats, experimental_use_kahan_sum, name)[0m
+[1;32m    202[0m [38;5;28;01mif[39;00m loc [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
+[1;32m    203[0m   bijector [38;5;241m=[39m shift_bijector[38;5;241m.[39mShift(
+[1;32m    204[0m       shift[38;5;241m=[39mloc, validate_args[38;5;241m=[39mvalidate_args)(bijector)
+[0;32m--> 205[0m [38;5;28;43msuper[39;49m[43m([49m[43mMultivariateNormalLinearOperator[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[43m)[49m[38;5;241;43m.[39;49m[38;5;21;43m__init__[39;49m[43m([49m
+[1;32m    206[0m [43m    [49m[38;5;66;43;03m# TODO(b/137665504): Use batch-adding meta-distribution to set the batch[39;49;00m
+[1;32m    207[0m [43m    [49m[38;5;66;43;03m# shape instead of tf.zeros.[39;49;00m
+[1;32m    208[0m [43m    [49m[38;5;66;43;03m# We use `Sample` instead of `Independent` because `Independent`[39;49;00m
+[1;32m    209[0m [43m    [49m[38;5;66;43;03m# requires concatenating `batch_shape` and `event_shape`, which loses[39;49;00m
+[1;32m    210[0m [43m    [49m[38;5;66;43;03m# static `batch_shape` information when `event_shape` is not statically[39;49;00m
+[1;32m    211[0m [43m    [49m[38;5;66;43;03m# known.[39;49;00m
+[1;32m    212[0m [43m    [49m[43mdistribution[49m[38;5;241;43m=[39;49m[43msample[49m[38;5;241;43m.[39;49m[43mSample[49m[43m([49m
+[1;32m    213[0m [43m        [49m[43mnormal[49m[38;5;241;43m.[39;49m[43mNormal[49m[43m([49m
+[1;32m    214[0m [43m            [49m[43mloc[49m[38;5;241;43m=[39;49m[43mtf[49m[38;5;241;43m.[39;49m[43mzeros[49m[43m([49m[43mbatch_shape[49m[43m,[49m[43m [49m[43mdtype[49m[38;5;241;43m=[39;49m[43mdtype[49m[43m)[49m[43m,[49m
+[1;32m    215[0m [43m            [49m[43mscale[49m[38;5;241;43m=[39;49m[43mtf[49m[38;5;241;43m.[39;49m[43mones[49m[43m([49m[43m[[49m[43m][49m[43m,[49m[43m [49m[43mdtype[49m[38;5;241;43m=[39;49m[43mdtype[49m[43m)[49m[43m)[49m[43m,[49m
+[1;32m    216[0m [43m        [49m[43mevent_shape[49m[43m,[49m
+[1;32m    217[0m [43m        [49m[43mexperimental_use_kahan_sum[49m[38;5;241;43m=[39;49m[43mexperimental_use_kahan_sum[49m[43m)[49m[43m,[49m
+[1;32m    218[0m [43m    [49m[43mbijector[49m[38;5;241;43m=[39;49m[43mbijector[49m[43m,[49m
+[1;32m    219[0m [43m    [49m[43mvalidate_args[49m[38;5;241;43m=[39;49m[43mvalidate_args[49m[43m,[49m
+[1;32m    220[0m [43m    [49m[43mname[49m[38;5;241;43m=[39;49m[43mname[49m[43m)[49m
+[1;32m    221[0m [38;5;28mself[39m[38;5;241m.[39m_parameters [38;5;241m=[39m parameters
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/decorator.py:232[0m, in [0;36mdecorate.<locals>.fun[0;34m(*args, **kw)[0m
+[1;32m    230[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m kwsyntax:
+[1;32m    231[0m     args, kw [38;5;241m=[39m fix(args, kw, sig)
+[0;32m--> 232[0m [38;5;28;01mreturn[39;00m [43mcaller[49m[43m([49m[43mfunc[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43m([49m[43mextras[49m[43m [49m[38;5;241;43m+[39;49m[43m [49m[43margs[49m[43m)[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkw[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:342[0m, in [0;36m_DistributionMeta.__new__.<locals>.wrapped_init[0;34m(***failed resolving arguments***)[0m
+[1;32m    339[0m [38;5;66;03m# Note: if we ever want to have things set in `self` before `__init__` is[39;00m
+[1;32m    340[0m [38;5;66;03m# called, here is the place to do it.[39;00m
+[1;32m    341[0m self_[38;5;241m.[39m_parameters [38;5;241m=[39m [38;5;28;01mNone[39;00m
+[0;32m--> 342[0m [43mdefault_init[49m[43m([49m[43mself_[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    343[0m [38;5;66;03m# Note: if we ever want to override things set in `self` by subclass[39;00m
+[1;32m    344[0m [38;5;66;03m# `__init__`, here is the place to do it.[39;00m
+[1;32m    345[0m [38;5;28;01mif[39;00m self_[38;5;241m.[39m_parameters [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m:
+[1;32m    346[0m   [38;5;66;03m# We prefer subclasses will set `parameters = dict(locals())` because[39;00m
+[1;32m    347[0m   [38;5;66;03m# this has nearly zero overhead. However, failing to do this, we will[39;00m
+[1;32m    348[0m   [38;5;66;03m# resolve the input arguments dynamically and only when needed.[39;00m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/transformed_distribution.py:244[0m, in [0;36m_TransformedDistribution.__init__[0;34m(self, distribution, bijector, kwargs_split_fn, validate_args, parameters, name)[0m
+[1;32m    238[0m [38;5;28mself[39m[38;5;241m.[39m_zero [38;5;241m=[39m tf[38;5;241m.[39mconstant([38;5;241m0[39m, dtype[38;5;241m=[39mtf[38;5;241m.[39mint32, name[38;5;241m=[39m[38;5;124m'[39m[38;5;124mzero[39m[38;5;124m'[39m)
+[1;32m    240[0m [38;5;66;03m# We don't just want to check isinstance(JointDistribution) because[39;00m
+[1;32m    241[0m [38;5;66;03m# TransformedDistributions with multipart bijectors are effectively[39;00m
+[1;32m    242[0m [38;5;66;03m# joint but don't inherit from JD. The 'duck-type' test is that[39;00m
+[1;32m    243[0m [38;5;66;03m# JDs have a structured dtype.[39;00m
+[0;32m--> 244[0m dtype [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mbijector[49m[38;5;241;43m.[39;49m[43mforward_dtype[49m[43m([49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mdistribution[49m[38;5;241;43m.[39;49m[43mdtype[49m[43m)[49m
+[1;32m    245[0m [38;5;28mself[39m[38;5;241m.[39m_is_joint [38;5;241m=[39m tf[38;5;241m.[39mnest[38;5;241m.[39mis_nested(dtype)
+[1;32m    247[0m [38;5;28msuper[39m(_TransformedDistribution, [38;5;28mself[39m)[38;5;241m.[39m[38;5;21m__init__[39m(
+[1;32m    248[0m     dtype[38;5;241m=[39mdtype,
+[1;32m    249[0m     reparameterization_type[38;5;241m=[39m[38;5;28mself[39m[38;5;241m.[39m_distribution[38;5;241m.[39mreparameterization_type,
+[0;32m   (...)[0m
+[1;32m    252[0m     parameters[38;5;241m=[39mparameters,
+[1;32m    253[0m     name[38;5;241m=[39mname)
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/bijectors/bijector.py:1705[0m, in [0;36mBijector.forward_dtype[0;34m(self, dtype, name, **kwargs)[0m
+[1;32m   1701[0m   input_dtype [38;5;241m=[39m nest_util[38;5;241m.[39mbroadcast_structure(
+[1;32m   1702[0m       [38;5;28mself[39m[38;5;241m.[39mforward_min_event_ndims, [38;5;28mself[39m[38;5;241m.[39mdtype)
+[1;32m   1703[0m [38;5;28;01melse[39;00m:
+[1;32m   1704[0m   [38;5;66;03m# Make sure inputs are compatible with statically-known dtype.[39;00m
+[0;32m-> 1705[0m   input_dtype [38;5;241m=[39m [43mnest[49m[38;5;241;43m.[39;49m[43mmap_structure_up_to[49m[43m([49m
+[1;32m   1706[0m [43m      [49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mforward_min_event_ndims[49m[43m,[49m
+[1;32m   1707[0m [43m      [49m[38;5;28;43;01mlambda[39;49;00m[43m [49m[43mx[49m[43m:[49m[43m [49m[43mdtype_util[49m[38;5;241;43m.[39;49m[43mconvert_to_dtype[49m[43m([49m[43mx[49m[43m,[49m[43m [49m[43mdtype[49m[38;5;241;43m=[39;49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mdtype[49m[43m)[49m[43m,[49m
+[1;32m   1708[0m [43m      [49m[43mnest_util[49m[38;5;241;43m.[39;49m[43mcoerce_structure[49m[43m([49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mforward_min_event_ndims[49m[43m,[49m[43m [49m[43mdtype[49m[43m)[49m[43m,[49m
+[1;32m   1709[0m [43m      [49m[43mcheck_types[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   1711[0m output_dtype [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_forward_dtype(input_dtype, [38;5;241m*[39m[38;5;241m*[39mkwargs)
+[1;32m   1712[0m [38;5;28;01mtry[39;00m:
+[1;32m   1713[0m   [38;5;66;03m# kwargs may alter dtypes themselves, but we currently require[39;00m
+[1;32m   1714[0m   [38;5;66;03m# structure to be statically known.[39;00m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/backend/jax/nest.py:324[0m, in [0;36mmap_structure_up_to[0;34m(shallow_structure, func, *structures, **kwargs)[0m
+[1;32m    323[0m [38;5;28;01mdef[39;00m [38;5;21mmap_structure_up_to[39m(shallow_structure, func, [38;5;241m*[39mstructures, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[0;32m--> 324[0m   [38;5;28;01mreturn[39;00m [43mmap_structure_with_tuple_paths_up_to[49m[43m([49m
+[1;32m    325[0m [43m      [49m[43mshallow_structure[49m[43m,[49m
+[1;32m    326[0m [43m      [49m[38;5;28;43;01mlambda[39;49;00m[43m [49m[43m_[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43margs[49m[43m:[49m[43m [49m[43mfunc[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m)[49m[43m,[49m[43m  [49m[38;5;66;43;03m# Discards path.[39;49;00m
+[1;32m    327[0m [43m      [49m[38;5;241;43m*[39;49m[43mstructures[49m[43m,[49m
+[1;32m    328[0m [43m      [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/backend/jax/nest.py:353[0m, in [0;36mmap_structure_with_tuple_paths_up_to[0;34m(shallow_structure, func, expand_composites, *structures, **kwargs)[0m
+[1;32m    350[0m [38;5;28;01mfor[39;00m input_tree [38;5;129;01min[39;00m structures:
+[1;32m    351[0m   assert_shallow_structure(
+[1;32m    352[0m       shallow_structure, input_tree, check_types[38;5;241m=[39mcheck_types)
+[0;32m--> 353[0m [38;5;28;01mreturn[39;00m [43mdm_tree[49m[38;5;241;43m.[39;49m[43mmap_structure_with_path_up_to[49m[43m([49m
+[1;32m    354[0m [43m    [49m[43mshallow_structure[49m[43m,[49m[43m [49m[43mfunc[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43mstructures[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tree/__init__.py:778[0m, in [0;36mmap_structure_with_path_up_to[0;34m(***failed resolving arguments***)[0m
+[1;32m    776[0m results [38;5;241m=[39m []
+[1;32m    777[0m [38;5;28;01mfor[39;00m path_and_values [38;5;129;01min[39;00m _multiyield_flat_up_to(shallow_structure, [38;5;241m*[39mstructures):
+[0;32m--> 778[0m   results[38;5;241m.[39mappend([43mfunc[49m[43m([49m[38;5;241;43m*[39;49m[43mpath_and_values[49m[43m)[49m)
+[1;32m    779[0m [38;5;28;01mreturn[39;00m unflatten_as(shallow_structure, results)
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/backend/jax/nest.py:326[0m, in [0;36mmap_structure_up_to.<locals>.<lambda>[0;34m(_, *args)[0m
+[1;32m    323[0m [38;5;28;01mdef[39;00m [38;5;21mmap_structure_up_to[39m(shallow_structure, func, [38;5;241m*[39mstructures, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[1;32m    324[0m   [38;5;28;01mreturn[39;00m map_structure_with_tuple_paths_up_to(
+[1;32m    325[0m       shallow_structure,
+[0;32m--> 326[0m       [38;5;28;01mlambda[39;00m _, [38;5;241m*[39margs: [43mfunc[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m)[49m,  [38;5;66;03m# Discards path.[39;00m
+[1;32m    327[0m       [38;5;241m*[39mstructures,
+[1;32m    328[0m       [38;5;241m*[39m[38;5;241m*[39mkwargs)
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/bijectors/bijector.py:1707[0m, in [0;36mBijector.forward_dtype.<locals>.<lambda>[0;34m(x)[0m
+[1;32m   1701[0m   input_dtype [38;5;241m=[39m nest_util[38;5;241m.[39mbroadcast_structure(
+[1;32m   1702[0m       [38;5;28mself[39m[38;5;241m.[39mforward_min_event_ndims, [38;5;28mself[39m[38;5;241m.[39mdtype)
+[1;32m   1703[0m [38;5;28;01melse[39;00m:
+[1;32m   1704[0m   [38;5;66;03m# Make sure inputs are compatible with statically-known dtype.[39;00m
+[1;32m   1705[0m   input_dtype [38;5;241m=[39m nest[38;5;241m.[39mmap_structure_up_to(
+[1;32m   1706[0m       [38;5;28mself[39m[38;5;241m.[39mforward_min_event_ndims,
+[0;32m-> 1707[0m       [38;5;28;01mlambda[39;00m x: [43mdtype_util[49m[38;5;241;43m.[39;49m[43mconvert_to_dtype[49m[43m([49m[43mx[49m[43m,[49m[43m [49m[43mdtype[49m[38;5;241;43m=[39;49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mdtype[49m[43m)[49m,
+[1;32m   1708[0m       nest_util[38;5;241m.[39mcoerce_structure([38;5;28mself[39m[38;5;241m.[39mforward_min_event_ndims, dtype),
+[1;32m   1709[0m       check_types[38;5;241m=[39m[38;5;28;01mFalse[39;00m)
+[1;32m   1711[0m output_dtype [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_forward_dtype(input_dtype, [38;5;241m*[39m[38;5;241m*[39mkwargs)
+[1;32m   1712[0m [38;5;28;01mtry[39;00m:
+[1;32m   1713[0m   [38;5;66;03m# kwargs may alter dtypes themselves, but we currently require[39;00m
+[1;32m   1714[0m   [38;5;66;03m# structure to be statically known.[39;00m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/internal/dtype_util.py:247[0m, in [0;36mconvert_to_dtype[0;34m(tensor_or_dtype, dtype, dtype_hint)[0m
+[1;32m    245[0m [38;5;28;01melif[39;00m [38;5;28misinstance[39m(tensor_or_dtype, np[38;5;241m.[39mndarray):
+[1;32m    246[0m   dt [38;5;241m=[39m base_dtype(dtype [38;5;129;01mor[39;00m dtype_hint [38;5;129;01mor[39;00m tensor_or_dtype[38;5;241m.[39mdtype)
+[0;32m--> 247[0m [38;5;28;01melif[39;00m [43mnp[49m[38;5;241;43m.[39;49m[43missctype[49m(tensor_or_dtype):
+[1;32m    248[0m   dt [38;5;241m=[39m base_dtype(dtype [38;5;129;01mor[39;00m dtype_hint [38;5;129;01mor[39;00m tensor_or_dtype)
+[1;32m    249[0m [38;5;28;01melse[39;00m:
+[1;32m    250[0m   [38;5;66;03m# If this is a Python object, call `convert_to_tensor` and grab the dtype.[39;00m
+[1;32m    251[0m   [38;5;66;03m# Note that this will add ops in graph-mode; we may want to consider[39;00m
+[1;32m    252[0m   [38;5;66;03m# other ways to handle this case.[39;00m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/numpy/__init__.py:397[0m, in [0;36m__getattr__[0;34m(attr)[0m
+[1;32m    394[0m     [38;5;28;01mraise[39;00m [38;5;167;01mAttributeError[39;00m(__former_attrs__[attr])
+[1;32m    396[0m [38;5;28;01mif[39;00m attr [38;5;129;01min[39;00m __expired_attributes__:
+[0;32m--> 397[0m     [38;5;28;01mraise[39;00m [38;5;167;01mAttributeError[39;00m(
+[1;32m    398[0m         [38;5;124mf[39m[38;5;124m"[39m[38;5;124m`np.[39m[38;5;132;01m{[39;00mattr[38;5;132;01m}[39;00m[38;5;124m` was removed in the NumPy 2.0 release. [39m[38;5;124m"[39m
+[1;32m    399[0m         [38;5;124mf[39m[38;5;124m"[39m[38;5;132;01m{[39;00m__expired_attributes__[attr][38;5;132;01m}[39;00m[38;5;124m"[39m
+[1;32m    400[0m     )
+[1;32m    402[0m [38;5;28;01mif[39;00m attr [38;5;241m==[39m [38;5;124m"[39m[38;5;124mchararray[39m[38;5;124m"[39m:
+[1;32m    403[0m     warnings[38;5;241m.[39mwarn(
+[1;32m    404[0m         [38;5;124m"[39m[38;5;124m`np.chararray` is deprecated and will be removed from [39m[38;5;124m"[39m
+[1;32m    405[0m         [38;5;124m"[39m[38;5;124mthe main namespace in the future. Use an array with a string [39m[38;5;124m"[39m
+[1;32m    406[0m         [38;5;124m"[39m[38;5;124mor bytes dtype instead.[39m[38;5;124m"[39m, [38;5;167;01mDeprecationWarning[39;00m, stacklevel[38;5;241m=[39m[38;5;241m2[39m)
+
+[0;31mAttributeError[0m: `np.issctype` was removed in the NumPy 2.0 release. Use `issubclass(rep, np.generic)` instead.
+
