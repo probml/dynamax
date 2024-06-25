@@ -45,21 +45,21 @@ class ParamsLGSSMDynamics(NamedTuple):
     :param cov: dynamics covariance $Q$
 
     """
-    weights: Union[ParameterProperties, 
-        Float[Array, "state_dim state_dim"], 
+    weights: Union[ParameterProperties,
+        Float[Array, "state_dim state_dim"],
         Float[Array, "ntime state_dim state_dim"]]
-    
+
     bias: Union[ParameterProperties,
-        Float[Array, "state_dim"], 
+        Float[Array, "state_dim"],
         Float[Array, "ntime state_dim"]]
-    
+
     input_weights: Union[ParameterProperties,
-        Float[Array, "state_dim input_dim"], 
+        Float[Array, "state_dim input_dim"],
         Float[Array, "ntime state_dim input_dim"]]
-    
-    cov: Union[ParameterProperties, 
-        Float[Array, "state_dim state_dim"], 
-        Float[Array, "ntime state_dim state_dim"], 
+
+    cov: Union[ParameterProperties,
+        Float[Array, "state_dim state_dim"],
+        Float[Array, "ntime state_dim state_dim"],
         Float[Array, "state_dim_triu"]]
 
 
@@ -77,22 +77,22 @@ class ParamsLGSSMEmissions(NamedTuple):
 
     """
     weights: Union[ParameterProperties,
-        Float[Array, "emission_dim state_dim"], 
+        Float[Array, "emission_dim state_dim"],
         Float[Array, "ntime emission_dim state_dim"]]
-    
+
     bias: Union[ParameterProperties,
-        Float[Array, "emission_dim"], 
+        Float[Array, "emission_dim"],
         Float[Array, "ntime emission_dim"]]
-    
+
     input_weights: Union[ParameterProperties,
-        Float[Array, "emission_dim input_dim"], 
+        Float[Array, "emission_dim input_dim"],
         Float[Array, "ntime emission_dim input_dim"]]
-    
+
     cov: Union[ParameterProperties,
-        Float[Array, "emission_dim emission_dim"], 
-        Float[Array, "ntime emission_dim emission_dim"], 
-        Float[Array, "emission_dim"], 
-        Float[Array, "ntime emission_dim"], 
+        Float[Array, "emission_dim emission_dim"],
+        Float[Array, "ntime emission_dim emission_dim"],
+        Float[Array, "emission_dim"],
+        Float[Array, "ntime emission_dim"],
         Float[Array, "emission_dim_triu"]]
 
 
@@ -166,9 +166,9 @@ def _get_params(params, num_timesteps, t):
     D = _get_one_param(params.emissions.input_weights, 2, t)
     d = _get_one_param(params.emissions.bias, 1, t)
 
-    if len(params.emissions.cov.shape) == 1: 
+    if len(params.emissions.cov.shape) == 1:
         R = _get_one_param(params.emissions.cov, 1, t)
-    elif len(params.emissions.cov.shape) > 2: 
+    elif len(params.emissions.cov.shape) > 2:
         R = _get_one_param(params.emissions.cov, 2, t)
     elif params.emissions.cov.shape[0] != num_timesteps:
         R = _get_one_param(params.emissions.cov, 2, t)
@@ -278,20 +278,20 @@ def _condition_on(m, P, H, D, d, R, u, y):
     if R.ndim == 2:
         S = R + H @ P @ H.T
         K = psd_solve(S, H @ P).T
-    else: 
+    else:
         # Optimization using Woodbury identity with A=R, U=H@chol(P), V=U.T, C=I
         # (see https://en.wikipedia.org/wiki/Woodbury_matrix_identity)
         I = jnp.eye(P.shape[0])
         U = H @ jnp.linalg.cholesky(P)
         X = U / R[:, None]
-        S_inv = jnp.diag(1.0 / R) - X @ psd_solve(I + U.T @ X, X.T) 
+        S_inv = jnp.diag(1.0 / R) - X @ psd_solve(I + U.T @ X, X.T)
         """
         # Could alternatively use U=H and C=P
         R_inv = jnp.diag(1.0 / R)
         P_inv = psd_solve(P, jnp.eye(P.shape[0]))
         S_inv = R_inv - R_inv @ H @ psd_solve(P_inv + H.T @ R_inv @ H, H.T @ R_inv)
         """
-        K = P @ H.T @ S_inv  
+        K = P @ H.T @ S_inv
         S = jnp.diag(R) + H @ P @ H.T
 
     Sigma_cond = P - K @ S @ K.T
@@ -361,8 +361,6 @@ def preprocess_args(f):
     return wrapper
 
 
-
-
 def lgssm_joint_sample(
     params: ParamsLGSSM,
     key: PRNGKey,
@@ -371,7 +369,7 @@ def lgssm_joint_sample(
 )-> Tuple[Float[Array, "num_timesteps state_dim"],
           Float[Array, "num_timesteps emission_dim"]]:
     r"""Sample from the joint distribution to produce state and emission trajectories.
-    
+
     Args:
         params: model parameters
         inputs: optional array of inputs.
@@ -390,7 +388,7 @@ def lgssm_joint_sample(
         mean = H @ x + D @ u + d
         R = jnp.diag(R) if R.ndim==1 else R
         return MVN(mean, R).sample(seed=key)
-    
+
     def _sample_initial(key, params, inputs):
         key1, key2 = jr.split(key)
 
@@ -417,7 +415,7 @@ def lgssm_joint_sample(
 
     # Sample the initial state
     key1, key2 = jr.split(key)
-    
+
     initial_state, initial_emission = _sample_initial(key1, params, inputs)
 
     # Sample the remaining emissions and states
@@ -462,7 +460,7 @@ def lgssm_filter(
         else:
             L = H @ jnp.linalg.cholesky(pred_cov)
             return MVNLowRank(m, R, L).log_prob(y)
-            
+
 
     def _step(carry, t):
         ll, pred_mean, pred_cov = carry
@@ -539,14 +537,17 @@ def lgssm_smoother(
         return (smoothed_mean, smoothed_cov), (smoothed_mean, smoothed_cov, smoothed_cross)
 
     # Run the Kalman smoother
-    init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_means[:-1][::-1], filtered_covs[:-1][::-1])
-    _, (smoothed_means, smoothed_covs, smoothed_cross) = lax.scan(_step, init_carry, args)
+    _, (smoothed_means, smoothed_covs, smoothed_cross) = lax.scan(
+        _step,
+        (filtered_means[-1], filtered_covs[-1]),
+        (jnp.arange(num_timesteps - 1), filtered_means[:-1], filtered_covs[:-1]),
+        reverse=True,
+    )
 
-    # Reverse the arrays and return
-    smoothed_means = jnp.vstack((smoothed_means[::-1], filtered_means[-1][None, ...]))
-    smoothed_covs = jnp.vstack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
-    smoothed_cross = smoothed_cross[::-1]
+    # Concatenate the arrays and return
+    smoothed_means = jnp.vstack((smoothed_means, filtered_means[-1][None, ...]))
+    smoothed_covs = jnp.vstack((smoothed_covs, filtered_covs[-1][None, ...]))
+
     return PosteriorGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,
@@ -563,7 +564,7 @@ def lgssm_posterior_sample(
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None,
     jitter: Optional[Scalar]=0
-    
+
 ) -> Float[Array, "ntime state_dim"]:
     r"""Run forward-filtering, backward-sampling to draw samples from $p(z_{1:T} \mid y_{1:T}, u_{1:T})$.
 
@@ -603,12 +604,16 @@ def lgssm_posterior_sample(
     key, this_key = jr.split(key, 2)
     last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_key)
 
-    args = (
-        jr.split(key, num_timesteps - 1),
-        filtered_means[:-1][::-1],
-        filtered_covs[:-1][::-1],
-        jnp.arange(num_timesteps - 2, -1, -1),
+    _, states = lax.scan(
+        _step,
+        last_state,
+        (
+            jr.split(key, num_timesteps - 1),
+            filtered_means[:-1],
+            filtered_covs[:-1],
+            jnp.arange(num_timesteps - 1),
+        ),
+        reverse=True,
     )
-    _, reversed_states = lax.scan(_step, last_state, args)
-    states = jnp.vstack([reversed_states[::-1], last_state])
-    return states
+
+    return jnp.vstack([states, last_state])

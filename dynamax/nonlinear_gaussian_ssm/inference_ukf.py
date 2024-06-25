@@ -80,7 +80,7 @@ def _predict(m, P, f, Q, lamb, w_mean, w_cov, u):
     Returns:
         m_pred (D_hid,): predicted mean.
         P_pred (D_hid,D_hid): predicted covariance.
-        
+
     """
     n = len(m)
     # Form sigma points and propagate
@@ -271,13 +271,17 @@ def unscented_kalman_smoother(
         return (smoothed_mean, smoothed_cov), (smoothed_mean, smoothed_cov)
 
     # Run the unscented Kalman smoother
-    init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_means[:-1][::-1], filtered_covs[:-1][::-1])
-    _, (smoothed_means, smoothed_covs) = lax.scan(_step, init_carry, args)
+    _, (smoothed_means, smoothed_covs) = lax.scan(
+        _step,
+        (filtered_means[-1], filtered_covs[-1]),
+        (jnp.arange(num_timesteps - 1), filtered_means[:-1], filtered_covs[:-1]),
+        reverse=True,
+    )
 
-    # Reverse the arrays and return
-    smoothed_means = jnp.vstack((smoothed_means[::-1], filtered_means[-1][None, ...]))
-    smoothed_covs = jnp.vstack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
+    # Concatenate the arrays and return
+    smoothed_means = jnp.vstack((smoothed_means, filtered_means[-1][None, ...]))
+    smoothed_covs = jnp.vstack((smoothed_covs, filtered_covs[-1][None, ...]))
+
     return PosteriorGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,

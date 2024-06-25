@@ -237,13 +237,17 @@ def extended_kalman_smoother(
         return (smoothed_mean, smoothed_cov), (smoothed_mean, smoothed_cov)
 
     # Run the extended Kalman smoother
-    init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_means[:-1][::-1], filtered_covs[:-1][::-1])
-    _, (smoothed_means, smoothed_covs) = lax.scan(_step, init_carry, args)
+    _, (smoothed_means, smoothed_covs) = lax.scan(
+        _step,
+        (filtered_means[-1], filtered_covs[-1]),
+        (jnp.arange(num_timesteps - 1), filtered_means[:-1], filtered_covs[:-1]),
+        reverse=True,
+    )
 
-    # Reverse the arrays and return
-    smoothed_means = jnp.vstack((smoothed_means[::-1], filtered_means[-1][None, ...]))
-    smoothed_covs = jnp.vstack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
+    # Concatenate the arrays and return
+    smoothed_means = jnp.vstack((smoothed_means, filtered_means[-1][None, ...]))
+    smoothed_covs = jnp.vstack((smoothed_covs, filtered_covs[-1][None, ...]))
+
     return PosteriorGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,
@@ -251,8 +255,6 @@ def extended_kalman_smoother(
         smoothed_means=smoothed_means,
         smoothed_covariances=smoothed_covs,
     )
-
-
 
 
 def extended_kalman_posterior_sample(
@@ -304,16 +306,18 @@ def extended_kalman_posterior_sample(
     key, this_key = jr.split(key, 2)
     last_state = MVN(filtered_means[-1], filtered_covs[-1]).sample(seed=this_key)
 
-    args = (
-        jr.split(key, num_timesteps - 1),
-        filtered_means[:-1][::-1],
-        filtered_covs[:-1][::-1],
-        jnp.arange(num_timesteps - 2, -1, -1),
+    _, states = lax.scan(
+        _step,
+        last_state,
+        (
+            jr.split(key, num_timesteps - 1),
+            filtered_means[:-1],
+            filtered_covs[:-1],
+            jnp.arange(num_timesteps - 1),
+        ),
+        reverse=True,
     )
-    _, reversed_states = lax.scan(_step, last_state, args)
-    states = jnp.vstack([reversed_states[::-1], last_state])
-    return states
-
+    return jnp.vstack([states, last_state])
 
 
 def iterated_extended_kalman_smoother(
