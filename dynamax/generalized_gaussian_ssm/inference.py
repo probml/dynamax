@@ -18,7 +18,6 @@ _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
 _jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
 
 
-
 class EKFIntegrals(NamedTuple):
     """ Lightweight container for EKF Gaussian integrals."""
     gaussian_expectation: Callable = lambda f, m, P: jnp.atleast_1d(f(m))
@@ -85,7 +84,7 @@ CMGFIntegrals = Union[EKFIntegrals, UKFIntegrals, GHKFIntegrals]
 
 def _predict(m, P, f, Q, u, g_ev, g_cov):
     """Predict next mean and covariance under an additive-noise Gaussian filter
-    
+
         p(x_{t+1}) = N(x_{t+1} | mu_pred, Sigma_pred)
         where
             mu_pred = gev(f, m, P)
@@ -337,13 +336,17 @@ def conditional_moments_gaussian_smoother(
         return (smoothed_mean, smoothed_cov), (smoothed_mean, smoothed_cov)
 
     # Run the smoother
-    init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_means[:-1][::-1], filtered_covs[:-1][::-1])
-    _, (smoothed_means, smoothed_covs) = lax.scan(_step, init_carry, args)
+    _, (smoothed_means, smoothed_covs) = lax.scan(
+        _step,
+        (filtered_means[-1], filtered_covs[-1]),
+        (jnp.arange(num_timesteps - 1), filtered_means[:-1], filtered_covs[:-1]),
+        reverse=True
+    )
 
-    # Reverse the arrays and return
-    smoothed_means = jnp.vstack((smoothed_means[::-1], filtered_means[-1][None, ...]))
-    smoothed_covs = jnp.vstack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
+    # Concatenate the last smoothed mean and covariance
+    smoothed_means = jnp.vstack((smoothed_means, filtered_means[-1][None, ...]))
+    smoothed_covs = jnp.vstack((smoothed_covs, filtered_covs[-1][None, ...]))
+
     return PosteriorGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,

@@ -271,13 +271,17 @@ def lgssm_info_smoother(
         return (smoothed_eta, smoothed_prec), (smoothed_eta, smoothed_prec)
 
     # Run the Kalman smoother
-    init_carry = (filtered_etas[-1], filtered_precisions[-1])
-    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_etas[:-1][::-1], filtered_precisions[:-1][::-1])
-    _, (smoothed_etas, smoothed_precisions) = lax.scan(_smooth_step, init_carry, args)
+    _, (smoothed_etas, smoothed_precisions) = lax.scan(
+        _smooth_step,
+        (filtered_etas[-1], filtered_precisions[-1]),
+        (jnp.arange(num_timesteps - 1), filtered_etas[:-1], filtered_precisions[:-1]),
+        reverse=True
+    )
 
-    # Reverse the arrays and return
-    smoothed_etas = jnp.vstack((smoothed_etas[::-1], filtered_etas[-1][None, ...]))
-    smoothed_precisions = jnp.vstack((smoothed_precisions[::-1], filtered_precisions[-1][None, ...]))
+    # Concatenate the arrays and return
+    smoothed_etas = jnp.vstack((smoothed_etas, filtered_etas[-1][None, ...]))
+    smoothed_precisions = jnp.vstack((smoothed_precisions, filtered_precisions[-1][None, ...]))
+
     return PosteriorGSSMInfoSmoothed(
         marginal_loglik=ll,
         filtered_etas=filtered_etas,

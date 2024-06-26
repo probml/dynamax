@@ -143,7 +143,6 @@ def hmm_filter(
     return post
 
 
-
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_backward_filter(
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
@@ -184,9 +183,9 @@ def hmm_backward_filter(
         next_backward_pred_probs = _predict(backward_filt_probs, A.T)
         return (log_normalizer, next_backward_pred_probs), backward_pred_probs
 
-    carry = (0.0, jnp.ones(num_states))
-    (log_normalizer, _), rev_backward_pred_probs = lax.scan(_step, carry, jnp.arange(num_timesteps)[::-1])
-    backward_pred_probs = rev_backward_pred_probs[::-1]
+    (log_normalizer, _), backward_pred_probs = lax.scan(
+        _step, (0.0, jnp.ones(num_states)), jnp.arange(num_timesteps), reverse=True
+    )
     return log_normalizer, backward_pred_probs
 
 
@@ -273,7 +272,7 @@ def hmm_smoother(
         posterior distribution
 
     """
-    num_timesteps, num_states = log_likelihoods.shape
+    num_timesteps = log_likelihoods.shape[0]
 
     # Run the HMM filter
     post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transition_fn)
@@ -298,12 +297,15 @@ def hmm_smoother(
         return smoothed_probs, smoothed_probs
 
     # Run the HMM smoother
-    carry = filtered_probs[-1]
-    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_probs[:-1][::-1], predicted_probs[1:][::-1])
-    _, rev_smoothed_probs = lax.scan(_step, carry, args)
+    _, smoothed_probs = lax.scan(
+        _step,
+        filtered_probs[-1],
+        (jnp.arange(num_timesteps - 1), filtered_probs[:-1], predicted_probs[1:]),
+        reverse=True,
+    )
 
-    # Reverse the arrays and return
-    smoothed_probs = jnp.vstack([rev_smoothed_probs[::-1], filtered_probs[-1]])
+    # Concatenate the arrays and return
+    smoothed_probs = jnp.vstack([smoothed_probs, filtered_probs[-1]])
 
     # Package into a posterior
     posterior = HMMPosterior(
@@ -467,10 +469,9 @@ def hmm_posterior_mode(
         return best_next_score, best_next_state
 
     num_states = log_likelihoods.shape[1]
-    best_second_score, rev_best_next_states = lax.scan(
-        _backward_pass, jnp.zeros(num_states), jnp.arange(num_timesteps - 2, -1, -1)
+    best_second_score, best_next_states = lax.scan(
+        _backward_pass, jnp.zeros(num_states), jnp.arange(num_timesteps - 1), reverse=True
     )
-    best_next_states = rev_best_next_states[::-1]
 
     # Run the forward pass
     def _forward_pass(state, best_next_state):
@@ -530,11 +531,13 @@ def hmm_posterior_sample(
     # Run the HMM smoother
     rngs = jr.split(rng, num_timesteps)
     last_state = jr.choice(rngs[-1], a=num_states, p=filtered_probs[-1])
-    args = (jnp.arange(num_timesteps - 1, 0, -1), rngs[:-1][::-1], filtered_probs[:-1][::-1])
-    _, rev_states = lax.scan(_step, last_state, args)
+    _, states = lax.scan(
+        _step, last_state, (jnp.arange(1, num_timesteps), rngs[:-1], filtered_probs[:-1]),
+        reverse=True
+    )
 
-    # Reverse the arrays and return
-    states = jnp.concatenate([rev_states[::-1], jnp.array([last_state])])
+    # Add the last state
+    states = jnp.concatenate([states, jnp.array([last_state])])
     return log_normalizer, states
 
 def _compute_sum_transition_probs(
