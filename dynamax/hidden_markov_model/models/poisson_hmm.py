@@ -45,14 +45,21 @@ class PoissonHMMEmissions(HMMEmissions):
 
     def initialize(self, key=jr.PRNGKey(0),
                    method="prior",
-                   emission_rates=None):
+                   emission_rates=None, 
+                   emissions=None):
         # Initialize the emission probabilities
         if emission_rates is None:
             if method.lower() == "prior":
                 prior = tfd.Gamma(self.emission_prior_concentration, self.emission_prior_rate)
                 emission_rates = prior.sample(seed=key, sample_shape=(self.num_states, self.emission_dim))
             elif method.lower() == "kmeans":
-                raise NotImplementedError("kmeans initialization is not yet implemented!")
+                assert emissions is not None, "Need emissions to initialize the model with K-Means!"
+                from sklearn.cluster import KMeans
+                key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+                sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+                km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
+                ## Cluster centers, also forms the Poisson emission rate 
+                emission_rates = jnp.array(km.cluster_centers_)
             else:
                 raise Exception("invalid initialization method: {}".format(method))
         else:
@@ -136,7 +143,8 @@ class PoissonHMM(HMM):
                    method="prior",
                    initial_probs: Optional[Float[Array, "num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
-                   emission_rates: Optional[Float[Array, "num_states emission_dim"]]=None
+                   emission_rates: Optional[Float[Array, "num_states emission_dim"]]=None, 
+                   emissions: Optional[Float[Array, "num_timesteps emission_dim"]]=None
     ) -> Tuple[ParameterSet, PropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
@@ -160,5 +168,5 @@ class PoissonHMM(HMM):
         params, props = dict(), dict()
         params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
         params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
-        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_rates=emission_rates)
+        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_rates=emission_rates, emissions = emissions)
         return ParamsPoissonHMM(**params), ParamsPoissonHMM(**props)
