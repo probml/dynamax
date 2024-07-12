@@ -1,5 +1,5 @@
 ---
-title: 'Dynamax: A Python package for probabilistic state space models (SSMs) written in JAX'
+title: 'Dynamax: A Python package for probabilistic state space modeling with JAX'
 tags:
   - Python
   - State space models
