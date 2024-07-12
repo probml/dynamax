@@ -1,6 +1,5 @@
 ---
-title: 'Dynamax: A Python package for probabilistic state space models (SSMs) written
-in JAX'
+title: 'Dynamax: A Python package for probabilistic state space models (SSMs) written in JAX'
 tags:
   - Python
   - State space models
@@ -58,6 +57,7 @@ More information about state space models and algorithms for state inference and
 `Dynamax` is an open-source Python pacakge for state space modeling. Since it is built with `JAX` [@jax], it automatically supports just-in-time (JIT) compilation for hardware acceleration on CPU, GPU, and TPU machines. It also supports automatic differentiation for gradient-based model learning. While other libraries exist for state space modeling in Python (and some also use `JAX`), this library provides a combination of low-level inference algorithms and high-level modeling objects that can support a wide range of research applications.
 
 The API for `Dynamax` is divided into two parts: a set of core, functionally pure, low-level inference algorithms, and a high-level, object oriented module for constructing and fitting probabilistic SSMs. The low-level inference API provides message passing algorithms for several common types of SSMs. For example, `Dynamax` provides `JAX` implementations for:
+
 - Forward-Backward algorithms for discrete-state hidden Markov models (HMMs), 
 - Kalman filtering and smoothing algorithms for linear Gaussian SSMs, 
 - Extended and unscented Kalman filtering and smoothing for nonlinear Gaussian SSMs, and
