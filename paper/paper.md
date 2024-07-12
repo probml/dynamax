@@ -68,7 +68,7 @@ The API for `Dynamax` is divided into two parts: a set of core, functionally pur
 
 The high-level model API makes it easy to construct, fit, and inspect HMMs and linear Gaussian SSMs. Finally, the online `Dynamax` documentation and tutorials provide a wealth of resources for state space modeling experts and newcomers alike.
 
-`Dynamax` has supported several publications. The low-level API has been used in machine learning research [@zhao2023revisiting; @lee2023switching; @chang2023low]. More sophisticated, special purpose models on top of `Dynamax`, like the Keypoint-MoSeq library for modeling postural dynamics of animals [@weinreb2024keypoint]. Finally, the `Dynamax` tutorials are used as reference examples in a major machine learning textbook [@murphy2023probabilistic]. 
+`Dynamax` has supported several publications. The low-level API has been used in machine learning research [@zhao2023revisiting; @lee2023switching; @chang2023low]. More sophisticated, special purpose models on top of `Dynamax`, like the Keypoint-MoSeq library for modeling postural dynamics of animals [@weinreb2024keypoint]. Finally, the `Dynamax` tutorials are used as reference examples in a major machine learning textbook [@murphy2023probabilistic].  
 
 # Acknowledgements
 
