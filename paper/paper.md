@@ -56,17 +56,17 @@ More information about state space models and algorithms for state inference and
 
 # Statement of need
 
-`Dynamax` is an open-source Python pacakge for state space modeling. Since it is built with `JAX` [@jax], it supports just-in-time (JIT) compilation for hardware acceleration on CPU, GPU, and TPU machines. It also supports automatic differentiation for gradient-based model learning. While other libraries exist for state space modeling in Python (and some also use `JAX`), this library provides a combination of low-level inference algorithms and high-level modeling objects that can support a wide range of research applications.
+`Dynamax` is an open-source Python pacakge for state space modeling. Since it is built with `JAX` [@jax], it supports just-in-time (JIT) compilation for hardware acceleration on CPU, GPU, and TPU machines. It also supports automatic differentiation for gradient-based model learning. While other libraries exist for state space modeling in Python (and some also use `JAX`), this library provides a unique combination of low-level inference algorithms and high-level modeling objects that can support a wide range of research applications.
 
 The API for `Dynamax` is divided into two parts: a set of core, functionally pure, low-level inference algorithms, and a high-level, object oriented module for constructing and fitting probabilistic SSMs. The low-level inference API provides message passing algorithms for several common types of SSMs. For example, `Dynamax` provides `JAX` implementations for:
 
 - Forward-Backward algorithms for discrete-state hidden Markov models (HMMs), 
 - Kalman filtering and smoothing algorithms for linear Gaussian SSMs, 
-- Extended and unscented Kalman filtering and smoothing for nonlinear Gaussian SSMs, and
-- Conditional moment filtering and smoothing algorithms for models with non-Gaussian emissions. 
+- Extended and unscented Kalman filtering and smoothing for nonlinear Gaussian SSMs, 
+- Conditional moment filtering and smoothing algorithms for models with non-Gaussian emissions, and
 - Parallel message passing routines take advantage of GPU or TPU acceleration to perform message passing in sublinear time. 
 
-The high-level model API makes it easy to construct, fit, and inspect HMMs and linear Gaussian SSMs.
+The high-level model API makes it easy to construct, fit, and inspect HMMs and linear Gaussian SSMs. Finally, the online `Dynamax` documentation and tutorials provide a wealth of resources for state space modeling experts and newcomers alike.
 
 `Dynamax` has supported several publications. The low-level API has been used in machine learning research [@zhao2023revisiting; @lee2023switching; @chang2023low]. More sophisticated, special purpose models on top of `Dynamax`, like the Keypoint-MoSeq library for modeling postural dynamics of animals [@weinreb2024keypoint]. Finally, the `Dynamax` tutorials are used as reference examples in a major machine learning textbook [@murphy2023probabilistic]. 
 
