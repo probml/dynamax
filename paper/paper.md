@@ -7,8 +7,6 @@ tags:
   - dynamics
   - JAX
 
-Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, Kevin Murphy.
-
 authors:
   - name: Scott W. Linderman
     orcid: 0000-0002-3878-9073
