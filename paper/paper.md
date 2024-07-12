@@ -64,7 +64,7 @@ The API for `Dynamax` is divided into two parts: a set of core, functionally pur
 - Kalman filtering and smoothing algorithms for linear Gaussian SSMs, 
 - Extended and unscented Kalman filtering and smoothing for nonlinear Gaussian SSMs, 
 - Conditional moment filtering and smoothing algorithms for models with non-Gaussian emissions, and
-- Parallel message passing routines take advantage of GPU or TPU acceleration to perform message passing in sublinear time. 
+- Parallel message passing routines that leverage GPU or TPU acceleration to perform message passing in sublinear time. 
 
 The high-level model API makes it easy to construct, fit, and inspect HMMs and linear Gaussian SSMs. Finally, the online `Dynamax` documentation and tutorials provide a wealth of resources for state space modeling experts and newcomers alike.
 
