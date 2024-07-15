@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax, tree_map
+from jax import lax
+from jax.tree_util import tree_map
 from jaxtyping import Float, Array
 from dynamax.hidden_markov_model.models.abstractions import HMM, HMMParameterSet, HMMPropertySet
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState

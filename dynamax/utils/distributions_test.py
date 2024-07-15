@@ -1,7 +1,7 @@
 import pytest
 import jax.numpy as jnp
 import jax.random as jr
-from jax import tree_map
+from jax.tree_util import tree_map
 from jax.scipy.stats import norm
 from scipy.stats import invgamma
 from tensorflow_probability.substrates import jax as tfp
