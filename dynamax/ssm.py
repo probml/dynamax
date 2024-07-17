@@ -400,6 +400,110 @@ class SSM(ABC):
             log_probs.append(marginal_loglik)
         return params, jnp.array(log_probs)
 
+    def fit_em_stoch(
+            self,
+            params: ParameterSet,
+            props: PropertySet,
+            emissions: Union[Float[Array, "num_timesteps emission_dim"],
+                            Float[Array, "num_batches num_timesteps emission_dim"]],
+            inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
+                                Float[Array, "num_batches num_timesteps input_dim"]]]=None,
+            mini_batch_size: int=32,
+            num_iters: int=50,
+            forgetting_rate: float=-0.5,
+            key: PRNGKey=jr.PRNGKey(0),
+            verbose: bool=True
+        ) -> Tuple[ParameterSet, Float[Array, "num_iters"]]:
+            r"""Stochastic Expectation Maximization (EM) with mini-batches and dynamic step size.
+
+            Args:
+                params: model parameters $\theta$
+                props: properties specifying which parameters should be learned
+                emissions: one or more sequences of emissions
+                inputs: one or more sequences of corresponding inputs
+                mini_batch_size: number of sequences per mini-batch
+                num_iters: number of iterations of stochastic EM to run
+                forgetting_rate: rate to adjust the learning step size
+                key: random number generator for selecting minibatches
+                verbose: whether or not to show a progress bar
+
+            Returns:
+                tuple of new parameters and log likelihoods over the course of EM iterations.
+            """
+            
+            @jit
+            def update_global_stats(global_stats, batch_stats, step_size, batch_size, mini_batch_size):
+                rescale = lambda x: batch_size / mini_batch_size * x
+                rescaled_stats = tree_map(rescale, batch_stats)
+                blend = lambda g, b: g * (1 - step_size) + b * step_size
+                return tree_map(blend, global_stats, rescaled_stats)
+            
+            # Ensure emissions and inputs have batch dimensions
+            batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
+            batch_inputs = ensure_array_has_batch_dim(inputs, self.inputs_shape)
+
+            batch_size = batch_emissions.shape[1]
+            num_minibatches = int(jnp.ceil(batch_size // mini_batch_size))
+            num_batches = len(batch_emissions)
+            
+            # Initialize the step size schedule
+            schedule = jnp.arange(1, (1 + num_minibatches) * num_iters) ** forgetting_rate
+
+            # Initialize log probability list and M-step state
+            log_probs = []
+
+            if verbose:
+                pbar = progress_bar(range(num_iters)) if verbose else range(num_iters)
+            else:
+                pbar = range(num_iters)
+                
+            
+            for iter_idx in pbar:
+                
+                # Shuffle and create mini-batches for each iteration
+                shuffled_indices = jr.permutation(key, num_batches)
+                batch_emissions = batch_emissions[shuffled_indices,:,:]
+                batch_inputs = batch_inputs[shuffled_indices,:,:] if batch_inputs is not None else None
+                
+                mini_batch_counter=0
+                
+                for batch_start in range(0, batch_size, mini_batch_size):
+                    
+                    current_mb_size=mini_batch_size
+                    if batch_size-1-(batch_start + current_mb_size)<0:
+                        current_mb_size=batch_size-batch_start-1
+                        
+                    minibatch_emissions = batch_emissions[:,batch_start:batch_start + current_mb_size,:]
+                    minibatch_inputs = batch_inputs[:,batch_start:batch_start + current_mb_size,:] if batch_inputs is not None else None
+                    
+                    if batch_start==0 and iter_idx==0:
+                        
+                        global_stats, _ = vmap(partial(self.e_step, params))(minibatch_emissions, minibatch_inputs)
+                        m_step_state = self.initialize_m_step_state(params, props)
+                    
+                    # E-step: Compute expected sufficient statistics for this mini-batch
+                    
+                    #print(f'iter {batch_start}')
+
+                    batch_stats, lls = vmap(partial(self.e_step, params))(minibatch_emissions, minibatch_inputs)
+                    # Blend batch statistics into global statistics
+                    step_size = schedule[iter_idx * num_minibatches + mini_batch_counter]
+                                        
+                    global_stats = update_global_stats(global_stats, batch_stats, step_size, batch_size, current_mb_size)
+                    
+                    # M-step: Update parameters using blended global statistics
+                    #params, m_step_state = self.m_step(params, props, global_stats, m_step_state)                    
+                    params, m_step_state = self.m_step(params, props, global_stats, m_step_state)
+
+                    # Log probability update
+                    lp = self.log_prior(params) + lls.sum() #* (current_mb_size/batch_size)
+                    log_probs.append(lp)
+                    
+                    # increment counter
+                    mini_batch_counter=mini_batch_counter+1
+            
+            return params, jnp.array(log_probs)
+
     def fit_sgd(
         self,
         params: ParameterSet,
