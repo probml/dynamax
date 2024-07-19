@@ -12,28 +12,28 @@ authors:
     affiliation: "1" # (Multiple affiliations must be quoted)
     corresponding: true
   - name: Peter Chang
-    affiliation: "3"
-  - name: Giles Harper-Donnelly
-    affiliation: "4"
-  - name: Aleyna Kara
-    affiliation: "5"
-  - name: Xinglong Li
-    affiliation: "6"
-  - name: Kevin Murphy
     affiliation: "2"
+  - name: Giles Harper-Donnelly
+    affiliation: "3"
+  - name: Aleyna Kara
+    affiliation: "4"
+  - name: Xinglong Li
+    affiliation: "5"
+  - name: Kevin Murphy
+    affiliation: "6"
     corresponding: true
 affiliations:
  - name: Department of Statistics and Wu Tsai Neurosciences Insitute, Stanford University, USA
    index: 1
- - name: Google DeepMind, USA
-   index: 2
  - name: CSAIL, Massachusetts Institute of Technology, USA
-   index: 3
+   index: 2
  - name: Cambridge University, UK
-   index: 4
+   index: 3
  - name: Computer Science Department, Technical University of Munich Garching, Germany
-   index: 5
+   index: 4
  - name: Statistics Department, University of British Columbia, Canada
+   index: 5
+ - name: Google DeepMind, USA
    index: 6
  
 date: 12 July 2024
