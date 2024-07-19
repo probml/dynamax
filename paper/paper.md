@@ -56,9 +56,9 @@ There are a few key design choices to make when constructing an SSM:
 
 - What is the type of latent state? E.g., is $z_t$ a continuous or discrete random variable?
 - How do the latent states evolve over time? E.g., are the dynamics linear or nonlinear?
-- What is the conditional distribution of the observations? E.g., are they Gaussian, Poisson, etc.?
+- How are the observations distributed? E.g., are they Gaussian, Poisson, etc.?
 
-Some design choices are so common that they have their own names. For example, hidden Markov models (HMM) are SSMs with discrete latent states, and linear dynamical systems (LDS) are SSMs with continuous latent states, linear dynamics, and additive Gaussian noise.  `Dynamax` supports these canonical SSMs and allows you to construct more complex models if needed.
+Some design choices are so common they have their own names. Hidden Markov models (HMM) are SSMs with discrete latent states, and linear dynamical systems (LDS) are SSMs with continuous latent states, linear dynamics, and additive Gaussian noise.  `Dynamax` supports canonical SSMs and allows the user to construct bespoke models as needed.
 
 Finally, even for canonical models, there are several algorithms for state inference and parameter estimation. `Dynamax` provides robust implementations of several low-level inference algorithms to suit a variety of applications, allowing users to choose among a host of models and algorithms for their application. More information about state space models and algorithms for state inference and parameter estimation can be found in the textbooks by @murphy2023probabilistic and @sarkka2023bayesian. 
 
