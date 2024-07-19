@@ -36,7 +36,7 @@ affiliations:
  - name: Statistics Department, University of British Columbia, Canada
    index: 5
  - name: Queen Mary University of London, England, UK
-   indx: 6
+   index: 6
  - name: Google DeepMind, USA
    index: 7
  
