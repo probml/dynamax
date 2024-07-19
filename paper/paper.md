@@ -19,24 +19,28 @@ authors:
     affiliation: "4"
   - name: Xinglong Li
     affiliation: "5"
-  - name: Kevin Murphy
+  - name: Gerardo Duran-Martin
     affiliation: "6"
+  - name: Kevin Murphy
+    affiliation: "7"
     corresponding: true
 affiliations:
  - name: Department of Statistics and Wu Tsai Neurosciences Insitute, Stanford University, USA
    index: 1
  - name: CSAIL, Massachusetts Institute of Technology, USA
    index: 2
- - name: Cambridge University, UK
+ - name: Cambridge University, England, UK
    index: 3
  - name: Computer Science Department, Technical University of Munich Garching, Germany
    index: 4
  - name: Statistics Department, University of British Columbia, Canada
    index: 5
+ - name: Queen Mary University of London, England, UK
+   indx: 6
  - name: Google DeepMind, USA
-   index: 6
+   index: 7
  
-date: 12 July 2024
+date: 19 July 2024
 bibliography: paper.bib
 
 ---
@@ -76,7 +80,7 @@ The API for `Dynamax` is divided into two parts: a set of core, functionally pur
 
 The high-level model API makes it easy to construct, fit, and inspect HMMs and linear Gaussian SSMs. Finally, the online `Dynamax` documentation and tutorials provide a wealth of resources for state space modeling experts and newcomers alike.
 
-`Dynamax` has supported several publications. The low-level API has been used in machine learning research [@zhao2023revisiting; @lee2023switching; @chang2023low]. More sophisticated, special purpose models on top of `Dynamax`, like the Keypoint-MoSeq library for modeling postural dynamics of animals [@weinreb2024keypoint]. Finally, the `Dynamax` tutorials are used as reference examples in a major machine learning textbook [@murphy2023probabilistic].  
+`Dynamax` has supported several publications. The low-level API has been used in machine learning research [@zhao2023revisiting; @lee2023switching; @chang2023low]. Special purpose libraries have been built on top of `Dynamax`, like the Keypoint-MoSeq library for modeling animal behavior [@weinreb2024keypoint] and the Structural Time Series in JAX library, `sts-jax` [@sts-jax]. Finally, the `Dynamax` tutorials are used as reference examples in a major machine learning textbook [@murphy2023probabilistic].  
 
 # Acknowledgements
 
