@@ -55,8 +55,8 @@ Second, we need to estimate the dynamics that govern how latent states evolve; f
 There are a few key design choices to make when constructing an SSM:
 
 - What is the type of latent state? E.g., is $z_t$ a continuous or discrete random variable?
-- What dynamics govern how latent states evolve over time? E.g., are they linear or nonlinear?
-- What is the conditional distribution of the observations given the latent states? E.g., are they Gaussian, Poisson, etc.?
+- How do the latent states evolve over time? E.g., are the dynamics linear or nonlinear?
+- What is the conditional distribution of the observations? E.g., are they Gaussian, Poisson, etc.?
 
 Some design choices are so common that they have their own names. For example, hidden Markov models (HMM) are SSMs with discrete latent states, and linear dynamical systems (LDS) are SSMs with continuous latent states, linear dynamics, and additive Gaussian noise.  `Dynamax` supports these canonical SSMs and allows you to construct more complex models if needed.
 
