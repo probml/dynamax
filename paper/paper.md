@@ -69,7 +69,7 @@ Finally, even for canonical models, there are several algorithms for state infer
 
 # Statement of need
 
-`Dynamax` is an open-source Python pacakge for state space modeling. Since it is built with `JAX` [@jax], it supports just-in-time (JIT) compilation for hardware acceleration on CPU, GPU, and TPU machines. It also supports automatic differentiation for gradient-based model learning. While other libraries exist for state space modeling in Python [@pyhsmm; @ssm; @eeasensors; @seabold2010statsmodels; @hmmlearn],  `Dynamax` provides a unique combination of low-level inference algorithms and high-level modeling objects that can support a wide range of research applications in JAX.
+`Dynamax` is an open-source Python package for state space modeling. Since it is built with `JAX` [@jax], it supports just-in-time (JIT) compilation for hardware acceleration on CPU, GPU, and TPU machines. It also supports automatic differentiation for gradient-based model learning. While other libraries exist for state space modeling in Python [@pyhsmm; @ssm; @eeasensors; @seabold2010statsmodels; @hmmlearn],  `Dynamax` provides a unique combination of low-level inference algorithms and high-level modeling objects that can support a wide range of research applications in JAX.
 
 The API for `Dynamax` is divided into two parts: a set of core, functionally pure, low-level inference algorithms, and a high-level, object oriented module for constructing and fitting probabilistic SSMs. The low-level inference API provides message passing algorithms for several common types of SSMs. For example, `Dynamax` provides `JAX` implementations for:
 
