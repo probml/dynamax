@@ -11,15 +11,21 @@ on:
 
 jobs:
   Workflow:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Select the Python versions to test against
+        os: ["ubuntu-latest", "macos-latest"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+    name: ${{ matrix.os }} with Python ${{ matrix.python-version }}
     steps:
     - name: Clone the reference repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3.5.2
 
-    - name: Set up Python 3.10.6
-      uses: actions/setup-python@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.10.6'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
