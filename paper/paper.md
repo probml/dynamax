@@ -25,7 +25,7 @@ authors:
     affiliation: "7"
     corresponding: true
 affiliations:
- - name: Department of Statistics and Wu Tsai Neurosciences Insitute, Stanford University, USA
+ - name: Department of Statistics and Wu Tsai Neurosciences Institute, Stanford University, USA
    index: 1
  - name: CSAIL, Massachusetts Institute of Technology, USA
    index: 2
