@@ -14,7 +14,7 @@ from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union, Tuple
 from dynamax.utils.utils import psd_solve, symmetrize
 from dynamax.parameters import ParameterProperties
-from dynamax.types import PRNGKey, Scalar
+from dynamax.types import PRNGKeyT, Scalar
 
 class ParamsLGSSMInitial(NamedTuple):
     r"""Parameters of the initial distribution
@@ -363,7 +363,7 @@ def preprocess_args(f):
 
 def lgssm_joint_sample(
     params: ParamsLGSSM,
-    key: PRNGKey,
+    key: PRNGKeyT,
     num_timesteps: int,
     inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
 )-> Tuple[Float[Array, "num_timesteps state_dim"],
@@ -559,7 +559,7 @@ def lgssm_smoother(
 
 
 def lgssm_posterior_sample(
-    key: PRNGKey,
+    key: PRNGKeyT,
     params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None,

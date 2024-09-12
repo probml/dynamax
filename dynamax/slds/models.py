@@ -9,7 +9,7 @@ from typing import Optional, Tuple
 
 from dynamax.ssm import SSM
 from dynamax.slds.inference import ParamsSLDS
-from dynamax.types import PRNGKey
+from dynamax.types import PRNGKeyT
 
 class SLDS(SSM):
     
@@ -71,7 +71,7 @@ class SLDS(SSM):
     def sample(
         self,
         params: ParamsSLDS,
-        key: PRNGKey,
+        key: PRNGKeyT,
         num_timesteps: int,
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> Tuple[Float[Array, "num_timesteps state_dim"],

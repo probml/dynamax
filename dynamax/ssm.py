@@ -14,7 +14,7 @@ from typing_extensions import Protocol
 
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.parameters import ParameterSet, PropertySet
-from dynamax.types import PRNGKey, Scalar
+from dynamax.types import PRNGKeyT, Scalar
 from dynamax.utils.optimize import run_sgd
 from dynamax.utils.utils import ensure_array_has_batch_dim
 
@@ -171,7 +171,7 @@ class SSM(ABC):
     def sample(
         self,
         params: ParameterSet,
-        key: PRNGKey,
+        key: PRNGKeyT,
         num_timesteps: int,
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> Tuple[Float[Array, "num_timesteps state_dim"],
@@ -412,7 +412,7 @@ class SSM(ABC):
         batch_size: int=1,
         num_epochs: int=50,
         shuffle: bool=False,
-        key: PRNGKey=jr.PRNGKey(0)
+        key: PRNGKeyT=jr.PRNGKey(0)
     ) -> Tuple[ParameterSet, Float[Array, " niter"]]:
         r"""Compute parameter MLE/ MAP estimate using Stochastic Gradient Descent (SGD).
 

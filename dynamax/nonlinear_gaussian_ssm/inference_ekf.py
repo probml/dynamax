@@ -9,7 +9,7 @@ from typing import List, Optional
 from dynamax.utils.utils import psd_solve, symmetrize
 from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
-from dynamax.types import PRNGKey
+from dynamax.types import PRNGKeyT
 
 # Helper functions
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
@@ -258,7 +258,7 @@ def extended_kalman_smoother(
 
 
 def extended_kalman_posterior_sample(
-    key: PRNGKey,
+    key: PRNGKeyT,
     params: ParamsNLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]] = None

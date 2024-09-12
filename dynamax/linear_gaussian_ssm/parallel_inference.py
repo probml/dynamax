@@ -34,7 +34,7 @@ import jax.numpy as jnp
 from jax import vmap, lax
 from jaxtyping import Array, Float
 from typing import NamedTuple
-from dynamax.types import PRNGKey
+from dynamax.types import PRNGKeyT
 from functools import partial
 import warnings
 
@@ -354,7 +354,7 @@ def _initialize_sampling_messages(key, params, filtered_means, filtered_covarian
 
 
 def lgssm_posterior_sample(
-    key: PRNGKey,
+    key: PRNGKeyT,
     params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"]
 ) -> Float[Array, "ntime state_dim"]:
