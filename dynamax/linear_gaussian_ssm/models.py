@@ -4,7 +4,7 @@ from jax import jit
 import jax.numpy as jnp
 import jax.random as jr
 from jax.tree_util import tree_map
-from jaxtyping import Array, Float, PyTree
+from jaxtyping import Array, Float
 import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from typing import Any, Optional, Tuple, Union
@@ -14,7 +14,7 @@ from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_joint_sample, lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
-from dynamax.parameters import ParameterProperties, ParameterSet
+from dynamax.parameters import ParameterProperties
 from dynamax.types import PRNGKey, Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
 from dynamax.utils.distributions import MatrixNormalInverseWishart as MNIW

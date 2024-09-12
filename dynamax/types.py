@@ -1,5 +1,4 @@
-from typing import Optional, Union
-from typing_extensions import Protocol
+from typing import Union
 from jaxtyping import Array, Float
 import jax._src.random as prng
 

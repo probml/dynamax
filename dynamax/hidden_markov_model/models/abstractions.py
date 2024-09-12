@@ -3,7 +3,7 @@ from dynamax.ssm import SSM
 from dynamax.types import Scalar
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.parameters import ParameterSet, PropertySet
-from dynamax.hidden_markov_model.inference import HMMPosterior, HMMPosteriorFiltered
+from dynamax.hidden_markov_model.inference import HMMPosterior
 from dynamax.hidden_markov_model.inference import hmm_filter
 from dynamax.hidden_markov_model.inference import hmm_posterior_mode
 from dynamax.hidden_markov_model.inference import hmm_smoother

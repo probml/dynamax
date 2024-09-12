@@ -1,4 +1,3 @@
-import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jaxtyping import Float, Array

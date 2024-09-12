@@ -2,8 +2,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, vmap, value_and_grad
 from jaxtyping import Array, Float, Int
-from typing import NamedTuple, Union
-from functools import partial
+from typing import NamedTuple
 
 from dynamax.hidden_markov_model.inference import HMMPosterior, HMMPosteriorFiltered
 

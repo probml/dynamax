@@ -8,7 +8,7 @@ from functools import partial
 from typing import Callable, Optional, Tuple, Union, NamedTuple
 from jaxtyping import Int, Float, Array
 
-from dynamax.types import Scalar, PRNGKey
+from dynamax.types import Scalar
 
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 

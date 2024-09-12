@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
-from jaxtyping import Float, Array, PyTree
+from jaxtyping import Float, Array
 import optax
 from tensorflow_probability.substrates.jax import distributions as tfd
 from typing import Optional, Union, Tuple, Any

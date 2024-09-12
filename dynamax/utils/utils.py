@@ -8,7 +8,6 @@ import jax
 import jaxlib
 from jaxtyping import Array, Int
 from scipy.optimize import linear_sum_assignment
-from typing import Optional
 from jax.scipy.linalg import cho_factor, cho_solve
 
 def has_tpu():

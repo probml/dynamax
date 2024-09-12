@@ -3,7 +3,6 @@ from numpy.polynomial.hermite_e import hermegauss
 from jax import jacfwd, vmap, lax
 import jax.numpy as jnp
 from jax import lax
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union, Callable
 
