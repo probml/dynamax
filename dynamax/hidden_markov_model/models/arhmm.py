@@ -125,7 +125,7 @@ class LinearAutoregressiveHMM(HMM):
         return (self.num_lags * self.emission_dim,)
 
     def initialize(self,
-                   key: jr.PRNGKey=jr.PRNGKey(0),
+                   key: Array=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
@@ -163,7 +163,7 @@ class LinearAutoregressiveHMM(HMM):
 
     def sample(self,
                params: HMMParameterSet,
-               key: jr.PRNGKey,
+               key: Array,
                num_timesteps: int,
                prev_emissions: Optional[Float[Array, "num_lags emission_dim"]]=None,
     ) -> Tuple[Float[Array, "num_timesteps state_dim"], Float[Array, "num_timesteps emission_dim"]]:

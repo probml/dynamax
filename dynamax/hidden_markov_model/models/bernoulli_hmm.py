@@ -131,7 +131,7 @@ class BernoulliHMM(HMM):
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
     def initialize(self,
-                   key: jr.PRNGKey=jr.PRNGKey(0),
+                   key: Array=jr.PRNGKey(0),
                    method: str="prior",
                    initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,

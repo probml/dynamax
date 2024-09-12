@@ -1,8 +1,6 @@
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax
-from jax import vmap
-from jax import jit
+from jax import jit, lax, vmap
 from functools import partial
 
 from typing import Callable, Optional, Tuple, Union, NamedTuple
@@ -486,7 +484,7 @@ def hmm_posterior_mode(
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_posterior_sample(
-    rng: jr.PRNGKey,
+    key: Array,
     initial_distribution: Float[Array, " num_states"],
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
@@ -515,7 +513,7 @@ def hmm_posterior_sample(
     # Run the sampler backward in time
     def _step(carry, args):
         next_state = carry
-        t, rng, filtered_probs = args
+        t, subkey, filtered_probs = args
 
         A = get_trans_mat(transition_matrix, transition_fn, t)
 
@@ -524,15 +522,15 @@ def hmm_posterior_sample(
         smoothed_probs /= smoothed_probs.sum()
 
         # Sample current state
-        state = jr.choice(rng, a=num_states, p=smoothed_probs)
+        state = jr.choice(subkey, a=num_states, p=smoothed_probs)
 
         return state, state
 
     # Run the HMM smoother
-    rngs = jr.split(rng, num_timesteps)
-    last_state = jr.choice(rngs[-1], a=num_states, p=filtered_probs[-1])
+    keys = jr.split(key, num_timesteps)
+    last_state = jr.choice(keys[-1], a=num_states, p=filtered_probs[-1])
     _, states = lax.scan(
-        _step, last_state, (jnp.arange(1, num_timesteps), rngs[:-1], filtered_probs[:-1]),
+        _step, last_state, (jnp.arange(1, num_timesteps), keys[:-1], filtered_probs[:-1]),
         reverse=True
     )
 

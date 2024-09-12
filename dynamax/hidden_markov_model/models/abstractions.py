@@ -71,7 +71,7 @@ class HMMInitialState(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -212,7 +212,7 @@ class HMMTransitions(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -368,7 +368,7 @@ class HMMEmissions(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
