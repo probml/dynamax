@@ -9,7 +9,7 @@ from dynamax.utils.utils import psd_solve
 
 class ParamsLGSSMInfo(NamedTuple):
     """Lightweight container for passing LGSSM parameters in information form to inference algorithms."""
-    initial_mean: Float[Array, "state_dim"]
+    initial_mean: Float[Array, " state_dim"]
     dynamics_weights: Float[Array, "state_dim state_dim"]
     emission_weights:  Float[Array, "emission_dim state_dim"]
 
@@ -19,9 +19,9 @@ class ParamsLGSSMInfo(NamedTuple):
 
     # Optional parameters (None means zeros)
     dynamics_input_weights: Optional[Float[Array, "input_dim state_dim"]] = None
-    dynamics_bias: Optional[Float[Array, "state_dim"]] = None
+    dynamics_bias: Optional[Float[Array, " state_dim"]] = None
     emission_input_weights: Optional[Float[Array, "input_dim emission_dim"]] = None
-    emission_bias: Optional[Float[Array, "emission_dim"]] = None
+    emission_bias: Optional[Float[Array, " emission_dim"]] = None
 
 
 class PosteriorGSSMInfoFiltered(NamedTuple):

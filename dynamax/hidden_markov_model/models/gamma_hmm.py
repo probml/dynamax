@@ -13,8 +13,8 @@ from typing import NamedTuple, Optional, Tuple, Union
 
 
 class ParamsGammaHMMEmissions(NamedTuple):
-    concentration: Union[Float[Array, "state_dim"], ParameterProperties]
-    rate: Union[Float[Array, "state_dim"], ParameterProperties]
+    concentration: Union[Float[Array, " state_dim"], ParameterProperties]
+    rate: Union[Float[Array, " state_dim"], ParameterProperties]
 
 
 class GammaHMMEmissions(HMMEmissions):
@@ -98,8 +98,8 @@ class GammaHMM(HMM):
     """
     def __init__(self,
                  num_states: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
                  m_step_optimizer: optax.GradientTransformation=optax.adam(1e-2),
                  m_step_num_iters: int=50):
@@ -111,11 +111,11 @@ class GammaHMM(HMM):
     def initialize(self,
                    key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
-                   emission_concentrations: Optional[Float[Array, "num_states"]]=None,
-                   emission_rates: Optional[Float[Array, "num_states"]]=None,
-                   emissions: Optional[Float[Array, "num_timesteps"]]=None,
+                   emission_concentrations: Optional[Float[Array, " num_states"]]=None,
+                   emission_rates: Optional[Float[Array, " num_states"]]=None,
+                   emissions: Optional[Float[Array, " num_timesteps"]]=None,
         ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
 

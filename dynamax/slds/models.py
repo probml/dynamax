@@ -46,7 +46,7 @@ class SLDS(SSM):
         self,
         params: ParamsSLDS,
         dstate: int,
-        cstate: Float[Array, "state_dim"],
+        cstate: Float[Array, " state_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> tfd.Distribution:
         params = params.linear_gaussian
@@ -59,7 +59,7 @@ class SLDS(SSM):
         self,
         params: ParamsSLDS,
         dstate: int,
-        cstate: Float[Array, "state_dim"],
+        cstate: Float[Array, " state_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> tfd.Distribution:
         params = params.linear_gaussian

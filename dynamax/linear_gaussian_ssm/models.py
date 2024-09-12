@@ -88,7 +88,7 @@ class LinearGaussianSSM(SSM):
     def initialize(
         self,
         key: PRNGKey =jr.PRNGKey(0),
-        initial_mean: Optional[Float[Array, "state_dim"]]=None,
+        initial_mean: Optional[Float[Array, " state_dim"]]=None,
         initial_covariance=None,
         dynamics_weights=None,
         dynamics_bias=None,
@@ -178,7 +178,7 @@ class LinearGaussianSSM(SSM):
     def transition_distribution(
         self,
         params: ParamsLGSSM,
-        state: Float[Array, "state_dim"],
+        state: Float[Array, " state_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> tfd.Distribution:
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
@@ -190,7 +190,7 @@ class LinearGaussianSSM(SSM):
     def emission_distribution(
         self,
         params: ParamsLGSSM,
-        state: Float[Array, "state_dim"],
+        state: Float[Array, " state_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> tfd.Distribution:
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)

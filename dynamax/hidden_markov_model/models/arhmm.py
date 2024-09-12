@@ -107,8 +107,8 @@ class LinearAutoregressiveHMM(HMM):
                  num_states: int,
                  emission_dim: int,
                  num_lags: int=1,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0):
         self.emission_dim = emission_dim
         self.num_lags = num_lags
@@ -127,7 +127,7 @@ class LinearAutoregressiveHMM(HMM):
     def initialize(self,
                    key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_weights: Optional[Float[Array, "num_states emission_dim emission_dim_times_num_lags"]]=None,
                    emission_biases: Optional[Float[Array, "num_states emission_dim"]]=None,

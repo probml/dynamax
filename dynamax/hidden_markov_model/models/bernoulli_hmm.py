@@ -17,7 +17,7 @@ from dynamax.utils.utils import pytree_sum
 
 
 class ParamsBernoulliHMMEmissions(NamedTuple):
-    probs: Union[Float[Array, "emission_dim"], ParameterProperties]
+    probs: Union[Float[Array, " emission_dim"], ParameterProperties]
 
 
 class ParamsBernoulliHMM(NamedTuple):
@@ -119,8 +119,8 @@ class BernoulliHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
                  emission_prior_concentration0: Scalar=1.1,
                  emission_prior_concentration1: Scalar=1.1):
@@ -133,7 +133,7 @@ class BernoulliHMM(HMM):
     def initialize(self,
                    key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_probs: Optional[Float[Array, "num_states emission_dim"]]=None
     ) -> Tuple[ParameterSet, PropertySet]:

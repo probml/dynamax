@@ -14,7 +14,7 @@ from typing import NamedTuple, Optional, Tuple, Union
 
 class ParamsLogisticRegressionHMMEmissions(NamedTuple):
     weights: Union[Float[Array, "state_dim input_dim"], ParameterProperties]
-    biases: Union[Float[Array, "state_dim"], ParameterProperties]
+    biases: Union[Float[Array, " state_dim"], ParameterProperties]
 
 
 class LogisticRegressionHMMEmissions(HMMEmissions):
@@ -121,8 +121,8 @@ class LogisticRegressionHMM(HMM):
     def __init__(self,
                  num_states: int,
                  input_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
                  emission_matrices_scale: Scalar=1e8,
                  m_step_optimizer: optax.GradientTransformation=optax.adam(1e-2),
@@ -140,11 +140,11 @@ class LogisticRegressionHMM(HMM):
     def initialize(self,
                    key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_weights: Optional[Float[Array, "num_states input_dim"]]=None,
-                   emission_biases: Optional[Float[Array, "num_states"]]=None,
-                   emissions: Optional[Float[Array, "num_timesteps"]]=None,
+                   emission_biases: Optional[Float[Array, " num_states"]]=None,
+                   emissions: Optional[Float[Array, " num_timesteps"]]=None,
                    inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
         ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.

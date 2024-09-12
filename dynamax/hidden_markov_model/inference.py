@@ -50,7 +50,7 @@ class HMMPosterior(NamedTuple):
     filtered_probs: Float[Array, "num_timesteps num_states"]
     predicted_probs: Float[Array, "num_timesteps num_states"]
     smoothed_probs: Float[Array, "num_timesteps num_states"]
-    initial_probs: Float[Array, "num_states"]
+    initial_probs: Float[Array, " num_states"]
     trans_probs: Optional[Union[Float[Array, "num_timesteps num_states num_states"],
                                 Float[Array, "num_states num_states"]]] = None
 
@@ -97,7 +97,7 @@ def _predict(probs, A):
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_filter(
-    initial_distribution: Float[Array, "num_states"],
+    initial_distribution: Float[Array, " num_states"],
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
@@ -191,7 +191,7 @@ def hmm_backward_filter(
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_two_filter_smoother(
-    initial_distribution: Float[Array, "num_states"],
+    initial_distribution: Float[Array, " num_states"],
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
@@ -245,7 +245,7 @@ def hmm_two_filter_smoother(
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_smoother(
-    initial_distribution: Float[Array, "num_states"],
+    initial_distribution: Float[Array, " num_states"],
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
@@ -325,7 +325,7 @@ def hmm_smoother(
 
 @partial(jit, static_argnames=["transition_fn", "window_size"])
 def hmm_fixed_lag_smoother(
-    initial_distribution: Float[Array, "num_states"],
+    initial_distribution: Float[Array, " num_states"],
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
@@ -439,12 +439,12 @@ def hmm_fixed_lag_smoother(
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_posterior_mode(
-    initial_distribution: Float[Array, "num_states"],
+    initial_distribution: Float[Array, " num_states"],
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
-) -> Int[Array, "num_timesteps"]:
+) -> Int[Array, " num_timesteps"]:
     r"""Compute the most likely state sequence. This is called the Viterbi algorithm.
 
     Args:
@@ -487,12 +487,12 @@ def hmm_posterior_mode(
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_posterior_sample(
     rng: jr.PRNGKey,
-    initial_distribution: Float[Array, "num_states"],
+    initial_distribution: Float[Array, " num_states"],
     transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
                              Float[Array, "num_states num_states"]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
     transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
-) -> Int[Array, "num_timesteps"]:
+) -> Int[Array, " num_timesteps"]:
     r"""Sample a latent sequence from the posterior.
 
     Args:

@@ -148,7 +148,7 @@ class FilterMessage(NamedTuple):
     C:    Float[Array, "ntime state_dim state_dim"]
     J:    Float[Array, "ntime state_dim state_dim"]
     eta:  Float[Array, "ntime state_dim"]
-    logZ: Float[Array, "ntime"]
+    logZ: Float[Array, " ntime"]
 
 
 def _initialize_filtering_messages(params, emissions):

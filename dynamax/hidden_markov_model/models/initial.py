@@ -9,7 +9,7 @@ from typing import NamedTuple, Union
 
 
 class ParamsStandardHMMInitialState(NamedTuple):
-    probs: Union[Float[Array, "state_dim"], ParameterProperties]
+    probs: Union[Float[Array, " state_dim"], ParameterProperties]
 
 
 class StandardHMMInitialState(HMMInitialState):

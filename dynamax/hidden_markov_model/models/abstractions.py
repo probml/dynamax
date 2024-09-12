@@ -59,7 +59,7 @@ class HMMInitialState(ABC):
     @abstractmethod
     def distribution(self,
                      params: ParameterSet,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the initial latent state
 
@@ -195,7 +195,7 @@ class HMMTransitions(ABC):
     def distribution(self,
                      params: ParameterSet,
                      state: int,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the next latent state
 
@@ -351,7 +351,7 @@ class HMMEmissions(ABC):
     def distribution(self,
                      params: ParameterSet,
                      state: int,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the emission
 

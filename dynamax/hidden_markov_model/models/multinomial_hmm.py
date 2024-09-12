@@ -115,8 +115,8 @@ class MultinomialHMM(HMM):
                  emission_dim,
                  num_classes,
                  num_trials,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
                  emission_prior_concentration: Scalar=1.1):
         self.emission_dim = emission_dim
@@ -129,7 +129,7 @@ class MultinomialHMM(HMM):
 
     def initialize(self, key=jr.PRNGKey(0),
                    method="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_probs: Optional[Float[Array, "num_states emission_dim num_classes"]]=None
     ) -> Tuple[ParameterSet, PropertySet]:

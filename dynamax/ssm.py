@@ -85,7 +85,7 @@ class SSM(ABC):
     def initial_distribution(
         self,
         params: ParameterSet,
-        inputs: Optional[Float[Array, "input_dim"]]
+        inputs: Optional[Float[Array, " input_dim"]]
     ) -> tfd.Distribution:
         r"""Return an initial distribution over latent states.
 
@@ -103,8 +103,8 @@ class SSM(ABC):
     def transition_distribution(
         self,
         params: ParameterSet,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]
+        state: Float[Array, " state_dim"],
+        inputs: Optional[Float[Array, " input_dim"]]
     ) -> tfd.Distribution:
         r"""Return a distribution over next latent state given current state.
 
@@ -123,8 +123,8 @@ class SSM(ABC):
     def emission_distribution(
         self,
         params: ParameterSet,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]=None
+        state: Float[Array, " state_dim"],
+        inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         r"""Return a distribution over emissions given current state.
 
@@ -355,7 +355,7 @@ class SSM(ABC):
                                Float[Array, "num_batches num_timesteps input_dim"]]]=None,
         num_iters: int=50,
         verbose: bool=True
-    ) -> Tuple[ParameterSet, Float[Array, "num_iters"]]:
+    ) -> Tuple[ParameterSet, Float[Array, " num_iters"]]:
         r"""Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).
 
         EM aims to find parameters that maximize the marginal log probability,
@@ -413,7 +413,7 @@ class SSM(ABC):
         num_epochs: int=50,
         shuffle: bool=False,
         key: PRNGKey=jr.PRNGKey(0)
-    ) -> Tuple[ParameterSet, Float[Array, "niter"]]:
+    ) -> Tuple[ParameterSet, Float[Array, " niter"]]:
         r"""Compute parameter MLE/ MAP estimate using Stochastic Gradient Descent (SGD).
 
         SGD aims to find parameters that maximize the marginal log probability,

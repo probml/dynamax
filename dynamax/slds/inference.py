@@ -9,7 +9,7 @@ from dynamax.utils.utils import psd_solve
 from dynamax.types import PRNGKey
 
 class DiscreteParamsSLDS(NamedTuple):
-    initial_distribution: Float[Array, "num_states"]
+    initial_distribution: Float[Array, " num_states"]
     transition_matrix : Float[Array, "num_states num_states"]
     proposal_transition_matrix : Float[Array, "num_states num_states"]
 

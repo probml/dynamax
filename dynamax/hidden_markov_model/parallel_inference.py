@@ -29,7 +29,7 @@ def _condition_on(A, ll, axis=-1):
     return A_cond, jnp.log(norm) + ll_max
 
 
-def hmm_filter(initial_probs: Float[Array, "num_states"],
+def hmm_filter(initial_probs: Float[Array, " num_states"],
                transition_matrix: Float[Array, "num_states num_states"],
                log_likelihoods: Float[Array, "num_timesteps num_states"]
 ) -> HMMPosteriorFiltered:
@@ -88,7 +88,7 @@ def hmm_filter(initial_probs: Float[Array, "num_states"],
 #---------------------------------------------------------------------------#
 
 
-def hmm_smoother(initial_probs: Float[Array, "num_states"],
+def hmm_smoother(initial_probs: Float[Array, " num_states"],
                  transition_matrix: Float[Array, "num_states num_states"],
                  log_likelihoods: Float[Array, "num_timesteps num_states"]
 ) -> HMMPosteriorFiltered:
@@ -160,10 +160,10 @@ def _initialize_sampling_messages(rng, transition_matrix, filtered_probs):
 
 
 def hmm_posterior_sample(rng: jr.PRNGKey,
-                         initial_distribution: Float[Array, "num_states"],
+                         initial_distribution: Float[Array, " num_states"],
                          transition_matrix: Float[Array, "num_states num_states"],
                          log_likelihoods: Float[Array, "num_timesteps num_states"]
-) -> Int[Array, "num_timesteps"]:
+) -> Int[Array, " num_timesteps"]:
     r"""Sample a sequence of hidden states from the posterior.
 
     Args:

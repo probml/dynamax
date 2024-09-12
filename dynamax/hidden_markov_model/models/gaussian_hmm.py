@@ -235,7 +235,7 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
 
 class ParamsSphericalGaussianHMMEmissions(NamedTuple):
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
-    scales: Union[Float[Array, "state_dim"], ParameterProperties]
+    scales: Union[Float[Array, " state_dim"], ParameterProperties]
 
 
 class SphericalGaussianHMMEmissions(HMMEmissions):
@@ -598,10 +598,10 @@ class GaussianHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
-                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]]=0.0,
                  emission_prior_concentration: Scalar=1e-4,
                  emission_prior_scale: Union[Scalar, Float[Array, "emission_dim emission_dim"]]=1e-4,
                  emission_prior_extra_df: Scalar=0.1):
@@ -619,7 +619,7 @@ class GaussianHMM(HMM):
     def initialize(self,
                    key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emission_covariances:  Optional[Float[Array, "num_states emission_dim emission_dim"]]=None,
@@ -691,11 +691,11 @@ class DiagonalGaussianHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
-                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
-                 emission_prior_mean_concentration: Union[Scalar, Float[Array, "emission_dim"]]=1e-4,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]]=0.0,
+                 emission_prior_mean_concentration: Union[Scalar, Float[Array, " emission_dim"]]=1e-4,
                  emission_prior_concentration: Scalar=0.1,
                  emission_prior_scale: Scalar=0.1):
 
@@ -713,7 +713,7 @@ class DiagonalGaussianHMM(HMM):
 
     def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emission_scale_diags: Optional[Float[Array, "num_states emission_dim"]]=None,
@@ -786,10 +786,10 @@ class SphericalGaussianHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
-                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]]=0.0,
                  emission_prior_mean_covariance: Union[Scalar, Float[Array, "emission_dim emission_dim"]]=1.0,
                  emission_var_concentration: Scalar=1.1,
                  emission_var_rate: Scalar=1.1,
@@ -811,10 +811,10 @@ class SphericalGaussianHMM(HMM):
 
     def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
-                   emission_scales: Optional[Float[Array, "num_states"]]=None,
+                   emission_scales: Optional[Float[Array, " num_states"]]=None,
                    emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
         ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
@@ -880,10 +880,10 @@ class SharedCovarianceGaussianHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
-                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]]=0.0,
                  emission_prior_concentration: Scalar=1e-4,
                  emission_prior_scale: Scalar=1e-4,
                  emission_prior_extra_df: Scalar=0.1):
@@ -901,7 +901,7 @@ class SharedCovarianceGaussianHMM(HMM):
 
     def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emission_covariance:  Optional[Float[Array, "emission_dim emission_dim"]]=None,
@@ -976,8 +976,8 @@ class LowRankGaussianHMM(HMM):
     def __init__(self, num_states: int,
                  emission_dim: int,
                  emission_rank: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
                  emission_diag_factor_concentration: Scalar=1.1,
                  emission_diag_factor_rate: Scalar=1.1,
@@ -997,7 +997,7 @@ class LowRankGaussianHMM(HMM):
 
     def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emission_cov_diag_factors: Optional[Float[Array, "num_states emission_dim"]]=None,
