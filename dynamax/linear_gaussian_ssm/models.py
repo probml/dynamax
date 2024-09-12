@@ -7,8 +7,8 @@ from jax.tree_util import tree_map
 from jaxtyping import Array, Float
 import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from typing import Any, Optional, Tuple, Union
-from typing_extensions import Protocol
+from typing import Any, Optional, Tuple, Union, runtime_checkable
+from typing_extensions import Protocol 
 
 from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_joint_sample, lgssm_filter, lgssm_smoother, lgssm_posterior_sample
@@ -22,6 +22,7 @@ from dynamax.utils.distributions import NormalInverseWishart as NIW
 from dynamax.utils.distributions import mniw_posterior_update, niw_posterior_update
 from dynamax.utils.utils import pytree_stack, psd_solve
 
+@runtime_checkable
 class SuffStatsLGSSM(Protocol):
     """A :class:`NamedTuple` with sufficient statistics for LGSSM parameter estimation."""
     pass

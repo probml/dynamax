@@ -9,7 +9,7 @@ from jax.tree_util import tree_map
 from jaxtyping import Float, Array
 import optax
 from tensorflow_probability.substrates.jax import distributions as tfd
-from typing import Optional, Union, Tuple, Any
+from typing import Optional, Union, Tuple, Any, runtime_checkable
 from typing_extensions import Protocol
 
 from dynamax.parameters import to_unconstrained, from_unconstrained
@@ -19,10 +19,12 @@ from dynamax.utils.optimize import run_sgd
 from dynamax.utils.utils import ensure_array_has_batch_dim
 
 
+@runtime_checkable
 class Posterior(Protocol):
     """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes."""
     pass
 
+@runtime_checkable
 class SuffStatsSSM(Protocol):
     """A :class:`NamedTuple` with sufficient statics stored as :class:`jax.DeviceArray` in the leaf nodes."""
     pass
