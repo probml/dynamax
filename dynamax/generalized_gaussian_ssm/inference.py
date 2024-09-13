@@ -82,7 +82,7 @@ CMGFIntegrals = Union[EKFIntegrals, UKFIntegrals, GHKFIntegrals]
 
 
 def _predict(m, P, f, Q, u, g_ev, g_cov):
-    """Predict next mean and covariance under an additive-noise Gaussian filter
+    r"""Predict next mean and covariance under an additive-noise Gaussian filter
 
         p(x_{t+1}) = N(x_{t+1} | mu_pred, Sigma_pred)
         where
@@ -116,7 +116,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
 
 
 def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, emission_dist):
-    """Condition a Gaussian potential on a new observation with arbitrary
+    r"""Condition a Gaussian potential on a new observation with arbitrary
        likelihood with given functions for conditional moments and make a
        Gaussian approximation.
        p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
@@ -171,7 +171,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, em
 
 
 def _statistical_linear_regression(mu, Sigma, m, S, C):
-    """Return moment-matching affine coefficients and approximation noise variance
+    r"""Return moment-matching affine coefficients and approximation noise variance
     given joint moments.
 
         g(x) \approx Ax + b + e where e ~ N(0, Omega)

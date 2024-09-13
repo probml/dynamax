@@ -719,7 +719,7 @@ class DiagonalGaussianHMM(HMM):
                    emission_scale_diags: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
         ) -> Tuple[HMMParameterSet, HMMPropertySet]:
-        """Initialize the model parameters and their corresponding properties.
+        r"""Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.

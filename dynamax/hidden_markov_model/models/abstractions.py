@@ -485,7 +485,7 @@ class HMMEmissions(ABC):
 
 
 class HMM(SSM):
-    """Abstract base class of Hidden Markov Models (HMMs).
+    r"""Abstract base class of Hidden Markov Models (HMMs).
 
     The model is defined as follows
 
