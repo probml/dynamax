@@ -16,8 +16,8 @@ class StandardHMMInitialState(HMMInitialState):
     """Abstract class for HMM initial distributions.
     """
     def __init__(self,
-                 num_states,
-                 initial_probs_concentration=1.1):
+                 num_states: int,
+                 initial_probs_concentration: Union[float, Float[Array, " num_states"]]=1.1):
         """
         Args:
             initial_probabilities[k]: prob(hidden(1)=k)
