@@ -1,15 +1,16 @@
+from typing import NamedTuple, Optional, Tuple, Union
 import jax.numpy as jnp
 import jax.random as jr
+from jaxtyping import Float, Array
+import optax
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from jaxtyping import Float, Array
+
 from dynamax.parameters import ParameterProperties
 from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions, HMMParameterSet, HMMPropertySet
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
-from dynamax.types import Scalar
-import optax
-from typing import NamedTuple, Optional, Tuple, Union
+from dynamax.types import IntScalar, Scalar
 
 
 class ParamsLogisticRegressionHMMEmissions(NamedTuple):
@@ -19,31 +20,32 @@ class ParamsLogisticRegressionHMMEmissions(NamedTuple):
 
 class LogisticRegressionHMMEmissions(HMMEmissions):
     def __init__(self,
-                 num_states,
-                 input_dim,
-                 emission_matrices_scale=1e8,
-                 m_step_optimizer=optax.adam(1e-2),
-                 m_step_num_iters=50):
+                 num_states: int,
+                 input_dim: int,
+                 emission_matrices_scale: Scalar = 1e8,
+                 m_step_optimizer: optax.GradientTransformation = optax.adam(1e-2),
+                 m_step_num_iters: int = 50):
         super().__init__(m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         self.num_states = num_states
         self.input_dim = input_dim
         self.emission_weights_scale = emission_matrices_scale
 
     @property
-    def emission_shape(self):
+    def emission_shape(self) -> Tuple:
         return ()
 
     @property
-    def inputs_shape(self):
+    def inputs_shape(self) -> Tuple[int]:
         return (self.input_dim,)
 
     def initialize(self,
-                   key=jr.PRNGKey(0),
-                   method="prior",
-                   emission_weights=None,
-                   emission_biases=None,
-                   emissions=None,
-                   inputs=None):
+                   key: Array = jr.PRNGKey(0),
+                   method: str = "prior",
+                   emission_weights: Optional[Float[Array, "num_states input_dim"]] = None,
+                   emission_biases: Optional[Float[Array, " num_states"]] = None,
+                   emissions: Optional[Float[Array, " num_timesteps"]] = None,
+                   inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None
+                   ) -> Tuple[ParamsLogisticRegressionHMMEmissions, ParamsLogisticRegressionHMMEmissions]:
 
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
@@ -78,10 +80,15 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
             biases=ParameterProperties())
         return params, props
 
-    def log_prior(self, params):
+    def log_prior(self, params: ParamsLogisticRegressionHMMEmissions) -> Float[Array, ""]:
         return tfd.Normal(0, self.emission_weights_scale).log_prob(params.weights).sum()
 
-    def distribution(self, params, state, inputs):
+    def distribution(
+            self,
+            params: ParamsLogisticRegressionHMMEmissions,
+            state: IntScalar,
+            inputs: Float[Array, "input_dim"]
+            ) -> tfd.Distribution:
         logits = params.weights[state] @ inputs + params.biases[state]
         return tfd.Bernoulli(logits=logits)
 
@@ -134,7 +141,7 @@ class LogisticRegressionHMM(HMM):
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
     @property
-    def inputs_shape(self):
+    def inputs_shape(self) -> Tuple[int, ...]:
         return (self.inputs_dim,)
 
     def initialize(self,
