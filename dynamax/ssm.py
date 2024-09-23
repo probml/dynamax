@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
-from jaxtyping import Float, Array
+from jaxtyping import Array, Float, Real
 import optax
 from tensorflow_probability.substrates.jax import distributions as tfd
 from typing import Optional, Union, Tuple, Any, runtime_checkable
@@ -351,8 +351,8 @@ class SSM(ABC):
         self,
         params: ParameterSet,
         props: PropertySet,
-        emissions: Union[Float[Array, "num_timesteps emission_dim"],
-                         Float[Array, "num_batches num_timesteps emission_dim"]],
+        emissions: Union[Real[Array, "num_timesteps emission_dim"],
+                         Real[Array, "num_batches num_timesteps emission_dim"]],
         inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
                                Float[Array, "num_batches num_timesteps input_dim"]]]=None,
         num_iters: int=50,
