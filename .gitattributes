@@ -1,1 +1,2 @@
 dynamax/_version.py export-subst
+*.ipynb linguist-documentation
