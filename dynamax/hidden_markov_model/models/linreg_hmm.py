@@ -94,7 +94,7 @@ class LinearRegressionHMMEmissions(HMMEmissions):
             self,
             params: ParamsLinearRegressionHMMEmissions,
             state: Union[int, Int[Array, ""]],
-            inputs: Array
+            inputs: Float[Array, " input_dim"]
     ):
         prediction = params.weights[state] @ inputs
         prediction +=  params.biases[state]
