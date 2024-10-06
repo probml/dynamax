@@ -1,9 +1,11 @@
 from abc import abstractmethod, ABC
+from typing import Any, Optional, Tuple, runtime_checkable, Union
+from typing_extensions import Protocol
 from dynamax.ssm import SSM
-from dynamax.types import Scalar
+from dynamax.types import IntScalar, Scalar
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.parameters import ParameterSet, PropertySet
-from dynamax.hidden_markov_model.inference import HMMPosterior, HMMPosteriorFiltered
+from dynamax.hidden_markov_model.inference import HMMPosterior
 from dynamax.hidden_markov_model.inference import hmm_filter
 from dynamax.hidden_markov_model.inference import hmm_posterior_mode
 from dynamax.hidden_markov_model.inference import hmm_smoother
@@ -14,13 +16,12 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
 from jax.tree_util import tree_map
-from jaxtyping import Float, Array, PyTree
+from jaxtyping import Float, Array, PyTree, Real
 import optax
 from tensorflow_probability.substrates.jax import distributions as tfd
-from typing import Any, Optional, Tuple
-from typing_extensions import Protocol
 
 
+@runtime_checkable
 class HMMParameterSet(Protocol):
     """Container for HMM parameters.
 
@@ -28,11 +29,20 @@ class HMMParameterSet(Protocol):
     :param transitions: (ParameterSet) transition distribution parameters
     :param emissions: (ParameterSet) emission distribution parameters
     """
-    initial: ParameterSet
-    transitions: ParameterSet
-    emissions: ParameterSet
+    @property
+    def initial(self) -> ParameterSet:
+        pass
+
+    @property
+    def transitions(self) -> ParameterSet:
+        pass
+
+    @property
+    def emissions(self) -> ParameterSet:
+        pass
 
 
+@runtime_checkable
 class HMMPropertySet(Protocol):
     """Container for properties of HMM parameter properties.
 
@@ -40,10 +50,17 @@ class HMMPropertySet(Protocol):
     :param transitions: (PropertySet) transition distribution properties
     :param emissions: (PropertySet) emission distribution properties
     """
-    initial: PropertySet
-    transitions: PropertySet
-    emissions: PropertySet
+    @property
+    def initial(self) -> PropertySet:
+        pass
 
+    @property
+    def transitions(self) -> PropertySet:
+        pass
+
+    @property
+    def emissions(self) -> PropertySet:
+        pass
 
 
 class HMMInitialState(ABC):
@@ -58,8 +75,8 @@ class HMMInitialState(ABC):
 
     @abstractmethod
     def distribution(self,
-                     params: ParameterSet,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     params: HMMParameterSet,
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the initial latent state
 
@@ -71,7 +88,7 @@ class HMMInitialState(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -97,7 +114,7 @@ class HMMInitialState(ABC):
         raise NotImplementedError
 
     def _compute_initial_probs(self, params, inputs=None):
-        return self.initial_distribution(params, inputs).probs_parameter()
+        return self.distribution(params, inputs).probs_parameter()
 
     def collect_suff_stats(self,
                            params: ParameterSet,
@@ -194,8 +211,8 @@ class HMMTransitions(ABC):
     @abstractmethod
     def distribution(self,
                      params: ParameterSet,
-                     state: int,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     state: IntScalar,
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the next latent state
 
@@ -212,7 +229,7 @@ class HMMTransitions(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -350,8 +367,8 @@ class HMMEmissions(ABC):
     @abstractmethod
     def distribution(self,
                      params: ParameterSet,
-                     state: int,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     state: IntScalar,
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the emission
 
@@ -368,7 +385,7 @@ class HMMEmissions(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -405,7 +422,8 @@ class HMMEmissions(ABC):
     def collect_suff_stats(self,
                            params: ParameterSet,
                            posterior: HMMPosterior,
-                           emissions: Float[Array, "num_timesteps emission_dim"],
+                           emissions: Union[Real[Array, "num_timesteps emission_dim"],
+                                            Real[Array, " num_timesteps"]],
                            inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> PyTree:
         """Collect sufficient statistics for updating the emission distribution parameters.
@@ -485,7 +503,7 @@ class HMMEmissions(ABC):
 
 
 class HMM(SSM):
-    """Abstract base class of Hidden Markov Models (HMMs).
+    r"""Abstract base class of Hidden Markov Models (HMMs).
 
     The model is defined as follows
 

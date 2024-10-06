@@ -34,7 +34,7 @@ import jax.numpy as jnp
 from jax import vmap, lax
 from jaxtyping import Array, Float
 from typing import NamedTuple
-from dynamax.types import PRNGKey
+from dynamax.types import PRNGKeyT
 from functools import partial
 import warnings
 
@@ -148,7 +148,7 @@ class FilterMessage(NamedTuple):
     C:    Float[Array, "ntime state_dim state_dim"]
     J:    Float[Array, "ntime state_dim state_dim"]
     eta:  Float[Array, "ntime state_dim"]
-    logZ: Float[Array, "ntime"]
+    logZ: Float[Array, " ntime"]
 
 
 def _initialize_filtering_messages(params, emissions):
@@ -354,7 +354,7 @@ def _initialize_sampling_messages(key, params, filtered_means, filtered_covarian
 
 
 def lgssm_posterior_sample(
-    key: PRNGKey,
+    key: PRNGKeyT,
     params: ParamsLGSSM,
     emissions: Float[Array, "ntime emission_dim"]
 ) -> Float[Array, "ntime state_dim"]:

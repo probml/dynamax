@@ -2,7 +2,6 @@ import jax.numpy as jnp
 import jax.random as jr
 from dynamax.slds import SLDS, DiscreteParamsSLDS, LGParamsSLDS, ParamsSLDS, rbpfilter, rbpfilter_optimal
 from functools import partial
-import matplotlib.pyplot as plt
 import dynamax.slds.mixture_kalman_filter_demo as kflib
 from functools import partial
 from jax.scipy.special import logit

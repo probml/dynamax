@@ -6,23 +6,25 @@ import jax.numpy as jnp
 import jax.random as jr
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
-from jaxtyping import Float, Array, PyTree
+from jaxtyping import Array, Float, Real
 import optax
 from tensorflow_probability.substrates.jax import distributions as tfd
-from typing import Optional, Union, Tuple, Any
+from typing import Optional, Union, Tuple, Any, runtime_checkable
 from typing_extensions import Protocol
 
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.parameters import ParameterSet, PropertySet
-from dynamax.types import PRNGKey, Scalar
+from dynamax.types import PRNGKeyT, Scalar
 from dynamax.utils.optimize import run_sgd
 from dynamax.utils.utils import ensure_array_has_batch_dim
 
 
+@runtime_checkable
 class Posterior(Protocol):
     """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes."""
     pass
 
+@runtime_checkable
 class SuffStatsSSM(Protocol):
     """A :class:`NamedTuple` with sufficient statics stored as :class:`jax.DeviceArray` in the leaf nodes."""
     pass
@@ -85,7 +87,7 @@ class SSM(ABC):
     def initial_distribution(
         self,
         params: ParameterSet,
-        inputs: Optional[Float[Array, "input_dim"]]
+        inputs: Optional[Float[Array, " input_dim"]]
     ) -> tfd.Distribution:
         r"""Return an initial distribution over latent states.
 
@@ -103,8 +105,8 @@ class SSM(ABC):
     def transition_distribution(
         self,
         params: ParameterSet,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]
+        state: Float[Array, " state_dim"],
+        inputs: Optional[Float[Array, " input_dim"]]
     ) -> tfd.Distribution:
         r"""Return a distribution over next latent state given current state.
 
@@ -123,8 +125,8 @@ class SSM(ABC):
     def emission_distribution(
         self,
         params: ParameterSet,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]=None
+        state: Float[Array, " state_dim"],
+        inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         r"""Return a distribution over emissions given current state.
 
@@ -171,7 +173,7 @@ class SSM(ABC):
     def sample(
         self,
         params: ParameterSet,
-        key: PRNGKey,
+        key: PRNGKeyT,
         num_timesteps: int,
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> Tuple[Float[Array, "num_timesteps state_dim"],
@@ -349,13 +351,13 @@ class SSM(ABC):
         self,
         params: ParameterSet,
         props: PropertySet,
-        emissions: Union[Float[Array, "num_timesteps emission_dim"],
-                         Float[Array, "num_batches num_timesteps emission_dim"]],
+        emissions: Union[Real[Array, "num_timesteps emission_dim"],
+                         Real[Array, "num_batches num_timesteps emission_dim"]],
         inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
                                Float[Array, "num_batches num_timesteps input_dim"]]]=None,
         num_iters: int=50,
         verbose: bool=True
-    ) -> Tuple[ParameterSet, Float[Array, "num_iters"]]:
+    ) -> Tuple[ParameterSet, Float[Array, " num_iters"]]:
         r"""Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).
 
         EM aims to find parameters that maximize the marginal log probability,
@@ -412,8 +414,8 @@ class SSM(ABC):
         batch_size: int=1,
         num_epochs: int=50,
         shuffle: bool=False,
-        key: PRNGKey=jr.PRNGKey(0)
-    ) -> Tuple[ParameterSet, Float[Array, "niter"]]:
+        key: PRNGKeyT=jr.PRNGKey(0)
+    ) -> Tuple[ParameterSet, Float[Array, " niter"]]:
         r"""Compute parameter MLE/ MAP estimate using Stochastic Gradient Descent (SGD).
 
         SGD aims to find parameters that maximize the marginal log probability,
