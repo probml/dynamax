@@ -18,12 +18,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
@@ -33,9 +33,9 @@
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341" />
-  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=3ee479438cf8b5e0d341"></script>
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -125,6 +125,8 @@
         <div class="sidebar-primary-item">
 
   
+    
+  
 
 <a class="navbar-brand logo" href="../../index.html">
   
@@ -146,7 +148,7 @@
 
  <script>
  document.write(`
-   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass"></i>
     <span class="search-button__default-text">Search</span>
     <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -316,10 +318,10 @@
 
 <script>
 document.write(`
-  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
   </button>
 `);
 </script>
@@ -327,7 +329,7 @@ document.write(`
 
 <script>
 document.write(`
-  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
   </button>
 `);
@@ -557,96 +559,15 @@ A_k &amp;\sim \mathrm{Dir}(\beta 1_K + \kappa e_k) \quad \text{for } k=1,\ldots,
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">OverflowError</span><span class="g g-Whitespace">                             </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">line</span> <span class="mi">5</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="n">hmm</span> <span class="o">=</span> <span class="n">CategoricalHMM</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_emissions</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">,</span>
-<span class="g g-Whitespace">      </span><span class="mi">2</span>                      <span class="n">transition_matrix_stickiness</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="ne">----&gt; </span><span class="mi">5</span> <span class="n">fbgd_params</span><span class="p">,</span> <span class="n">fbgd_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Randomly initialized parameters&quot;</span><span class="p">)</span>
-<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="n">print_params</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">)</span>
-
-<span class="nn">File ~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/categorical_hmm.py:174,</span> in <span class="ni">CategoricalHMM.initialize</span><span class="nt">(self, key, method, initial_probs, transition_matrix, emission_probs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">172</span> <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span> <span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">173</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
-<span class="ne">--&gt; </span><span class="mi">174</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">175</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">176</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">emission_probs</span><span class="o">=</span><span class="n">emission_probs</span><span class="p">)</span>
-
-<span class="nn">File ~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/initial.py:45,</span> in <span class="ni">StandardHMMInitialState.initialize</span><span class="nt">(self, key, method, initial_probs)</span>
-<span class="g g-Whitespace">     </span><span class="mi">43</span> <span class="k">if</span> <span class="n">initial_probs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<span class="g g-Whitespace">     </span><span class="mi">44</span>     <span class="n">this_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">45</span>     <span class="n">initial_probs</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_probs_concentration</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">this_key</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">47</span> <span class="c1"># Package the results into dictionaries</span>
-<span class="g g-Whitespace">     </span><span class="mi">48</span> <span class="n">params</span> <span class="o">=</span> <span class="n">ParamsStandardHMMInitialState</span><span class="p">(</span><span class="n">probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:1205,</span> in <span class="ni">Distribution.sample</span><span class="nt">(self, sample_shape, seed, name, **kwargs)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1190</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;Generate samples of the specified shape.</span>
-<span class="g g-Whitespace">   </span><span class="mi">1191</span><span class="sd"> </span>
-<span class="g g-Whitespace">   </span><span class="mi">1192</span><span class="sd"> Note that a call to `sample()` without arguments will generate a single</span>
-<span class="sd">   (...)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1202</span><span class="sd">   samples: a `Tensor` with prepended dimensions `sample_shape`.</span>
-<span class="g g-Whitespace">   </span><span class="mi">1203</span><span class="sd"> &quot;&quot;&quot;</span>
-<span class="g g-Whitespace">   </span><span class="mi">1204</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_and_control_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-<span class="ne">-&gt; </span><span class="mi">1205</span>   <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_sample_n</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py:1182,</span> in <span class="ni">Distribution._call_sample_n</span><span class="nt">(self, sample_shape, seed, **kwargs)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1178</span> <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="n">convert_to_shape_tensor</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">1179</span>     <span class="n">ps</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sample_shape&#39;</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1180</span> <span class="n">sample_shape</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_sample_shape_to_vector</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">1181</span>     <span class="n">sample_shape</span><span class="p">,</span> <span class="s1">&#39;sample_shape&#39;</span><span class="p">)</span>
-<span class="ne">-&gt; </span><span class="mi">1182</span> <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_n</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">1183</span>     <span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">()</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span> <span class="k">else</span> <span class="n">seed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1184</span> <span class="n">samples</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nest</span><span class="o">.</span><span class="n">map_structure</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">1185</span>     <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ps</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">ps</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]],</span> <span class="mi">0</span><span class="p">)),</span>
-<span class="g g-Whitespace">   </span><span class="mi">1186</span>     <span class="n">samples</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1187</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_sample_static_shape</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/dirichlet.py:233,</span> in <span class="ni">Dirichlet._sample_n</span><span class="nt">(self, n, seed)</span>
-<span class="g g-Whitespace">    </span><span class="mi">229</span> <span class="k">def</span> <span class="nf">_sample_n</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="g g-Whitespace">    </span><span class="mi">230</span>   <span class="c1"># We use the log-space gamma sampler to avoid the bump-up-from-0 correction,</span>
-<span class="g g-Whitespace">    </span><span class="mi">231</span>   <span class="c1"># and to apply the concentration &lt; 1 recurrence in log-space. This improves</span>
-<span class="g g-Whitespace">    </span><span class="mi">232</span>   <span class="c1"># accuracy for small concentrations.</span>
-<span class="ne">--&gt; </span><span class="mi">233</span>   <span class="n">log_gamma_sample</span> <span class="o">=</span> <span class="n">gamma_lib</span><span class="o">.</span><span class="n">random_gamma</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">234</span>       <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">concentration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">concentration</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">log_space</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">235</span>   <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">236</span>       <span class="n">log_gamma_sample</span> <span class="o">-</span>
-<span class="g g-Whitespace">    </span><span class="mi">237</span>       <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">reduce_logsumexp</span><span class="p">(</span><span class="n">log_gamma_sample</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/gamma.py:725,</span> in <span class="ni">random_gamma</span><span class="nt">(shape, concentration, rate, log_rate, seed, log_space)</span>
-<span class="g g-Whitespace">    </span><span class="mi">723</span> <span class="k">def</span> <span class="nf">random_gamma</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">724</span>     <span class="n">shape</span><span class="p">,</span> <span class="n">concentration</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_rate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_space</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="ne">--&gt; </span><span class="mi">725</span>   <span class="k">return</span> <span class="n">random_gamma_with_runtime</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">726</span>       <span class="n">shape</span><span class="p">,</span> <span class="n">concentration</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">log_rate</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">log_space</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/distributions/gamma.py:718,</span> in <span class="ni">random_gamma_with_runtime</span><span class="nt">(shape, concentration, rate, log_rate, seed, log_space)</span>
-<span class="g g-Whitespace">    </span><span class="mi">713</span>   <span class="n">log_rate</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">log_rate</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">714</span> <span class="n">total_shape</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">715</span>     <span class="p">[</span><span class="n">shape</span><span class="p">,</span> <span class="n">ps</span><span class="o">.</span><span class="n">broadcast_shape</span><span class="p">(</span><span class="n">ps</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">concentration</span><span class="p">),</span>
-<span class="g g-Whitespace">    </span><span class="mi">716</span>                                <span class="n">_shape_or_scalar</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">log_rate</span><span class="p">))],</span>
-<span class="g g-Whitespace">    </span><span class="mi">717</span>     <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">718</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">samplers</span><span class="o">.</span><span class="n">sanitize_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">salt</span><span class="o">=</span><span class="s1">&#39;random_gamma&#39;</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">719</span> <span class="k">return</span> <span class="n">_random_gamma_gradient</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">720</span>     <span class="n">total_shape</span><span class="p">,</span> <span class="n">concentration</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">log_rate</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">log_space</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/internal/samplers.py:144,</span> in <span class="ni">sanitize_seed</span><span class="nt">(seed, salt, name)</span>
-<span class="g g-Whitespace">    </span><span class="mi">142</span> <span class="k">if</span> <span class="n">salt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">143</span>   <span class="n">salt</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha512</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">salt</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">144</span>   <span class="n">seed</span> <span class="o">=</span> <span class="n">fold_in</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">salt</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">146</span> <span class="k">if</span> <span class="n">JAX_MODE</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">147</span>   <span class="kn">import</span> <span class="nn">jax</span>  <span class="c1"># pylint: disable=g-import-not-at-top</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.19/x64/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/internal/samplers.py:186,</span> in <span class="ni">fold_in</span><span class="nt">(seed, salt)</span>
-<span class="g g-Whitespace">    </span><span class="mi">183</span>   <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">jaxrand</span>  <span class="c1"># pylint: disable=g-import-not-at-top</span>
-<span class="g g-Whitespace">    </span><span class="mi">184</span>   <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>  <span class="c1"># pylint: disable=g-import-not-at-top</span>
-<span class="g g-Whitespace">    </span><span class="mi">185</span>   <span class="k">return</span> <span class="n">jaxrand</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span>
-<span class="ne">--&gt; </span><span class="mi">186</span>       <span class="n">seed</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">salt</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">SEED_DTYPE</span><span class="p">))</span>
-<span class="g g-Whitespace">    </span><span class="mi">187</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">salt</span><span class="p">,</span> <span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">integer_types</span><span class="p">)):</span>
-<span class="g g-Whitespace">    </span><span class="mi">188</span>   <span class="n">seed</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">bitwise</span><span class="o">.</span><span class="n">bitwise_xor</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">189</span>       <span class="n">seed</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">([</span><span class="n">salt</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">64</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)])</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
-
-<span class="ne">OverflowError</span>: Python int too large to convert to C long
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Randomly initialized parameters
+initial probs:
+[0.793 0.207]
+transition matrix:
+[[0.978 0.022]
+ [0.252 0.748]]
+emission probs:
+[[0.145 0.115 0.024 0.136 0.187 0.393]
+ [0.010 0.119 0.416 0.325 0.068 0.061]]
 </pre></div>
 </div>
 </div>
@@ -705,7 +626,7 @@ A_k &amp;\sim \mathrm{Dir}(\beta 1_K + \kappa e_k) \quad \text{for } k=1,\ldots,
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9ac2aa2e56d05e019e13037eea3503edda5a40f9778b0ccd13b0a2dd2c2f6a62.png" src="../../_images/9ac2aa2e56d05e019e13037eea3503edda5a40f9778b0ccd13b0a2dd2c2f6a62.png" />
+<img alt="../../_images/9c3360391ab9b5d3e37f609f4bc82d6bce0e7b619d1afa674f54f3c77af38beb.png" src="../../_images/9c3360391ab9b5d3e37f609f4bc82d6bce0e7b619d1afa674f54f3c77af38beb.png" />
 </div>
 </div>
 <p>As you can see, stochastic gradient descent converges much more quickly that full-batch gradient descent in this example. Intuitively, that’s because SGD takes multiple steps per <em>epoch</em> (i.e. each complete sweep through the dataset), whereas full-batch gradient descent takes only one.</p>
@@ -823,7 +744,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/5c55850707208423386917493556f9a1d3d8b45d8314cc9f36ad9b8a0f70029e.png" src="../../_images/5c55850707208423386917493556f9a1d3d8b45d8314cc9f36ad9b8a0f70029e.png" />
+<img alt="../../_images/713583b8134105a06c7584b362a17b090d98c8458de92449cb458354635dd022.png" src="../../_images/713583b8134105a06c7584b362a17b090d98c8458de92449cb458354635dd022.png" />
 </div>
 </div>
 <p>Not only does EM converge much faster on this example (here, in only a handful of iterations), it also converges to a better estimate of the parameters. Indeed, it essentially matches the loss obtained by the parameters that truly generated the data. We see that its parameter estimates are nearly the same as the true parameters, up to label switching.</p>
@@ -835,12 +756,14 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">NameError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="nn">/Users/kpmurphy/github/dynamax/docs/notebooks/hmm/casino_hmm_learning.ipynb Cell 27</span> in <span class="ni">&lt;cell line: 1&gt;</span><span class="nt">()</span>
-<span class="o">----&gt;</span> <span class="o">&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s1">&#39;vscode-notebook-cell:/Users/kpmurphy/github/dynamax/docs/notebooks/hmm/casino_hmm_learning.ipynb#X35sZmlsZQ%3D%3D?line=0&#39;</span><span class="o">&gt;</span><span class="mi">1</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;</span> <span class="n">print_params</span><span class="p">(</span><span class="n">em_params</span><span class="p">)</span>
-
-<span class="ne">NameError</span>: name &#39;print_params&#39; is not defined
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial probs:
+[0.628 0.372]
+transition matrix:
+[[0.909 0.091]
+ [0.053 0.947]]
+emission probs:
+[[0.110 0.106 0.101 0.110 0.105 0.468]
+ [0.171 0.173 0.171 0.164 0.164 0.157]]
 </pre></div>
 </div>
 </div>
@@ -962,8 +885,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
 
   <footer class="bd-footer">
   </footer>
