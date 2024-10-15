@@ -46,6 +46,9 @@ class ParameterProperties:
     def tree_unflatten(cls, aux_data, children):
         return cls(*aux_data)
 
+    def __repr__(self):
+        return f"ParameterProperties(trainable={self.trainable}, constrainer={self.constrainer})"
+
 
 def to_unconstrained(params: ParameterSet, props: PropertySet) -> ParameterSet:
     """Convert the constrained parameters to unconstrained form.
