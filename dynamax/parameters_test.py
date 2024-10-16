@@ -10,7 +10,7 @@ from typing import NamedTuple, Union
 
 
 class InitialParams(NamedTuple):
-    probs: Union[Float[Array, "state_dim"], ParameterProperties]
+    probs: Union[Float[Array, " state_dim"], ParameterProperties]
 
 class TransitionsParams(NamedTuple):
     transition_matrix: Union[Float[Array, "state_dim state_dim"], ParameterProperties]

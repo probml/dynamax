@@ -17,7 +17,7 @@ from dynamax.utils.utils import pytree_sum
 
 
 class ParamsBernoulliHMMEmissions(NamedTuple):
-    probs: Union[Float[Array, "emission_dim"], ParameterProperties]
+    probs: Union[Float[Array, " emission_dim"], ParameterProperties]
 
 
 class ParamsBernoulliHMM(NamedTuple):
@@ -28,11 +28,13 @@ class ParamsBernoulliHMM(NamedTuple):
 
 class BernoulliHMMEmissions(HMMEmissions):
 
-    def __init__(self,
-                 num_states,
-                 emission_dim,
-                 emission_prior_concentration1=1.1,
-                 emission_prior_concentration0=1.1):
+    def __init__(
+        self,
+        num_states: int,
+        emission_dim: int,
+        emission_prior_concentration1: Scalar = 1.1,
+        emission_prior_concentration0: Scalar = 1.1,
+    ):
         """_summary_
         Args:
             emission_probs (_type_): _description_
@@ -43,22 +45,26 @@ class BernoulliHMMEmissions(HMMEmissions):
         self.emission_prior_concentration1 = emission_prior_concentration1
 
     @property
-    def emission_shape(self):
+    def emission_shape(self) -> Tuple[int]:
         return (self.emission_dim,)
 
-    def distribution(self, params, state, inputs=None):
+    def distribution(self, params, state, inputs=None) -> tfd.Distribution:
         # This model assumes the emissions are a vector of conditionally independent
         # Bernoulli observations. The `reinterpreted_batch_ndims` argument tells
         # `tfd.Independent` that only the last dimension should be considered a "batch"
         # of conditionally independent observations.
         return tfd.Independent(tfd.Bernoulli(probs=params.probs[state]), reinterpreted_batch_ndims=1)
 
-    def log_prior(self, params):
-        prior = tfd.Beta(self.emission_prior_concentration1,
-                         self.emission_prior_concentration0)
+    def log_prior(self, params) -> Float[Array, ""]:
+        prior = tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0)
         return prior.log_prob(params.probs).sum()
 
-    def initialize(self, key=jr.PRNGKey(0), method="prior", emission_probs=None):
+    def initialize(
+        self,
+        key: Array = jr.PRNGKey(0),
+        method="prior",
+        emission_probs: Optional[Float[Array, "num_states emission_dim"]] = None,
+    ) -> Tuple[ParamsBernoulliHMMEmissions, ParamsBernoulliHMMEmissions]:
         if emission_probs is None:
             if method.lower() == "prior":
                 prior = tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0)
@@ -90,8 +96,8 @@ class BernoulliHMMEmissions(HMMEmissions):
         if props.probs.trainable:
             sum_x, sum_1mx = pytree_sum(batch_stats, axis=0)
             probs = tfd.Beta(
-                self.emission_prior_concentration1 + sum_x,
-                self.emission_prior_concentration0 + sum_1mx).mode()
+                self.emission_prior_concentration1 + sum_x, self.emission_prior_concentration0 + sum_1mx
+            ).mode()
             params = params._replace(probs=probs)
         return params, m_step_state
 
@@ -117,25 +123,37 @@ class BernoulliHMM(HMM):
     :param emission_prior_concentration1: $\gamma_1$
 
     """
-    def __init__(self, num_states: int,
-                 emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_stickiness: Scalar=0.0,
-                 emission_prior_concentration0: Scalar=1.1,
-                 emission_prior_concentration1: Scalar=1.1):
+
+    def __init__(
+        self,
+        num_states: int,
+        emission_dim: int,
+        initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]] = 1.1,
+        transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]] = 1.1,
+        transition_matrix_stickiness: Scalar = 0.0,
+        emission_prior_concentration0: Scalar = 1.1,
+        emission_prior_concentration1: Scalar = 1.1,
+    ):
         self.emission_dim = emission_dim
         initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
-        emission_component = BernoulliHMMEmissions(num_states, emission_dim, emission_prior_concentration0=emission_prior_concentration0, emission_prior_concentration1=emission_prior_concentration1)
+        transition_component = StandardHMMTransitions(
+            num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness
+        )
+        emission_component = BernoulliHMMEmissions(
+            num_states,
+            emission_dim,
+            emission_prior_concentration0=emission_prior_concentration0,
+            emission_prior_concentration1=emission_prior_concentration1,
+        )
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self,
-                   key: jr.PRNGKey=jr.PRNGKey(0),
-                   method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
-                   transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
-                   emission_probs: Optional[Float[Array, "num_states emission_dim"]]=None
+    def initialize(
+        self,
+        key: Array = jr.PRNGKey(0),
+        method: str = "prior",
+        initial_probs: Optional[Float[Array, " num_states"]] = None,
+        transition_matrix: Optional[Float[Array, "num_states num_states"]] = None,
+        emission_probs: Optional[Float[Array, "num_states emission_dim"]] = None,
     ) -> Tuple[ParameterSet, PropertySet]:
         """Initialize the model parameters and their corresponding properties.
 
@@ -155,9 +173,15 @@ class BernoulliHMM(HMM):
         Returns:
             Model parameters and their properties.
         """
-        key1, key2, key3 = jr.split(key , 3)
+        key1, key2, key3 = jr.split(key, 3)
         params, props = dict(), dict()
-        params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
-        params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
-        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_probs=emission_probs)
+        params["initial"], props["initial"] = self.initial_component.initialize(
+            key1, method=method, initial_probs=initial_probs
+        )
+        params["transitions"], props["transitions"] = self.transition_component.initialize(
+            key2, method=method, transition_matrix=transition_matrix
+        )
+        params["emissions"], props["emissions"] = self.emission_component.initialize(
+            key3, method=method, emission_probs=emission_probs
+        )
         return ParamsBernoulliHMM(**params), ParamsBernoulliHMM(**props)
