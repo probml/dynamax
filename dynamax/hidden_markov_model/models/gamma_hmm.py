@@ -8,6 +8,7 @@ from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions, H
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.types import Scalar
+from dynamax.utils.cluster import kmeans_sklearn
 import optax
 from typing import NamedTuple, Optional, Tuple, Union
 
@@ -38,13 +39,9 @@ class GammaHMMEmissions(HMMEmissions):
 
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
-            from sklearn.cluster import KMeans
-            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
-            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, 1))
-
+            cluster_centers, _ = kmeans_sklearn(self.num_states, emissions.reshape(-1, 1), key)
             _emission_concentrations = jnp.ones((self.num_states,))
-            _emission_rates = jnp.ravel(1.0 / km.cluster_centers_)
+            _emission_rates = jnp.ravel(1.0 / cluster_centers)
 
         elif method.lower() == "prior":
             _emission_concentrations = jnp.ones((self.num_states,))
