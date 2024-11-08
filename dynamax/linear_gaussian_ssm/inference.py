@@ -14,7 +14,7 @@ from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union, Tuple
 from dynamax.utils.utils import psd_solve, symmetrize
 from dynamax.parameters import ParameterProperties
-from dynamax.types import PRNGKey, Scalar
+from dynamax.types import PRNGKeyT, Scalar
 
 class ParamsLGSSMInitial(NamedTuple):
     r"""Parameters of the initial distribution
@@ -27,9 +27,9 @@ class ParamsLGSSMInitial(NamedTuple):
     :param cov: $Q_1$
 
     """
-    mean: Union[Float[Array, "state_dim"], ParameterProperties]
+    mean: Union[Float[Array, " state_dim"], ParameterProperties]
     # unconstrained parameters are stored as a vector.
-    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, "state_dim_triu"], ParameterProperties]
+    cov: Union[Float[Array, "state_dim state_dim"], Float[Array, " state_dim_triu"], ParameterProperties]
 
 
 class ParamsLGSSMDynamics(NamedTuple):
@@ -50,7 +50,7 @@ class ParamsLGSSMDynamics(NamedTuple):
         Float[Array, "ntime state_dim state_dim"]]
 
     bias: Union[ParameterProperties,
-        Float[Array, "state_dim"],
+        Float[Array, " state_dim"],
         Float[Array, "ntime state_dim"]]
 
     input_weights: Union[ParameterProperties,
@@ -60,7 +60,7 @@ class ParamsLGSSMDynamics(NamedTuple):
     cov: Union[ParameterProperties,
         Float[Array, "state_dim state_dim"],
         Float[Array, "ntime state_dim state_dim"],
-        Float[Array, "state_dim_triu"]]
+        Float[Array, " state_dim_triu"]]
 
 
 class ParamsLGSSMEmissions(NamedTuple):
@@ -81,7 +81,7 @@ class ParamsLGSSMEmissions(NamedTuple):
         Float[Array, "ntime emission_dim state_dim"]]
 
     bias: Union[ParameterProperties,
-        Float[Array, "emission_dim"],
+        Float[Array, " emission_dim"],
         Float[Array, "ntime emission_dim"]]
 
     input_weights: Union[ParameterProperties,
@@ -91,9 +91,9 @@ class ParamsLGSSMEmissions(NamedTuple):
     cov: Union[ParameterProperties,
         Float[Array, "emission_dim emission_dim"],
         Float[Array, "ntime emission_dim emission_dim"],
-        Float[Array, "emission_dim"],
+        Float[Array, " emission_dim"],
         Float[Array, "ntime emission_dim"],
-        Float[Array, "emission_dim_triu"]]
+        Float[Array, " emission_dim_triu"]]
 
 
 class ParamsLGSSM(NamedTuple):
@@ -117,7 +117,7 @@ class PosteriorGSSMFiltered(NamedTuple):
     :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[z_t \mid y_{1:t}, u_{1:t}]$
 
     """
-    marginal_loglik: Union[Scalar, Float[Array, "ntime"]]
+    marginal_loglik: Union[Scalar, Float[Array, " ntime"]]
     filtered_means: Optional[Float[Array, "ntime state_dim"]] = None
     filtered_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
     predicted_means: Optional[Float[Array, "ntime state_dim"]] = None
@@ -363,7 +363,7 @@ def preprocess_args(f):
 
 def lgssm_joint_sample(
     params: ParamsLGSSM,
-    key: PRNGKey,
+    key: PRNGKeyT,
     num_timesteps: int,
     inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
 )-> Tuple[Float[Array, "num_timesteps state_dim"],
@@ -559,7 +559,7 @@ def lgssm_smoother(
 
 
 def lgssm_posterior_sample(
-    key: PRNGKey,
+    key: PRNGKeyT,
     params: ParamsLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
     inputs: Optional[Float[Array, "ntime input_dim"]]=None,

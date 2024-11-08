@@ -1,4 +1,3 @@
-import pytest
 import itertools as it
 import jax.numpy as jnp
 import jax.random as jr
