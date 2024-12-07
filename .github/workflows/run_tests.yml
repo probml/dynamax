@@ -23,7 +23,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -e '.[dev]'
+        pip install -e '.[test]'
 
     - name: Run tests
-      run: pytest
+      run: pytest --cov=./
