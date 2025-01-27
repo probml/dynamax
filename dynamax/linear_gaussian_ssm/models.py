@@ -4,24 +4,25 @@ from jax import jit
 import jax.numpy as jnp
 import jax.random as jr
 from jax.tree_util import tree_map
-from jaxtyping import Array, Float, PyTree
+from jaxtyping import Array, Float
 import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from typing import Any, Optional, Tuple, Union
-from typing_extensions import Protocol
+from typing import Any, Optional, Tuple, Union, runtime_checkable
+from typing_extensions import Protocol 
 
 from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_joint_sample, lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
-from dynamax.parameters import ParameterProperties, ParameterSet
-from dynamax.types import PRNGKey, Scalar
+from dynamax.parameters import ParameterProperties
+from dynamax.types import PRNGKeyT, Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
 from dynamax.utils.distributions import MatrixNormalInverseWishart as MNIW
 from dynamax.utils.distributions import NormalInverseWishart as NIW
 from dynamax.utils.distributions import mniw_posterior_update, niw_posterior_update
 from dynamax.utils.utils import pytree_stack, psd_solve
 
+@runtime_checkable
 class SuffStatsLGSSM(Protocol):
     """A :class:`NamedTuple` with sufficient statistics for LGSSM parameter estimation."""
     pass
@@ -87,8 +88,8 @@ class LinearGaussianSSM(SSM):
 
     def initialize(
         self,
-        key: PRNGKey =jr.PRNGKey(0),
-        initial_mean: Optional[Float[Array, "state_dim"]]=None,
+        key: PRNGKeyT =jr.PRNGKey(0),
+        initial_mean: Optional[Float[Array, " state_dim"]]=None,
         initial_covariance=None,
         dynamics_weights=None,
         dynamics_bias=None,
@@ -178,7 +179,7 @@ class LinearGaussianSSM(SSM):
     def transition_distribution(
         self,
         params: ParamsLGSSM,
-        state: Float[Array, "state_dim"],
+        state: Float[Array, " state_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ) -> tfd.Distribution:
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
@@ -190,22 +191,22 @@ class LinearGaussianSSM(SSM):
     def emission_distribution(
         self,
         params: ParamsLGSSM,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None
+        state: Float[Array, " state_dim"],
+        inputs: Optional[Float[Array, "ntime input_dim"]] = None
     ) -> tfd.Distribution:
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
         mean = params.emissions.weights @ state + params.emissions.input_weights @ inputs
         if self.has_emissions_bias:
             mean += params.emissions.bias
         return MVN(mean, params.emissions.cov)
-    
+
     def sample(
         self,
         params: ParamsLGSSM,
-        key: PRNGKey,
+        key: PRNGKeyT,
         num_timesteps: int,
-        inputs: Optional[Float[Array, "ntime input_dim"]] = None
-    ) -> PosteriorGSSMFiltered:
+        inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None,
+    ) -> Tuple[Float[Array, "num_timesteps state_dim"], Float[Array, "num_timesteps emission_dim"]]:
         return lgssm_joint_sample(params, key, num_timesteps, inputs)
 
     def marginal_log_prob(
@@ -235,7 +236,7 @@ class LinearGaussianSSM(SSM):
 
     def posterior_sample(
         self,
-        key: PRNGKey,
+        key: PRNGKeyT,
         params: ParamsLGSSM,
         emissions: Float[Array, "ntime emission_dim"],
         inputs: Optional[Float[Array, "ntime input_dim"]]=None
@@ -500,7 +501,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
 
     def fit_blocked_gibbs(
         self,
-        key: PRNGKey,
+        key: PRNGKeyT,
         initial_params: ParamsLGSSM,
         sample_size: int,
         emissions: Float[Array, "nbatch ntime emission_dim"],

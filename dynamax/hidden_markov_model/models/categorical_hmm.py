@@ -13,7 +13,7 @@ from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import ParamsStandardHMMTransitions
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions
 from dynamax.parameters import ParameterProperties, ParameterSet, PropertySet
-from dynamax.types import Scalar
+from dynamax.types import IntScalar, Scalar
 from dynamax.utils.utils import pytree_sum
 
 
@@ -30,10 +30,10 @@ class ParamsCategoricalHMM(NamedTuple):
 class CategoricalHMMEmissions(HMMEmissions):
 
     def __init__(self,
-                 num_states,
-                 emission_dim,
-                 num_classes,
-                 emission_prior_concentration=1.1):
+                 num_states: int,
+                 emission_dim: int,
+                 num_classes: int,
+                 emission_prior_concentration: Union[Scalar, Float[Array, " num_classes"]]=1.1):
         """_summary_
 
         Args:
@@ -45,18 +45,22 @@ class CategoricalHMMEmissions(HMMEmissions):
         self.emission_prior_concentration = emission_prior_concentration  * jnp.ones(num_classes)
 
     @property
-    def emission_shape(self):
+    def emission_shape(self) -> Tuple[int]:
         return (self.emission_dim,)
 
-    def distribution(self, params, state, inputs=None):
+    def distribution(self, params: ParamsCategoricalHMMEmissions, state: IntScalar, inputs=None) -> tfd.Distribution:
         return tfd.Independent(
             tfd.Categorical(probs=params.probs[state]),
             reinterpreted_batch_ndims=1)
 
-    def log_prior(self, params):
+    def log_prior(self, params: ParamsCategoricalHMMEmissions) -> Scalar:
         return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params.probs).sum()
 
-    def initialize(self, key=jr.PRNGKey(0), method="prior", emission_probs=None):
+    def initialize(self,
+                   key:Optional[Array]=jr.PRNGKey(0),
+                   method="prior",
+                   emission_probs:Optional[Float[Array, "num_states emission_dim num_classes"]]=None
+                   ) -> Tuple[ParamsCategoricalHMMEmissions, ParamsCategoricalHMMEmissions]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
@@ -77,6 +81,8 @@ class CategoricalHMMEmissions(HMMEmissions):
         # Initialize the emission probabilities
         if emission_probs is None:
             if method.lower() == "prior":
+                if key is None:
+                    raise ValueError("key must not be None when emission_probs is None")
                 prior = tfd.Dirichlet(self.emission_prior_concentration)
                 emission_probs = prior.sample(seed=key, sample_shape=(self.num_states, self.emission_dim))
             elif method.lower() == "kmeans":
@@ -134,8 +140,8 @@ class CategoricalHMM(HMM):
     def __init__(self, num_states: int,
                  emission_dim: int,
                  num_classes: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
                  emission_prior_concentration=1.1):
         self.emission_dim = emission_dim
@@ -145,9 +151,9 @@ class CategoricalHMM(HMM):
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
     def initialize(self,
-                   key: jr.PRNGKey=jr.PRNGKey(0),
+                   key: Array=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_probs: Optional[Float[Array, "num_states emission_dim num_classes"]]=None
     ) -> Tuple[ParameterSet, PropertySet]:

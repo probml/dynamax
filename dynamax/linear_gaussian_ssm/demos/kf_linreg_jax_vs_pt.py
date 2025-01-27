@@ -1,29 +1,16 @@
 import numpy as np
-from jaxtyping import Float, Array
-from typing import Callable, NamedTuple, Union, Tuple, Any
-from functools import partial
-import chex
-import optax
 import jax
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax, jacfwd, vmap, grad, jit
-from jax.tree_util import tree_map, tree_reduce
-from jax.flatten_util import ravel_pytree
+from jax import lax
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
 import time
 import platform
 
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
-from dataclasses import dataclass
-from itertools import cycle
 
-import tensorflow as tf
-import tensorflow_probability as tfp
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 
 import torch
