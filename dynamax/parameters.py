@@ -2,18 +2,19 @@ import jax.numpy as jnp
 from jax import lax
 from jax.tree_util import tree_reduce, tree_map, register_pytree_node_class
 import tensorflow_probability.substrates.jax.bijectors as tfb
-from typing import Optional, Union
+from typing import Optional, runtime_checkable
 from typing_extensions import Protocol
-from jaxtyping import Array, Float
 
-from dynamax.types import PRNGKey, Scalar
+from dynamax.types import Scalar
 
+@runtime_checkable
 class ParameterSet(Protocol):
     """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.
 
     """
     pass
 
+@runtime_checkable
 class PropertySet(Protocol):
     """A matching :class:`NamedTuple` with :class:`ParameterProperties` stored in the leaf nodes.
 

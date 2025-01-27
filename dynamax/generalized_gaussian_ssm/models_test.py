@@ -21,7 +21,7 @@ def test_poisson_emission(key, kwargs):
     keys = jr.split(key, 3)
     state_dim = kwargs['state_dim']
     emission_dim = 1 # Univariate Poisson
-    poisson_weights = jr.normal(keys[0], shape=(emission_dim, state_dim))
+    poisson_weights = jr.normal(keys[0], shape=(emission_dim, state_dim)) /  jnp.sqrt(state_dim)
     model = GeneralizedGaussianSSM(state_dim, emission_dim)
     
     # Define model parameters with Poisson emission
@@ -51,7 +51,7 @@ def test_poisson_emission(key, kwargs):
 
     # Fit model with Gaussian emission
     gaussian_marginal_lls = conditional_moments_gaussian_filter(gaussian_params, EKFIntegrals(), emissions).marginal_loglik
-
+    
     # Check that the marginal log-likelihoods under Poisson emission are higher
     assert pois_marginal_lls > gaussian_marginal_lls
 

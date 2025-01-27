@@ -1,9 +1,11 @@
 from abc import abstractmethod, ABC
+from typing import Any, Optional, Tuple, runtime_checkable, Union 
+from typing_extensions import Protocol
 from dynamax.ssm import SSM
-from dynamax.types import Scalar
+from dynamax.types import IntScalar, Scalar
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.parameters import ParameterSet, PropertySet
-from dynamax.hidden_markov_model.inference import HMMPosterior, HMMPosteriorFiltered
+from dynamax.hidden_markov_model.inference import HMMPosterior
 from dynamax.hidden_markov_model.inference import hmm_filter
 from dynamax.hidden_markov_model.inference import hmm_posterior_mode
 from dynamax.hidden_markov_model.inference import hmm_smoother
@@ -11,16 +13,15 @@ from dynamax.hidden_markov_model.inference import hmm_two_filter_smoother
 from dynamax.utils.optimize import run_gradient_descent
 from dynamax.utils.utils import pytree_slice
 import jax.numpy as jnp
-import jax.random as jr
 from jax import vmap
 from jax.tree_util import tree_map
-from jaxtyping import Float, Array, PyTree
+from jaxtyping import Float, Array, PyTree, Real
 import optax
 from tensorflow_probability.substrates.jax import distributions as tfd
-from typing import Any, Optional, Tuple
-from typing_extensions import Protocol
 
 
+
+@runtime_checkable
 class HMMParameterSet(Protocol):
     """Container for HMM parameters.
 
@@ -28,11 +29,20 @@ class HMMParameterSet(Protocol):
     :param transitions: (ParameterSet) transition distribution parameters
     :param emissions: (ParameterSet) emission distribution parameters
     """
-    initial: ParameterSet
-    transitions: ParameterSet
-    emissions: ParameterSet
+    @property
+    def initial(self) -> ParameterSet:
+        pass
+
+    @property
+    def transitions(self) -> ParameterSet:
+        pass
+
+    @property
+    def emissions(self) -> ParameterSet:
+        pass
 
 
+@runtime_checkable
 class HMMPropertySet(Protocol):
     """Container for properties of HMM parameter properties.
 
@@ -40,10 +50,17 @@ class HMMPropertySet(Protocol):
     :param transitions: (PropertySet) transition distribution properties
     :param emissions: (PropertySet) emission distribution properties
     """
-    initial: PropertySet
-    transitions: PropertySet
-    emissions: PropertySet
+    @property
+    def initial(self) -> PropertySet:
+        pass
 
+    @property
+    def transitions(self) -> PropertySet:
+        pass
+
+    @property
+    def emissions(self) -> PropertySet:
+        pass
 
 
 class HMMInitialState(ABC):
@@ -59,7 +76,7 @@ class HMMInitialState(ABC):
     @abstractmethod
     def distribution(self,
                      params: ParameterSet,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the initial latent state
 
@@ -71,7 +88,7 @@ class HMMInitialState(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -96,14 +113,14 @@ class HMMInitialState(ABC):
         """
         raise NotImplementedError
 
-    def _compute_initial_probs(self, params, inputs=None):
-        return self.initial_distribution(params, inputs).probs_parameter()
+    def _compute_initial_probs(self, params, inputs:Optional[Array] = None):
+        return self.distribution(params, inputs).probs_parameter()
 
     def collect_suff_stats(self,
                            params: ParameterSet,
                            posterior: HMMPosterior,
                            inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> PyTree:
+                           ) -> Tuple[Float[Array, " num_states"], Optional[Float[Array, " input_dim"]]]:
         """Collect sufficient statistics for updating the initial distribution parameters.
 
         Args:
@@ -135,7 +152,7 @@ class HMMInitialState(ABC):
                batch_stats: PyTree,
                m_step_state: Any,
                scale: float=1.0
-    ) -> ParameterSet:
+    ) -> Tuple[ParameterSet, Any]:
         """Perform an M-step on the initial distribution parameters.
 
         Args:
@@ -194,8 +211,8 @@ class HMMTransitions(ABC):
     @abstractmethod
     def distribution(self,
                      params: ParameterSet,
-                     state: int,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     state: IntScalar,
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the next latent state
 
@@ -212,7 +229,7 @@ class HMMTransitions(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -238,7 +255,7 @@ class HMMTransitions(ABC):
         """
         raise NotImplementedError
 
-    def _compute_transition_matrices(self, params, inputs=None):
+    def _compute_transition_matrices(self, params, inputs:Optional[Array] = None):
         if inputs is not None:
             f = lambda inpt: \
                 vmap(lambda state: \
@@ -254,7 +271,7 @@ class HMMTransitions(ABC):
                            params: ParameterSet,
                            posterior: HMMPosterior,
                            inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> PyTree:
+                           ) -> Tuple[Float[Array, "..."], Optional[Float[Array, "num_timesteps-1 input_dim"]]]:
         """Collect sufficient statistics for updating the transition distribution parameters.
 
         Args:
@@ -284,7 +301,7 @@ class HMMTransitions(ABC):
                batch_stats: PyTree,
                m_step_state: Any,
                scale: float=1.0
-    ) -> ParameterSet:
+    ) -> Tuple[ParameterSet, Any]:
         """Perform an M-step on the transition distribution parameters.
 
         Args:
@@ -350,8 +367,8 @@ class HMMEmissions(ABC):
     @abstractmethod
     def distribution(self,
                      params: ParameterSet,
-                     state: int,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     state: IntScalar,
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the emission
 
@@ -368,7 +385,7 @@ class HMMEmissions(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -394,7 +411,7 @@ class HMMEmissions(ABC):
         """
         raise NotImplementedError
 
-    def _compute_conditional_logliks(self, params, emissions, inputs=None):
+    def _compute_conditional_logliks(self, params, emissions, inputs:Optional[Array] = None):
         # Compute the log probability for each time step by
         # performing a nested vmap over emission time steps and states.
         f = lambda emission, inpt: \
@@ -405,9 +422,12 @@ class HMMEmissions(ABC):
     def collect_suff_stats(self,
                            params: ParameterSet,
                            posterior: HMMPosterior,
-                           emissions: Float[Array, "num_timesteps emission_dim"],
+                           emissions: Union[Real[Array, "num_timesteps emission_dim"],
+                                            Real[Array, " num_timesteps"]],
                            inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> PyTree:
+    ) -> Tuple[Float[Array, "num_timesteps num_states"],
+               Union[Real[Array, "num_timesteps emission_dim"], Real[Array, " num_timesteps"]],
+               Optional[Float[Array, "num_timesteps input_dim"]]]:
         """Collect sufficient statistics for updating the emission distribution parameters.
 
         Args:
@@ -438,7 +458,7 @@ class HMMEmissions(ABC):
                batch_stats: PyTree,
                m_step_state: Any,
                scale: float=1.0
-    ) -> ParameterSet:
+    ) -> Tuple[ParameterSet, Any]:
         """Perform an M-step on the emission distribution parameters.
 
         Args:
@@ -485,7 +505,7 @@ class HMMEmissions(ABC):
 
 
 class HMM(SSM):
-    """Abstract base class of Hidden Markov Models (HMMs).
+    r"""Abstract base class of Hidden Markov Models (HMMs).
 
     The model is defined as follows
 
@@ -532,43 +552,48 @@ class HMM(SSM):
     def emission_shape(self):
         return self.emission_component.emission_shape
 
-    def initial_distribution(self, params, inputs=None):
+    def initial_distribution(self, params: HMMParameterSet, inputs:Optional[Array] = None) -> tfd.Distribution:
         return self.initial_component.distribution(params.initial, inputs=inputs)
 
-    def transition_distribution(self, params, state, inputs=None):
+    def transition_distribution(self, params: HMMParameterSet, state: IntScalar, inputs:Optional[Array] = None) -> tfd.Distribution:
         return self.transition_component.distribution(params.transitions, state, inputs=inputs)
 
-    def emission_distribution(self, params, state, inputs=None):
+    def emission_distribution(self, params: HMMParameterSet, state: IntScalar, inputs:Optional[Array] = None):
         return self.emission_component.distribution(params.emissions, state, inputs=inputs)
 
-    def log_prior(self, params):
+    def log_prior(self, params: HMMParameterSet) -> Scalar:
         lp = self.initial_component.log_prior(params.initial)
         lp += self.transition_component.log_prior(params.transitions)
         lp += self.emission_component.log_prior(params.emissions)
         return lp
 
     # The inference functions all need the same arguments
-    def _inference_args(self, params, emissions, inputs):
+    def _inference_args(self, params: HMMParameterSet, emissions: Array, inputs: Optional[Array]):
         return (self.initial_component._compute_initial_probs(params.initial, inputs),
                 self.transition_component._compute_transition_matrices(params.transitions, inputs),
                 self.emission_component._compute_conditional_logliks(params.emissions, emissions, inputs))
 
     # Convenience wrappers for the inference code
-    def marginal_log_prob(self, params, emissions, inputs=None):
+    def marginal_log_prob(self, params: HMMParameterSet, emissions: Array, inputs: Optional[Array]=None):
         post = hmm_filter(*self._inference_args(params, emissions, inputs))
         return post.marginal_loglik
 
-    def most_likely_states(self, params, emissions, inputs=None):
+    def most_likely_states(self, params: HMMParameterSet, emissions: Array, inputs: Optional[Array]=None):
         return hmm_posterior_mode(*self._inference_args(params, emissions, inputs))
 
-    def filter(self, params, emissions, inputs=None):
+    def filter(self, params: HMMParameterSet, emissions: Array, inputs: Optional[Array]=None):
         return hmm_filter(*self._inference_args(params, emissions, inputs))
 
-    def smoother(self, params, emissions, inputs=None):
+    def smoother(self, params: HMMParameterSet, emissions: Array, inputs: Optional[Array]=None):
         return hmm_smoother(*self._inference_args(params, emissions, inputs))
 
     # Expectation-maximization (EM) code
-    def e_step(self, params, emissions, inputs=None):
+    def e_step(
+            self,
+            params: HMMParameterSet,
+            emissions: Array,
+           inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+           ) -> Tuple[PyTree, Scalar]:
         """The E-step computes expected sufficient statistics under the
         posterior. In the generic case, we simply return the posterior itself.
         """
@@ -580,7 +605,7 @@ class HMM(SSM):
         emission_stats = self.emission_component.collect_suff_stats(params.emissions, posterior, emissions, inputs)
         return (initial_stats, transition_stats, emission_stats), posterior.marginal_loglik
 
-    def initialize_m_step_state(self, params, props):
+    def initialize_m_step_state(self, params: HMMParameterSet, props: HMMPropertySet):
         """Initialize any required state for the M step.
 
         For example, this might include the optimizer state for Adam.
@@ -590,7 +615,13 @@ class HMM(SSM):
         emissions_m_step_state = self.emission_component.initialize_m_step_state(params.emissions, props.emissions)
         return initial_m_step_state, transitions_m_step_state, emissions_m_step_state
 
-    def m_step(self, params, props, batch_stats, m_step_state):
+    def m_step(
+            self,
+            params: HMMParameterSet,
+            props: HMMPropertySet,
+            batch_stats: PyTree,
+            m_step_state: Any
+            ) -> Tuple[HMMParameterSet, Any]:
         batch_initial_stats, batch_transition_stats, batch_emission_stats = batch_stats
         initial_m_step_state, transitions_m_step_state, emissions_m_step_state = m_step_state
 

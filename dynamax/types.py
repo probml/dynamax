@@ -1,9 +1,8 @@
-from typing import Optional, Union
-from typing_extensions import Protocol
-from jaxtyping import Array, Float
-import jax._src.random as prng
+from typing import Union
+from jaxtyping import Array, Float, Int
 
-
-PRNGKey = prng.KeyArray
+PRNGKeyT = Array
 
 Scalar = Union[float, Float[Array, ""]] # python float or scalar jax device array with dtype float
+
+IntScalar = Union[int, Int[Array, ""]]

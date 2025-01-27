@@ -11,11 +11,11 @@ from dynamax.ssm import SSM
 from dynamax.nonlinear_gaussian_ssm.models import FnStateToState, FnStateAndInputToState
 from dynamax.nonlinear_gaussian_ssm.models import FnStateToEmission, FnStateAndInputToEmission
 
-FnStateToEmission2 = Callable[[Float[Array, "state_dim"]], Float[Array, "emission_dim emission_dim"]]
-FnStateAndInputToEmission2 = Callable[[Float[Array, "state_dim"], Float[Array, "input_dim"]], Float[Array, "emission_dim emission_dim"]]
+FnStateToEmission2 = Callable[[Float[Array, " state_dim"]], Float[Array, "emission_dim emission_dim"]]
+FnStateAndInputToEmission2 = Callable[[Float[Array, " state_dim"], Float[Array, " input_dim"]], Float[Array, "emission_dim emission_dim"]]
 
 # emission distribution takes a mean vector and covariance matrix and returns a distribution
-EmissionDistFn = Callable[ [Float[Array, "state_dim"], Float[Array, "state_dim state_dim"]], tfd.Distribution]
+EmissionDistFn = Callable[ [Float[Array, " state_dim"], Float[Array, "state_dim state_dim"]], tfd.Distribution]
 
 
 class ParamsGGSSM(NamedTuple):
@@ -42,7 +42,7 @@ class ParamsGGSSM(NamedTuple):
 
     """
 
-    initial_mean: Float[Array, "state_dim"]
+    initial_mean: Float[Array, " state_dim"]
     initial_covariance: Float[Array, "state_dim state_dim"]
     dynamics_function: Union[FnStateToState, FnStateAndInputToState]
     dynamics_covariance: Float[Array, "state_dim state_dim"]
@@ -97,15 +97,15 @@ class GeneralizedGaussianSSM(SSM):
     def initial_distribution(
         self,
         params: ParamsGGSSM,
-        inputs: Optional[Float[Array, "input_dim"]]=None
+        inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         return MVN(params.initial_mean, params.initial_covariance)
 
     def transition_distribution(
         self,
         params: ParamsGGSSM,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]=None
+        state: Float[Array, " state_dim"],
+        inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         f = params.dynamics_function
         if inputs is None:
@@ -117,8 +117,8 @@ class GeneralizedGaussianSSM(SSM):
     def emission_distribution(
         self,
         params: ParamsGGSSM,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]=None
+        state: Float[Array, " state_dim"],
+        inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         h = params.emission_mean_function
         R = params.emission_cov_function

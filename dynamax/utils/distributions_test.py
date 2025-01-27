@@ -1,4 +1,3 @@
-import pytest
 import jax.numpy as jnp
 import jax.random as jr
 from jax.tree_util import tree_map
