@@ -6,7 +6,6 @@ from functools import partial
 
 import tensorflow_probability.substrates.jax.distributions as tfd
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
-
 from dynamax.utils.utils import has_tpu
 
 if has_tpu():
@@ -15,6 +14,32 @@ if has_tpu():
 else:
     def allclose(x,y):
         return jnp.allclose(x, y, atol=1e-1)
+
+
+def flatten_diagonal_emission_cov(params):
+    """Flatten a diagonal emission covariance matrix into a vector.
+
+    Args:
+        params: LGSSMParams object.
+
+    Returns:
+        params: LGSSMParams object with flattened diagonal emission covariance.
+    """
+    R = params.emissions.cov
+
+    if R.ndim == 2:
+        R_diag = jnp.diag(R)
+        R_full = jnp.diag(R_diag)
+    else:
+        R_diag = vmap(jnp.diag)(R)
+        R_full = vmap(jnp.diag)(R_diag)
+
+    assert allclose(R, R_full), "R is not diagonal"
+
+    emission_params_diag = params.emissions._replace(cov=R_diag)
+    params = params._replace(emissions=emission_params_diag)
+    return params
+
 
 def joint_posterior_mvn(params, emissions):
     """Construct the joint posterior MVN of a LGSSM, by inverting the joint precision matrix which
@@ -73,6 +98,7 @@ def joint_posterior_mvn(params, emissions):
 
     return means, covs
 
+
 def lgssm_dynamax_to_tfp(num_timesteps, params):
 
     """Create a Tensorflow Probability `LinearGaussianStateSpaceModel` object
@@ -96,6 +122,7 @@ def lgssm_dynamax_to_tfp(num_timesteps, params):
     )
 
     return tfp_lgssm
+
 
 def build_lgssm_for_inference():
     """Construct example LinearGaussianSSM object for testing.
@@ -128,6 +155,7 @@ def build_lgssm_for_inference():
 
     return lgssm, params
 
+
 def build_lgssm_for_sampling():
     state_dim = 1
     emission_dim = 1
@@ -149,6 +177,7 @@ def build_lgssm_for_sampling():
                                  emission_covariance=R)
     return lgssm, params
 
+
 class TestFilteringAndSmoothing():
 
     ## For inference tests
@@ -158,12 +187,13 @@ class TestFilteringAndSmoothing():
     sample_key = jr.PRNGKey(0)
     num_timesteps = 15
     _, emissions = lgssm.sample(params, sample_key, num_timesteps)
-    ssm_posterior = lgssm.filter(params, emissions)
-    print(ssm_posterior.filtered_means.shape)
 
     ssm_posterior = lgssm.smoother(params, emissions)
     print(ssm_posterior.filtered_means.shape)
     print(ssm_posterior.smoothed_means.shape)
+    
+    params_diag = flatten_diagonal_emission_cov(params)
+    ssm_posterior_diag = lgssm.smoother(params_diag, emissions)
 
     # TensorFlow Probability posteriors
     tfp_lgssm = lgssm_dynamax_to_tfp(num_timesteps, params)
@@ -172,7 +202,6 @@ class TestFilteringAndSmoothing():
 
     # Posteriors from full joint distribution
     joint_means, joint_covs = joint_posterior_mvn(params, emissions)
-
 
     ## For sampling tests
     lgssm, params = build_lgssm_for_sampling()
@@ -188,7 +217,11 @@ class TestFilteringAndSmoothing():
     posterior_sample = partial(lgssm.posterior_sample, params=params, emissions=emissions)
     keys = jr.split(key, sample_size)
     samples = vmap(lambda key, func=posterior_sample: func(key=key))(keys)
-
+    
+    params_diag = flatten_diagonal_emission_cov(params)
+    posterior_sample_diag = partial(lgssm.posterior_sample, params=params_diag, emissions=emissions)
+    samples_diag = vmap(lambda key, func=posterior_sample_diag: func(key=key))(keys)
+    
     # Do the same with TFP
     tfp_lgssm = lgssm_dynamax_to_tfp(num_timesteps, params)
     tfp_samples = tfp_lgssm.posterior_sample(emissions, seed=key, sample_shape=sample_size) 
@@ -199,12 +232,21 @@ class TestFilteringAndSmoothing():
         assert allclose(self.ssm_posterior.smoothed_means, self.tfp_smoothed_means)
         assert allclose(self.ssm_posterior.smoothed_covariances, self.tfp_smoothed_covs)
         assert allclose(self.ssm_posterior.marginal_loglik, self.tfp_lls.sum())
-
+        assert allclose(self.ssm_posterior_diag.filtered_means, self.tfp_filtered_means)
+        assert allclose(self.ssm_posterior_diag.filtered_covariances, self.tfp_filtered_covs)
+        assert allclose(self.ssm_posterior_diag.smoothed_means, self.tfp_smoothed_means)
+        assert allclose(self.ssm_posterior_diag.smoothed_covariances, self.tfp_smoothed_covs)
+        assert allclose(self.ssm_posterior_diag.marginal_loglik, self.tfp_lls.sum())
+        
     def test_kalman_vs_joint(self):
         assert allclose(self.ssm_posterior.smoothed_means, self.joint_means)
         assert allclose(self.ssm_posterior.smoothed_covariances, self.joint_covs)
-
+        assert allclose(self.ssm_posterior_diag.smoothed_means, self.joint_means)
+        assert allclose(self.ssm_posterior_diag.smoothed_covariances, self.joint_covs)
+        
     def test_posterior_sampler(self):
         assert allclose(jnp.mean(self.samples), jnp.mean(self.tfp_samples))
         assert allclose(jnp.std(self.samples), jnp.std(self.tfp_samples))
+        assert allclose(jnp.mean(self.samples_diag), jnp.mean(self.tfp_samples))
+        assert allclose(jnp.std(self.samples_diag), jnp.std(self.tfp_samples))
         

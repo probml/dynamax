@@ -1,15 +1,18 @@
+from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
+from jax import vmap
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
-from jax import vmap
 from jaxtyping import Float, Array
 import optax
+
 from dynamax.parameters import ParameterProperties
+from dynamax.hidden_markov_model.inference import HMMPosterior
 from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions, HMMParameterSet, HMMPropertySet
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
-from dynamax.types import Scalar
+from dynamax.types import IntScalar, Scalar
 from dynamax.utils.distributions import InverseWishart
 from dynamax.utils.distributions import NormalInverseGamma
 from dynamax.utils.distributions import NormalInverseWishart
@@ -17,7 +20,6 @@ from dynamax.utils.distributions import nig_posterior_update
 from dynamax.utils.distributions import niw_posterior_update
 from dynamax.utils.bijectors import RealToPSDBijector
 from dynamax.utils.utils import pytree_sum
-from typing import NamedTuple, Optional, Tuple, Union
 
 
 class ParamsGaussianHMMEmissions(NamedTuple):
@@ -28,19 +30,21 @@ class ParamsGaussianHMMEmissions(NamedTuple):
 class GaussianHMMEmissions(HMMEmissions):
 
     def __init__(self,
-                 num_states,
-                 emission_dim,
-                 emission_prior_mean=0.0,
-                 emission_prior_concentration=1e-4,
-                 emission_prior_scale=1e-4,
-                 emission_prior_extra_df=0.1):
-        """_summary_
+                 num_states: int,
+                 emission_dim: int,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]] = 0.0,
+                 emission_prior_concentration: Scalar = 1e-4,
+                 emission_prior_scale: Union[Scalar, Float[Array, "emission_dim emission_dim"]] = 1e-4,
+                 emission_prior_extra_df: Scalar = 0.1):
+        """Initialize GaussianHMMEmissions.
 
         Args:
-            initial_probabilities (_type_): _description_
-            transition_matrix (_type_): _description_
-            emission_means (_type_): _description_
-            emission_covariance_matrices (_type_): _description_
+            num_states: number of discrete states
+            emission_dim: dimension of the emission vector
+            emission_prior_mean: prior mean for emissions
+            emission_prior_concentration: concentration parameter for the prior
+            emission_prior_scale: scale matrix for the prior
+            emission_prior_extra_df: extra degrees of freedom for the prior
         """
         self.num_states = num_states
         self.emission_dim = emission_dim
@@ -51,27 +55,48 @@ class GaussianHMMEmissions(HMMEmissions):
         self.emission_prior_df = emission_dim + emission_prior_extra_df
 
     @property
-    def emission_shape(self):
+    def emission_shape(self) -> Tuple[int]:
         return (self.emission_dim,)
 
-    def distribution(self, params, state, inputs=None):
+    def distribution(
+            self, 
+            params: ParamsGaussianHMMEmissions,
+            state: IntScalar,
+            inputs: Optional[Array] = None
+            ) -> tfd.Distribution:
         return tfd.MultivariateNormalFullCovariance(
             params.means[state], params.covs[state])
 
-    def log_prior(self, params):
+    def log_prior(self, params: ParamsGaussianHMMEmissions) -> Float[Array, ""]:
         return NormalInverseWishart(self.emission_prior_mean, self.emission_prior_conc,
                                    self.emission_prior_df, self.emission_prior_scale).log_prob(
             (params.covs, params.means)).sum()
 
-    def initialize(self, key=jr.PRNGKey(0),
-                   method="prior",
-                   emission_means=None,
-                   emission_covariances=None,
-                   emissions=None):
+    def initialize(self, 
+                   key: Array = jr.PRNGKey(0),
+                   method: str = "prior",
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]] = None,
+                   emission_covariances: Optional[Float[Array, "num_states emission_dim emission_dim"]] = None,
+                   emissions: Optional[Float[Array, "num_timesteps emission_dim"]] = None
+        ) -> Tuple[ParamsGaussianHMMEmissions, ParamsGaussianHMMEmissions]:
+        """Initialize the model parameters and their corresponding properties.
+
+        Args:
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            emission_means: manually specified emission means.
+            emission_covariances: manually specified emission covariances.
+            emissions: emissions for initializing the parameters with kmeans.
+
+        Returns:
+            Tuple of (params, props) where params are the initialized parameters and props are their properties.
+        """
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
-            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
 
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_covs = jnp.tile(jnp.eye(self.emission_dim)[None, :, :], (self.num_states, 1, 1))
@@ -95,7 +120,13 @@ class GaussianHMMEmissions(HMMEmissions):
             covs=ParameterProperties(constrainer=RealToPSDBijector()))
         return params, props
 
-    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
+    def collect_suff_stats(
+            self, 
+            params: ParamsGaussianHMMEmissions, 
+            posterior: HMMPosterior,
+            emissions: Float[Array, "num_timesteps emission_dim"], 
+            inputs: Optional[Array] = None
+        ) -> Dict[str, Float[Array, "..."]]:
         expected_states = posterior.smoothed_probs
         return dict(
             sum_w=jnp.einsum("tk->k", expected_states),
@@ -103,10 +134,16 @@ class GaussianHMMEmissions(HMMEmissions):
             sum_xxT=jnp.einsum("tk,ti,tj->kij", expected_states, emissions, emissions)
         )
 
-    def initialize_m_step_state(self, params, props):
+    def initialize_m_step_state(self, params: ParamsGaussianHMMEmissions, props: ParamsGaussianHMMEmissions) -> None:
         return None
 
-    def m_step(self, params, props, batch_stats, m_step_state):
+    def m_step(
+            self, 
+            params: ParamsGaussianHMMEmissions, 
+            props: ParamsGaussianHMMEmissions, 
+            batch_stats: Dict[str, Float[Array, "..."]], 
+            m_step_state: Any
+        ) -> Tuple[ParamsGaussianHMMEmissions, Any]:
         if props.covs.trainable and props.means.trainable:
             niw_prior = NormalInverseWishart(loc=self.emission_prior_mean,
                                             mean_concentration=self.emission_prior_conc,
@@ -139,17 +176,18 @@ class ParamsDiagonalGaussianHMMEmissions(NamedTuple):
 class DiagonalGaussianHMMEmissions(HMMEmissions):
 
     def __init__(self,
-                 num_states,
-                 emission_dim,
-                 emission_prior_mean=0.0,
-                 emission_prior_mean_concentration=1e-4,
-                 emission_prior_concentration=0.1,
-                 emission_prior_scale=0.1):
+                 num_states: int,
+                 emission_dim: int,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]] = 0.0,
+                 emission_prior_mean_concentration: Scalar = 1e-4,
+                 emission_prior_concentration: Union[Scalar, Float[Array, " emission_dim"]] = 0.1,
+                 emission_prior_scale: Scalar = 0.1):
 
         self.num_states = num_states
         self.emission_dim = emission_dim
         self.emission_prior_mean = emission_prior_mean * jnp.ones(emission_dim)
         self.emission_prior_mean_conc = emission_prior_mean_concentration
+        # TODO: Problem here if prior conc is Array shape ()?
         self.emission_prior_conc = emission_prior_concentration * jnp.ones(emission_dim) \
             if isinstance(emission_prior_concentration, float) else emission_prior_concentration
         self.emission_prior_scale = emission_prior_scale
@@ -158,16 +196,20 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
     def emission_shape(self):
         return (self.emission_dim,)
 
-    def initialize(self, key=jr.PRNGKey(0),
-                   method="prior",
-                   emission_means=None,
-                   emission_scale_diags=None,
-                   emissions=None):
+    def initialize(self, 
+                   key: Array = jr.PRNGKey(0),
+                   method: str = "prior",
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]] = None,
+                   emission_scale_diags: Optional[Float[Array, "num_states emission_dim"]] = None,
+                   emissions: Optional[Float[Array, "num_timesteps emission_dim"]] = None
+        ) -> Tuple[ParamsDiagonalGaussianHMMEmissions, ParamsDiagonalGaussianHMMEmissions]:
 
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
-            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_scale_diags = jnp.ones((self.num_states, self.emission_dim))
 
@@ -231,20 +273,20 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
 
 class ParamsSphericalGaussianHMMEmissions(NamedTuple):
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
-    scales: Union[Float[Array, "state_dim"], ParameterProperties]
+    scales: Union[Float[Array, " state_dim"], ParameterProperties]
 
 
 class SphericalGaussianHMMEmissions(HMMEmissions):
 
     def __init__(self,
-                 num_states,
-                 emission_dim,
-                 emission_prior_mean=0.0,
-                 emission_prior_mean_covariance=1.0,
-                 emission_var_concentration=1.1,
-                 emission_var_rate=1.1,
-                 m_step_optimizer=optax.adam(1e-2),
-                 m_step_num_iters=50):
+                 num_states: int,
+                 emission_dim: int,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]] = 0.0,
+                 emission_prior_mean_covariance: Union[Scalar, Float[Array, "emission_dim emission_dim"]] = 1.0,
+                 emission_var_concentration: Scalar = 1.1,
+                 emission_var_rate: Scalar = 1.1,
+                 m_step_optimizer: optax.GradientTransformation = optax.adam(1e-2),
+                 m_step_num_iters: int = 50):
         super().__init__(m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         self.num_states = num_states
         self.emission_dim = emission_dim
@@ -256,14 +298,16 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
         self.emission_var_rate = emission_var_rate
 
     @property
-    def emission_shape(self):
+    def emission_shape(self) -> Tuple[int]:
         return (self.emission_dim,)
 
-    def initialize(self, key=jr.PRNGKey(0),
-                   method="prior",
-                   emission_means=None,
-                   emission_scales=None,
-                   emissions=None):
+    def initialize(self, 
+                   key: Array = jr.PRNGKey(0),
+                   method: str = "prior",
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]] = None,
+                   emission_scales: Optional[Float[Array, " num_states"]] = None,
+                   emissions: Optional[Float[Array, "num_timesteps emission_dim"]] = None
+        ) -> Tuple[ParamsSphericalGaussianHMMEmissions, ParamsSphericalGaussianHMMEmissions]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
@@ -286,7 +330,9 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
-            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_scales = jnp.ones((self.num_states,))
 
@@ -313,12 +359,16 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
             scales=ParameterProperties(constrainer=tfb.Softplus()))
         return params, props
 
-    def distribution(self, params, state, inputs=None):
-        dim = self.emission_dim
+    def distribution(
+            self,
+            params: ParamsSphericalGaussianHMMEmissions,
+            state: IntScalar,
+            inputs: Optional[Array] = None
+            ) -> tfd.Distribution:
         return tfd.MultivariateNormalDiag(params.means[state],
-                                          params.scales[state] * jnp.ones((dim,)))
+                                          params.scales[state] * jnp.ones((self.emission_shape)))
 
-    def log_prior(self, params):
+    def log_prior(self, params: ParamsSphericalGaussianHMMEmissions) -> Float[Array, ""]:
         lp = tfd.MultivariateNormalFullCovariance(
             self.emission_prior_mean, self.emission_prior_mean_cov)\
                 .log_prob(params.means).sum()
@@ -335,17 +385,21 @@ class ParamsSharedCovarianceGaussianHMMEmissions(NamedTuple):
 class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
 
     def __init__(self,
-                 num_states,
-                 emission_dim,
-                 emission_prior_mean=0.0,
-                 emission_prior_concentration=1e-4,
-                 emission_prior_scale=1e-4,
-                 emission_prior_extra_df=0.1):
-        """_summary_
+                 num_states: int,
+                 emission_dim: int,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]] = 0.0,
+                 emission_prior_concentration: Scalar = 1e-4,
+                 emission_prior_scale: Union[Scalar, Float[Array, "emission_dim emission_dim"]] = 1e-4,
+                 emission_prior_extra_df: Scalar = 0.1):
+        """Initialize SharedCovarianceGaussianHMMEmissions.
 
         Args:
-            emission_means (_type_): _description_
-            emission_covariance_matrix (_type_): _description_
+            num_states: number of discrete states
+            emission_dim: dimension of the emission vector
+            emission_prior_mean: prior mean for emissions
+            emission_prior_concentration: concentration parameter for the prior
+            emission_prior_scale: scale matrix for the prior
+            emission_prior_extra_df: extra degrees of freedom for the prior
         """
         self.num_states = num_states
         self.emission_dim = emission_dim
@@ -356,14 +410,16 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         self.emission_prior_df = emission_dim + emission_prior_extra_df
 
     @property
-    def emission_shape(self):
+    def emission_shape(self) -> Tuple[int]:
         return (self.emission_dim,)
 
-    def initialize(self, key=jr.PRNGKey(0),
-                   method="prior",
-                   emission_means=None,
-                   emission_covariance=None,
-                   emissions=None):
+    def initialize(self, 
+                   key: Array = jr.PRNGKey(0),
+                   method: str = "prior",
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]] = None,
+                   emission_covariance: Optional[Float[Array, "emission_dim emission_dim"]] = None,
+                   emissions: Optional[Float[Array, "num_timesteps emission_dim"]] = None
+        ) -> Tuple[ParamsSharedCovarianceGaussianHMMEmissions, ParamsSharedCovarianceGaussianHMMEmissions]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
@@ -386,7 +442,9 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
-            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_cov = jnp.eye(self.emission_dim)
 
@@ -412,11 +470,16 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
             cov=ParameterProperties(constrainer=RealToPSDBijector()))
         return params, props
 
-    def distribution(self, params, state, inputs=None):
+    def distribution(
+            self,
+            params: ParamsSharedCovarianceGaussianHMMEmissions,
+            state: IntScalar,
+            inputs: Optional[Array] = None
+            ) -> tfd.Distribution:
         return tfd.MultivariateNormalFullCovariance(
             params.means[state], params.cov)
 
-    def log_prior(self, params):
+    def log_prior(self, params: ParamsSharedCovarianceGaussianHMMEmissions) -> Float[Array, ""]:
         mus = params.means
         Sigma = params.cov
         mu0 = self.emission_prior_mean
@@ -428,7 +491,13 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         lp += tfd.MultivariateNormalFullCovariance(mu0, Sigma / kappa0).log_prob(mus).sum()
         return lp
 
-    def collect_suff_stats(self, params, posterior, emissions, inputs=None):
+    def collect_suff_stats(
+        self,
+        params: ParamsSharedCovarianceGaussianHMMEmissions,
+        posterior: HMMPosterior,
+        emissions: Float[Array, "num_timesteps emission_dim"],
+        inputs: Optional[Array] = None
+    ) -> Dict[str, Float[Array, "..."] | int]:
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
@@ -437,10 +506,20 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         stats = dict(sum_w=sum_w, sum_x=sum_x, sum_xxT=sum_xxT, sum_T=sum_T)
         return stats
 
-    def initialize_m_step_state(self, params, props):
+    def initialize_m_step_state(
+            self,
+            params: ParamsSharedCovarianceGaussianHMMEmissions,
+            props: ParamsSharedCovarianceGaussianHMMEmissions
+    ) -> None:
         return None
 
-    def m_step(self, params, props, batch_stats, m_step_state):
+    def m_step(
+            self,
+            params: ParamsSharedCovarianceGaussianHMMEmissions,
+            props: ParamsSharedCovarianceGaussianHMMEmissions,
+            batch_stats: Dict[str, Array],
+            m_step_state: Any
+    ) -> Tuple[ParamsSharedCovarianceGaussianHMMEmissions, Any]:
         mu0 = self.emission_prior_mean
         kappa0 = self.emission_prior_conc
         Psi0 = self.emission_prior_scale
@@ -465,11 +544,14 @@ class ParamsLowRankGaussianHMMEmissions(NamedTuple):
 
 class LowRankGaussianHMMEmissions(HMMEmissions):
 
-    def __init__(self, num_states, emission_dim, emission_rank,
-                 emission_diag_factor_concentration=1.1,
-                 emission_diag_factor_rate=1.1,
-                 m_step_optimizer=optax.adam(1e-2),
-                 m_step_num_iters=50):
+    def __init__(self,
+                 num_states: int,
+                 emission_dim: int,
+                 emission_rank: int,
+                 emission_diag_factor_concentration: Scalar = 1.1,
+                 emission_diag_factor_rate: Scalar = 1.1,
+                 m_step_optimizer: optax.GradientTransformation = optax.adam(1e-2),
+                 m_step_num_iters: int = 50):
         super().__init__(m_step_optimizer=m_step_optimizer, m_step_num_iters=m_step_num_iters)
         self.num_states = num_states
         self.emission_dim = emission_dim
@@ -477,12 +559,14 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
         self.emission_diag_factor_conc = emission_diag_factor_concentration
         self.emission_diag_factor_rate = emission_diag_factor_rate
 
-    def initialize(self, key=jr.PRNGKey(0),
-                   method="prior",
-                   emission_means=None,
-                   emission_cov_diag_factors=None,
-                   emission_cov_low_rank_factors=None,
-                   emissions=None):
+    def initialize(self, 
+                   key: Array = jr.PRNGKey(0),
+                   method: str = "prior",
+                   emission_means: Optional[Float[Array, "num_states emission_dim"]] = None,
+                   emission_cov_diag_factors: Optional[Float[Array, "num_states emission_dim"]] = None,
+                   emission_cov_low_rank_factors: Optional[Float[Array, "num_states emission_dim emission_rank"]] = None,
+                   emissions: Optional[Float[Array, "num_timesteps emission_dim"]] = None
+        ) -> Tuple[ParamsLowRankGaussianHMMEmissions, ParamsLowRankGaussianHMMEmissions]:
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
@@ -506,7 +590,9 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
-            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_means = jnp.array(km.cluster_centers_)
             _emission_cov_diag_factors = jnp.ones((self.num_states, self.emission_dim))
             _emission_cov_low_rank_factors = jnp.zeros((self.num_states, self.emission_dim, self.emission_rank))
@@ -536,17 +622,22 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
         return params, props
 
     @property
-    def emission_shape(self):
+    def emission_shape(self) -> Tuple[int]:
         return (self.emission_dim,)
 
-    def distribution(self, params, state, inputs=None):
+    def distribution(
+            self,
+            params: ParamsLowRankGaussianHMMEmissions,
+            state: IntScalar,
+            inputs: Optional[Array] = None
+    ) -> tfd.Distribution:
         return tfd.MultivariateNormalDiagPlusLowRankCovariance(
             params.means[state],
             params.cov_diag_factors[state],
             params.cov_low_rank_factors[state]
         )
 
-    def log_prior(self, params):
+    def log_prior(self, params: ParamsLowRankGaussianHMMEmissions) -> Float[Array, ""]:
         lp = tfd.Gamma(self.emission_diag_factor_conc, self.emission_diag_factor_rate)\
             .log_prob(params.cov_diag_factors).sum()
         return lp
@@ -588,10 +679,10 @@ class GaussianHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
-                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]]=0.0,
                  emission_prior_concentration: Scalar=1e-4,
                  emission_prior_scale: Union[Scalar, Float[Array, "emission_dim emission_dim"]]=1e-4,
                  emission_prior_extra_df: Scalar=0.1):
@@ -607,9 +698,9 @@ class GaussianHMM(HMM):
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
     def initialize(self,
-                   key: jr.PRNGKey=jr.PRNGKey(0),
+                   key: Array=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emission_covariances:  Optional[Float[Array, "num_states emission_dim emission_dim"]]=None,
@@ -636,9 +727,15 @@ class GaussianHMM(HMM):
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
-        params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
-        params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
-        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_covariances=emission_covariances, emissions=emissions)
+        params["initial"], props["initial"] = self.initial_component.initialize(
+            key1, method=method, initial_probs=initial_probs
+        )
+        params["transitions"], props["transitions"] = self.transition_component.initialize(
+            key2, method=method, transition_matrix=transition_matrix
+        )
+        params["emissions"], props["emissions"] = self.emission_component.initialize(
+            key3, method=method, emission_means=emission_means, emission_covariances=emission_covariances, emissions=emissions
+        )
         return ParamsGaussianHMM(**params), ParamsGaussianHMM(**props)
 
 
@@ -681,17 +778,21 @@ class DiagonalGaussianHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
-                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
-                 emission_prior_mean_concentration: Union[Scalar, Float[Array, "emission_dim"]]=1e-4,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]]=0.0,
+                 emission_prior_mean_concentration: Union[Scalar, Float[Array, " emission_dim"]]=1e-4,
                  emission_prior_concentration: Scalar=0.1,
                  emission_prior_scale: Scalar=0.1):
 
         self.emission_dim = emission_dim
-        initial_component = StandardHMMInitialState(num_states, initial_probs_concentration=initial_probs_concentration)
-        transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
+        initial_component = StandardHMMInitialState(
+            num_states, initial_probs_concentration=initial_probs_concentration
+            )
+        transition_component = StandardHMMTransitions(
+            num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness
+        )
         emission_component = DiagonalGaussianHMMEmissions(
             num_states, emission_dim,
             emission_prior_mean=emission_prior_mean,
@@ -701,15 +802,15 @@ class DiagonalGaussianHMM(HMM):
 
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
+    def initialize(self, key: Array=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emission_scale_diags: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
         ) -> Tuple[HMMParameterSet, HMMPropertySet]:
-        """Initialize the model parameters and their corresponding properties.
+        r"""Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
         them set automatically. If any parameters are not specified, you must supply a PRNGKey.
@@ -729,9 +830,15 @@ class DiagonalGaussianHMM(HMM):
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
-        params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
-        params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
-        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_scale_diags=emission_scale_diags, emissions=emissions)
+        params["initial"], props["initial"] = self.initial_component.initialize(
+            key1, method=method, initial_probs=initial_probs
+        )
+        params["transitions"], props["transitions"] = self.transition_component.initialize(
+            key2, method=method, transition_matrix=transition_matrix
+        )
+        params["emissions"], props["emissions"] = self.emission_component.initialize(
+            key3, method=method, emission_means=emission_means, emission_scale_diags=emission_scale_diags, emissions=emissions
+        )
         return ParamsDiagonalGaussianHMM(**params), ParamsDiagonalGaussianHMM(**props)
 
 
@@ -776,10 +883,10 @@ class SphericalGaussianHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
-                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]]=0.0,
                  emission_prior_mean_covariance: Union[Scalar, Float[Array, "emission_dim emission_dim"]]=1.0,
                  emission_var_concentration: Scalar=1.1,
                  emission_var_rate: Scalar=1.1,
@@ -799,12 +906,12 @@ class SphericalGaussianHMM(HMM):
 
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
+    def initialize(self, key: Array=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
-                   emission_scales: Optional[Float[Array, "num_states"]]=None,
+                   emission_scales: Optional[Float[Array, " num_states"]]=None,
                    emissions:  Optional[Float[Array, "num_timesteps emission_dim"]]=None
         ) -> Tuple[HMMParameterSet, HMMPropertySet]:
         """Initialize the model parameters and their corresponding properties.
@@ -828,9 +935,15 @@ class SphericalGaussianHMM(HMM):
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
-        params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
-        params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
-        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_scales=emission_scales, emissions=emissions)
+        params["initial"], props["initial"] = self.initial_component.initialize(
+            key1, method=method, initial_probs=initial_probs
+        )
+        params["transitions"], props["transitions"] = self.transition_component.initialize(
+            key2, method=method, transition_matrix=transition_matrix
+        )
+        params["emissions"], props["emissions"] = self.emission_component.initialize(
+            key3, method=method, emission_means=emission_means, emission_scales=emission_scales, emissions=emissions
+        )
         return ParamsSphericalGaussianHMM(**params), ParamsSphericalGaussianHMM(**props)
 
 
@@ -870,10 +983,10 @@ class SharedCovarianceGaussianHMM(HMM):
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
-                 emission_prior_mean: Union[Scalar, Float[Array, "emission_dim"]]=0.0,
+                 emission_prior_mean: Union[Scalar, Float[Array, " emission_dim"]]=0.0,
                  emission_prior_concentration: Scalar=1e-4,
                  emission_prior_scale: Scalar=1e-4,
                  emission_prior_extra_df: Scalar=0.1):
@@ -889,9 +1002,9 @@ class SharedCovarianceGaussianHMM(HMM):
             emission_prior_extra_df=emission_prior_extra_df)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
+    def initialize(self, key: Array=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emission_covariance:  Optional[Float[Array, "emission_dim emission_dim"]]=None,
@@ -917,9 +1030,15 @@ class SharedCovarianceGaussianHMM(HMM):
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
-        params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
-        params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
-        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_covariance=emission_covariance, emissions=emissions)
+        params["initial"], props["initial"] = self.initial_component.initialize(
+            key1, method=method, initial_probs=initial_probs
+        )
+        params["transitions"], props["transitions"] = self.transition_component.initialize(
+            key2, method=method, transition_matrix=transition_matrix
+        )
+        params["emissions"], props["emissions"] = self.emission_component.initialize(
+            key3, method=method, emission_means=emission_means, emission_covariance=emission_covariance, emissions=emissions
+        )
         return ParamsSharedCovarianceGaussianHMM(**params), ParamsSharedCovarianceGaussianHMM(**props)
 
 
@@ -966,8 +1085,8 @@ class LowRankGaussianHMM(HMM):
     def __init__(self, num_states: int,
                  emission_dim: int,
                  emission_rank: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
                  emission_diag_factor_concentration: Scalar=1.1,
                  emission_diag_factor_rate: Scalar=1.1,
@@ -985,9 +1104,9 @@ class LowRankGaussianHMM(HMM):
             m_step_num_iters=m_step_num_iters)
         super().__init__(num_states, initial_component, transition_component, emission_component)
 
-    def initialize(self, key: jr.PRNGKey=jr.PRNGKey(0),
+    def initialize(self, key: Array=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_means: Optional[Float[Array, "num_states emission_dim"]]=None,
                    emission_cov_diag_factors: Optional[Float[Array, "num_states emission_dim"]]=None,
@@ -1015,7 +1134,13 @@ class LowRankGaussianHMM(HMM):
         """
         key1, key2, key3 = jr.split(key , 3)
         params, props = dict(), dict()
-        params["initial"], props["initial"] = self.initial_component.initialize(key1, method=method, initial_probs=initial_probs)
-        params["transitions"], props["transitions"] = self.transition_component.initialize(key2, method=method, transition_matrix=transition_matrix)
-        params["emissions"], props["emissions"] = self.emission_component.initialize(key3, method=method, emission_means=emission_means, emission_cov_diag_factors=emission_cov_diag_factors, emission_cov_low_rank_factors=emission_cov_low_rank_factors, emissions=emissions)
+        params["initial"], props["initial"] = self.initial_component.initialize(
+            key1, method=method, initial_probs=initial_probs
+        )
+        params["transitions"], props["transitions"] = self.transition_component.initialize(
+            key2, method=method, transition_matrix=transition_matrix
+        )
+        params["emissions"], props["emissions"] = self.emission_component.initialize(
+            key3, method=method, emission_means=emission_means, emission_cov_diag_factors=emission_cov_diag_factors, emission_cov_low_rank_factors=emission_cov_low_rank_factors, emissions=emissions
+        )
         return ParamsLowRankGaussianHMM(**params), ParamsLowRankGaussianHMM(**props)

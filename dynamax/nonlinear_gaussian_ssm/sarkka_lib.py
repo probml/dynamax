@@ -6,7 +6,6 @@ Available: https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
 """
 
 import jax.numpy as jnp
-import jax.random as jr
 from jax import vmap
 from jax import lax
 from jax import jacfwd
@@ -63,9 +62,9 @@ def eks(m_0, P_0, f, Q, h, R, Y):
         return (m_sm, P_sm), (m_sm, P_sm)
 
     carry = (m_post[-1], P_post[-1])
-    _, (m_sm, P_sm) = lax.scan(_step, carry, jnp.arange(num_timesteps - 2, -1, -1))
-    m_sm = jnp.concatenate((jnp.array([m_post[-1]]), m_sm))[::-1]
-    P_sm = jnp.concatenate((jnp.array([P_post[-1]]), P_sm))[::-1]
+    _, (m_sm, P_sm) = lax.scan(_step, carry, jnp.arange(num_timesteps - 1), reverse=True)
+    m_sm = jnp.concatenate((m_sm, jnp.array([m_post[-1]])))
+    P_sm = jnp.concatenate((P_sm, jnp.array([P_post[-1]])))
 
     return m_sm, P_sm
 
@@ -196,8 +195,8 @@ def uks(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
         return jnp.concatenate((jnp.array([m]), sigma_plus, sigma_minus))
 
     carry = (m_post[-1], P_post[-1])
-    _, (m_sm, P_sm) = lax.scan(_step, carry, jnp.arange(num_timesteps - 2, -1, -1))
-    m_sm = jnp.concatenate((jnp.array([m_post[-1]]), m_sm))[::-1]
-    P_sm = jnp.concatenate((jnp.array([P_post[-1]]), P_sm))[::-1]
+    _, (m_sm, P_sm) = lax.scan(_step, carry, jnp.arange(num_timesteps - 1), reverse=True)
+    m_sm = jnp.concatenate((m_sm, jnp.array([m_post[-1]])))
+    P_sm = jnp.concatenate((P_sm, jnp.array([P_post[-1]])))
 
     return m_sm, P_sm

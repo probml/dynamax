@@ -1,7 +1,10 @@
+from typing import NamedTuple, Optional, Tuple, Union
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax, tree_map
-from jaxtyping import Float, Array
+from jax import lax
+from jax.tree_util import tree_map
+from jaxtyping import Int, Float, Array
+
 from dynamax.hidden_markov_model.models.abstractions import HMM, HMMParameterSet, HMMPropertySet
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
@@ -10,7 +13,6 @@ from dynamax.parameters import ParameterProperties
 from dynamax.types import Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
 from tensorflow_probability.substrates import jax as tfp
-from typing import NamedTuple, Optional, Tuple, Union
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -24,25 +26,28 @@ class ParamsLinearAutoregressiveHMM(NamedTuple):
 
 class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
     def __init__(self,
-                 num_states,
-                 emission_dim,
-                 num_lags=1):
+                 num_states: int,
+                 emission_dim: int,
+                 num_lags: int=1):
         self.num_lags = num_lags
         self.emission_dim = emission_dim
         input_dim = num_lags * emission_dim
         super().__init__(num_states, input_dim, emission_dim)
 
     def initialize(self,
-                   key=jr.PRNGKey(0),
-                   method="prior",
-                   emission_weights=None,
-                   emission_biases=None,
-                   emission_covariances=None,
-                   emissions=None):
+                   key: Array=jr.PRNGKey(0),
+                   method: str="prior",
+                   emission_weights: Optional[Float[Array, "num_states emission_dim input_dim"]]=None,
+                   emission_biases: Optional[Float[Array, "num_states emission_dim"]]=None,
+                   emission_covariances: Optional[Float[Array, "num_states emission_dim emission_dim"]]=None,
+                   emissions: Optional[Float[Array, "num_timesteps emission_dim"]]=None
+                   ) -> Tuple[ParamsLinearRegressionHMMEmissions, ParamsLinearRegressionHMMEmissions]:
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
-            km = KMeans(self.num_states).fit(emissions.reshape(-1, self.emission_dim))
+            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
+            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
+            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
             _emission_biases = jnp.array(km.cluster_centers_)
             _emission_covs = jnp.tile(jnp.eye(self.emission_dim)[None, :, :], (self.num_states, 1, 1))
@@ -104,8 +109,8 @@ class LinearAutoregressiveHMM(HMM):
                  num_states: int,
                  emission_dim: int,
                  num_lags: int=1,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0):
         self.emission_dim = emission_dim
         self.num_lags = num_lags
@@ -122,9 +127,9 @@ class LinearAutoregressiveHMM(HMM):
         return (self.num_lags * self.emission_dim,)
 
     def initialize(self,
-                   key: jr.PRNGKey=jr.PRNGKey(0),
+                   key: Array=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_weights: Optional[Float[Array, "num_states emission_dim emission_dim_times_num_lags"]]=None,
                    emission_biases: Optional[Float[Array, "num_states emission_dim"]]=None,
@@ -160,10 +165,10 @@ class LinearAutoregressiveHMM(HMM):
 
     def sample(self,
                params: HMMParameterSet,
-               key: jr.PRNGKey,
+               key: Array,
                num_timesteps: int,
                prev_emissions: Optional[Float[Array, "num_lags emission_dim"]]=None,
-    ) -> Tuple[Float[Array, "num_timesteps state_dim"], Float[Array, "num_timesteps emission_dim"]]:
+    ) -> Tuple[Int[Array, " num_timesteps"], Float[Array, "num_timesteps emission_dim"]]:
         r"""Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$.
 
         Args:
@@ -185,14 +190,14 @@ class LinearAutoregressiveHMM(HMM):
             key1, key2 = jr.split(key, 2)
             state = self.transition_distribution(params, prev_state).sample(seed=key2)
             emission = self.emission_distribution(params, state, inputs=jnp.ravel(prev_emissions)).sample(seed=key1)
-            next_prev_emissions = jnp.row_stack([emission, prev_emissions[:-1]])
+            next_prev_emissions = jnp.vstack([emission, prev_emissions[:-1]])
             return (state, next_prev_emissions), (state, emission)
 
         # Sample the initial state
         key1, key2, key = jr.split(key, 3)
         initial_state = self.initial_distribution(params).sample(seed=key1)
         initial_emission = self.emission_distribution(params, initial_state, inputs=jnp.ravel(prev_emissions)).sample(seed=key2)
-        initial_prev_emissions = jnp.row_stack([initial_emission, prev_emissions[:-1]])
+        initial_prev_emissions = jnp.vstack([initial_emission, prev_emissions[:-1]])
 
         # Sample the remaining emissions and states
         next_keys = jr.split(key, num_timesteps - 1)
@@ -208,7 +213,7 @@ class LinearAutoregressiveHMM(HMM):
     def compute_inputs(self,
                        emissions: Float[Array, "num_timesteps emission_dim"],
                        prev_emissions: Optional[Float[Array, "num_lags emission_dim"]]=None
-    ) -> Float[Array, "num_timesteps emission_dim_times_num_lags"]:
+    ) -> Float[Array, "num_timesteps {self.num_lags}*{self.emission_dim}"]:
         r"""Helper function to compute the matrix of lagged emissions.
 
         Args:

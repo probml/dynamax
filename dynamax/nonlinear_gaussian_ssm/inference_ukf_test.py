@@ -1,5 +1,4 @@
 import jax.numpy as jnp
-import jax.random as jr
 
 from dynamax.nonlinear_gaussian_ssm.inference_ukf import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.sarkka_lib import ukf, uks

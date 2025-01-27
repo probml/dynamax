@@ -15,7 +15,7 @@ from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM, NonlinearGaussia
 from dynamax.parameters import ParameterProperties
 from dynamax.ssm import SSM
 from dynamax.utils.bijectors import RealToPSDBijector
-from dynamax.types import PRNGKey
+from dynamax.types import PRNGKeyT
 
 
 tfd = tfp.distributions
@@ -37,7 +37,7 @@ def lgssm_to_nlgssm(params: ParamsLGSSM) -> ParamsNLGSSM:
 
 
 def random_lgssm_args(
-    key: Union[int, PRNGKey] = 0,
+    key: Union[int, PRNGKeyT] = 0,
     num_timesteps: int = 15,
     state_dim: int = 4,
     emission_dim: int = 2

@@ -8,7 +8,7 @@ import jax
 import jaxlib
 from jaxtyping import Array, Int
 from scipy.optimize import linear_sum_assignment
-from typing import Optional
+from jax.scipy.linalg import cho_factor, cho_solve
 
 def has_tpu():
     try:
@@ -43,7 +43,7 @@ def pad_sequences(observations, valid_lens, pad_val=0):
     return dataset
 
 
-def monotonically_increasing(x, atol=0, rtol=0):
+def monotonically_increasing(x, atol=0., rtol=0.):
     thresh = atol + rtol*jnp.abs(x[:-1])
     return jnp.all(jnp.diff(x) >= -thresh)
 
@@ -55,7 +55,7 @@ def pytree_len(pytree):
         return len(tree_leaves(pytree)[0])
 
 
-def pytree_sum(pytree, axis=None, keepdims=None, where=None):
+def pytree_sum(pytree, axis=None, keepdims=False, where=None):
     return tree_map(partial(jnp.sum, axis=axis, keepdims=keepdims, where=where), pytree)
 
 
@@ -147,8 +147,8 @@ def ensure_array_has_batch_dim(tree, instance_shapes):
 
 
 def compute_state_overlap(
-    z1: Int[Array, "num_timesteps"],
-    z2: Int[Array, "num_timesteps"]
+    z1: Int[Array, " num_timesteps"],
+    z2: Int[Array, " num_timesteps"]
 ):
     """
     Compute a matrix describing the state-wise overlap between two state vectors
@@ -166,7 +166,7 @@ def compute_state_overlap(
     assert z1.shape == z2.shape
     assert z1.min() >= 0 and z2.min() >= 0
 
-    K = max(z1.max(), z2.max()) + 1
+    K = max(max(z1), max(z2)) + 1
 
     overlap = jnp.sum(
         (z1[:, None] == jnp.arange(K))[:, :, None]
@@ -177,8 +177,8 @@ def compute_state_overlap(
 
 
 def find_permutation(
-    z1: Int[Array, "num_timesteps"],
-    z2: Int[Array, "num_timesteps"]
+    z1: Int[Array, " num_timesteps"],
+    z2: Int[Array, " num_timesteps"]
 ):
     """
     Find the permutation of the state labels in sequence ``z1`` so that they
@@ -198,7 +198,13 @@ def find_permutation(
     return perm
 
 
-def psd_solve(A,b):
+def psd_solve(A, b, diagonal_boost=1e-9):
     """A wrapper for coordinating the linalg solvers used in the library for psd matrices."""
-    A = A + 1e-6
-    return jnp.linalg.solve(A,b)
+    A = symmetrize(A) + diagonal_boost * jnp.eye(A.shape[-1])
+    L, lower = cho_factor(A, lower=True)
+    x = cho_solve((L, lower), b)
+    return x
+
+def symmetrize(A):
+    """Symmetrize one or more matrices."""
+    return 0.5 * (A + jnp.swapaxes(A, -1, -2))

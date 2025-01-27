@@ -110,7 +110,7 @@ as we discuss below.
 More information can be found in these books:
 
    * "Machine Learning: Advanced Topics", K. Murphy, MIT Press 2023. Available at https://probml.github.io/pml-book/book2.html.
-   * "Bayesian Filtering and Smoothing", S. Särkkä, Cambridge University Press, 2013. Available at https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
+   * "Bayesian Filtering and Smoothing, Second Edition", S. Särkkä and L. Svensson, Cambridge University Press, 2023. Available at http://users.aalto.fi/~ssarkka/pub/bfs_book_2023_online.pdf
 
 Quickstart
 ----------

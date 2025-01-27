@@ -1,25 +1,29 @@
+from functools import partial
+from typing import Callable, NamedTuple, Optional, Tuple, Union
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax
-from jax import vmap
-from jax import jit
-from functools import partial
-
-from typing import Callable, Optional, Tuple, Union, NamedTuple
+from jax import jit, lax, vmap
 from jaxtyping import Int, Float, Array
 
-from dynamax.types import Scalar, PRNGKey
+from dynamax.types import IntScalar, Scalar
 
 _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 
-def get_trans_mat(transition_matrix, transition_fn, t):
+def get_trans_mat(
+        transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                          Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
+        transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]],
+        t: IntScalar
+) -> Float[Array, "num_states num_states"]:
     if transition_fn is not None:
         return transition_fn(t)
-    else:
-        if transition_matrix.ndim == 3: # (T,K,K)
+    elif transition_matrix is not None:
+        if transition_matrix.ndim == 3: # (T-1,K,K)
             return transition_matrix[t]
         else:
             return transition_matrix
+    else:
+        raise ValueError("Either `transition_matrix` or `transition_fn` must be specified.")
 
 class HMMPosteriorFiltered(NamedTuple):
     r"""Simple wrapper for properties of an HMM filtering posterior.
@@ -50,12 +54,12 @@ class HMMPosterior(NamedTuple):
     filtered_probs: Float[Array, "num_timesteps num_states"]
     predicted_probs: Float[Array, "num_timesteps num_states"]
     smoothed_probs: Float[Array, "num_timesteps num_states"]
-    initial_probs: Float[Array, "num_states"]
-    trans_probs: Optional[Union[Float[Array, "num_timesteps num_states num_states"],
-                                Float[Array, "num_states num_states"]]] = None
+    initial_probs: Float[Array, " num_states"]
+    trans_probs: Optional[Union[Float[Array, "num_states num_states"],
+                                Float[Array, "num_timesteps_minus_1 num_states num_states"]]] = None
 
 
-def _normalize(u, axis=0, eps=1e-15):
+def _normalize(u: Array, axis=0, eps=1e-15):
     """Normalizes the values within the axis in a way that they sum up to 1.
 
     Args:
@@ -97,11 +101,11 @@ def _predict(probs, A):
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_filter(
-    initial_distribution: Float[Array, "num_states"],
-    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
-                             Float[Array, "num_states num_states"]],
+    initial_distribution: Float[Array, " num_states"],
+    transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                      Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
+    transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]] = None
 ) -> HMMPosteriorFiltered:
     r"""Forwards filtering
 
@@ -143,14 +147,13 @@ def hmm_filter(
     return post
 
 
-
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_backward_filter(
-    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
-                             Float[Array, "num_states num_states"]],
+    transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                      Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
-) -> Tuple[Float, Float[Array, "num_timesteps num_states"]]:
+    transition_fn: Optional[Callable[[int], Float[Array, "num_states num_states"]]]= None
+) -> Tuple[Scalar, Float[Array, "num_timesteps num_states"]]:
     r"""Run the filter backwards in time. This is the second step of the forward-backward algorithm.
 
     Transition matrix may be either 2D (if transition probabilities are fixed) or 3D
@@ -184,19 +187,19 @@ def hmm_backward_filter(
         next_backward_pred_probs = _predict(backward_filt_probs, A.T)
         return (log_normalizer, next_backward_pred_probs), backward_pred_probs
 
-    carry = (0.0, jnp.ones(num_states))
-    (log_normalizer, _), rev_backward_pred_probs = lax.scan(_step, carry, jnp.arange(num_timesteps)[::-1])
-    backward_pred_probs = rev_backward_pred_probs[::-1]
+    (log_normalizer, _), backward_pred_probs = lax.scan(
+        _step, (0.0, jnp.ones(num_states)), jnp.arange(num_timesteps), reverse=True
+    )
     return log_normalizer, backward_pred_probs
 
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_two_filter_smoother(
-    initial_distribution: Float[Array, "num_states"],
-    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
-                             Float[Array, "num_states num_states"]],
+    initial_distribution: Float[Array, " num_states"],
+    transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                      Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None,
+    transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]]= None,
     compute_trans_probs: bool = True
 ) -> HMMPosterior:
     r"""Computed the smoothed state probabilities using the two-filter
@@ -246,11 +249,11 @@ def hmm_two_filter_smoother(
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_smoother(
-    initial_distribution: Float[Array, "num_states"],
-    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
-                             Float[Array, "num_states num_states"]],
+    initial_distribution: Float[Array, " num_states"],
+    transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                      Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None,
+    transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]]= None,
     compute_trans_probs: bool = True
 ) -> HMMPosterior:
     r"""Computed the smoothed state probabilities using a general
@@ -273,7 +276,7 @@ def hmm_smoother(
         posterior distribution
 
     """
-    num_timesteps, num_states = log_likelihoods.shape
+    num_timesteps = log_likelihoods.shape[0]
 
     # Run the HMM filter
     post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transition_fn)
@@ -298,12 +301,15 @@ def hmm_smoother(
         return smoothed_probs, smoothed_probs
 
     # Run the HMM smoother
-    carry = filtered_probs[-1]
-    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_probs[:-1][::-1], predicted_probs[1:][::-1])
-    _, rev_smoothed_probs = lax.scan(_step, carry, args)
+    _, smoothed_probs = lax.scan(
+        _step,
+        filtered_probs[-1],
+        (jnp.arange(num_timesteps - 1), filtered_probs[:-1], predicted_probs[1:]),
+        reverse=True,
+    )
 
-    # Reverse the arrays and return
-    smoothed_probs = jnp.row_stack([rev_smoothed_probs[::-1], filtered_probs[-1]])
+    # Concatenate the arrays and return
+    smoothed_probs = jnp.vstack([smoothed_probs, filtered_probs[-1]])
 
     # Package into a posterior
     posterior = HMMPosterior(
@@ -323,12 +329,12 @@ def hmm_smoother(
 
 @partial(jit, static_argnames=["transition_fn", "window_size"])
 def hmm_fixed_lag_smoother(
-    initial_distribution: Float[Array, "num_states"],
-    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
-                             Float[Array, "num_states num_states"]],
+    initial_distribution: Float[Array, " num_states"],
+    transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                      Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
-    window_size: Int,
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
+    window_size: int,
+    transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]]= None
 ) -> HMMPosterior:
     r"""Compute the smoothed state probabilities using the fixed-lag smoother.
 
@@ -437,12 +443,12 @@ def hmm_fixed_lag_smoother(
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_posterior_mode(
-    initial_distribution: Float[Array, "num_states"],
-    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
-                             Float[Array, "num_states num_states"]],
+    initial_distribution: Float[Array, " num_states"],
+    transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                     Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]]= None
-) -> Int[Array, "num_timesteps"]:
+    transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]]= None
+) -> Int[Array, " num_timesteps"]:
     r"""Compute the most likely state sequence. This is called the Viterbi algorithm.
 
     Args:
@@ -467,10 +473,9 @@ def hmm_posterior_mode(
         return best_next_score, best_next_state
 
     num_states = log_likelihoods.shape[1]
-    best_second_score, rev_best_next_states = lax.scan(
-        _backward_pass, jnp.zeros(num_states), jnp.arange(num_timesteps - 2, -1, -1)
+    best_second_score, best_next_states = lax.scan(
+        _backward_pass, jnp.zeros(num_states), jnp.arange(num_timesteps - 1), reverse=True
     )
-    best_next_states = rev_best_next_states[::-1]
 
     # Run the forward pass
     def _forward_pass(state, best_next_state):
@@ -485,13 +490,13 @@ def hmm_posterior_mode(
 
 @partial(jit, static_argnames=["transition_fn"])
 def hmm_posterior_sample(
-    rng: jr.PRNGKey,
-    initial_distribution: Float[Array, "num_states"],
-    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
-                             Float[Array, "num_states num_states"]],
+    key: Array,
+    initial_distribution: Float[Array, " num_states"],
+    transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                      Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
     log_likelihoods: Float[Array, "num_timesteps num_states"],
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
-) -> Int[Array, "num_timesteps"]:
+    transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]] = None
+) -> Tuple[Scalar, Int[Array, " num_timesteps"]]:
     r"""Sample a latent sequence from the posterior.
 
     Args:
@@ -514,7 +519,7 @@ def hmm_posterior_sample(
     # Run the sampler backward in time
     def _step(carry, args):
         next_state = carry
-        t, rng, filtered_probs = args
+        t, subkey, filtered_probs = args
 
         A = get_trans_mat(transition_matrix, transition_fn, t)
 
@@ -523,30 +528,33 @@ def hmm_posterior_sample(
         smoothed_probs /= smoothed_probs.sum()
 
         # Sample current state
-        state = jr.choice(rng, a=num_states, p=smoothed_probs)
+        state = jr.choice(subkey, a=num_states, p=smoothed_probs)
 
         return state, state
 
     # Run the HMM smoother
-    rngs = jr.split(rng, num_timesteps)
-    last_state = jr.choice(rngs[-1], a=num_states, p=filtered_probs[-1])
-    args = (jnp.arange(num_timesteps - 1, 0, -1), rngs[:-1][::-1], filtered_probs[:-1][::-1])
-    _, rev_states = lax.scan(_step, last_state, args)
+    keys = jr.split(key, num_timesteps)
+    last_state = jr.choice(keys[-1], a=num_states, p=filtered_probs[-1])
+    _, states = lax.scan(
+        _step, last_state, (jnp.arange(1, num_timesteps), keys[:-1], filtered_probs[:-1]),
+        reverse=True
+    )
 
-    # Reverse the arrays and return
-    states = jnp.concatenate([rev_states[::-1], jnp.array([last_state])])
+    # Add the last state
+    states = jnp.concatenate([states, jnp.array([last_state])])
     return log_normalizer, states
 
 def _compute_sum_transition_probs(
     transition_matrix: Float[Array, "num_states num_states"],
     hmm_posterior: HMMPosterior) -> Float[Array, "num_states num_states"]:
     """Compute the transition probabilities from the HMM posterior messages.
+
     Args:
         transition_matrix (_type_): _description_
         hmm_posterior (_type_): _description_
     """
 
-    def _step(carry, args):
+    def _step(carry, args: Tuple[Array, Array, Array, Int[Array, ""]]):
         filtered_probs, smoothed_probs_next, predicted_probs_next, t = args
 
         # Get parameters for time t
@@ -577,11 +585,13 @@ def _compute_sum_transition_probs(
 
 
 def _compute_all_transition_probs(
-    transition_matrix: Float[Array, "num_timesteps num_states num_states"],
+    transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                      Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
     hmm_posterior: HMMPosterior,
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
+    transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]] = None
     ) -> Float[Array, "num_timesteps num_states num_states"]:
     """Compute the transition probabilities from the HMM posterior messages.
+
     Args:
         transition_matrix (_type_): _description_
         hmm_posterior (_type_): _description_
@@ -595,20 +605,21 @@ def _compute_all_transition_probs(
         A = get_trans_mat(transition_matrix, transition_fn, t)
         return jnp.einsum('i,ij,j->ij', filtered_probs[t], A, relative_probs_next[t])
 
-    transition_probs = vmap(_compute_probs)(jnp.arange(len(filtered_probs)-1))
+    transition_probs = vmap(_compute_probs)(jnp.arange(len(filtered_probs)))
     return transition_probs
 
 
-# TODO: Consider alternative annotation for return type:
-#  Float[Array, "*num_timesteps num_states num_states"] I think this would allow multiple prepended dims.
-#  Float[Array, "#num_timesteps num_states num_states"] this might accept (1, sd, sd) but not (sd, sd).
+# TODO: This is a candidate for @overload however at present I think we would need to use 
+#       `@beartype.typing.overload` and beartype is currently not a core dependency.
+#       Support for `typing.overload` might change in the future: 
+#         https://github.com/beartype/beartype/issues/54
 def compute_transition_probs(
-    transition_matrix: Union[Float[Array, "num_timesteps num_states num_states"],
-                             Float[Array, "num_states num_states"]],
+    transition_matrix: Optional[Union[Float[Array, "num_states num_states"],
+                                      Float[Array, "num_timesteps_minus_1 num_states num_states"]]],
     hmm_posterior: HMMPosterior,
-    transition_fn: Optional[Callable[[Int], Float[Array, "num_states num_states"]]] = None
-) -> Union[Float[Array, "num_timesteps num_states num_states"],
-            Float[Array, "num_states num_states"]]:
+    transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]] = None
+) -> Union[Float[Array, "num_states num_states"],
+           Float[Array, "num_timesteps_minus_1 num_states num_states"]]:
     r"""Compute the posterior marginal distributions $p(z_{t+1}, z_t \mid y_{1:T}, u_{1:T}, \theta)$.
 
     Args:
@@ -619,8 +630,10 @@ def compute_transition_probs(
     Returns:
         array of smoothed transition probabilities.
     """
-    reduce_sum = transition_matrix is not None and transition_matrix.ndim == 2
-    if reduce_sum:
+    if transition_matrix is None and transition_fn is None:
+        raise ValueError("Either `transition_matrix` or `transition_fn` must be specified.")
+
+    if transition_matrix is not None and transition_matrix.ndim == 2:
         return _compute_sum_transition_probs(transition_matrix, hmm_posterior)
     else:
         return _compute_all_transition_probs(transition_matrix, hmm_posterior, transition_fn=transition_fn)

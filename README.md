@@ -29,6 +29,12 @@ sequential Monte Carlo (SMC)).
 
 For tutorials and API documentation, see: https://probml.github.io/dynamax/.
 
+For an extension of dynamax that supports structural time series models, 
+see https://github.com/probml/sts-jax.
+
+For an illustration of how to use dynamax inside of [bayeux](https://jax-ml.github.io/bayeux/) to perform Bayesian inference
+for the parameters of an SSM, see https://jax-ml.github.io/bayeux/examples/dynamax_and_bayeux/.
+
 ## Installation and Testing
 
 To install the latest releast of dynamax from PyPi:
@@ -76,7 +82,7 @@ illustrated in the graphical model below.
 The corresponding joint distribution has the following form (in dynamax,
 we restrict attention to discrete time systems):
 
-$$p(y_{1:T}, z_{1:T} | u_{1:T}) = p(z_1 | u_1) p(y_1 | z_1, u_1) \prod_{t=1}^T p(z_t | z_{t-1}, u_t) p(y_t | z_t, u_t)$$
+$$p(y_{1:T}, z_{1:T} \mid u_{1:T}) = p(z_1 \mid u_1) \prod_{t=2}^T p(z_t \mid z_{t-1}, u_t) \prod_{t=1}^T p(y_t \mid z_t, u_t)$$
 
 Here $p(z_t | z_{t-1}, u_t)$ is called the transition or dynamics model,
 and $p(y_t | z_{t}, u_t)$ is called the observation or emission model.
@@ -100,9 +106,9 @@ More information can be found in these books:
 
 > -   \"Machine Learning: Advanced Topics\", K. Murphy, MIT Press 2023.
 >     Available at <https://probml.github.io/pml-book/book2.html>.
-> -   \"Bayesian Filtering and Smoothing\", S. Särkkä, Cambridge
->     University Press, 2013. Available at
->     <https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf>
+> -   \"Bayesian Filtering and Smoothing, Second Edition\", S. Särkkä and L. Svensson, Cambridge
+>     University Press, 2023. Available at
+>     <http://users.aalto.fi/~ssarkka/pub/bfs_book_2023_online.pdf>
 
 ## Example usage
 

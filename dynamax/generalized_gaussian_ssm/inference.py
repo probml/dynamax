@@ -3,7 +3,6 @@ from numpy.polynomial.hermite_e import hermegauss
 from jax import jacfwd, vmap, lax
 import jax.numpy as jnp
 from jax import lax
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Union, Callable
 
@@ -16,7 +15,6 @@ _get_params = lambda x, dim, t: x[t] if x.ndim == dim + 1 else x
 _process_fn = lambda f, u: (lambda x, y: f(x)) if u is None else f
 _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
 _jacfwd_2d = lambda f, x: jnp.atleast_2d(jacfwd(f)(x))
-
 
 
 class EKFIntegrals(NamedTuple):
@@ -84,8 +82,8 @@ CMGFIntegrals = Union[EKFIntegrals, UKFIntegrals, GHKFIntegrals]
 
 
 def _predict(m, P, f, Q, u, g_ev, g_cov):
-    """Predict next mean and covariance under an additive-noise Gaussian filter
-    
+    r"""Predict next mean and covariance under an additive-noise Gaussian filter
+
         p(x_{t+1}) = N(x_{t+1} | mu_pred, Sigma_pred)
         where
             mu_pred = gev(f, m, P)
@@ -118,7 +116,7 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
 
 
 def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, emission_dist):
-    """Condition a Gaussian potential on a new observation with arbitrary
+    r"""Condition a Gaussian potential on a new observation with arbitrary
        likelihood with given functions for conditional moments and make a
        Gaussian approximation.
        p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
@@ -173,7 +171,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, em
 
 
 def _statistical_linear_regression(mu, Sigma, m, S, C):
-    """Return moment-matching affine coefficients and approximation noise variance
+    r"""Return moment-matching affine coefficients and approximation noise variance
     given joint moments.
 
         g(x) \approx Ax + b + e where e ~ N(0, Omega)
@@ -337,13 +335,17 @@ def conditional_moments_gaussian_smoother(
         return (smoothed_mean, smoothed_cov), (smoothed_mean, smoothed_cov)
 
     # Run the smoother
-    init_carry = (filtered_means[-1], filtered_covs[-1])
-    args = (jnp.arange(num_timesteps - 2, -1, -1), filtered_means[:-1][::-1], filtered_covs[:-1][::-1])
-    _, (smoothed_means, smoothed_covs) = lax.scan(_step, init_carry, args)
+    _, (smoothed_means, smoothed_covs) = lax.scan(
+        _step,
+        (filtered_means[-1], filtered_covs[-1]),
+        (jnp.arange(num_timesteps - 1), filtered_means[:-1], filtered_covs[:-1]),
+        reverse=True
+    )
 
-    # Reverse the arrays and return
-    smoothed_means = jnp.row_stack((smoothed_means[::-1], filtered_means[-1][None, ...]))
-    smoothed_covs = jnp.row_stack((smoothed_covs[::-1], filtered_covs[-1][None, ...]))
+    # Concatenate the last smoothed mean and covariance
+    smoothed_means = jnp.vstack((smoothed_means, filtered_means[-1][None, ...]))
+    smoothed_covs = jnp.vstack((smoothed_covs, filtered_covs[-1][None, ...]))
+
     return PosteriorGSSMSmoothed(
         marginal_loglik=ll,
         filtered_means=filtered_means,
