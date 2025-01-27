@@ -6,7 +6,6 @@ Available: https://users.aalto.fi/~ssarkka/pub/cup_book_online_20131111.pdf
 """
 
 import jax.numpy as jnp
-import jax.random as jr
 from jax import vmap
 from jax import lax
 from jax import jacfwd

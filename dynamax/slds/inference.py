@@ -6,10 +6,10 @@ from functools import partial
 from jaxtyping import Array, Float, Int
 from typing import NamedTuple, Optional
 from dynamax.utils.utils import psd_solve
-from dynamax.types import PRNGKey
+from dynamax.types import PRNGKeyT
 
 class DiscreteParamsSLDS(NamedTuple):
-    initial_distribution: Float[Array, "num_states"]
+    initial_distribution: Float[Array, " num_states"]
     transition_matrix : Float[Array, "num_states num_states"]
     proposal_transition_matrix : Float[Array, "num_states num_states"]
 
@@ -164,7 +164,7 @@ def rbpfilter(
     num_particles: int,
     params: ParamsSLDS,
     emissions:  Float[Array, "ntime emission_dim"],
-    key: PRNGKey = jr.PRNGKey(0),
+    key: PRNGKeyT = jr.PRNGKey(0),
     inputs: Optional[Float[Array, "ntime input_dim"]] = None,
     ess_threshold: float = 0.5
     ):
@@ -253,7 +253,7 @@ def rbpfilter_optimal(
     num_particles: int,
     params: ParamsSLDS,
     emissions:  Float[Array, "ntime emission_dim"],
-    key: PRNGKey = jr.PRNGKey(0),
+    key: PRNGKeyT = jr.PRNGKey(0),
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ):
     '''

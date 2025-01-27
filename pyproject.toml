@@ -11,3 +11,6 @@ fail-under = 66
 verbose = 2
 quiet = false
 color = true
+
+[tool.ruff.lint]
+ignore = ["F722"]
