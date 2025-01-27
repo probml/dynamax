@@ -4,5 +4,13 @@ requires = ["setuptools >= 30.3.0", "wheel"]
 [tool.black]
 line-length = 120
 
+[tool.interrogate]
+ignore-init-method = true
+ignore-init-module = true
+fail-under = 66
+verbose = 2
+quiet = false
+color = true
+
 [tool.ruff.lint]
 ignore = ["F722"]
