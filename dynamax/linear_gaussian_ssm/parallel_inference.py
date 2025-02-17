@@ -1,4 +1,4 @@
-'''
+"""
 Parallel filtering and smoothing for a lgssm.
 
 This implementation is adapted from the work of Adrien Correnflos:
@@ -27,25 +27,22 @@ Z₀ ─────────── Z₁ ─────────── Z�
 | H₀,R₀        | H₁,R₁        | H₂,R₂        | H₃,R₃
 |              |              |              |
 Y₀             Y₁             Y₂             Y₃ 
-
-'''
-
+"""
 import jax.numpy as jnp
-from jax import vmap, lax
-from jaxtyping import Array, Float
-from typing import NamedTuple, Optional
-from dynamax.types import PRNGKeyT
-from functools import partial
 import warnings
 
-from tensorflow_probability.substrates.jax.distributions import (
-    MultivariateNormalDiagPlusLowRankCovariance as MVNLowRank,
-    MultivariateNormalFullCovariance as MVN)
-
-from jax.scipy.linalg import cho_solve, cho_factor
 from dynamax.utils.utils import symmetrize, psd_solve
 from dynamax.linear_gaussian_ssm import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
 from dynamax.linear_gaussian_ssm.inference import _zeros_if_none
+from dynamax.types import PRNGKeyT
+from functools import partial
+from jax import vmap, lax
+from jax.scipy.linalg import cho_solve, cho_factor
+from jaxtyping import Array, Float
+from tensorflow_probability.substrates.jax.distributions import (
+    MultivariateNormalDiagPlusLowRankCovariance as MVNLowRank,
+    MultivariateNormalFullCovariance as MVN)
+from typing import NamedTuple, Optional
 
 
 def _get_one_param(x, dim, t):
@@ -165,6 +162,7 @@ def _initialize_filtering_messages(
     inputs = _zeros_if_none(inputs, (num_timesteps, 0))
     
     def _first_message(params, y, u):
+        """Compute the first filtering message."""
         H, D, d, R = _get_params(params, num_timesteps, -1)[4:]
         m = params.initial.mean
         P = params.initial.cov
@@ -185,6 +183,7 @@ def _initialize_filtering_messages(
 
     @partial(vmap, in_axes=(None, 0, 0, 0))
     def _generic_message(params, y, u, t):
+        """Compute the generic filtering message."""
         F, B, b, Q, H, D, d, R = _get_params(params, num_timesteps, t)
 
         S_inv = _emissions_scale(Q, H, R)
@@ -228,6 +227,7 @@ def lgssm_filter(
     """
     @vmap
     def _operator(elem1, elem2):
+        """Parallel filtering operator."""
         A1, b1, C1, J1, eta1, logZ1 = elem1
         A2, b2, C2, J2, eta2, logZ2 = elem2
         I = jnp.eye(A1.shape[0])
@@ -283,6 +283,7 @@ def _initialize_smoothing_messages(params: ParamsLGSSM,
     """Preprocess filtering output to construct input for smoothing assocative scan."""
 
     def _last_message(m, P):
+        """Compute the last smoothing message."""
         return jnp.zeros_like(P), m, P
 
     num_timesteps = filtered_means.shape[0]
@@ -290,6 +291,7 @@ def _initialize_smoothing_messages(params: ParamsLGSSM,
 
     @partial(vmap, in_axes=(None, 0, 0, 0, 0))
     def _generic_message(params, m, P, u, t):
+        """Compute the generic smoothing message."""
         F, B, b, Q = _get_params(params, num_timesteps, t)[:4]
         CF, low = cho_factor(F @ P @ F.T + Q)
         E = cho_solve((CF, low), F @ P).T
@@ -324,6 +326,7 @@ def lgssm_smoother(
     
     @vmap
     def _operator(elem1, elem2):
+        """Parallel smoothing operator."""
         E1, g1, L1 = elem1
         E2, g2, L2 = elem2
         E = E2 @ E1
@@ -389,6 +392,7 @@ def lgssm_posterior_sample(
 
     @vmap
     def _operator(elem1, elem2):
+        """Parallel sampling operator."""
         E1, h1 = elem1
         E2, h2 = elem2
 

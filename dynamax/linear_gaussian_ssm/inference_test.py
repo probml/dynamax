@@ -1,13 +1,17 @@
-from jax import vmap
-from jax import random as jr
+"""
+Tests for the inference methods of the Linear Gaussian State Space Model.
+"""
 import jax.scipy.linalg as jla
 import jax.numpy as jnp
-from functools import partial
-
 import tensorflow_probability.substrates.jax.distributions as tfd
+
+from functools import partial
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.utils.utils import has_tpu
+from jax import vmap
+from jax import random as jr
 
+# Use different tolerance threshold for TPU
 if has_tpu():
     def allclose(x, y):
         return jnp.allclose(x, y, atol=1e-1)
@@ -100,7 +104,6 @@ def joint_posterior_mvn(params, emissions):
 
 
 def lgssm_dynamax_to_tfp(num_timesteps, params):
-
     """Create a Tensorflow Probability `LinearGaussianStateSpaceModel` object
      from an dynamax `LinearGaussianSSM`.
 
@@ -157,6 +160,8 @@ def build_lgssm_for_inference():
 
 
 def build_lgssm_for_sampling():
+    """Construct example LinearGaussianSSM object for testing.
+    """
     state_dim = 1
     emission_dim = 1
     key = jr.PRNGKey(0)
@@ -179,7 +184,9 @@ def build_lgssm_for_sampling():
 
 
 class TestFilteringAndSmoothing():
-
+    """
+    Tests for the filtering and smoothing methods of the Linear Gaussian State Space
+    """
     ## For inference tests
     lgssm, params = build_lgssm_for_inference()
 
@@ -227,6 +234,7 @@ class TestFilteringAndSmoothing():
     tfp_samples = tfp_lgssm.posterior_sample(emissions, seed=key, sample_shape=sample_size) 
 
     def test_kalman_tfp(self):
+        """Test that the dynamax and TFP implementations of the Kalman filter are consistent."""
         assert allclose(self.ssm_posterior.filtered_means, self.tfp_filtered_means)
         assert allclose(self.ssm_posterior.filtered_covariances, self.tfp_filtered_covs)
         assert allclose(self.ssm_posterior.smoothed_means, self.tfp_smoothed_means)
@@ -239,12 +247,14 @@ class TestFilteringAndSmoothing():
         assert allclose(self.ssm_posterior_diag.marginal_loglik, self.tfp_lls.sum())
         
     def test_kalman_vs_joint(self):
+        """Test that the dynamax and joint posterior methods are consistent."""
         assert allclose(self.ssm_posterior.smoothed_means, self.joint_means)
         assert allclose(self.ssm_posterior.smoothed_covariances, self.joint_covs)
         assert allclose(self.ssm_posterior_diag.smoothed_means, self.joint_means)
         assert allclose(self.ssm_posterior_diag.smoothed_covariances, self.joint_covs)
         
     def test_posterior_sampler(self):
+        """Test that the dynamax and TFP implementations of the posterior sampler are consistent."""
         assert allclose(jnp.mean(self.samples), jnp.mean(self.tfp_samples))
         assert allclose(jnp.std(self.samples), jnp.std(self.tfp_samples))
         assert allclose(jnp.mean(self.samples_diag), jnp.mean(self.tfp_samples))

@@ -1,11 +1,15 @@
+"""
+Linear Gaussian State Space Models (LG-SSM) with and without conjugate priors.
+"""
+import jax.numpy as jnp
+import jax.random as jr
+import tensorflow_probability.substrates.jax.distributions as tfd
+
 from fastprogress.fastprogress import progress_bar
 from functools import partial
 from jax import jit
-import jax.numpy as jnp
-import jax.random as jr
 from jax.tree_util import tree_map
 from jaxtyping import Array, Float
-import tensorflow_probability.substrates.jax.distributions as tfd
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from typing import Any, Optional, Tuple, Union, runtime_checkable
 from typing_extensions import Protocol 
@@ -64,14 +68,11 @@ class LinearGaussianSSM(SSM):
     :param has_emissions_bias:  Whether model contains an offset term $d$. Defaults to True.
 
     """
-    def __init__(
-        self,
-        state_dim: int,
-        emission_dim: int,
-        input_dim: int=0,
-        has_dynamics_bias: bool=True,
-        has_emissions_bias: bool=True
-    ):
+    def __init__(self,
+                 state_dim: int,
+                 emission_dim: int,
+                 input_dim: int=0,
+                 has_dynamics_bias: bool=True,has_emissions_bias: bool=True):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
         self.input_dim = input_dim
@@ -80,26 +81,27 @@ class LinearGaussianSSM(SSM):
 
     @property
     def emission_shape(self):
+        """Shape of the emission vector."""
         return (self.emission_dim,)
 
     @property
     def inputs_shape(self):
+        """Shape of the input vector."""
         return (self.input_dim,) if self.input_dim > 0 else None
 
-    def initialize(
-        self,
-        key: PRNGKeyT =jr.PRNGKey(0),
-        initial_mean: Optional[Float[Array, " state_dim"]]=None,
-        initial_covariance=None,
-        dynamics_weights=None,
-        dynamics_bias=None,
-        dynamics_input_weights=None,
-        dynamics_covariance=None,
-        emission_weights=None,
-        emission_bias=None,
-        emission_input_weights=None,
-        emission_covariance=None
-    ) -> Tuple[ParamsLGSSM, ParamsLGSSM]:
+    def initialize(self,
+                   key: PRNGKeyT =jr.PRNGKey(0),
+                   initial_mean: Optional[Float[Array, " state_dim"]]=None,
+                   initial_covariance=None,
+                   dynamics_weights=None,
+                   dynamics_bias=None,
+                   dynamics_input_weights=None,
+                   dynamics_covariance=None,
+                   emission_weights=None,
+                   emission_bias=None,
+                   emission_input_weights=None,
+                   emission_covariance=None) \
+                   -> Tuple[ParamsLGSSM, ParamsLGSSM]:
         r"""Initialize model parameters that are set to None, and their corresponding properties.
 
         Args:
@@ -118,7 +120,6 @@ class LinearGaussianSSM(SSM):
         Returns:
             Tuple[ParamsLGSSM, ParamsLGSSM]: parameters and their properties.
         """
-
         # Arbitrary default values, for demo purposes.
         _initial_mean = jnp.zeros(self.state_dim)
         _initial_covariance = jnp.eye(self.state_dim)
@@ -169,86 +170,134 @@ class LinearGaussianSSM(SSM):
             )
         return params, props
 
-    def initial_distribution(
-        self,
-        params: ParamsLGSSM,
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> tfd.Distribution:
+    def initial_distribution(self,
+                             params: ParamsLGSSM,
+                             inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None) \
+                             -> tfd.Distribution:
+        """Return the initial distribution of the model."""
         return MVN(params.initial.mean, params.initial.cov)
 
-    def transition_distribution(
-        self,
-        params: ParamsLGSSM,
-        state: Float[Array, " state_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> tfd.Distribution:
+    def transition_distribution(self,
+                                params: ParamsLGSSM,
+                                state: Float[Array, " state_dim"],
+                                inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None) \
+                                -> tfd.Distribution:
+        """Return the transition distribution of the model."""
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
         mean = params.dynamics.weights @ state + params.dynamics.input_weights @ inputs
         if self.has_dynamics_bias:
             mean += params.dynamics.bias
         return MVN(mean, params.dynamics.cov)
 
-    def emission_distribution(
-        self,
-        params: ParamsLGSSM,
-        state: Float[Array, " state_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]] = None
-    ) -> tfd.Distribution:
+    def emission_distribution(self,
+                              params: ParamsLGSSM,
+                              state: Float[Array, " state_dim"],
+                              inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None) \
+                              -> tfd.Distribution:
+        """Return the emission distribution of the model."""
         inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
         mean = params.emissions.weights @ state + params.emissions.input_weights @ inputs
         if self.has_emissions_bias:
             mean += params.emissions.bias
         return MVN(mean, params.emissions.cov)
 
-    def sample(
-        self,
-        params: ParamsLGSSM,
-        key: PRNGKeyT,
-        num_timesteps: int,
-        inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None,
-    ) -> Tuple[Float[Array, "num_timesteps state_dim"], Float[Array, "num_timesteps emission_dim"]]:
+    def sample(self,
+               params: ParamsLGSSM,
+               key: PRNGKeyT,
+               num_timesteps: int,
+               inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None) \
+                -> Tuple[Float[Array, "num_timesteps state_dim"], 
+                         Float[Array, "num_timesteps emission_dim"]]:
+        """Sample from the model.
+        
+        Args:
+            params: model parameters.
+            key: random number key.
+            num_timesteps: number of time steps.
+            inputs: optional sequence of inputs.
+        
+        Returns:
+            Tuple of latent states and observations.
+        """
         return lgssm_joint_sample(params, key, num_timesteps, inputs)
 
-    def marginal_log_prob(
-        self,
-        params: ParamsLGSSM,
-        emissions: Float[Array, "ntime emission_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]] = None
-    ) -> Scalar:
+    def marginal_log_prob(self,
+                          params: ParamsLGSSM,
+                          emissions: Float[Array, "num_timesteps emission_dim"],
+                          inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None) \
+                          -> Scalar:
+        """Compute the marginal log likelihood of the model.
+        
+        Args:
+            params: model parameters.
+            emissions: sequence of observations.
+            inputs: optional sequence of inputs.
+
+        Returns:
+            marginal log likelihood.
+        """
         filtered_posterior = lgssm_filter(params, emissions, inputs)
         return filtered_posterior.marginal_loglik
 
-    def filter(
-        self,
-        params: ParamsLGSSM,
-        emissions: Float[Array, "ntime emission_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]] = None
-    ) -> PosteriorGSSMFiltered:
+    def filter(self,
+               params: ParamsLGSSM,
+               emissions: Float[Array, "num_timesteps emission_dim"],
+               inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None) \
+               -> PosteriorGSSMFiltered:
+        """Compute the marginal filtering distribution for each time step.
+        
+        Args:
+            params: model parameters.
+            emissions: sequence of observations.
+            inputs: optional sequence of inputs.
+
+        Returns:
+            marginal filtering distribution.
+        """
         return lgssm_filter(params, emissions, inputs)
 
-    def smoother(
-        self,
-        params: ParamsLGSSM,
-        emissions: Float[Array, "ntime emission_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]] = None
-    ) -> PosteriorGSSMSmoothed:
+    def smoother(self,
+                 params: ParamsLGSSM,
+                 emissions: Float[Array, "num_timesteps emission_dim"],
+                 inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None) \
+                 -> PosteriorGSSMSmoothed:
+        """Compute the posterior smoothing distribution for each time step.
+        
+        Args:
+            params: model parameters.
+            emissions: sequence of observations.
+            inputs: optional sequence of inputs.
+
+        Returns:
+            posterior smoothing distribution.
+        """
         return lgssm_smoother(params, emissions, inputs)
 
-    def posterior_sample(
-        self,
-        key: PRNGKeyT,
-        params: ParamsLGSSM,
-        emissions: Float[Array, "ntime emission_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> Float[Array, "ntime state_dim"]:
+    def posterior_sample(self,
+                         key: PRNGKeyT,
+                         params: ParamsLGSSM,
+                         emissions: Float[Array, "num_timesteps emission_dim"],
+                         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None) \
+                         -> Float[Array, "num_timesteps state_dim"]:
+        """Sample from the posterior distribution of the latent states.
+        
+        Args:
+            key: random number key.
+            params: model parameters.
+            emissions: sequence of observations.
+            inputs: optional sequence of inputs.
+
+        Returns:
+            posterior samples of the latent states.
+
+        """
         return lgssm_posterior_sample(key, params, emissions, inputs)
 
-    def posterior_predictive(
-        self,
-        params: ParamsLGSSM,
-        emissions: Float[Array, "ntime emission_dim"],
-        inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ) -> Tuple[Float[Array, "ntime emission_dim"], Float[Array, "ntime emission_dim"]]:
+    def posterior_predictive(self,
+                             params: ParamsLGSSM,
+                             emissions: Float[Array, "num_timesteps emission_dim"],
+                             inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None) \
+                              -> Tuple[Float[Array, "num_timesteps emission_dim"], Float[Array, "num_timesteps emission_dim"]]:
         r"""Compute marginal posterior predictive smoothing distribution for each observation.
 
         Args:
@@ -272,14 +321,23 @@ class LinearGaussianSSM(SSM):
         return smoothed_emissions, smoothed_emissions_std
 
     # Expectation-maximization (EM) code
-    def e_step(
-        self,
-        params: ParamsLGSSM,
-        emissions: Union[Float[Array, "num_timesteps emission_dim"],
-                         Float[Array, "num_batches num_timesteps emission_dim"]],
-        inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
-                               Float[Array, "num_batches num_timesteps input_dim"]]]=None,
-    ) -> Tuple[SuffStatsLGSSM, Scalar]:
+    def e_step(self,
+               params: ParamsLGSSM,
+               emissions: Union[Float[Array, "num_timesteps emission_dim"],
+                                Float[Array, "num_batches num_timesteps emission_dim"]],
+               inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
+                                      Float[Array, "num_batches num_timesteps input_dim"]]]=None) \
+               -> Tuple[SuffStatsLGSSM, Scalar]:
+        """Compute expected sufficient statistics for the E-step of the EM algorithm.
+        
+        Args:
+            params: model parameters.
+            emissions: sequence of observations.
+            inputs: optional sequence of inputs.
+
+        Returns:
+            expected sufficient statistics and marginal log likelihood.
+        """
         num_timesteps = emissions.shape[0]
         if inputs is None:
             inputs = jnp.zeros((num_timesteps, 0))
@@ -331,23 +389,38 @@ class LinearGaussianSSM(SSM):
 
         return (init_stats, dynamics_stats, emission_stats), posterior.marginal_loglik
 
-    def initialize_m_step_state(
-            self,
-            params: ParamsLGSSM,
-            props: ParamsLGSSM
-    ) -> Any:
+    def initialize_m_step_state(self,
+                                params: ParamsLGSSM,
+                                props: ParamsLGSSM) \
+                                -> Any:
+        """Initialize the state for the M-step."""
         return None
 
-    def m_step(
-        self,
-        params: ParamsLGSSM,
-        props: ParamsLGSSM,
-        batch_stats: SuffStatsLGSSM,
-        m_step_state: Any
-    ) -> Tuple[ParamsLGSSM, Any]:
+    def m_step(self,
+               params: ParamsLGSSM,
+               props: ParamsLGSSM,
+               batch_stats: SuffStatsLGSSM,
+               m_step_state: Any) \
+               -> Tuple[ParamsLGSSM, Any]:
+        """Perform the M-step of the EM algorithm.
+
+        Note: This function currently ignores any `trainable` constraints specified
+        in the `props` argument.
+        
+        Args:
+            params: model parameters.
+            props: parameter properties.
+            batch_stats: expected sufficient statistics.
+            m_step_state: state for the M-step.
+        
+        Returns:
+            updated model parameters and updated M-step state.
+        """
 
         def fit_linear_regression(ExxT, ExyT, EyyT, N):
-            # Solve a linear regression given sufficient statistics
+            """
+            Solve a linear regression given sufficient statistics
+            """
             W = psd_solve(ExxT, ExyT).T
             Sigma = (EyyT - W @ ExyT - ExyT.T @ W.T + W @ ExxT @ W.T) / N
             return W, Sigma
@@ -433,16 +506,19 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
 
     @property
     def emission_shape(self):
+        """Shape of the emission vector."""
         return (self.emission_dim,)
 
     @property
     def covariates_shape(self):
+        """Shape of the covariates/inputs vector."""
         return dict(inputs=(self.input_dim,)) if self.input_dim > 0 else dict()
 
-    def log_prior(
-        self,
-        params: ParamsLGSSM
-    ) -> Scalar:
+    def log_prior(self,
+                  params: ParamsLGSSM) \
+                  -> Scalar:
+        """Compute the log prior of the model parameters.
+        """
         lp = self.initial_prior.log_prob((params.initial.cov, params.initial.mean))
 
         # dynamics
@@ -459,19 +535,32 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         lp += self.emission_prior.log_prob((params.emissions.cov, emission_matrix))
         return lp
 
-    def initialize_m_step_state(
-        self,
-        params: ParamsLGSSM,
-        props: ParamsLGSSM
-    ) -> Any:
+    def initialize_m_step_state(self,
+                                params: ParamsLGSSM,
+                                props: ParamsLGSSM) \
+                                -> Any:
+        """Initialize the state for the M-step."""
         return None
 
-    def m_step(
-        self,
-        params: ParamsLGSSM,
-        props: ParamsLGSSM,
-        batch_stats: SuffStatsLGSSM,
-        m_step_state: Any):
+    def m_step(self,
+               params: ParamsLGSSM,
+               props: ParamsLGSSM,
+               batch_stats: SuffStatsLGSSM,
+               m_step_state: Any):
+        """Perform the M-step of the EM algorithm.
+        
+        Note: This function currently ignores any `trainable` constraints specified
+        in the `props` argument.
+
+        Args:
+            params: model parameters.
+            props: parameter properties.
+            batch_stats: expected sufficient statistics.
+            m_step_state: state for the M-step.
+
+        Returns:
+            updated model parameters and updated M-step state.
+        """
         # Sum the statistics across all batches
         stats = tree_map(partial(jnp.sum, axis=0), batch_stats)
         init_stats, dynamics_stats, emission_stats = stats
@@ -499,14 +588,13 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
         )
         return params, m_step_state
 
-    def fit_blocked_gibbs(
-        self,
-        key: PRNGKeyT,
-        initial_params: ParamsLGSSM,
-        sample_size: int,
-        emissions: Float[Array, "nbatch ntime emission_dim"],
-        inputs: Optional[Float[Array, "nbatch ntime input_dim"]]=None
-    ) -> ParamsLGSSM:
+    def fit_blocked_gibbs(self,
+                          key: PRNGKeyT,
+                          initial_params: ParamsLGSSM,
+                          sample_size: int,
+                          emissions: Float[Array, "nbatch num_timesteps emission_dim"],
+                          inputs: Optional[Float[Array, "nbatch num_timesteps input_dim"]]=None) \
+                            -> ParamsLGSSM:
         r"""Estimate parameter posterior using block-Gibbs sampler.
 
         Args:
@@ -587,6 +675,7 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
 
         @jit
         def one_sample(_params, rng):
+            """Sample a single set of states and compute their sufficient stats."""
             rngs = jr.split(rng, 2)
             # Sample latent states
             states = lgssm_posterior_sample(rngs[0], _params, emissions, inputs)

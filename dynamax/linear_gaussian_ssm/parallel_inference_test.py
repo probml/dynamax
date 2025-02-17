@@ -1,7 +1,8 @@
+"""
+Tests for parallel inference in linear Gaussian SSMs.
+"""
 import jax.numpy as jnp
 import jax.random as jr
-from jax import vmap
-from functools import partial
 
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm import lgssm_joint_sample
@@ -10,18 +11,24 @@ from dynamax.linear_gaussian_ssm import parallel_lgssm_smoother, parallel_lgssm_
 from dynamax.linear_gaussian_ssm import lgssm_posterior_sample as serial_lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm import parallel_lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference_test import flatten_diagonal_emission_cov
+from functools import partial
+from jax import vmap
 
 
-def allclose(x,y, atol=1e-2):
-    m = jnp.abs(jnp.max(x-y))
-    if m > atol:
-        print(m)
-        return False
-    else:
-        return True
+# def allclose(x,y, atol=1e-2):
+#     """Check if all elements of x and y are close within atol."""
+#     # TODO: Why do we have a separate allclose implementation here??
+#     m = jnp.abs(jnp.max(x-y))
+#     if m > atol:
+#         print(m)
+#         return False
+#     else:
+#         return True
     
+allclose = partial(jnp.allclose, atol=1e-2)    
 
 def make_static_lgssm_params():
+    """Create a static LGSSM with fixed parameters."""
     dt = 0.1
     F = jnp.eye(4) + dt * jnp.eye(4, k=2)
     Q = 1. * jnp.kron(jnp.array([[dt**3/3, dt**2/2],
@@ -48,6 +55,7 @@ def make_static_lgssm_params():
 
 
 def make_lgssm_params_with_inputs():
+    """Create a static LGSSM with fixed parameters and inputs."""
     dt = 0.1
     F = jnp.eye(4) + dt * jnp.eye(4, k=2)
     B = jnp.array([[0., 0.], [1., 0.], [0., 0.], [0., 1.]]) * dt
@@ -79,6 +87,7 @@ def make_lgssm_params_with_inputs():
         
 
 def make_dynamic_lgssm_params(num_timesteps, latent_dim=4, observation_dim=2, seed=0):
+    """Create a time-varying LGSSM with time-varying parameters."""
     key = jr.PRNGKey(seed)
     key, key_f, key_r, key_init = jr.split(key, 4)
 
@@ -125,22 +134,27 @@ class TestParallelLGSSMSmoother:
     parallel_posterior_diag = parallel_lgssm_smoother(params_diag, emissions)
 
     def test_filtered_means(self):
+        """Check if filtered means are close."""
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior_diag.filtered_means)
 
     def test_filtered_covariances(self):
+        """Check if filtered covariances are close."""
         assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior.filtered_covariances)
         assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior_diag.filtered_covariances)
 
     def test_smoothed_means(self):
+        """Check if smoothed means are close."""
         assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior.smoothed_means)
         assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior_diag.smoothed_means)
 
     def test_smoothed_covariances(self):
+        """Check if smoothed covariances are close."""
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior_diag.smoothed_covariances)
 
     def test_marginal_loglik(self):
+        """Check if marginal log likelihoods are close."""
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, atol=2e-1)
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior_diag.marginal_loglik, atol=2e-1)
 
@@ -162,22 +176,27 @@ class TestParallelLGSSMSmootherWithInputs:
     parallel_posterior_diag = parallel_lgssm_smoother(params_diag, emissions, inputs)
 
     def test_filtered_means(self):
+        """Check if filtered means are close."""
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior_diag.filtered_means)
 
     def test_filtered_covariances(self):
+        """Check if filtered covariances are close."""
         assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior.filtered_covariances)
         assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior_diag.filtered_covariances)
 
     def test_smoothed_means(self):
+        """Check if smoothed means are close."""
         assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior.smoothed_means)
         assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior_diag.smoothed_means)
 
     def test_smoothed_covariances(self):
+        """Check if smoothed covariances are close."""
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior_diag.smoothed_covariances)
 
     def test_marginal_loglik(self):
+        """Check if marginal log likelihoods are close."""
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, atol=2e-1)
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior_diag.marginal_loglik, atol=2e-1)
 
@@ -199,22 +218,27 @@ class TestTimeVaryingParallelLGSSMSmoother:
     parallel_posterior_diag = parallel_lgssm_smoother(params_diag, emissions)
 
     def test_filtered_means(self):
+        """Check if filtered means are close."""
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior.filtered_means)
         assert allclose(self.serial_posterior.filtered_means, self.parallel_posterior_diag.filtered_means)
 
     def test_filtered_covariances(self):
+        """Check if filtered covariances are close."""
         assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior.filtered_covariances)
         assert allclose(self.serial_posterior.filtered_covariances, self.parallel_posterior_diag.filtered_covariances)
 
     def test_smoothed_means(self):
+        """Check if smoothed means are close."""
         assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior.smoothed_means)
         assert allclose(self.serial_posterior.smoothed_means, self.parallel_posterior_diag.smoothed_means)
 
     def test_smoothed_covariances(self):
+        """Check if smoothed covariances are close."""
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior.smoothed_covariances)
         assert allclose(self.serial_posterior.smoothed_covariances, self.parallel_posterior_diag.smoothed_covariances)
 
     def test_marginal_loglik(self):
+        """Check if marginal log likelihoods are close."""
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik, atol=2e-1)
         assert jnp.allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior_diag.marginal_loglik, atol=2e-1)
 
@@ -244,6 +268,7 @@ class TestTimeVaryingParallelLGSSMSampler():
                                  parallel_keys, params, emissions)
 
     def test_sampled_means(self):
+        """Check if sampled means are close."""
         serial_mean = self.serial_samples.mean(axis=0)
         parallel_mean = self.parallel_samples.mean(axis=0)
         parallel_mean_diag = self.parallel_samples.mean(axis=0)
@@ -251,6 +276,7 @@ class TestTimeVaryingParallelLGSSMSampler():
         assert allclose(serial_mean, parallel_mean_diag, atol=1e-1)
 
     def test_sampled_covariances(self):
+        """Check if sampled covariances are close."""
         # samples have shape (N, T, D): vmap over the T axis, calculate cov over N axis
         serial_cov = vmap(partial(jnp.cov, rowvar=False), in_axes=1)(self.serial_samples)
         parallel_cov = vmap(partial(jnp.cov, rowvar=False), in_axes=1)(self.parallel_samples)
