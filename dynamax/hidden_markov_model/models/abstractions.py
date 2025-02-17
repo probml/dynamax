@@ -611,7 +611,7 @@ class HMM(SSM):
     def most_likely_states(self, params: HMMParameterSet, 
                            emissions: Array, 
                            inputs: Optional[Array]=None) \
-                           -> Array[Float, "num_timesteps"]:
+                           -> Float[Array, "num_timesteps"]:
         """Compute the most likely sequence of states."""
         return hmm_posterior_mode(*self._inference_args(params, emissions, inputs))
 
