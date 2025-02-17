@@ -1,20 +1,23 @@
+"""
+This module contains functions for inference in linear Gaussian state space models (LGSSMs).
+"""
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax
-from functools import wraps
 import inspect
 import warnings
+
+from functools import wraps
+from jax import lax
+from jax.tree_util import tree_map
+from jaxtyping import Array, Float
+from dynamax.utils.utils import psd_solve, symmetrize
+from dynamax.parameters import ParameterProperties
+from dynamax.types import PRNGKeyT, Scalar
+from typing import NamedTuple, Optional, Union, Tuple
 
 from tensorflow_probability.substrates.jax.distributions import (
     MultivariateNormalDiagPlusLowRankCovariance as MVNLowRank,
     MultivariateNormalFullCovariance as MVN)
-
-from jax.tree_util import tree_map
-from jaxtyping import Array, Float
-from typing import NamedTuple, Optional, Union, Tuple
-from dynamax.utils.utils import psd_solve, symmetrize
-from dynamax.parameters import ParameterProperties
-from dynamax.types import PRNGKeyT, Scalar
 
 class ParamsLGSSMInitial(NamedTuple):
     r"""Parameters of the initial distribution
@@ -347,6 +350,7 @@ def preprocess_args(f):
 
     @wraps(f)
     def wrapper(*args, **kwargs):
+        """Wrapper function to preprocess arguments."""
         # Extract the arguments by name
         bound_args = sig.bind(*args, **kwargs)
         bound_args.apply_defaults()
@@ -381,15 +385,18 @@ def lgssm_joint_sample(
     params, inputs = preprocess_params_and_inputs(params, num_timesteps, inputs)
 
     def _sample_transition(key, F, B, b, Q, x_tm1, u):
+        """Sample from the transition distribution."""
         mean = F @ x_tm1 + B @ u + b
         return MVN(mean, Q).sample(seed=key)
 
     def _sample_emission(key, H, D, d, R, x, u):
+        """Sample from the emission distribution."""
         mean = H @ x + D @ u + d
         R = jnp.diag(R) if R.ndim==1 else R
         return MVN(mean, R).sample(seed=key)
 
     def _sample_initial(key, params, inputs):
+        """Sample from the initial distribution."""
         key1, key2 = jr.split(key)
 
         initial_state = MVN(params.initial.mean, params.initial.cov).sample(seed=key1)
@@ -401,6 +408,7 @@ def lgssm_joint_sample(
         return initial_state, initial_emission
 
     def _step(prev_state, args):
+        """Sample the next state and emission."""
         key, t, inpt = args
         key1, key2 = jr.split(key, 2)
 
@@ -453,6 +461,7 @@ def lgssm_filter(
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
 
     def _log_likelihood(pred_mean, pred_cov, H, D, d, R, u, y):
+        """Compute the log likelihood of an observation under a linear Gaussian model."""
         m = H @ pred_mean + D @ u + d
         if R.ndim==2:
             S = R + H @ pred_cov @ H.T
@@ -463,6 +472,7 @@ def lgssm_filter(
 
 
     def _step(carry, t):
+        """Run one step of the Kalman filter."""
         ll, pred_mean, pred_cov = carry
 
         # Shorthand: get parameters and inputs for time index t
@@ -515,6 +525,7 @@ def lgssm_smoother(
 
     # Run the smoother backward in time
     def _step(carry, args):
+        """Run one step of the Kalman smoother."""
         # Unpack the inputs
         smoothed_mean_next, smoothed_cov_next = carry
         t, filtered_mean, filtered_cov = args
@@ -587,6 +598,7 @@ def lgssm_posterior_sample(
 
     # Sample backward in time
     def _step(carry, args):
+        """Run one step of the backward sampling algorithm."""
         next_state = carry
         key, filtered_mean, filtered_cov, t = args
 
