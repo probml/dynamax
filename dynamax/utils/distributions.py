@@ -1,3 +1,6 @@
+"""
+This module contains custom distributions for Bayesian inference.
+"""
 import jax.numpy as jnp
 from jax import vmap
 from jax.scipy.linalg import solve_triangular
@@ -10,35 +13,29 @@ from dynamax.utils.utils import psd_solve
 
 
 class InverseWishart(tfd.TransformedDistribution):
+    r"""Implementation of an inverse Wishart distribution as a transformation of
+    a Wishart distribution. This distribution is defined by a scalar degrees of
+    freedom `df` and a scale matrix, `scale`.
 
-    def __new__(cls, *args, **kwargs):
-        # Patch for tfp 0.18.0.
-        # See https://github.com/tensorflow/probability/issues/1617
-        return tfd.Distribution.__new__(cls)
+    #### Mathematical Details
+    The probability density function (pdf) is,
+    ```none
+    pdf(X; df, scale) = det(X)**(-0.5 (df+k+1)) exp(-0.5 tr[inv(X) scale]) / Z
+    Z = 2**(0.5 df k) Gamma_k(0.5 df) |det(scale)|**(-0.5 df)
+    ```
 
+    where
+    * `df >= k` denotes the degrees of freedom,
+    * `scale` is a symmetric, positive definite, `k x k` matrix,
+    * `Z` is the normalizing constant, and,
+    * `Gamma_k` is the [multivariate Gamma function](
+        https://en.wikipedia.org/wiki/Multivariate_gamma_function).
+
+    Args:
+        df (_type_): _description_
+        scale (_type_): _description_
+    """
     def __init__(self, df, scale):
-        r"""Implementation of an inverse Wishart distribution as a transformation of
-        a Wishart distribution. This distribution is defined by a scalar degrees of
-        freedom `df` and a scale matrix, `scale`.
-
-        #### Mathematical Details
-        The probability density function (pdf) is,
-        ```none
-        pdf(X; df, scale) = det(X)**(-0.5 (df+k+1)) exp(-0.5 tr[inv(X) scale]) / Z
-        Z = 2**(0.5 df k) Gamma_k(0.5 df) |det(scale)|**(-0.5 df)
-        ```
-
-        where
-        * `df >= k` denotes the degrees of freedom,
-        * `scale` is a symmetric, positive definite, `k x k` matrix,
-        * `Z` is the normalizing constant, and,
-        * `Gamma_k` is the [multivariate Gamma function](
-            https://en.wikipedia.org/wiki/Multivariate_gamma_function).
-
-        Args:
-            df (_type_): _description_
-            scale (_type_): _description_
-        """
         self._df = df
         self._scale = scale
         # Compute the Cholesky of the inverse scale to parameterize a
@@ -56,8 +53,17 @@ class InverseWishart(tfd.TransformedDistribution):
 
         self._parameters = dict(df=df, scale=scale)
 
+    def __new__(cls, *args, **kwargs):
+        """Patch for tfp 0.18.0.
+        See https://github.com/tensorflow/probability/issues/1617
+        """
+        return tfd.Distribution.__new__(cls)
+
     @classmethod
     def _parameter_properties(self, dtype, num_classes=None):
+        """
+        Returns a dictionary mapping parameter names to properties.
+        """
         return dict(
             # Annotations may optionally specify properties, such as `event_ndims`,
             # `default_constraining_bijector_fn`, `specifies_shape`, etc.; see
@@ -67,19 +73,23 @@ class InverseWishart(tfd.TransformedDistribution):
 
     @property
     def df(self):
+        """Return the degrees of freedom."""
         return self._df
 
     @property
     def scale(self):
+        """Return the scale matrix."""
         return self._scale
 
     def _mean(self):
+        """Compute the mean of the distribution."""
         dim = self.scale.shape[-1]
         df = jnp.array(self.df)[..., None, None]  # at least 2d on the right
         assert self.df > dim + 1, "Mean only exists if df > dim + 1"
         return self.scale / (df - dim - 1)
 
     def _mode(self):
+        """Compute the mode of the distribution."""
         dim = self.scale.shape[-1]
         df = jnp.array(self.df)[..., None, None]  # at least 2d on the right
         return self.scale / (df + dim + 1)
@@ -87,8 +97,8 @@ class InverseWishart(tfd.TransformedDistribution):
     def _variance(self):
         """Compute the marginal variance of each entry of the matrix.
         """
-
         def _single_variance(df, scale):
+            """Compute the marginal variance of each entry of the matrix."""
             assert scale.ndim == 2
             assert df.shape == scale.shape
             dim = scale.shape[-1]
@@ -107,21 +117,16 @@ class InverseWishart(tfd.TransformedDistribution):
 
 
 class NormalInverseWishart(tfd.JointDistributionSequential):
-    def __new__(cls, *args, **kwargs):
-        # Patch for tfp 0.18.0.
-        # See https://github.com/tensorflow/probability/issues/1617
-        return tfd.Distribution.__new__(cls)
-
+    r"""
+    A normal inverse Wishart (NIW) distribution with
+    TODO: Finish this description
+    Args:
+        loc:                    \mu_0 in math above
+        mean_concentration:     \kappa_0
+        df:                     \nu
+        scale:                  \Psi
+    """
     def __init__(self, loc, mean_concentration, df, scale):
-        r"""
-        A normal inverse Wishart (NIW) distribution with
-        TODO: Finish this description
-        Args:
-            loc:            \mu_0 in math above
-            mean_concentration: \kappa_0
-            df:             \nu
-            scale:          \Psi
-        """
         # Store hyperparameters.
         # Note: these should really be private.
         self._loc = loc
@@ -135,21 +140,32 @@ class NormalInverseWishart(tfd.JointDistributionSequential):
         ])
 
         self._parameters = dict(loc=loc, mean_concentration=mean_concentration, df=df, scale=scale)
+        
+    def __new__(cls, *args, **kwargs):
+        """Patch for tfp 0.18.0.
+        See https://github.com/tensorflow/probability/issues/1617
+        """
+        return tfd.Distribution.__new__(cls)
 
+    
     @property
     def loc(self):
+        """Return the mean of the normal distribution."""
         return self._loc
 
     @property
     def mean_concentration(self):
+        """Return the mean concentration."""
         return self._mean_concentration
 
     @property
     def df(self):
+        """Return the degrees of freedom."""
         return self._df
 
     @property
     def scale(self):
+        """Return the scale matrix."""
         return self._scale
 
     def _mode(self):
@@ -171,23 +187,17 @@ class NormalInverseWishart(tfd.JointDistributionSequential):
 
 
 class MatrixNormalPrecision(tfd.TransformedDistribution):
+    r"""A matrix normal distribution
 
-    def __new__(cls, *args, **kwargs):
-        # Patch for tfp 0.18.0.
-        # See https://github.com/tensorflow/probability/issues/1617
-        return tfd.Distribution.__new__(cls)
+    Args:
+        loc:            mean value of the matrix
+        row_covariance: covariance matrix of rows of the matrix
+        col_precision:  precision matrix (inverse of covariance) of columns of the matrix
 
-    def __init__(self, loc, row_covariance, col_precision):
-        r"""A matrix normal distribution
-
-        Args:
-            loc:            mean value of the matrix
-            row_covariance: covariance matrix of rows of the matrix
-            col_precision:  precision matrix (inverse of covariance) of columns of the matrix
-
-        Returns:
-            A tfp.Distribution object.
-        """
+    Returns:
+        A tfp.Distribution object.
+    """
+    def __init__(self, loc, row_covariance, col_precision): 
         self._shape = loc.shape
         self._loc = loc
         self._row_cov = row_covariance
@@ -202,8 +212,17 @@ class MatrixNormalPrecision(tfd.TransformedDistribution):
         # Replace the default MultivariateNormalFullCovariance parameters with the MatrixNormal ones
         self._parameters = dict(loc=loc, row_covariance=row_covariance, col_precision=col_precision)
 
+    def __new__(cls, *args, **kwargs):
+        """ Patch for tfp 0.18.0.
+        See https://github.com/tensorflow/probability/issues/1617
+        """
+        return tfd.Distribution.__new__(cls)
+
     @classmethod
     def _parameter_properties(self, dtype, num_classes=None):
+        """
+        Returns a dictionary mapping parameter names to properties.
+        """
         return dict(
             # Annotations may optionally specify properties, such as `event_ndims`,
             # `default_constraining_bijector_fn`, `specifies_shape`, etc.; see
@@ -214,39 +233,38 @@ class MatrixNormalPrecision(tfd.TransformedDistribution):
 
     @property
     def loc(self):
+        """Return the mean of the matrix."""
         return self._loc
 
     @property
     def row_covariance(self):
+        """Return the covariance matrix of the rows."""
         return self._row_cov
 
     @property
     def col_precision(self):
+        """Return the precision matrix of the columns."""
         return self._col_precision
 
     def _mode(self):
+        """Compute the mode of the distribution."""
         return self._loc
 
 
 class MatrixNormalInverseWishart(tfd.JointDistributionSequential):
-    def __new__(cls, *args, **kwargs):
-        # Patch for tfp 0.18.0.
-        # See https://github.com/tensorflow/probability/issues/1617
-        return tfd.Distribution.__new__(cls)
+    r"""A matrix normal inverse Wishart (MNIW) distribution
 
+    Args:
+        loc:           mean value matrix of the matrix normal distribution
+        col_precision: column precision matrix (the inverse of the column covariance)
+                        of the matrix normal ditribution
+        df:            degree of freedom parameter of the inverse Wishart distribution
+        scale:         the scale matrix of the inverse Wishart distribution
+
+    Returns:
+        A tfp.JointDistribution object.
+    """
     def __init__(self, loc, col_precision, df, scale):
-        r"""A matrix normal inverse Wishart (MNIW) distribution
-
-        Args:
-            loc:           mean value matrix of the matrix normal distribution
-            col_precision: column precision matrix (the inverse of the column covariance)
-                           of the matrix normal ditribution
-            df:            degree of freedom parameter of the inverse Wishart distribution
-            scale:         the scale matrix of the inverse Wishart distribution
-
-        Returns:
-            A tfp.JointDistribution object.
-        """
         self._matrix_normal_shape = loc.shape
         self._loc = loc
         self._col_precision = col_precision
@@ -256,23 +274,34 @@ class MatrixNormalInverseWishart(tfd.JointDistributionSequential):
 
         self._parameters = dict(loc=loc, col_precision=col_precision, df=df, scale=scale)
 
+    def __new__(cls, *args, **kwargs):
+        """ Patch for tfp 0.18.0.
+        See  https://github.com/tensorflow/probability/issues/1617
+        """
+        return tfd.Distribution.__new__(cls)
+
     @property
     def loc(self):
+        """Return the mean of the matrix normal distribution."""
         return self._loc
 
     @property
     def col_precision(self):
+        """Return the column precision matrix."""
         return self._col_precision
 
     @property
     def df(self):
+        """Return the degrees of freedom."""
         return self._df
 
     @property
     def scale(self):
+        """Return the scale matrix."""
         return self._scale
 
     def _mode(self):
+        r"""Solve for the mode."""
         num_row, num_col = self._matrix_normal_shape
         covariance = jnp.einsum("...,...ij->...ij", 1 / (self._df + num_row + num_col + 1), self._scale)
         return covariance, self._loc
@@ -345,16 +374,10 @@ def iw_posterior_update(iw_prior, sufficient_stats):
 
 
 class NormalInverseGamma(tfd.JointDistributionSequential):
-
-    def __new__(cls, *args, **kwargs):
-        # Patch for tfp 0.18.0.
-        # See https://github.com/tensorflow/probability/issues/1617
-        return tfd.Distribution.__new__(cls)
-
+    """
+    A normal inverse gamma (NIG) distribution.
+    """    
     def __init__(self, loc, mean_concentration, concentration, scale):
-        """
-        A normal inverse gamma (NIG) distribution.
-        """
         self._loc = loc
         self._mean_concentration = mean_concentration
         self._concentration = concentration
@@ -369,21 +392,32 @@ class NormalInverseGamma(tfd.JointDistributionSequential):
                                 mean_concentration=mean_concentration,
                                 concentration=concentration,
                                 scale=scale)
+    
+    def __new__(cls, *args, **kwargs):
+        """Patch for tfp 0.18.0.
+        See https://github.com/tensorflow/probability/issues/1617
+        """
+        return tfd.Distribution.__new__(cls)
 
+    
     @property
     def loc(self):
+        """Return the mean of the normal distribution."""
         return self._loc
 
     @property
     def mean_concentration(self):
+        """Return the mean concentration."""
         return self._mean_concentration
 
     @property
     def concentration(self):
+        """Return the concentration."""
         return self._concentration
 
     @property
     def scale(self):
+        """Return the scale."""
         return self._scale
 
     def _mode(self):
