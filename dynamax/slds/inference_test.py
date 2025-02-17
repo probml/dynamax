@@ -1,15 +1,23 @@
+"""
+Tests for the inference functions in dynamax/slds/inference.py
+"""
+import pytest 
+
 import jax.numpy as jnp
 import jax.random as jr
+import dynamax.slds.mixture_kalman_filter_demo as kflib
+import jax
+
 from dynamax.slds import SLDS, DiscreteParamsSLDS, LGParamsSLDS, ParamsSLDS, rbpfilter, rbpfilter_optimal
 from functools import partial
-import dynamax.slds.mixture_kalman_filter_demo as kflib
 from functools import partial
 from jax.scipy.special import logit
-import jax
 
 
 class TestRBPF():
-
+    """
+    Tests for the inference functions in dynamax/slds/inference.py
+    """
     ## Model definitions
     num_states = 3
     num_particles = 10
@@ -82,6 +90,9 @@ class TestRBPF():
     params1 = kflib.RBPFParamsDiscrete(A, B, C, Q, R, transition_matrix)
 
     def test_rbpf(self):
+        """ 
+        Test the RBPF implementation
+        """
         # Baseline
         rbpf_optimal_part = partial(kflib.rbpf, params=self.params1, nparticles=self.num_particles)
         _, (mu_hist, Sigma_hist, weights_hist, s_hist, Ptk) = jax.lax.scan(rbpf_optimal_part, self.init_config, self.emissions)
@@ -98,6 +109,9 @@ class TestRBPF():
         assert jnp.allclose(bl_post_mean, dyn_post_mean, atol=10.0)
 
     def test_rbpf_optimal(self):
+        """
+        Test the RBPF optimal implementation
+        """
         # Baseline
         rbpf_optimal_part = partial(kflib.rbpf_optimal, params=self.params1, nparticles=self.num_particles)
         _, (mu_hist, Sigma_hist, weights_hist, s_hist, Ptk) = jax.lax.scan(rbpf_optimal_part, self.init_config, self.emissions)
@@ -113,11 +127,6 @@ class TestRBPF():
         print(bl_rbpf_mse, dyn_rbpf_mse)
         assert jnp.allclose(bl_post_mean, dyn_post_mean, atol=10.0)
     
-
-if __name__ == '__main__':
-    test = TestRBPF()
-    test.test_rbpf()
-    test.test_rbpf_optimal()
 
 
 
