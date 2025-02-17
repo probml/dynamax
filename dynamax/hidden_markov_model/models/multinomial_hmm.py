@@ -1,3 +1,4 @@
+"""Multinomial Hidden Markov Model."""
 from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
 
 import jax.numpy as jnp
@@ -18,11 +19,21 @@ from dynamax.utils.utils import pytree_sum
 
 
 class ParamsMultinomialHMMEmissions(NamedTuple):
+    """Parameters for multinomial emissions."""
     probs: Union[Float[Array, "state_dim emission_dim num_classes"], ParameterProperties]
 
 
 class MultinomialHMMEmissions(HMMEmissions):
-
+    """Multinomial emissions for an HMM.
+    
+    The emission distribution is a product of multinomials, one for each emission dimension.
+    
+    :param num_states: number of discrete states $K$
+    :param emission_dim: number of conditionally independent emissions $N$
+    :param num_classes: number of multinomial classes $C$
+    :param num_trials: number of multinomial trials $R$
+    :param emission_prior_concentration: $\gamma$
+    """
     def __init__(self,
                  num_states: int,
                  emission_dim: int,
@@ -37,6 +48,7 @@ class MultinomialHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self):
+        """Shape of the emission distribution."""
         return (self.emission_dim, self.num_classes)
 
     def initialize(self,
@@ -44,6 +56,13 @@ class MultinomialHMMEmissions(HMMEmissions):
                    method: str = "prior",
                    emission_probs: Optional[Float[Array, "num_states emission_dim num_classes"]] = None
                    ) -> Tuple[ParamsMultinomialHMMEmissions, ParamsMultinomialHMMEmissions]:
+        """Initialize the emission parameters.
+
+        Args:
+            key (array): random number generator key.
+            method (str): initialization method. Currently only "prior" is supported.
+            emission_probs (array): manually specified emission probabilities.
+        """
         # Initialize the emission probabilities
         if emission_probs is None:
             if method.lower() == "prior":
@@ -69,11 +88,13 @@ class MultinomialHMMEmissions(HMMEmissions):
             state: IntScalar,
             inputs: Optional[Array] = None
             ) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         return tfd.Independent(
             tfd.Multinomial(self.num_trials, probs=params.probs[state]),
             reinterpreted_batch_ndims=1)
 
     def log_prior(self, params: ParamsMultinomialHMMEmissions) -> Float[Array, ""]:
+        """Return the log prior probability of the emission parameters"""
         return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params.probs).sum()
 
     def collect_suff_stats(
@@ -83,10 +104,12 @@ class MultinomialHMMEmissions(HMMEmissions):
             emissions: Real[Array, "num_timesteps emission_dim num_classes"],
             inputs: Optional[Array] = None
             ) -> Dict[str, Float[Array, "num_states emission_dim num_classes"]]:
+        """Collect sufficient statistics for the emission parameters."""
         expected_states = posterior.smoothed_probs
         return dict(sum_x=jnp.einsum("tk, tdi->kdi", expected_states, emissions))
 
     def initialize_m_step_state(self, params, props) -> None:
+        """Initialize the state for the M-step."""
         return None
 
     def m_step(
@@ -96,6 +119,7 @@ class MultinomialHMMEmissions(HMMEmissions):
             batch_stats: Dict[str, Float[Array, "batch_dim num_states emission_dim num_classes"]],
             m_step_state: Any
             ) -> Tuple[ParamsMultinomialHMMEmissions, Any]:
+        """Perform the M-step for the emission parameters."""
         if props.probs.trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
             probs = tfd.Dirichlet(
@@ -106,6 +130,7 @@ class MultinomialHMMEmissions(HMMEmissions):
 
 
 class ParamsMultinomialHMM(NamedTuple):
+    """Parameters for a multinomial HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsMultinomialHMMEmissions

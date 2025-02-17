@@ -1,3 +1,4 @@
+"""Hidden Markov Model with Gamma emissions."""
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
@@ -13,11 +14,18 @@ from typing import NamedTuple, Optional, Tuple, Union
 
 
 class ParamsGammaHMMEmissions(NamedTuple):
+    """Parameters for the Gamma emissions of an HMM."""
     concentration: Union[Float[Array, " state_dim"], ParameterProperties]
     rate: Union[Float[Array, " state_dim"], ParameterProperties]
 
 
 class GammaHMMEmissions(HMMEmissions):
+    r"""Gamma emissions for an HMM.
+    
+    :param num_states: number of discrete states $K$
+    :param m_step_optimizer: ``optax`` optimizer, like Adam.
+    :param m_step_num_iters: number of optimizer steps per M-step.
+    """
     def __init__(
         self,
         num_states: int,
@@ -29,6 +37,7 @@ class GammaHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple:
+        """Shape of the emission distribution."""
         return ()
 
     def initialize(
@@ -40,6 +49,21 @@ class GammaHMMEmissions(HMMEmissions):
         emissions: Optional[Float[Array, " num_timesteps"]] = None,
         # ) -> Tuple[ParamsGammaHMMEmissions, ParamsGammaHMMEmissions]:
     ) -> Tuple[ParamsGammaHMMEmissions, ParamsGammaHMMEmissions]:
+        """Initialize the model parameters and their corresponding properties.
+        
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+
+        Args:
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            emission_concentrations: manually specified emission concentrations.
+            emission_rates: manually specified emission rates.
+            emissions: emissions for initializing the parameters with kmeans.
+
+        Returns:
+            Model parameters and their properties.
+        """
 
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
@@ -72,13 +96,16 @@ class GammaHMMEmissions(HMMEmissions):
         return params, props
 
     def log_prior(self, params) -> float:
+        """Compute the log-prior probability of the parameters."""
         return 0.0
 
     def distribution(self, params: ParamsGammaHMMEmissions, state, inputs=None) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         return tfd.Gamma(concentration=params.concentration[state], rate=params.rate[state])
 
 
 class ParamsGammaHMM(NamedTuple):
+    """Parameters for a Gamma HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsGammaHMMEmissions

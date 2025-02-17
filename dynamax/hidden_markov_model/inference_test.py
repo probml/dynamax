@@ -1,3 +1,6 @@
+"""
+Tests for the HMM inference functions.
+"""
 import itertools as it
 import jax.numpy as jnp
 import jax.random as jr
@@ -31,6 +34,9 @@ def big_log_joint(initial_probs, transition_matrix, log_likelihoods):
 
 
 def random_hmm_args(key, num_timesteps, num_states, scale=1.0):
+    """
+    Generate random arguments for the HMM functions.
+    """
     k1, k2, k3 = jr.split(key, 3)
     initial_probs = jr.uniform(k1, (num_states,))
     initial_probs /= initial_probs.sum()
@@ -40,6 +46,9 @@ def random_hmm_args(key, num_timesteps, num_states, scale=1.0):
     return initial_probs, transition_matrix, log_likelihoods
 
 def random_hmm_args_nonstationary(key, num_timesteps, num_states, scale=1.0):
+    """
+    Generate random *time-varying* arguments for the HMM functions.
+    """
     k1, k2, k3 = jr.split(key, 3)
     initial_probs = jr.uniform(k1, (num_states,))
     initial_probs /= initial_probs.sum()
@@ -55,6 +64,9 @@ def random_hmm_args_nonstationary(key, num_timesteps, num_states, scale=1.0):
     return initial_probs, jnp.array(trans_mat), log_likelihoods
 
 def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
+    """
+    Test the HMM filter function.
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -86,35 +98,36 @@ def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
         assert jnp.allclose(predicted_probs[t], predicted_probs_t, atol=1e-4)
 
 
-"""
-def test_hmm_posterior_sample(key=0, num_timesteps=5, num_states=2, eps=1e-3, num_samples=1000000, num_iterations=5):
-    if isinstance(key, int):
-        key = jr.PRNGKey(key)
+# def test_hmm_posterior_sample(key=0, num_timesteps=5, num_states=2, eps=1e-3, num_samples=1000000, num_iterations=5):
+#     if isinstance(key, int):
+#         key = jr.PRNGKey(key)
 
-    max_unique_size = 1 << num_timesteps
+#     max_unique_size = 1 << num_timesteps
 
-    def iterate_test(key_iter):
-        keys_iter = jr.split(key_iter, num_samples)
-        args = random_hmm_args(key_iter, num_timesteps, num_states)
+#     def iterate_test(key_iter):
+#         keys_iter = jr.split(key_iter, num_samples)
+#         args = random_hmm_args(key_iter, num_timesteps, num_states)
 
-        # Sample sequences from posterior
-        state_seqs = vmap(core.hmm_posterior_sample, (0, None, None, None), (0, 0))(keys_iter, *args)[1]
-        unique_seqs, counts = jnp.unique(state_seqs, axis=0, size=max_unique_size, return_counts=True)
-        blj_sample = counts / counts.sum()
+#         # Sample sequences from posterior
+#         state_seqs = vmap(core.hmm_posterior_sample, (0, None, None, None), (0, 0))(keys_iter, *args)[1]
+#         unique_seqs, counts = jnp.unique(state_seqs, axis=0, size=max_unique_size, return_counts=True)
+#         blj_sample = counts / counts.sum()
 
-        # Compute joint probabilities
-        blj = jnp.exp(big_log_joint(*args))
-        blj = jnp.ravel(blj / blj.sum())
+#         # Compute joint probabilities
+#         blj = jnp.exp(big_log_joint(*args))
+#         blj = jnp.ravel(blj / blj.sum())
 
-        # Compare the joint distributions
-        return jnp.allclose(blj_sample, blj, rtol=0, atol=eps)
+#         # Compare the joint distributions
+#         return jnp.allclose(blj_sample, blj, rtol=0, atol=eps)
 
-    keys = jr.split(key, num_iterations)
-    assert iterate_test(keys[0])
-"""
+#     keys = jr.split(key, num_iterations)
+#     assert iterate_test(keys[0])
 
 
 def test_two_filter_smoother(key=0, num_timesteps=5, num_states=2):
+    """
+    Test the two-filter smoother function.
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -135,6 +148,9 @@ def test_two_filter_smoother(key=0, num_timesteps=5, num_states=2):
 
 
 def test_hmm_smoother(key=0, num_timesteps=5, num_states=2):
+    """
+    Test the HMM smoother function.
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -155,6 +171,9 @@ def test_hmm_smoother(key=0, num_timesteps=5, num_states=2):
 
 
 def test_hmm_fixed_lag_smoother(key=0, num_timesteps=5, num_states=2):
+    """
+    Test the HMM fixed-lag smoother function.
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -174,6 +193,9 @@ def test_hmm_fixed_lag_smoother(key=0, num_timesteps=5, num_states=2):
 
 
 def test_compute_transition_probs(key=0, num_timesteps=5, num_states=2):
+    """
+    Test the transition probability computation function
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -196,6 +218,9 @@ def test_compute_transition_probs(key=0, num_timesteps=5, num_states=2):
 
 
 def test_hmm_posterior_mode(key=0, num_timesteps=5, num_states=2):
+    """
+    Test the HMM posterior mode function.
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -213,6 +238,9 @@ def test_hmm_posterior_mode(key=0, num_timesteps=5, num_states=2):
 
 
 def test_hmm_smoother_stability(key=0, num_timesteps=10000, num_states=100, scale=100.0):
+    """
+    Test the HMM smoother function with a large number of states and timesteps.
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -225,6 +253,9 @@ def test_hmm_smoother_stability(key=0, num_timesteps=10000, num_states=100, scal
     assert jnp.allclose(posterior.smoothed_probs.sum(1), 1.0)
 
 def test_hmm_non_stationary(key=0, num_timesteps=10, num_states=5, scale=1):
+    """
+    Test the HMM functions with time-varying transition matrices.
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -233,6 +264,7 @@ def test_hmm_non_stationary(key=0, num_timesteps=10, num_states=5, scale=1):
     assert jnp.shape(transition_matrices)[1] == num_states
 
     def trans_mat_callable(t):
+        """Callable to return the transition matrix at time t."""
         return transition_matrices[t]
 
     # Run the HMM filter with a 3d list of transition matrices and a callable
@@ -260,6 +292,9 @@ def test_hmm_non_stationary(key=0, num_timesteps=10, num_states=5, scale=1):
 
 
 def test_parallel_filter(key=0, num_timesteps=100, num_states=3):
+    """
+    Test the parallel HMM filter function
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -276,6 +311,9 @@ def test_parallel_filter(key=0, num_timesteps=100, num_states=3):
 
 
 def test_parallel_smoother(key=0, num_timesteps=100, num_states=3):
+    """ 
+    Test the parallel HMM smoother function
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 
@@ -290,7 +328,10 @@ def test_parallel_smoother(key=0, num_timesteps=100, num_states=3):
 def test_parallel_posterior_sample(
         key=0, num_timesteps=5, num_states=2, eps=1e-3, 
         num_samples=1000000, num_iterations=5
-):
+    ):
+    """
+    Test the parallel HMM posterior sample function
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
 

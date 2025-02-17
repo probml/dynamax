@@ -1,3 +1,7 @@
+"""
+This module contains a Hidden Markov Model (HMM) with categorical emissions 
+from a regression model.
+"""
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jaxtyping import Float, Array
@@ -11,18 +15,20 @@ from typing import NamedTuple, Optional, Tuple, Union
 
 
 class ParamsCategoricalRegressionHMMEmissions(NamedTuple):
+    """Parameters for the emission distribution of a Categorical Regression HMM."""
     weights: Union[Float[Array, "state_dim num_classes feature_dim"], ParameterProperties]
     biases: Union[Float[Array, "state_dim num_classes"], ParameterProperties]
 
 
 class ParamsCategoricalRegressionHMM(NamedTuple):
+    """Parameters for a Categorical Regression HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsCategoricalRegressionHMMEmissions
 
 
 class CategoricalRegressionHMMEmissions(HMMEmissions):
-
+    """Emission distribution for a Categorical Regression HMM."""
     def __init__(self,
                  num_states: int,
                  num_classes: int,
@@ -41,13 +47,19 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self):
+        """Shape of the emission distribution."""
         return ()
 
     @property
     def inputs_shape(self):
+        """Shape of the inputs to the emission distribution."""
         return (self.feature_dim,)
 
     def log_prior(self, params):
+        """Log prior probability of the parameters.
+        
+        Currently, there is no prior so this is always 0.
+        """
         return 0.0
 
     def initialize(
@@ -99,6 +111,7 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
             params: ParamsCategoricalRegressionHMMEmissions,
             state: IntScalar,
             inputs: Float[Array, " input_dim"]):
+        """Return the emission distribution for a given state and input."""
         logits = params.weights[state] @ inputs + params.biases[state]
         return tfd.Categorical(logits=logits)
 
@@ -143,6 +156,7 @@ class CategoricalRegressionHMM(HMM):
 
     @property
     def inputs_shape(self):
+        """Shape of the inputs to the emission distribution."""
         return (self.input_dim,)
 
     def initialize(self,
