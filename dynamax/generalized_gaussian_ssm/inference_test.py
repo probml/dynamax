@@ -1,5 +1,4 @@
 import jax.numpy as jnp
-import jax.random as jr
 
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
 from dynamax.generalized_gaussian_ssm.inference import conditional_moments_gaussian_smoother, EKFIntegrals, UKFIntegrals
@@ -7,24 +6,18 @@ from dynamax.nonlinear_gaussian_ssm.inference_ekf import extended_kalman_smoothe
 from dynamax.nonlinear_gaussian_ssm.inference_ukf import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.inference_test_utils import random_nlgssm_args
 from dynamax.utils.utils import has_tpu
-
+from functools import partial
 
 if has_tpu():
-    def allclose(x, y):
-        print(jnp.max(x-y))
-        #return jnp.allclose(x, y, atol=1e-1)
-        return True # hack !!!
+    allclose = partial(jnp.allclose, atol=1e-1)
 else:
-    def allclose(x,y):
-        m = jnp.max(x-y)
-        if jnp.abs(m) > 1e-1:
-            print(m)
-            return False
-        else:
-            return True
+    allclose = partial(jnp.allclose, atol=1e-5)
 
 
 def ekf(key=0, num_timesteps=15):
+    """
+    Test EKF as a GGF
+    """
     nlgssm_args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run EKF from dynamax.ekf
@@ -47,14 +40,11 @@ def ekf(key=0, num_timesteps=15):
     assert allclose(ekf_post.smoothed_means, ggf_post.smoothed_means)
     assert allclose(ekf_post.smoothed_covariances, ggf_post.smoothed_covariances)
 
-def skip_test_ekf():
-    key = jr.PRNGKey(0)
-    keys = jr.split(key, 5)
-    for key in keys:
-        ekf(key, num_timesteps=15)
-
 
 def test_ukf(key=1, num_timesteps=15):
+    """
+    Test UKF as a GGF
+    """
     nlgssm_args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
     hyperparams = UKFHyperParams()
 
