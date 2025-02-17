@@ -145,7 +145,7 @@ class TestFilteringAndSmoothing:
     F = jnp.array([[1, 0, 1, 0],
                     [0, 1, 0, 1],
                     [0, 0, 1, 0],
-                    [0, 0, 0, 1]], dtype=jnp.float)
+                    [0, 0, 0, 1]], dtype=jnp.float32)
     Q = jnp.eye(state_dim) * 0.001
     H = jnp.array([[1.0, 0, 0, 0],
                      [0, 1.0, 0, 0]])
