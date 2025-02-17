@@ -2,6 +2,8 @@
 Tests for information form inference in linear Gaussian SSMs.
 """
 import jax.numpy as jnp
+
+from functools import partial
 from jax import random as jr
 
 from dynamax.linear_gaussian_ssm.inference import  lgssm_smoother, lgssm_filter
@@ -12,13 +14,10 @@ from dynamax.utils.utils import has_tpu
 
 # Use lower tolerance for TPU tests.
 if has_tpu():
-    def allclose(x, y):
-        print(jnp.max(x-y))
-        #return jnp.allclose(x, y, atol=1e-1)
-        return True # hack since otherwise marginal loglik  tests fail.
+    allclose = partial(jnp.allclose, atol=1e-1)
 else:
-    def allclose(x,y):
-        return jnp.allclose(x, y, atol=1e-1)
+    allclose = partial(jnp.allclose, atol=1e-4)
+    
 
 def build_lgssm_moment_and_info_form():
     """Construct example LinearGaussianSSM and equivalent LGSSMInfoParams

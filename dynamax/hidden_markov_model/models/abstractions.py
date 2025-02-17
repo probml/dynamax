@@ -33,14 +33,17 @@ class HMMParameterSet(Protocol):
     """
     @property
     def initial(self) -> ParameterSet:
+        """Initial distribution parameters."""
         pass
 
     @property
     def transitions(self) -> ParameterSet:
+        """Transition distribution parameters."""
         pass
 
     @property
     def emissions(self) -> ParameterSet:
+        """Emission distribution parameters."""
         pass
 
 
@@ -54,14 +57,17 @@ class HMMPropertySet(Protocol):
     """
     @property
     def initial(self) -> PropertySet:
+        """Initial distribution properties."""
         pass
 
     @property
     def transitions(self) -> PropertySet:
+        """Transition distribution properties."""
         pass
 
     @property
     def emissions(self) -> PropertySet:
+        """Emission distribution properties."""
         pass
 
 

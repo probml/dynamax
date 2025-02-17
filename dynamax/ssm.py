@@ -1,13 +1,17 @@
+"""
+Base classes for state space models (SSMs).
+"""
+import jax.numpy as jnp
+import jax.random as jr
+import optax
+
 from abc import ABC
 from abc import abstractmethod
 from fastprogress.fastprogress import progress_bar
 from functools import partial
-import jax.numpy as jnp
-import jax.random as jr
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
 from jaxtyping import Array, Float, Real
-import optax
 from tensorflow_probability.substrates.jax import distributions as tfd
 from typing import Optional, Union, Tuple, Any, runtime_checkable
 from typing_extensions import Protocol
@@ -191,6 +195,7 @@ class SSM(ABC):
 
         """
         def _step(prev_state, args):
+            """Sample the next state and emission given the previous state and input."""
             key, inpt = args
             key1, key2 = jr.split(key, 2)
             state = self.transition_distribution(params, prev_state, inpt).sample(seed=key2)
@@ -224,6 +229,7 @@ class SSM(ABC):
         r"""Compute the log joint probability of the states and observations"""
 
         def _step(carry, args):
+            """Compute the log probability of the next time step."""
             lp, prev_state = carry
             state, emission, inpt = args
             lp += self.transition_distribution(params, prev_state, inpt).log_prob(state)
@@ -387,6 +393,7 @@ class SSM(ABC):
 
         @jit
         def em_step(params, m_step_state):
+            """Perform one EM step."""
             batch_stats, lls = vmap(partial(self.e_step, params))(batch_emissions, batch_inputs)
             lp = self.log_prior(params) + lls.sum()
             params, m_step_state = self.m_step(params, props, batch_stats, m_step_state)

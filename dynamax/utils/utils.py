@@ -1,11 +1,15 @@
-from functools import partial
+"""
+Utility functions for the library.
+"""
+import jax
+import jaxlib
 import jax.numpy as jnp
 import jax.random as jr
+
+from functools import partial
 from jax import jit
 from jax import vmap
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
-import jax
-import jaxlib
 from jaxtyping import Array, Int
 from scipy.optimize import linear_sum_assignment
 from jax.scipy.linalg import cho_factor, cho_solve
@@ -133,6 +137,7 @@ def ensure_array_has_batch_dim(tree, instance_shapes):
             entry in the array.
     """
     def _expand_dim(x, shp):
+        """Add a batch dimension to an array, if necessary."""
         ndim = len(shp)
         assert x.ndim > ndim, "array does not match expected shape!"
         assert all([(d1 == d2) for d1, d2 in zip(x.shape[-ndim:], shp)]), \

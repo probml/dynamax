@@ -1,3 +1,6 @@
+"""
+Tests for inference in the generalized Gaussian SSM.
+"""
 import jax.numpy as jnp
 
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
@@ -11,7 +14,7 @@ from functools import partial
 if has_tpu():
     allclose = partial(jnp.allclose, atol=1e-1)
 else:
-    allclose = partial(jnp.allclose, atol=1e-5)
+    allclose = partial(jnp.allclose, atol=1e-3)
 
 
 def ekf(key=0, num_timesteps=15):

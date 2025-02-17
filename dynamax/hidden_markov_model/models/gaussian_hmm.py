@@ -160,6 +160,7 @@ class GaussianHMMEmissions(HMMEmissions):
 
             # Find the posterior parameters of the NIW distribution
             def _single_m_step(stats):
+                """Perform the M-step for a single state."""
                 niw_posterior = niw_posterior_update(niw_prior, (stats['sum_x'], stats['sum_xxT'], stats['sum_w']))
                 return niw_posterior.mode()
 

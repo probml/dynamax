@@ -206,6 +206,7 @@ class LinearAutoregressiveHMM(HMM):
             prev_emissions = jnp.zeros((self.num_lags, self.emission_dim))
 
         def _step(carry, key):
+            """Sample the next state and emission."""
             prev_state, prev_emissions = carry
             key1, key2 = jr.split(key, 2)
             state = self.transition_distribution(params, prev_state).sample(seed=key2)
