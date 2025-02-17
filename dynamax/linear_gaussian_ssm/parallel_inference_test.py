@@ -15,17 +15,7 @@ from functools import partial
 from jax import vmap
 
 
-# def allclose(x,y, atol=1e-2):
-#     """Check if all elements of x and y are close within atol."""
-#     # TODO: Why do we have a separate allclose implementation here??
-#     m = jnp.abs(jnp.max(x-y))
-#     if m > atol:
-#         print(m)
-#         return False
-#     else:
-#         return True
-    
-allclose = partial(jnp.allclose, atol=1e-2)    
+allclose = partial(jnp.allclose, atol=1e-4)    
 
 def make_static_lgssm_params():
     """Create a static LGSSM with fixed parameters."""
