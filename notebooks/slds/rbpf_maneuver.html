@@ -41,7 +41,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/slds/rbpf_maneuver';</script>
@@ -602,12 +602,12 @@
 <span class="g g-Whitespace">     </span><span class="mi">88</span> <span class="n">latent_hmap</span> <span class="o">=</span> <span class="n">ohe</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">dstates</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span>
 <span class="g g-Whitespace">     </span><span class="mi">89</span> <span class="n">latent_hmap_est</span> <span class="o">=</span> <span class="n">ohe</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">p_est</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
 
-<span class="ne">TypeError</span>: __init__() got an unexpected keyword argument &#39;sparse&#39;
+<span class="ne">TypeError</span>: OneHotEncoder.__init__() got an unexpected keyword argument &#39;sparse&#39;
 </pre></div>
 </div>
-<img alt="../../_images/6429e210d93f25c13aba4d93caa7a67015b9163a2e48355dd9ff79f23ba53318.png" src="../../_images/6429e210d93f25c13aba4d93caa7a67015b9163a2e48355dd9ff79f23ba53318.png" />
-<img alt="../../_images/a36c14410a6e31b24d7cc2b8b688f97dd34e2a9031c1900aca1c86b1d8c76133.png" src="../../_images/a36c14410a6e31b24d7cc2b8b688f97dd34e2a9031c1900aca1c86b1d8c76133.png" />
-<img alt="../../_images/5a8aa91d8274a6768fc581f96d579d9c9ec08f017982c78f92e3c407259c6349.png" src="../../_images/5a8aa91d8274a6768fc581f96d579d9c9ec08f017982c78f92e3c407259c6349.png" />
+<img alt="../../_images/cbf6c257cfae86887ec4953860d382733206abd4bc0c79df023b2e8675ed8c95.png" src="../../_images/cbf6c257cfae86887ec4953860d382733206abd4bc0c79df023b2e8675ed8c95.png" />
+<img alt="../../_images/fe849c6a4c07d991cfbf56c6c9bea6730f0e7548a39c6fa0704c3e672c354cc7.png" src="../../_images/fe849c6a4c07d991cfbf56c6c9bea6730f0e7548a39c6fa0704c3e672c354cc7.png" />
+<img alt="../../_images/ef5d213b2f7d85bfbcf262ea934a1c972bc56b1d5f4b3761621a734147e70009.png" src="../../_images/ef5d213b2f7d85bfbcf262ea934a1c972bc56b1d5f4b3761621a734147e70009.png" />
 </div>
 </div>
 </section>

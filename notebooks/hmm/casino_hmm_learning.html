@@ -41,7 +41,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
@@ -429,55 +429,6 @@ p(\theta) &amp;= \mathrm{Dir}(\pi \mid \alpha 1_K) \prod_{k=1}^K \mathrm{Dir}(A_
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">9</span>
-<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
-<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
-<span class="ne">----&gt; </span><span class="mi">9</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalHMM</span>
-
-<span class="n">File</span> <span class="o">~/</span><span class="n">work</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">hidden_markov_model</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">7</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.categorical_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalHMM</span>
-<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gamma_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GammaHMM</span>
-<span class="ne">----&gt; </span><span class="mi">7</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gaussian_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianHMM</span><span class="p">,</span> <span class="n">DiagonalGaussianHMM</span><span class="p">,</span> <span class="n">SphericalGaussianHMM</span><span class="p">,</span> <span class="n">SharedCovarianceGaussianHMM</span><span class="p">,</span> <span class="n">LowRankGaussianHMM</span>
-<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gmm_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianMixtureHMM</span><span class="p">,</span> <span class="n">DiagonalGaussianMixtureHMM</span>
-<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.linreg_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegressionHMM</span>
-
-<span class="n">File</span> <span class="o">~/</span><span class="n">work</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">hidden_markov_model</span><span class="o">/</span><span class="n">models</span><span class="o">/</span><span class="n">gaussian_hmm</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">442</span>
-<span class="g g-Whitespace">    </span><span class="mi">438</span>     <span class="n">means</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
-<span class="g g-Whitespace">    </span><span class="mi">439</span>     <span class="n">cov</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
-<span class="ne">--&gt; </span><span class="mi">442</span> <span class="k">class</span><span class="w"> </span><span class="nc">SharedCovarianceGaussianHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
-<span class="g g-Whitespace">    </span><span class="mi">443</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;Initialize SharedCovarianceGaussianHMMEmissions.</span>
-<span class="g g-Whitespace">    </span><span class="mi">444</span><span class="sd"> </span>
-<span class="g g-Whitespace">    </span><span class="mi">445</span><span class="sd">     Args:</span>
-<span class="sd">   (...)</span>
-<span class="g g-Whitespace">    </span><span class="mi">451</span><span class="sd">         emission_prior_extra_df: extra degrees of freedom for the prior</span>
-<span class="g g-Whitespace">    </span><span class="mi">452</span><span class="sd">     &quot;&quot;&quot;</span>
-<span class="g g-Whitespace">    </span><span class="mi">453</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">454</span>                  <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">455</span>                  <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">458</span>                  <span class="n">emission_prior_scale</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">459</span>                  <span class="n">emission_prior_extra_df</span><span class="p">:</span> <span class="n">Scalar</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>
-
-<span class="nn">File ~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/gaussian_hmm.py:559,</span> in <span class="ni">SharedCovarianceGaussianHMMEmissions</span><span class="nt">()</span>
-<span class="g g-Whitespace">    </span><span class="mi">550</span>     <span class="n">lp</span> <span class="o">+=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span><span class="n">mu0</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">/</span> <span class="n">kappa0</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">mus</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="g g-Whitespace">    </span><span class="mi">551</span>     <span class="k">return</span> <span class="n">lp</span>
-<span class="g g-Whitespace">    </span><span class="mi">553</span> <span class="k">def</span><span class="w"> </span><span class="nf">collect_suff_stats</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">554</span>     <span class="bp">self</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">555</span>     <span class="n">params</span><span class="p">:</span> <span class="n">ParamsSharedCovarianceGaussianHMMEmissions</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">556</span>     <span class="n">posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">557</span>     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
-<span class="g g-Whitespace">    </span><span class="mi">558</span>     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="ne">--&gt; </span><span class="mi">559</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="g g-Whitespace">    </span><span class="mi">560</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;Collect sufficient statistics for the M-step of the EM algorithm.&quot;&quot;&quot;</span>
-<span class="g g-Whitespace">    </span><span class="mi">561</span>     <span class="n">expected_states</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span>
-
-<span class="ne">TypeError</span>: unsupported operand type(s) for |: &#39;MetaAbstractArray&#39; and &#39;type&#39;
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="sample-data-from-true-model">
@@ -596,13 +547,13 @@ A_k &amp;\sim \mathrm{Dir}(\beta 1_K + \kappa e_k) \quad \text{for } k=1,\ldots,
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Randomly initialized parameters
 initial probs:
-[0.793 0.207]
+[0.635 0.365]
 transition matrix:
-[[0.978 0.022]
- [0.252 0.748]]
+[[0.920 0.080]
+ [0.023 0.977]]
 emission probs:
-[[0.145 0.115 0.024 0.136 0.187 0.393]
- [0.010 0.119 0.416 0.325 0.068 0.061]]
+[[0.569 0.016 0.037 0.150 0.164 0.064]
+ [0.127 0.141 0.070 0.306 0.058 0.298]]
 </pre></div>
 </div>
 </div>
@@ -661,7 +612,7 @@ emission probs:
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9ac2aa2e56d05e019e13037eea3503edda5a40f9778b0ccd13b0a2dd2c2f6a62.png" src="../../_images/9ac2aa2e56d05e019e13037eea3503edda5a40f9778b0ccd13b0a2dd2c2f6a62.png" />
+<img alt="../../_images/72e59dc629f83e341b9a077d4a1aa8110eddf96ea9a238a037b869f20097f12e.png" src="../../_images/72e59dc629f83e341b9a077d4a1aa8110eddf96ea9a238a037b869f20097f12e.png" />
 </div>
 </div>
 <p>As you can see, stochastic gradient descent converges much more quickly that full-batch gradient descent in this example. Intuitively, that’s because SGD takes multiple steps per <em>epoch</em> (i.e. each complete sweep through the dataset), whereas full-batch gradient descent takes only one.</p>
@@ -680,23 +631,23 @@ emission probs:
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Full batch gradient descent params:
 initial probs:
-[0.793 0.207]
+[0.634 0.366]
 transition matrix:
-[[0.961 0.039]
- [0.292 0.708]]
+[[0.883 0.117]
+ [0.015 0.985]]
 emission probs:
-[[0.162 0.142 0.115 0.131 0.145 0.306]
- [0.013 0.170 0.406 0.249 0.093 0.070]]
+[[0.427 0.021 0.051 0.194 0.231 0.077]
+ [0.130 0.150 0.151 0.142 0.139 0.288]]
 
 Stochastic gradient descent params:
 initial probs:
-[0.793 0.207]
+[0.633 0.367]
 transition matrix:
-[[0.964 0.036]
- [0.344 0.656]]
+[[0.839 0.161]
+ [0.011 0.989]]
 emission probs:
-[[0.165 0.143 0.124 0.130 0.150 0.287]
- [0.014 0.229 0.315 0.258 0.110 0.074]]
+[[0.330 0.025 0.066 0.236 0.259 0.085]
+ [0.136 0.149 0.147 0.140 0.141 0.287]]
 </pre></div>
 </div>
 </div>
@@ -743,7 +694,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div><div class="output text_html">
     <div>
       <progress value='400' class='' max='400' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [400/400 00:01&lt;00:00]
+      100.00% [400/400 00:02&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -779,7 +730,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/5c55850707208423386917493556f9a1d3d8b45d8314cc9f36ad9b8a0f70029e.png" src="../../_images/5c55850707208423386917493556f9a1d3d8b45d8314cc9f36ad9b8a0f70029e.png" />
+<img alt="../../_images/1f2dd612be2e1524b846eb08e144958c0f5f53964c69d35cc3f6bb5d2bb7742f.png" src="../../_images/1f2dd612be2e1524b846eb08e144958c0f5f53964c69d35cc3f6bb5d2bb7742f.png" />
 </div>
 </div>
 <p>Not only does EM converge much faster on this example (here, in only a handful of iterations), it also converges to a better estimate of the parameters. Indeed, it essentially matches the loss obtained by the parameters that truly generated the data. We see that its parameter estimates are nearly the same as the true parameters, up to label switching.</p>
@@ -791,12 +742,14 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">NameError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="nn">/Users/kpmurphy/github/dynamax/docs/notebooks/hmm/casino_hmm_learning.ipynb Cell 27</span> in <span class="ni">&lt;cell line: 1&gt;</span><span class="nt">()</span>
-<span class="o">----&gt;</span> <span class="o">&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s1">&#39;vscode-notebook-cell:/Users/kpmurphy/github/dynamax/docs/notebooks/hmm/casino_hmm_learning.ipynb#X35sZmlsZQ%3D%3D?line=0&#39;</span><span class="o">&gt;</span><span class="mi">1</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;</span> <span class="n">print_params</span><span class="p">(</span><span class="n">em_params</span><span class="p">)</span>
-
-<span class="ne">NameError</span>: name &#39;print_params&#39; is not defined
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial probs:
+[0.510 0.490]
+transition matrix:
+[[0.947 0.053]
+ [0.082 0.918]]
+emission probs:
+[[0.167 0.171 0.169 0.172 0.166 0.156]
+ [0.105 0.105 0.113 0.105 0.111 0.462]]
 </pre></div>
 </div>
 </div>

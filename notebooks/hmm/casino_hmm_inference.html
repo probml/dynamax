@@ -41,7 +41,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
@@ -415,62 +415,13 @@ This is from the book:</p>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">9</span>
-<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
-<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="kn">from</span><span class="w"> </span><span class="nn">jax.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">one_hot</span>
-<span class="ne">----&gt; </span><span class="mi">9</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalHMM</span>
-
-<span class="n">File</span> <span class="o">~/</span><span class="n">work</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">hidden_markov_model</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">7</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.categorical_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalHMM</span>
-<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gamma_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GammaHMM</span>
-<span class="ne">----&gt; </span><span class="mi">7</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gaussian_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianHMM</span><span class="p">,</span> <span class="n">DiagonalGaussianHMM</span><span class="p">,</span> <span class="n">SphericalGaussianHMM</span><span class="p">,</span> <span class="n">SharedCovarianceGaussianHMM</span><span class="p">,</span> <span class="n">LowRankGaussianHMM</span>
-<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gmm_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianMixtureHMM</span><span class="p">,</span> <span class="n">DiagonalGaussianMixtureHMM</span>
-<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.linreg_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegressionHMM</span>
-
-<span class="n">File</span> <span class="o">~/</span><span class="n">work</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">hidden_markov_model</span><span class="o">/</span><span class="n">models</span><span class="o">/</span><span class="n">gaussian_hmm</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">442</span>
-<span class="g g-Whitespace">    </span><span class="mi">438</span>     <span class="n">means</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
-<span class="g g-Whitespace">    </span><span class="mi">439</span>     <span class="n">cov</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
-<span class="ne">--&gt; </span><span class="mi">442</span> <span class="k">class</span><span class="w"> </span><span class="nc">SharedCovarianceGaussianHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
-<span class="g g-Whitespace">    </span><span class="mi">443</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;Initialize SharedCovarianceGaussianHMMEmissions.</span>
-<span class="g g-Whitespace">    </span><span class="mi">444</span><span class="sd"> </span>
-<span class="g g-Whitespace">    </span><span class="mi">445</span><span class="sd">     Args:</span>
-<span class="sd">   (...)</span>
-<span class="g g-Whitespace">    </span><span class="mi">451</span><span class="sd">         emission_prior_extra_df: extra degrees of freedom for the prior</span>
-<span class="g g-Whitespace">    </span><span class="mi">452</span><span class="sd">     &quot;&quot;&quot;</span>
-<span class="g g-Whitespace">    </span><span class="mi">453</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">454</span>                  <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">455</span>                  <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">458</span>                  <span class="n">emission_prior_scale</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">459</span>                  <span class="n">emission_prior_extra_df</span><span class="p">:</span> <span class="n">Scalar</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>
-
-<span class="nn">File ~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/gaussian_hmm.py:559,</span> in <span class="ni">SharedCovarianceGaussianHMMEmissions</span><span class="nt">()</span>
-<span class="g g-Whitespace">    </span><span class="mi">550</span>     <span class="n">lp</span> <span class="o">+=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span><span class="n">mu0</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">/</span> <span class="n">kappa0</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">mus</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="g g-Whitespace">    </span><span class="mi">551</span>     <span class="k">return</span> <span class="n">lp</span>
-<span class="g g-Whitespace">    </span><span class="mi">553</span> <span class="k">def</span><span class="w"> </span><span class="nf">collect_suff_stats</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">554</span>     <span class="bp">self</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">555</span>     <span class="n">params</span><span class="p">:</span> <span class="n">ParamsSharedCovarianceGaussianHMMEmissions</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">556</span>     <span class="n">posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">557</span>     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
-<span class="g g-Whitespace">    </span><span class="mi">558</span>     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="ne">--&gt; </span><span class="mi">559</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="g g-Whitespace">    </span><span class="mi">560</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;Collect sufficient statistics for the M-step of the EM algorithm.&quot;&quot;&quot;</span>
-<span class="g g-Whitespace">    </span><span class="mi">561</span>     <span class="n">expected_states</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span>
-
-<span class="ne">TypeError</span>: unsupported operand type(s) for |: &#39;MetaAbstractArray&#39; and &#39;type&#39;
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="make-a-categorical-hmm">
 <h2>Make a Categorical HMM<a class="headerlink" href="#make-a-categorical-hmm" title="Link to this heading">#</a></h2>
 <p>First, we’ll construct a categorical hidden Markov model (HMM). The model has discrete latent states <span class="math notranslate nohighlight">\(z_t \in \{1,2\}\)</span> to specify which of the two dice is used on the <span class="math notranslate nohighlight">\(t\)</span>-th roll. You observe the outcomes, or “emissions,” <span class="math notranslate nohighlight">\(y_t \in \{1,\ldots,6\}\)</span>. The categorical HMM specifies a joint distribution over the latent states and emissions,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-da42fb8f-35d0-4d5b-afba-2a22ac635201">
-<span class="eqno">(1)<a class="headerlink" href="#equation-da42fb8f-35d0-4d5b-afba-2a22ac635201" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-0ad80cab-2c70-4db2-9d50-e59b16e58512">
+<span class="eqno">(1)<a class="headerlink" href="#equation-0ad80cab-2c70-4db2-9d50-e59b16e58512" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_{1:T}, z_{1:T} \mid \theta) 
 &amp;= \mathrm{Cat}(z_1 \mid \pi) 
 \prod_{t=2}^T \mathrm{Cat}(z_t \mid A_{z_{t-1}}) 
@@ -530,12 +481,12 @@ B.shape: (2, 6)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ParamsCategoricalHMM(initial=ParamsStandardHMMInitialState(probs=DeviceArray([0.5, 0.5], dtype=float32)), transitions=ParamsStandardHMMTransitions(transition_matrix=DeviceArray([[0.95, 0.05],
-             [0.1 , 0.9 ]], dtype=float32)), emissions=ParamsCategoricalHMMEmissions(probs=DeviceArray([[[0.16666667, 0.16666667, 0.16666667, 0.16666667,
-               0.16666667, 0.16666667]],
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ParamsCategoricalHMM(initial=ParamsStandardHMMInitialState(probs=Array([0.5, 0.5], dtype=float32)), transitions=ParamsStandardHMMTransitions(transition_matrix=Array([[0.95, 0.05],
+       [0.1 , 0.9 ]], dtype=float32)), emissions=ParamsCategoricalHMMEmissions(probs=Array([[[0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667,
+         0.16666667]],
 
-             [[0.1       , 0.1       , 0.1       , 0.1       ,
-               0.1       , 0.5       ]]], dtype=float32)))
+       [[0.1       , 0.1       , 0.1       , 0.1       , 0.1       ,
+         0.5       ]]], dtype=float32)))
 </pre></div>
 </div>
 </div>
@@ -584,8 +535,8 @@ B.shape: (2, 6)
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>true_states.shape: (300,)
 emissions.shape: (300, 1)
 
-First few states:     [1 1 1 1 1]
-First few emissions:  [5 0 5 5 5]
+First few states:     [0 0 0 0 0]
+First few emissions:  [1 1 5 5 3]
 </pre></div>
 </div>
 </div>
@@ -647,7 +598,7 @@ batch_emissions.shape: (5, 300, 1)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/62c0c99057cb7d7bbe41d92c9ec8be373d2e138dde968d2ba50b870ad24d912e.png" src="../../_images/62c0c99057cb7d7bbe41d92c9ec8be373d2e138dde968d2ba50b870ad24d912e.png" />
+<img alt="../../_images/4bd769b70a660da63342e1b10bbb06e084721f4ab592445321f754abb05fb554.png" src="../../_images/4bd769b70a660da63342e1b10bbb06e084721f4ab592445321f754abb05fb554.png" />
 </div>
 </div>
 <p>The difference in outcomes is borne out in the empirical frequencies of seeing a six in each state.</p>
@@ -663,7 +614,7 @@ batch_emissions.shape: (5, 300, 1)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>empirical frequencies:  [0.14970061 0.46616542]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>empirical frequencies:  [0.15463917 0.49056605]
 expected frequencies:   [0.16666667 0.5       ]
 </pre></div>
 </div>
@@ -674,8 +625,8 @@ expected frequencies:   [0.16666667 0.5       ]
 <section id="filtering-forwards-algorithm">
 <h2>Filtering (forwards algorithm)<a class="headerlink" href="#filtering-forwards-algorithm" title="Link to this heading">#</a></h2>
 <p>In an HMM, <em>filtering</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given emissions up to and including time <span class="math notranslate nohighlight">\(t\)</span>. Mathematically, the filtering distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-de70a48d-8072-4e90-8981-51eb71a166ae">
-<span class="eqno">(2)<a class="headerlink" href="#equation-de70a48d-8072-4e90-8981-51eb71a166ae" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-5e4daa11-11c6-4072-b1c2-411e303efdec">
+<span class="eqno">(2)<a class="headerlink" href="#equation-5e4daa11-11c6-4072-b1c2-411e303efdec" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(z_t \mid y_{1:t}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} p(z_{1:t}, y_{1:t} \mid \theta)
 \end{align}\]</div>
 <p>The forward filtering algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.2) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion. It also returns an estimate of the <em>marginal likelihood</em>, <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta)\)</span>, which is useful for model comparison and fitting.</p>
@@ -689,7 +640,7 @@ p(z_t \mid y_{1:t}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} p(z_{1
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>marginal likelihood: -517.95
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>marginal likelihood: -524.68
 posterior.filtered_probs.shape: (300, 2)
 </pre></div>
 </div>
@@ -725,7 +676,7 @@ posterior.filtered_probs.shape: (300, 2)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/3493ccd510397df4dc506cbf76666db1318cf26453908c81585844c89921b6a5.png" src="../../_images/3493ccd510397df4dc506cbf76666db1318cf26453908c81585844c89921b6a5.png" />
+<img alt="../../_images/626734a4923e6651d022b01bba70c4fad31f703664781fcf422c4e372bf25365.png" src="../../_images/626734a4923e6651d022b01bba70c4fad31f703664781fcf422c4e372bf25365.png" />
 </div>
 </div>
 </section>
@@ -733,8 +684,8 @@ posterior.filtered_probs.shape: (300, 2)
 <section id="smoothing-forwards-backwards-algorithm">
 <h2>Smoothing (forwards-backwards algorithm)<a class="headerlink" href="#smoothing-forwards-backwards-algorithm" title="Link to this heading">#</a></h2>
 <p><em>Smoothing</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given all emissions, including those that come after. Mathematically, the smoothing distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-e9c69e38-932f-4d0b-b10c-080b234f2412">
-<span class="eqno">(3)<a class="headerlink" href="#equation-e9c69e38-932f-4d0b-b10c-080b234f2412" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-750aa71a-c9a2-499a-96bf-4d3e83195aee">
+<span class="eqno">(3)<a class="headerlink" href="#equation-750aa71a-c9a2-499a-96bf-4d3e83195aee" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{z_{t+1}} \cdots \sum_{z_T} p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>The forward-backward algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.4) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion.</p>
@@ -760,7 +711,7 @@ p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/35111c4581d3898007581563aa438be22f2927b4651136740ab111993c68a3b3.png" src="../../_images/35111c4581d3898007581563aa438be22f2927b4651136740ab111993c68a3b3.png" />
+<img alt="../../_images/dc07721819e9f6c3c19ba5bc410ac96f649776779110f1dbe4cca7aa5fd843a9.png" src="../../_images/dc07721819e9f6c3c19ba5bc410ac96f649776779110f1dbe4cca7aa5fd843a9.png" />
 </div>
 </div>
 <p>Compare the smoothed probabilities to the filtered ones. See how the sharp rises in probability (e.g. around time step 235) are attenuated in the smoothing distribution? That’s because the filtering distribution is sensitive to when the die comes up six, thinking it might indicate a switch to the loaded die. The smoothing distributions benefit from future outcomes, which suggest that the six was just a chance event.</p>
@@ -768,8 +719,8 @@ p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{
 <section id="most-likely-state-sequence-viterbi-algorithm">
 <h2>Most likely state sequence (Viterbi algorithm)<a class="headerlink" href="#most-likely-state-sequence-viterbi-algorithm" title="Link to this heading">#</a></h2>
 <p>Finally, we can compute the most likely state sequence (aka <em>maximum a posteriori</em> or “MAP” sequence) using the Viterbi algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.7). This dynamic programming algorithm solves for</p>
-<div class="amsmath math notranslate nohighlight" id="equation-84ef4427-e45d-4d87-927a-e0c9f1988f5c">
-<span class="eqno">(4)<a class="headerlink" href="#equation-84ef4427-e45d-4d87-927a-e0c9f1988f5c" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-e2505cd3-4695-4984-ac80-32680af5d3ac">
+<span class="eqno">(4)<a class="headerlink" href="#equation-e2505cd3-4695-4984-ac80-32680af5d3ac" title="Permalink to this equation">#</a></span>\[\begin{align}
 z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>You can compute the MAP sequence with the following code.</p>
@@ -802,7 +753,7 @@ z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/aa0877c89536fbe5c25f7d992069b0974c941c30b2143eda2372af48fd00223c.png" src="../../_images/aa0877c89536fbe5c25f7d992069b0974c941c30b2143eda2372af48fd00223c.png" />
+<img alt="../../_images/ec331806ab1a11cdad20f40431f103defe448d464353d4e2138af632e933a1e9.png" src="../../_images/ec331806ab1a11cdad20f40431f103defe448d464353d4e2138af632e933a1e9.png" />
 </div>
 </div>
 </section>
