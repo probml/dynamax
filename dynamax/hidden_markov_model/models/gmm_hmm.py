@@ -1,3 +1,6 @@
+"""
+Gaussian Mixture Hidden Markov Models (GMM-HMMs) and Diagonal Gaussian Mixture Hidden Markov Models (Diag-GMM-HMMs).
+"""
 from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
 import jax.numpy as jnp
 import jax.random as jr
@@ -21,24 +24,28 @@ from dynamax.types import IntScalar, Scalar
 
 
 class ParamsGaussianMixtureHMMEmissions(NamedTuple):
+    """Parameters for a Gaussian Mixture HMM emission distribution."""
     weights: Union[Float[Array, "state_dim num_components"], ParameterProperties]
     means: Union[Float[Array, "state_dim num_components emission_dim"], ParameterProperties]
     covs: Union[Float[Array, "state_dim num_components emission_dim emission_dim"], ParameterProperties]
 
 
 class ParamsGaussianMixtureHMM(NamedTuple):
+    """Parameters for a Gaussian Mixture HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsGaussianMixtureHMMEmissions
 
 
 class ParamsDiagonalGaussianMixtureHMMEmissions(NamedTuple):
+    """Parameters for a Diagonal Gaussian Mixture HMM emission distribution."""
     weights: Union[Float[Array, "state_dim num_components"], ParameterProperties]
     means: Union[Float[Array, "state_dim num_components emission_dim"], ParameterProperties]
     scale_diags: Union[Float[Array, "state_dim num_components emission_dim"], ParameterProperties]
 
 
 class ParamsDiagonalGaussianMixtureHMM(NamedTuple):
+    """Parameters for a Diagonal Gaussian Mixture HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsDiagonalGaussianMixtureHMMEmissions
@@ -46,7 +53,20 @@ class ParamsDiagonalGaussianMixtureHMM(NamedTuple):
 
 # Emissions and models
 class GaussianMixtureHMMEmissions(HMMEmissions):
+    r"""Emission distribution for a Gaussian Mixture HMM.
 
+    The emission distribution is a mixture of multivariate normal (i.e. Gaussian) distributions.
+
+    Args:
+        num_states: number of discrete states $K$
+        num_components: number of mixture components $C$
+        emission_dim: number of conditionally independent emissions $N$
+        emission_weights_concentration: $\gamma$
+        emission_prior_mean: $\mu_0$
+        emission_prior_mean_concentration: $\kappa_0$
+        emission_prior_extra_df: $\nu_0 - N > 0$, the "extra" degrees of freedom, above and beyond the minimum of $\nu_0 = N$.
+        emission_prior_scale: $\Psi_
+    """
     def __init__(self,
                  num_states: int,
                  num_components: int,
@@ -67,6 +87,7 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self):
+        """Shape of the emission distribution."""
         return (self.emission_dim,)
 
     def initialize(self,
@@ -77,6 +98,20 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
                    emission_covariances: Optional[Float[Array, "num_states num_components emission_dim emission_dim"]]=None,
                    emissions: Optional[Float[Array, "num_timesteps emission_dim"]]=None
         ) -> Tuple[ParamsGaussianMixtureHMMEmissions, ParamsGaussianMixtureHMMEmissions]:
+        """
+        Initialize the emission parameters.
+        
+        Args:
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            emission_weights: manually specified emission weights.
+            emission_means: manually specified emission means.
+            emission_covariances: manually specified emission covariances.
+            emissions: emissions for initializing the parameters with kmeans.
+
+        Returns:
+            Model parameters and their properties.
+        """
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
@@ -117,13 +152,15 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
                      params: ParamsGaussianMixtureHMMEmissions, 
                      state: IntScalar,
                      inputs: Optional[Array] = None
-    ) -> tfd.Distribution:
+        ) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         return tfd.MixtureSameFamily(
             mixture_distribution=tfd.Categorical(probs=params.weights[state]),
             components_distribution=tfd.MultivariateNormalFullCovariance(
                 loc=params.means[state], covariance_matrix=params.covs[state]))
 
     def log_prior(self, params:ParamsGaussianMixtureHMMEmissions) -> Float[Array, ""]:
+        """Compute the log prior probability of the emission parameters."""
         lp = tfd.Dirichlet(self.emission_weights_concentration).log_prob(
             params.weights).sum()
         lp += NormalInverseWishart(self.emission_prior_mean, self.emission_prior_mean_concentration,
@@ -136,8 +173,11 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
                            posterior: HMMPosterior,
                            emissions: Float[Array, "num_timesteps emission_dim"], 
                            inputs: Optional[Array] = None
-    ) -> Dict[str, Float[Array, "..."]]:
+        ) -> Dict[str, Float[Array, "..."]]:
+        """Collect sufficient statistics for the emission parameters."""
+        
         def prob_fn(x):
+            """Compute the posterior probability of each discrete class."""
             logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalFullCovariance(
                 loc=mus, covariance_matrix=sigmas).log_prob(x) + jnp.log(weights))(
                     params.means, params.covs, params.weights)
@@ -156,7 +196,8 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
             self,
             params: ParamsGaussianMixtureHMMEmissions,
             props: ParamsGaussianMixtureHMMEmissions
-    ) -> None:
+        ) -> None:
+        """Initialize the M-step state."""
         return None
 
     def m_step(
@@ -166,6 +207,7 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
             batch_stats: Dict[str, Float[Array, "..."]],
             m_step_state: Any
     ) -> Tuple[ParamsGaussianMixtureHMMEmissions, Any]:
+        """Perform the M-step of the EM algorithm."""
         assert props.weights.trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
         assert props.means.trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
         assert props.covs.trainable, "GaussianMixtureHMM.fit_em() does not support fitting a subset of parameters"
@@ -288,6 +330,21 @@ class GaussianMixtureHMM(HMM):
 
 
 class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
+    r"""Emission distribution for a Diagonal Gaussian Mixture HMM.
+
+    The emission distribution is a mixture of multivariate normal (i.e. Gaussian) 
+    distributions with diagonal covariance.
+
+    Args:
+        num_states: number of discrete states $K$
+        num_components: number of mixture components $C$
+        emission_dim: number of conditionally independent emissions $N$
+        emission_weights_concentration: $\gamma$
+        emission_prior_mean: $\mu_0$
+        emission_prior_mean_concentration: $\kappa_0$
+        emission_prior_shape: $\alpha_0$
+        emission_prior_scale: $\beta_0$
+    """
     def __init__(self,
                  num_states: int,
                  num_components: int,
@@ -310,6 +367,7 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple[int]:
+        """Shape of the emission distribution."""
         return (self.emission_dim,)
 
     def initialize(self,
@@ -320,6 +378,20 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
                    emission_scale_diags: Optional[Float[Array, "num_states num_components emission_dim"]]=None,
                    emissions: Optional[Float[Array, "num_timesteps emission_dim"]]=None
         ) -> Tuple[ParamsDiagonalGaussianMixtureHMMEmissions, ParamsDiagonalGaussianMixtureHMMEmissions]:
+        """
+        Initialize the emission parameters.
+        
+        Args:
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            emission_weights: manually specified emission weights.
+            emission_means: manually specified emission means.
+            emission_scale_diags: manually specified emission scale diagonals.
+            emissions: emissions for initializing the parameters with kmeans.
+
+        Returns:
+            Model parameters and their properties.
+        """
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
@@ -360,7 +432,9 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
                      params: ParamsDiagonalGaussianMixtureHMMEmissions, 
                      state: IntScalar,
                      inputs: Optional[Array] = None
-    ) -> tfd.Distribution:
+        ) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
+
         return tfd.MixtureSameFamily(
             mixture_distribution=tfd.Categorical(probs=params.weights[state]),
             components_distribution=tfd.MultivariateNormalDiag(
@@ -368,6 +442,7 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
                 scale_diag=params.scale_diags[state]))
 
     def log_prior(self, params: ParamsDiagonalGaussianMixtureHMMEmissions) -> Float[Array, ""]:
+        """Compute the log prior probability of the emission parameters."""
         lp = tfd.Dirichlet(self.emission_weights_concentration).log_prob(
             params.weights).sum()
         lp += NormalInverseGamma(self.emission_prior_mean, self.emission_prior_mean_concentration,
@@ -381,9 +456,12 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
                            posterior: HMMPosterior,
                            emissions: Float[Array, "num_timesteps emission_dim"], 
                            inputs: Optional[Array] = None
-    ) -> Dict[str, Float[Array, "..."]]:
+        ) -> Dict[str, Float[Array, "..."]]:
+        """Collect sufficient statistics for the emission parameters."""
+
         # Evaluate the posterior probability of each discrete class
         def prob_fn(x):
+            """Compute the posterior probability of each discrete class."""
             logprobs = vmap(lambda mus, sigmas, weights: tfd.MultivariateNormalDiag(
                 loc=mus, scale_diag=sigmas).log_prob(x) + jnp.log(weights))(
                     params.means, params.scale_diags,
@@ -403,6 +481,7 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
                                 params: ParamsDiagonalGaussianMixtureHMMEmissions, 
                                 props: ParamsDiagonalGaussianMixtureHMMEmissions
     ) -> None:
+        """Initialize the M-step state."""
         return None
 
     def m_step(self, 
@@ -411,6 +490,7 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
                batch_stats: Dict[str, Float[Array, "..."]], 
                m_step_state: None
     ) -> Tuple[ParamsDiagonalGaussianMixtureHMMEmissions, None]:
+        """Perform the M-step of the EM algorithm."""
         assert props.weights.trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
         assert props.means.trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"
         assert props.scale_diags.trainable, "GaussianMixtureDiagHMM.fit_em() does not support fitting a subset of parameters"

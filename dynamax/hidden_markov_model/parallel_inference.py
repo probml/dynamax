@@ -1,3 +1,6 @@
+"""
+Parallel implementations of the forward filtering and backward smoothing algorithms
+"""
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, vmap, value_and_grad
@@ -22,7 +25,12 @@ class FilterMessage(NamedTuple):
     log_b: Float[Array, "num_timesteps num_states"]
 
 
-def _condition_on(A, ll, axis=-1):
+def _condition_on(A : Float[Array, "num_states num_states"], 
+                  ll : Float[Array, " num_states"], 
+                  axis : int=-1) -> \
+                  Tuple[Float[Array, "num_states num_states"], Float[Array, "num_states"]]:
+    """ Update the message by conditioning on new observations.
+    """
     ll_max = ll.max(axis=axis)
     A_cond = A * jnp.exp(ll - ll_max)
     norm = A_cond.sum(axis=axis)
@@ -52,6 +60,10 @@ def hmm_filter(initial_probs: Float[Array, " num_states"],
 
     @vmap
     def marginalize(m_ij, m_jk):
+        """
+        Compute the message from time i to time k by marginalizing out 
+        the hidden state at time j.
+        """
         A_ij_cond, lognorm = _condition_on(m_ij.A, m_jk.log_b)
         A_ik = A_ij_cond @ m_jk.A
         log_b_ik = m_ij.log_b + lognorm
@@ -110,6 +122,7 @@ def hmm_smoother(initial_probs: Float[Array, " num_states"],
 
     """
     def log_normalizer(log_initial_probs, log_transition_matrix, log_likelihoods):
+        """Compute the log normalizer of the HMM model."""
         post = hmm_filter(jnp.exp(log_initial_probs),
                                    jnp.exp(log_transition_matrix),
                                    log_likelihoods)
@@ -146,11 +159,13 @@ def _initialize_sampling_messages(key, transition_matrix, filtered_probs):
     keys = jr.split(key, T)
 
     def _last_message(key, probs):
+        """Sample the last hidden state."""
         state = jr.choice(key, K, p=probs)
         return jnp.repeat(state, K)
 
     @vmap
     def _generic_message(key, probs):
+        """Sample a hidden state given the previous state."""
         smoothed_probs = probs * transition_matrix.T
         smoothed_probs = smoothed_probs / smoothed_probs.sum(1).reshape(K,1)
         return vmap(lambda p: jr.choice(key, K, p=p))(smoothed_probs)
@@ -184,6 +199,7 @@ def hmm_posterior_sample(key: Array,
 
     @vmap
     def _operator(E_jk, E_ij):
+        """Sample a hidden state given the previous state."""
         return jnp.take(E_ij, E_jk)
 
     initial_messages = _initialize_sampling_messages(key, transition_matrix, filtered_probs)

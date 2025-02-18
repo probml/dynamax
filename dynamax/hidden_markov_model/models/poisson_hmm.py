@@ -1,10 +1,11 @@
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
-
+"""Poisson Hidden Markov Model."""
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
 import tensorflow_probability.substrates.jax.distributions as tfd
+
 from jaxtyping import Array, Float
+from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
 
 from dynamax.hidden_markov_model.inference import HMMPosterior
 from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions
@@ -18,23 +19,24 @@ from dynamax.utils.utils import pytree_sum
 
 
 class ParamsPoissonHMMEmissions(NamedTuple):
+    """Parameters for the Poisson emissions of an HMM."""
     rates: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
 
 
 class PoissonHMMEmissions(HMMEmissions):
+    """Poisson emissions for an HMM.
 
+    Args:
+        num_states: number of states in the HMM
+        emission_dim: dimensionality of the emission space
+        emission_prior_concentration: concentration parameter of the Gamma prior on the emission rates
+        emission_prior_rate: rate parameter of the Gamma prior on the emission rates
+    """
     def __init__(self,
                  num_states: int,
                  emission_dim: int,
                  emission_prior_concentration: Scalar = 1.1,
                  emission_prior_rate: Scalar = 0.1):
-        """_summary_
-
-        Args:
-            initial_probabilities (_type_): _description_
-            transition_matrix (_type_): _description_
-            emission_rates (_type_): _description_
-        """
         self.num_states = num_states
         self.emission_dim = emission_dim
         self.emission_prior_concentration = emission_prior_concentration
@@ -42,12 +44,23 @@ class PoissonHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple[int]:
+        """Shape of the emission distribution."""
         return (self.emission_dim,)
 
     def initialize(self, key: Array=jr.PRNGKey(0),
                    method: str = "prior",
                    emission_rates: Optional[Float[Array, "num_states emission_dim"]] = None
     ) -> Tuple[ParamsPoissonHMMEmissions, ParamsPoissonHMMEmissions]:
+        """Initialize the emission parameters.
+
+        Args:
+            key: random number generator for sampling from the prior. Defaults to jr.PRNGKey(0).
+            method: initialization method for the emission rates. Currently, only "prior" is allowed. Defaults to "prior".
+            emission_rates: manually specified emission rates. Defaults to None.
+
+        Returns:
+            Model parameters and their properties.
+        """
         # Initialize the emission probabilities
         if emission_rates is None:
             if method.lower() == "prior":
@@ -72,10 +85,12 @@ class PoissonHMMEmissions(HMMEmissions):
             state: IntScalar,
             inputs: Optional[Array] = None
             ) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         return tfd.Independent(tfd.Poisson(rate=params.rates[state]),
                                reinterpreted_batch_ndims=1)
 
     def log_prior(self, params: ParamsPoissonHMMEmissions) -> Float[Array, ""]:
+        """Return the log prior probability of the emission parameters."""
         prior = tfd.Gamma(self.emission_prior_concentration, self.emission_prior_rate)
         return prior.log_prob(params.rates).sum()
 
@@ -86,12 +101,14 @@ class PoissonHMMEmissions(HMMEmissions):
             emissions: Float[Array, "num_timesteps emission_dim"],
             inputs: Optional[Array] = None
             ) -> Dict[str, Float[Array, "..."]]:
+        """Collect sufficient statistics for the emission parameters."""
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)[:, None]
         sum_x = jnp.einsum("tk, ti->ki", expected_states, emissions)
         return dict(sum_w=sum_w, sum_x=sum_x)
 
     def initialize_m_step_state(self, params: ParamsPoissonHMMEmissions, props: ParamsPoissonHMMEmissions) -> None:
+        """Initialize the state for the M-step."""
         return None
 
     def m_step(
@@ -101,6 +118,7 @@ class PoissonHMMEmissions(HMMEmissions):
             batch_stats: Dict[str, Float[Array, "..."]],
             m_step_state: Any
             ) -> Tuple[ParamsPoissonHMMEmissions, Any]:
+        """Perform the M-step for the emission parameters."""
         if props.rates.trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
             post_concentration = self.emission_prior_concentration + emission_stats['sum_x']
@@ -111,6 +129,7 @@ class PoissonHMMEmissions(HMMEmissions):
 
 
 class ParamsPoissonHMM(NamedTuple):
+    """Parameters for a Poisson Hidden Markov Model."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsPoissonHMMEmissions

@@ -1,3 +1,4 @@
+"""Categorical Hidden Markov Model."""
 from typing import NamedTuple, Optional, Tuple, Union
 
 import jax.numpy as jnp
@@ -18,27 +19,25 @@ from dynamax.utils.utils import pytree_sum
 
 
 class ParamsCategoricalHMMEmissions(NamedTuple):
+    """Parameters for the CategoricalHMM emission distribution."""
     probs: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
 
 
 class ParamsCategoricalHMM(NamedTuple):
+    """Parameters for the CategoricalHMM model."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsCategoricalHMMEmissions
 
 
 class CategoricalHMMEmissions(HMMEmissions):
+    r"""Categorical emissions for a hidden Markov model."""
 
     def __init__(self,
                  num_states: int,
                  emission_dim: int,
                  num_classes: int,
                  emission_prior_concentration: Union[Scalar, Float[Array, " num_classes"]]=1.1):
-        """_summary_
-
-        Args:
-            emission_probs (_type_): _description_
-        """
         self.num_states = num_states
         self.emission_dim = emission_dim
         self.num_classes = num_classes
@@ -46,14 +45,17 @@ class CategoricalHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple[int]:
+        """Shape of the emission distribution."""
         return (self.emission_dim,)
 
     def distribution(self, params: ParamsCategoricalHMMEmissions, state: IntScalar, inputs=None) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         return tfd.Independent(
             tfd.Categorical(probs=params.probs[state]),
             reinterpreted_batch_ndims=1)
 
     def log_prior(self, params: ParamsCategoricalHMMEmissions) -> Scalar:
+        """Return the log prior probability of the emission parameters."""
         return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params.probs).sum()
 
     def initialize(self,
@@ -100,14 +102,17 @@ class CategoricalHMMEmissions(HMMEmissions):
         return params, props
 
     def collect_suff_stats(self, params, posterior, emissions, inputs=None):
+        """Collect sufficient statistics for the emission distribution."""
         expected_states = posterior.smoothed_probs
         x = one_hot(emissions, self.num_classes)
         return dict(sum_x=jnp.einsum("tk,tdi->kdi", expected_states, x))
 
     def initialize_m_step_state(self, params, props):
+        """Initialize the m-step state."""
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
+        """Perform the m-step for the emission distribution."""
         if props.probs.trainable:
             emission_stats = pytree_sum(batch_stats, axis=0)
             probs = tfd.Dirichlet(self.emission_prior_concentration + emission_stats['sum_x']).mode()

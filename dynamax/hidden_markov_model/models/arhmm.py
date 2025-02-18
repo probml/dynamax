@@ -1,3 +1,6 @@
+"""
+Linear Autoregressive Hidden Markov Model (ARHMM) for dynamax.
+"""
 from typing import NamedTuple, Optional, Tuple, Union
 import jax.numpy as jnp
 import jax.random as jr
@@ -19,12 +22,15 @@ tfb = tfp.bijectors
 
 
 class ParamsLinearAutoregressiveHMM(NamedTuple):
+    """Model parameters for a Linear Autoregressive HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsLinearRegressionHMMEmissions
 
 
 class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
+    r"""Emissions for a Linear Autoregressive HMM."""
+
     def __init__(self,
                  num_states: int,
                  emission_dim: int,
@@ -42,6 +48,20 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
                    emission_covariances: Optional[Float[Array, "num_states emission_dim emission_dim"]]=None,
                    emissions: Optional[Float[Array, "num_timesteps emission_dim"]]=None
                    ) -> Tuple[ParamsLinearRegressionHMMEmissions, ParamsLinearRegressionHMMEmissions]:
+        r"""Initialize the model parameters and their corresponding properties.
+        
+        Args:
+            key: random number generator
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            emission_weights: manually specified emission weights. The weights are stored as matrices $W_k = [W_{k,1}, \ldots, W_{k,L}] \in \mathbb{R}^{N \times N \cdot L}$.
+            emission_biases: manually specified emission biases.
+            emission_covariances: manually specified emission covariances.
+            emissions: emissions for initializing the parameters with kmeans.
+
+        Returns:
+            Model parameters and their properties.
+        """
+
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
@@ -186,6 +206,7 @@ class LinearAutoregressiveHMM(HMM):
             prev_emissions = jnp.zeros((self.num_lags, self.emission_dim))
 
         def _step(carry, key):
+            """Sample the next state and emission."""
             prev_state, prev_emissions = carry
             key1, key2 = jr.split(key, 2)
             state = self.transition_distribution(params, prev_state).sample(seed=key2)

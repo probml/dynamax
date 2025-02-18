@@ -1,3 +1,6 @@
+"""
+Extended Kalman filtering and smoothing for nonlinear Gaussian state-space models.
+"""
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax
@@ -71,6 +74,7 @@ def _condition_on(m, P, h, H, R, u, y, num_iter):
          Sigma_cond (D_hid,D_hid): filtered covariance.
     """
     def _step(carry, _):
+        """Iteratively re-linearize around posterior mean and covariance."""
         prior_mean, prior_cov = carry
         H_x = H(prior_mean, u)
         S = R + H_x @ prior_cov @ H_x.T
@@ -117,6 +121,7 @@ def extended_kalman_filter(
     inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, t):
+        """Iteratively update the state estimate and log likelihood."""
         ll, pred_mean, pred_cov = carry
 
         # Get parameters and inputs for time index t
@@ -215,6 +220,7 @@ def extended_kalman_smoother(
     inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, args):
+        """One step of the extended Kalman smoother."""
         # Unpack the inputs
         smoothed_mean_next, smoothed_cov_next = carry
         t, filtered_mean, filtered_cov = args
@@ -289,6 +295,7 @@ def extended_kalman_posterior_sample(
     inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, args):
+        """One step of the extended Kalman sampler."""
         # Unpack the inputs
         next_state = carry
         key, filtered_mean, filtered_cov, t = args
@@ -340,6 +347,7 @@ def iterated_extended_kalman_smoother(
     """
 
     def _step(carry, _):
+        """Iteratively re-linearize around smoothed posterior from previous iteration."""
         # Relinearize around smoothed posterior from previous iteration
         smoothed_prior = carry
         smoothed_posterior = extended_kalman_smoother(params, emissions, smoothed_prior, inputs)

@@ -1,3 +1,6 @@
+"""
+This script demonstrates how to use the CategoricalRegressionHMM class.
+"""
 import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap

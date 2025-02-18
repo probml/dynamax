@@ -1,11 +1,16 @@
-# TensorFlow Probability logs a few annoying messages.
-# We suppress these by default.
+"""
+TensorFlow Probability logs a few annoying messages. We suppress these by default.
+"""
 import logging
 import warnings
 
-# Catch "check_types" warnings that are sent to the logger
+
 class CheckTypesFilter(logging.Filter):
+    """
+    Catch "check_types" warnings that are sent to the logger
+    """
     def filter(self, record):
+        """Filter out check_types warnings"""
         return "check_types" not in record.getMessage()
 
 

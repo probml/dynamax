@@ -1,3 +1,6 @@
+"""
+Linear regression hidden Markov model (HMM) with state-dependent weights.
+"""
 from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
 import jax.numpy as jnp
 import jax.random as jr
@@ -18,37 +21,38 @@ tfd = tfp.distributions
 tfb = tfp.bijectors
 
 class ParamsLinearRegressionHMMEmissions(NamedTuple):
+    """Parameters for the emissions of a linear regression HMM."""
     weights: Union[Float[Array, "state_dim emission_dim input_dim"], ParameterProperties]
     biases: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     covs: Union[Float[Array, "state_dim emission_dim emission_dim"], ParameterProperties]
 
 
 class ParamsLinearRegressionHMM(NamedTuple):
+    """Parameters for a linear regression HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsLinearRegressionHMMEmissions
 
 
 class LinearRegressionHMMEmissions(HMMEmissions):
+    r"""Emissions for a linear regression hidden Markov model (HMM).
+
+    Args:
+        num_states: number of discrete states $K$
+        input_dim: input dimension $M$
+        emission_dim: emission dimension $N$
+    """
     def __init__(self,
                  num_states: int,
                  input_dim: int,
                  emission_dim: int):
-        """_summary_
-
-        Args:
-            initial_probabilities (_type_): _description_
-            transition_matrix (_type_): _description_
-            emission_matrices (_type_): _description_
-            emission_biases (_type_): _description_
-            emission_covariance_matrices (_type_): _description_
-        """
         self.num_states = num_states
         self.input_dim = input_dim
         self.emission_dim = emission_dim
 
     @property
     def emission_shape(self) -> Tuple[int]:
+        """Return the shape of the emission distribution."""
         return (self.emission_dim,)
 
     def initialize(self,
@@ -59,6 +63,21 @@ class LinearRegressionHMMEmissions(HMMEmissions):
                    emission_covariances: Optional[Float[Array, "num_states emission_dim emission_dim"]]=None,
                    emissions: Optional[Float[Array, "num_timesteps emission_dim"]]=None
                    ) -> Tuple[ParamsLinearRegressionHMMEmissions, ParamsLinearRegressionHMMEmissions]:
+        """Initialize the emission parameters and their corresponding properties.
+        
+        You can either specify parameters manually via the keyword arguments, or you can have
+
+        Args:
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            emission_weights: manually specified emission weights.
+            emission_biases: manually specified emission biases.
+            emission_covariances: manually specified emission covariances.
+            emissions: emissions for initializing the parameters with kmeans.
+
+        Returns:
+            Model parameters and their properties.
+        """
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             from sklearn.cluster import KMeans
@@ -96,11 +115,16 @@ class LinearRegressionHMMEmissions(HMMEmissions):
             state: Union[int, Int[Array, ""]],
             inputs: Float[Array, " input_dim"]
     ):
+        """Return the emission distribution for a given state."""
         prediction = params.weights[state] @ inputs
         prediction +=  params.biases[state]
         return tfd.MultivariateNormalFullCovariance(prediction, params.covs[state])
 
     def log_prior(self, params: ParamsLinearRegressionHMMEmissions) -> float:
+        """Return the log-prior probability of the emission parameters.
+        
+        Currently, there is no prior so this function returns 0.
+        """
         return 0.0
 
     # Expectation-maximization (EM) code
@@ -111,6 +135,7 @@ class LinearRegressionHMMEmissions(HMMEmissions):
             emissions: Float[Array, "num_timesteps emission_dim"],
             inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None
     ) -> Dict[str, Float[Array, "..."]]:
+        """Collect sufficient statistics for the emission parameters."""
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, inputs)
@@ -121,6 +146,7 @@ class LinearRegressionHMMEmissions(HMMEmissions):
         return dict(sum_w=sum_w, sum_x=sum_x, sum_y=sum_y, sum_xxT=sum_xxT, sum_xyT=sum_xyT, sum_yyT=sum_yyT)
 
     def initialize_m_step_state(self, params, props) -> None:
+        """Initialize the state for the M-step of the EM algorithm."""
         return None
 
     def m_step(
@@ -130,7 +156,10 @@ class LinearRegressionHMMEmissions(HMMEmissions):
             batch_stats: Dict[str, Float[Array, "..."]],
             m_step_state: Any
     ) -> Tuple[ParamsLinearRegressionHMMEmissions, Any]:
+        """Perform the M-step of the EM algorithm."""
+        
         def _single_m_step(stats):
+            """Perform the M-step for a single state."""
             sum_w = stats['sum_w']
             sum_x = stats['sum_x']
             sum_y = stats['sum_y']
@@ -201,6 +230,7 @@ class LinearRegressionHMM(HMM):
 
     @property
     def inputs_shape(self):
+        """Return the shape of the input."""
         return (self.input_dim,)
 
     def initialize(self,

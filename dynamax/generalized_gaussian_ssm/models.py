@@ -1,4 +1,6 @@
-
+"""
+Generalized Gaussian State Space Models.
+"""
 from jaxtyping import Array, Float
 import tensorflow_probability.substrates.jax as tfp
 from typing import NamedTuple, Optional, Union, Callable
@@ -88,25 +90,27 @@ class GeneralizedGaussianSSM(SSM):
 
     @property
     def emission_shape(self):
+        """Shape of the emissions"""
         return (self.emission_dim,)
 
     @property
     def covariates_shape(self):
+        """Shape of the covariates"""
         return (self.input_dim,) if self.input_dim > 0 else None
 
-    def initial_distribution(
-        self,
-        params: ParamsGGSSM,
-        inputs: Optional[Float[Array, " input_dim"]]=None
-    ) -> tfd.Distribution:
+    def initial_distribution(self,
+                             params: ParamsGGSSM,
+                             inputs: Optional[Float[Array, " input_dim"]]=None) \
+                             -> tfd.Distribution:
+        """Returns the initial distribution of the state."""
         return MVN(params.initial_mean, params.initial_covariance)
 
-    def transition_distribution(
-        self,
-        params: ParamsGGSSM,
-        state: Float[Array, " state_dim"],
-        inputs: Optional[Float[Array, " input_dim"]]=None
-    ) -> tfd.Distribution:
+    def transition_distribution(self,
+                                params: ParamsGGSSM,
+                                state: Float[Array, " state_dim"],
+                                inputs: Optional[Float[Array, " input_dim"]]=None
+                                ) -> tfd.Distribution:
+        """Returns the transition distribution of the state."""
         f = params.dynamics_function
         if inputs is None:
             mean = f(state)
@@ -114,12 +118,12 @@ class GeneralizedGaussianSSM(SSM):
             mean = f(state, inputs)
         return MVN(mean, params.dynamics_covariance)
 
-    def emission_distribution(
-        self,
-        params: ParamsGGSSM,
-        state: Float[Array, " state_dim"],
-        inputs: Optional[Float[Array, " input_dim"]]=None
-    ) -> tfd.Distribution:
+    def emission_distribution(self,
+                              params: ParamsGGSSM,
+                              state: Float[Array, " state_dim"],
+                              inputs: Optional[Float[Array, " input_dim"]]=None) \
+                                -> tfd.Distribution:
+        """Returns the emission distribution of the state."""
         h = params.emission_mean_function
         R = params.emission_cov_function
         if inputs is None:
