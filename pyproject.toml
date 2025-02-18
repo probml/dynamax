@@ -95,9 +95,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]  
-include = ["dynamax"]
-exclude = ["logo"]  
-namespaces = false  
+exclude = ["logo", "docs"] 
 
 
 [tool.versioneer]
