@@ -1,9 +1,12 @@
+"""
+Unscented Kalman Filter and Smoother for Nonlinear Gaussian State Space Models.
+"""
 import jax.numpy as jnp
 from jax import lax
 from jax import vmap
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from jaxtyping import Array, Float
-from typing import NamedTuple, Optional, List
+from typing import Callable, NamedTuple, Optional, List, Tuple
 
 from dynamax.utils.utils import psd_solve
 from dynamax.nonlinear_gaussian_ssm.models import  ParamsNLGSSM
@@ -27,7 +30,11 @@ _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
 _compute_lambda = lambda x, y, z: x**2 * (y + z) - z
 
 
-def _compute_sigmas(m, P, n, lamb):
+def _compute_sigmas(m: Float[Array, "state_dim"], 
+                    P: Float[Array, "state_dim state_dim"], 
+                    n: int, 
+                    lamb: float) \
+                    -> Float[Array, "2*state_dim+1"]:
     """Compute (2n+1) sigma points used for inputs to  unscented transform.
 
     Args:
@@ -45,7 +52,12 @@ def _compute_sigmas(m, P, n, lamb):
     return jnp.concatenate((jnp.array([m]), sigma_plus, sigma_minus))
 
 
-def _compute_weights(n, alpha, beta, lamb):
+def _compute_weights(n: int, 
+                     alpha: float, 
+                     beta: float, 
+                     lamb: float) \
+                     -> Tuple[Float[Array, "2*state_dim+1"], 
+                              Float[Array, "2*state_dim+1"]]:
     """Compute weights used to compute predicted mean and covariance (Sarkka 5.77).
 
     Args:
@@ -64,7 +76,17 @@ def _compute_weights(n, alpha, beta, lamb):
     return w_mean, w_cov
 
 
-def _predict(m, P, f, Q, lamb, w_mean, w_cov, u):
+def _predict(m: Float[Array, "state_dim"], 
+             P: Float[Array, "state_dim state_dim"],
+             f: Callable, 
+             Q: Float[Array, "state_dim state_dim"],
+             lamb: float, 
+             w_mean: Float[Array, "2*state_dim+1"],
+             w_cov: Float[Array, "2*state_dim+1"],
+             u: Float[Array, "input_dim"]) \
+             -> Tuple[Float[Array, "state_dim"],
+                      Float[Array, "state_dim state_dim"],
+                      Float[Array, "state_dim state_dim"]]:
     """Predict next mean and covariance using additive UKF
 
     Args:
@@ -95,7 +117,18 @@ def _predict(m, P, f, Q, lamb, w_mean, w_cov, u):
     return m_pred, P_pred, P_cross
 
 
-def _condition_on(m, P, h, R, lamb, w_mean, w_cov, u, y):
+def _condition_on(m: Float[Array, "state_dim"],
+                  P: Float[Array, "state_dim state_dim"],
+                  h: Callable, 
+                  R: Float[Array, "emission_dim emission_dim"],
+                  lamb: float, 
+                  w_mean: Float[Array, "2*state_dim+1"],
+                  w_cov: Float[Array, "2*state_dim+1"],
+                  u: Float[Array, "input_dim"],
+                  y: Float[Array, "emission_dim"]) \
+                  -> Tuple[float, 
+                           Float[Array, "state_dim"],
+                           Float[Array, "state_dim state_dim"]]:
     """Condition a Gaussian potential on a new observation
 
     Args:
@@ -136,13 +169,12 @@ def _condition_on(m, P, h, R, lamb, w_mean, w_cov, u, y):
     return ll, m_cond, P_cond
 
 
-def unscented_kalman_filter(
-    params: ParamsNLGSSM,
-    emissions: Float[Array, "ntime emission_dim"],
-    hyperparams: UKFHyperParams,
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None,
-    output_fields: Optional[List[str]]=["filtered_means", "filtered_covariances", "predicted_means", "predicted_covariances"],
-) -> PosteriorGSSMFiltered:
+def unscented_kalman_filter(params: ParamsNLGSSM,
+                            emissions: Float[Array, "ntime emission_dim"],
+                            hyperparams: UKFHyperParams,
+                            inputs: Optional[Float[Array, "ntime input_dim"]]=None,
+                            output_fields: Optional[List[str]]=["filtered_means", "filtered_covariances", "predicted_means", "predicted_covariances"]) \
+                            -> PosteriorGSSMFiltered:
     """Run a unscented Kalman filter to produce the marginal likelihood and
     filtered state estimates.
 
@@ -170,6 +202,7 @@ def unscented_kalman_filter(
     inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, t):
+        """One step of the UKF"""
         ll, pred_mean, pred_cov = carry
 
         # Get parameters and inputs for time t
@@ -212,12 +245,11 @@ def unscented_kalman_filter(
     return posterior_filtered
 
 
-def unscented_kalman_smoother(
-    params: ParamsNLGSSM,
-    emissions: Float[Array, "ntime emission_dim"],
-    hyperparams: UKFHyperParams,
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGSSMSmoothed:
+def unscented_kalman_smoother(params: ParamsNLGSSM,
+                              emissions: Float[Array, "ntime emission_dim"],
+                              hyperparams: UKFHyperParams,
+                              inputs: Optional[Float[Array, "ntime input_dim"]]=None) \
+                              -> PosteriorGSSMSmoothed:
     """Run a unscented Kalman (RTS) smoother.
 
     Args:
@@ -250,6 +282,7 @@ def unscented_kalman_smoother(
     inputs = _process_input(inputs, num_timesteps)
 
     def _step(carry, args):
+        """One step of the UKS"""
         # Unpack the inputs
         smoothed_mean_next, smoothed_cov_next = carry
         t, filtered_mean, filtered_cov = args

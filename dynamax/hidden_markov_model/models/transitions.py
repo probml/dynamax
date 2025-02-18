@@ -1,6 +1,5 @@
-from typing import Any, cast, NamedTuple, Optional, Tuple, Union
+"""Module for HMM transition models."""
 import jax.numpy as jnp
-from jaxtyping import Float, Array
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
@@ -9,8 +8,12 @@ from dynamax.hidden_markov_model.inference import HMMPosterior
 from dynamax.parameters import ParameterProperties
 from dynamax.types import IntScalar, Scalar
 
+from jaxtyping import Float, Array
+from typing import Any, cast, NamedTuple, Optional, Tuple, Union
+
 
 class ParamsStandardHMMTransitions(NamedTuple):
+    """Named tuple for the parameters of the StandardHMMTransitions model."""
     transition_matrix: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
 
 
@@ -27,8 +30,6 @@ class StandardHMMTransitions(HMMTransitions):
     * $e_k$ denotes the one-hot vector with a 1 in the $k$-th position,
     * $\beta \in \mathbb{R}_+$ is the concentration, and
     * $\kappa \in \mathbb{R}_+$ is the `stickiness`.
-
-
 
     """
     def __init__(
@@ -47,6 +48,7 @@ class StandardHMMTransitions(HMMTransitions):
                 stickiness * jnp.eye(num_states)
 
     def distribution(self, params: ParamsStandardHMMTransitions, state: IntScalar, inputs=None):
+        """Return the distribution over the next state given the current state."""
         return tfd.Categorical(probs=params.transition_matrix[state])
 
     def initialize(
@@ -78,11 +80,13 @@ class StandardHMMTransitions(HMMTransitions):
         return params, props
 
     def log_prior(self, params: ParamsStandardHMMTransitions) -> Scalar:
+        """Compute the log prior probability of the parameters."""
         return tfd.Dirichlet(self.concentration).log_prob(params.transition_matrix).sum()
 
     def _compute_transition_matrices(
             self, params: ParamsStandardHMMTransitions, inputs=None
     ) -> Float[Array, "num_states num_states"]:
+        """Compute the transition matrices."""
         return params.transition_matrix
 
     def collect_suff_stats(
@@ -92,9 +96,11 @@ class StandardHMMTransitions(HMMTransitions):
             inputs=None
     ) -> Union[Float[Array, "num_states num_states"],
                Float[Array, "num_timesteps_minus_1 num_states num_states"]]:
+        """Collect the sufficient statistics for the model."""
         return posterior.trans_probs
 
     def initialize_m_step_state(self, params, props):
+        """Initialize the state for the M-step."""
         return None
 
     def m_step(
@@ -103,7 +109,8 @@ class StandardHMMTransitions(HMMTransitions):
             props: ParamsStandardHMMTransitions,
             batch_stats: Float[Array, "batch num_states num_states"],
             m_step_state: Any
-    ) -> Tuple[ParamsStandardHMMTransitions, Any]:
+        ) -> Tuple[ParamsStandardHMMTransitions, Any]:
+        """Perform the M-step of the EM algorithm."""
         if props.transition_matrix.trainable:
             if self.num_states == 1:
                 transition_matrix = jnp.array([[1.0]])

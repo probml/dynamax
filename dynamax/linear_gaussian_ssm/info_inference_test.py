@@ -1,4 +1,9 @@
+"""
+Tests for information form inference in linear Gaussian SSMs.
+"""
 import jax.numpy as jnp
+
+from functools import partial
 from jax import random as jr
 
 from dynamax.linear_gaussian_ssm.inference import  lgssm_smoother, lgssm_filter
@@ -7,14 +12,12 @@ from dynamax.linear_gaussian_ssm.info_inference import lgssm_info_filter, lgssm_
 from dynamax.linear_gaussian_ssm.info_inference import ParamsLGSSMInfo
 from dynamax.utils.utils import has_tpu
 
+# Use lower tolerance for TPU tests.
 if has_tpu():
-    def allclose(x, y):
-        print(jnp.max(x-y))
-        #return jnp.allclose(x, y, atol=1e-1)
-        return True # hack since otherwise marginal loglik  tests fail.
+    allclose = partial(jnp.allclose, atol=1e-1)
 else:
-    def allclose(x,y):
-        return jnp.allclose(x, y, atol=1e-1)
+    allclose = partial(jnp.allclose, atol=1e-4)
+    
 
 def build_lgssm_moment_and_info_form():
     """Construct example LinearGaussianSSM and equivalent LGSSMInfoParams
@@ -94,18 +97,23 @@ class TestInfoFilteringAndSmoothing:
     )
 
     def test_filtered_means(self):
+        """Test filtered means."""
         assert allclose(self.info_filtered_means, self.lgssm_moment_posterior.filtered_means)
 
     def test_filtered_covs(self):
+        """Test filtered covariances."""
         assert allclose(self.info_filtered_covs, self.lgssm_moment_posterior.filtered_covariances)
 
     def test_smoothed_means(self):
+        """Test smoothed means."""
         assert allclose(self.info_smoothed_means, self.lgssm_moment_posterior.smoothed_means)
 
     def test_smoothed_covs(self):
+        """Test smoothed covariances."""
         assert allclose(self.info_smoothed_covs, self.lgssm_moment_posterior.smoothed_covariances)
 
     def test_marginal_loglik(self):
+        """Test marginal log likelihood."""
         assert allclose(self.lgssm_info_posterior.marginal_loglik, self.lgssm_moment_posterior.marginal_loglik)
 
 
@@ -166,7 +174,9 @@ class TestInfoKFLinReg:
     )
 
     def test_filtered_means(self):
+        """Test filtered means."""
         assert allclose(self.info_filtered_means, self.lgssm_moment_posterior.filtered_means)
 
     def test_filtered_covs(self):
+        """Test filtered covariances."""
         assert allclose(self.info_filtered_covs, self.lgssm_moment_posterior.filtered_covariances)

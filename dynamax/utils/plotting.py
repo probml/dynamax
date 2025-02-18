@@ -1,3 +1,6 @@
+"""
+Utilities for plotting.
+"""
 import jax.numpy as jnp
 from matplotlib.patches import Ellipse, transforms
 from matplotlib.colors import LinearSegmentedColormap

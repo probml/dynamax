@@ -10,13 +10,17 @@ from jax import vmap
 from jax import lax
 from jax import jacfwd
 
-# First-order additive EKF (Sarkka Algorithm 5.4)
+
 def ekf(m_0, P_0, f, Q, h, R, Y):
+    """
+    First-order additive EKF (Sarkka Algorithm 5.4)
+    """
     num_timesteps = len(Y)
     # Compute Jacobians
     F, H = jacfwd(f), jacfwd(h)
 
     def _step(carry, t):
+        """One step of EKF"""
         m_k, P_k = carry
 
         # Update
@@ -37,8 +41,10 @@ def ekf(m_0, P_0, f, Q, h, R, Y):
     return ms, Ps
 
 
-# First-order additive EK smoother
 def eks(m_0, P_0, f, Q, h, R, Y):
+    """
+    First-order additive EK smoother
+    """
     num_timesteps = len(Y)
 
     # Run ekf
@@ -48,6 +54,7 @@ def eks(m_0, P_0, f, Q, h, R, Y):
     F, H = jacfwd(f), jacfwd(h)
 
     def _step(carry, t):
+        """One step of EKS"""
         m_k, P_k = carry
 
         # Prediction step
@@ -69,11 +76,14 @@ def eks(m_0, P_0, f, Q, h, R, Y):
     return m_sm, P_sm
 
 
-# Additive SLF with closed-form expectations (Sarkka Algorithm 5.10)
 def slf_additive(m_0, P_0, f, Q, h, R, Ef, Efdx, Eh, Ehdx, Y):
+    """
+    Additive SLF with closed-form expectations (Sarkka Algorithm 5.10)
+    """
     num_timesteps = len(Y)
 
     def _step(carry, t):
+        """One step of SLF"""
         m_k, P_k = carry
 
         # Update step
@@ -94,13 +104,16 @@ def slf_additive(m_0, P_0, f, Q, h, R, Ef, Efdx, Eh, Ehdx, Y):
     return ms, Ps
 
 
-# Additive UKF (Sarkka Algorithm 5.14)
 def ukf(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
+    """
+    Additive UKF (Sarkka Algorithm 5.14)
+    """
     num_timesteps, n = len(Y), P_0.shape[0]
     lamb = alpha**2 * (n + kappa) - n
 
     # Compute weights for mean and covariance estimates
     def compute_weights(n, alpha, beta, lamb):
+        """Compute weights for UKF"""
         factor = 1 / (2 * (n + lamb))
         w_mean = jnp.concatenate((jnp.array([lamb / (n + lamb)]), jnp.ones(2 * n) * factor))
         w_cov = jnp.concatenate((jnp.array([lamb / (n + lamb) + (1 - alpha**2 + beta)]), jnp.ones(2 * n) * factor))
@@ -109,6 +122,7 @@ def ukf(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
     w_mean, w_cov = compute_weights(n, alpha, beta, lamb)
 
     def _step(carry, t):
+        """One step of UKF"""
         m_k, P_k = carry
 
         # Update step:
@@ -140,6 +154,7 @@ def ukf(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
 
     # Find 2n+1 sigma points
     def compute_sigmas(m, P, n, lamb):
+        """Compute sigma points"""
         disc = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(P)
         sigma_plus = jnp.array([m + disc[:, i] for i in range(n)])
         sigma_minus = jnp.array([m - disc[:, i] for i in range(n)])
@@ -150,13 +165,16 @@ def ukf(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
     return ms, Ps
 
 
-# First-order additive EK smoother
 def uks(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
+    """
+    First-order additive UKS
+    """
     num_timesteps, n = len(Y), P_0.shape[0]
     lamb = alpha**2 * (n + kappa) - n
 
     # Compute weights for mean and covariance estimates
     def compute_weights(n, alpha, beta, lamb):
+        """Compute weights for UKS"""
         factor = 1 / (2 * (n + lamb))
         w_mean = jnp.concatenate((jnp.array([lamb / (n + lamb)]), jnp.ones(2 * n) * factor))
         w_cov = jnp.concatenate((jnp.array([lamb / (n + lamb) + (1 - alpha**2 + beta)]), jnp.ones(2 * n) * factor))
@@ -168,6 +186,7 @@ def uks(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
     m_post, P_post = ukf(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y)
 
     def _step(carry, t):
+        """One step of UKS"""
         m_k, P_k = carry
         m_p, P_p = m_post[t], P_post[t]
 
@@ -189,6 +208,7 @@ def uks(m_0, P_0, f, Q, h, R, alpha, beta, kappa, Y):
 
     # Find 2n+1 sigma points
     def compute_sigmas(m, P, n, lamb):
+        """Compute sigma points"""
         disc = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(P)
         sigma_plus = jnp.array([m + disc[:, i] for i in range(n)])
         sigma_minus = jnp.array([m - disc[:, i] for i in range(n)])

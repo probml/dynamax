@@ -1,9 +1,14 @@
+"""
+Bijectors for converting between positive semi-definite matrices and real vectors.
+"""
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
 # From https://www.tensorflow.org/probability/examples/
 # TensorFlow_Probability_Case_Study_Covariance_Estimation
 class PSDToRealBijector(tfb.Chain):
-
+    """
+    Bijector that maps a positive definite matrix to a real vector.
+    """
     def __init__(self,
                  validate_args=False,
                  validate_event_size=False,
@@ -19,7 +24,9 @@ class PSDToRealBijector(tfb.Chain):
 
 
 class RealToPSDBijector(tfb.Chain):
-
+    """
+    Bijector that maps a real vector to a positive definite matrix.
+    """
     def __init__(self,
                  validate_args=False,
                  validate_event_size=False,

@@ -1,14 +1,23 @@
+"""
+Rao-Blackwellized Particle Filter for inference in a 
+Switching Linear Dynamical Systems (SLDS).
+"""
 import jax.numpy as jnp
 import jax.random as jr
-from jax import lax, vmap, jit
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+
 from functools import partial
+from jax import lax, vmap, jit
 from jaxtyping import Array, Float, Int
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from typing import NamedTuple, Optional
+
 from dynamax.utils.utils import psd_solve
 from dynamax.types import PRNGKeyT
 
 class DiscreteParamsSLDS(NamedTuple):
+    """
+    Parameters of a discrete state dynamics for an SLDS.
+    """
     initial_distribution: Float[Array, " num_states"]
     transition_matrix : Float[Array, "num_states num_states"]
     proposal_transition_matrix : Float[Array, "num_states num_states"]
@@ -93,7 +102,8 @@ class RBPFiltered(NamedTuple):
     covariances: Optional[Float[Array, "num_particles ntime state_dim state_dim"]] = None
    
 
-def resampling(weights, states, means, covariances, key):                                                                  
+def resampling(weights, states, means, covariances, key):
+    """Resample particles using the multinomial resampling algorithm."""
     keys = jr.split(key, 2)
     num_particles = weights.shape[0]
     resampled_idx = jr.choice(keys[0], jnp.arange(weights.shape[0]), shape=(num_particles,), p=weights)
@@ -168,13 +178,13 @@ def rbpfilter(
     inputs: Optional[Float[Array, "ntime input_dim"]] = None,
     ess_threshold: float = 0.5
     ):
-    '''
+    """
     Implementation of the Rao-Blackwellized particle filter, for approximating the 
     filtering distribution of a switching linear dynamical system. The filter at each iteration
     samples discrete states from a discrete proposal, and then runs a KF step conditional on the sampled
     value of the chain. At the end of the update it computes an effective sample size and decide whether
     resampling is necessary.
-    '''
+    """
 
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 1)) if inputs is None else inputs
@@ -256,9 +266,9 @@ def rbpfilter_optimal(
     key: PRNGKeyT = jr.PRNGKey(0),
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
     ):
-    '''
+    """
     Implementation of the Rao-Blackwellized particle filter with optimal resampling
-    '''
+    """
 
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 1)) if inputs is None else inputs

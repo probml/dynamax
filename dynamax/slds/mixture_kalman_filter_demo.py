@@ -1,15 +1,15 @@
-# Mixture Kalman Filter library. Also known as the
-# Rao-Blackwell Particle Filter.
+"""
+Demo of a fitting an SLDS with the Rao-Blackwell Particle Filter.
 
-# Author: Gerardo Durán-Martín (@gerdm)
+Author: Gerardo Durán-Martín (@gerdm)
+"""
+import jax
+import jax.numpy as jnp
 
 from dataclasses import dataclass
-import jax
 from jax import random
-import jax.numpy as jnp
 from jax.scipy.special import logit
 from jaxtyping import Array, Float
-
 
 @dataclass
 class RBPFParamsDiscrete:
@@ -60,6 +60,9 @@ def draw_state(val, key, params):
 
 
 def kf_update(mu_t, Sigma_t, k, xt, params):
+    """
+    Kalman filter update step.
+    """
     I = jnp.eye(len(mu_t))
     mu_t_cond = params.A @ mu_t + params.B[k]
     Sigma_t_cond = params.A @ Sigma_t @ params.A.T + params.Q
@@ -81,6 +84,9 @@ def kf_update(mu_t, Sigma_t, k, xt, params):
 
 
 def rbpf_step(key, weight_t, st, mu_t, Sigma_t, xt, params):
+    """
+    Rao-Blackwell Particle Filter step.
+    """
     log_p_next = logit(params.transition_matrix[st])
     k = random.categorical(key, log_p_next)
     mu_t, Sigma_t, Ltk = kf_update(mu_t, Sigma_t, k, xt, params)
@@ -93,6 +99,9 @@ kf_update_vmap = jax.vmap(kf_update, in_axes=(None, None, 0, None, None), out_ax
 
 
 def rbpf_step_optimal(key, weight_t, st, mu_t, Sigma_t, xt, params):
+    """
+    Rao-Blackwell Particle Filter step with optimal proposal.
+    """
     # do Kalman step for all possible discrete latent states    
     k = jnp.arange(len(params.transition_matrix))
     mu_tk, Sigma_tk, Ltk = kf_update_vmap(mu_t, Sigma_t, k, xt, params)

@@ -1,10 +1,14 @@
+"""
+Inference algorithms for linear Gaussian state space models in information form.
+"""
 import jax.numpy as jnp
+
+from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM
+from dynamax.utils.utils import psd_solve
 from jax import lax, vmap, value_and_grad
 from jax.scipy.linalg import solve_triangular
 from jaxtyping import Array, Float
-from typing import NamedTuple, Optional
-
-from dynamax.utils.utils import psd_solve
+from typing import NamedTuple, Optional, Tuple
 
 
 class ParamsLGSSMInfo(NamedTuple):
@@ -185,6 +189,7 @@ def lgssm_info_filter(
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
     def _filter_step(carry, t):
+        """Run a single step of the Kalman filter."""
         ll, pred_eta, pred_prec = carry
 
         # Shorthand: get parameters and inputs for time index t
@@ -245,6 +250,7 @@ def lgssm_info_smoother(
 
     # Run the smoother backward in time
     def _smooth_step(carry, args):
+        """Run a single step of the Kalman smoother."""
         # Unpack the inputs
         smoothed_eta_next, smoothed_prec_next = carry
         t, filtered_eta, filtered_prec = args
@@ -291,7 +297,11 @@ def lgssm_info_smoother(
     )
 
 
-def block_tridiag_mvn_log_normalizer(precision_diag_blocks, precision_lower_diag_blocks, linear_potential):
+def block_tridiag_mvn_log_normalizer(precision_diag_blocks: Float[Array, "num_timesteps state_dim state_dim"], 
+                                     precision_lower_diag_blocks: Float[Array, "num_timesteps-1 state_dim state_dim"], 
+                                     linear_potential: Float[Array, "num_timesteps state_dim"]) \
+                                     -> Tuple[Float, Tuple[Float[Array, "num_timesteps state_dim state_dim"], 
+                                                           Float[Array, "num_timesteps state_dim"]]]:
     r"""
     Compute the log normalizing constant for a multivariate normal distribution
     with natural parameters :math:`J` and :math:`h` with density,
@@ -341,6 +351,7 @@ def block_tridiag_mvn_log_normalizer(precision_diag_blocks, precision_lower_diag
     J_lower_diag_pad = jnp.concatenate((J_lower_diag, jnp.zeros((1, dim, dim))), axis=0)
 
     def marginalize(carry, t):
+        """Run a single step of the Kalman filter."""
         Jp, hp, lp = carry
 
         # Condition
@@ -374,7 +385,38 @@ def block_tridiag_mvn_log_normalizer(precision_diag_blocks, precision_lower_diag
     return log_Z, (filtered_Js, filtered_hs)
 
 
-def block_tridiag_mvn_expectations(precision_diag_blocks, precision_lower_diag_blocks, linear_potential):
+def block_tridiag_mvn_expectations(precision_diag_blocks: Float[Array, "num_timesteps state_dim state_dim"], 
+                                   precision_lower_diag_blocks: Float[Array, "num_timesteps-1 state_dim state_dim"], 
+                                   linear_potential: Float[Array, "num_timesteps state_dim"]) \
+                                   -> Tuple[Float, 
+                                            Float[Array, "num_timesteps state_dim"],
+                                            Float[Array, "num_timesteps state_dim state_dim"],
+                                            Float[Array, "num_timesteps-1 state_dim state_dim"]]:
+    """
+    Compute the posterior expectations of a multivariate normal distribution
+    with block tridiagonal precision matrix in O(T) time using the
+    information form Kalman filter.
+    
+    Note: this implementation uses automatic differentiation of the log normalizer
+    to compute the expected sufficient statistics. 
+
+    Args:
+
+    precision_diag_blocks:          Shape (T, D, D) array of the diagonal blocks
+                                    of a shape (TD, TD) precision matrix.
+    precision_lower_diag_blocks:    Shape (T-1, D, D) array of the lower diagonal
+                                    blocks of a shape (TD, TD) precision matrix.
+    linear_potential:               Shape (T, D) array of linear potentials of a
+                                    TD dimensional multivariate normal distribution
+
+    Returns:
+    
+    log_normalizer:                 The scalar log normalizing constant.
+    Ex:                             The expected value of x, with shape (T, D).
+    ExxT:                           The expected value of x x^T, with shape (T, D, D).
+    ExxnT:                          The expected value of x_{t-1} x_t^T, with shape (T-1, D, D).
+
+    """
     # Run message passing code to get the log normalizer, the filtering potentials,
     # and the expected values of x. Technically, the natural parameters are -1/2 J
     # so we need to do a little correction of the gradients to get the expectations.
@@ -388,7 +430,26 @@ def block_tridiag_mvn_expectations(precision_diag_blocks, precision_lower_diag_b
     return log_normalizer, Ex, ExxT, ExxnT
 
 
-def lds_to_block_tridiag(lds, data, inputs):
+def lds_to_block_tridiag(lds: ParamsLGSSM, 
+                         data: Float[Array, "num_timesteps emission_dim"], 
+                         inputs: Float[Array, "num_timesteps input_dim"]) \
+                         -> Tuple[Float[Array, "num_timesteps state_dim state_dim"], 
+                                  Float[Array, "num_timesteps-1 state_dim state_dim"], 
+                                  Float[Array, "num_timesteps state_dim"]]: 
+    """
+    Convert a linear dynamical system to block tridiagonal form for the
+    information form Kalman filter.
+
+    Args:
+        lds: ParamsLGSSM instance
+        data: (T, D) array of observations
+        inputs: (T, D_in) array of inputs
+
+    Returns:
+        J_diag: (T, D, D) array of diagonal blocks of precision matrix
+        J_lower_diag: (T-1, D, D) array of lower diagonal blocks of precision matrix
+        h: (T, D) array of linear potentials
+    """
     # Shorthand names for parameters
     m0 = lds.initial_mean
     Q0 = lds.initial_covariance

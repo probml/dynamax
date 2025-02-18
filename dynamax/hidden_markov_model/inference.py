@@ -1,3 +1,6 @@
+"""
+This module contains inference algorithms for Hidden Markov Models (HMMs).
+"""
 from functools import partial
 from typing import Callable, NamedTuple, Optional, Tuple, Union
 import jax.numpy as jnp
@@ -15,6 +18,9 @@ def get_trans_mat(
         transition_fn: Optional[Callable[[IntScalar], Float[Array, "num_states num_states"]]],
         t: IntScalar
 ) -> Float[Array, "num_states num_states"]:
+    """
+    Helper function to get the transition matrix at time `t`.
+    """
     if transition_fn is not None:
         return transition_fn(t)
     elif transition_matrix is not None:
@@ -95,7 +101,12 @@ def _condition_on(probs, ll):
     return new_probs, log_norm
 
 
-def _predict(probs, A):
+def _predict(probs : Float[Array, " num states"], 
+             A: Float[Array , "num states num states"]) \
+                -> Float[Array, "num states"]:
+    r"""Predict the next state given the current state probabilities and 
+    the transition matrix.
+    """
     return A.T @ probs
 
 
@@ -127,6 +138,7 @@ def hmm_filter(
     num_timesteps, num_states = log_likelihoods.shape
 
     def _step(carry, t):
+        """Filtering step."""
         log_normalizer, predicted_probs = carry
 
         A = get_trans_mat(transition_matrix, transition_fn, t)
@@ -174,6 +186,7 @@ def hmm_backward_filter(
     num_timesteps, num_states = log_likelihoods.shape
 
     def _step(carry, t):
+        """Backward filtering step."""
         log_normalizer, backward_pred_probs = carry
 
         A = get_trans_mat(transition_matrix, transition_fn, t)
@@ -285,6 +298,7 @@ def hmm_smoother(
 
     # Run the smoother backward in time
     def _step(carry, args):
+        """Smoother step."""
         # Unpack the inputs
         smoothed_probs_next = carry
         t, filtered_probs, predicted_probs_next = args
@@ -361,6 +375,7 @@ def hmm_fixed_lag_smoother(
     num_timesteps, num_states = log_likelihoods.shape
 
     def _step(carry, t):
+        """Fixed-lag smoother step."""
         # Unpack the inputs
         log_normalizers, filtered_probs, predicted_probs, bmatrices = carry
 
@@ -384,20 +399,21 @@ def hmm_fixed_lag_smoother(
 
         # Smooth inside the window in parallel
         def update_bmatrix(bmatrix):
+            """Perform one backward predict and update step"""
             return (bmatrix @ A_bwd) * jnp.exp(ll)
 
         bmatrices = vmap(update_bmatrix)(bmatrices)
         bmatrices = jnp.concatenate((bmatrices, jnp.eye(num_states)[None, :]))
 
-        # Compute beta values by row-summing bmatrices
         def compute_beta(bmatrix):
+            """Compute the beta values for a given bmatrix"""
             beta = bmatrix.sum(axis=1)
             return jnp.where(beta.sum(), beta / beta.sum(), beta)
 
         betas = vmap(compute_beta)(bmatrices)
 
-        # Compute posterior values
         def compute_posterior(filtered_probs, beta):
+            """Compute the smoothed posterior"""
             smoothed_probs = filtered_probs * beta
             return jnp.where(smoothed_probs.sum(), smoothed_probs / smoothed_probs.sum(), smoothed_probs)
 
@@ -465,6 +481,7 @@ def hmm_posterior_mode(
 
     # Run the backward pass
     def _backward_pass(best_next_score, t):
+        """Viterbi backward step."""
         A = get_trans_mat(transition_matrix, transition_fn, t)
 
         scores = jnp.log(A) + best_next_score + log_likelihoods[t + 1]
@@ -479,6 +496,7 @@ def hmm_posterior_mode(
 
     # Run the forward pass
     def _forward_pass(state, best_next_state):
+        """Viterbi forward step."""
         next_state = best_next_state[state]
         return next_state, next_state
 
@@ -518,6 +536,7 @@ def hmm_posterior_sample(
 
     # Run the sampler backward in time
     def _step(carry, args):
+        """Backward sampler step."""
         next_state = carry
         t, subkey, filtered_probs = args
 
@@ -555,6 +574,7 @@ def _compute_sum_transition_probs(
     """
 
     def _step(carry, args: Tuple[Array, Array, Array, Int[Array, ""]]):
+        """Compute the sum of transition probabilities."""
         filtered_probs, smoothed_probs_next, predicted_probs_next, t = args
 
         # Get parameters for time t
@@ -602,6 +622,7 @@ def _compute_all_transition_probs(
     relative_probs_next = smoothed_probs_next / predicted_probs_next
 
     def _compute_probs(t):
+        """Compute the transition probabilities at time t."""
         A = get_trans_mat(transition_matrix, transition_fn, t)
         return jnp.einsum('i,ij,j->ij', filtered_probs[t], A, relative_probs_next[t])
 

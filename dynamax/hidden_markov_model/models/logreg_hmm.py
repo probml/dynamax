@@ -1,3 +1,6 @@
+"""
+Logistic Regression Hidden Markov Model
+"""
 from typing import NamedTuple, Optional, Tuple, Union
 import jax.numpy as jnp
 import jax.random as jr
@@ -14,11 +17,21 @@ from dynamax.types import IntScalar, Scalar
 
 
 class ParamsLogisticRegressionHMMEmissions(NamedTuple):
+    """Parameters for the logistic regression emissions in an HMM."""
     weights: Union[Float[Array, "state_dim input_dim"], ParameterProperties]
     biases: Union[Float[Array, " state_dim"], ParameterProperties]
 
 
 class LogisticRegressionHMMEmissions(HMMEmissions):
+    r"""Logistic regression emissions for an HMM.
+    
+    Args:
+        num_states: number of discrete states $K$
+        input_dim: input dimension $M$
+        emission_matrices_scale: $\varsigma$
+        m_step_optimizer: ``optax`` optimizer, like Adam.
+        m_step_num_iters: number of optimizer steps per M-step.
+    """
     def __init__(self,
                  num_states: int,
                  input_dim: int,
@@ -32,10 +45,12 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple:
+        """Shape of the emission distribution."""
         return ()
 
     @property
     def inputs_shape(self) -> Tuple[int]:
+        """Shape of the inputs to the emission distribution."""
         return (self.input_dim,)
 
     def initialize(self,
@@ -46,7 +61,22 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
                    emissions: Optional[Float[Array, " num_timesteps"]] = None,
                    inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None
                    ) -> Tuple[ParamsLogisticRegressionHMMEmissions, ParamsLogisticRegressionHMMEmissions]:
+        """Initialize the model parameters and their corresponding properties.
 
+        You can either specify parameters manually via the keyword arguments, or you can have
+        them set automatically. If any parameters are not specified, you must supply a PRNGKey.
+
+        Args:
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            emission_weights: manually specified emission weights.
+            emission_biases: manually specified emission biases.
+            emissions: emissions for initializing the parameters with kmeans.
+            inputs: inputs for initializing the parameters with kmeans.
+
+        Returns:
+            Model parameters and their properties.
+        """
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             assert inputs is not None, "Need inputs to initialize the model with K-Means!"
@@ -81,6 +111,7 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
         return params, props
 
     def log_prior(self, params: ParamsLogisticRegressionHMMEmissions) -> Float[Array, ""]:
+        """Log prior probability of the emission parameters."""
         return tfd.Normal(0, self.emission_weights_scale).log_prob(params.weights).sum()
 
     def distribution(
@@ -89,11 +120,13 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
             state: IntScalar,
             inputs: Float[Array, "input_dim"]
             ) -> tfd.Distribution:
+        """Emission distribution for a given state."""
         logits = params.weights[state] @ inputs + params.biases[state]
         return tfd.Bernoulli(logits=logits)
 
 
 class ParamsLogisticRegressionHMM(NamedTuple):
+    """Parameters for a logistic regression HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsLogisticRegressionHMMEmissions
@@ -142,6 +175,7 @@ class LogisticRegressionHMM(HMM):
 
     @property
     def inputs_shape(self) -> Tuple[int, ...]:
+        """Shape of the inputs to the emission distribution."""
         return (self.inputs_dim,)
 
     def initialize(self,

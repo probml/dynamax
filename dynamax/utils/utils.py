@@ -1,16 +1,21 @@
-from functools import partial
+"""
+Utility functions for the library.
+"""
+import jax
+import jaxlib
 import jax.numpy as jnp
 import jax.random as jr
+
+from functools import partial
 from jax import jit
 from jax import vmap
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
-import jax
-import jaxlib
 from jaxtyping import Array, Int
 from scipy.optimize import linear_sum_assignment
 from jax.scipy.linalg import cho_factor, cho_solve
 
 def has_tpu():
+    """Check if the current device is a TPU."""
     try:
         return isinstance(jax.devices()[0], jaxlib.xla_extension.TpuDevice)
     except:
@@ -36,6 +41,7 @@ def pad_sequences(observations, valid_lens, pad_val=0):
     """
 
     def pad(seq, len):
+        """Pad a single sequence."""
         idx = jnp.arange(1, seq.shape[0] + 1)
         return jnp.where(idx <= len, seq, pad_val)
 
@@ -44,11 +50,13 @@ def pad_sequences(observations, valid_lens, pad_val=0):
 
 
 def monotonically_increasing(x, atol=0., rtol=0.):
+    """Check if an array is monotonically increasing."""
     thresh = atol + rtol*jnp.abs(x[:-1])
     return jnp.all(jnp.diff(x) >= -thresh)
 
 
 def pytree_len(pytree):
+    """Return the number of leaves in a PyTree."""
     if pytree is None:
         return 0
     else:
@@ -56,14 +64,17 @@ def pytree_len(pytree):
 
 
 def pytree_sum(pytree, axis=None, keepdims=False, where=None):
+    """Sum all the leaves in a PyTree."""
     return tree_map(partial(jnp.sum, axis=axis, keepdims=keepdims, where=where), pytree)
 
 
 def pytree_slice(pytree, slc):
+    """Slice all the leaves in a Pytree."""
     return tree_map(lambda x: x[slc], pytree)
 
 
 def pytree_stack(pytrees):
+    """Stack all the leaves in a list of PyTrees."""
     _, treedef = tree_flatten(pytrees[0])
     leaves = [tree_leaves(tree) for tree in pytrees]
     return tree_unflatten(treedef, [jnp.stack(vals) for vals in zip(*leaves)])
@@ -126,6 +137,7 @@ def ensure_array_has_batch_dim(tree, instance_shapes):
             entry in the array.
     """
     def _expand_dim(x, shp):
+        """Add a batch dimension to an array, if necessary."""
         ndim = len(shp)
         assert x.ndim > ndim, "array does not match expected shape!"
         assert all([(d1 == d2) for d1, d2 in zip(x.shape[-ndim:], shp)]), \

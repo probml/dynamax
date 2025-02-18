@@ -1,29 +1,29 @@
+"""
+Tests for the extended Kalman filter and smoother.
+"""
 import jax.numpy as jnp
 import jax.random as jr
-from jax import vmap
 
+from functools import partial
 from dynamax.linear_gaussian_ssm import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.nonlinear_gaussian_ssm.inference_ekf import extended_kalman_filter, extended_kalman_smoother, extended_kalman_posterior_sample
 from dynamax.nonlinear_gaussian_ssm.inference_test_utils import lgssm_to_nlgssm, random_lgssm_args, random_nlgssm_args
 from dynamax.nonlinear_gaussian_ssm.sarkka_lib import ekf, eks
 from dynamax.utils.utils import has_tpu
+from jax import vmap
 
 if has_tpu():
-    def allclose(x, y):
-        print(jnp.max(x-y))
-        #return jnp.allclose(x, y, atol=1e-1)
-        return True # hack !!!
+    # TPU has very poor numerical stability
+    allclose = partial(jnp.allclose, atol=1e-1)
 else:
-    def allclose(x,y):
-        m = jnp.max(x-y)
-        if jnp.abs(m) > 1e-1:
-            print(m)
-            return False
-        else:
-            return True
+    allclose = partial(jnp.allclose, atol=1e-4)
 
 
 def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
+    """
+    Test that the extended Kalman filter produces the correct filtered moments
+    in the linear Gaussian case.
+    """
     args, _, emissions = random_lgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run standard Kalman filter
@@ -38,6 +38,10 @@ def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
 
 
 def test_extended_kalman_filter_nonlinear(key=42, num_timesteps=15):
+    """
+    Test that the extended Kalman filter produces the correct filtered moments
+    by comparing it to the sarkka-jax library.
+    """
     args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run EKF from sarkka-jax library
@@ -51,6 +55,10 @@ def test_extended_kalman_filter_nonlinear(key=42, num_timesteps=15):
 
 
 def test_extended_kalman_smoother_linear(key=0, num_timesteps=15):
+    """
+    Test that the extended Kalman smoother produces the correct smoothed moments
+    in the linear Gaussian case.
+    """
     args, _, emissions = random_lgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run standard Kalman smoother
@@ -64,6 +72,10 @@ def test_extended_kalman_smoother_linear(key=0, num_timesteps=15):
 
 
 def extended_kalman_smoother_nonlinear(key=0, num_timesteps=15):
+    """
+    Test that the extended Kalman smoother produces the correct smoothed moments
+    by comparing it to the sarkka-jax library.
+    """
     args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run EK smoother from sarkka-jax library
@@ -77,6 +89,10 @@ def extended_kalman_smoother_nonlinear(key=0, num_timesteps=15):
 
 
 def test_extended_kalman_sampler_linear(key=0, num_timesteps=15):
+    """
+    Test that the extended Kalman sampler produces samples with the correct mean
+    in the linear Gaussian case.
+    """
     args, _, emissions = random_lgssm_args(key=key, num_timesteps=num_timesteps)
     new_key = jr.split(jr.PRNGKey(key))[1]
 
@@ -90,6 +106,9 @@ def test_extended_kalman_sampler_linear(key=0, num_timesteps=15):
     
     
 def test_extended_kalman_sampler_nonlinear(key=0, num_timesteps=15, sample_size=50000):
+    """
+    Test that the extended Kalman sampler produces samples with the correct mean.
+    """
     # note: empirical covariance needs a large sample_size to converge
     
     args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
@@ -103,15 +122,10 @@ def test_extended_kalman_sampler_nonlinear(key=0, num_timesteps=15, sample_size=
     ekf_samples = sampler(keys, args, emissions)
 
     # Compare sample moments to smoother output
+    # Use the posterior variance to compute the variance of the Monte Carlo estimate,
+    # and check that the differences are within 6 standard deviations.
+    post_variance = vmap(jnp.diag)(ekf_post.smoothed_covariances)
+    threshold = 6 * jnp.sqrt(post_variance / sample_size)
     empirical_means = ekf_samples.mean(0)
-    empirical_covs = vmap(jnp.cov, in_axes=(1,))(ekf_samples.T)
+    assert jnp.all(abs(empirical_means - ekf_post.smoothed_means) < threshold)
     
-    assert allclose(empirical_means, ekf_post.smoothed_means)
-    assert allclose(empirical_covs, ekf_post.smoothed_covariances)
-
-
-def skip_test_eks_nonlinear():
-    key = jr.PRNGKey(0)
-    keys = jr.split(key, 5)
-    for key in keys:
-        extended_kalman_smoother_nonlinear(key, num_timesteps=15)

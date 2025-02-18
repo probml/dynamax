@@ -1,3 +1,4 @@
+"""Gaussian Hidden Markov Models with various constraints on the covariance matrix."""
 from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
 from jax import vmap
 import jax.numpy as jnp
@@ -23,12 +24,22 @@ from dynamax.utils.utils import pytree_sum
 
 
 class ParamsGaussianHMMEmissions(NamedTuple):
+    """Parameters for Gaussian emissions in an HMM."""
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     covs: Union[Float[Array, "state_dim emission_dim emission_dim"], ParameterProperties]
 
 
 class GaussianHMMEmissions(HMMEmissions):
+    """Gaussian emissions for an HMM.
 
+    Args:
+        num_states: number of discrete states
+        emission_dim: dimension of the emission vector
+        emission_prior_mean: prior mean for emissions
+        emission_prior_concentration: concentration parameter for the normal inverse Wishart prior
+        emission_prior_scale: scale matrix for the normal inverse Wishart  prior
+        emission_prior_extra_df: extra degrees of freedom for the normal inverse Wishart prior
+    """
     def __init__(self,
                  num_states: int,
                  emission_dim: int,
@@ -36,16 +47,6 @@ class GaussianHMMEmissions(HMMEmissions):
                  emission_prior_concentration: Scalar = 1e-4,
                  emission_prior_scale: Union[Scalar, Float[Array, "emission_dim emission_dim"]] = 1e-4,
                  emission_prior_extra_df: Scalar = 0.1):
-        """Initialize GaussianHMMEmissions.
-
-        Args:
-            num_states: number of discrete states
-            emission_dim: dimension of the emission vector
-            emission_prior_mean: prior mean for emissions
-            emission_prior_concentration: concentration parameter for the prior
-            emission_prior_scale: scale matrix for the prior
-            emission_prior_extra_df: extra degrees of freedom for the prior
-        """
         self.num_states = num_states
         self.emission_dim = emission_dim
         self.emission_prior_mean = emission_prior_mean * jnp.ones(emission_dim)
@@ -56,6 +57,7 @@ class GaussianHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple[int]:
+        """Shape of the emission vector."""
         return (self.emission_dim,)
 
     def distribution(
@@ -64,10 +66,12 @@ class GaussianHMMEmissions(HMMEmissions):
             state: IntScalar,
             inputs: Optional[Array] = None
             ) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         return tfd.MultivariateNormalFullCovariance(
             params.means[state], params.covs[state])
 
     def log_prior(self, params: ParamsGaussianHMMEmissions) -> Float[Array, ""]:
+        """Return the log prior probability of the emission parameters."""
         return NormalInverseWishart(self.emission_prior_mean, self.emission_prior_conc,
                                    self.emission_prior_df, self.emission_prior_scale).log_prob(
             (params.covs, params.means)).sum()
@@ -127,6 +131,7 @@ class GaussianHMMEmissions(HMMEmissions):
             emissions: Float[Array, "num_timesteps emission_dim"], 
             inputs: Optional[Array] = None
         ) -> Dict[str, Float[Array, "..."]]:
+        """Collect sufficient statistics for the M-step of the EM algorithm."""
         expected_states = posterior.smoothed_probs
         return dict(
             sum_w=jnp.einsum("tk->k", expected_states),
@@ -134,7 +139,9 @@ class GaussianHMMEmissions(HMMEmissions):
             sum_xxT=jnp.einsum("tk,ti,tj->kij", expected_states, emissions, emissions)
         )
 
-    def initialize_m_step_state(self, params: ParamsGaussianHMMEmissions, props: ParamsGaussianHMMEmissions) -> None:
+    def initialize_m_step_state(self, params: ParamsGaussianHMMEmissions, 
+                                props: ParamsGaussianHMMEmissions) -> None:
+        """Initialize the M-step state."""
         return None
 
     def m_step(
@@ -144,6 +151,7 @@ class GaussianHMMEmissions(HMMEmissions):
             batch_stats: Dict[str, Float[Array, "..."]], 
             m_step_state: Any
         ) -> Tuple[ParamsGaussianHMMEmissions, Any]:
+        """Perform the M-step of the EM algorithm."""
         if props.covs.trainable and props.means.trainable:
             niw_prior = NormalInverseWishart(loc=self.emission_prior_mean,
                                             mean_concentration=self.emission_prior_conc,
@@ -152,6 +160,7 @@ class GaussianHMMEmissions(HMMEmissions):
 
             # Find the posterior parameters of the NIW distribution
             def _single_m_step(stats):
+                """Perform the M-step for a single state."""
                 niw_posterior = niw_posterior_update(niw_prior, (stats['sum_x'], stats['sum_xxT'], stats['sum_w']))
                 return niw_posterior.mode()
 
@@ -169,11 +178,22 @@ class GaussianHMMEmissions(HMMEmissions):
 
 
 class ParamsDiagonalGaussianHMMEmissions(NamedTuple):
+    """Parameters for Diagonal Gaussian emissions in an HMM."""
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     scale_diags: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
 
 
 class DiagonalGaussianHMMEmissions(HMMEmissions):
+    """Diagonal Gaussian emissions for an HMM.
+    
+    Args:
+        num_states: number of discrete states
+        emission_dim: dimension of the emission vector
+        emission_prior_mean: prior mean for emissions
+        emission_prior_mean_concentration: concentration parameter for the normal inverse gamma prior
+        emission_prior_concentration: concentration parameter for the normal inverse gamma prior
+        emission_prior_scale: scale matrix for the normal inverse gamma prior
+    """
 
     def __init__(self,
                  num_states: int,
@@ -194,6 +214,7 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self):
+        """Shape of the emission vector."""
         return (self.emission_dim,)
 
     def initialize(self, 
@@ -203,6 +224,18 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
                    emission_scale_diags: Optional[Float[Array, "num_states emission_dim"]] = None,
                    emissions: Optional[Float[Array, "num_timesteps emission_dim"]] = None
         ) -> Tuple[ParamsDiagonalGaussianHMMEmissions, ParamsDiagonalGaussianHMMEmissions]:
+        """Initialize the model parameters and their corresponding properties.
+        
+        Args:
+            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.
+            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.
+            emission_means: manually specified emission means.
+            emission_scale_diags: manually specified emission scale diagonals.
+            emissions: emissions for initializing the parameters with kmeans.
+
+        Returns:
+            Tuple of (params, props) where params are the initialized parameters and props are their properties.
+        """
 
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
@@ -234,16 +267,19 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
         return params, props
 
     def distribution(self, params, state, inputs=None):
+        """Return the emission distribution for a given state."""
         return tfd.MultivariateNormalDiag(params.means[state],
                                           params.scale_diags[state])
 
     def log_prior(self, params):
+        """Return the log prior probability of the emission parameters."""
         prior =  NormalInverseGamma(self.emission_prior_mean, self.emission_prior_mean_conc,
                                     self.emission_prior_conc, self.emission_prior_scale)
         return prior.log_prob((params.scale_diags**2,
                                params.means)).sum()
 
     def collect_suff_stats(self, params, posterior, emissions, inputs=None):
+        """Collect sufficient statistics for the M-step of the EM algorithm."""
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
@@ -251,15 +287,18 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
         return dict(sum_w=sum_w, sum_x=sum_x, sum_xsq=sum_xsq)
 
     def initialize_m_step_state(self, params, props):
+        """Initialize the M-step state."""
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
+        """Perform the M-step of the EM algorithm."""
         nig_prior = NormalInverseGamma(loc=self.emission_prior_mean,
                                        mean_concentration=self.emission_prior_mean_conc,
                                        concentration=self.emission_prior_conc,
                                        scale=self.emission_prior_scale)
 
         def _single_m_step(stats):
+            """Perform the M-step for a single state."""
             # Find the posterior parameters of the NIG distribution
             posterior = nig_posterior_update(nig_prior, (stats['sum_x'], stats['sum_xsq'], stats['sum_w']))
             return posterior.mode()
@@ -272,12 +311,26 @@ class DiagonalGaussianHMMEmissions(HMMEmissions):
 
 
 class ParamsSphericalGaussianHMMEmissions(NamedTuple):
+    """Parameters for Spherical Gaussian emissions in an HMM."""
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     scales: Union[Float[Array, " state_dim"], ParameterProperties]
 
 
 class SphericalGaussianHMMEmissions(HMMEmissions):
+    """
+    Spherical Gaussian emissions for an HMM.
+    
+    Args:
+        num_states: number of discrete states
+        emission_dim: dimension of the emission vector
+        emission_prior_mean: prior mean for emissions
+        emission_prior_mean_covariance: covariance matrix for the prior
+        emission_var_concentration: concentration parameter for the gamma prior
+        emission_var_rate: rate parameter for the gamma prior
+        m_step_optimizer: optimizer for the M-step
+        m_step_num_iters: number of iterations for the M-step
 
+    """
     def __init__(self,
                  num_states: int,
                  emission_dim: int,
@@ -299,6 +352,7 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple[int]:
+        """Shape of the emission vector."""
         return (self.emission_dim,)
 
     def initialize(self, 
@@ -365,10 +419,12 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
             state: IntScalar,
             inputs: Optional[Array] = None
             ) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         return tfd.MultivariateNormalDiag(params.means[state],
                                           params.scales[state] * jnp.ones((self.emission_shape)))
 
     def log_prior(self, params: ParamsSphericalGaussianHMMEmissions) -> Float[Array, ""]:
+        """Return the log prior probability of the emission parameters."""
         lp = tfd.MultivariateNormalFullCovariance(
             self.emission_prior_mean, self.emission_prior_mean_cov)\
                 .log_prob(params.means).sum()
@@ -378,12 +434,22 @@ class SphericalGaussianHMMEmissions(HMMEmissions):
 
 
 class ParamsSharedCovarianceGaussianHMMEmissions(NamedTuple):
+    """Parameters for Shared Covariance Gaussian emissions in an HMM."""
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     cov: Union[Float[Array, "emission_dim emission_dim"], ParameterProperties]
 
 
 class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
+    """Initialize SharedCovarianceGaussianHMMEmissions.
 
+    Args:
+        num_states: number of discrete states
+        emission_dim: dimension of the emission vector
+        emission_prior_mean: prior mean for emissions
+        emission_prior_concentration: concentration parameter for the prior
+        emission_prior_scale: scale matrix for the prior
+        emission_prior_extra_df: extra degrees of freedom for the prior
+    """
     def __init__(self,
                  num_states: int,
                  emission_dim: int,
@@ -391,16 +457,6 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
                  emission_prior_concentration: Scalar = 1e-4,
                  emission_prior_scale: Union[Scalar, Float[Array, "emission_dim emission_dim"]] = 1e-4,
                  emission_prior_extra_df: Scalar = 0.1):
-        """Initialize SharedCovarianceGaussianHMMEmissions.
-
-        Args:
-            num_states: number of discrete states
-            emission_dim: dimension of the emission vector
-            emission_prior_mean: prior mean for emissions
-            emission_prior_concentration: concentration parameter for the prior
-            emission_prior_scale: scale matrix for the prior
-            emission_prior_extra_df: extra degrees of freedom for the prior
-        """
         self.num_states = num_states
         self.emission_dim = emission_dim
         self.emission_prior_mean = emission_prior_mean * jnp.ones(emission_dim)
@@ -411,6 +467,7 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple[int]:
+        """ Shape of the emission vector."""
         return (self.emission_dim,)
 
     def initialize(self, 
@@ -476,10 +533,12 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
             state: IntScalar,
             inputs: Optional[Array] = None
             ) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         return tfd.MultivariateNormalFullCovariance(
             params.means[state], params.cov)
 
     def log_prior(self, params: ParamsSharedCovarianceGaussianHMMEmissions) -> Float[Array, ""]:
+        """Return the log prior probability of the emission parameters."""
         mus = params.means
         Sigma = params.cov
         mu0 = self.emission_prior_mean
@@ -498,6 +557,7 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
         emissions: Float[Array, "num_timesteps emission_dim"],
         inputs: Optional[Array] = None
     ) -> Dict[str, Float[Array, "..."] | int]:
+        """Collect sufficient statistics for the M-step of the EM algorithm."""
         expected_states = posterior.smoothed_probs
         sum_w = jnp.einsum("tk->k", expected_states)
         sum_x = jnp.einsum("tk,ti->ki", expected_states, emissions)
@@ -509,8 +569,9 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
     def initialize_m_step_state(
             self,
             params: ParamsSharedCovarianceGaussianHMMEmissions,
-            props: ParamsSharedCovarianceGaussianHMMEmissions
-    ) -> None:
+            props: ParamsSharedCovarianceGaussianHMMEmissions) \
+            -> None:
+        """Initialize the M-step state."""
         return None
 
     def m_step(
@@ -519,7 +580,8 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
             props: ParamsSharedCovarianceGaussianHMMEmissions,
             batch_stats: Dict[str, Array],
             m_step_state: Any
-    ) -> Tuple[ParamsSharedCovarianceGaussianHMMEmissions, Any]:
+        ) -> Tuple[ParamsSharedCovarianceGaussianHMMEmissions, Any]:
+        """Perform the M-step of the EM algorithm."""
         mu0 = self.emission_prior_mean
         kappa0 = self.emission_prior_conc
         Psi0 = self.emission_prior_scale
@@ -537,13 +599,25 @@ class SharedCovarianceGaussianHMMEmissions(HMMEmissions):
 
 
 class ParamsLowRankGaussianHMMEmissions(NamedTuple):
+    """Parameters for Low Rank Gaussian emissions in an HMM."""
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     cov_diag_factors: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     cov_low_rank_factors: Union[Float[Array, "state_dim emission_dim emission_rank"], ParameterProperties]
 
 
 class LowRankGaussianHMMEmissions(HMMEmissions):
-
+    """Low Rank plus diagonal (LRPD) Gaussian emissions for an HMM.
+    
+    Args:
+        num_states: number of discrete states
+        emission_dim: dimension of the emission vector
+        emission_rank: rank of the low rank part of the covariance matrix
+        emission_diag_factor_concentration: concentration parameter for the gamma prior
+        emission_diag_factor_rate: rate parameter for the gamma prior
+        m_step_optimizer: optimizer for the M-step
+        m_step_num_iters: number of iterations for the M
+    
+    """
     def __init__(self,
                  num_states: int,
                  emission_dim: int,
@@ -623,6 +697,7 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple[int]:
+        """Shape of the emission vector."""
         return (self.emission_dim,)
 
     def distribution(
@@ -630,7 +705,8 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
             params: ParamsLowRankGaussianHMMEmissions,
             state: IntScalar,
             inputs: Optional[Array] = None
-    ) -> tfd.Distribution:
+        ) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         return tfd.MultivariateNormalDiagPlusLowRankCovariance(
             params.means[state],
             params.cov_diag_factors[state],
@@ -638,6 +714,7 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
         )
 
     def log_prior(self, params: ParamsLowRankGaussianHMMEmissions) -> Float[Array, ""]:
+        """Return the log prior probability of the emission parameters."""
         lp = tfd.Gamma(self.emission_diag_factor_conc, self.emission_diag_factor_rate)\
             .log_prob(params.cov_diag_factors).sum()
         return lp
@@ -645,6 +722,7 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
 
 ### Now for the models ###
 class ParamsGaussianHMM(NamedTuple):
+    """Parameters for a Gaussian HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsGaussianHMMEmissions
@@ -740,6 +818,7 @@ class GaussianHMM(HMM):
 
 
 class ParamsDiagonalGaussianHMM(NamedTuple):
+    """Parameters for a Diagonal Gaussian HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsDiagonalGaussianHMMEmissions
@@ -843,6 +922,7 @@ class DiagonalGaussianHMM(HMM):
 
 
 class ParamsSphericalGaussianHMM(NamedTuple):
+    """Parameters for a Spherical Gaussian HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsSphericalGaussianHMMEmissions
@@ -948,6 +1028,7 @@ class SphericalGaussianHMM(HMM):
 
 
 class ParamsSharedCovarianceGaussianHMM(NamedTuple):
+    """Parameters for a Shared Covariance Gaussian HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsSharedCovarianceGaussianHMMEmissions
@@ -1043,6 +1124,7 @@ class SharedCovarianceGaussianHMM(HMM):
 
 
 class ParamsLowRankGaussianHMM(NamedTuple):
+    """Parameters for a Low Rank Gaussian HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsLowRankGaussianHMMEmissions

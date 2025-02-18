@@ -1,3 +1,6 @@
+"""
+Helpers for managing parameters and their properties as PyTrees.
+"""
 import jax.numpy as jnp
 from jax import lax
 from jax.tree_util import tree_reduce, tree_map, register_pytree_node_class
@@ -41,13 +44,16 @@ class ParameterProperties:
         self.constrainer = constrainer
 
     def tree_flatten(self):
+        """Flatten the PyTree into a tuple of aux_data and children."""
         return (), (self.trainable, self.constrainer)
 
     @classmethod
     def tree_unflatten(cls, aux_data, children):
+        """Reconstruct the PyTree from the tuple of aux_data and children."""
         return cls(*aux_data)
 
     def __repr__(self):
+        """Return a string representation of the PyTree."""
         return f"ParameterProperties(trainable={self.trainable}, constrainer={self.constrainer})"
 
 
@@ -89,6 +95,7 @@ def from_unconstrained(unc_params: ParameterSet, props: PropertySet) -> Paramete
 
     """
     def from_unc(unc_value, prop):
+        """Convert the unconstrained value to constrained form."""
         value = prop.constrainer(unc_value) if prop.constrainer is not None else unc_value
         value = lax.stop_gradient(value) if not prop.trainable else value
         return value
@@ -117,6 +124,7 @@ def log_det_jac_constrain(params: ParameterSet, props: PropertySet) -> Scalar:
     """
     unc_params = to_unconstrained(params, props)
     def _compute_logdet(unc_value, prop):
+        """Compute the log determinant of the Jacobian matrix."""
         logdet = prop.constrainer.forward_log_det_jacobian(unc_value).sum() \
             if prop.constrainer is not None else 0.0
         return logdet if prop.trainable else 0.0

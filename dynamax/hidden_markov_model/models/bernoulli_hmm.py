@@ -1,3 +1,6 @@
+"""
+Bernoulli Hidden Markov Model.
+"""
 from typing import NamedTuple, Optional, Tuple, Union
 
 import jax.numpy as jnp
@@ -17,16 +20,25 @@ from dynamax.utils.utils import pytree_sum
 
 
 class ParamsBernoulliHMMEmissions(NamedTuple):
+    """Parameters for the Bernoulli emissions of an HMM."""
     probs: Union[Float[Array, " emission_dim"], ParameterProperties]
 
 
 class ParamsBernoulliHMM(NamedTuple):
+    """Parameters for a Bernoulli Hidden Markov Model."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsBernoulliHMMEmissions
 
 
 class BernoulliHMMEmissions(HMMEmissions):
+    r"""Bernoulli emissions for an HMM.
+    
+    :param num_states: number of discrete states $K$
+    :param emission_dim: number of conditionally independent emissions $N$
+    :param emission_prior_concentration0: $\gamma_0$
+    :param emission_prior_concentration1: $\gamma_1$
+    """
 
     def __init__(
         self,
@@ -35,10 +47,6 @@ class BernoulliHMMEmissions(HMMEmissions):
         emission_prior_concentration1: Scalar = 1.1,
         emission_prior_concentration0: Scalar = 1.1,
     ):
-        """_summary_
-        Args:
-            emission_probs (_type_): _description_
-        """
         self.num_states = num_states
         self.emission_dim = emission_dim
         self.emission_prior_concentration0 = emission_prior_concentration0
@@ -46,9 +54,11 @@ class BernoulliHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self) -> Tuple[int]:
+        """Shape of the emission distribution."""
         return (self.emission_dim,)
 
     def distribution(self, params, state, inputs=None) -> tfd.Distribution:
+        """Return the emission distribution for a given state."""
         # This model assumes the emissions are a vector of conditionally independent
         # Bernoulli observations. The `reinterpreted_batch_ndims` argument tells
         # `tfd.Independent` that only the last dimension should be considered a "batch"
@@ -56,6 +66,7 @@ class BernoulliHMMEmissions(HMMEmissions):
         return tfd.Independent(tfd.Bernoulli(probs=params.probs[state]), reinterpreted_batch_ndims=1)
 
     def log_prior(self, params) -> Float[Array, ""]:
+        """Return the log prior probability of the emission parameters."""
         prior = tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0)
         return prior.log_prob(params.probs).sum()
 
@@ -65,6 +76,13 @@ class BernoulliHMMEmissions(HMMEmissions):
         method="prior",
         emission_probs: Optional[Float[Array, "num_states emission_dim"]] = None,
     ) -> Tuple[ParamsBernoulliHMMEmissions, ParamsBernoulliHMMEmissions]:
+        """Initialize the emission parameters and their properties.
+
+        Args:
+            key: random number generator for sampling the parameters. Defaults to jr.PRNGKey(0).
+            method: method for initializing the parameters. Currently, only "prior" is allowed. Defaults to "prior".
+            emission_probs: manually specified emission probabilities. Defaults to None.
+        """
         if emission_probs is None:
             if method.lower() == "prior":
                 prior = tfd.Beta(self.emission_prior_concentration1, self.emission_prior_concentration0)
@@ -84,15 +102,18 @@ class BernoulliHMMEmissions(HMMEmissions):
         return params, props
 
     def collect_suff_stats(self, params, posterior, emissions, inputs=None):
+        """Collect sufficient statistics for the emission parameters."""
         expected_states = posterior.smoothed_probs
         sum_x = jnp.einsum("tk, ti->ki", expected_states, jnp.where(jnp.isnan(emissions), 0, emissions))
         sum_1mx = jnp.einsum("tk, ti->ki", expected_states, jnp.where(jnp.isnan(emissions), 0, 1 - emissions))
         return (sum_x, sum_1mx)
 
     def initialize_m_step_state(self, params, props):
+        """Initialize the state for the M-step of the EM algorithm."""
         return None
 
     def m_step(self, params, props, batch_stats, m_step_state):
+        """Perform the M-step of the EM algorithm."""
         if props.probs.trainable:
             sum_x, sum_1mx = pytree_sum(batch_stats, axis=0)
             probs = tfd.Beta(

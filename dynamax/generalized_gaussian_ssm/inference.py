@@ -1,10 +1,12 @@
-from itertools import product
-from numpy.polynomial.hermite_e import hermegauss
-from jax import jacfwd, vmap, lax
+"""Inference routines for generalized Gaussian state-space models."""
 import jax.numpy as jnp
+
+from itertools import product
+from jax import jacfwd, vmap, lax
 from jax import lax
 from jaxtyping import Array, Float
-from typing import NamedTuple, Optional, Union, Callable
+from numpy.polynomial.hermite_e import hermegauss
+from typing import Callable, NamedTuple, Optional, Tuple, Union
 
 from dynamax.utils.utils import psd_solve
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
@@ -29,17 +31,37 @@ class UKFIntegrals(NamedTuple):
     beta: float = 2.0
     kappa: float = 1.0
 
-    def gaussian_expectation(self, f, m, P):
+    def gaussian_expectation(self, 
+                             f: Callable, 
+                             m: Float[Array, "state_dim"], 
+                             P: Float[Array, "state_dim state_dim"]) \
+                             -> Float[Array, "output_dim"]:
+        """Compute the Gaussian expectation of a function f."""
         w_mean, _, sigmas = self.compute_weights_and_sigmas(m, P)
         return jnp.atleast_1d(jnp.tensordot(w_mean, vmap(f)(sigmas), axes=1))
 
-    def gaussian_cross_covariance(self, f, g, m, P):
+    def gaussian_cross_covariance(self, 
+                                  f: Callable, 
+                                  g: Callable, 
+                                  m: Float[Array, "state_dim"],
+                                  P: Float[Array, "state_dim state_dim"]) \
+                                  -> Float[Array, "output_dim_f output_dim_g"]:
+        """Compute the Gaussian cross-covariance of two functions f and g."""
         _, w_cov, sigmas = self.compute_weights_and_sigmas(m, P)
         _outer = vmap(lambda x, y: jnp.atleast_2d(x).T @ jnp.atleast_2d(y), 0, 0)
-        f_mean, g_mean = self.gaussian_expectation(f, m, P), self.gaussian_expectation(g, m, P)
-        return jnp.atleast_2d(jnp.tensordot(w_cov, _outer(vmap(f)(sigmas) - f_mean, vmap(g)(sigmas) - g_mean), axes=1))
+        f_mean = self.gaussian_expectation(f, m, P)
+        g_mean = self.gaussian_expectation(g, m, P)
+        return jnp.atleast_2d(jnp.tensordot(w_cov, _outer(vmap(f)(sigmas) - f_mean, 
+                                                          vmap(g)(sigmas) - g_mean), 
+                                                          axes=1))
 
-    def compute_weights_and_sigmas(self, m, P):
+    def compute_weights_and_sigmas(self, 
+                                   m: Float[Array, "state_dim"],
+                                   P: Float[Array, "state_dim state_dim"]) \
+                                   -> Tuple[Float[Array, "2*state_dim+1"], 
+                                            Float[Array, "2*state_dim+1"], 
+                                            Float[Array, "2*state_dim+1 state_dim"]]:
+        """Compute weights and sigma points for the UKF."""
         n = len(m)
         lamb = self.alpha**2 * (n + self.kappa) - n
         # Compute weights
@@ -58,17 +80,34 @@ class GHKFIntegrals(NamedTuple):
     """Lightweight container for GHKF Gaussian integrals."""
     order: int = 10
 
-    def gaussian_expectation(self, f, m, P):
+    def gaussian_expectation(self, 
+                             f: Callable, 
+                             m: Float[Array, "state_dim"], 
+                             P: Float[Array, "state_dim state_dim"]) \
+                             -> Float[Array, "output_dim"]:
+        """Compute the Gaussian expectation of a function f."""
         w_mean, _, sigmas = self.compute_weights_and_sigmas(m, P)
         return jnp.atleast_1d(jnp.tensordot(w_mean, vmap(f)(sigmas), axes=1))
 
-    def gaussian_cross_covariance(self, f, g, m, P):
+    def gaussian_cross_covariance(self, 
+                                  f: Callable, 
+                                  g: Callable, 
+                                  m: Float[Array, "state_dim"],
+                                  P: Float[Array, "state_dim state_dim"]) \
+                                  -> Float[Array, "output_dim_f output_dim_g"]:
+        """Compute the Gaussian cross-covariance of two functions f and g."""
         _, w_cov, sigmas = self.compute_weights_and_sigmas(m, P)
         _outer = vmap(lambda x, y: jnp.atleast_2d(x).T @ jnp.atleast_2d(y), 0, 0)
         f_mean, g_mean = self.gaussian_expectation(f, m, P), self.gaussian_expectation(g, m, P)
         return jnp.atleast_2d(jnp.tensordot(w_cov, _outer(vmap(f)(sigmas) - f_mean, vmap(g)(sigmas) - g_mean), axes=1))
 
-    def compute_weights_and_sigmas(self, m, P):
+    def compute_weights_and_sigmas(self, 
+                                   m: Float[Array, "state_dim"],
+                                   P: Float[Array, "state_dim state_dim"]) \
+                                   -> Tuple[Float[Array, "order**state_dim"],
+                                            Float[Array, "order**state_dim"],
+                                            Float[Array, "order**state_dim state_dim"]]:
+        """Compute weights and sigma points for the GHKF."""
         n = len(m)
         samples_1d, weights_1d = jnp.array(hermegauss(self.order))
         weights_1d /= weights_1d.sum()
@@ -81,7 +120,16 @@ class GHKFIntegrals(NamedTuple):
 CMGFIntegrals = Union[EKFIntegrals, UKFIntegrals, GHKFIntegrals]
 
 
-def _predict(m, P, f, Q, u, g_ev, g_cov):
+def _predict(m: Float[Array, "state_dim"], 
+             P: Float[Array, "state_dim state_dim"],
+             f: Callable, 
+             Q: Float[Array, "state_dim state_dim"],
+             u: Float[Array, "input_dim"],
+             g_ev: Callable, 
+             g_cov: Callable) \
+             -> Tuple[Float[Array, "state_dim"],
+                      Float[Array, "state_dim state_dim"],
+                      Float[Array, "state_dim state_dim"]]:
     r"""Predict next mean and covariance under an additive-noise Gaussian filter
 
         p(x_{t+1}) = N(x_{t+1} | mu_pred, Sigma_pred)
@@ -115,7 +163,20 @@ def _predict(m, P, f, Q, u, g_ev, g_cov):
     return mu_pred, Sigma_pred, cross_pred
 
 
-def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, emission_dist):
+def _condition_on(m: Float[Array, "state_dim"],
+                  P: Float[Array, "state_dim state_dim"],
+                  y_cond_mean: Callable, 
+                  y_cond_cov: Callable, 
+                  u: Float[Array, "input_dim"],
+                  y: Float[Array, "output_dim"],
+                  g_ev: Callable, 
+                  g_cov: Callable, 
+                  num_iter: int, 
+                  emission_dist: Callable) \
+                  -> Tuple[Float[Array, "output_dim"],
+                           Float[Array, "state_dim"],
+                           Float[Array, "state_dim state_dim"]]:
+    
     r"""Condition a Gaussian potential on a new observation with arbitrary
        likelihood with given functions for conditional moments and make a
        Gaussian approximation.
@@ -154,6 +215,7 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, em
     identity_fn = lambda x: x
 
     def _step(carry, _):
+        """Iteratively re-linearize around the posterior mean and covariance."""
         prior_mean, prior_cov = carry
         yhat = g_ev(m_Y, prior_mean, prior_cov)
         S = g_ev(Cov_Y, prior_mean, prior_cov) + g_cov(m_Y, m_Y, prior_mean, prior_cov)
@@ -170,7 +232,14 @@ def _condition_on(m, P, y_cond_mean, y_cond_cov, u, y, g_ev, g_cov, num_iter, em
     return lls[0], mu_cond, Sigma_cond
 
 
-def _statistical_linear_regression(mu, Sigma, m, S, C):
+def _statistical_linear_regression(mu: Float[Array, "state_dim"],
+                                   Sigma: Float[Array, "state_dim state_dim"],
+                                   m: Float[Array, "output_dim"],
+                                   S: Float[Array, "output_dim output_dim"],
+                                   C: Float[Array, "state_dim output_dim"]) \
+                                   -> Tuple[Float[Array, "output_dim state_dim"],
+                                            Float[Array, "output_dim"],
+                                            Float[Array, "output_dim output_dim"]]:
     r"""Return moment-matching affine coefficients and approximation noise variance
     given joint moments.
 
@@ -203,8 +272,8 @@ def conditional_moments_gaussian_filter(
     inf_params: CMGFIntegrals,
     emissions: Float[Array, "ntime emission_dim"],
     num_iter: int = 1,
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGSSMFiltered:
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None) \
+    -> PosteriorGSSMFiltered:
     """Run an (iterated) conditional moments Gaussian filter to produce the
     marginal likelihood and filtered state estimates.
 
@@ -235,6 +304,7 @@ def conditional_moments_gaussian_filter(
     emission_dist = model_params.emission_dist
 
     def _step(carry, t):
+        """One step of the CMGF"""
         ll, pred_mean, pred_cov = carry
 
         # Get parameters and inputs for time index t
@@ -262,8 +332,8 @@ def iterated_conditional_moments_gaussian_filter(
     inf_params: CMGFIntegrals,
     emissions: Float[Array, "ntime emission_dim"],
     num_iter: int = 2,
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGSSMFiltered:
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None) \
+    -> PosteriorGSSMFiltered:
     """Run an iterated conditional moments Gaussian filter.
 
     Args:
@@ -285,8 +355,8 @@ def conditional_moments_gaussian_smoother(
     inf_params: CMGFIntegrals,
     emissions: Float[Array, "ntime emission_dim"],
     filtered_posterior: Optional[PosteriorGSSMFiltered]=None,
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGSSMSmoothed:
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None) \
+    -> PosteriorGSSMSmoothed:
     """Run a conditional moments Gaussian smoother.
 
     Args:
@@ -316,6 +386,7 @@ def conditional_moments_gaussian_smoother(
     g_cov = inf_params.gaussian_cross_covariance
 
     def _step(carry, args):
+        """One step of the CMGS"""
         # Unpack the inputs
         smoothed_mean_next, smoothed_cov_next = carry
         t, filtered_mean, filtered_cov = args
@@ -360,8 +431,8 @@ def iterated_conditional_moments_gaussian_smoother(
     inf_params: CMGFIntegrals,
     emissions: Float[Array, "ntime emission_dim"],
     num_iter: int = 2,
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGSSMSmoothed:
+    inputs: Optional[Float[Array, "ntime input_dim"]]=None) \
+    -> PosteriorGSSMSmoothed:
     """Run an iterated conditional moments Gaussian smoother.
 
     Args:
@@ -376,6 +447,7 @@ def iterated_conditional_moments_gaussian_smoother(
 
     """
     def _step(carry, _):
+        """Iteratively re-linearize around the smoothed posterior from the previous iteration."""
         # Relinearize around smoothed posterior from previous iteration
         smoothed_prior = carry
         smoothed_posterior = conditional_moments_gaussian_smoother(model_params, inf_params, emissions, smoothed_prior, inputs)
