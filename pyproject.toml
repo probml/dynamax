@@ -100,7 +100,7 @@ exclude = ["logo", "docs"]
 
 [tool.versioneer]
 VCS = "git"
-style = "pep440"
+style = "pep440-pre"
 versionfile_source = "dynamax/_version.py"
 versionfile_build = "dynamax/_version.py"
 tag_prefix = ""
