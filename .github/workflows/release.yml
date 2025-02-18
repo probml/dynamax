@@ -19,7 +19,7 @@ jobs:
         python-version: 3.9
     - name: Install release tooling
       run: |
-        pip install twine wheel
+        pip install twine wheel versioneer[toml]
     - name: Build package
       run: |
         python setup.py sdist bdist_wheel
