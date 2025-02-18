@@ -1,6 +1,113 @@
 [build-system]
 requires = ["setuptools >= 30.3.0", "wheel"]
 
+[project]
+name = "dynamax"
+dynamic = ["version"]
+requires-python = ">= 3.8"
+dependencies = [
+    "jax>=0.3.15",
+    "jaxlib",
+    "fastprogress",
+    "optax",
+    "tensorflow_probability",
+    "scikit-learn",
+    "jaxtyping",
+    "typing-extensions",
+    "numpy<2.0"
+]
+
+authors = [
+    {name="Scott Linderman", email="scott.linderman@stanford.edu"}, 
+    {name="Peter Chang"}, 
+    {name="Giles Harper-Donnelly"}, 
+    {name="Aleyna Kara"}, 
+    {name="Xinglong Li"}, 
+    {name="Kevin Murphy"}
+]
+maintainers = [
+    {name="Scott Linderman", email="scott.linderman@stanford.edu"}
+]
+description = "Dynamic State Space Models in JAX."
+readme = "README.md"
+license = {file="LICENSE"}
+classifiers = ["Programming Language :: Python"]
+
+[project.urls]
+homepage = "https://github.com/probml/dynamax"
+documentation = "https://probml.github.io/dynamax/"
+repository = "https://github.com/probml/dynamax"
+
+[project.optional-dependencies]
+notebooks = [
+    "matplotlib",
+    "seaborn",
+    "flax",
+    "blackjax",
+    "graphviz",
+    "scipy"
+]
+
+doc = [
+    "matplotlib",
+    "seaborn",
+    "flax",
+    "blackjax",
+    "graphviz",
+    "scipy",
+    "sphinx",
+    "sphinx-autobuild",
+    "sphinx_autodoc_typehints",
+    "sphinx-math-dollar",
+    "myst-nb",
+    "jupytext",
+    "sphinx-book-theme"
+]
+
+test = [
+    "codecov",
+    "coverage",
+    "pytest>=3.9",
+    "pytest-cov",
+    "interrogate>=1.5.0"
+]
+
+dev = [
+    "matplotlib",
+    "seaborn",
+    "flax",
+    "blackjax",
+    "graphviz",
+    "scipy",
+    "sphinx",
+    "sphinx-autobuild",
+    "sphinx_autodoc_typehints",
+    "sphinx-math-dollar",
+    "myst-nb",
+    "jupytext",
+    "sphinx-book-theme",
+    "codecov",
+    "coverage",
+    "pytest>=3.9",
+    "pytest-cov",
+    "interrogate>=1.5.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]  
+include = ["dynamax"]
+exclude = ["logo"]  
+namespaces = false  
+
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "dynamax/_version.py"
+versionfile_build = "dynamax/_version.py"
+tag_prefix = ""
+parentdir_prefix = ""
+
 [tool.black]
 line-length = 120
 
