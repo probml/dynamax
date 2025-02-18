@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
@@ -191,9 +191,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -407,10 +412,10 @@ learning algorithms like expectation-maximization (EM) and stochastic gradient d
 Below we illustrate the high level (object-oriented) API for the case of an HMM
 with Gaussian emissions. (See <a class="reference external" href="https://github.com/probml/dynamax/blob/main/docs/notebooks/hmm/gaussian_hmm.ipynb">this notebook</a> for
 a runnable version of this code.)</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">GaussianHMM</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianHMM</span>
 
 <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
 <span class="n">num_states</span> <span class="o">=</span> <span class="mi">3</span>
@@ -438,8 +443,8 @@ a runnable version of this code.)</p>
 </div>
 <p>JAX allows you to easily vectorize these operations with <cite>vmap</cite>.
 For example, you can sample and then fit to a batch of emissions as shown below.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
 
 <span class="n">num_seq</span> <span class="o">=</span> <span class="mi">200</span>
 <span class="n">batch_true_states</span><span class="p">,</span> <span class="n">batch_emissions</span> <span class="o">=</span> \
@@ -530,50 +535,10 @@ If you’re new to these models, we recommend you start at the top and work your
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#hidden-markov-model">Hidden Markov Model</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#abstract-classes">Abstract classes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.HMM"><code class="docutils literal notranslate"><span class="pre">HMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.HMMInitialState"><code class="docutils literal notranslate"><span class="pre">HMMInitialState</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.HMMTransitions"><code class="docutils literal notranslate"><span class="pre">HMMTransitions</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.HMMEmissions"><code class="docutils literal notranslate"><span class="pre">HMMEmissions</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#high-level-models">High-level models</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.BernoulliHMM"><code class="docutils literal notranslate"><span class="pre">BernoulliHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.CategoricalHMM"><code class="docutils literal notranslate"><span class="pre">CategoricalHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.GammaHMM"><code class="docutils literal notranslate"><span class="pre">GammaHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.GaussianHMM"><code class="docutils literal notranslate"><span class="pre">GaussianHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.DiagonalGaussianHMM"><code class="docutils literal notranslate"><span class="pre">DiagonalGaussianHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.SphericalGaussianHMM"><code class="docutils literal notranslate"><span class="pre">SphericalGaussianHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.SharedCovarianceGaussianHMM"><code class="docutils literal notranslate"><span class="pre">SharedCovarianceGaussianHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.LowRankGaussianHMM"><code class="docutils literal notranslate"><span class="pre">LowRankGaussianHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.MultinomialHMM"><code class="docutils literal notranslate"><span class="pre">MultinomialHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.PoissonHMM"><code class="docutils literal notranslate"><span class="pre">PoissonHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.GaussianMixtureHMM"><code class="docutils literal notranslate"><span class="pre">GaussianMixtureHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.DiagonalGaussianMixtureHMM"><code class="docutils literal notranslate"><span class="pre">DiagonalGaussianMixtureHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.LinearRegressionHMM"><code class="docutils literal notranslate"><span class="pre">LinearRegressionHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.LogisticRegressionHMM"><code class="docutils literal notranslate"><span class="pre">LogisticRegressionHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.CategoricalRegressionHMM"><code class="docutils literal notranslate"><span class="pre">CategoricalRegressionHMM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.LinearAutoregressiveHMM"><code class="docutils literal notranslate"><span class="pre">LinearAutoregressiveHMM</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#low-level-inference">Low-level inference</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.HMMPosterior"><code class="docutils literal notranslate"><span class="pre">HMMPosterior</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.HMMPosteriorFiltered"><code class="docutils literal notranslate"><span class="pre">HMMPosteriorFiltered</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.hmm_filter"><code class="docutils literal notranslate"><span class="pre">hmm_filter()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.hmm_smoother"><code class="docutils literal notranslate"><span class="pre">hmm_smoother()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.hmm_two_filter_smoother"><code class="docutils literal notranslate"><span class="pre">hmm_two_filter_smoother()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.hmm_fixed_lag_smoother"><code class="docutils literal notranslate"><span class="pre">hmm_fixed_lag_smoother()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.hmm_posterior_mode"><code class="docutils literal notranslate"><span class="pre">hmm_posterior_mode()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.hmm_posterior_sample"><code class="docutils literal notranslate"><span class="pre">hmm_posterior_sample()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.parallel_hmm_filter"><code class="docutils literal notranslate"><span class="pre">parallel_hmm_filter()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.parallel_hmm_smoother"><code class="docutils literal notranslate"><span class="pre">parallel_hmm_smoother()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#types">Types</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.HMMParameterSet"><code class="docutils literal notranslate"><span class="pre">HMMParameterSet</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.hidden_markov_model.HMMPropertySet"><code class="docutils literal notranslate"><span class="pre">HMMPropertySet</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#abstract-classes">Abstract classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#high-level-models">High-level models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#low-level-inference">Low-level inference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#types">Types</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#linear-gaussian-ssm">Linear Gaussian SSM</a><ul>
@@ -581,13 +546,13 @@ If you’re new to these models, we recommend you start at the top and work your
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.linear_gaussian_ssm.LinearGaussianSSM"><code class="docutils literal notranslate"><span class="pre">LinearGaussianSSM</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#id4">Low-level inference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id1">Low-level inference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.linear_gaussian_ssm.lgssm_filter"><code class="docutils literal notranslate"><span class="pre">lgssm_filter()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.linear_gaussian_ssm.lgssm_smoother"><code class="docutils literal notranslate"><span class="pre">lgssm_smoother()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.linear_gaussian_ssm.lgssm_posterior_sample"><code class="docutils literal notranslate"><span class="pre">lgssm_posterior_sample()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#id5">Types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id2">Types</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.linear_gaussian_ssm.ParamsLGSSM"><code class="docutils literal notranslate"><span class="pre">ParamsLGSSM</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.linear_gaussian_ssm.ParamsLGSSMInitial"><code class="docutils literal notranslate"><span class="pre">ParamsLGSSMInitial</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.linear_gaussian_ssm.ParamsLGSSMDynamics"><code class="docutils literal notranslate"><span class="pre">ParamsLGSSMDynamics</span></code></a></li>
@@ -599,11 +564,11 @@ If you’re new to these models, we recommend you start at the top and work your
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#nonlinear-gaussian-gssm">Nonlinear Gaussian GSSM</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#id6">High-level class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id3">High-level class</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM"><code class="docutils literal notranslate"><span class="pre">NonlinearGaussianSSM</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#id7">Low-level inference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id4">Low-level inference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.nonlinear_gaussian_ssm.extended_kalman_filter"><code class="docutils literal notranslate"><span class="pre">extended_kalman_filter()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.nonlinear_gaussian_ssm.iterated_extended_kalman_filter"><code class="docutils literal notranslate"><span class="pre">iterated_extended_kalman_filter()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.nonlinear_gaussian_ssm.extended_kalman_smoother"><code class="docutils literal notranslate"><span class="pre">extended_kalman_smoother()</span></code></a></li>
@@ -612,25 +577,25 @@ If you’re new to these models, we recommend you start at the top and work your
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.nonlinear_gaussian_ssm.unscented_kalman_smoother"><code class="docutils literal notranslate"><span class="pre">unscented_kalman_smoother()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#id8">Types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id5">Types</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM"><code class="docutils literal notranslate"><span class="pre">ParamsNLGSSM</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#generalized-gaussian-gssm">Generalized Gaussian GSSM</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#id9">High-level class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id6">High-level class</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.generalized_gaussian_ssm.GeneralizedGaussianSSM"><code class="docutils literal notranslate"><span class="pre">GeneralizedGaussianSSM</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#id10">Low-level inference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id7">Low-level inference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter"><code class="docutils literal notranslate"><span class="pre">conditional_moments_gaussian_filter()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.generalized_gaussian_ssm.iterated_conditional_moments_gaussian_filter"><code class="docutils literal notranslate"><span class="pre">iterated_conditional_moments_gaussian_filter()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_smoother"><code class="docutils literal notranslate"><span class="pre">conditional_moments_gaussian_smoother()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.generalized_gaussian_ssm.iterated_conditional_moments_gaussian_smoother"><code class="docutils literal notranslate"><span class="pre">iterated_conditional_moments_gaussian_smoother()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#id11">Types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#id8">Types</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#dynamax.generalized_gaussian_ssm.ParamsGGSSM"><code class="docutils literal notranslate"><span class="pre">ParamsGGSSM</span></code></a></li>
 </ul>
 </li>
@@ -767,8 +732,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

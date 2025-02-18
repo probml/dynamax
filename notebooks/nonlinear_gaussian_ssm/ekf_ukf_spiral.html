@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -190,9 +190,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -390,25 +395,25 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">jr</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">jr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.utils.plotting</span> <span class="kn">import</span>  <span class="n">plot_uncertainty_ellipses</span>
-<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span> <span class="n">NonlinearGaussianSSM</span><span class="p">,</span> <span class="n">UKFHyperParams</span>
-<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">extended_kalman_filter</span> <span class="k">as</span> <span class="n">ekf</span>
-<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">unscented_kalman_filter</span> <span class="k">as</span> <span class="n">ukf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.plotting</span><span class="w"> </span><span class="kn">import</span>  <span class="n">plot_uncertainty_ellipses</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.nonlinear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span> <span class="n">NonlinearGaussianSSM</span><span class="p">,</span> <span class="n">UKFHyperParams</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.nonlinear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">extended_kalman_filter</span> <span class="k">as</span> <span class="n">ekf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.nonlinear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">unscented_kalman_filter</span> <span class="k">as</span> <span class="n">ukf</span>
 </pre></div>
 </div>
 </div>
@@ -450,7 +455,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_inference</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">estimates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">est_type</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">show_states</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_inference</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">estimates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">est_type</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">show_states</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">show_states</span><span class="p">:</span>
@@ -477,7 +482,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Axes: title={&#39;center&#39;: &#39;Noisy obervations from hidden trajectory&#39;}&gt;
 </pre></div>
 </div>
-<img alt="../../_images/3103774a0e9fbff48867aa26f137bf94bbc92ae1efbe3313682df6790e17eb29.png" src="../../_images/3103774a0e9fbff48867aa26f137bf94bbc92ae1efbe3313682df6790e17eb29.png" />
+<img alt="../../_images/2ae0a2c3bbc74e3b61d9b8c8bde5e91c0eb766faa916beede684f5ac995cdc5a.png" src="../../_images/2ae0a2c3bbc74e3b61d9b8c8bde5e91c0eb766faa916beede684f5ac995cdc5a.png" />
 </div>
 </div>
 </section>
@@ -503,7 +508,7 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6a348257933058227b86dd56fabc3466d876f0cac1f435d829a84578cc99e1a3.png" src="../../_images/6a348257933058227b86dd56fabc3466d876f0cac1f435d829a84578cc99e1a3.png" />
+<img alt="../../_images/ecb962561341f22bfa3c99b6f1ec97ecbc1916178b1723ef96c6f90c65d47e40.png" src="../../_images/ecb962561341f22bfa3c99b6f1ec97ecbc1916178b1723ef96c6f90c65d47e40.png" />
 </div>
 </div>
 </section>
@@ -537,10 +542,10 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f8861294d30&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f15914538b0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/26540558df450d4d684ce7372003650d2320745caf73b5f924e0f11cfaaad900.png" src="../../_images/26540558df450d4d684ce7372003650d2320745caf73b5f924e0f11cfaaad900.png" />
+<img alt="../../_images/a89facb3eee2c29695f5684e7df77ffeb9ca5f9857059bf5516d051df82debfd.png" src="../../_images/a89facb3eee2c29695f5684e7df77ffeb9ca5f9857059bf5516d051df82debfd.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -569,10 +574,10 @@ h(\begin{pmatrix} u \\ v \end{pmatrix}) &amp;= \begin{pmatrix} u \\ v \end{pmatr
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f886114a8b0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f159137cd00&gt;
 </pre></div>
 </div>
-<img alt="../../_images/c57a822efd4e863b9217c983aa190bbbc8875c007bd1fb06128958b77e6b0d17.png" src="../../_images/c57a822efd4e863b9217c983aa190bbbc8875c007bd1fb06128958b77e6b0d17.png" />
+<img alt="../../_images/f2e11e3c1430890d66f4d09279e9795ec07bd53317a2ed8e9157bb243fbe3c0a.png" src="../../_images/f2e11e3c1430890d66f4d09279e9795ec07bd53317a2ed8e9157bb243fbe3c0a.png" />
 </div>
 </div>
 </section>
@@ -677,8 +682,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

@@ -15,8 +15,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
@@ -187,9 +187,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -289,20 +294,24 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.utils.utils</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jit</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
-<span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_map</span><span class="p">,</span> <span class="n">tree_leaves</span><span class="p">,</span> <span class="n">tree_flatten</span><span class="p">,</span> <span class="n">tree_unflatten</span>
-<span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jaxlib</span>
-<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Int</span>
-<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">linear_sum_assignment</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">jax.scipy.linalg</span> <span class="kn">import</span> <span class="n">cho_factor</span><span class="p">,</span> <span class="n">cho_solve</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utility functions for the library.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jaxlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
 
-<span class="k">def</span> <span class="nf">has_tpu</span><span class="p">():</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">jit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.tree_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_map</span><span class="p">,</span> <span class="n">tree_leaves</span><span class="p">,</span> <span class="n">tree_flatten</span><span class="p">,</span> <span class="n">tree_unflatten</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Int</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">linear_sum_assignment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cho_factor</span><span class="p">,</span> <span class="n">cho_solve</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">has_tpu</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the current device is a TPU.&quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">devices</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">jaxlib</span><span class="o">.</span><span class="n">xla_extension</span><span class="o">.</span><span class="n">TpuDevice</span><span class="p">)</span>
     <span class="k">except</span><span class="p">:</span>
@@ -310,7 +319,7 @@
 
 
 <span class="nd">@jit</span>
-<span class="k">def</span> <span class="nf">pad_sequences</span><span class="p">(</span><span class="n">observations</span><span class="p">,</span> <span class="n">valid_lens</span><span class="p">,</span> <span class="n">pad_val</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pad_sequences</span><span class="p">(</span><span class="n">observations</span><span class="p">,</span> <span class="n">valid_lens</span><span class="p">,</span> <span class="n">pad_val</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Pad ragged sequences to a fixed length.</span>
 <span class="sd">    Parameters</span>
@@ -327,7 +336,8 @@
 <span class="sd">        Ragged dataset</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="nb">len</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pad</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="nb">len</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pad a single sequence.&quot;&quot;&quot;</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seq</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">idx</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">pad_val</span><span class="p">)</span>
 
@@ -335,32 +345,37 @@
     <span class="k">return</span> <span class="n">dataset</span>
 
 
-<span class="k">def</span> <span class="nf">monotonically_increasing</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">monotonically_increasing</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">0.</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an array is monotonically increasing.&quot;&quot;&quot;</span>
     <span class="n">thresh</span> <span class="o">=</span> <span class="n">atol</span> <span class="o">+</span> <span class="n">rtol</span><span class="o">*</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">thresh</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">pytree_len</span><span class="p">(</span><span class="n">pytree</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytree_len</span><span class="p">(</span><span class="n">pytree</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the number of leaves in a PyTree.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">pytree</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="mi">0</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">tree_leaves</span><span class="p">(</span><span class="n">pytree</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
 
 
-<span class="k">def</span> <span class="nf">pytree_sum</span><span class="p">(</span><span class="n">pytree</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytree_sum</span><span class="p">(</span><span class="n">pytree</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sum all the leaves in a PyTree.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="n">keepdims</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">),</span> <span class="n">pytree</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">pytree_slice</span><span class="p">(</span><span class="n">pytree</span><span class="p">,</span> <span class="n">slc</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytree_slice</span><span class="p">(</span><span class="n">pytree</span><span class="p">,</span> <span class="n">slc</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Slice all the leaves in a Pytree.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">pytree</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">pytree_stack</span><span class="p">(</span><span class="n">pytrees</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytree_stack</span><span class="p">(</span><span class="n">pytrees</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stack all the leaves in a list of PyTrees.&quot;&quot;&quot;</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">treedef</span> <span class="o">=</span> <span class="n">tree_flatten</span><span class="p">(</span><span class="n">pytrees</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">leaves</span> <span class="o">=</span> <span class="p">[</span><span class="n">tree_leaves</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span> <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">pytrees</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">tree_unflatten</span><span class="p">(</span><span class="n">treedef</span><span class="p">,</span> <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="k">for</span> <span class="n">vals</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">leaves</span><span class="p">)])</span>
 
-<span class="k">def</span> <span class="nf">random_rotation</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">random_rotation</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Helper function to create a rotating linear system.</span>
 
 <span class="sd">    Args:</span>
@@ -388,7 +403,7 @@
     <span class="k">return</span> <span class="n">q</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">instance_shapes</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">instance_shapes</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a batch dimension to a PyTree, if necessary.</span>
 
 <span class="sd">    Example: If `tree` is an array of shape (T, D) where `T` is</span>
@@ -417,7 +432,8 @@
 <span class="sd">            tuples of integers specifying the shape of one &quot;instance&quot; or</span>
 <span class="sd">            entry in the array.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">_expand_dim</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shp</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expand_dim</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shp</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a batch dimension to an array, if necessary.&quot;&quot;&quot;</span>
         <span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="n">ndim</span><span class="p">,</span> <span class="s2">&quot;array does not match expected shape!&quot;</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([(</span><span class="n">d1</span> <span class="o">==</span> <span class="n">d2</span><span class="p">)</span> <span class="k">for</span> <span class="n">d1</span><span class="p">,</span> <span class="n">d2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">ndim</span><span class="p">:],</span> <span class="n">shp</span><span class="p">)]),</span> \
@@ -438,9 +454,9 @@
         <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">_expand_dim</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">instance_shapes</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">compute_state_overlap</span><span class="p">(</span>
-    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">],</span>
-    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_state_overlap</span><span class="p">(</span>
+    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_timesteps&quot;</span><span class="p">],</span>
+    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_timesteps&quot;</span><span class="p">]</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute a matrix describing the state-wise overlap between two state vectors</span>
@@ -458,7 +474,7 @@
     <span class="k">assert</span> <span class="n">z1</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">z2</span><span class="o">.</span><span class="n">shape</span>
     <span class="k">assert</span> <span class="n">z1</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">z2</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">0</span>
 
-    <span class="n">K</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">z1</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">z2</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">z1</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">z2</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
 
     <span class="n">overlap</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
         <span class="p">(</span><span class="n">z1</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">==</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">K</span><span class="p">))[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
@@ -470,9 +486,9 @@
 
 <div class="viewcode-block" id="find_permutation">
 <a class="viewcode-back" href="../../../api.html#dynamax.utils.utils.find_permutation">[docs]</a>
-<span class="k">def</span> <span class="nf">find_permutation</span><span class="p">(</span>
-    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">],</span>
-    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps&quot;</span><span class="p">]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_permutation</span><span class="p">(</span>
+    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_timesteps&quot;</span><span class="p">],</span>
+    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_timesteps&quot;</span><span class="p">]</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Find the permutation of the state labels in sequence ``z1`` so that they</span>
@@ -493,14 +509,14 @@
 
 
 
-<span class="k">def</span> <span class="nf">psd_solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">diagonal_boost</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">psd_solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">diagonal_boost</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper for coordinating the linalg solvers used in the library for psd matrices.&quot;&quot;&quot;</span>
     <span class="n">A</span> <span class="o">=</span> <span class="n">symmetrize</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">+</span> <span class="n">diagonal_boost</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">L</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="n">cho_factor</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">((</span><span class="n">L</span><span class="p">,</span> <span class="n">lower</span><span class="p">),</span> <span class="n">b</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">x</span>
 
-<span class="k">def</span> <span class="nf">symmetrize</span><span class="p">(</span><span class="n">A</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">symmetrize</span><span class="p">(</span><span class="n">A</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Symmetrize one or more matrices.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
@@ -565,8 +581,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

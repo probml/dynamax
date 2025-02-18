@@ -15,8 +15,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
@@ -187,9 +187,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -289,18 +294,21 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.nonlinear_gaussian_ssm.inference_ukf</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">lax</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
-<span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormalFullCovariance</span> <span class="k">as</span> <span class="n">MVN</span>
-<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Unscented Kalman Filter and Smoother for Nonlinear Gaussian State Space Models.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormalFullCovariance</span> <span class="k">as</span> <span class="n">MVN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">psd_solve</span>
-<span class="kn">from</span> <span class="nn">dynamax.nonlinear_gaussian_ssm.models</span> <span class="kn">import</span>  <span class="n">ParamsNLGSSM</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.models</span> <span class="kn">import</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGSSMSmoothed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">psd_solve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.nonlinear_gaussian_ssm.models</span><span class="w"> </span><span class="kn">import</span>  <span class="n">ParamsNLGSSM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.linear_gaussian_ssm.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGSSMSmoothed</span>
 
-<span class="k">class</span> <span class="nc">UKFHyperParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UKFHyperParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight container for UKF hyperparameters.</span>
 
 <span class="sd">    Default values taken from https://github.com/sbitzer/UKF-exposed</span>
@@ -318,7 +326,11 @@
 <span class="n">_compute_lambda</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">z</span>
 
 
-<span class="k">def</span> <span class="nf">_compute_sigmas</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lamb</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_sigmas</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> 
+                    <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span> 
+                    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> 
+                    <span class="n">lamb</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> \
+                    <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute (2n+1) sigma points used for inputs to  unscented transform.</span>
 
 <span class="sd">    Args:</span>
@@ -336,7 +348,12 @@
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">m</span><span class="p">]),</span> <span class="n">sigma_plus</span><span class="p">,</span> <span class="n">sigma_minus</span><span class="p">))</span>
 
 
-<span class="k">def</span> <span class="nf">_compute_weights</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">lamb</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_weights</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> 
+                     <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
+                     <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
+                     <span class="n">lamb</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> \
+                     <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span> 
+                              <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute weights used to compute predicted mean and covariance (Sarkka 5.77).</span>
 
 <span class="sd">    Args:</span>
@@ -355,7 +372,17 @@
     <span class="k">return</span> <span class="n">w_mean</span><span class="p">,</span> <span class="n">w_cov</span>
 
 
-<span class="k">def</span> <span class="nf">_predict</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">lamb</span><span class="p">,</span> <span class="n">w_mean</span><span class="p">,</span> <span class="n">w_cov</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_predict</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> 
+             <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+             <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+             <span class="n">Q</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+             <span class="n">lamb</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
+             <span class="n">w_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span>
+             <span class="n">w_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span>
+             <span class="n">u</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">])</span> \
+             <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                      <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+                      <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict next mean and covariance using additive UKF</span>
 
 <span class="sd">    Args:</span>
@@ -386,7 +413,18 @@
     <span class="k">return</span> <span class="n">m_pred</span><span class="p">,</span> <span class="n">P_pred</span><span class="p">,</span> <span class="n">P_cross</span>
 
 
-<span class="k">def</span> <span class="nf">_condition_on</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">lamb</span><span class="p">,</span> <span class="n">w_mean</span><span class="p">,</span> <span class="n">w_cov</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_condition_on</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                  <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+                  <span class="n">h</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                  <span class="n">R</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">],</span>
+                  <span class="n">lamb</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
+                  <span class="n">w_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span>
+                  <span class="n">w_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span>
+                  <span class="n">u</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">],</span>
+                  <span class="n">y</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">])</span> \
+                  <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> 
+                           <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                           <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Condition a Gaussian potential on a new observation</span>
 
 <span class="sd">    Args:</span>
@@ -429,13 +467,12 @@
 
 <div class="viewcode-block" id="unscented_kalman_filter">
 <a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter">[docs]</a>
-<span class="k">def</span> <span class="nf">unscented_kalman_filter</span><span class="p">(</span>
-    <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
-    <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
-    <span class="n">hyperparams</span><span class="p">:</span> <span class="n">UKFHyperParams</span><span class="p">,</span>
-    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">output_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;filtered_means&quot;</span><span class="p">,</span> <span class="s2">&quot;filtered_covariances&quot;</span><span class="p">,</span> <span class="s2">&quot;predicted_means&quot;</span><span class="p">,</span> <span class="s2">&quot;predicted_covariances&quot;</span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">unscented_kalman_filter</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
+                            <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
+                            <span class="n">hyperparams</span><span class="p">:</span> <span class="n">UKFHyperParams</span><span class="p">,</span>
+                            <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">output_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;filtered_means&quot;</span><span class="p">,</span> <span class="s2">&quot;filtered_covariances&quot;</span><span class="p">,</span> <span class="s2">&quot;predicted_means&quot;</span><span class="p">,</span> <span class="s2">&quot;predicted_covariances&quot;</span><span class="p">])</span> \
+                            <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a unscented Kalman filter to produce the marginal likelihood and</span>
 <span class="sd">    filtered state estimates.</span>
 
@@ -462,7 +499,8 @@
     <span class="n">f</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">_process_fn</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">h</span><span class="p">))</span>
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">_process_input</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;One step of the UKF&quot;&quot;&quot;</span>
         <span class="n">ll</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span> <span class="o">=</span> <span class="n">carry</span>
 
         <span class="c1"># Get parameters and inputs for time t</span>
@@ -508,12 +546,11 @@
 
 <div class="viewcode-block" id="unscented_kalman_smoother">
 <a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.unscented_kalman_smoother">[docs]</a>
-<span class="k">def</span> <span class="nf">unscented_kalman_smoother</span><span class="p">(</span>
-    <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
-    <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
-    <span class="n">hyperparams</span><span class="p">:</span> <span class="n">UKFHyperParams</span><span class="p">,</span>
-    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">unscented_kalman_smoother</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
+                              <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
+                              <span class="n">hyperparams</span><span class="p">:</span> <span class="n">UKFHyperParams</span><span class="p">,</span>
+                              <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> \
+                              <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a unscented Kalman (RTS) smoother.</span>
 
 <span class="sd">    Args:</span>
@@ -545,7 +582,8 @@
     <span class="n">f</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">_process_fn</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">h</span><span class="p">))</span>
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">_process_input</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;One step of the UKS&quot;&quot;&quot;</span>
         <span class="c1"># Unpack the inputs</span>
         <span class="n">smoothed_mean_next</span><span class="p">,</span> <span class="n">smoothed_cov_next</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">t</span><span class="p">,</span> <span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span> <span class="o">=</span> <span class="n">args</span>
@@ -648,8 +686,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -190,9 +190,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -387,31 +392,31 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="n">ParamsGGSSM</span><span class="p">,</span> <span class="n">EKFIntegrals</span><span class="p">,</span> <span class="n">UKFIntegrals</span><span class="p">,</span> <span class="n">GHKFIntegrals</span>
-<span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="n">conditional_moments_gaussian_filter</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.generalized_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsGGSSM</span><span class="p">,</span> <span class="n">EKFIntegrals</span><span class="p">,</span> <span class="n">UKFIntegrals</span><span class="p">,</span> <span class="n">GHKFIntegrals</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.generalized_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">conditional_moments_gaussian_filter</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
-<span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">from</span> <span class="nn">jax.scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
 </pre></div>
 </div>
 </div>
@@ -422,7 +427,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <p>We generate a reasonable 2d binary classification data.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">generate_dataset</span><span class="p">(</span><span class="n">num_points</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">generate_dataset</span><span class="p">(</span><span class="n">num_points</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="n">key0</span><span class="p">,</span> <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
@@ -462,9 +467,9 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_1966/1437855553.py:25: DeprecationWarning: jax.random.shuffle is deprecated. Use jax.random.permutation with independent=True.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_2055/1437855553.py:25: DeprecationWarning: jax.random.shuffle is deprecated. Use jax.random.permutation with independent=True.
   idx = jr.shuffle(key2, jnp.arange(num_points))
-/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/jax/_src/random.py:535: FutureWarning: jax.random.shuffle is deprecated and will be removed in a future release. Use jax.random.permutation with independent=True.
+/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/jax/_src/random.py:535: FutureWarning: jax.random.shuffle is deprecated and will be removed in a future release. Use jax.random.permutation with independent=True.
   warnings.warn(msg, FutureWarning)
 </pre></div>
 </div>
@@ -473,7 +478,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <p>Next, we define a function that visualizes the 2d posterior predictive distribution.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_posterior_predictive</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">colors</span><span class="p">,</span> <span class="n">Xspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Zspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_posterior_predictive</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">colors</span><span class="p">,</span> <span class="n">Xspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Zspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">Xspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Zspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="o">*</span><span class="n">Xspace</span><span class="p">,</span> <span class="n">Zspace</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
@@ -486,7 +491,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_boundary</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">colors</span><span class="p">,</span> <span class="n">Xspace</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_boundary</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">colors</span><span class="p">,</span> <span class="n">Xspace</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">Xspace</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">w</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="n">w</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">Xspace</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">w</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
@@ -506,7 +511,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9a6b53d43c00f9621b37487d7a394f8513fa1952602b569da362a465bdf4d097.png" src="../../_images/9a6b53d43c00f9621b37487d7a394f8513fa1952602b569da362a465bdf4d097.png" />
+<img alt="../../_images/fc1bcdb7a121b7c9f7598910b7e745f515010331e6eeb69dae991fb39b546786.png" src="../../_images/fc1bcdb7a121b7c9f7598910b7e745f515010331e6eeb69dae991fb39b546786.png" />
 </div>
 </div>
 <p>Let us define a grid on which we compute the predictive distribution.</p>
@@ -528,7 +533,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <p>Next, we define a function to that returns the posterior predictive probability for each point in grid.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">posterior_predictive_grid</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">posterior_predictive_grid</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="n">samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="p">(</span><span class="n">n_samples</span><span class="p">,))</span>
@@ -542,7 +547,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <p>Finally, we define a function that plots the convergence of filtered estimates to the batch MAP estimate.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_cmgf_post_laplace</span><span class="p">(</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_cmgf_post_laplace</span><span class="p">(</span>
     <span class="n">mean_hist</span><span class="p">,</span> <span class="n">cov_hist</span><span class="p">,</span> <span class="n">w_map</span><span class="p">,</span> <span class="n">lcolors</span><span class="p">,</span> <span class="n">filter_type</span><span class="p">,</span> <span class="n">legend_font_size</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">bb1</span><span class="o">=</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">),</span> <span class="n">bb2</span><span class="o">=</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span> <span class="n">bb3</span><span class="o">=</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
 <span class="p">):</span>
     <span class="n">input_dim</span> <span class="o">=</span> <span class="n">mean_hist</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -582,13 +587,13 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <p>We compute a Laplace approximation to the posterior, which we can compare CMGF to.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">log_posterior</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">prior_var</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">log_posterior</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">prior_var</span><span class="p">):</span>
     <span class="n">prediction</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">X</span> <span class="o">@</span> <span class="n">w</span><span class="p">)</span>
     <span class="n">log_prior</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">prior_var</span> <span class="o">*</span> <span class="n">w</span> <span class="o">@</span> <span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">log_likelihood</span> <span class="o">=</span> <span class="n">Y</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">Y</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prediction</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">log_prior</span> <span class="o">+</span> <span class="n">log_likelihood</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
-<span class="k">def</span> <span class="nf">laplace_inference</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">prior_var</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">laplace_inference</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">prior_var</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="n">input_dim</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -626,7 +631,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/935c691996784e839be172dc0f25e41514cbc6f89419e4f3bea2709115df59a0.png" src="../../_images/935c691996784e839be172dc0f25e41514cbc6f89419e4f3bea2709115df59a0.png" />
+<img alt="../../_images/833ff4710eaeb9fd64e43b652e0741a881d5e16922b6d8c4d94ebfa4e0adcb88.png" src="../../_images/833ff4710eaeb9fd64e43b652e0741a881d5e16922b6d8c4d94ebfa4e0adcb88.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -641,7 +646,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/eedc06642805abb77316657cf1d47ab30a6a767b6c6f6864f2450a66c775b4aa.png" src="../../_images/eedc06642805abb77316657cf1d47ab30a6a767b6c6f6864f2450a66c775b4aa.png" />
+<img alt="../../_images/16fc39a02a1cbb707be0ac8e58327d0de5ed91a39e54fd7d9ba3d594f2663d17.png" src="../../_images/16fc39a02a1cbb707be0ac8e58327d0de5ed91a39e54fd7d9ba3d594f2663d17.png" />
 </div>
 </div>
 </section>
@@ -703,10 +708,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/dec47975befa41400d0904835371af2ff6e954ede8e4bf256f98c47f899d463a.png" src="../../_images/dec47975befa41400d0904835371af2ff6e954ede8e4bf256f98c47f899d463a.png" />
-<img alt="../../_images/95f51fcc4bef068391a60670d9f1bf47b0d2f442bc2cdf69dbe75ec40fd5cf77.png" src="../../_images/95f51fcc4bef068391a60670d9f1bf47b0d2f442bc2cdf69dbe75ec40fd5cf77.png" />
-<img alt="../../_images/a0686ab0bb47662f0204c5ad0d7aed52e4633b55da83c9ee6db751dcac3ec223.png" src="../../_images/a0686ab0bb47662f0204c5ad0d7aed52e4633b55da83c9ee6db751dcac3ec223.png" />
-<img alt="../../_images/9adafe37088735c66a87ef44d257281e495691a743ef217e645c802f7e8b7165.png" src="../../_images/9adafe37088735c66a87ef44d257281e495691a743ef217e645c802f7e8b7165.png" />
+<img alt="../../_images/9658a4e15bdb74e0d24cc940311d819399e3205bd70f60d2abcbd7e715c503ae.png" src="../../_images/9658a4e15bdb74e0d24cc940311d819399e3205bd70f60d2abcbd7e715c503ae.png" />
+<img alt="../../_images/27e6d5fecb48c2538b33dd48ea41dd439d6dd92408027c62e0f2f85bf6f474ea.png" src="../../_images/27e6d5fecb48c2538b33dd48ea41dd439d6dd92408027c62e0f2f85bf6f474ea.png" />
+<img alt="../../_images/1f0c49c30aa717eafda63c9f6e5b3c505b195f27966b5ad087ded81c6b85c9fd.png" src="../../_images/1f0c49c30aa717eafda63c9f6e5b3c505b195f27966b5ad087ded81c6b85c9fd.png" />
+<img alt="../../_images/dbc76eaa203cb85748bee8d4a481990beb7c8446595bd76379ddead423922a11.png" src="../../_images/dbc76eaa203cb85748bee8d4a481990beb7c8446595bd76379ddead423922a11.png" />
 </div>
 </div>
 </section>
@@ -731,10 +736,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/eeb7dcd2d0f4b374870286d2274c82090038328bad3b2b56f3bcc42ffbc2ec3b.png" src="../../_images/eeb7dcd2d0f4b374870286d2274c82090038328bad3b2b56f3bcc42ffbc2ec3b.png" />
-<img alt="../../_images/1590f94b9f68449459c0de7ebd61dd303e32151d5dfc18188454161e4f5f4932.png" src="../../_images/1590f94b9f68449459c0de7ebd61dd303e32151d5dfc18188454161e4f5f4932.png" />
-<img alt="../../_images/202d6eb6ff0839bd5b5df376d10a03ba6458bcf0c97b3fe907ccd188d6d66bb4.png" src="../../_images/202d6eb6ff0839bd5b5df376d10a03ba6458bcf0c97b3fe907ccd188d6d66bb4.png" />
-<img alt="../../_images/039b8398ff863a50d7c9c06e6a8d8348ced860a34b24ecbc654040f05058b238.png" src="../../_images/039b8398ff863a50d7c9c06e6a8d8348ced860a34b24ecbc654040f05058b238.png" />
+<img alt="../../_images/451ea5c3d67671c29fb4604a068bf5a8d6b33de9a21ec5d9c541c989ee403e09.png" src="../../_images/451ea5c3d67671c29fb4604a068bf5a8d6b33de9a21ec5d9c541c989ee403e09.png" />
+<img alt="../../_images/3d54822f01e8e54be61ac18954e4648acd9936ef65f2fcd5c5311ff7f2e40215.png" src="../../_images/3d54822f01e8e54be61ac18954e4648acd9936ef65f2fcd5c5311ff7f2e40215.png" />
+<img alt="../../_images/f430507f26fada3d35d9ca6d76ef1cf41aaafb89692efe57b5e68b24a7f61c23.png" src="../../_images/f430507f26fada3d35d9ca6d76ef1cf41aaafb89692efe57b5e68b24a7f61c23.png" />
+<img alt="../../_images/c4542846f636a6aa4ca4198f5b73a51cca7926174a72769800e581f8aa24eee5.png" src="../../_images/c4542846f636a6aa4ca4198f5b73a51cca7926174a72769800e581f8aa24eee5.png" />
 </div>
 </div>
 </section>
@@ -760,10 +765,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/b9b661b361a70c6bbf6113daef58679d0531798b4db5aac9de2ea959a9e524de.png" src="../../_images/b9b661b361a70c6bbf6113daef58679d0531798b4db5aac9de2ea959a9e524de.png" />
-<img alt="../../_images/8d4d36097676406b0a4dacaefb4a8a72e811ec2931d06eacc682cdd97c9e4c71.png" src="../../_images/8d4d36097676406b0a4dacaefb4a8a72e811ec2931d06eacc682cdd97c9e4c71.png" />
-<img alt="../../_images/5511565fce5744afe7d6bbe596f4c22484215c30b396e8186c1badc780f7fa64.png" src="../../_images/5511565fce5744afe7d6bbe596f4c22484215c30b396e8186c1badc780f7fa64.png" />
-<img alt="../../_images/9aed04764f7e82501a29dda44855262fb6ed660e8680b049c2bebe8ece626507.png" src="../../_images/9aed04764f7e82501a29dda44855262fb6ed660e8680b049c2bebe8ece626507.png" />
+<img alt="../../_images/9e9b55ee2599a648270586e73cd5b1bb7d2f054f96ec1de8a4e3e91f44908c64.png" src="../../_images/9e9b55ee2599a648270586e73cd5b1bb7d2f054f96ec1de8a4e3e91f44908c64.png" />
+<img alt="../../_images/ee827b0da59f3481c5866e12c87e51d9b1b041dc77c00fd8d9240056831a7524.png" src="../../_images/ee827b0da59f3481c5866e12c87e51d9b1b041dc77c00fd8d9240056831a7524.png" />
+<img alt="../../_images/5dec553371fa06d27c0054a458f7538c613379bd65ea323077382eff7c6c0e08.png" src="../../_images/5dec553371fa06d27c0054a458f7538c613379bd65ea323077382eff7c6c0e08.png" />
+<img alt="../../_images/77086a14ae1c49cf189902fa61fab4cee500711d81a0f7e45ed86dcedc66679b.png" src="../../_images/77086a14ae1c49cf189902fa61fab4cee500711d81a0f7e45ed86dcedc66679b.png" />
 </div>
 </div>
 </section>
@@ -874,8 +879,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

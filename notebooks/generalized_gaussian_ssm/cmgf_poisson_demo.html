@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -188,9 +188,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -361,32 +366,32 @@
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="n">ParamsGGSSM</span><span class="p">,</span> <span class="n">GeneralizedGaussianSSM</span><span class="p">,</span> <span class="n">EKFIntegrals</span>
-<span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="n">conditional_moments_gaussian_smoother</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.generalized_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsGGSSM</span><span class="p">,</span> <span class="n">GeneralizedGaussianSSM</span><span class="p">,</span> <span class="n">EKFIntegrals</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.generalized_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">conditional_moments_gaussian_smoother</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">matplotlib.gridspec</span> <span class="kn">import</span> <span class="n">GridSpec</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.gridspec</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridSpec</span>
 
-<span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="kn">import</span> <span class="n">Poisson</span> <span class="k">as</span> <span class="n">Pois</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Poisson</span> <span class="k">as</span> <span class="n">Pois</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
 </pre></div>
 </div>
 </div>
@@ -401,7 +406,7 @@
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_dynamics_2d</span><span class="p">(</span><span class="n">dynamics_matrix</span><span class="p">,</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_dynamics_2d</span><span class="p">(</span><span class="n">dynamics_matrix</span><span class="p">,</span>
                      <span class="n">bias_vector</span><span class="p">,</span>
                      <span class="n">mins</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">40</span><span class="p">,</span><span class="o">-</span><span class="mi">40</span><span class="p">),</span>
                      <span class="n">maxs</span><span class="o">=</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span><span class="mi">40</span><span class="p">),</span>
@@ -423,7 +428,7 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">q</span>
 
-<span class="k">def</span> <span class="nf">plot_states</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_states</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
     <span class="n">latent_dim</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">lim</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">states</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">):</span>
@@ -435,7 +440,7 @@
     <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ax</span>
 
-<span class="k">def</span> <span class="nf">plot_emissions_poisson</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_emissions_poisson</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
     <span class="n">latent_dim</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">emissions_dim</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">num_steps</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -466,7 +471,7 @@
 
     <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
 
-<span class="k">def</span> <span class="nf">compare_dynamics</span><span class="p">(</span><span class="n">Ex</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">dynamics_weights</span><span class="p">,</span> <span class="n">dynamics_bias</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_dynamics</span><span class="p">(</span><span class="n">Ex</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">dynamics_weights</span><span class="p">,</span> <span class="n">dynamics_bias</span><span class="p">):</span>
     <span class="c1"># Plot</span>
     <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 
@@ -501,7 +506,7 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
     <span class="c1"># plt.show()</span>
 
-<span class="k">def</span> <span class="nf">compare_smoothened_predictions</span><span class="p">(</span><span class="n">Ey</span><span class="p">,</span> <span class="n">Ey_true</span><span class="p">,</span> <span class="n">Covy</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_smoothened_predictions</span><span class="p">(</span><span class="n">Ey</span><span class="p">,</span> <span class="n">Ey_true</span><span class="p">,</span> <span class="n">Covy</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
     <span class="n">data_dim</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
@@ -534,7 +539,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Helper function to create a rotating linear system</span>
-<span class="k">def</span> <span class="nf">random_rotation</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">random_rotation</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     
@@ -570,11 +575,11 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sample from Poisson</span>
-<span class="k">def</span> <span class="nf">sample_poisson</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">num_trials</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_poisson</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">num_trials</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     
-    <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sample</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
         <span class="n">states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="o">=</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">emissions</span>
     
@@ -633,7 +638,7 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/0a2bcc58996b483bdc7bb1aaa9ac6a35ded8f93e1669eaf750d8976540a20fc6.png" src="../../_images/0a2bcc58996b483bdc7bb1aaa9ac6a35ded8f93e1669eaf750d8976540a20fc6.png" />
+<img alt="../../_images/ea9985cf5f5840644ab542273f1fd3e430774106a74bb989b75b59fa55f90041.png" src="../../_images/ea9985cf5f5840644ab542273f1fd3e430774106a74bb989b75b59fa55f90041.png" />
 </div>
 </div>
 </section>
@@ -655,7 +660,7 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/3dddcca9a8569b011c0d49a20ef1fc77cad44c6ab1d833b461fb6198f26a9cc4.png" src="../../_images/3dddcca9a8569b011c0d49a20ef1fc77cad44c6ab1d833b461fb6198f26a9cc4.png" />
+<img alt="../../_images/a96ad41322c780f07f0a9e059ecc9023de18efe919c45a8e5b281020d8e9ba14.png" src="../../_images/a96ad41322c780f07f0a9e059ecc9023de18efe919c45a8e5b281020d8e9ba14.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -674,12 +679,12 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/f6c3c5992b2a5ce3d6d8a7c4378f68a1aab2e41078a25b9170741487cb8e6a96.png" src="../../_images/f6c3c5992b2a5ce3d6d8a7c4378f68a1aab2e41078a25b9170741487cb8e6a96.png" />
-<img alt="../../_images/493f9da5913d77e679e859fb2d536d2ebbd1c04007ad533217e27329676a86c5.png" src="../../_images/493f9da5913d77e679e859fb2d536d2ebbd1c04007ad533217e27329676a86c5.png" />
-<img alt="../../_images/5105c39a3d0a30fb26f37432e3a2e41a69e093bbddf971c247b805700b575b85.png" src="../../_images/5105c39a3d0a30fb26f37432e3a2e41a69e093bbddf971c247b805700b575b85.png" />
-<img alt="../../_images/94ab73e7a77af81de1b3d57671b4f6a3b352f5845778ce97856bb87d43413912.png" src="../../_images/94ab73e7a77af81de1b3d57671b4f6a3b352f5845778ce97856bb87d43413912.png" />
-<img alt="../../_images/cd06b51c382d3361e122048bd0fe718372016665d83880ef9018cbeba5ec2418.png" src="../../_images/cd06b51c382d3361e122048bd0fe718372016665d83880ef9018cbeba5ec2418.png" />
-<img alt="../../_images/add4b44e258c0ccd664ae915d36054402939b07c921b4005972c781517c8ef7a.png" src="../../_images/add4b44e258c0ccd664ae915d36054402939b07c921b4005972c781517c8ef7a.png" />
+<img alt="../../_images/3fdaa872420972872aeabf53e9077999051b1eeea045e4369340def95b03b2b0.png" src="../../_images/3fdaa872420972872aeabf53e9077999051b1eeea045e4369340def95b03b2b0.png" />
+<img alt="../../_images/95d44b13d53d3bdfda99c5bbd116cfbc6efd02ecaffcef59251a1e893da0be29.png" src="../../_images/95d44b13d53d3bdfda99c5bbd116cfbc6efd02ecaffcef59251a1e893da0be29.png" />
+<img alt="../../_images/71f2052b8145c793206357326d2fe7d1d1e883963870fc57d9c065cd1d9cfc8e.png" src="../../_images/71f2052b8145c793206357326d2fe7d1d1e883963870fc57d9c065cd1d9cfc8e.png" />
+<img alt="../../_images/c0bee679b62cdb62949ee09a82c8559c3029232cd32d4f7881ae79758a80767d.png" src="../../_images/c0bee679b62cdb62949ee09a82c8559c3029232cd32d4f7881ae79758a80767d.png" />
+<img alt="../../_images/f6db08c95cd4d70f92ae2f1640d2a94ff9307510a4071b73c5d6e937ae25ee34.png" src="../../_images/f6db08c95cd4d70f92ae2f1640d2a94ff9307510a4071b73c5d6e937ae25ee34.png" />
+<img alt="../../_images/e908c10a15fde32ac70f05f4c7415245951fb8aa9699fa32998529ec56f7d3b1.png" src="../../_images/e908c10a15fde32ac70f05f4c7415245951fb8aa9699fa32998529ec56f7d3b1.png" />
 </div>
 </div>
 </section>
@@ -784,8 +789,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

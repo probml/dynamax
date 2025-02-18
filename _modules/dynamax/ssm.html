@@ -15,8 +15,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -187,9 +187,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -289,38 +294,44 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.ssm</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">fastprogress.fastprogress</span> <span class="kn">import</span> <span class="n">progress_bar</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">lax</span><span class="p">,</span> <span class="n">vmap</span>
-<span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_map</span>
-<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PyTree</span>
-<span class="kn">import</span> <span class="nn">optax</span>
-<span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax</span> <span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">tfd</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Any</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Protocol</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Base classes for state space models (SSMs).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">to_unconstrained</span><span class="p">,</span> <span class="n">from_unconstrained</span>
-<span class="kn">from</span> <span class="nn">dynamax.parameters</span> <span class="kn">import</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">PropertySet</span>
-<span class="kn">from</span> <span class="nn">dynamax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">Scalar</span>
-<span class="kn">from</span> <span class="nn">dynamax.utils.optimize</span> <span class="kn">import</span> <span class="n">run_sgd</span>
-<span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">ensure_array_has_batch_dim</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastprogress.fastprogress</span><span class="w"> </span><span class="kn">import</span> <span class="n">progress_bar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">lax</span><span class="p">,</span> <span class="n">vmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.tree_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Real</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">tfd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_unconstrained</span><span class="p">,</span> <span class="n">from_unconstrained</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">PropertySet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">PRNGKeyT</span><span class="p">,</span> <span class="n">Scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_sgd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_array_has_batch_dim</span>
 
 
-<span class="k">class</span> <span class="nc">Posterior</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="nd">@runtime_checkable</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Posterior</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.&quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
-<span class="k">class</span> <span class="nc">SuffStatsSSM</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="nd">@runtime_checkable</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SuffStatsSSM</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A :class:`NamedTuple` with sufficient statics stored as :class:`jax.DeviceArray` in the leaf nodes.&quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
 <div class="viewcode-block" id="SSM">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM">[docs]</a>
-<span class="k">class</span> <span class="nc">SSM</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SSM</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;A base class for state space models. Such models consist of parameters, which</span>
 <span class="sd">    we may learn, as well as hyperparameters, which specify static properties of the</span>
 <span class="sd">    model. This base class allows parameters to be indicated a standardized way</span>
@@ -377,10 +388,10 @@
 <div class="viewcode-block" id="SSM.initial_distribution">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.initial_distribution">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">initial_distribution</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">initial_distribution</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return an initial distribution over latent states.</span>
 
@@ -398,11 +409,11 @@
 <div class="viewcode-block" id="SSM.transition_distribution">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.transition_distribution">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">transition_distribution</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transition_distribution</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a distribution over next latent state given current state.</span>
 
@@ -421,11 +432,11 @@
 <div class="viewcode-block" id="SSM.emission_distribution">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.emission_distribution">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">emission_distribution</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">emission_distribution</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a distribution over emissions given current state.</span>
 
@@ -443,7 +454,7 @@
 
 <div class="viewcode-block" id="SSM.log_prior">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.log_prior">[docs]</a>
-    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
@@ -457,7 +468,7 @@
 
     <span class="nd">@property</span>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a pytree matching the pytree of tuples specifying the shape of a single time step&#39;s emissions.</span>
 
 <span class="sd">        For example, a `GaussianHMM` with $D$ dimensional emissions would return `(D,)`.</span>
@@ -466,7 +477,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">inputs_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inputs_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a pytree matching the pytree of tuples specifying the shape of a single time step&#39;s inputs.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -475,10 +486,10 @@
     <span class="c1"># All SSMs support sampling</span>
 <div class="viewcode-block" id="SSM.sample">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.sample">[docs]</a>
-    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKeyT</span><span class="p">,</span>
         <span class="n">num_timesteps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps state_dim&quot;</span><span class="p">],</span>
@@ -495,7 +506,8 @@
 <span class="sd">            latent states and emissions</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Sample the next state and emission given the previous state and input.&quot;&quot;&quot;</span>
             <span class="n">key</span><span class="p">,</span> <span class="n">inpt</span> <span class="o">=</span> <span class="n">args</span>
             <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
             <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">prev_state</span><span class="p">,</span> <span class="n">inpt</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">)</span>
@@ -522,7 +534,7 @@
 
 <div class="viewcode-block" id="SSM.log_prob">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.log_prob">[docs]</a>
-    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">states</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps state_dim&quot;</span><span class="p">],</span>
@@ -531,7 +543,8 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the log joint probability of the states and observations&quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Compute the log probability of the next time step.&quot;&quot;&quot;</span>
             <span class="n">lp</span><span class="p">,</span> <span class="n">prev_state</span> <span class="o">=</span> <span class="n">carry</span>
             <span class="n">state</span><span class="p">,</span> <span class="n">emission</span><span class="p">,</span> <span class="n">inpt</span> <span class="o">=</span> <span class="n">args</span>
             <span class="n">lp</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">prev_state</span><span class="p">,</span> <span class="n">inpt</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
@@ -556,7 +569,7 @@
     <span class="c1"># Some SSMs will implement these inference functions.</span>
 <div class="viewcode-block" id="SSM.marginal_log_prob">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.marginal_log_prob">[docs]</a>
-    <span class="k">def</span> <span class="nf">marginal_log_prob</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">marginal_log_prob</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
@@ -578,7 +591,7 @@
 
 <div class="viewcode-block" id="SSM.filter">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.filter">[docs]</a>
-    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
@@ -600,7 +613,7 @@
 
 <div class="viewcode-block" id="SSM.smoother">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.smoother">[docs]</a>
-    <span class="k">def</span> <span class="nf">smoother</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">smoother</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
@@ -623,7 +636,7 @@
     <span class="c1"># Learning algorithms</span>
 <div class="viewcode-block" id="SSM.e_step">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.e_step">[docs]</a>
-    <span class="k">def</span> <span class="nf">e_step</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
@@ -645,7 +658,7 @@
 
 <div class="viewcode-block" id="SSM.m_step">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.m_step">[docs]</a>
-    <span class="k">def</span> <span class="nf">m_step</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span>
@@ -673,17 +686,17 @@
 
 <div class="viewcode-block" id="SSM.fit_em">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.fit_em">[docs]</a>
-    <span class="k">def</span> <span class="nf">fit_em</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_em</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span>
-        <span class="n">emissions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
-                         <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_batches num_timesteps emission_dim&quot;</span><span class="p">]],</span>
+        <span class="n">emissions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Real</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
+                         <span class="n">Real</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_batches num_timesteps emission_dim&quot;</span><span class="p">]],</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">],</span>
                                <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_batches num_timesteps input_dim&quot;</span><span class="p">]]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">num_iters</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
         <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_iters&quot;</span><span class="p">]]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_iters&quot;</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).</span>
 
 <span class="sd">        EM aims to find parameters that maximize the marginal log probability,</span>
@@ -712,7 +725,8 @@
         <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs_shape</span><span class="p">)</span>
 
         <span class="nd">@jit</span>
-        <span class="k">def</span> <span class="nf">em_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">em_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Perform one EM step.&quot;&quot;&quot;</span>
             <span class="n">batch_stats</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">e_step</span><span class="p">,</span> <span class="n">params</span><span class="p">))(</span><span class="n">batch_emissions</span><span class="p">,</span> <span class="n">batch_inputs</span><span class="p">)</span>
             <span class="n">lp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prior</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="n">lls</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
             <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">)</span>
@@ -731,7 +745,7 @@
 
 <div class="viewcode-block" id="SSM.fit_sgd">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.fit_sgd">[docs]</a>
-    <span class="k">def</span> <span class="nf">fit_sgd</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_sgd</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span>
@@ -743,8 +757,8 @@
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">num_epochs</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
         <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;niter&quot;</span><span class="p">]]:</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKeyT</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; niter&quot;</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute parameter MLE/ MAP estimate using Stochastic Gradient Descent (SGD).</span>
 
 <span class="sd">        SGD aims to find parameters that maximize the marginal log probability,</span>
@@ -779,7 +793,7 @@
 
         <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">_loss_fn</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_loss_fn</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Default objective function.&quot;&quot;&quot;</span>
             <span class="n">params</span> <span class="o">=</span> <span class="n">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
             <span class="n">minibatch_emissions</span><span class="p">,</span> <span class="n">minibatch_inputs</span> <span class="o">=</span> <span class="n">minibatch</span>
@@ -864,8 +878,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

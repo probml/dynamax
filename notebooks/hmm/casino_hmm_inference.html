@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -190,9 +190,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -386,11 +391,11 @@ This is from the book:</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 </pre></div>
 </div>
 </div>
@@ -398,15 +403,64 @@ This is from the book:</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
-<span class="kn">from</span> <span class="nn">jax.nn</span> <span class="kn">import</span> <span class="n">one_hot</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">one_hot</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">CategoricalHMM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalHMM</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">9</span>
+<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
+<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="kn">from</span><span class="w"> </span><span class="nn">jax.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">one_hot</span>
+<span class="ne">----&gt; </span><span class="mi">9</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalHMM</span>
+
+<span class="n">File</span> <span class="o">~/</span><span class="n">work</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">hidden_markov_model</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">7</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.categorical_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalHMM</span>
+<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gamma_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GammaHMM</span>
+<span class="ne">----&gt; </span><span class="mi">7</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gaussian_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianHMM</span><span class="p">,</span> <span class="n">DiagonalGaussianHMM</span><span class="p">,</span> <span class="n">SphericalGaussianHMM</span><span class="p">,</span> <span class="n">SharedCovarianceGaussianHMM</span><span class="p">,</span> <span class="n">LowRankGaussianHMM</span>
+<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gmm_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianMixtureHMM</span><span class="p">,</span> <span class="n">DiagonalGaussianMixtureHMM</span>
+<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.linreg_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegressionHMM</span>
+
+<span class="n">File</span> <span class="o">~/</span><span class="n">work</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">hidden_markov_model</span><span class="o">/</span><span class="n">models</span><span class="o">/</span><span class="n">gaussian_hmm</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">442</span>
+<span class="g g-Whitespace">    </span><span class="mi">438</span>     <span class="n">means</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+<span class="g g-Whitespace">    </span><span class="mi">439</span>     <span class="n">cov</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+<span class="ne">--&gt; </span><span class="mi">442</span> <span class="k">class</span><span class="w"> </span><span class="nc">SharedCovarianceGaussianHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">443</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;Initialize SharedCovarianceGaussianHMMEmissions.</span>
+<span class="g g-Whitespace">    </span><span class="mi">444</span><span class="sd"> </span>
+<span class="g g-Whitespace">    </span><span class="mi">445</span><span class="sd">     Args:</span>
+<span class="sd">   (...)</span>
+<span class="g g-Whitespace">    </span><span class="mi">451</span><span class="sd">         emission_prior_extra_df: extra degrees of freedom for the prior</span>
+<span class="g g-Whitespace">    </span><span class="mi">452</span><span class="sd">     &quot;&quot;&quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">453</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">454</span>                  <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">455</span>                  <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">458</span>                  <span class="n">emission_prior_scale</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">459</span>                  <span class="n">emission_prior_extra_df</span><span class="p">:</span> <span class="n">Scalar</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>
+
+<span class="nn">File ~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/gaussian_hmm.py:559,</span> in <span class="ni">SharedCovarianceGaussianHMMEmissions</span><span class="nt">()</span>
+<span class="g g-Whitespace">    </span><span class="mi">550</span>     <span class="n">lp</span> <span class="o">+=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span><span class="n">mu0</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">/</span> <span class="n">kappa0</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">mus</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="g g-Whitespace">    </span><span class="mi">551</span>     <span class="k">return</span> <span class="n">lp</span>
+<span class="g g-Whitespace">    </span><span class="mi">553</span> <span class="k">def</span><span class="w"> </span><span class="nf">collect_suff_stats</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">554</span>     <span class="bp">self</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">555</span>     <span class="n">params</span><span class="p">:</span> <span class="n">ParamsSharedCovarianceGaussianHMMEmissions</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">556</span>     <span class="n">posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">557</span>     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
+<span class="g g-Whitespace">    </span><span class="mi">558</span>     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="ne">--&gt; </span><span class="mi">559</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="g g-Whitespace">    </span><span class="mi">560</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;Collect sufficient statistics for the M-step of the EM algorithm.&quot;&quot;&quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">561</span>     <span class="n">expected_states</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span>
+
+<span class="ne">TypeError</span>: unsupported operand type(s) for |: &#39;MetaAbstractArray&#39; and &#39;type&#39;
 </pre></div>
 </div>
 </div>
@@ -415,8 +469,8 @@ This is from the book:</p>
 <section id="make-a-categorical-hmm">
 <h2>Make a Categorical HMM<a class="headerlink" href="#make-a-categorical-hmm" title="Link to this heading">#</a></h2>
 <p>First, we’ll construct a categorical hidden Markov model (HMM). The model has discrete latent states <span class="math notranslate nohighlight">\(z_t \in \{1,2\}\)</span> to specify which of the two dice is used on the <span class="math notranslate nohighlight">\(t\)</span>-th roll. You observe the outcomes, or “emissions,” <span class="math notranslate nohighlight">\(y_t \in \{1,\ldots,6\}\)</span>. The categorical HMM specifies a joint distribution over the latent states and emissions,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-7dabf45a-cf0d-4cf0-9d68-117bbe6dbbf3">
-<span class="eqno">(1)<a class="headerlink" href="#equation-7dabf45a-cf0d-4cf0-9d68-117bbe6dbbf3" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-90d9b183-9836-49a4-b891-be19e0272c82">
+<span class="eqno">(1)<a class="headerlink" href="#equation-90d9b183-9836-49a4-b891-be19e0272c82" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_{1:T}, z_{1:T} \mid \theta) 
 &amp;= \mathrm{Cat}(z_1 \mid \pi) 
 \prod_{t=2}^T \mathrm{Cat}(z_t \mid A_{z_{t-1}}) 
@@ -476,12 +530,12 @@ B.shape: (2, 6)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ParamsCategoricalHMM(initial=ParamsStandardHMMInitialState(probs=Array([0.5, 0.5], dtype=float32)), transitions=ParamsStandardHMMTransitions(transition_matrix=Array([[0.95, 0.05],
-       [0.1 , 0.9 ]], dtype=float32)), emissions=ParamsCategoricalHMMEmissions(probs=Array([[[0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667,
-         0.16666667]],
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ParamsCategoricalHMM(initial=ParamsStandardHMMInitialState(probs=DeviceArray([0.5, 0.5], dtype=float32)), transitions=ParamsStandardHMMTransitions(transition_matrix=DeviceArray([[0.95, 0.05],
+             [0.1 , 0.9 ]], dtype=float32)), emissions=ParamsCategoricalHMMEmissions(probs=DeviceArray([[[0.16666667, 0.16666667, 0.16666667, 0.16666667,
+               0.16666667, 0.16666667]],
 
-       [[0.1       , 0.1       , 0.1       , 0.1       , 0.1       ,
-         0.5       ]]], dtype=float32)))
+             [[0.1       , 0.1       , 0.1       , 0.1       ,
+               0.1       , 0.5       ]]], dtype=float32)))
 </pre></div>
 </div>
 </div>
@@ -572,7 +626,7 @@ batch_emissions.shape: (5, 300, 1)
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_sequence</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_sequence</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">emissions</span><span class="p">):</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">one_hot</span><span class="p">(</span><span class="n">emissions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> 
                <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Greys&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">extent</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">-</span><span class="mf">.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">.5</span><span class="p">),</span> 
@@ -593,7 +647,7 @@ batch_emissions.shape: (5, 300, 1)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8cc941804ea17ec34438fc26f4cd08afd318272886cd238a970604cd0bbae456.png" src="../../_images/8cc941804ea17ec34438fc26f4cd08afd318272886cd238a970604cd0bbae456.png" />
+<img alt="../../_images/62c0c99057cb7d7bbe41d92c9ec8be373d2e138dde968d2ba50b870ad24d912e.png" src="../../_images/62c0c99057cb7d7bbe41d92c9ec8be373d2e138dde968d2ba50b870ad24d912e.png" />
 </div>
 </div>
 <p>The difference in outcomes is borne out in the empirical frequencies of seeing a six in each state.</p>
@@ -620,8 +674,8 @@ expected frequencies:   [0.16666667 0.5       ]
 <section id="filtering-forwards-algorithm">
 <h2>Filtering (forwards algorithm)<a class="headerlink" href="#filtering-forwards-algorithm" title="Link to this heading">#</a></h2>
 <p>In an HMM, <em>filtering</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given emissions up to and including time <span class="math notranslate nohighlight">\(t\)</span>. Mathematically, the filtering distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-cd232e62-a5b4-41bb-87fb-7540ba597cb7">
-<span class="eqno">(2)<a class="headerlink" href="#equation-cd232e62-a5b4-41bb-87fb-7540ba597cb7" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-58f7f25d-7315-4792-9491-cb453c235acf">
+<span class="eqno">(2)<a class="headerlink" href="#equation-58f7f25d-7315-4792-9491-cb453c235acf" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(z_t \mid y_{1:t}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} p(z_{1:t}, y_{1:t} \mid \theta)
 \end{align}\]</div>
 <p>The forward filtering algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.2) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion. It also returns an estimate of the <em>marginal likelihood</em>, <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta)\)</span>, which is useful for model comparison and fitting.</p>
@@ -650,7 +704,7 @@ posterior.filtered_probs.shape: (300, 2)
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_posterior_probs</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_posterior_probs</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">extent</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> 
                <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Greys&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">probs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>   <span class="c1"># probability of the loaded state (z=1)</span>
@@ -671,7 +725,7 @@ posterior.filtered_probs.shape: (300, 2)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/5b25803be0c297a35bf790a5ddc5936dd9b5c6761589e5bd4c723e09708fdd64.png" src="../../_images/5b25803be0c297a35bf790a5ddc5936dd9b5c6761589e5bd4c723e09708fdd64.png" />
+<img alt="../../_images/3493ccd510397df4dc506cbf76666db1318cf26453908c81585844c89921b6a5.png" src="../../_images/3493ccd510397df4dc506cbf76666db1318cf26453908c81585844c89921b6a5.png" />
 </div>
 </div>
 </section>
@@ -679,8 +733,8 @@ posterior.filtered_probs.shape: (300, 2)
 <section id="smoothing-forwards-backwards-algorithm">
 <h2>Smoothing (forwards-backwards algorithm)<a class="headerlink" href="#smoothing-forwards-backwards-algorithm" title="Link to this heading">#</a></h2>
 <p><em>Smoothing</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given all emissions, including those that come after. Mathematically, the smoothing distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-cf3ab882-221a-40b6-82e4-85db250bb9dd">
-<span class="eqno">(3)<a class="headerlink" href="#equation-cf3ab882-221a-40b6-82e4-85db250bb9dd" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-409d5a09-010f-4c13-bc31-75e32c892406">
+<span class="eqno">(3)<a class="headerlink" href="#equation-409d5a09-010f-4c13-bc31-75e32c892406" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{z_{t+1}} \cdots \sum_{z_T} p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>The forward-backward algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.4) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion.</p>
@@ -706,7 +760,7 @@ p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/f5099d6bcac529dd0fccc1539360adfd31b6eb97559171c423d9e2880e74ca2d.png" src="../../_images/f5099d6bcac529dd0fccc1539360adfd31b6eb97559171c423d9e2880e74ca2d.png" />
+<img alt="../../_images/35111c4581d3898007581563aa438be22f2927b4651136740ab111993c68a3b3.png" src="../../_images/35111c4581d3898007581563aa438be22f2927b4651136740ab111993c68a3b3.png" />
 </div>
 </div>
 <p>Compare the smoothed probabilities to the filtered ones. See how the sharp rises in probability (e.g. around time step 235) are attenuated in the smoothing distribution? That’s because the filtering distribution is sensitive to when the die comes up six, thinking it might indicate a switch to the loaded die. The smoothing distributions benefit from future outcomes, which suggest that the six was just a chance event.</p>
@@ -714,8 +768,8 @@ p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{
 <section id="most-likely-state-sequence-viterbi-algorithm">
 <h2>Most likely state sequence (Viterbi algorithm)<a class="headerlink" href="#most-likely-state-sequence-viterbi-algorithm" title="Link to this heading">#</a></h2>
 <p>Finally, we can compute the most likely state sequence (aka <em>maximum a posteriori</em> or “MAP” sequence) using the Viterbi algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.7). This dynamic programming algorithm solves for</p>
-<div class="amsmath math notranslate nohighlight" id="equation-37ee27db-0b30-4404-8c2b-3072ef85784a">
-<span class="eqno">(4)<a class="headerlink" href="#equation-37ee27db-0b30-4404-8c2b-3072ef85784a" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-c18751b2-4bbb-4623-a93b-204fb44ac6e9">
+<span class="eqno">(4)<a class="headerlink" href="#equation-c18751b2-4bbb-4623-a93b-204fb44ac6e9" title="Permalink to this equation">#</a></span>\[\begin{align}
 z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>You can compute the MAP sequence with the following code.</p>
@@ -726,7 +780,7 @@ z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta)
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_map_sequence</span><span class="p">(</span><span class="n">most_likely_states</span><span class="p">,</span> <span class="n">states</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_map_sequence</span><span class="p">(</span><span class="n">most_likely_states</span><span class="p">,</span> <span class="n">states</span><span class="p">):</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">extent</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">),</span> 
                <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Greys&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">most_likely_states</span><span class="p">)</span>
@@ -748,7 +802,7 @@ z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/52ea374f9825c0da68780bb12ee08abc598619c3048f101201a16bf2fe2c8e54.png" src="../../_images/52ea374f9825c0da68780bb12ee08abc598619c3048f101201a16bf2fe2c8e54.png" />
+<img alt="../../_images/aa0877c89536fbe5c25f7d992069b0974c941c30b2143eda2372af48fd00223c.png" src="../../_images/aa0877c89536fbe5c25f7d992069b0974c941c30b2143eda2372af48fd00223c.png" />
 </div>
 </div>
 </section>
@@ -865,8 +919,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

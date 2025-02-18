@@ -15,8 +15,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
@@ -187,9 +187,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -289,18 +294,19 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.generalized_gaussian_ssm.inference</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
-<span class="kn">from</span> <span class="nn">numpy.polynomial.hermite_e</span> <span class="kn">import</span> <span class="n">hermegauss</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jacfwd</span><span class="p">,</span> <span class="n">vmap</span><span class="p">,</span> <span class="n">lax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">lax</span>
-<span class="kn">from</span> <span class="nn">tensorflow_probability.substrates.jax.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormalFullCovariance</span> <span class="k">as</span> <span class="n">MVN</span>
-<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Callable</span>
+<span></span><span class="sd">&quot;&quot;&quot;Inference routines for generalized Gaussian state-space models.&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">psd_solve</span>
-<span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm.models</span> <span class="kn">import</span> <span class="n">ParamsGGSSM</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm.inference</span> <span class="kn">import</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGSSMSmoothed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">jacfwd</span><span class="p">,</span> <span class="n">vmap</span><span class="p">,</span> <span class="n">lax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.polynomial.hermite_e</span><span class="w"> </span><span class="kn">import</span> <span class="n">hermegauss</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">psd_solve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.generalized_gaussian_ssm.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsGGSSM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.linear_gaussian_ssm.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGSSMSmoothed</span>
 
 <span class="c1"># Helper functions</span>
 <span class="n">_get_params</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">x</span>
@@ -309,29 +315,49 @@
 <span class="n">_jacfwd_2d</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">jacfwd</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">x</span><span class="p">))</span>
 
 
-<span class="k">class</span> <span class="nc">EKFIntegrals</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EKFIntegrals</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Lightweight container for EKF Gaussian integrals.&quot;&quot;&quot;</span>
     <span class="n">gaussian_expectation</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
     <span class="n">gaussian_cross_covariance</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span> <span class="n">_jacfwd_2d</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="o">@</span> <span class="n">P</span> <span class="o">@</span> <span class="n">_jacfwd_2d</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
 
 
-<span class="k">class</span> <span class="nc">UKFIntegrals</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UKFIntegrals</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight container for UKF Gaussian integrals.&quot;&quot;&quot;</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
     <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span>
     <span class="n">kappa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
 
-    <span class="k">def</span> <span class="nf">gaussian_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gaussian_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                             <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                             <span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> 
+                             <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">])</span> \
+                             <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the Gaussian expectation of a function f.&quot;&quot;&quot;</span>
         <span class="n">w_mean</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">sigmas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_weights_and_sigmas</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">w_mean</span><span class="p">,</span> <span class="n">vmap</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">sigmas</span><span class="p">),</span> <span class="n">axes</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">gaussian_cross_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gaussian_cross_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                                  <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                                  <span class="n">g</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                                  <span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                                  <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">])</span> \
+                                  <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim_f output_dim_g&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the Gaussian cross-covariance of two functions f and g.&quot;&quot;&quot;</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">w_cov</span><span class="p">,</span> <span class="n">sigmas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_weights_and_sigmas</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
         <span class="n">_outer</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="n">f_mean</span><span class="p">,</span> <span class="n">g_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaussian_expectation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaussian_expectation</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">w_cov</span><span class="p">,</span> <span class="n">_outer</span><span class="p">(</span><span class="n">vmap</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">sigmas</span><span class="p">)</span> <span class="o">-</span> <span class="n">f_mean</span><span class="p">,</span> <span class="n">vmap</span><span class="p">(</span><span class="n">g</span><span class="p">)(</span><span class="n">sigmas</span><span class="p">)</span> <span class="o">-</span> <span class="n">g_mean</span><span class="p">),</span> <span class="n">axes</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">f_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaussian_expectation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+        <span class="n">g_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaussian_expectation</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">w_cov</span><span class="p">,</span> <span class="n">_outer</span><span class="p">(</span><span class="n">vmap</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">sigmas</span><span class="p">)</span> <span class="o">-</span> <span class="n">f_mean</span><span class="p">,</span> 
+                                                          <span class="n">vmap</span><span class="p">(</span><span class="n">g</span><span class="p">)(</span><span class="n">sigmas</span><span class="p">)</span> <span class="o">-</span> <span class="n">g_mean</span><span class="p">),</span> 
+                                                          <span class="n">axes</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">compute_weights_and_sigmas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_weights_and_sigmas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                                   <span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                                   <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">])</span> \
+                                   <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span> 
+                                            <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span> 
+                                            <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1 state_dim&quot;</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute weights and sigma points for the UKF.&quot;&quot;&quot;</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
         <span class="n">lamb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kappa</span><span class="p">)</span> <span class="o">-</span> <span class="n">n</span>
         <span class="c1"># Compute weights</span>
@@ -346,21 +372,38 @@
         <span class="k">return</span> <span class="n">w_mean</span><span class="p">,</span> <span class="n">w_cov</span><span class="p">,</span> <span class="n">sigmas</span>
 
 
-<span class="k">class</span> <span class="nc">GHKFIntegrals</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GHKFIntegrals</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight container for GHKF Gaussian integrals.&quot;&quot;&quot;</span>
     <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
 
-    <span class="k">def</span> <span class="nf">gaussian_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gaussian_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                             <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                             <span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> 
+                             <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">])</span> \
+                             <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the Gaussian expectation of a function f.&quot;&quot;&quot;</span>
         <span class="n">w_mean</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">sigmas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_weights_and_sigmas</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">w_mean</span><span class="p">,</span> <span class="n">vmap</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">sigmas</span><span class="p">),</span> <span class="n">axes</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">gaussian_cross_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gaussian_cross_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                                  <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                                  <span class="n">g</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                                  <span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                                  <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">])</span> \
+                                  <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim_f output_dim_g&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the Gaussian cross-covariance of two functions f and g.&quot;&quot;&quot;</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">w_cov</span><span class="p">,</span> <span class="n">sigmas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_weights_and_sigmas</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
         <span class="n">_outer</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">f_mean</span><span class="p">,</span> <span class="n">g_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaussian_expectation</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaussian_expectation</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">w_cov</span><span class="p">,</span> <span class="n">_outer</span><span class="p">(</span><span class="n">vmap</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">sigmas</span><span class="p">)</span> <span class="o">-</span> <span class="n">f_mean</span><span class="p">,</span> <span class="n">vmap</span><span class="p">(</span><span class="n">g</span><span class="p">)(</span><span class="n">sigmas</span><span class="p">)</span> <span class="o">-</span> <span class="n">g_mean</span><span class="p">),</span> <span class="n">axes</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">compute_weights_and_sigmas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_weights_and_sigmas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                                   <span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                                   <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">])</span> \
+                                   <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;order**state_dim&quot;</span><span class="p">],</span>
+                                            <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;order**state_dim&quot;</span><span class="p">],</span>
+                                            <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;order**state_dim state_dim&quot;</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute weights and sigma points for the GHKF.&quot;&quot;&quot;</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
         <span class="n">samples_1d</span><span class="p">,</span> <span class="n">weights_1d</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hermegauss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">))</span>
         <span class="n">weights_1d</span> <span class="o">/=</span> <span class="n">weights_1d</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
@@ -373,8 +416,17 @@
 <span class="n">CMGFIntegrals</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">EKFIntegrals</span><span class="p">,</span> <span class="n">UKFIntegrals</span><span class="p">,</span> <span class="n">GHKFIntegrals</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_predict</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">g_ev</span><span class="p">,</span> <span class="n">g_cov</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict next mean and covariance under an additive-noise Gaussian filter</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_predict</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> 
+             <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+             <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+             <span class="n">Q</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+             <span class="n">u</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">],</span>
+             <span class="n">g_ev</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+             <span class="n">g_cov</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> \
+             <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                      <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+                      <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Predict next mean and covariance under an additive-noise Gaussian filter</span>
 
 <span class="sd">        p(x_{t+1}) = N(x_{t+1} | mu_pred, Sigma_pred)</span>
 <span class="sd">        where</span>
@@ -407,8 +459,21 @@
     <span class="k">return</span> <span class="n">mu_pred</span><span class="p">,</span> <span class="n">Sigma_pred</span><span class="p">,</span> <span class="n">cross_pred</span>
 
 
-<span class="k">def</span> <span class="nf">_condition_on</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">y_cond_mean</span><span class="p">,</span> <span class="n">y_cond_cov</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">g_ev</span><span class="p">,</span> <span class="n">g_cov</span><span class="p">,</span> <span class="n">num_iter</span><span class="p">,</span> <span class="n">emission_dist</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Condition a Gaussian potential on a new observation with arbitrary</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_condition_on</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                  <span class="n">P</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+                  <span class="n">y_cond_mean</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                  <span class="n">y_cond_cov</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                  <span class="n">u</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">],</span>
+                  <span class="n">y</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim&quot;</span><span class="p">],</span>
+                  <span class="n">g_ev</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                  <span class="n">g_cov</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
+                  <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> 
+                  <span class="n">emission_dist</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> \
+                  <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim&quot;</span><span class="p">],</span>
+                           <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                           <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]]:</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Condition a Gaussian potential on a new observation with arbitrary</span>
 <span class="sd">       likelihood with given functions for conditional moments and make a</span>
 <span class="sd">       Gaussian approximation.</span>
 <span class="sd">       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})</span>
@@ -445,7 +510,8 @@
     <span class="n">Cov_Y</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">y_cond_cov</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
     <span class="n">identity_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
 
-    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iteratively re-linearize around the posterior mean and covariance.&quot;&quot;&quot;</span>
         <span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">yhat</span> <span class="o">=</span> <span class="n">g_ev</span><span class="p">(</span><span class="n">m_Y</span><span class="p">,</span> <span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span><span class="p">)</span>
         <span class="n">S</span> <span class="o">=</span> <span class="n">g_ev</span><span class="p">(</span><span class="n">Cov_Y</span><span class="p">,</span> <span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span><span class="p">)</span> <span class="o">+</span> <span class="n">g_cov</span><span class="p">(</span><span class="n">m_Y</span><span class="p">,</span> <span class="n">m_Y</span><span class="p">,</span> <span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span><span class="p">)</span>
@@ -462,8 +528,15 @@
     <span class="k">return</span> <span class="n">lls</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mu_cond</span><span class="p">,</span> <span class="n">Sigma_cond</span>
 
 
-<span class="k">def</span> <span class="nf">_statistical_linear_regression</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">C</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return moment-matching affine coefficients and approximation noise variance</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_statistical_linear_regression</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
+                                   <span class="n">Sigma</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+                                   <span class="n">m</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim&quot;</span><span class="p">],</span>
+                                   <span class="n">S</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim output_dim&quot;</span><span class="p">],</span>
+                                   <span class="n">C</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim output_dim&quot;</span><span class="p">])</span> \
+                                   <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim state_dim&quot;</span><span class="p">],</span>
+                                            <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim&quot;</span><span class="p">],</span>
+                                            <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;output_dim output_dim&quot;</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return moment-matching affine coefficients and approximation noise variance</span>
 <span class="sd">    given joint moments.</span>
 
 <span class="sd">        g(x) \approx Ax + b + e where e ~ N(0, Omega)</span>
@@ -492,13 +565,13 @@
 
 <div class="viewcode-block" id="conditional_moments_gaussian_filter">
 <a class="viewcode-back" href="../../../api.html#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter">[docs]</a>
-<span class="k">def</span> <span class="nf">conditional_moments_gaussian_filter</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">conditional_moments_gaussian_filter</span><span class="p">(</span>
     <span class="n">model_params</span><span class="p">:</span> <span class="n">ParamsGGSSM</span><span class="p">,</span>
     <span class="n">inf_params</span><span class="p">:</span> <span class="n">CMGFIntegrals</span><span class="p">,</span>
     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> \
+    <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run an (iterated) conditional moments Gaussian filter to produce the</span>
 <span class="sd">    marginal likelihood and filtered state estimates.</span>
 
@@ -528,7 +601,8 @@
     <span class="c1"># Emission distribution</span>
     <span class="n">emission_dist</span> <span class="o">=</span> <span class="n">model_params</span><span class="o">.</span><span class="n">emission_dist</span>
 
-    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;One step of the CMGF&quot;&quot;&quot;</span>
         <span class="n">ll</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span> <span class="o">=</span> <span class="n">carry</span>
 
         <span class="c1"># Get parameters and inputs for time index t</span>
@@ -554,13 +628,13 @@
 
 <div class="viewcode-block" id="iterated_conditional_moments_gaussian_filter">
 <a class="viewcode-back" href="../../../api.html#dynamax.generalized_gaussian_ssm.iterated_conditional_moments_gaussian_filter">[docs]</a>
-<span class="k">def</span> <span class="nf">iterated_conditional_moments_gaussian_filter</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">iterated_conditional_moments_gaussian_filter</span><span class="p">(</span>
     <span class="n">model_params</span><span class="p">:</span> <span class="n">ParamsGGSSM</span><span class="p">,</span>
     <span class="n">inf_params</span><span class="p">:</span> <span class="n">CMGFIntegrals</span><span class="p">,</span>
     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> \
+    <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run an iterated conditional moments Gaussian filter.</span>
 
 <span class="sd">    Args:</span>
@@ -580,13 +654,13 @@
 
 <div class="viewcode-block" id="conditional_moments_gaussian_smoother">
 <a class="viewcode-back" href="../../../api.html#dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_smoother">[docs]</a>
-<span class="k">def</span> <span class="nf">conditional_moments_gaussian_smoother</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">conditional_moments_gaussian_smoother</span><span class="p">(</span>
     <span class="n">model_params</span><span class="p">:</span> <span class="n">ParamsGGSSM</span><span class="p">,</span>
     <span class="n">inf_params</span><span class="p">:</span> <span class="n">CMGFIntegrals</span><span class="p">,</span>
     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">filtered_posterior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorGSSMFiltered</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> \
+    <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a conditional moments Gaussian smoother.</span>
 
 <span class="sd">    Args:</span>
@@ -615,7 +689,8 @@
     <span class="n">g_ev</span> <span class="o">=</span> <span class="n">inf_params</span><span class="o">.</span><span class="n">gaussian_expectation</span>
     <span class="n">g_cov</span> <span class="o">=</span> <span class="n">inf_params</span><span class="o">.</span><span class="n">gaussian_cross_covariance</span>
 
-    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;One step of the CMGS&quot;&quot;&quot;</span>
         <span class="c1"># Unpack the inputs</span>
         <span class="n">smoothed_mean_next</span><span class="p">,</span> <span class="n">smoothed_cov_next</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">t</span><span class="p">,</span> <span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span> <span class="o">=</span> <span class="n">args</span>
@@ -658,13 +733,13 @@
 
 <div class="viewcode-block" id="iterated_conditional_moments_gaussian_smoother">
 <a class="viewcode-back" href="../../../api.html#dynamax.generalized_gaussian_ssm.iterated_conditional_moments_gaussian_smoother">[docs]</a>
-<span class="k">def</span> <span class="nf">iterated_conditional_moments_gaussian_smoother</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">iterated_conditional_moments_gaussian_smoother</span><span class="p">(</span>
     <span class="n">model_params</span><span class="p">:</span> <span class="n">ParamsGGSSM</span><span class="p">,</span>
     <span class="n">inf_params</span><span class="p">:</span> <span class="n">CMGFIntegrals</span><span class="p">,</span>
     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
     <span class="n">num_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> \
+    <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run an iterated conditional moments Gaussian smoother.</span>
 
 <span class="sd">    Args:</span>
@@ -678,7 +753,8 @@
 <span class="sd">        post: posterior object.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iteratively re-linearize around the smoothed posterior from the previous iteration.&quot;&quot;&quot;</span>
         <span class="c1"># Relinearize around smoothed posterior from previous iteration</span>
         <span class="n">smoothed_prior</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">smoothed_posterior</span> <span class="o">=</span> <span class="n">conditional_moments_gaussian_smoother</span><span class="p">(</span><span class="n">model_params</span><span class="p">,</span> <span class="n">inf_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">smoothed_prior</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
@@ -749,8 +825,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

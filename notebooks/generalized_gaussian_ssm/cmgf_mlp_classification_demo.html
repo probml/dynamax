@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -190,9 +190,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -380,19 +385,19 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="n">ParamsGGSSM</span><span class="p">,</span> <span class="n">EKFIntegrals</span>
-<span class="kn">from</span> <span class="nn">dynamax.generalized_gaussian_ssm</span> <span class="kn">import</span> <span class="n">conditional_moments_gaussian_filter</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.generalized_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsGGSSM</span><span class="p">,</span> <span class="n">EKFIntegrals</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.generalized_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">conditional_moments_gaussian_filter</span>
 </pre></div>
 </div>
 </div>
@@ -400,26 +405,26 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">flax.linen</span> <span class="k">as</span> <span class="nn">nn</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">flax.linen</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing flax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="k">pip</span> install -qq flax
-<span class="kn">import</span> <span class="nn">flax.linen</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">flax.linen</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">matplotlib.cm</span> <span class="k">as</span> <span class="nn">cm</span>
-<span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">from</span> <span class="nn">jax.flatten_util</span> <span class="kn">import</span> <span class="n">ravel_pytree</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.cm</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">ravel_pytree</span>
 </pre></div>
 </div>
 </div>
@@ -427,7 +432,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Helper function that visualizes 2d posterior predictive distribution</span>
-<span class="k">def</span> <span class="nf">plot_posterior_predictive</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">Xspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Zspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">rainbow</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_posterior_predictive</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">Xspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Zspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">rainbow</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">Xspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Zspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">Xspace</span><span class="o">.</span><span class="n">T</span><span class="p">),</span> <span class="p">(</span><span class="n">Zspace</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
@@ -447,7 +452,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate spiral dataset</span>
 <span class="c1"># Adapted from https://gist.github.com/45deg/e731d9e7f478de134def5668324c44c5</span>
-<span class="k">def</span> <span class="nf">generate_spiral_dataset</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_per_class</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">zero_var</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">one_var</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_spiral_dataset</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_per_class</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">zero_var</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">one_var</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span><span class="p">,</span> <span class="n">key4</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
@@ -494,7 +499,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9872a8d0d01050cf313609b7b275202955cd1b1c46e570e416b3092f226fd896.png" src="../../_images/9872a8d0d01050cf313609b7b275202955cd1b1c46e570e416b3092f226fd896.png" />
+<img alt="../../_images/37d02cd03663d13f63cb114adfea098ca299ec104cd4508f8c6ef7d5bd9a57a2.png" src="../../_images/37d02cd03663d13f63cb114adfea098ca299ec104cd4508f8c6ef7d5bd9a57a2.png" />
 </div>
 </div>
 </section>
@@ -519,7 +524,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># &#39;binary=True&#39; indicates rounding probabilities to binary outputs</span>
-<span class="k">def</span> <span class="nf">posterior_predictive_grid</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">apply</span><span class="p">,</span> <span class="n">binary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">posterior_predictive_grid</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">apply</span><span class="p">,</span> <span class="n">binary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="n">inferred_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">apply</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="n">fn_vec</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">inferred_fn</span><span class="p">,</span> <span class="n">signature</span><span class="o">=</span><span class="s1">&#39;(2)-&gt;(3)&#39;</span><span class="p">)</span>
     <span class="n">Z</span> <span class="o">=</span> <span class="n">fn_vec</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
@@ -536,11 +541,11 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <p>Finally, we define a generic MLP class that uses a sigmoid activation function.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="n">features</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
 
     <span class="nd">@nn</span><span class="o">.</span><span class="n">compact</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="n">feat</span><span class="p">)(</span><span class="n">x</span><span class="p">))</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])(</span><span class="n">x</span><span class="p">)</span>
@@ -551,7 +556,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_mlp_flattened_params</span><span class="p">(</span><span class="n">model_dims</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_mlp_flattened_params</span><span class="p">(</span><span class="n">model_dims</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
@@ -565,7 +570,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
     <span class="n">flat_params</span><span class="p">,</span> <span class="n">unflatten_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 
     <span class="c1"># Define apply function</span>
-    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="n">flat_params</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">unflatten_fn</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="n">flat_params</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">unflatten_fn</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">unflatten_fn</span><span class="p">(</span><span class="n">flat_params</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 
     <span class="n">apply_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">apply</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">unflatten_fn</span><span class="o">=</span><span class="n">unflatten_fn</span><span class="p">)</span>
@@ -624,7 +629,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/fcaebf0f34dc070eba447fe3fa5b0dd35dc4d795ef4d1a03f4d71f7a802f217e.png" src="../../_images/fcaebf0f34dc070eba447fe3fa5b0dd35dc4d795ef4d1a03f4d71f7a802f217e.png" />
+<img alt="../../_images/0cd364fb1dd8faadff6186ca5c40f178bca63f8e4928479bd992e5aad82dd371.png" src="../../_images/0cd364fb1dd8faadff6186ca5c40f178bca63f8e4928479bd992e5aad82dd371.png" />
 </div>
 </div>
 <p>Next, we visualize the training procedure by evaluating the intermediate steps.</p>
@@ -641,21 +646,21 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d1c1d7ba909c174c216547933f2c563e52c41ad05471066e90b7ac8e49245020.png" src="../../_images/d1c1d7ba909c174c216547933f2c563e52c41ad05471066e90b7ac8e49245020.png" />
+<img alt="../../_images/3ef9f9747d3025bf13f114c9b559da8383c76b776fd1121532f89e970ac46e06.png" src="../../_images/3ef9f9747d3025bf13f114c9b559da8383c76b776fd1121532f89e970ac46e06.png" />
 </div>
 </div>
 <p>Finally, we generate a video of the MLP-Classifier being trained.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.animation</span> <span class="k">as</span> <span class="nn">animation</span>
-<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.animation</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">animation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">animate</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
     <span class="n">w_curr</span> <span class="o">=</span> <span class="n">w_means</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
     <span class="n">Zi</span> <span class="o">=</span> <span class="n">posterior_predictive_grid</span><span class="p">(</span><span class="n">input_grid</span><span class="p">,</span> <span class="n">w_means</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">sigmoid_fn</span><span class="p">)</span>
@@ -784,8 +789,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

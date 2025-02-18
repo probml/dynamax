@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -190,9 +190,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -389,11 +394,11 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 </pre></div>
 </div>
 </div>
@@ -401,14 +406,65 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jr</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.hidden_markov_model</span> <span class="kn">import</span> <span class="n">LinearAutoregressiveHMM</span>
-<span class="kn">from</span> <span class="nn">dynamax.utils.plotting</span> <span class="kn">import</span> <span class="n">gradient_cmap</span>
-<span class="kn">from</span> <span class="nn">dynamax.utils.utils</span> <span class="kn">import</span> <span class="n">random_rotation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearAutoregressiveHMM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">gradient_cmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">random_rotation</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">6</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+<span class="ne">----&gt; </span><span class="mi">6</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearAutoregressiveHMM</span>
+<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">gradient_cmap</span>
+<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">random_rotation</span>
+
+<span class="n">File</span> <span class="o">~/</span><span class="n">work</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">hidden_markov_model</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">7</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.categorical_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalHMM</span>
+<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gamma_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GammaHMM</span>
+<span class="ne">----&gt; </span><span class="mi">7</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gaussian_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianHMM</span><span class="p">,</span> <span class="n">DiagonalGaussianHMM</span><span class="p">,</span> <span class="n">SphericalGaussianHMM</span><span class="p">,</span> <span class="n">SharedCovarianceGaussianHMM</span><span class="p">,</span> <span class="n">LowRankGaussianHMM</span>
+<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.gmm_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianMixtureHMM</span><span class="p">,</span> <span class="n">DiagonalGaussianMixtureHMM</span>
+<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model.models.linreg_hmm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegressionHMM</span>
+
+<span class="n">File</span> <span class="o">~/</span><span class="n">work</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">dynamax</span><span class="o">/</span><span class="n">hidden_markov_model</span><span class="o">/</span><span class="n">models</span><span class="o">/</span><span class="n">gaussian_hmm</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">442</span>
+<span class="g g-Whitespace">    </span><span class="mi">438</span>     <span class="n">means</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+<span class="g g-Whitespace">    </span><span class="mi">439</span>     <span class="n">cov</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+<span class="ne">--&gt; </span><span class="mi">442</span> <span class="k">class</span><span class="w"> </span><span class="nc">SharedCovarianceGaussianHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">443</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;Initialize SharedCovarianceGaussianHMMEmissions.</span>
+<span class="g g-Whitespace">    </span><span class="mi">444</span><span class="sd"> </span>
+<span class="g g-Whitespace">    </span><span class="mi">445</span><span class="sd">     Args:</span>
+<span class="sd">   (...)</span>
+<span class="g g-Whitespace">    </span><span class="mi">451</span><span class="sd">         emission_prior_extra_df: extra degrees of freedom for the prior</span>
+<span class="g g-Whitespace">    </span><span class="mi">452</span><span class="sd">     &quot;&quot;&quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">453</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">454</span>                  <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">455</span>                  <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">458</span>                  <span class="n">emission_prior_scale</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">459</span>                  <span class="n">emission_prior_extra_df</span><span class="p">:</span> <span class="n">Scalar</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>
+
+<span class="nn">File ~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/gaussian_hmm.py:559,</span> in <span class="ni">SharedCovarianceGaussianHMMEmissions</span><span class="nt">()</span>
+<span class="g g-Whitespace">    </span><span class="mi">550</span>     <span class="n">lp</span> <span class="o">+=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">MultivariateNormalFullCovariance</span><span class="p">(</span><span class="n">mu0</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">/</span> <span class="n">kappa0</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">mus</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="g g-Whitespace">    </span><span class="mi">551</span>     <span class="k">return</span> <span class="n">lp</span>
+<span class="g g-Whitespace">    </span><span class="mi">553</span> <span class="k">def</span><span class="w"> </span><span class="nf">collect_suff_stats</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">554</span>     <span class="bp">self</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">555</span>     <span class="n">params</span><span class="p">:</span> <span class="n">ParamsSharedCovarianceGaussianHMMEmissions</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">556</span>     <span class="n">posterior</span><span class="p">:</span> <span class="n">HMMPosterior</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">557</span>     <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
+<span class="g g-Whitespace">    </span><span class="mi">558</span>     <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="ne">--&gt; </span><span class="mi">559</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="g g-Whitespace">    </span><span class="mi">560</span><span class="w">     </span><span class="sd">&quot;&quot;&quot;Collect sufficient statistics for the M-step of the EM algorithm.&quot;&quot;&quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">561</span>     <span class="n">expected_states</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_probs</span>
+
+<span class="ne">TypeError</span>: unsupported operand type(s) for |: &#39;MetaAbstractArray&#39; and &#39;type&#39;
 </pre></div>
 </div>
 </div>
@@ -466,10 +522,10 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7ff45c9aeca0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fab41b8dc40&gt;
 </pre></div>
 </div>
-<img alt="../../_images/89b96ad241daeefe613409894f492be6afc124d0d93404865c64a423477e6227.png" src="../../_images/89b96ad241daeefe613409894f492be6afc124d0d93404865c64a423477e6227.png" />
+<img alt="../../_images/6874ee5e3dc726addcbf67c8b72ffc2273620abfa8ab05aaa674b02294284609.png" src="../../_images/6874ee5e3dc726addcbf67c8b72ffc2273620abfa8ab05aaa674b02294284609.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -487,12 +543,6 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 
 <span class="c1"># Compute the stationary points</span>
 <span class="n">stationary_points</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span> <span class="o">-</span> <span class="n">weights</span><span class="p">,</span> <span class="n">biases</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/jax/_src/numpy/linalg.py:1342: FutureWarning: jnp.linalg.solve: batched 1D solves with b.ndim &gt; 1 are deprecated, and in the future will be treated as a batched 2D solve. Use solve(a, b[..., None])[..., 0] to avoid this warning.
-  warnings.warn(&quot;jnp.linalg.solve: batched 1D solves with b.ndim &gt; 1 are deprecated, &quot;
 </pre></div>
 </div>
 </div>
@@ -530,7 +580,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/4366510971d2fe6ff38e221073ce743775a395851492cc38002dedfde43a50ff.png" src="../../_images/4366510971d2fe6ff38e221073ce743775a395851492cc38002dedfde43a50ff.png" />
+<img alt="../../_images/ea6972b58fbc9d1cd0bf11518c20ab6b258389db3cf34087a7e3511fd5272683.png" src="../../_images/ea6972b58fbc9d1cd0bf11518c20ab6b258389db3cf34087a7e3511fd5272683.png" />
 </div>
 </div>
 </section>
@@ -574,7 +624,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;$x_2$&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/bbe45f3029beaed085d29b042e34abdcf82dc4c45bfd929a1e78476a94a1272a.png" src="../../_images/bbe45f3029beaed085d29b042e34abdcf82dc4c45bfd929a1e78476a94a1272a.png" />
+<img alt="../../_images/346d4416b64f48c92ada15d09b912dce057a01ddfc30eb59777fce896ebedbe0.png" src="../../_images/346d4416b64f48c92ada15d09b912dce057a01ddfc30eb59777fce896ebedbe0.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the the corresponding AR state while the solid lines are the actual observations sampled from the HMM.</p>
@@ -606,7 +656,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/2fde180c4111b2689102c392b107436af3a5a17ae8756ef389f9405063a45bb6.png" src="../../_images/2fde180c4111b2689102c392b107436af3a5a17ae8756ef389f9405063a45bb6.png" />
+<img alt="../../_images/487615603b90dd95bf963592681d2b697aec8e288d136fa941aad4e35ffa8aa3.png" src="../../_images/487615603b90dd95bf963592681d2b697aec8e288d136fa941aad4e35ffa8aa3.png" />
 </div>
 </div>
 </section>
@@ -666,7 +716,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/18736cec9145c1eccf01832d510b230e887a5d2eff37977ccbda1c524aa7933e.png" src="../../_images/18736cec9145c1eccf01832d510b230e887a5d2eff37977ccbda1c524aa7933e.png" />
+<img alt="../../_images/89bc0bdaa47121770ebcad4eef9b80f1f8d088716401f4b130aa0e8482e45344.png" src="../../_images/89bc0bdaa47121770ebcad4eef9b80f1f8d088716401f4b130aa0e8482e45344.png" />
 </div>
 </div>
 </section>
@@ -713,7 +763,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ee763718182cb44a6b007dbfe745957aacc1da1e0697833e38f95e9e3e4026fd.png" src="../../_images/ee763718182cb44a6b007dbfe745957aacc1da1e0697833e38f95e9e3e4026fd.png" />
+<img alt="../../_images/3ea28fa5800691180879d1d7122324e9dc1b7920da8b7d1337d094b12c5e23ab.png" src="../../_images/3ea28fa5800691180879d1d7122324e9dc1b7920da8b7d1337d094b12c5e23ab.png" />
 </div>
 </div>
 </section>
@@ -741,7 +791,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/f1495b36c9c47f65df1672fc23245555d2a9709ab6c19763c974fa5284ec5bf9.png" src="../../_images/f1495b36c9c47f65df1672fc23245555d2a9709ab6c19763c974fa5284ec5bf9.png" />
+<img alt="../../_images/a5584a750b5364efe309fd7c5ff1434559cfe78e04bba7ebb447dcb6d424ad60.png" src="../../_images/a5584a750b5364efe309fd7c5ff1434559cfe78e04bba7ebb447dcb6d424ad60.png" />
 </div>
 </div>
 </section>
@@ -771,7 +821,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6a60a261d4c93a6183f6737e048f0c1ffac880fe712fdd48f740ff00b0e1990c.png" src="../../_images/6a60a261d4c93a6183f6737e048f0c1ffac880fe712fdd48f740ff00b0e1990c.png" />
+<img alt="../../_images/cf4c8b2e4ace9adaafedad4f1c4a178a9d1e4f04433a25907025341a61be00f3.png" src="../../_images/cf4c8b2e4ace9adaafedad4f1c4a178a9d1e4f04433a25907025341a61be00f3.png" />
 </div>
 </div>
 </section>
@@ -892,8 +942,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

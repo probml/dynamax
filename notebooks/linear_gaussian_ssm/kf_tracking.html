@@ -16,8 +16,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -190,9 +190,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -397,11 +402,10 @@ Thus the observation model becomes</p>
   &amp;=
     \underbrace{
     \begin{pmatrix}
-1 &amp; 0 &amp; 0 &amp; 0 \\
+1 &amp; 0 &amp; 0 &amp; 0 \\\
 0 &amp; 1 &amp; 0 &amp; 0
     \end{pmatrix}
     }_{H}
-    \;
 \underbrace{\begin{pmatrix} u_t\\ v_t \\ \dot{u}_t \\ \dot{v}_t \end{pmatrix}}_{z_t}    
  + r_t
 \end{align*}\]</div>
@@ -419,11 +423,11 @@ relevant parts  of the state vector.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
     <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
-    <span class="kn">import</span> <span class="nn">dynamax</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 </pre></div>
 </div>
 </div>
@@ -431,14 +435,14 @@ relevant parts  of the state vector.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">jr</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">vmap</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">jr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.utils.plotting</span> <span class="kn">import</span> <span class="n">plot_uncertainty_ellipses</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
-<span class="kn">from</span> <span class="nn">dynamax.linear_gaussian_ssm</span> <span class="kn">import</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_uncertainty_ellipses</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.linear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.linear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_filter</span>
 </pre></div>
 </div>
 </div>
@@ -465,7 +469,7 @@ relevant parts  of the state vector.</p>
 <span class="n">dynamics_covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.001</span>
 <span class="n">emission_weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
                               <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
-<span class="n">emission_covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.0</span>
+<span class="n">emission_covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span>
 
 <span class="c1"># Initialize model</span>
 <span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lgssm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
@@ -498,10 +502,10 @@ relevant parts  of the state vector.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7ff5c2c56ee0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f6762d4cd90&gt;
 </pre></div>
 </div>
-<img alt="../../_images/262052328eac31915797aa5ee9cbdd23151b58e2ebfb88f4830e3f7417ac5b69.png" src="../../_images/262052328eac31915797aa5ee9cbdd23151b58e2ebfb88f4830e3f7417ac5b69.png" />
+<img alt="../../_images/02832507a78c733241bba1cd3a78c57bca86995f11b7e53796405f9bf1bfc1f9.png" src="../../_images/02832507a78c733241bba1cd3a78c57bca86995f11b7e53796405f9bf1bfc1f9.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -511,7 +515,7 @@ relevant parts  of the state vector.</p>
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_lgssm_posterior</span><span class="p">(</span><span class="n">post_means</span><span class="p">,</span> <span class="n">post_covs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ellipse_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">legend_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_lgssm_posterior</span><span class="p">(</span><span class="n">post_means</span><span class="p">,</span> <span class="n">post_covs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ellipse_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">legend_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot posterior means and covariances for the first two dimensions of</span>
 <span class="sd">     the latent state of a LGSSM.</span>
 
@@ -595,7 +599,7 @@ relevant parts  of the state vector.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Axes: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/f09a085e0e747ee2539a41a064ce4844a00b803ae5bde18f08a322c8fb5084d8.png" src="../../_images/f09a085e0e747ee2539a41a064ce4844a00b803ae5bde18f08a322c8fb5084d8.png" />
+<img alt="../../_images/2ac463f63c7ff8dc9856102a0b9e17ddaeeca8d9666de5999f6f9deb431b355a.png" src="../../_images/2ac463f63c7ff8dc9856102a0b9e17ddaeeca8d9666de5999f6f9deb431b355a.png" />
 </div>
 </div>
 </section>
@@ -629,7 +633,7 @@ relevant parts  of the state vector.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Axes: &gt;
 </pre></div>
 </div>
-<img alt="../../_images/ec28d356f37166a98305740f1c5bf085a83afd9a44afbabac51829b8948384c5.png" src="../../_images/ec28d356f37166a98305740f1c5bf085a83afd9a44afbabac51829b8948384c5.png" />
+<img alt="../../_images/38fb00cef2bba8626bafbd01a359c2cf795eb9ad8bd14fa966d2a315b71dfecf.png" src="../../_images/38fb00cef2bba8626bafbd01a359c2cf795eb9ad8bd14fa966d2a315b71dfecf.png" />
 </div>
 </div>
 </section>
@@ -673,7 +677,7 @@ We just pass the model parameters directly to the function.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_kf_parallel</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">lgssm_posteriors</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_kf_parallel</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">lgssm_posteriors</span><span class="p">):</span>
     <span class="n">num_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
     <span class="n">dict_figures</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -734,9 +738,9 @@ We just pass the model parameters directly to the function.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ba822946a1eb9ba070edce5cb06a539bb5ad9da747e6d75809d87523a4e53e83.png" src="../../_images/ba822946a1eb9ba070edce5cb06a539bb5ad9da747e6d75809d87523a4e53e83.png" />
-<img alt="../../_images/219d2fb789d08d94820099fc5e6be0dfd2567ba64ceb39edd1257e40e7093099.png" src="../../_images/219d2fb789d08d94820099fc5e6be0dfd2567ba64ceb39edd1257e40e7093099.png" />
-<img alt="../../_images/26ec85d349c68eb6cb19be46b784271382523da73fa2190e66965a12ad8a00e7.png" src="../../_images/26ec85d349c68eb6cb19be46b784271382523da73fa2190e66965a12ad8a00e7.png" />
+<img alt="../../_images/15aab7f6f98d792b9676faa29d2451faf25d0d9828499dcd2a4968b7d8df3a0d.png" src="../../_images/15aab7f6f98d792b9676faa29d2451faf25d0d9828499dcd2a4968b7d8df3a0d.png" />
+<img alt="../../_images/9388a5137c4362b876d07bac8a4a01ff0333eb24eff4b06a9b0cbbcd02dd1fd4.png" src="../../_images/9388a5137c4362b876d07bac8a4a01ff0333eb24eff4b06a9b0cbbcd02dd1fd4.png" />
+<img alt="../../_images/369402dcd1fcc5a85c7a4ec28bae3643dede3bdbc57f9b7ce26f2e3c7ee4431e.png" src="../../_images/369402dcd1fcc5a85c7a4ec28bae3643dede3bdbc57f9b7ce26f2e3c7ee4431e.png" />
 </div>
 </div>
 </section>
@@ -843,8 +847,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

@@ -1,0 +1,80 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/nbclient/client.py", line 1319, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+    return future.result()
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+from functools import partial
+
+import jax.numpy as jnp
+import jax.random as jr
+import matplotlib.pyplot as plt
+from jax import vmap
+
+from dynamax.hidden_markov_model import GaussianHMM
+from dynamax.hidden_markov_model import DiagonalGaussianHMM
+from dynamax.hidden_markov_model import SphericalGaussianHMM
+from dynamax.hidden_markov_model import SharedCovarianceGaussianHMM
+from dynamax.utils.plotting import CMAP, COLORS, white_to_color_cmap
+------------------
+
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mTypeError[0m                                 Traceback (most recent call last)
+Cell [0;32mIn[2], line 8[0m
+[1;32m      5[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mmatplotlib[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpyplot[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[38;5;21;01mplt[39;00m
+[1;32m      6[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m vmap
+[0;32m----> 8[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mdynamax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mhidden_markov_model[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m GaussianHMM
+[1;32m      9[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mdynamax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mhidden_markov_model[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m DiagonalGaussianHMM
+[1;32m     10[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mdynamax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mhidden_markov_model[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m SphericalGaussianHMM
+
+File [0;32m~/work/dynamax/dynamax/dynamax/hidden_markov_model/__init__.py:7[0m
+[1;32m      5[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mdynamax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mhidden_markov_model[39;00m[38;5;21;01m.[39;00m[38;5;21;01mmodels[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcategorical_hmm[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m CategoricalHMM
+[1;32m      6[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mdynamax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mhidden_markov_model[39;00m[38;5;21;01m.[39;00m[38;5;21;01mmodels[39;00m[38;5;21;01m.[39;00m[38;5;21;01mgamma_hmm[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m GammaHMM
+[0;32m----> 7[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mdynamax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mhidden_markov_model[39;00m[38;5;21;01m.[39;00m[38;5;21;01mmodels[39;00m[38;5;21;01m.[39;00m[38;5;21;01mgaussian_hmm[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m GaussianHMM, DiagonalGaussianHMM, SphericalGaussianHMM, SharedCovarianceGaussianHMM, LowRankGaussianHMM
+[1;32m      8[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mdynamax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mhidden_markov_model[39;00m[38;5;21;01m.[39;00m[38;5;21;01mmodels[39;00m[38;5;21;01m.[39;00m[38;5;21;01mgmm_hmm[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m GaussianMixtureHMM, DiagonalGaussianMixtureHMM
+[1;32m      9[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mdynamax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mhidden_markov_model[39;00m[38;5;21;01m.[39;00m[38;5;21;01mmodels[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlinreg_hmm[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m LinearRegressionHMM
+
+File [0;32m~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/gaussian_hmm.py:442[0m
+[1;32m    438[0m     means: Union[Float[Array, [38;5;124m"[39m[38;5;124mstate_dim emission_dim[39m[38;5;124m"[39m], ParameterProperties]
+[1;32m    439[0m     cov: Union[Float[Array, [38;5;124m"[39m[38;5;124memission_dim emission_dim[39m[38;5;124m"[39m], ParameterProperties]
+[0;32m--> 442[0m [38;5;28;01mclass[39;00m[38;5;250m [39m[38;5;21;01mSharedCovarianceGaussianHMMEmissions[39;00m(HMMEmissions):
+[1;32m    443[0m [38;5;250m    [39m[38;5;124;03m"""Initialize SharedCovarianceGaussianHMMEmissions.[39;00m
+[1;32m    444[0m 
+[1;32m    445[0m [38;5;124;03m    Args:[39;00m
+[0;32m   (...)[0m
+[1;32m    451[0m [38;5;124;03m        emission_prior_extra_df: extra degrees of freedom for the prior[39;00m
+[1;32m    452[0m [38;5;124;03m    """[39;00m
+[1;32m    453[0m     [38;5;28;01mdef[39;00m[38;5;250m [39m[38;5;21m__init__[39m([38;5;28mself[39m,
+[1;32m    454[0m                  num_states: [38;5;28mint[39m,
+[1;32m    455[0m                  emission_dim: [38;5;28mint[39m,
+[0;32m   (...)[0m
+[1;32m    458[0m                  emission_prior_scale: Union[Scalar, Float[Array, [38;5;124m"[39m[38;5;124memission_dim emission_dim[39m[38;5;124m"[39m]] [38;5;241m=[39m [38;5;241m1e-4[39m,
+[1;32m    459[0m                  emission_prior_extra_df: Scalar [38;5;241m=[39m [38;5;241m0.1[39m):
+
+File [0;32m~/work/dynamax/dynamax/dynamax/hidden_markov_model/models/gaussian_hmm.py:559[0m, in [0;36mSharedCovarianceGaussianHMMEmissions[0;34m()[0m
+[1;32m    550[0m     lp [38;5;241m+[39m[38;5;241m=[39m tfd[38;5;241m.[39mMultivariateNormalFullCovariance(mu0, Sigma [38;5;241m/[39m kappa0)[38;5;241m.[39mlog_prob(mus)[38;5;241m.[39msum()
+[1;32m    551[0m     [38;5;28;01mreturn[39;00m lp
+[1;32m    553[0m [38;5;28;01mdef[39;00m[38;5;250m [39m[38;5;21mcollect_suff_stats[39m(
+[1;32m    554[0m     [38;5;28mself[39m,
+[1;32m    555[0m     params: ParamsSharedCovarianceGaussianHMMEmissions,
+[1;32m    556[0m     posterior: HMMPosterior,
+[1;32m    557[0m     emissions: Float[Array, [38;5;124m"[39m[38;5;124mnum_timesteps emission_dim[39m[38;5;124m"[39m],
+[1;32m    558[0m     inputs: Optional[Array] [38;5;241m=[39m [38;5;28;01mNone[39;00m
+[0;32m--> 559[0m ) [38;5;241m-[39m[38;5;241m>[39m Dict[[38;5;28mstr[39m, [43mFloat[49m[43m[[49m[43mArray[49m[43m,[49m[43m [49m[38;5;124;43m"[39;49m[38;5;124;43m...[39;49m[38;5;124;43m"[39;49m[43m][49m[43m [49m[38;5;241;43m|[39;49m[43m [49m[38;5;28;43mint[39;49m]:
+[1;32m    560[0m [38;5;250m    [39m[38;5;124;03m"""Collect sufficient statistics for the M-step of the EM algorithm."""[39;00m
+[1;32m    561[0m     expected_states [38;5;241m=[39m posterior[38;5;241m.[39msmoothed_probs
+
+[0;31mTypeError[0m: unsupported operand type(s) for |: 'MetaAbstractArray' and 'type'
+

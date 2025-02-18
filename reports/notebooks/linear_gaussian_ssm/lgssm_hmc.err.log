@@ -1,92 +1,104 @@
 Traceback (most recent call last):
-  File "/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
     executenb(
-  File "/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/nbclient/client.py", line 1314, in execute
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/nbclient/client.py", line 1319, in execute
     return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
-  File "/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
     return loop.run_until_complete(inner)
-  File "/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
     return future.result()
-  File "/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/nbclient/client.py", line 709, in async_execute
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/nbclient/client.py", line 709, in async_execute
     await self.async_execute_cell(
-  File "/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/nbclient/client.py", line 1062, in async_execute_cell
     await self._check_raise_for_error(cell, cell_index, exec_reply)
-  File "/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+  File "/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
-sample_size = 500
-param_samples, lps = fit_hmc(test_model, initial_params, param_props, next(keys), sample_size, emissions, num_integration_steps=30)
+try:
+    import blackjax
+except ModuleNotFoundError:
+    print('installing blackjax')
+    %pip install -qq blackjax
+    import blackjax
 ------------------
 
------ stdout -----
-Running window adaptation
-------------------
 
 [0;31m---------------------------------------------------------------------------[0m
 [0;31mTypeError[0m                                 Traceback (most recent call last)
-Cell [0;32mIn[10], line 2[0m
-[1;32m      1[0m sample_size [38;5;241m=[39m [38;5;241m500[39m
-[0;32m----> 2[0m param_samples, lps [38;5;241m=[39m [43mfit_hmc[49m[43m([49m[43mtest_model[49m[43m,[49m[43m [49m[43minitial_params[49m[43m,[49m[43m [49m[43mparam_props[49m[43m,[49m[43m [49m[38;5;28;43mnext[39;49m[43m([49m[43mkeys[49m[43m)[49m[43m,[49m[43m [49m[43msample_size[49m[43m,[49m[43m [49m[43memissions[49m[43m,[49m[43m [49m[43mnum_integration_steps[49m[38;5;241;43m=[39;49m[38;5;241;43m30[39;49m[43m)[49m
+Cell [0;32mIn[2], line 2[0m
+[1;32m      1[0m [38;5;28;01mtry[39;00m:
+[0;32m----> 2[0m     [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mblackjax[39;00m
+[1;32m      3[0m [38;5;28;01mexcept[39;00m [38;5;167;01mModuleNotFoundError[39;00m:
+[1;32m      4[0m     [38;5;28mprint[39m([38;5;124m'[39m[38;5;124minstalling blackjax[39m[38;5;124m'[39m)
 
-Cell [0;32mIn[9], line 38[0m, in [0;36mfit_hmc[0;34m(model, initial_params, props, key, num_samples, emissions, inputs, warmup_steps, num_integration_steps, verbose)[0m
-[1;32m     32[0m warmup [38;5;241m=[39m blackjax[38;5;241m.[39mwindow_adaptation(blackjax[38;5;241m.[39mhmc,
-[1;32m     33[0m                                     _logprob,
-[1;32m     34[0m                                     num_steps[38;5;241m=[39mwarmup_steps,
-[1;32m     35[0m                                     num_integration_steps[38;5;241m=[39mnum_integration_steps,
-[1;32m     36[0m                                     progress_bar[38;5;241m=[39mverbose)
-[1;32m     37[0m init_key, key [38;5;241m=[39m jr[38;5;241m.[39msplit(key)
-[0;32m---> 38[0m hmc_initial_state, hmc_kernel, _ [38;5;241m=[39m [43mwarmup[49m[38;5;241;43m.[39;49m[43mrun[49m[43m([49m[43minit_key[49m[43m,[49m[43m [49m[43minitial_unc_params[49m[43m)[49m
-[1;32m     40[0m [38;5;129m@jit[39m
-[1;32m     41[0m [38;5;28;01mdef[39;00m [38;5;21mhmc_step[39m(hmc_state, step_key):
-[1;32m     42[0m     next_hmc_state, _ [38;5;241m=[39m hmc_kernel(step_key, hmc_state)
+File [0;32m/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/blackjax/__init__.py:6[0m
+[1;32m      2[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mtyping[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m Callable
+[1;32m      4[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mblackjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01m_version[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m __version__
+[0;32m----> 6[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;21;01madaptation[39;00m[38;5;21;01m.[39;00m[38;5;21;01madjusted_mclmc_adaptation[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m adjusted_mclmc_find_L_and_step_size
+[1;32m      7[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;21;01madaptation[39;00m[38;5;21;01m.[39;00m[38;5;21;01mchees_adaptation[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m chees_adaptation
+[1;32m      8[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;21;01madaptation[39;00m[38;5;21;01m.[39;00m[38;5;21;01mmclmc_adaptation[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m mclmc_find_L_and_step_size
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/blackjax/adaptation/window_adaptation.py:340[0m, in [0;36mwindow_adaptation.<locals>.run[0;34m(rng_key, position, num_steps)[0m
-[1;32m    338[0m keys [38;5;241m=[39m jax[38;5;241m.[39mrandom[38;5;241m.[39msplit(rng_key, num_steps)
-[1;32m    339[0m schedule [38;5;241m=[39m build_schedule(num_steps)
-[0;32m--> 340[0m last_state, info [38;5;241m=[39m [43mscan_fn[49m[43m([49m
-[1;32m    341[0m [43m    [49m[43mone_step[49m[43m,[49m
-[1;32m    342[0m [43m    [49m[43mstart_state[49m[43m,[49m
-[1;32m    343[0m [43m    [49m[43m([49m[43mjnp[49m[38;5;241;43m.[39;49m[43marange[49m[43m([49m[43mnum_steps[49m[43m)[49m[43m,[49m[43m [49m[43mkeys[49m[43m,[49m[43m [49m[43mschedule[49m[43m)[49m[43m,[49m
-[1;32m    344[0m [43m[49m[43m)[49m
-[1;32m    346[0m last_chain_state, last_warmup_state, [38;5;241m*[39m_ [38;5;241m=[39m last_state
-[1;32m    348[0m step_size, inverse_mass_matrix [38;5;241m=[39m adapt_final(last_warmup_state)
+File [0;32m/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/blackjax/adaptation/__init__.py:1[0m
+[0;32m----> 1[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m (
+[1;32m      2[0m     chees_adaptation,
+[1;32m      3[0m     mclmc_adaptation,
+[1;32m      4[0m     meads_adaptation,
+[1;32m      5[0m     pathfinder_adaptation,
+[1;32m      6[0m     window_adaptation,
+[1;32m      7[0m )
+[1;32m      9[0m __all__ [38;5;241m=[39m [
+[1;32m     10[0m     [38;5;124m"[39m[38;5;124mchees_adaptation[39m[38;5;124m"[39m,
+[1;32m     11[0m     [38;5;124m"[39m[38;5;124mmeads_adaptation[39m[38;5;124m"[39m,
+[0;32m   (...)[0m
+[1;32m     14[0m     [38;5;124m"[39m[38;5;124mmclmc_adaptation[39m[38;5;124m"[39m,
+[1;32m     15[0m ]
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/blackjax/progress_bar.py:105[0m, in [0;36mgen_scan_fn.<locals>.scan_wrap[0;34m(f, init, *args, **kwargs)[0m
-[1;32m    103[0m func [38;5;241m=[39m progress_bar_scan(num_samples, print_rate)(f)
-[1;32m    104[0m carry [38;5;241m=[39m (init, [38;5;241m-[39m[38;5;241m1[39m)
-[0;32m--> 105[0m (last_state, _), output [38;5;241m=[39m [43mlax[49m[38;5;241;43m.[39;49m[43mscan[49m[43m([49m[43mfunc[49m[43m,[49m[43m [49m[43mcarry[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
-[1;32m    106[0m [38;5;28;01mreturn[39;00m last_state, output
+File [0;32m/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/blackjax/adaptation/chees_adaptation.py:11[0m
+[1;32m      8[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mnumpy[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[38;5;21;01mnp[39;00m
+[1;32m      9[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01moptax[39;00m
+[0;32m---> 11[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mblackjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mmcmc[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdynamic_hmc[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[38;5;21;01mdynamic_hmc[39;00m
+[1;32m     12[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mblackjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01moptimizers[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdual_averaging[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[38;5;21;01mdual_averaging[39;00m
+[1;32m     13[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mblackjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01madaptation[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbase[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m AdaptationResults, return_all_adapt_info
 
-    [0;31m[... skipping hidden 9 frame][0m
+File [0;32m/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/blackjax/mcmc/__init__.py:1[0m
+[0;32m----> 1[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01m.[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m (
+[1;32m      2[0m     adjusted_mclmc,
+[1;32m      3[0m     adjusted_mclmc_dynamic,
+[1;32m      4[0m     barker,
+[1;32m      5[0m     elliptical_slice,
+[1;32m      6[0m     ghmc,
+[1;32m      7[0m     hmc,
+[1;32m      8[0m     mala,
+[1;32m      9[0m     marginal_latent_gaussian,
+[1;32m     10[0m     mclmc,
+[1;32m     11[0m     nuts,
+[1;32m     12[0m     periodic_orbital,
+[1;32m     13[0m     random_walk,
+[1;32m     14[0m     rmhmc,
+[1;32m     15[0m )
+[1;32m     17[0m __all__ [38;5;241m=[39m [
+[1;32m     18[0m     [38;5;124m"[39m[38;5;124mbarker[39m[38;5;124m"[39m,
+[1;32m     19[0m     [38;5;124m"[39m[38;5;124melliptical_slice[39m[38;5;124m"[39m,
+[0;32m   (...)[0m
+[1;32m     30[0m     [38;5;124m"[39m[38;5;124madjusted_mclmc[39m[38;5;124m"[39m,
+[1;32m     31[0m ]
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/blackjax/progress_bar.py:90[0m, in [0;36mprogress_bar_scan.<locals>._progress_bar_scan.<locals>.wrapper_progress_bar[0;34m(carry, x)[0m
-[1;32m     88[0m subcarry, chain_id [38;5;241m=[39m carry
-[1;32m     89[0m chain_id [38;5;241m=[39m _update_progress_bar(iter_num, chain_id)
-[0;32m---> 90[0m subcarry, y [38;5;241m=[39m [43mfunc[49m[43m([49m[43msubcarry[49m[43m,[49m[43m [49m[43mx[49m[43m)[49m
-[1;32m     92[0m [38;5;28;01mreturn[39;00m (subcarry, chain_id), y
+File [0;32m/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/blackjax/mcmc/barker.py:162[0m
+[1;32m    154[0m         [38;5;28;01mreturn[39;00m accepted_state, BarkerInfo(p_accept, do_accept, proposed_state)
+[1;32m    156[0m     [38;5;28;01mreturn[39;00m kernel
+[1;32m    159[0m [38;5;28;01mdef[39;00m[38;5;250m [39m[38;5;21mas_top_level_api[39m(
+[1;32m    160[0m     logdensity_fn: Callable,
+[1;32m    161[0m     step_size: [38;5;28mfloat[39m,
+[0;32m--> 162[0m     inverse_mass_matrix: [43mmetrics[49m[38;5;241;43m.[39;49m[43mMetricTypes[49m[43m [49m[38;5;241;43m|[39;49m[43m [49m[38;5;28;43;01mNone[39;49;00m [38;5;241m=[39m [38;5;28;01mNone[39;00m,
+[1;32m    163[0m ) [38;5;241m-[39m[38;5;241m>[39m SamplingAlgorithm:
+[1;32m    164[0m [38;5;250m    [39m[38;5;124;03m"""Implements the (basic) user interface for the Barker's proposal :cite:p:`Livingstone2022Barker` kernel with a[39;00m
+[1;32m    165[0m [38;5;124;03m    Gaussian base kernel.[39;00m
+[1;32m    166[0m 
+[0;32m   (...)[0m
+[1;32m    213[0m 
+[1;32m    214[0m [38;5;124;03m    """[39;00m
+[1;32m    216[0m     kernel [38;5;241m=[39m build_kernel()
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.20/x64/lib/python3.9/site-packages/blackjax/adaptation/window_adaptation.py:310[0m, in [0;36mwindow_adaptation.<locals>.one_step[0;34m(carry, xs)[0m
-[1;32m    307[0m _, rng_key, adaptation_stage [38;5;241m=[39m xs
-[1;32m    308[0m state, adaptation_state [38;5;241m=[39m carry
-[0;32m--> 310[0m new_state, info [38;5;241m=[39m [43mmcmc_kernel[49m[43m([49m
-[1;32m    311[0m [43m    [49m[43mrng_key[49m[43m,[49m
-[1;32m    312[0m [43m    [49m[43mstate[49m[43m,[49m
-[1;32m    313[0m [43m    [49m[43mlogdensity_fn[49m[43m,[49m
-[1;32m    314[0m [43m    [49m[43madaptation_state[49m[38;5;241;43m.[39;49m[43mstep_size[49m[43m,[49m
-[1;32m    315[0m [43m    [49m[43madaptation_state[49m[38;5;241;43m.[39;49m[43minverse_mass_matrix[49m[43m,[49m
-[1;32m    316[0m [43m    [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mextra_parameters[49m[43m,[49m
-[1;32m    317[0m [43m[49m[43m)[49m
-[1;32m    318[0m new_adaptation_state [38;5;241m=[39m adapt_step(
-[1;32m    319[0m     adaptation_state,
-[1;32m    320[0m     adaptation_stage,
-[1;32m    321[0m     new_state[38;5;241m.[39mposition,
-[1;32m    322[0m     info[38;5;241m.[39macceptance_rate,
-[1;32m    323[0m )
-[1;32m    325[0m [38;5;28;01mreturn[39;00m (
-[1;32m    326[0m     (new_state, new_adaptation_state),
-[1;32m    327[0m     adaptation_info_fn(new_state, info, new_adaptation_state),
-[1;32m    328[0m )
-
-[0;31mTypeError[0m: kernel() got an unexpected keyword argument 'num_steps'
+[0;31mTypeError[0m: unsupported operand type(s) for |: '_UnionGenericAlias' and 'NoneType'
 

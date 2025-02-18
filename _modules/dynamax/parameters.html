@@ -15,8 +15,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -187,9 +187,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -289,19 +294,22 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.parameters</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">lax</span>
-<span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_reduce</span><span class="p">,</span> <span class="n">tree_map</span><span class="p">,</span> <span class="n">register_pytree_node_class</span>
-<span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax.bijectors</span> <span class="k">as</span> <span class="nn">tfb</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Protocol</span>
-<span class="kn">from</span> <span class="nn">jaxtyping</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Helpers for managing parameters and their properties as PyTrees.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.tree_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_reduce</span><span class="p">,</span> <span class="n">tree_map</span><span class="p">,</span> <span class="n">register_pytree_node_class</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.bijectors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tfb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
 
-<span class="kn">from</span> <span class="nn">dynamax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">Scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scalar</span>
 
 <div class="viewcode-block" id="ParameterSet">
 <a class="viewcode-back" href="../../api.html#dynamax.parameters.ParameterSet">[docs]</a>
-<span class="k">class</span> <span class="nc">ParameterSet</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="nd">@runtime_checkable</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParameterSet</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -310,7 +318,8 @@
 
 <div class="viewcode-block" id="PropertySet">
 <a class="viewcode-back" href="../../api.html#dynamax.parameters.PropertySet">[docs]</a>
-<span class="k">class</span> <span class="nc">PropertySet</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="nd">@runtime_checkable</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PropertySet</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A matching :class:`NamedTuple` with :class:`ParameterProperties` stored in the leaf nodes.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -321,7 +330,7 @@
 <div class="viewcode-block" id="ParameterProperties">
 <a class="viewcode-back" href="../../api.html#dynamax.parameters.ParameterProperties">[docs]</a>
 <span class="nd">@register_pytree_node_class</span>
-<span class="k">class</span> <span class="nc">ParameterProperties</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParameterProperties</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A PyTree containing parameter metadata (properties).</span>
 
 <span class="sd">    Note: the properties are stored in the aux_data of this PyTree so that</span>
@@ -332,25 +341,28 @@
 <span class="sd">        constrainer (Optional tfb.Bijector): bijector mapping to constrained form.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">trainable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
                  <span class="n">constrainer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">tfb</span><span class="o">.</span><span class="n">Bijector</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">trainable</span> <span class="o">=</span> <span class="n">trainable</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">constrainer</span> <span class="o">=</span> <span class="n">constrainer</span>
 
-    <span class="k">def</span> <span class="nf">tree_flatten</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tree_flatten</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flatten the PyTree into a tuple of aux_data and children.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trainable</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">constrainer</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">tree_unflatten</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">aux_data</span><span class="p">,</span> <span class="n">children</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tree_unflatten</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">aux_data</span><span class="p">,</span> <span class="n">children</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reconstruct the PyTree from the tuple of aux_data and children.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">aux_data</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a string representation of the PyTree.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ParameterProperties(trainable=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">trainable</span><span class="si">}</span><span class="s2">, constrainer=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">constrainer</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
 
-<span class="k">def</span> <span class="nf">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert the constrained parameters to unconstrained form.</span>
 
 <span class="sd">    Args:</span>
@@ -370,7 +382,7 @@
     <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">to_unc</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">is_leaf</span><span class="o">=</span><span class="n">is_leaf</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert the unconstrained parameters to constrained form.</span>
 
 <span class="sd">    Args:</span>
@@ -387,7 +399,8 @@
 <span class="sd">                 using these frozen constrained parameters will be zero.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">from_unc</span><span class="p">(</span><span class="n">unc_value</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_unc</span><span class="p">(</span><span class="n">unc_value</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the unconstrained value to constrained form.&quot;&quot;&quot;</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span><span class="p">(</span><span class="n">unc_value</span><span class="p">)</span> <span class="k">if</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">unc_value</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">prop</span><span class="o">.</span><span class="n">trainable</span> <span class="k">else</span> <span class="n">value</span>
         <span class="k">return</span> <span class="n">value</span>
@@ -396,7 +409,7 @@
     <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">from_unc</span><span class="p">,</span> <span class="n">unc_params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">is_leaf</span><span class="o">=</span><span class="n">is_leaf</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">log_det_jac_constrain</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_det_jac_constrain</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log determinant of the Jacobian matrix evaluated at the unconstrained parameters.</span>
 
 <span class="sd">    Let x be the unconstrained parameter and f(x) be the constrained parameter, so</span>
@@ -415,7 +428,8 @@
 <span class="sd">        logdet: the log determinant of the forward Jacobian.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">_compute_logdet</span><span class="p">(</span><span class="n">unc_value</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_logdet</span><span class="p">(</span><span class="n">unc_value</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the log determinant of the Jacobian matrix.&quot;&quot;&quot;</span>
         <span class="n">logdet</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span><span class="o">.</span><span class="n">forward_log_det_jacobian</span><span class="p">(</span><span class="n">unc_value</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> \
             <span class="k">if</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.0</span>
         <span class="k">return</span> <span class="n">logdet</span> <span class="k">if</span> <span class="n">prop</span><span class="o">.</span><span class="n">trainable</span> <span class="k">else</span> <span class="mf">0.0</span>
@@ -485,8 +499,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>
