@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 30.3.0", "wheel"]
+requires = ["setuptools >= 30.3.0", "wheel", "versioneer[toml]==0.29"]
 
 [project]
 name = "dynamax"
