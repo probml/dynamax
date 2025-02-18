@@ -1,51 +1,46 @@
-'''
-Parallel filtering and smoothing for a lgssm.
+"""
+Parallel filtering and smoothing for a linear Gaussian SSM.
 
-This implementation is adapted from the work of Adrien Correnflos:
-https://github.com/EEA-sensors/sequential-parallelization-examples/
+The trick is to write the filtering and smoothing computations in 
+terms of a binary associative scan. This allows us to parallelize
+the computation of the filtering and smoothing messages.
 
-Note that in the original implementation, the initial state distribution
-applies to t=0, and the first emission occurs at time `t=1` (i.e. after
-the initial state has been transformed by the dynamics), whereas here,
-the first emission occurs at time `t=0` and is produced directly by the
-untransformed initial state (see below).
+The filtering messages represent two distributions:
+    
+    f_ij(x_i, x_j) = p(x_i | y_{j+1:i}, x_j)
+    g_ij(x_j) = p(y_i | x_j)
 
-Sarkka et al.
+We define a binary associative operator that takes two filtering messages
+and returns a new filtering message,
 
-      F₀,Q₀          F₁,Q₁         F₂,Q₂
-Z₀ ─────────── Z₁ ─────────── Z₂ ─────────── Z₃ ─────...
-               |              |              |
-               | H₁,R₁        | H₂,R₂        | H₃,R₃
-               |              |              |
-               Y₁             Y₂             Y₃
+    (f_ij, g_ij) \otimes (f_jk, g_jk) = (f_ik, g_ik)
 
-Dynamax
+For a linear Gaussian SSM, the filtering messages are Gaussian potentials.
+Following Sarkka and Garcia-Fernandez (2021), we write them in the following
+form,
+    
+    f_{ij}(x_i, x_j) = N(x_i | A_{ij} x_j + b_{ij}, C_{ij})
+    g_{ij}(x_j) \propto N_I(x_j | \eta_{ij}, J_{ij})
 
-      F₀,Q₀           F₁,Q₁         F₂,Q₂
-Z₀ ─────────── Z₁ ─────────── Z₂ ─────────── Z₃ ─────...
-|              |              |              |
-| H₀,R₀        | H₁,R₁        | H₂,R₂        | H₃,R₃
-|              |              |              |
-Y₀             Y₁             Y₂             Y₃ 
-
-'''
-
+where A_{ij}, b_{ij}, C_{ij}, \eta_{ij}, J_{ij} are the parameters of the
+Gaussian potentials. The updates for these parameters are derived in the 
+manuscript referenced above.
+"""
 import jax.numpy as jnp
-from jax import vmap, lax
-from jaxtyping import Array, Float
-from typing import NamedTuple, Optional
-from dynamax.types import PRNGKeyT
-from functools import partial
 import warnings
 
-from tensorflow_probability.substrates.jax.distributions import (
-    MultivariateNormalDiagPlusLowRankCovariance as MVNLowRank,
-    MultivariateNormalFullCovariance as MVN)
-
-from jax.scipy.linalg import cho_solve, cho_factor
 from dynamax.utils.utils import symmetrize, psd_solve
 from dynamax.linear_gaussian_ssm import PosteriorGSSMFiltered, PosteriorGSSMSmoothed, ParamsLGSSM
 from dynamax.linear_gaussian_ssm.inference import _zeros_if_none
+from dynamax.types import PRNGKeyT
+from functools import partial
+from jax import vmap, lax
+from jax.scipy.linalg import cho_solve, cho_factor
+from jaxtyping import Array, Float
+from tensorflow_probability.substrates.jax.distributions import (
+    MultivariateNormalDiagPlusLowRankCovariance as MVNLowRank,
+    MultivariateNormalFullCovariance as MVN)
+from typing import NamedTuple, Optional
 
 
 def _get_one_param(x, dim, t):
@@ -57,35 +52,36 @@ def _get_one_param(x, dim, t):
     else:
         return x
 
-def _get_params(params: ParamsLGSSM, num_timesteps, t):
-    """Helper function to get parameters at time t."""
-    assert not callable(params.emissions.cov), "Emission covariance cannot be a callable."
-
-    F = _get_one_param(params.dynamics.weights, 2, t)
-    B = _get_one_param(params.dynamics.input_weights, 2, t)
-    b = _get_one_param(params.dynamics.bias, 1, t)
-    Q = _get_one_param(params.dynamics.cov, 2, t)
-    H = _get_one_param(params.emissions.weights, 2, t+1)
-    D = _get_one_param(params.emissions.input_weights, 2, t+1)
-    d = _get_one_param(params.emissions.bias, 1, t+1)
-
-    if len(params.emissions.cov.shape) == 1: 
-        R = _get_one_param(params.emissions.cov, 1, t+1)
-    elif len(params.emissions.cov.shape) > 2: 
-        R = _get_one_param(params.emissions.cov, 2, t+1)
-    elif params.emissions.cov.shape[0] != num_timesteps:
-        R = _get_one_param(params.emissions.cov, 2, t+1)
-    elif params.emissions.cov.shape[1] != num_timesteps:
-        R = _get_one_param(params.emissions.cov, 1, t+1)
+def _get_emission_cov_dim(params, num_timesteps):
+    assert not callable(params.emissions.cov), "Emission covariance cannot be a callable for parallel inference."
+    emission_dim = _get_one_param(params.emissions.bias, 1, 0).shape[0]
+    R_shp = params.emissions.cov.shape
+    if len(R_shp) == 1:
+        assert R_shp[0] == emission_dim, "Emission covariance must have the same dimension as the emission bias."
+        return 1
+    
+    elif len(R_shp) == 2: 
+        if R_shp == (emission_dim, emission_dim):
+            # Assume static, full covariance, but warn if it's TxT
+            if emission_dim == num_timesteps:
+                warnings.warn(
+                    "Emission covariance has shape (T,T) where T is the number of timesteps. "
+                    "The covariance will be interpreted as static and non-diagonal. To "
+                    "specify a dynamic and diagonal covariance, pass it as a 3D array.")
+            return 2
+        elif R_shp == (num_timesteps, emission_dim):
+            # Assume time-varying diagonal covariance
+            return 1
+        else:
+            raise Exception("Emission covariance must be (T,D) or (D,D).")
+        
+    elif len(R_shp) == 3:
+        # Time-varying full covariance
+        assert R_shp == (num_timesteps, emission_dim, emission_dim)
+        return 2
     else:
-        R = _get_one_param(params.emissions.cov, 2, t+1)
-        warnings.warn(
-            "Emission covariance has shape (N,N) where N is the number of timesteps. "
-            "The covariance will be interpreted as static and non-diagonal. To "
-            "specify a dynamic and diagonal covariance, pass it as a 3D array.")
-
-    return F, B, b, Q, H, D, d, R
-
+        raise Exception("Emission covariance must be a 2D or 3D array.")
+            
 
 #---------------------------------------------------------------------------#
 #                                Filtering                                  #
@@ -164,45 +160,60 @@ def _initialize_filtering_messages(
     num_timesteps = emissions.shape[0]
     inputs = _zeros_if_none(inputs, (num_timesteps, 0))
     
+    # Get the emission covariance dimension
+    R_dim = _get_emission_cov_dim(params, num_timesteps)
+    
     def _first_message(params, y, u):
-        H, D, d, R = _get_params(params, num_timesteps, -1)[4:]
+        """Compute the first filtering message."""
         m = params.initial.mean
         P = params.initial.cov
+        H = _get_one_param(params.emissions.weights, 2, 0)
+        D = _get_one_param(params.emissions.input_weights, 2, 0)
+        d = _get_one_param(params.emissions.bias, 1, 0)
+        R = _get_one_param(params.emissions.cov, R_dim, 0)
 
-        S = H @ P @ H.T + (R if R.ndim==2 else jnp.diag(R))
+        S = H @ P @ H.T + (R if R_dim == 2 else jnp.diag(R))
         S_inv = _emissions_scale(P, H, R)
         K = P @ H.T @ S_inv
 
+        innov = y - D @ u - d
         A = jnp.zeros_like(P)
-        b = m + K @ (y - H @ m - D @ u - d)
+        b = m + K @ (innov - H @ m)
         C = symmetrize(P - K @ S @ K.T)
-        eta = jnp.zeros_like(b)
-        J = jnp.eye(len(b))
-
-        logZ = _marginal_loglik_elem(P, H, R, y - H @ m - D @ u - d)
+        eta = jnp.zeros_like(m)
+        J = jnp.zeros_like(P)
+        logZ = _marginal_loglik_elem(P, H, R, innov)
         return A, b, C, J, eta, logZ
 
 
-    @partial(vmap, in_axes=(None, 0, 0, 0))
-    def _generic_message(params, y, u, t):
-        F, B, b, Q, H, D, d, R = _get_params(params, num_timesteps, t)
+    @partial(vmap, in_axes=(None, 0, 0, 0, 0))
+    def _generic_message(params, y, ut, utm1, t):
+        """Compute the generic filtering message."""
+        F = _get_one_param(params.dynamics.weights, 2, t-1)
+        B = _get_one_param(params.dynamics.input_weights, 2, t-1)
+        b = _get_one_param(params.dynamics.bias, 1, t-1)
+        Q = _get_one_param(params.dynamics.cov, 2, t-1)
+        H = _get_one_param(params.emissions.weights, 2, t)
+        D = _get_one_param(params.emissions.input_weights, 2, t)
+        d = _get_one_param(params.emissions.bias, 1, t)
+        R = _get_one_param(params.emissions.cov, R_dim, t)
 
         S_inv = _emissions_scale(Q, H, R)
         K = Q @ H.T @ S_inv
         
-        innov = (y - H @ b - D @ u - d)
+        bias_tm1 = B @ utm1 + b
+        innov = (y - D @ ut - d - H @ bias_tm1)
+        A = F - K @ H @ F
+        b = bias_tm1 + K @ innov
+        C = symmetrize(Q - K @ H @ Q)
         eta = F.T @ H.T @ S_inv @ innov
         J = symmetrize(F.T @ H.T @ S_inv @ H @ F)
-
-        A = F - K @ H @ F
-        b = b + B @ u + K @ innov
-        C = symmetrize(Q - K @ H @ Q)
 
         logZ = _marginal_loglik_elem(Q, H, R, innov)
         return A, b, C, J, eta, logZ
 
     A0, b0, C0, J0, eta0, logZ0 = _first_message(params, emissions[0], inputs[0])
-    At, bt, Ct, Jt, etat, logZt = _generic_message(params, emissions[1:], inputs[1:], jnp.arange(len(emissions)-1))
+    At, bt, Ct, Jt, etat, logZt = _generic_message(params, emissions[1:], inputs[1:], inputs[:-1], jnp.arange(1, len(emissions)))
 
     return FilterMessage(
         A=jnp.concatenate([A0[None], At]),
@@ -215,11 +226,10 @@ def _initialize_filtering_messages(
 
 
 
-def lgssm_filter(
-    params: ParamsLGSSM,
-    emissions: Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGSSMFiltered:
+def lgssm_filter(params: ParamsLGSSM,
+                 emissions: Float[Array, "ntime emission_dim"],
+                 inputs: Optional[Float[Array, "ntime input_dim"]]=None) \
+                 -> PosteriorGSSMFiltered:
     """A parallel version of the lgssm filtering algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
@@ -228,6 +238,7 @@ def lgssm_filter(
     """
     @vmap
     def _operator(elem1, elem2):
+        """Parallel filtering operator."""
         A1, b1, C1, J1, eta1, logZ1 = elem1
         A2, b2, C2, J2, eta2, logZ2 = elem2
         I = jnp.eye(A1.shape[0])
@@ -270,30 +281,36 @@ class SmoothMessage(NamedTuple):
         g: P(z_i | y_{1:j}, z_{j+1}) bias.
         L: P(z_i | y_{1:j}, z_{j+1}) covariance.
     """
-    E: Float[Array, "ntime state_dim state_dim"]
-    g: Float[Array, "ntime state_dim"]
-    L: Float[Array, "ntime state_dim state_dim"]
+    E: Float[Array, "num_timesteps state_dim state_dim"]
+    g: Float[Array, "num_timesteps state_dim"]
+    L: Float[Array, "num_timesteps state_dim state_dim"]
 
 
 def _initialize_smoothing_messages(params: ParamsLGSSM, 
-    filtered_means: Float[Array, "ntime state_dim"], 
-    filtered_covariances: Float[Array, "ntime state_dim state_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> SmoothMessage:
+                                   filtered_means: Float[Array, "num_timesteps state_dim"], 
+                                   filtered_covariances: Float[Array, "num_timesteps state_dim state_dim"],
+                                   inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+                                   ) -> SmoothMessage:
     """Preprocess filtering output to construct input for smoothing assocative scan."""
 
     def _last_message(m, P):
+        """Compute the last smoothing message."""
         return jnp.zeros_like(P), m, P
 
     num_timesteps = filtered_means.shape[0]
     inputs = _zeros_if_none(inputs, (num_timesteps, 0))
 
     @partial(vmap, in_axes=(None, 0, 0, 0, 0))
-    def _generic_message(params, m, P, u, t):
-        F, B, b, Q = _get_params(params, num_timesteps, t)[:4]
+    def _generic_message(params, m, P, ut, t):
+        """Compute the generic smoothing message."""
+        F = _get_one_param(params.dynamics.weights, 2, t)
+        B = _get_one_param(params.dynamics.input_weights, 2, t)
+        b = _get_one_param(params.dynamics.bias, 1, t)
+        Q = _get_one_param(params.dynamics.cov, 2, t)
+        
         CF, low = cho_factor(F @ P @ F.T + Q)
         E = cho_solve((CF, low), F @ P).T
-        g  = m - E @ (F @ m + b + B @ u)
+        g  = m - E @ (F @ m + B @ ut + b)
         L  = symmetrize(P - E @ F @ P)
         return E, g, L
     
@@ -324,6 +341,7 @@ def lgssm_smoother(
     
     @vmap
     def _operator(elem1, elem2):
+        """Parallel smoothing operator."""
         E1, g1, L1 = elem1
         E2, g2, L2 = elem2
         E = E2 @ E1
@@ -389,6 +407,7 @@ def lgssm_posterior_sample(
 
     @vmap
     def _operator(elem1, elem2):
+        """Parallel sampling operator."""
         E1, h1 = elem1
         E2, h2 = elem2
 
