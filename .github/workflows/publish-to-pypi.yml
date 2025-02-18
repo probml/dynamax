@@ -1,6 +1,11 @@
 name: Publish Python distribution to PyPI and TestPyPI
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+  
+  release:
+    types:
+      - created
 
 jobs:
   build:
