@@ -406,7 +406,8 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
@@ -471,7 +472,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f54ca18d710&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fa687760050&gt;
 </pre></div>
 </div>
 <img alt="../../_images/28cc666662b3803fe72bf7f3e3ca37cdd4ad838114ab32b0df2a4a47d6b1ab76.png" src="../../_images/28cc666662b3803fe72bf7f3e3ca37cdd4ad838114ab32b0df2a4a47d6b1ab76.png" />
@@ -491,32 +492,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 <span class="n">covariances</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="mf">0.001</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">),</span> <span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
 
 <span class="c1"># Compute the stationary points</span>
-<span class="n">stationary_points</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span> <span class="o">-</span> <span class="n">weights</span><span class="p">,</span> <span class="n">biases</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ValueError</span><span class="g g-Whitespace">                                </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">line</span> <span class="mi">13</span>
-<span class="g g-Whitespace">     </span><span class="mi">10</span> <span class="n">covariances</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="mf">0.001</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">),</span> <span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-<span class="g g-Whitespace">     </span><span class="mi">12</span> <span class="c1"># Compute the stationary points</span>
-<span class="ne">---&gt; </span><span class="mi">13</span> <span class="n">stationary_points</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span> <span class="o">-</span> <span class="n">weights</span><span class="p">,</span> <span class="n">biases</span><span class="p">)</span>
-
-    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">13</span> <span class="n">frame</span><span class="p">]</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/jax/_src/numpy/linalg.py:1345,</span> in <span class="ni">solve</span><span class="nt">(a, b)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1342</span> <span class="c1"># Check for invalid inputs that previously would have led to a batched 1D solve:</span>
-<span class="g g-Whitespace">   </span><span class="mi">1343</span> <span class="k">if</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">ndim</span> <span class="o">+</span> <span class="mi">1</span> <span class="ow">and</span>
-<span class="g g-Whitespace">   </span><span class="mi">1344</span>     <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]):</span>
-<span class="ne">-&gt; </span><span class="mi">1345</span>   <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">1346</span>     <span class="sa">f</span><span class="s2">&quot;Invalid shapes for solve: </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">. Prior to JAX v0.5.0,&quot;</span>
-<span class="g g-Whitespace">   </span><span class="mi">1347</span>     <span class="s2">&quot; this would have been treated as a batched 1-dimensional solve.&quot;</span>
-<span class="g g-Whitespace">   </span><span class="mi">1348</span>     <span class="s2">&quot; To recover this behavior, use solve(a, b[..., None]).squeeze(-1).&quot;</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1350</span> <span class="n">signature</span> <span class="o">=</span> <span class="s2">&quot;(m,m),(m)-&gt;(m)&quot;</span> <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;(m,m),(m,n)-&gt;(m,n)&quot;</span>
-<span class="g g-Whitespace">   </span><span class="mi">1351</span> <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">lax_linalg</span><span class="o">.</span><span class="n">_solve</span><span class="p">,</span> <span class="n">signature</span><span class="o">=</span><span class="n">signature</span><span class="p">)(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
-
-<span class="ne">ValueError</span>: Invalid shapes for solve: (5, 2, 2), (5, 2). Prior to JAX v0.5.0, this would have been treated as a batched 1-dimensional solve. To recover this behavior, use solve(a, b[..., None]).squeeze(-1).
+<span class="n">stationary_points</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">)(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)</span> <span class="o">-</span> <span class="n">weights</span><span class="p">,</span> <span class="n">biases</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -554,7 +530,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ea6972b58fbc9d1cd0bf11518c20ab6b258389db3cf34087a7e3511fd5272683.png" src="../../_images/ea6972b58fbc9d1cd0bf11518c20ab6b258389db3cf34087a7e3511fd5272683.png" />
+<img alt="../../_images/a91400077861bd2a8b8b6bc180e5e3ce4c0b5e330dbcbc14b55718d8325bd466.png" src="../../_images/a91400077861bd2a8b8b6bc180e5e3ce4c0b5e330dbcbc14b55718d8325bd466.png" />
 </div>
 </div>
 </section>
@@ -598,7 +574,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;$x_2$&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/346d4416b64f48c92ada15d09b912dce057a01ddfc30eb59777fce896ebedbe0.png" src="../../_images/346d4416b64f48c92ada15d09b912dce057a01ddfc30eb59777fce896ebedbe0.png" />
+<img alt="../../_images/bcbc9f1de205a6088cb853177a4daaf38b6bc1269ae6dc03d291a2087a01460e.png" src="../../_images/bcbc9f1de205a6088cb853177a4daaf38b6bc1269ae6dc03d291a2087a01460e.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the the corresponding AR state while the solid lines are the actual observations sampled from the HMM.</p>
@@ -630,7 +606,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/487615603b90dd95bf963592681d2b697aec8e288d136fa941aad4e35ffa8aa3.png" src="../../_images/487615603b90dd95bf963592681d2b697aec8e288d136fa941aad4e35ffa8aa3.png" />
+<img alt="../../_images/b96df9d64c0e9807c74bee0a4a6b0b1ba982b708db8ffbc009658e28090eced8.png" src="../../_images/b96df9d64c0e9807c74bee0a4a6b0b1ba982b708db8ffbc009658e28090eced8.png" />
 </div>
 </div>
 </section>
@@ -690,7 +666,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/89bc0bdaa47121770ebcad4eef9b80f1f8d088716401f4b130aa0e8482e45344.png" src="../../_images/89bc0bdaa47121770ebcad4eef9b80f1f8d088716401f4b130aa0e8482e45344.png" />
+<img alt="../../_images/68e458ddd00ceae85b12f80beccbb44a404b7e231020ca5943be4ab412079ec5.png" src="../../_images/68e458ddd00ceae85b12f80beccbb44a404b7e231020ca5943be4ab412079ec5.png" />
 </div>
 </div>
 </section>
@@ -737,7 +713,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/3ea28fa5800691180879d1d7122324e9dc1b7920da8b7d1337d094b12c5e23ab.png" src="../../_images/3ea28fa5800691180879d1d7122324e9dc1b7920da8b7d1337d094b12c5e23ab.png" />
+<img alt="../../_images/a801df75eb738f3d65752e4d10a6646957375a91c4286d15b228dfa9133eb292.png" src="../../_images/a801df75eb738f3d65752e4d10a6646957375a91c4286d15b228dfa9133eb292.png" />
 </div>
 </div>
 </section>
@@ -765,7 +741,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a5584a750b5364efe309fd7c5ff1434559cfe78e04bba7ebb447dcb6d424ad60.png" src="../../_images/a5584a750b5364efe309fd7c5ff1434559cfe78e04bba7ebb447dcb6d424ad60.png" />
+<img alt="../../_images/a92df7ddde09c93790cef2fef581156e41bc1c02929fd25ecf73a00470626f43.png" src="../../_images/a92df7ddde09c93790cef2fef581156e41bc1c02929fd25ecf73a00470626f43.png" />
 </div>
 </div>
 </section>
@@ -795,7 +771,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/cf4c8b2e4ace9adaafedad4f1c4a178a9d1e4f04433a25907025341a61be00f3.png" src="../../_images/cf4c8b2e4ace9adaafedad4f1c4a178a9d1e4f04433a25907025341a61be00f3.png" />
+<img alt="../../_images/5e2bb36f832779810cd324339902cad4532db4e0de83ce65d9be1eceaf46dd89.png" src="../../_images/5e2bb36f832779810cd324339902cad4532db4e0de83ce65d9be1eceaf46dd89.png" />
 </div>
 </div>
 </section>

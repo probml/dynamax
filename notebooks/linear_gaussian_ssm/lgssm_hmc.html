@@ -402,8 +402,6 @@ for an LGSSM model. We use the Kalman filter to compute the marginal likelihood,
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_det_jac_constrain</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
-<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">9</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -542,7 +540,7 @@ for an LGSSM model. We use the Kalman filter to compute the marginal likelihood,
             <span class="n">emissions</span><span class="p">,</span>
             <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">warmup_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-            <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+            <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
             <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample parameters of the model using HMC.&quot;&quot;&quot;</span>
     <span class="c1"># Make sure the emissions and inputs have batch dimensions</span>
@@ -562,11 +560,11 @@ for an LGSSM model. We use the Kalman filter to compute the marginal likelihood,
     <span class="c1"># Initialize the HMC sampler using window_adaptation</span>
     <span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">,</span>
                                         <span class="n">_logprob</span><span class="p">,</span>
-                                        <span class="n">num_steps</span><span class="o">=</span><span class="n">warmup_steps</span><span class="p">,</span>
                                         <span class="n">num_integration_steps</span><span class="o">=</span><span class="n">num_integration_steps</span><span class="p">,</span>
                                         <span class="n">progress_bar</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
     <span class="n">init_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-    <span class="n">hmc_initial_state</span><span class="p">,</span> <span class="n">hmc_kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">init_key</span><span class="p">,</span> <span class="n">initial_unc_params</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">hmc_initial_state</span><span class="p">,</span> <span class="n">hmc_params</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">init_key</span><span class="p">,</span> <span class="n">initial_unc_params</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="n">warmup_steps</span><span class="p">)</span>
+    <span class="n">hmc_kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">_logprob</span><span class="p">,</span> <span class="o">**</span><span class="n">hmc_params</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
 
     <span class="nd">@jit</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">hmc_step</span><span class="p">(</span><span class="n">hmc_state</span><span class="p">,</span> <span class="n">step_key</span><span class="p">):</span>
@@ -582,7 +580,7 @@ for an LGSSM model. We use the Kalman filter to compute the marginal likelihood,
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">pbar</span><span class="p">:</span>
         <span class="n">step_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="n">hmc_state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">hmc_step</span><span class="p">(</span><span class="n">hmc_state</span><span class="p">,</span> <span class="n">step_key</span><span class="p">)</span>
-        <span class="n">log_probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">hmc_state</span><span class="o">.</span><span class="n">potential_energy</span><span class="p">)</span>
+        <span class="n">log_probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hmc_state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">)</span>
         <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 
     <span class="c1"># Combine the samples into a single pytree</span>
@@ -596,8 +594,14 @@ for an LGSSM model. We use the Kalman filter to compute the marginal likelihood,
 <h2>Call HMC<a class="headerlink" href="#call-hmc" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sample_size</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">param_samples</span><span class="p">,</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">fit_hmc</span><span class="p">(</span><span class="n">test_model</span><span class="p">,</span> <span class="n">initial_params</span><span class="p">,</span> <span class="n">param_props</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="n">sample_size</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sample_size</span> <span class="o">=</span> <span class="mi">4000</span>
+<span class="n">param_samples</span><span class="p">,</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">fit_hmc</span><span class="p">(</span><span class="n">test_model</span><span class="p">,</span> 
+                             <span class="n">initial_params</span><span class="p">,</span> 
+                             <span class="n">param_props</span><span class="p">,</span> 
+                             <span class="nb">next</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> 
+                             <span class="n">sample_size</span><span class="p">,</span> 
+                             <span class="n">emissions</span><span class="p">,</span> 
+                             <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -605,89 +609,63 @@ for an LGSSM model. We use the Kalman filter to compute the marginal likelihood,
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running window adaptation
 </pre></div>
 </div>
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="n">sample_size</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="n">param_samples</span><span class="p">,</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">fit_hmc</span><span class="p">(</span><span class="n">test_model</span><span class="p">,</span> <span class="n">initial_params</span><span class="p">,</span> <span class="n">param_props</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="n">sample_size</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
-
-<span class="nn">Cell In[9], line 38,</span> in <span class="ni">fit_hmc</span><span class="nt">(model, initial_params, props, key, num_samples, emissions, inputs, warmup_steps, num_integration_steps, verbose)</span>
-<span class="g g-Whitespace">     </span><span class="mi">32</span> <span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">33</span>                                     <span class="n">_logprob</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">34</span>                                     <span class="n">num_steps</span><span class="o">=</span><span class="n">warmup_steps</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">35</span>                                     <span class="n">num_integration_steps</span><span class="o">=</span><span class="n">num_integration_steps</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">36</span>                                     <span class="n">progress_bar</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">37</span> <span class="n">init_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">38</span> <span class="n">hmc_initial_state</span><span class="p">,</span> <span class="n">hmc_kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">init_key</span><span class="p">,</span> <span class="n">initial_unc_params</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">40</span> <span class="nd">@jit</span>
-<span class="g g-Whitespace">     </span><span class="mi">41</span> <span class="k">def</span><span class="w"> </span><span class="nf">hmc_step</span><span class="p">(</span><span class="n">hmc_state</span><span class="p">,</span> <span class="n">step_key</span><span class="p">):</span>
-<span class="g g-Whitespace">     </span><span class="mi">42</span>     <span class="n">next_hmc_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hmc_kernel</span><span class="p">(</span><span class="n">step_key</span><span class="p">,</span> <span class="n">hmc_state</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/blackjax/adaptation/window_adaptation.py:340,</span> in <span class="ni">window_adaptation.&lt;locals&gt;.run</span><span class="nt">(rng_key, position, num_steps)</span>
-<span class="g g-Whitespace">    </span><span class="mi">338</span> <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">339</span> <span class="n">schedule</span> <span class="o">=</span> <span class="n">build_schedule</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">340</span> <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">scan_fn</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">341</span>     <span class="n">one_step</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">342</span>     <span class="n">start_state</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">343</span>     <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">),</span>
-<span class="g g-Whitespace">    </span><span class="mi">344</span> <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">346</span> <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
-<span class="g g-Whitespace">    </span><span class="mi">348</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">adapt_final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/blackjax/progress_bar.py:105,</span> in <span class="ni">gen_scan_fn.&lt;locals&gt;.scan_wrap</span><span class="nt">(f, init, *args, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">103</span> <span class="n">func</span> <span class="o">=</span> <span class="n">progress_bar_scan</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">print_rate</span><span class="p">)(</span><span class="n">f</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">104</span> <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">105</span> <span class="p">(</span><span class="n">last_state</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">output</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">106</span> <span class="k">return</span> <span class="n">last_state</span><span class="p">,</span> <span class="n">output</span>
-
-    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">9</span> <span class="n">frame</span><span class="p">]</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/blackjax/progress_bar.py:90,</span> in <span class="ni">progress_bar_scan.&lt;locals&gt;._progress_bar_scan.&lt;locals&gt;.wrapper_progress_bar</span><span class="nt">(carry, x)</span>
-<span class="g g-Whitespace">     </span><span class="mi">88</span> <span class="n">subcarry</span><span class="p">,</span> <span class="n">chain_id</span> <span class="o">=</span> <span class="n">carry</span>
-<span class="g g-Whitespace">     </span><span class="mi">89</span> <span class="n">chain_id</span> <span class="o">=</span> <span class="n">_update_progress_bar</span><span class="p">(</span><span class="n">iter_num</span><span class="p">,</span> <span class="n">chain_id</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">90</span> <span class="n">subcarry</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">subcarry</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">92</span> <span class="k">return</span> <span class="p">(</span><span class="n">subcarry</span><span class="p">,</span> <span class="n">chain_id</span><span class="p">),</span> <span class="n">y</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/blackjax/adaptation/window_adaptation.py:310,</span> in <span class="ni">window_adaptation.&lt;locals&gt;.one_step</span><span class="nt">(carry, xs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">307</span> <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">adaptation_stage</span> <span class="o">=</span> <span class="n">xs</span>
-<span class="g g-Whitespace">    </span><span class="mi">308</span> <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
-<span class="ne">--&gt; </span><span class="mi">310</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_kernel</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">311</span>     <span class="n">rng_key</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">312</span>     <span class="n">state</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">313</span>     <span class="n">logdensity_fn</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">314</span>     <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">315</span>     <span class="n">adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">316</span>     <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">317</span> <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">318</span> <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_step</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">319</span>     <span class="n">adaptation_state</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">320</span>     <span class="n">adaptation_stage</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">321</span>     <span class="n">new_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">322</span>     <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">323</span> <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">325</span> <span class="k">return</span> <span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">326</span>     <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
-<span class="g g-Whitespace">    </span><span class="mi">327</span>     <span class="n">adaptation_info_fn</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
-<span class="g g-Whitespace">    </span><span class="mi">328</span> <span class="p">)</span>
-
-<span class="ne">TypeError</span>: build_kernel.&lt;locals&gt;.kernel() got an unexpected keyword argument &#39;num_steps&#39;
-</pre></div>
-</div>
-</div>
+<div class="output text_html">
+<style>
+    /* Turns off some styling */
+    progress {
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+    }
+    progress:not([value]), progress:not([value])::-webkit-progress-bar {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
+    }
+    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+        background: #F44336;
+    }
+</style>
+</div><div class="output text_html">
+    <div>
+      <progress value='4000' class='' max='4000' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      100.00% [4000/4000 01:04&lt;00:00]
+    </div>
+    </div><div class="output text_html">
+<style>
+    /* Turns off some styling */
+    progress {
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+    }
+    progress:not([value]), progress:not([value])::-webkit-progress-bar {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
+    }
+    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+        background: #F44336;
+    }
+</style>
+</div><div class="output text_html">
+    <div>
+      <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      100.00% [100/100 00:00&lt;?]
+    </div>
+    </div></div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lps</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;iteration&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;log probability&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;log probability&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 0, &#39;log probability&#39;)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;log probability&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/867fb9253f2d2bd9544ec24b563d51e6dac91cc881bdc94e9f4f6259c5b48e84.png" src="../../_images/867fb9253f2d2bd9544ec24b563d51e6dac91cc881bdc94e9f4f6259c5b48e84.png" />
+<img alt="../../_images/1b7f1e0f29a68d051f32cbc3071a5c1954233b3da6bb6159c9a003814bbb9d47.png" src="../../_images/1b7f1e0f29a68d051f32cbc3071a5c1954233b3da6bb6159c9a003814bbb9d47.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -700,15 +678,15 @@ for an LGSSM model. We use the Kalman filter to compute the marginal likelihood,
     <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_means</span> <span class="o">@</span> <span class="n">C</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">d</span>
 
 <span class="n">smoothed_emissions</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">smooth_emission</span><span class="p">)(</span><span class="n">param_samples</span><span class="p">)</span>
-<span class="n">smoothed_emissions_mean</span> <span class="o">=</span> <span class="n">smoothed_emissions</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">smoothed_emissions_std</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">smoothed_emissions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">smoothed_emissions_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">smoothed_emissions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">smoothed_emissions_std</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">smoothed_emissions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">([</span><span class="n">emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">smoothed_emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">smoothed_emissions_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">smoothed_emissions_std</span><span class="o">.</span><span class="n">shape</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[(100, 10), (500, 100, 10), (100, 10), (100, 10)]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[(100, 10), (4000, 100, 10), (100, 10), (100, 10)]
 </pre></div>
 </div>
 </div>
@@ -720,7 +698,7 @@ for an LGSSM model. We use the Kalman filter to compute the marginal likelihood,
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/056916c469be027c04d1ed13d5d1846d2bf88c2bbdcc4d0c16e36ef57c5e855f.png" src="../../_images/056916c469be027c04d1ed13d5d1846d2bf88c2bbdcc4d0c16e36ef57c5e855f.png" />
+<img alt="../../_images/be827df28e256623dac9799e3db85199e5d29eef3db4c4e2a5f0960f50876e20.png" src="../../_images/be827df28e256623dac9799e3db85199e5d29eef3db4c4e2a5f0960f50876e20.png" />
 </div>
 </div>
 </section>
@@ -751,8 +729,14 @@ which builds on dynamax.).</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sample_size</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">param_samples</span><span class="p">,</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">fit_hmc</span><span class="p">(</span><span class="n">test_model</span><span class="p">,</span> <span class="n">test_params</span><span class="p">,</span> <span class="n">test_param_props</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="n">sample_size</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sample_size</span> <span class="o">=</span> <span class="mi">2000</span>
+<span class="n">param_samples</span><span class="p">,</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">fit_hmc</span><span class="p">(</span><span class="n">test_model</span><span class="p">,</span> 
+                             <span class="n">test_params</span><span class="p">,</span> 
+                             <span class="n">test_param_props</span><span class="p">,</span> 
+                             <span class="nb">next</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> 
+                             <span class="n">sample_size</span><span class="p">,</span> 
+                             <span class="n">emissions</span><span class="p">,</span> 
+                             <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lps</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;iteration&quot;</span><span class="p">)</span>
@@ -785,10 +769,7 @@ which builds on dynamax.).</p>
       <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
       100.00% [100/100 00:00&lt;?]
     </div>
-    </div><div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
-</pre></div>
-</div>
-<div class="output text_html">
+    </div><div class="output text_html">
 <style>
     /* Turns off some styling */
     progress {
@@ -806,13 +787,13 @@ which builds on dynamax.).</p>
 </style>
 </div><div class="output text_html">
     <div>
-      <progress value='500' class='' max='500' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [500/500 00:35&lt;00:00]
+      <progress value='2000' class='' max='2000' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      100.00% [2000/2000 00:29&lt;00:00]
     </div>
     </div><div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 0, &#39;log probability&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/836fcbea0be86faac291446320ccaf16fa5a00ff92b89c418010cf123ef65efe.png" src="../../_images/836fcbea0be86faac291446320ccaf16fa5a00ff92b89c418010cf123ef65efe.png" />
+<img alt="../../_images/966bbbec5f395f60dc3c63aea363aef4d08d5b23dcd0d18559de6b546a0f8129.png" src="../../_images/966bbbec5f395f60dc3c63aea363aef4d08d5b23dcd0d18559de6b546a0f8129.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -825,15 +806,15 @@ which builds on dynamax.).</p>
     <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">smoothed_means</span> <span class="o">@</span> <span class="n">C</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">d</span>
 
 <span class="n">smoothed_emissions</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">smooth_emission</span><span class="p">)(</span><span class="n">param_samples</span><span class="p">)</span>
-<span class="n">smoothed_emissions_mean</span> <span class="o">=</span> <span class="n">smoothed_emissions</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">smoothed_emissions_std</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">smoothed_emissions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">smoothed_emissions_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">smoothed_emissions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">smoothed_emissions_std</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">smoothed_emissions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">([</span><span class="n">emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">smoothed_emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">smoothed_emissions_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">smoothed_emissions_std</span><span class="o">.</span><span class="n">shape</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[(100, 10), (500, 100, 10), (100, 10), (100, 10)]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[(100, 10), (2000, 100, 10), (100, 10), (100, 10)]
 </pre></div>
 </div>
 </div>
@@ -845,7 +826,7 @@ which builds on dynamax.).</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7a3c19aa1c6d0cfb1d36849faecbddffe734e9c45a5fd4a1ca1f3d38a6f5f0b4.png" src="../../_images/7a3c19aa1c6d0cfb1d36849faecbddffe734e9c45a5fd4a1ca1f3d38a6f5f0b4.png" />
+<img alt="../../_images/6ce2803d9405edce76a0f205094dc95d7442fdfde6adcacfe4590694dc8c8777.png" src="../../_images/6ce2803d9405edce76a0f205094dc95d7442fdfde6adcacfe4590694dc8c8777.png" />
 </div>
 </div>
 </section>

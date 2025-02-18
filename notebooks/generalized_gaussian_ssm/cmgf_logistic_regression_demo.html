@@ -451,7 +451,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 
     <span class="c1"># Shuffle</span>
     <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_points</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">num_points</span><span class="p">)</span>
         <span class="nb">input</span><span class="p">,</span> <span class="n">input_with_bias</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="nb">input</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">input_with_bias</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">output</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
     
     <span class="k">return</span> <span class="nb">input</span><span class="p">,</span> <span class="n">input_with_bias</span><span class="p">,</span> <span class="n">output</span>
@@ -463,24 +463,6 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate data</span>
 <span class="nb">input</span><span class="p">,</span> <span class="n">input_with_bias</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="n">generate_dataset</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Generate data</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="nb">input</span><span class="p">,</span> <span class="n">input_with_bias</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="n">generate_dataset</span><span class="p">()</span>
-
-<span class="nn">Cell In[4], line 25,</span> in <span class="ni">generate_dataset</span><span class="nt">(num_points, shuffle, key)</span>
-<span class="g g-Whitespace">     </span><span class="mi">23</span> <span class="c1"># Shuffle</span>
-<span class="g g-Whitespace">     </span><span class="mi">24</span> <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span>
-<span class="ne">---&gt; </span><span class="mi">25</span>     <span class="n">idx</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_points</span><span class="p">))</span>
-<span class="g g-Whitespace">     </span><span class="mi">26</span>     <span class="nb">input</span><span class="p">,</span> <span class="n">input_with_bias</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="nb">input</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">input_with_bias</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">output</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-<span class="g g-Whitespace">     </span><span class="mi">28</span> <span class="k">return</span> <span class="nb">input</span><span class="p">,</span> <span class="n">input_with_bias</span><span class="p">,</span> <span class="n">output</span>
-
-<span class="ne">AttributeError</span>: module &#39;jax.random&#39; has no attribute &#39;shuffle&#39;
 </pre></div>
 </div>
 </div>
@@ -521,7 +503,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/5dacff404e762d6555bdf15381a81a7cfbecc264b8077044553e200eb4de5046.png" src="../../_images/5dacff404e762d6555bdf15381a81a7cfbecc264b8077044553e200eb4de5046.png" />
+<img alt="../../_images/11f3299dd8dd79f24025741f606a03f85de409d05f6446e025b78389bcde51c5.png" src="../../_images/11f3299dd8dd79f24025741f606a03f85de409d05f6446e025b78389bcde51c5.png" />
 </div>
 </div>
 <p>Let us define a grid on which we compute the predictive distribution.</p>
@@ -641,7 +623,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/edc096702ade95cd8e6283f7c86ef5a04d8258f4be82dd5650a686c8c18e02a7.png" src="../../_images/edc096702ade95cd8e6283f7c86ef5a04d8258f4be82dd5650a686c8c18e02a7.png" />
+<img alt="../../_images/d29ec0d0b9bcbeae1ff7cd265342be6c1432a1922fffd88befb6e1d5d4fc0fcf.png" src="../../_images/d29ec0d0b9bcbeae1ff7cd265342be6c1432a1922fffd88befb6e1d5d4fc0fcf.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -656,7 +638,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/055e5d7cf903ef095ae867fcd2aa22ac3a45cae394993eeb5b2b7b56f1d43ae3.png" src="../../_images/055e5d7cf903ef095ae867fcd2aa22ac3a45cae394993eeb5b2b7b56f1d43ae3.png" />
+<img alt="../../_images/569a997c17c4f13e6507649168338927f956d3f412f16a3300db0acf877fb492.png" src="../../_images/569a997c17c4f13e6507649168338927f956d3f412f16a3300db0acf877fb492.png" />
 </div>
 </div>
 </section>
@@ -718,10 +700,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/89d39e51ed51b8af9f5efecbdd558feb303dd69a57c400ee9b66da8facaaa1d3.png" src="../../_images/89d39e51ed51b8af9f5efecbdd558feb303dd69a57c400ee9b66da8facaaa1d3.png" />
-<img alt="../../_images/de3918315f34af57b091d8b1f1292ba6cd855ce1ccad32d42f00c1e890086c59.png" src="../../_images/de3918315f34af57b091d8b1f1292ba6cd855ce1ccad32d42f00c1e890086c59.png" />
-<img alt="../../_images/6a3ce24d91fed1322718fd98c85cba1cc690a9de8d9a6226143ed0c929db4451.png" src="../../_images/6a3ce24d91fed1322718fd98c85cba1cc690a9de8d9a6226143ed0c929db4451.png" />
-<img alt="../../_images/36fa31bc8006b986ab55be437b5461e3360e55f085a17d1631227cce847a460c.png" src="../../_images/36fa31bc8006b986ab55be437b5461e3360e55f085a17d1631227cce847a460c.png" />
+<img alt="../../_images/ae6e0e592f21605124d5b1beec693bc92cbe21e31d7e957f6810328eb370e30c.png" src="../../_images/ae6e0e592f21605124d5b1beec693bc92cbe21e31d7e957f6810328eb370e30c.png" />
+<img alt="../../_images/ab985380f1c75219f779937b49958d775a0ed0b9522807ec8d6fafbc628c1408.png" src="../../_images/ab985380f1c75219f779937b49958d775a0ed0b9522807ec8d6fafbc628c1408.png" />
+<img alt="../../_images/68c850a3590fc0b3829338d31d09585c1a618e484b33e77143d63104f8566612.png" src="../../_images/68c850a3590fc0b3829338d31d09585c1a618e484b33e77143d63104f8566612.png" />
+<img alt="../../_images/783379e47fec8bc81683b163d049787a6d4f59890b98ed26483930fddb6811c1.png" src="../../_images/783379e47fec8bc81683b163d049787a6d4f59890b98ed26483930fddb6811c1.png" />
 </div>
 </div>
 </section>
@@ -746,10 +728,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8955901de20b6c1333f87bbb65be52453e72b9afa1c5439cdc0f1e9b629db273.png" src="../../_images/8955901de20b6c1333f87bbb65be52453e72b9afa1c5439cdc0f1e9b629db273.png" />
-<img alt="../../_images/a36a2f23ba39152075ffddab0087f1fd772f04d70840b02bd06229a53b53c71d.png" src="../../_images/a36a2f23ba39152075ffddab0087f1fd772f04d70840b02bd06229a53b53c71d.png" />
-<img alt="../../_images/56a1ddc5825e58855c6da07738c792fae9dc5e371c7d7e1dd2ebc573f5eec710.png" src="../../_images/56a1ddc5825e58855c6da07738c792fae9dc5e371c7d7e1dd2ebc573f5eec710.png" />
-<img alt="../../_images/0367f6217309f582bdd4b450b08524632e933406040e04d52274c7861d1273f4.png" src="../../_images/0367f6217309f582bdd4b450b08524632e933406040e04d52274c7861d1273f4.png" />
+<img alt="../../_images/66ae0d27eaaebc4c9f8cf6570d1dc834402fcb4e74806114546ec01a7af8603b.png" src="../../_images/66ae0d27eaaebc4c9f8cf6570d1dc834402fcb4e74806114546ec01a7af8603b.png" />
+<img alt="../../_images/927e9d169fa76b7e26b29ff70e4c7d64b7530d51c2381ad0ca9b5bc0e5349bb8.png" src="../../_images/927e9d169fa76b7e26b29ff70e4c7d64b7530d51c2381ad0ca9b5bc0e5349bb8.png" />
+<img alt="../../_images/0215b2bdbf6478598cbcd6d7fd3a6ab81933fe57e869dcbd556fb8103b166899.png" src="../../_images/0215b2bdbf6478598cbcd6d7fd3a6ab81933fe57e869dcbd556fb8103b166899.png" />
+<img alt="../../_images/a78947759290ff9523fada976727e7f06aeaa113dd5a3966cfb5f18540963145.png" src="../../_images/a78947759290ff9523fada976727e7f06aeaa113dd5a3966cfb5f18540963145.png" />
 </div>
 </div>
 </section>
@@ -775,10 +757,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9f418186530bcc0ff063e45c5d650212b46248e8ae42eed6411ceda3147ca04a.png" src="../../_images/9f418186530bcc0ff063e45c5d650212b46248e8ae42eed6411ceda3147ca04a.png" />
-<img alt="../../_images/498a8050693beb2d827fb1b4fbf6d8d5b23b55bc81ab2e92a57b706601661d37.png" src="../../_images/498a8050693beb2d827fb1b4fbf6d8d5b23b55bc81ab2e92a57b706601661d37.png" />
-<img alt="../../_images/116def7858da920e0dbf9ec5c18306839fb1a77f386f1fbaa4411c50a96b335f.png" src="../../_images/116def7858da920e0dbf9ec5c18306839fb1a77f386f1fbaa4411c50a96b335f.png" />
-<img alt="../../_images/09a78af058ce51b4a7b023733c0bbd35817314485bf20edc14562c69639e873c.png" src="../../_images/09a78af058ce51b4a7b023733c0bbd35817314485bf20edc14562c69639e873c.png" />
+<img alt="../../_images/6fa86abd05e8e1ca8419b1534a2b7f6f077c96a154ef3923d06fb1c8e68a07eb.png" src="../../_images/6fa86abd05e8e1ca8419b1534a2b7f6f077c96a154ef3923d06fb1c8e68a07eb.png" />
+<img alt="../../_images/26caecaad74804f949663ac70d30da48cd39f6abda0c7ec340d2a9dd5caa2684.png" src="../../_images/26caecaad74804f949663ac70d30da48cd39f6abda0c7ec340d2a9dd5caa2684.png" />
+<img alt="../../_images/72d88c7222d9886641e53785a733766fe072c600dc489522200f506fa1f38917.png" src="../../_images/72d88c7222d9886641e53785a733766fe072c600dc489522200f506fa1f38917.png" />
+<img alt="../../_images/7358b3191649a5e609408f9575969a59899a1874ce17dfbf2aa047e257a794d8.png" src="../../_images/7358b3191649a5e609408f9575969a59899a1874ce17dfbf2aa047e257a794d8.png" />
 </div>
 </div>
 </section>
