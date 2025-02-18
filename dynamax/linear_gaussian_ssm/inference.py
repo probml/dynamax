@@ -190,17 +190,18 @@ def _get_params(params, num_timesteps, t):
 _zeros_if_none = lambda x, shape: x if x is not None else jnp.zeros(shape)
 
 
-def make_lgssm_params(initial_mean,
-                      initial_cov,
-                      dynamics_weights,
-                      dynamics_cov,
-                      emissions_weights,
-                      emissions_cov,
-                      dynamics_bias=None,
-                      dynamics_input_weights=None,
-                      emissions_bias=None,
-                      emissions_input_weights=None):
-    """Helper function to construct a ParamsLGSSM object from arguments."""
+def make_lgssm_params(initial_mean: Float[Array, " state_dim"],
+                      initial_cov: Float[Array, "state_dim state_dim"],
+                      dynamics_weights: Float[Array, "state_dim state_dim"],
+                      dynamics_cov: Float[Array, "state_dim state_dim"],
+                      emissions_weights: Float[Array, "emission_dim state_dim"],
+                      emissions_cov: Float[Array, "emission_dim emission_dim"],
+                      dynamics_bias: Optional[Float[Array, " state_dim"]]=None,
+                      dynamics_input_weights: Optional[Float[Array, "state_dim input_dim"]]=None,
+                      emissions_bias: Optional[Float[Array, " emission_dim"]]=None,
+                      emissions_input_weights: Optional[Float[Array, "emission_dim input_dim"]]=None):
+    """Helper function to construct a ParamsLGSSM object from arguments.
+    """
     state_dim = len(initial_mean)
     emission_dim = emissions_cov.shape[-1]
     input_dim = max(dynamics_input_weights.shape[-1] if dynamics_input_weights is not None else 0,
