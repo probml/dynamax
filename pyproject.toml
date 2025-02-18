@@ -1,5 +1,6 @@
 [build-system]
 requires = ["setuptools >= 30.3.0", "wheel", "versioneer[toml]==0.29"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "dynamax"
@@ -18,7 +19,7 @@ dependencies = [
 ]
 
 authors = [
-    {name="Scott Linderman", email="scott.linderman@stanford.edu"}, 
+    {name="Scott Linderman"}, 
     {name="Peter Chang"}, 
     {name="Giles Harper-Donnelly"}, 
     {name="Aleyna Kara"}, 
@@ -94,13 +95,12 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["."]  
 exclude = ["logo", "docs"] 
 
 
 [tool.versioneer]
 VCS = "git"
-style = "pep440"
+style = "pep440-pre "
 versionfile_source = "dynamax/_version.py"
 versionfile_build = "dynamax/_version.py"
 tag_prefix = ""
