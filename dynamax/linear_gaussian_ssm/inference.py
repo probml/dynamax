@@ -158,7 +158,7 @@ def _get_one_param(x, dim, t):
         return x
 
 def _get_params(params, num_timesteps, t):
-    """Helper function to get parameters at time t."""
+    """Helper function to get all parameters at time t."""
     assert not callable(params.emissions.cov), "Emission covariance cannot be a callable."
 
     F = _get_one_param(params.dynamics.weights, 2, t)
@@ -199,8 +199,12 @@ def make_lgssm_params(initial_mean: Float[Array, " state_dim"],
                       dynamics_bias: Optional[Float[Array, " state_dim"]]=None,
                       dynamics_input_weights: Optional[Float[Array, "state_dim input_dim"]]=None,
                       emissions_bias: Optional[Float[Array, " emission_dim"]]=None,
-                      emissions_input_weights: Optional[Float[Array, "emission_dim input_dim"]]=None):
+                      emissions_input_weights: Optional[Float[Array, "emission_dim input_dim"]]=None
+                      ) -> ParamsLGSSM:
     """Helper function to construct a ParamsLGSSM object from arguments.
+
+    See `ParamsLGSSM`, `ParamsLGSSMInitial`, `ParamsLGSSMDynamics`, and `ParamsLGSSMEmissions` for
+    more details on the parameters.
     """
     state_dim = len(initial_mean)
     emission_dim = emissions_cov.shape[-1]
@@ -228,31 +232,37 @@ def make_lgssm_params(initial_mean: Float[Array, " state_dim"],
     return params
 
 
-def _predict(m, S, F, B, b, Q, u):
+def _predict(prior_mean: Float[Array, "state_dim"],
+             prior_cov: Float[Array, "state_dim state_dim"],
+             dynamics_matrix: Float[Array, "state_dim state_dim"],
+             input_weights: Float[Array, "state_dim input_dim"],
+             dynamics_bias: Float[Array, "state_dim"],
+             dynamics_cov: Float[Array, "state_dim state_dim"],
+             inpt: Float[Array, "input_dim"]
+             ) -> Tuple[Float[Array, "state_dim"], 
+                        Float[Array, "state_dim state_dim"]]:
     r"""Predict next mean and covariance under a linear Gaussian model.
 
         p(z_{t+1}) = int N(z_t \mid m, S) N(z_{t+1} \mid Fz_t + Bu + b, Q)
                     = N(z_{t+1} \mid Fm + Bu, F S F^T + Q)
 
-    Args:
-        m (D_hid,): prior mean.
-        S (D_hid,D_hid): prior covariance.
-        F (D_hid,D_hid): dynamics matrix.
-        B (D_hid,D_in): dynamics input matrix.
-        u (D_in,): inputs.
-        Q (D_hid,D_hid): dynamics covariance matrix.
-        b (D_hid,): dynamics bias.
-
     Returns:
-        mu_pred (D_hid,): predicted mean.
-        Sigma_pred (D_hid,D_hid): predicted covariance.
+        mu_pred (state_dim,): predicted mean.
+        Sigma_pred (state_dim,state_dim): predicted covariance.
     """
-    mu_pred = F @ m + B @ u + b
-    Sigma_pred = F @ S @ F.T + Q
+    mu_pred = dynamics_matrix @ prior_mean + input_weights @ inpt + dynamics_bias
+    Sigma_pred = dynamics_matrix @ prior_cov @ dynamics_matrix.T + dynamics_cov
     return mu_pred, Sigma_pred
 
 
-def _condition_on(m, P, H, D, d, R, u, y):
+def _condition_on(prior_mean: Float[Array, "state_dim"],
+                  prior_cov: Float[Array, "state_dim state_dim"],
+                  emission_matrix: Float[Array, "emission_dim state_dim"],
+                  input_weights: Float[Array, "emission_dim input_dim"],
+                  emission_bias: Float[Array, "emission_dim"],
+                  emission_cov: Union[Float[Array, "emission_dim emission_dim"], Float[Array, "emission_dim"]],
+                  inpt: Float[Array, "input_dim"],
+                  emission: Float[Array, "emission_dim"]):
     r"""Condition a Gaussian potential on a new linear Gaussian observation
        p(z_t \mid y_t, u_t, y_{1:t-1}, u_{1:t-1})
          propto p(z_t \mid y_{1:t-1}, u_{1:t-1}) p(y_t \mid z_t, u_t)
@@ -265,46 +275,51 @@ def _condition_on(m, P, H, D, d, R, u, y):
          K = P * H' * S^{-1}
          PP = P - K S K' = Sigma_cond
 
-    Args:
-         m (D_hid,): prior mean.
-         P (D_hid,D_hid): prior covariance.
-         H (D_obs,D_hid): emission matrix.
-         D (D_obs,D_in): emission input weights.
-         u (D_in,): inputs.
-         d (D_obs,): emission bias.
-         R (D_obs,D_obs): emission covariance matrix.
-         y (D_obs,): observation.
-
      Returns:
          mu_pred (D_hid,): predicted mean.
          Sigma_pred (D_hid,D_hid): predicted covariance.
     """
-    if R.ndim == 2:
-        S = R + H @ P @ H.T
-        K = psd_solve(S, H @ P).T
+    if emission_cov.ndim == 2:
+        S = emission_cov + emission_matrix @ prior_cov @ emission_matrix.T
+        K = psd_solve(S, emission_matrix @ prior_cov).T
     else:
         # Optimization using Woodbury identity with A=R, U=H@chol(P), V=U.T, C=I
         # (see https://en.wikipedia.org/wiki/Woodbury_matrix_identity)
-        I = jnp.eye(P.shape[0])
-        U = H @ jnp.linalg.cholesky(P)
-        X = U / R[:, None]
-        S_inv = jnp.diag(1.0 / R) - X @ psd_solve(I + U.T @ X, X.T)
+        I = jnp.eye(prior_cov.shape[0])
+        U = emission_matrix @ jnp.linalg.cholesky(prior_cov)
+        X = U / emission_cov[:, None]
+        S_inv = jnp.diag(1.0 / emission_cov) - X @ psd_solve(I + U.T @ X, X.T)
         """
         # Could alternatively use U=H and C=P
         R_inv = jnp.diag(1.0 / R)
         P_inv = psd_solve(P, jnp.eye(P.shape[0]))
         S_inv = R_inv - R_inv @ H @ psd_solve(P_inv + H.T @ R_inv @ H, H.T @ R_inv)
         """
-        K = P @ H.T @ S_inv
-        S = jnp.diag(R) + H @ P @ H.T
+        K = prior_cov @ emission_matrix.T @ S_inv
+        S = jnp.diag(emission_cov) + emission_matrix @ prior_cov @ emission_matrix.T
 
-    Sigma_cond = P - K @ S @ K.T
-    mu_cond = m + K @ (y - D @ u - d - H @ m)
+    residual = emission - input_weights @ inpt - emission_bias - emission_matrix @ prior_mean
+    mu_cond = prior_mean + K @ residual
+    Sigma_cond = prior_cov - K @ S @ K.T
     return mu_cond, symmetrize(Sigma_cond)
 
 
-def preprocess_params_and_inputs(params, num_timesteps, inputs):
-    """Preprocess parameters in case some are set to None."""
+def preprocess_params_and_inputs(params: ParamsLGSSM, 
+                                 num_timesteps: int, 
+                                 inputs: Optional[Float[Array, "num_timesteps input_dim"]]
+                                 ) -> Tuple[ParamsLGSSM, 
+                                            Float[Array, "num_timesteps input_dim"]]:
+    """Preprocess parameters in case some are set to None.
+    
+    Args:
+        params: model parameters
+        num_timesteps: number of timesteps
+        inputs: optional array of inputs.
+
+    Returns:
+        full_params: full parameters with zeros for missing parameters
+        inputs: processed inputs (zero if None)
+    """
 
     # Make sure all the required parameters are there
     assert params.initial.mean is not None
@@ -366,22 +381,22 @@ def preprocess_args(f):
     return wrapper
 
 
-def lgssm_joint_sample(
-    params: ParamsLGSSM,
-    key: PRNGKeyT,
-    num_timesteps: int,
-    inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-)-> Tuple[Float[Array, "num_timesteps state_dim"],
-          Float[Array, "num_timesteps emission_dim"]]:
+def lgssm_joint_sample(params: ParamsLGSSM,
+                       key: PRNGKeyT,
+                       num_timesteps: int,
+                       inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+                       )-> Tuple[Float[Array, "num_timesteps state_dim"],
+                                 Float[Array, "num_timesteps emission_dim"]]:
     r"""Sample from the joint distribution to produce state and emission trajectories.
 
     Args:
         params: model parameters
+        key: random number key.
+        num_timesteps: number of timesteps.
         inputs: optional array of inputs.
 
     Returns:
-        latent states and emissions
-
+        latent states and emissions sampled from the model.
     """
     params, inputs = preprocess_params_and_inputs(params, num_timesteps, inputs)
 
@@ -442,11 +457,10 @@ def lgssm_joint_sample(
 
 
 @preprocess_args
-def lgssm_filter(
-    params: ParamsLGSSM,
-    emissions:  Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGSSMFiltered:
+def lgssm_filter(params: ParamsLGSSM,
+                 emissions:  Float[Array, "ntime emission_dim"],
+                 inputs: Optional[Float[Array, "ntime input_dim"]]=None
+                 ) -> PosteriorGSSMFiltered:
     r"""Run a Kalman filter to produce the marginal likelihood and filtered state estimates.
 
     Args:
@@ -499,11 +513,10 @@ def lgssm_filter(
 
 
 @preprocess_args
-def lgssm_smoother(
-    params: ParamsLGSSM,
-    emissions: Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGSSMSmoothed:
+def lgssm_smoother(params: ParamsLGSSM,
+                   emissions: Float[Array, "ntime emission_dim"],
+                   inputs: Optional[Float[Array, "ntime input_dim"]]=None
+                   ) -> PosteriorGSSMSmoothed:
     r"""Run forward-filtering, backward-smoother to compute expectations
     under the posterior distribution on latent states. Technically, this
     implements the Rauch-Tung-Striebel (RTS) smoother.
@@ -570,14 +583,12 @@ def lgssm_smoother(
     )
 
 
-def lgssm_posterior_sample(
-    key: PRNGKeyT,
-    params: ParamsLGSSM,
-    emissions:  Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None,
-    jitter: Optional[Scalar]=0
-
-) -> Float[Array, "ntime state_dim"]:
+def lgssm_posterior_sample(key: PRNGKeyT,
+                           params: ParamsLGSSM,
+                           emissions:  Float[Array, "num_timesteps emission_dim"],
+                           inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None,
+                           jitter: Optional[Scalar]=0.0
+                           ) -> Float[Array, "num_timesteps state_dim"]:
     r"""Run forward-filtering, backward-sampling to draw samples from $p(z_{1:T} \mid y_{1:T}, u_{1:T})$.
 
     Args:
@@ -588,7 +599,7 @@ def lgssm_posterior_sample(
         jitter: padding to add to the diagonal of the covariance matrix before sampling.
 
     Returns:
-        Float[Array, "ntime state_dim"]: one sample of $z_{1:T}$ from the posterior distribution on latent states.
+        One sample of $z_{1:T}$ from the posterior distribution on latent states.
     """
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
