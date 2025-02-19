@@ -30,29 +30,29 @@ _process_input = lambda x, y: jnp.zeros((y,)) if x is None else x
 _compute_lambda = lambda x, y, z: x**2 * (y + z) - z
 
 
-def _compute_sigmas(m: Float[Array, "state_dim"], 
-                    P: Float[Array, "state_dim state_dim"], 
-                    n: int, 
-                    lamb: float) \
+def _compute_sigmas(mean: Float[Array, "state_dim"], 
+                    cov: Float[Array, "state_dim state_dim"], 
+                    dim: int, 
+                    scale: float) \
                     -> Float[Array, "2*state_dim+1"]:
     """Compute (2n+1) sigma points used for inputs to  unscented transform.
 
     Args:
-        m (D_hid,): mean.
-        P (D_hid,D_hid): covariance.
-        n (int): number of state dimensions.
+        mean (dim,): mean.
+        cov (dim, dim): covariance.
+        dim (int): number of state dimensions.
         lamb (Scalar): unscented parameter lambda.
 
     Returns:
-        sigmas (2*D_hid+1,): 2n+1 sigma points.
+        sigmas (2*dim+1,): 2dim+1 sigma points.
     """
-    distances = jnp.sqrt(n + lamb) * jnp.linalg.cholesky(P)
-    sigma_plus = jnp.array([m + distances[:, i] for i in range(n)])
-    sigma_minus = jnp.array([m - distances[:, i] for i in range(n)])
-    return jnp.concatenate((jnp.array([m]), sigma_plus, sigma_minus))
+    distances = jnp.sqrt(dim + scale) * jnp.linalg.cholesky(cov)
+    sigma_plus = jnp.array([mean + distances[:, i] for i in range(dim)])
+    sigma_minus = jnp.array([mean - distances[:, i] for i in range(dim)])
+    return jnp.concatenate((jnp.array([mean]), sigma_plus, sigma_minus))
 
 
-def _compute_weights(n: int, 
+def _compute_weights(dim: int, 
                      alpha: float, 
                      beta: float, 
                      lamb: float) \
@@ -61,7 +61,7 @@ def _compute_weights(n: int,
     """Compute weights used to compute predicted mean and covariance (Sarkka 5.77).
 
     Args:
-        n (int): number of state dimensions.
+        dim (int): number of state dimensions.
         alpha (float): hyperparameter that determines the spread of sigma points
         beta (float): hyperparameter that incorporates prior information
         lamb (float): lamb = alpha**2 *(n + kappa) - n
@@ -70,77 +70,71 @@ def _compute_weights(n: int,
         w_mean (2*n+1,): 2n+1 weights to compute predicted mean.
         w_cov (2*n+1,): 2n+1 weights to compute predicted covariance.
     """
-    factor = 1 / (2 * (n + lamb))
-    w_mean = jnp.concatenate((jnp.array([lamb / (n + lamb)]), jnp.ones(2 * n) * factor))
-    w_cov = jnp.concatenate((jnp.array([lamb / (n + lamb) + (1 - alpha**2 + beta)]), jnp.ones(2 * n) * factor))
+    factor = 1 / (2 * (dim + lamb))
+    w_mean = jnp.concatenate((jnp.array([lamb / (dim + lamb)]), jnp.ones(2 * dim) * factor))
+    w_cov = jnp.concatenate((jnp.array([lamb / (dim + lamb) + (1 - alpha**2 + beta)]), jnp.ones(2 * dim) * factor))
     return w_mean, w_cov
 
 
-def _predict(m: Float[Array, "state_dim"], 
-             P: Float[Array, "state_dim state_dim"],
-             f: Callable, 
-             Q: Float[Array, "state_dim state_dim"],
+def _predict(prior_mean: Float[Array, "state_dim"], 
+             prior_cov: Float[Array, "state_dim state_dim"],
+             dynamics_func: Callable, 
+             dynamics_cov: Float[Array, "state_dim state_dim"],
              lamb: float, 
-             w_mean: Float[Array, "2*state_dim+1"],
-             w_cov: Float[Array, "2*state_dim+1"],
-             u: Float[Array, "input_dim"]) \
+             weights_mean: Float[Array, "2*state_dim+1"],
+             weights_cov: Float[Array, "2*state_dim+1"],
+             inpt: Float[Array, "input_dim"]) \
              -> Tuple[Float[Array, "state_dim"],
                       Float[Array, "state_dim state_dim"],
                       Float[Array, "state_dim state_dim"]]:
     """Predict next mean and covariance using additive UKF
 
     Args:
-        m (D_hid,): prior mean.
-        P (D_hid,D_hid): prior covariance.
-        f (Callable): dynamics function.
-        Q (D_hid,D_hid): dynamics covariance matrix.
-        lamb (float): lamb = alpha**2 *(n + kappa) - n.
-        w_mean (2*D_hid+1,): 2n+1 weights to compute predicted mean.
-        w_cov (2*D_hid+1,): 2n+1 weights to compute predicted covariance.
-        u (D_in,): inputs.
+        prior_mean: prior mean.
+        prior_cov: prior covariance.
+        dynamics_func: dynamics function.
+        dynamics_cov: dynamics covariance matrix.
+        lamb: lamb = alpha**2 *(n + kappa) - n.
+        weights_mean: 2n+1 weights to compute predicted mean.
+        weights_cov: 2n+1 weights to compute predicted covariance.
+        inpt: inputs.
 
     Returns:
-        m_pred (D_hid,): predicted mean.
-        P_pred (D_hid,D_hid): predicted covariance.
-
+        m_pred: predicted mean.
+        P_pred: predicted covariance.
+        P_cross: predicted cross-covariance.
     """
-    n = len(m)
+    n = len(prior_mean)
     # Form sigma points and propagate
-    sigmas_pred = _compute_sigmas(m, P, n, lamb)
-    u_s = jnp.array([u] * len(sigmas_pred))
-    sigmas_pred_prop = vmap(f, (0, 0), 0)(sigmas_pred, u_s)
+    sigmas_pred = _compute_sigmas(prior_mean, prior_cov, n, lamb)
+    u_s = jnp.array([inpt] * len(sigmas_pred))
+    sigmas_pred_prop = vmap(dynamics_func, (0, 0), 0)(sigmas_pred, u_s)
 
     # Compute predicted mean and covariance
-    m_pred = jnp.tensordot(w_mean, sigmas_pred_prop, axes=1)
-    P_pred = jnp.tensordot(w_cov, _outer(sigmas_pred_prop - m_pred, sigmas_pred_prop - m_pred), axes=1) + Q
-    P_cross = jnp.tensordot(w_cov, _outer(sigmas_pred - m, sigmas_pred_prop - m_pred), axes=1)
+    m_pred = jnp.tensordot(weights_mean, sigmas_pred_prop, axes=1)
+    P_pred = jnp.tensordot(weights_cov, 
+                           _outer(sigmas_pred_prop - m_pred, 
+                                  sigmas_pred_prop - m_pred), axes=1) \
+                                    + dynamics_cov
+    P_cross = jnp.tensordot(weights_cov,
+                            _outer(sigmas_pred - prior_mean, 
+                                   sigmas_pred_prop - m_pred), axes=1)
     return m_pred, P_pred, P_cross
 
 
-def _condition_on(m: Float[Array, "state_dim"],
-                  P: Float[Array, "state_dim state_dim"],
-                  h: Callable, 
-                  R: Float[Array, "emission_dim emission_dim"],
+def _condition_on(prior_mean: Float[Array, "state_dim"],
+                  prior_cov: Float[Array, "state_dim state_dim"],
+                  emission_func: Callable, 
+                  emission_cov: Float[Array, "emission_dim emission_dim"],
                   lamb: float, 
-                  w_mean: Float[Array, "2*state_dim+1"],
-                  w_cov: Float[Array, "2*state_dim+1"],
-                  u: Float[Array, "input_dim"],
-                  y: Float[Array, "emission_dim"]) \
+                  weights_mean: Float[Array, "2*state_dim+1"],
+                  weights_cov: Float[Array, "2*state_dim+1"],
+                  inpt: Float[Array, "input_dim"],
+                  emission: Float[Array, "emission_dim"]) \
                   -> Tuple[float, 
                            Float[Array, "state_dim"],
                            Float[Array, "state_dim state_dim"]]:
     """Condition a Gaussian potential on a new observation
-
-    Args:
-        m (D_hid,): prior mean.
-        P (D_hid,D_hid): prior covariance.
-        h (Callable): emission function.
-        R (D_obs,D_obs): emssion covariance matrix
-        lamb (float): lamb = alpha**2 *(n + kappa) - n.
-        w_mean (2*D_hid+1,): 2n+1 weights to compute predicted mean.
-        w_cov (2*D_hid+1,): 2n+1 weights to compute predicted covariance.
-        u (D_in,): inputs.
-        y (D_obs,): observation.black
 
     Returns:
         ll (float): log-likelihood of observation
@@ -148,24 +142,24 @@ def _condition_on(m: Float[Array, "state_dim"],
         P_cond (D_hid,D_hid): filtered covariance.
 
     """
-    n = len(m)
+    n = len(prior_mean)
     # Form sigma points and propagate
-    sigmas_cond = _compute_sigmas(m, P, n, lamb)
-    u_s = jnp.array([u] * len(sigmas_cond))
-    sigmas_cond_prop = vmap(h, (0, 0), 0)(sigmas_cond, u_s)
+    sigmas_cond = _compute_sigmas(prior_mean, prior_cov, n, lamb)
+    u_s = jnp.array([inpt] * len(sigmas_cond))
+    sigmas_cond_prop = vmap(emission_func, (0, 0), 0)(sigmas_cond, u_s)
 
     # Compute parameters needed to filter
-    pred_mean = jnp.tensordot(w_mean, sigmas_cond_prop, axes=1)
-    pred_cov = jnp.tensordot(w_cov, _outer(sigmas_cond_prop - pred_mean, sigmas_cond_prop - pred_mean), axes=1) + R
-    pred_cross = jnp.tensordot(w_cov, _outer(sigmas_cond - m, sigmas_cond_prop - pred_mean), axes=1)
+    pred_mean = jnp.tensordot(weights_mean, sigmas_cond_prop, axes=1)
+    pred_cov = jnp.tensordot(weights_cov, _outer(sigmas_cond_prop - pred_mean, sigmas_cond_prop - pred_mean), axes=1) + emission_cov
+    pred_cross = jnp.tensordot(weights_cov, _outer(sigmas_cond - prior_mean, sigmas_cond_prop - pred_mean), axes=1)
 
     # Compute log-likelihood of observation
-    ll = MVN(pred_mean, pred_cov).log_prob(y)
+    ll = MVN(pred_mean, pred_cov).log_prob(emission)
 
     # Compute filtered mean and covariace
     K = psd_solve(pred_cov, pred_cross.T).T  # Filter gain
-    m_cond = m + K @ (y - pred_mean)
-    P_cond = P - K @ pred_cov @ K.T
+    m_cond = prior_mean + K @ (emission - pred_mean)
+    P_cond = prior_cov - K @ pred_cov @ K.T
     return ll, m_cond, P_cond
 
 
