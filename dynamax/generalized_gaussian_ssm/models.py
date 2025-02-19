@@ -54,7 +54,6 @@ class ParamsGGSSM(NamedTuple):
     emission_dist: EmissionDistFn = lambda mean, cov: MVN(loc=mean, covariance_matrix=cov)
 
 
-
 class GeneralizedGaussianSSM(SSM):
     """
     Generalized Gaussian State Space Model.
