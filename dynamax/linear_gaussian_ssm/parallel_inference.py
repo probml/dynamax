@@ -53,6 +53,7 @@ def _get_one_param(x, dim, t):
         return x
 
 def _get_emission_cov_dim(params, num_timesteps):
+    """Get the emission covariance dimension."""
     assert not callable(params.emissions.cov), "Emission covariance cannot be a callable for parallel inference."
     emission_dim = _get_one_param(params.emissions.bias, 1, 0).shape[0]
     R_shp = params.emissions.cov.shape
@@ -233,8 +234,6 @@ def lgssm_filter(params: ParamsLGSSM,
     """A parallel version of the lgssm filtering algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
-
-    Note: This function does not yet handle `inputs` to the system.
     """
     @vmap
     def _operator(elem1, elem2):
@@ -324,16 +323,13 @@ def _initialize_smoothing_messages(params: ParamsLGSSM,
     )
 
 
-def lgssm_smoother(
-    params: ParamsLGSSM,
-    emissions: Float[Array, "ntime emission_dim"],
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-) -> PosteriorGSSMSmoothed:
+def lgssm_smoother(params: ParamsLGSSM,
+                   emissions: Float[Array, "ntime emission_dim"],
+                   inputs: Optional[Float[Array, "ntime input_dim"]]=None
+                   ) -> PosteriorGSSMSmoothed:
     """A parallel version of the lgssm smoothing algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
-
-    Note: This function does not yet handle `inputs` to the system.
     """
     filtered_posterior = lgssm_filter(params, emissions, inputs)
     filtered_means = filtered_posterior.filtered_means
@@ -398,8 +394,6 @@ def lgssm_posterior_sample(
     """A parallel version of the lgssm sampling algorithm.
 
     See S. Särkkä and Á. F. García-Fernández (2021) - https://arxiv.org/abs/1905.13002.
-
-    Note: This function does not yet handle `inputs` to the system.
     """
     filtered_posterior = lgssm_filter(params, emissions, inputs)
     filtered_means = filtered_posterior.filtered_means
