@@ -163,29 +163,6 @@ def extended_kalman_filter(
     return posterior_filtered
 
 
-def iterated_extended_kalman_filter(
-    params: ParamsNLGSSM,
-    emissions:  Float[Array, "ntime emission_dim"],
-    num_iter: int = 2,
-    inputs: Optional[Float[Array, "ntime input_dim"]] = None
-) -> PosteriorGSSMFiltered:
-    r"""Run an iterated extended Kalman filter to produce the
-    marginal likelihood and filtered state estimates.
-
-    Args:
-        params: model parameters.
-        emissions: observation sequence.
-        num_iter: number of linearizations around posterior for update step (default 2).
-        inputs: optional array of inputs.
-
-    Returns:
-        post: posterior object.
-
-    """
-    filtered_posterior = extended_kalman_filter(params, emissions, num_iter, inputs)
-    return filtered_posterior
-
-
 def extended_kalman_smoother(
     params: ParamsNLGSSM,
     emissions:  Float[Array, "ntime emission_dim"],
@@ -325,33 +302,3 @@ def extended_kalman_posterior_sample(
         reverse=True,
     )
     return jnp.vstack([states, last_state])
-
-
-def iterated_extended_kalman_smoother(
-    params: ParamsNLGSSM,
-    emissions:  Float[Array, "ntime emission_dim"],
-    num_iter: int = 2,
-    inputs: Optional[Float[Array, "ntime input_dim"]] = None
-) -> PosteriorGSSMSmoothed:
-    r"""Run an iterated extended Kalman smoother (IEKS).
-
-    Args:
-        params: model parameters.
-        emissions: observation sequence.
-        num_iter: number of linearizations around posterior for update step (default 2).
-        inputs: optional array of inputs.
-
-    Returns:
-        post: posterior object.
-
-    """
-
-    def _step(carry, _):
-        """Iteratively re-linearize around smoothed posterior from previous iteration."""
-        # Relinearize around smoothed posterior from previous iteration
-        smoothed_prior = carry
-        smoothed_posterior = extended_kalman_smoother(params, emissions, smoothed_prior, inputs)
-        return smoothed_posterior, None
-
-    smoothed_posterior, _ = lax.scan(_step, None, jnp.arange(num_iter))
-    return smoothed_posterior
