@@ -1,8 +1,12 @@
 """
 Tests for the linear Gaussian SSM models.
 """
+from functools import partial
+from itertools import count
 
 import pytest
+from jax import vmap
+import jax.numpy as jnp
 import jax.random as jr
 
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
@@ -29,3 +33,20 @@ def test_sample_and_fit(cls, kwargs, inputs):
     fitted_params, lps = model.fit_em(params, param_props, emissions, inputs=inputs, num_iters=3)
     assert monotonically_increasing(lps)
     fitted_params, lps = model.fit_sgd(params, param_props, emissions, inputs=inputs, num_epochs=3)
+
+def test_fit_blocked_gibbs_batched():
+    """
+    Test that the blocked Gibbs sampler works for multiple observations.
+    """
+    state_dim = 2
+    emission_dim = 3
+    num_timesteps = 4
+    m_samples = 5
+    keys = map(jr.PRNGKey, count())
+    m_keys = jr.split(next(keys), num=m_samples)
+
+    model = LinearGaussianConjugateSSM(state_dim, emission_dim)
+    params, _ = model.initialize(next(keys))
+    _, y_obs = vmap(partial(model.sample, params, num_timesteps=num_timesteps))(m_keys)
+
+    model.fit_blocked_gibbs(next(keys), params, sample_size=6, emissions=y_obs)
