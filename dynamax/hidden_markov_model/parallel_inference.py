@@ -1,18 +1,21 @@
+"""
+Parallel implementations of the forward filtering and backward smoothing algorithms
+"""
 import jax.numpy as jnp
 import jax.random as jr
 from jax import lax, vmap, value_and_grad
 from jaxtyping import Array, Float, Int
-from typing import NamedTuple, Union
-from functools import partial
+from typing import NamedTuple, Tuple
 
 from dynamax.hidden_markov_model.inference import HMMPosterior, HMMPosteriorFiltered
+from dynamax.types import Scalar
 
 #---------------------------------------------------------------------------#
 #                                Filtering                                  #
 #---------------------------------------------------------------------------#
 
 class FilterMessage(NamedTuple):
-    """Filtering associative scan elements.
+    r"""Filtering associative scan elements.
 
     Attributes:
         A: $p(z_j \mid z_i)$
@@ -22,7 +25,12 @@ class FilterMessage(NamedTuple):
     log_b: Float[Array, "num_timesteps num_states"]
 
 
-def _condition_on(A, ll, axis=-1):
+def _condition_on(A : Float[Array, "num_states num_states"], 
+                  ll : Float[Array, " num_states"], 
+                  axis : int=-1) -> \
+                  Tuple[Float[Array, "num_states num_states"], Float[Array, "num_states"]]:
+    """ Update the message by conditioning on new observations.
+    """
     ll_max = ll.max(axis=axis)
     A_cond = A * jnp.exp(ll - ll_max)
     norm = A_cond.sum(axis=axis)
@@ -30,7 +38,7 @@ def _condition_on(A, ll, axis=-1):
     return A_cond, jnp.log(norm) + ll_max
 
 
-def hmm_filter(initial_probs: Float[Array, "num_states"],
+def hmm_filter(initial_probs: Float[Array, " num_states"],
                transition_matrix: Float[Array, "num_states num_states"],
                log_likelihoods: Float[Array, "num_timesteps num_states"]
 ) -> HMMPosteriorFiltered:
@@ -52,6 +60,10 @@ def hmm_filter(initial_probs: Float[Array, "num_states"],
 
     @vmap
     def marginalize(m_ij, m_jk):
+        """
+        Compute the message from time i to time k by marginalizing out 
+        the hidden state at time j.
+        """
         A_ij_cond, lognorm = _condition_on(m_ij.A, m_jk.log_b)
         A_ik = A_ij_cond @ m_jk.A
         log_b_ik = m_ij.log_b + lognorm
@@ -89,10 +101,10 @@ def hmm_filter(initial_probs: Float[Array, "num_states"],
 #---------------------------------------------------------------------------#
 
 
-def hmm_smoother(initial_probs: Float[Array, "num_states"],
+def hmm_smoother(initial_probs: Float[Array, " num_states"],
                  transition_matrix: Float[Array, "num_states num_states"],
                  log_likelihoods: Float[Array, "num_timesteps num_states"]
-) -> HMMPosteriorFiltered:
+) -> HMMPosterior:
     r"""Parallel implementation of HMM smoothing with `jax.lax.associative_scan`.
 
     **Notes:**
@@ -110,6 +122,7 @@ def hmm_smoother(initial_probs: Float[Array, "num_states"],
 
     """
     def log_normalizer(log_initial_probs, log_transition_matrix, log_likelihoods):
+        """Compute the log normalizer of the HMM model."""
         post = hmm_filter(jnp.exp(log_initial_probs),
                                    jnp.exp(log_transition_matrix),
                                    log_likelihoods)
@@ -132,43 +145,45 @@ def hmm_smoother(initial_probs: Float[Array, "num_states"],
 #---------------------------------------------------------------------------#
 #                                  Sampling                                 #
 #---------------------------------------------------------------------------#
-"""Associative scan elements $E_ij$ are vectors specifying a sample::
+r"""Associative scan elements $E_ij$ are vectors specifying a sample::
 
     $z_j ~ p(z_j \mid z_i)$ 
     
 for each possible value of $z_i$.
 """
 
-def _initialize_sampling_messages(rng, transition_matrix, filtered_probs):
+def _initialize_sampling_messages(key, transition_matrix, filtered_probs):
     """Preprocess filtering output to construct input for sampling assocative scan."""
 
     T, K = filtered_probs.shape
-    rngs = jr.split(rng, T)
+    keys = jr.split(key, T)
 
-    def _last_message(rng, probs):
-        state = jr.choice(rng, K, p=probs)
+    def _last_message(key, probs):
+        """Sample the last hidden state."""
+        state = jr.choice(key, K, p=probs)
         return jnp.repeat(state, K)
 
     @vmap
-    def _generic_message(rng, probs):
+    def _generic_message(key, probs):
+        """Sample a hidden state given the previous state."""
         smoothed_probs = probs * transition_matrix.T
         smoothed_probs = smoothed_probs / smoothed_probs.sum(1).reshape(K,1)
-        return vmap(lambda p: jr.choice(rng, K, p=p))(smoothed_probs)
+        return vmap(lambda p: jr.choice(key, K, p=p))(smoothed_probs)
 
-    En = _last_message(rngs[-1], filtered_probs[-1])
-    Et = _generic_message(rngs[:-1], filtered_probs[:-1])
+    En = _last_message(keys[-1], filtered_probs[-1])
+    Et = _generic_message(keys[:-1], filtered_probs[:-1])
     return jnp.concatenate([Et, En[None]])
 
 
-def hmm_posterior_sample(rng: jr.PRNGKey,
-                         initial_distribution: Float[Array, "num_states"],
+def hmm_posterior_sample(key: Array,
+                         initial_distribution: Float[Array, " num_states"],
                          transition_matrix: Float[Array, "num_states num_states"],
                          log_likelihoods: Float[Array, "num_timesteps num_states"]
-) -> Int[Array, "num_timesteps"]:
+) -> Tuple[Scalar, Int[Array, " num_timesteps"]]:
     r"""Sample a sequence of hidden states from the posterior.
 
     Args:
-        rng: random number generator
+        key: random number generator
         initial_distribution: $p(z_1 \mid u_1, \theta)$
         transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
         log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
@@ -177,8 +192,6 @@ def hmm_posterior_sample(rng: jr.PRNGKey,
         log_normalizer: $\log P(y_{1:T} \mid u_{1:T}, \theta)$
         states: sequence of hidden states $z_{1:T}$
     """
-    T, K = log_likelihoods.shape
-
     # Run the HMM filter
     post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods)
     log_normalizer = post.marginal_loglik
@@ -186,9 +199,10 @@ def hmm_posterior_sample(rng: jr.PRNGKey,
 
     @vmap
     def _operator(E_jk, E_ij):
+        """Sample a hidden state given the previous state."""
         return jnp.take(E_ij, E_jk)
 
-    initial_messages = _initialize_sampling_messages(rng, transition_matrix, filtered_probs)
+    initial_messages = _initialize_sampling_messages(key, transition_matrix, filtered_probs)
     final_messages = lax.associative_scan(_operator, initial_messages, reverse=True)
     states = final_messages[:,0]
     return log_normalizer, states

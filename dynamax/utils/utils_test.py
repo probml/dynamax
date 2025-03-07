@@ -1,3 +1,6 @@
+"""
+Tests of the utility functions.
+"""
 import jax.numpy as jnp
 
 from dynamax.utils.utils import find_permutation

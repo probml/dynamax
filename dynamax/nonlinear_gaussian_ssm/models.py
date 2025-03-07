@@ -1,19 +1,19 @@
-from jaxtyping import Array, Float
-from typing import NamedTuple, Optional, Union, Callable
+"""
+Nonlinear Gaussian State Space Model objects.
+"""
 import tensorflow_probability.substrates.jax as tfp
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 import tensorflow_probability.substrates.jax.distributions as tfd
 
 from dynamax.ssm import SSM
+from jaxtyping import Array, Float
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
+from typing import NamedTuple, Optional, Union, Callable
 
-tfd = tfp.distributions
-tfb = tfp.bijectors
 
-
-FnStateToState = Callable[ [Float[Array, "state_dim"]], Float[Array, "state_dim"]]
-FnStateAndInputToState = Callable[ [Float[Array, "state_dim"], Float[Array, "input_dim"]], Float[Array, "state_dim"]]
-FnStateToEmission = Callable[ [Float[Array, "state_dim"]], Float[Array, "emission_dim"]]
-FnStateAndInputToEmission = Callable[ [Float[Array, "state_dim"], Float[Array, "input_dim"] ], Float[Array, "emission_dim"]]
+FnStateToState = Callable[ [Float[Array, " state_dim"]], Float[Array, " state_dim"]]
+FnStateAndInputToState = Callable[ [Float[Array, " state_dim"], Float[Array, " input_dim"]], Float[Array, " state_dim"]]
+FnStateToEmission = Callable[ [Float[Array, " state_dim"]], Float[Array, " emission_dim"]]
+FnStateAndInputToEmission = Callable[ [Float[Array, " state_dim"], Float[Array, " input_dim"] ], Float[Array, " emission_dim"]]
 
 
 class ParamsNLGSSM(NamedTuple):
@@ -34,7 +34,7 @@ class ParamsNLGSSM(NamedTuple):
 
     """
 
-    initial_mean: Float[Array, "state_dim"]
+    initial_mean: Float[Array, " state_dim"]
     initial_covariance: Float[Array, "state_dim state_dim"]
     dynamics_function: Union[FnStateToState, FnStateAndInputToState]
     dynamics_covariance: Float[Array, "state_dim state_dim"]
@@ -67,8 +67,6 @@ class NonlinearGaussianSSM(SSM):
 
     These parameters of the model are stored in a separate object of type :class:`ParamsNLGSSM`.
     """
-
-
     def __init__(self, state_dim: int, emission_dim: int, input_dim: int = 0):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
@@ -76,25 +74,27 @@ class NonlinearGaussianSSM(SSM):
 
     @property
     def emission_shape(self):
+        """Returns the shape of the emission distribution."""
         return (self.emission_dim,)
 
     @property
     def inputs_shape(self):
+        """Returns the shape of the input distribution."""
         return (self.input_dim,) if self.input_dim > 0 else None
 
-    def initial_distribution(
-        self,
-        params: ParamsNLGSSM,
-        inputs: Optional[Float[Array, "input_dim"]] = None
-    ) -> tfd.Distribution:
+    def initial_distribution(self,
+                             params: ParamsNLGSSM,
+                             inputs: Optional[Float[Array, " input_dim"]] = None) \
+                             -> tfd.Distribution:
+        """Returns the initial distribution."""
         return MVN(params.initial_mean, params.initial_covariance)
 
-    def transition_distribution(
-        self,
-        params: ParamsNLGSSM,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]] = None
-    ) -> tfd.Distribution:
+    def transition_distribution(self,
+                                params: ParamsNLGSSM,
+                                state: Float[Array, " state_dim"],
+                                inputs: Optional[Float[Array, " input_dim"]] = None) \
+                                -> tfd.Distribution:
+        """Returns the nonlinear dynamics distribution."""
         f = params.dynamics_function
         if inputs is None:
             mean = f(state)
@@ -102,12 +102,12 @@ class NonlinearGaussianSSM(SSM):
             mean = f(state, inputs)
         return MVN(mean, params.dynamics_covariance)
 
-    def emission_distribution(
-        self,
-        params: ParamsNLGSSM,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]] = None
-     ) -> tfd.Distribution:
+    def emission_distribution(self,
+                              params: ParamsNLGSSM,
+                              state: Float[Array, " state_dim"],
+                              inputs: Float[Array, " input_dim"] = None) \
+                              -> tfd.Distribution:
+        """Returns the nonlinear emission distribution."""
         h = params.emission_function
         if inputs is None:
             mean = h(state)

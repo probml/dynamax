@@ -1,7 +1,11 @@
+"""
+This module contains functions for optimization.
+"""
 import jax.numpy as jnp
 import jax.random as jr
 import optax
-from jax import lax, value_and_grad, tree_map
+from jax import lax, value_and_grad
+from jax.tree_util import tree_map
 from dynamax.utils.utils import pytree_len
 
 
@@ -57,14 +61,17 @@ def run_sgd(loss_fn,
         shuffle = False
 
     def train_step(carry, key):
+        """One step of the algorithm."""
         params, opt_state = carry
         sample_generator = sample_minibatches(key, dataset, batch_size, shuffle)
 
         def cond_fun(state):
+            """Condition for while loop."""
             itr, params, opt_state, avg_loss = state
             return itr < num_batches
 
         def body_fun(state):
+            """Body of while loop."""
             itr, params, opt_state, avg_loss = state
             minibatch = next(sample_generator)  ## TODO: Does this work inside while_loop??
             this_loss, grads = loss_grad_fn(params, minibatch)
@@ -86,7 +93,9 @@ def run_gradient_descent(objective,
                          optimizer=optax.adam(1e-2),
                          optimizer_state=None,
                          num_mstep_iters=50):
-
+    """
+    Run gradient descent on the objective function.
+    """
     if optimizer_state is None:
         optimizer_state = optimizer.init(params)
 
@@ -95,6 +104,7 @@ def run_gradient_descent(objective,
 
     # One step of the algorithm
     def train_step(carry, args):
+        """One step of the algorithm."""
         params, optimizer_state = carry
         loss, grads = loss_grad_fn(params)
         updates, optimizer_state = optimizer.update(grads, optimizer_state)

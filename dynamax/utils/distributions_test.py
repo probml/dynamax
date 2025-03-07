@@ -1,7 +1,10 @@
-import pytest
+"""
+Tests for the distributions module.
+"""
 import jax.numpy as jnp
 import jax.random as jr
-from jax import tree_map
+
+from jax.tree_util import tree_map
 from jax.scipy.stats import norm
 from scipy.stats import invgamma
 from tensorflow_probability.substrates import jax as tfp
@@ -17,12 +20,18 @@ tfb = tfp.bijectors
 
 
 def test_inverse_wishart_mode(df=7.0, dim=3, scale_factor=3.0):
+    """
+    Test that the mode of the InverseWishart distribution is correct.
+    """
     scale = scale_factor * jnp.eye(dim)
     iw = InverseWishart(df, scale)
     assert jnp.allclose(iw.mode(), scale / (df + dim + 1))
 
 
 def test_inverse_wishart_log_prob(df=7.0, dim=3, scale_factor=3.0, n_samples=10):
+    """
+    Test that the log_prob of samples from the InverseWishart distribution is finite.
+    """
     scale = scale_factor * jnp.eye(dim)
     iw = InverseWishart(df, scale)
     samples = iw.sample(seed=jr.PRNGKey(0), sample_shape=(n_samples,))
@@ -50,6 +59,9 @@ def test_inverse_wishart_sample(df=7.0, dim=3, scale_factor=3.0, n_samples=10000
 
 
 def test_normal_inverse_wishart_mode(loc=0., mean_conc=1.0, df=7.0, dim=3, scale_factor=3.0):
+    """
+    Test that the mode of the NormalInverseWishart distribution is correct.
+    """
     loc = loc * jnp.ones(dim)
     scale = scale_factor * jnp.eye(dim)
     niw = NormalInverseWishart(loc, mean_conc, df, scale)
@@ -59,6 +71,9 @@ def test_normal_inverse_wishart_mode(loc=0., mean_conc=1.0, df=7.0, dim=3, scale
 
 
 def test_normal_inverse_wishart_mode_batch(loc=0., mean_conc=1.0, df=7.0, dim=3, scale_factor=3.0, batch_size=10):
+    """
+    Test that the mode of the NormalInverseWishart distribution is correct.
+    """
     loc = loc * jnp.ones(dim)
     scale = scale_factor * jnp.eye(dim)
     niw = NormalInverseWishart(loc[None, ...].repeat(batch_size, axis=0), mean_conc, df, scale[None,
@@ -72,6 +87,9 @@ def test_normal_inverse_wishart_mode_batch(loc=0., mean_conc=1.0, df=7.0, dim=3,
 
 
 def test_normal_inverse_wishart_log_prob(loc=0., mean_conc=1.0, df=7.0, dim=3, scale_factor=3.0, n_samples=10):
+    """
+    Test that the log_prob of samples from the NormalInverseWishart distribution is finite.
+    """
     loc = loc * jnp.ones(dim)
     scale = scale_factor * jnp.eye(dim)
     niw = NormalInverseWishart(loc, mean_conc, df, scale)
@@ -119,9 +137,10 @@ def test_matrix_normal_inverse_wishart_log_prob(
     assert jnp.allclose(mniw_probs, jnp.exp(lp_iw + lp_mn))
 
 
-def test_normal_inverse_gamma_vs_normal_inv_wishart(
-        key=jr.PRNGKey(0), loc=0.0, mean_conc=1.0, concentration=7.0, scale=3.0):
-
+def test_normal_inverse_gamma_vs_normal_inv_wishart(key=jr.PRNGKey(0), loc=0.0, mean_conc=1.0, concentration=7.0, scale=3.0):
+    """
+    Test that the NormalInverseGamma and NormalInverseWishart distributions are equivalent.
+    """
     nig = NormalInverseGamma(loc, mean_conc, concentration, scale)
 
     loc = loc * jnp.ones((1, 1))
@@ -141,9 +160,10 @@ def test_normal_inverse_gamma_vs_normal_inv_wishart(
     assert all(tree_map(lambda x, y: jnp.allclose(jnp.array(x), jnp.array(y)), niw.mode(), nig.mode()))
 
 
-def test_normal_inverse_gamma_log_prob(
-        key=jr.PRNGKey(0), loc=0.0, mean_conc=1.0, concentration=7.0, scale=3.0, n_samples=10):
-
+def test_normal_inverse_gamma_log_prob(key=jr.PRNGKey(0), loc=0.0, mean_conc=1.0, concentration=7.0, scale=3.0, n_samples=10):
+    """
+    Test that the log_prob of samples from the NormalInverseGamma distribution is finite.
+    """
     nig = NormalInverseGamma(loc, mean_conc, concentration, scale)
 
     variance, mean = nig.sample(seed=key, sample_shape=(n_samples,))

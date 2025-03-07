@@ -23,9 +23,11 @@ pip install pytest
 pytest
 ```
 
-Then push your changes back to your fork of the repository:
+Then commit your changes and push back to your fork of the repository:
 
 ```bash
+git add <the files you want to commit>
+git commit -m "<an informative commit message>"
 git push
 ```
 

@@ -1,6 +1,10 @@
+"""
+Tests for the linear Gaussian SSM models.
+"""
+
 import pytest
-from datetime import datetime
 import jax.random as jr
+
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
 from dynamax.linear_gaussian_ssm import LinearGaussianConjugateSSM
 from dynamax.utils.utils import monotonically_increasing
@@ -14,6 +18,9 @@ CONFIGS = [
 
 @pytest.mark.parametrize(["cls", "kwargs", "inputs"], CONFIGS)
 def test_sample_and_fit(cls, kwargs, inputs):
+    """
+    Test that the model can sample and fit the data.
+    """
     model = cls(**kwargs)
     #key1, key2 = jr.split(jr.PRNGKey(int(datetime.now().timestamp())))
     key1, key2 = jr.split(jr.PRNGKey(0))

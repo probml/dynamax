@@ -1,6 +1,11 @@
+"""
+This module contains the abstract classes for the components of a Hidden Markov Model (HMM).
+"""
 from abc import abstractmethod, ABC
+from typing import Any, Optional, Tuple, runtime_checkable, Union 
+from typing_extensions import Protocol
 from dynamax.ssm import SSM
-from dynamax.types import Scalar
+from dynamax.types import IntScalar, Scalar
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.parameters import ParameterSet, PropertySet
 from dynamax.hidden_markov_model.inference import HMMPosterior, HMMPosteriorFiltered
@@ -11,16 +16,14 @@ from dynamax.hidden_markov_model.inference import hmm_two_filter_smoother
 from dynamax.utils.optimize import run_gradient_descent
 from dynamax.utils.utils import pytree_slice
 import jax.numpy as jnp
-import jax.random as jr
 from jax import vmap
 from jax.tree_util import tree_map
-from jaxtyping import Float, Array, PyTree
+from jaxtyping import Float, Array, PyTree, Real
 import optax
 from tensorflow_probability.substrates.jax import distributions as tfd
-from typing import Any, Optional, Tuple
-from typing_extensions import Protocol
 
 
+@runtime_checkable
 class HMMParameterSet(Protocol):
     """Container for HMM parameters.
 
@@ -28,11 +31,23 @@ class HMMParameterSet(Protocol):
     :param transitions: (ParameterSet) transition distribution parameters
     :param emissions: (ParameterSet) emission distribution parameters
     """
-    initial: ParameterSet
-    transitions: ParameterSet
-    emissions: ParameterSet
+    @property
+    def initial(self) -> ParameterSet:
+        """Initial distribution parameters."""
+        pass
+
+    @property
+    def transitions(self) -> ParameterSet:
+        """Transition distribution parameters."""
+        pass
+
+    @property
+    def emissions(self) -> ParameterSet:
+        """Emission distribution parameters."""
+        pass
 
 
+@runtime_checkable
 class HMMPropertySet(Protocol):
     """Container for properties of HMM parameter properties.
 
@@ -40,10 +55,20 @@ class HMMPropertySet(Protocol):
     :param transitions: (PropertySet) transition distribution properties
     :param emissions: (PropertySet) emission distribution properties
     """
-    initial: PropertySet
-    transitions: PropertySet
-    emissions: PropertySet
+    @property
+    def initial(self) -> PropertySet:
+        """Initial distribution properties."""
+        pass
 
+    @property
+    def transitions(self) -> PropertySet:
+        """Transition distribution properties."""
+        pass
+
+    @property
+    def emissions(self) -> PropertySet:
+        """Emission distribution properties."""
+        pass
 
 
 class HMMInitialState(ABC):
@@ -59,7 +84,7 @@ class HMMInitialState(ABC):
     @abstractmethod
     def distribution(self,
                      params: ParameterSet,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the initial latent state
 
@@ -71,7 +96,7 @@ class HMMInitialState(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -96,14 +121,15 @@ class HMMInitialState(ABC):
         """
         raise NotImplementedError
 
-    def _compute_initial_probs(self, params, inputs=None):
-        return self.initial_distribution(params, inputs).probs_parameter()
+    def _compute_initial_probs(self, params, inputs:Optional[Array] = None):
+        """Compute the initial probabilities for each state."""
+        return self.distribution(params, inputs).probs_parameter()
 
     def collect_suff_stats(self,
                            params: ParameterSet,
                            posterior: HMMPosterior,
                            inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> PyTree:
+                           ) -> Tuple[Float[Array, " num_states"], Optional[Float[Array, " input_dim"]]]:
         """Collect sufficient statistics for updating the initial distribution parameters.
 
         Args:
@@ -135,7 +161,7 @@ class HMMInitialState(ABC):
                batch_stats: PyTree,
                m_step_state: Any,
                scale: float=1.0
-    ) -> ParameterSet:
+    ) -> Tuple[ParameterSet, Any]:
         """Perform an M-step on the initial distribution parameters.
 
         Args:
@@ -155,9 +181,11 @@ class HMMInitialState(ABC):
 
         # Minimize the negative expected log joint probability
         def neg_expected_log_joint(unc_params):
+            """Compute the negative expected log joint probability."""
             params = from_unconstrained(unc_params, props)
 
             def _single_expected_log_like(stats):
+                """Compute the expected log likelihood for a single sequence."""
                 expected_initial_state, inpt = stats
                 log_initial_prob = jnp.log(self._compute_initial_probs(params, inpt))
                 lp = jnp.sum(expected_initial_state * log_initial_prob)
@@ -194,8 +222,8 @@ class HMMTransitions(ABC):
     @abstractmethod
     def distribution(self,
                      params: ParameterSet,
-                     state: int,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     state: IntScalar,
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the next latent state
 
@@ -212,7 +240,7 @@ class HMMTransitions(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -238,7 +266,8 @@ class HMMTransitions(ABC):
         """
         raise NotImplementedError
 
-    def _compute_transition_matrices(self, params, inputs=None):
+    def _compute_transition_matrices(self, params, inputs:Optional[Array] = None):
+        """Compute the transition matrix for each time step."""
         if inputs is not None:
             f = lambda inpt: \
                 vmap(lambda state: \
@@ -254,7 +283,7 @@ class HMMTransitions(ABC):
                            params: ParameterSet,
                            posterior: HMMPosterior,
                            inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> PyTree:
+                           ) -> Tuple[Float[Array, "..."], Optional[Float[Array, "num_timesteps-1 input_dim"]]]:
         """Collect sufficient statistics for updating the transition distribution parameters.
 
         Args:
@@ -284,7 +313,7 @@ class HMMTransitions(ABC):
                batch_stats: PyTree,
                m_step_state: Any,
                scale: float=1.0
-    ) -> ParameterSet:
+    ) -> Tuple[ParameterSet, Any]:
         """Perform an M-step on the transition distribution parameters.
 
         Args:
@@ -302,9 +331,11 @@ class HMMTransitions(ABC):
 
         # Minimize the negative expected log joint probability
         def neg_expected_log_joint(unc_params):
+            """Compute the negative expected log joint probability."""
             params = from_unconstrained(unc_params, props)
 
             def _single_expected_log_like(stats):
+                """Compute the expected log likelihood for a single sequence."""
                 expected_transitions, inputs = stats
                 log_trans_matrix = jnp.log(self._compute_transition_matrices(params, inputs))
                 lp = jnp.sum(expected_transitions * log_trans_matrix)
@@ -350,8 +381,8 @@ class HMMEmissions(ABC):
     @abstractmethod
     def distribution(self,
                      params: ParameterSet,
-                     state: int,
-                     inputs: Optional[Float[Array, "input_dim"]]=None
+                     state: IntScalar,
+                     inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         """Return a distribution over the emission
 
@@ -368,7 +399,7 @@ class HMMEmissions(ABC):
 
     @abstractmethod
     def initialize(self,
-                   key: jr.PRNGKey=None,
+                   key: Optional[Array]=None,
                    method: str="prior",
                    **kwargs
     ) -> Tuple[ParameterSet, PropertySet]:
@@ -394,7 +425,8 @@ class HMMEmissions(ABC):
         """
         raise NotImplementedError
 
-    def _compute_conditional_logliks(self, params, emissions, inputs=None):
+    def _compute_conditional_logliks(self, params, emissions, inputs:Optional[Array] = None):
+        """Compute the log likelihood of the emissions given the latent states."""
         # Compute the log probability for each time step by
         # performing a nested vmap over emission time steps and states.
         f = lambda emission, inpt: \
@@ -405,9 +437,12 @@ class HMMEmissions(ABC):
     def collect_suff_stats(self,
                            params: ParameterSet,
                            posterior: HMMPosterior,
-                           emissions: Float[Array, "num_timesteps emission_dim"],
+                           emissions: Union[Real[Array, "num_timesteps emission_dim"],
+                                            Real[Array, " num_timesteps"]],
                            inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-    ) -> PyTree:
+    ) -> Tuple[Float[Array, "num_timesteps num_states"],
+               Union[Real[Array, "num_timesteps emission_dim"], Real[Array, " num_timesteps"]],
+               Optional[Float[Array, "num_timesteps input_dim"]]]:
         """Collect sufficient statistics for updating the emission distribution parameters.
 
         Args:
@@ -438,7 +473,7 @@ class HMMEmissions(ABC):
                batch_stats: PyTree,
                m_step_state: Any,
                scale: float=1.0
-    ) -> ParameterSet:
+    ) -> Tuple[ParameterSet, Any]:
         """Perform an M-step on the emission distribution parameters.
 
         Args:
@@ -458,9 +493,11 @@ class HMMEmissions(ABC):
 
         # the objective is the negative expected log likelihood (and the log prior of the emission params)
         def neg_expected_log_joint(unc_params):
+            """Compute the negative expected log joint probability."""
             params = from_unconstrained(unc_params, props)
 
             def _single_expected_log_like(stats):
+                """Compute the expected log likelihood for a single sequence."""
                 expected_states, emissions, inputs = stats
                 log_likelihoods = self._compute_conditional_logliks(params, emissions, inputs)
                 lp = jnp.sum(expected_states * log_likelihoods)
@@ -485,7 +522,7 @@ class HMMEmissions(ABC):
 
 
 class HMM(SSM):
-    """Abstract base class of Hidden Markov Models (HMMs).
+    r"""Abstract base class of Hidden Markov Models (HMMs).
 
     The model is defined as follows
 
@@ -530,45 +567,81 @@ class HMM(SSM):
     # Implement the SSM abstract methods by passing on to the components
     @property
     def emission_shape(self):
+        """Return the shape of the emission distribution."""
         return self.emission_component.emission_shape
 
-    def initial_distribution(self, params, inputs=None):
+    def initial_distribution(self, params: HMMParameterSet, 
+                             inputs:Optional[Array] = None) \
+                             -> tfd.Distribution:
+        """Return the initial distribution."""
         return self.initial_component.distribution(params.initial, inputs=inputs)
 
-    def transition_distribution(self, params, state, inputs=None):
+    def transition_distribution(self, params: HMMParameterSet, 
+                                state: IntScalar, 
+                                inputs:Optional[Array] = None) \
+                                -> tfd.Distribution:
+        """Return the transition distribution."""
         return self.transition_component.distribution(params.transitions, state, inputs=inputs)
 
-    def emission_distribution(self, params, state, inputs=None):
+    def emission_distribution(self, params: HMMParameterSet, 
+                              state: IntScalar, 
+                              inputs:Optional[Array] = None) \
+                              -> tfd.Distribution:
+        """Return the emission distribution."""
         return self.emission_component.distribution(params.emissions, state, inputs=inputs)
 
-    def log_prior(self, params):
+    def log_prior(self, params: HMMParameterSet) -> Scalar:
+        """Compute the log prior probability of the model parameters."""
         lp = self.initial_component.log_prior(params.initial)
         lp += self.transition_component.log_prior(params.transitions)
         lp += self.emission_component.log_prior(params.emissions)
         return lp
 
     # The inference functions all need the same arguments
-    def _inference_args(self, params, emissions, inputs):
+    def _inference_args(self, params: HMMParameterSet, 
+                        emissions: Array, 
+                        inputs: Optional[Array]) -> Tuple:
+        """Return the arguments needed for inference."""
         return (self.initial_component._compute_initial_probs(params.initial, inputs),
                 self.transition_component._compute_transition_matrices(params.transitions, inputs),
                 self.emission_component._compute_conditional_logliks(params.emissions, emissions, inputs))
 
     # Convenience wrappers for the inference code
-    def marginal_log_prob(self, params, emissions, inputs=None):
+    def marginal_log_prob(self, params: HMMParameterSet, 
+                          emissions: Array, 
+                          inputs: Optional[Array]=None) -> float:
+        """Compute the marginal log probability of the emissions."""
         post = hmm_filter(*self._inference_args(params, emissions, inputs))
         return post.marginal_loglik
 
-    def most_likely_states(self, params, emissions, inputs=None):
+    def most_likely_states(self, params: HMMParameterSet, 
+                           emissions: Array, 
+                           inputs: Optional[Array]=None) \
+                           -> Float[Array, "num_timesteps"]:
+        """Compute the most likely sequence of states."""
         return hmm_posterior_mode(*self._inference_args(params, emissions, inputs))
 
-    def filter(self, params, emissions, inputs=None):
+    def filter(self, params: HMMParameterSet, 
+               emissions: Array, 
+               inputs: Optional[Array]=None) \
+               -> HMMPosteriorFiltered:
+        """Compute the filtering distributions."""
         return hmm_filter(*self._inference_args(params, emissions, inputs))
 
-    def smoother(self, params, emissions, inputs=None):
+    def smoother(self, params: HMMParameterSet, 
+                 emissions: Array, 
+                 inputs: Optional[Array]=None) \
+                 -> HMMPosterior:
+        """Compute the posterior smoothing distributions."""
         return hmm_smoother(*self._inference_args(params, emissions, inputs))
 
     # Expectation-maximization (EM) code
-    def e_step(self, params, emissions, inputs=None):
+    def e_step(
+            self,
+            params: HMMParameterSet,
+            emissions: Array,
+           inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
+           ) -> Tuple[PyTree, Scalar]:
         """The E-step computes expected sufficient statistics under the
         posterior. In the generic case, we simply return the posterior itself.
         """
@@ -580,7 +653,7 @@ class HMM(SSM):
         emission_stats = self.emission_component.collect_suff_stats(params.emissions, posterior, emissions, inputs)
         return (initial_stats, transition_stats, emission_stats), posterior.marginal_loglik
 
-    def initialize_m_step_state(self, params, props):
+    def initialize_m_step_state(self, params: HMMParameterSet, props: HMMPropertySet):
         """Initialize any required state for the M step.
 
         For example, this might include the optimizer state for Adam.
@@ -590,7 +663,16 @@ class HMM(SSM):
         emissions_m_step_state = self.emission_component.initialize_m_step_state(params.emissions, props.emissions)
         return initial_m_step_state, transitions_m_step_state, emissions_m_step_state
 
-    def m_step(self, params, props, batch_stats, m_step_state):
+    def m_step(
+            self,
+            params: HMMParameterSet,
+            props: HMMPropertySet,
+            batch_stats: PyTree,
+            m_step_state: Any
+            ) -> Tuple[HMMParameterSet, Any]:
+        """
+        Perform an M-step on the model parameters.
+        """
         batch_initial_stats, batch_transition_stats, batch_emission_stats = batch_stats
         initial_m_step_state, transitions_m_step_state, emissions_m_step_state = m_step_state
 
@@ -600,107 +682,3 @@ class HMM(SSM):
         params = params._replace(initial=initial_params, transitions=transition_params, emissions=emission_params)
         m_step_state = initial_m_step_state, transitions_m_step_state, emissions_m_step_state
         return params, m_step_state
-
-
-# class ExponentialFamilyHMM(HMM):
-#     """
-#     An HMM whose initial distribution, transition distribution, and emission
-#     distribution all belong to the exponential family. Such models admit a
-#     simple stochastic expectation-maximization algorithm.
-#     """
-#     def fit_stochastic_em(self,
-#                           initial_params,
-#                           param_props,
-#                           emissions_generator,
-#                           schedule=None,
-#                           num_epochs=50):
-#         """
-#         Fit this HMM by running Stochastic Expectation-Maximization.
-#         Assuming the original dataset consists of N independent sequences of
-#         length T, this algorithm performs EM on a random subset of B sequences
-#         (not timesteps) at each step. Importantly, the subsets of B sequences
-#         are shuffled at each epoch. It is up to the user to correctly
-#         instantiate the Dataloader generator object to exhibit this property.
-#         The algorithm uses a learning rate schedule to anneal the minibatch
-#         sufficient statistics at each stage of training. If a schedule is not
-#         specified, an exponentially decaying model is used such that the
-#         learning rate which decreases by 5% at each epoch.
-
-#         Args:
-#             emissions_generator: Iterable over the emissions dataset;
-#                 auto-shuffles batches after each epoch.
-#             total_emissions (int): Total number of emissions that the generator
-#                 will load. Used to scale the minibatch statistics.
-#             schedule (optax schedule, Callable: int -> [0, 1]): Learning rate
-#                 schedule; defaults to exponential schedule.
-#             num_epochs (int): Num of iterations made through the entire dataset.
-#         Returns:
-#             expected_log_prob: Mean expected log prob of each epoch.
-
-#         TODO Any way to take a weighted average of rolling stats (in addition
-#              to the convex combination) given the number of emissions we see
-#              with each new minibatch? This would allow us to remove the
-#              `total_emissions` variable, and avoid errors in math in calculating
-#              total number of emissions (which could get tricky esp. with
-#              variable batch sizes.)
-#         """
-#         num_batches = len(emissions_generator)
-
-#         # Set global training learning rates: shape (num_epochs, num_batches)
-#         if schedule is None:
-#             schedule = optax.exponential_decay(
-#                 init_value=1.,
-#                 end_value=0.,
-#                 transition_steps=num_batches,
-#                 decay_rate=.95,
-#             )
-
-#         learning_rates = schedule(jnp.arange(num_epochs * num_batches))
-#         assert learning_rates[0] == 1.0, "Learning rate must start at 1."
-#         learning_rates = learning_rates.reshape(num_epochs, num_batches)
-
-#         @jit
-#         def minibatch_em_step(carry, inputs):
-#             params, rolling_stats = carry
-#             minibatch_emissions, learn_rate = inputs
-
-#             # Compute the sufficient stats given a minibatch of emissions
-#             # TODO: Handle minibatch inputs
-#             minibatch_stats, lls = vmap(partial(self.e_step, params))(minibatch_emissions)
-#             # minibatch_stats, ll = self.e_step(params, minibatch_emissions)
-
-#             # Scale the stats as if they came from the whole dataset
-#             scale = num_batches
-#             scaled_minibatch_stats = tree_map(lambda x: jnp.sum(x, axis=0) * scale, minibatch_stats)
-#             expected_lp = self.log_prior(params) + lls.sum() * scale
-
-#             # Incorporate these these stats into the rolling averaged stats
-#             rolling_stats = tree_map(lambda s0, s1: (1 - learn_rate) * s0 + learn_rate * s1,
-#                                      rolling_stats,
-#                                      scaled_minibatch_stats)
-
-#             # Add a batch dimension and call M-step
-#             batched_rolling_stats = tree_map(lambda x: jnp.expand_dims(x, axis=0), rolling_stats)
-#             params = self.m_step(params, param_props, minibatch_emissions, batched_rolling_stats)
-
-#             return (params, rolling_stats), expected_lp
-
-#         # Initialize and train
-#         params = initial_params
-#         expected_log_probs = []
-#         rolling_stats = self._zeros_like_suff_stats()
-#         for epoch in trange(num_epochs):
-
-#             _expected_lps = 0.
-#             for minibatch, minibatch_emissions in enumerate(emissions_generator):
-#                 (params, rolling_stats), expected_lp = minibatch_em_step(
-#                     (params, rolling_stats),
-#                     (minibatch_emissions, learning_rates[epoch][minibatch]),
-#                 )
-#                 _expected_lps += expected_lp
-
-#             # Save epoch mean of expected log probs
-#             expected_log_probs.append(_expected_lps / num_batches)
-
-#         # Update self with fitted params
-#         return params, jnp.array(expected_log_probs)

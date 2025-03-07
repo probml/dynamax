@@ -193,9 +193,7 @@ Low-level inference
 -------------------
 
 .. autofunction:: dynamax.nonlinear_gaussian_ssm.extended_kalman_filter
-.. autofunction:: dynamax.nonlinear_gaussian_ssm.iterated_extended_kalman_filter
 .. autofunction:: dynamax.nonlinear_gaussian_ssm.extended_kalman_smoother
-.. autofunction:: dynamax.nonlinear_gaussian_ssm.iterated_extended_kalman_smoother
 
 .. autofunction:: dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter
 .. autofunction:: dynamax.nonlinear_gaussian_ssm.unscented_kalman_smoother
@@ -219,9 +217,7 @@ Low-level inference
 -------------------
 
 .. autofunction:: dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_filter
-.. autofunction:: dynamax.generalized_gaussian_ssm.iterated_conditional_moments_gaussian_filter
 .. autofunction:: dynamax.generalized_gaussian_ssm.conditional_moments_gaussian_smoother
-.. autofunction:: dynamax.generalized_gaussian_ssm.iterated_conditional_moments_gaussian_smoother
 
 Types
 -----

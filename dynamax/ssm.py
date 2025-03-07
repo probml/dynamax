@@ -1,28 +1,34 @@
+"""
+Base classes for state space models (SSMs).
+"""
+import jax.numpy as jnp
+import jax.random as jr
+import optax
+
 from abc import ABC
 from abc import abstractmethod
 from fastprogress.fastprogress import progress_bar
 from functools import partial
-import jax.numpy as jnp
-import jax.random as jr
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
-from jaxtyping import Float, Array, PyTree
-import optax
+from jaxtyping import Array, Float, Real
 from tensorflow_probability.substrates.jax import distributions as tfd
-from typing import Optional, Union, Tuple, Any
+from typing import Optional, Union, Tuple, Any, runtime_checkable
 from typing_extensions import Protocol
 
 from dynamax.parameters import to_unconstrained, from_unconstrained
 from dynamax.parameters import ParameterSet, PropertySet
-from dynamax.types import PRNGKey, Scalar
+from dynamax.types import PRNGKeyT, Scalar
 from dynamax.utils.optimize import run_sgd
 from dynamax.utils.utils import ensure_array_has_batch_dim
 
 
+@runtime_checkable
 class Posterior(Protocol):
     """A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes."""
     pass
 
+@runtime_checkable
 class SuffStatsSSM(Protocol):
     """A :class:`NamedTuple` with sufficient statics stored as :class:`jax.DeviceArray` in the leaf nodes."""
     pass
@@ -85,7 +91,7 @@ class SSM(ABC):
     def initial_distribution(
         self,
         params: ParameterSet,
-        inputs: Optional[Float[Array, "input_dim"]]
+        inputs: Optional[Float[Array, " input_dim"]]
     ) -> tfd.Distribution:
         r"""Return an initial distribution over latent states.
 
@@ -103,8 +109,8 @@ class SSM(ABC):
     def transition_distribution(
         self,
         params: ParameterSet,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]
+        state: Float[Array, " state_dim"],
+        inputs: Optional[Float[Array, " input_dim"]]
     ) -> tfd.Distribution:
         r"""Return a distribution over next latent state given current state.
 
@@ -123,8 +129,8 @@ class SSM(ABC):
     def emission_distribution(
         self,
         params: ParameterSet,
-        state: Float[Array, "state_dim"],
-        inputs: Optional[Float[Array, "input_dim"]]=None
+        state: Float[Array, " state_dim"],
+        inputs: Optional[Float[Array, " input_dim"]]=None
     ) -> tfd.Distribution:
         r"""Return a distribution over emissions given current state.
 
@@ -171,7 +177,7 @@ class SSM(ABC):
     def sample(
         self,
         params: ParameterSet,
-        key: PRNGKey,
+        key: PRNGKeyT,
         num_timesteps: int,
         inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
     ) -> Tuple[Float[Array, "num_timesteps state_dim"],
@@ -189,6 +195,7 @@ class SSM(ABC):
 
         """
         def _step(prev_state, args):
+            """Sample the next state and emission given the previous state and input."""
             key, inpt = args
             key1, key2 = jr.split(key, 2)
             state = self.transition_distribution(params, prev_state, inpt).sample(seed=key2)
@@ -222,6 +229,7 @@ class SSM(ABC):
         r"""Compute the log joint probability of the states and observations"""
 
         def _step(carry, args):
+            """Compute the log probability of the next time step."""
             lp, prev_state = carry
             state, emission, inpt = args
             lp += self.transition_distribution(params, prev_state, inpt).log_prob(state)
@@ -349,13 +357,13 @@ class SSM(ABC):
         self,
         params: ParameterSet,
         props: PropertySet,
-        emissions: Union[Float[Array, "num_timesteps emission_dim"],
-                         Float[Array, "num_batches num_timesteps emission_dim"]],
+        emissions: Union[Real[Array, "num_timesteps emission_dim"],
+                         Real[Array, "num_batches num_timesteps emission_dim"]],
         inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
                                Float[Array, "num_batches num_timesteps input_dim"]]]=None,
         num_iters: int=50,
         verbose: bool=True
-    ) -> Tuple[ParameterSet, Float[Array, "num_iters"]]:
+    ) -> Tuple[ParameterSet, Float[Array, " num_iters"]]:
         r"""Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).
 
         EM aims to find parameters that maximize the marginal log probability,
@@ -385,6 +393,7 @@ class SSM(ABC):
 
         @jit
         def em_step(params, m_step_state):
+            """Perform one EM step."""
             batch_stats, lls = vmap(partial(self.e_step, params))(batch_emissions, batch_inputs)
             lp = self.log_prior(params) + lls.sum()
             params, m_step_state = self.m_step(params, props, batch_stats, m_step_state)
@@ -396,8 +405,8 @@ class SSM(ABC):
         m_step_state = self.initialize_m_step_state(params, props)
         pbar = progress_bar(range(num_iters)) if verbose else range(num_iters)
         for _ in pbar:
-            params, m_step_state, marginal_loglik = em_step(params, m_step_state)
-            log_probs.append(marginal_loglik)
+            params, m_step_state, marginal_logprob = em_step(params, m_step_state)
+            log_probs.append(marginal_logprob)
         return params, jnp.array(log_probs)
 
     def fit_sgd(
@@ -412,8 +421,8 @@ class SSM(ABC):
         batch_size: int=1,
         num_epochs: int=50,
         shuffle: bool=False,
-        key: PRNGKey=jr.PRNGKey(0)
-    ) -> Tuple[ParameterSet, Float[Array, "niter"]]:
+        key: PRNGKeyT=jr.PRNGKey(0)
+    ) -> Tuple[ParameterSet, Float[Array, " niter"]]:
         r"""Compute parameter MLE/ MAP estimate using Stochastic Gradient Descent (SGD).
 
         SGD aims to find parameters that maximize the marginal log probability,

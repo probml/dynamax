@@ -1,3 +1,6 @@
+"""
+This script demonstrates how to use the CategoricalRegressionHMM class.
+"""
 import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
@@ -58,7 +61,7 @@ if __name__ == "__main__":
     plt.figure()
     plt.imshow(jnp.vstack((states[None, :], most_likely_states[None, :])),
                 aspect="auto", interpolation='none', cmap="Greys")
-    plt.yticks([0.0, 1.0], ["$z$", "$\hat{z}$"])
+    plt.yticks([0.0, 1.0], ["$z$", r"$\hat{z}$"])
     plt.xlabel("time")
     plt.xlim(0, 500)
 

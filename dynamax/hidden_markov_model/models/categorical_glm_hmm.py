@@ -1,4 +1,7 @@
-import jax.numpy as jnp
+"""
+This module contains a Hidden Markov Model (HMM) with categorical emissions 
+from a regression model.
+"""
 import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 from jaxtyping import Float, Array
@@ -6,28 +9,30 @@ from dynamax.parameters import ParameterProperties
 from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions, HMMParameterSet, HMMPropertySet
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
-from dynamax.types import Scalar
+from dynamax.types import IntScalar, Scalar
 import optax
 from typing import NamedTuple, Optional, Tuple, Union
 
 
 class ParamsCategoricalRegressionHMMEmissions(NamedTuple):
+    """Parameters for the emission distribution of a Categorical Regression HMM."""
     weights: Union[Float[Array, "state_dim num_classes feature_dim"], ParameterProperties]
     biases: Union[Float[Array, "state_dim num_classes"], ParameterProperties]
 
 
 class ParamsCategoricalRegressionHMM(NamedTuple):
+    """Parameters for a Categorical Regression HMM."""
     initial: ParamsStandardHMMInitialState
     transitions: ParamsStandardHMMTransitions
     emissions: ParamsCategoricalRegressionHMMEmissions
 
 
 class CategoricalRegressionHMMEmissions(HMMEmissions):
-
+    """Emission distribution for a Categorical Regression HMM."""
     def __init__(self,
-                 num_states,
-                 num_classes,
-                 input_dim,
+                 num_states: int,
+                 num_classes: int,
+                 input_dim: int,
                  m_step_optimizer=optax.adam(1e-2),
                  m_step_num_iters=50):
         """_summary_
@@ -42,16 +47,28 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
 
     @property
     def emission_shape(self):
+        """Shape of the emission distribution."""
         return ()
 
     @property
     def inputs_shape(self):
+        """Shape of the inputs to the emission distribution."""
         return (self.feature_dim,)
 
     def log_prior(self, params):
+        """Log prior probability of the parameters.
+        
+        Currently, there is no prior so this is always 0.
+        """
         return 0.0
 
-    def initialize(self, key=jr.PRNGKey(0), method="prior", emission_weights=None, emission_biases=None):
+    def initialize(
+            self,
+            key: Array=jr.PRNGKey(0),
+            method: str="prior",
+            emission_weights: Optional[Float[Array, "num_states num_classes input_dim"]]=None,
+            emission_biases: Optional[Float[Array, "num_states num_classes"]]=None,
+            ):
         """Initialize the model parameters and their corresponding properties.
 
         You can either specify parameters manually via the keyword arguments, or you can have
@@ -89,7 +106,12 @@ class CategoricalRegressionHMMEmissions(HMMEmissions):
             biases=ParameterProperties())
         return params, props
 
-    def distribution(self, params, state, inputs=None):
+    def distribution(
+            self,
+            params: ParamsCategoricalRegressionHMMEmissions,
+            state: IntScalar,
+            inputs: Float[Array, " input_dim"]):
+        """Return the emission distribution for a given state and input."""
         logits = params.weights[state] @ inputs + params.biases[state]
         return tfd.Categorical(logits=logits)
 
@@ -121,8 +143,8 @@ class CategoricalRegressionHMM(HMM):
                  num_states: int,
                  num_classes: int,
                  input_dim: int,
-                 initial_probs_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
-                 transition_matrix_concentration: Union[Scalar, Float[Array, "num_states"]]=1.1,
+                 initial_probs_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
+                 transition_matrix_concentration: Union[Scalar, Float[Array, " num_states"]]=1.1,
                  transition_matrix_stickiness: Scalar=0.0,
                  m_step_optimizer: optax.GradientTransformation=optax.adam(1e-2),
                  m_step_num_iters: int=50):
@@ -134,12 +156,13 @@ class CategoricalRegressionHMM(HMM):
 
     @property
     def inputs_shape(self):
+        """Shape of the inputs to the emission distribution."""
         return (self.input_dim,)
 
     def initialize(self,
-                   key: jr.PRNGKey=jr.PRNGKey(0),
+                   key: Array=jr.PRNGKey(0),
                    method: str="prior",
-                   initial_probs: Optional[Float[Array, "num_states"]]=None,
+                   initial_probs: Optional[Float[Array, " num_states"]]=None,
                    transition_matrix: Optional[Float[Array, "num_states num_states"]]=None,
                    emission_weights: Optional[Float[Array, "num_states num_classes input_dim"]]=None,
                    emission_biases: Optional[Float[Array, "num_states num_classes"]]=None,

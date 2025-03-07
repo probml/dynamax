@@ -15,7 +15,7 @@ from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM, NonlinearGaussia
 from dynamax.parameters import ParameterProperties
 from dynamax.ssm import SSM
 from dynamax.utils.bijectors import RealToPSDBijector
-from dynamax.types import PRNGKey
+from dynamax.types import PRNGKeyT
 
 
 tfd = tfp.distributions
@@ -36,12 +36,15 @@ def lgssm_to_nlgssm(params: ParamsLGSSM) -> ParamsNLGSSM:
     return nlgssm_params
 
 
-def random_lgssm_args(
-    key: Union[int, PRNGKey] = 0,
-    num_timesteps: int = 15,
-    state_dim: int = 4,
-    emission_dim: int = 2
-) -> Tuple[ParamsLGSSM, Float[Array, "ntime state_dim"], Float[Array, "ntime emission_dim"]]:
+def random_lgssm_args(key: Union[int, PRNGKeyT] = 0,
+                      num_timesteps: int = 15,
+                      state_dim: int = 4,
+                      emission_dim: int = 2) -> \
+                      Tuple[ParamsLGSSM, Float[Array, "ntime state_dim"], 
+                            Float[Array, "ntime emission_dim"]]:
+    """
+    Generates random LGSSM parameters, states and emissions.
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
     *keys, subkey = jr.split(key, 9)
@@ -79,9 +82,19 @@ def random_lgssm_args(
 
 
 def to_poly(state, degree):
+    """
+    Returns the polynomial features of the state up to the given degree.
+    """
     return jnp.concatenate([state**d for d in jnp.arange(degree+1)])
 
-def make_nlgssm_params(state_dim, emission_dim, dynamics_degree=1, emission_degree=1, key = jr.PRNGKey(0)):
+def make_nlgssm_params(state_dim, 
+                       emission_dim, 
+                       dynamics_degree=1, 
+                       emission_degree=1, 
+                       key=jr.PRNGKey(0)):
+    """
+    Generates random NLGSSM parameters.
+    """
     dynamics_weights = jr.normal(key, (state_dim, state_dim * (dynamics_degree+1)))
     f = lambda z: jnp.sin(dynamics_weights @ to_poly(z, dynamics_degree))
     emission_weights = jr.normal(key, (emission_dim, state_dim * (emission_degree+1)))
@@ -97,6 +110,9 @@ def make_nlgssm_params(state_dim, emission_dim, dynamics_degree=1, emission_degr
     return params
 
 class SimpleNonlinearSSM(SSM):
+    """
+    Simple nonlinear SSM with sinusoidal dynamics and cosine emissions.
+    """
     def __init__(self, state_dim, emission_dim, dynamics_degree=1, emission_degree=1):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
@@ -105,22 +121,27 @@ class SimpleNonlinearSSM(SSM):
 
     @property
     def emission_shape(self):
+        """Returns the shape of the emission distribution."""
         return (self.emission_dim,)
 
     def initial_distribution(self, params, covariates=None):
+        """Returns the initial distribution."""
         return MVN(params["initial"]["mean"], params["initial"]["cov"])
 
     def transition_distribution(self, params, state, covariates=None):
+        """Returns the nonlinear dynamics function."""
         x = to_poly(state, self.dynamics_degree)
         mean = jnp.sin(params["dynamics"]["weights"] @ x)
         return MVN(mean, params["dynamics"]["cov"])
 
     def emission_distribution(self, params, state, covariates=None):
+        """Returns the nonlinear emission function."""
         x = to_poly(state, self.emission_degree)
         mean = jnp.cos(params["emissions"]["weights"] @ x)
         return MVN(mean, params["emissions"]["cov"])
 
     def initialize(self, key):
+        """Initializes the parameters."""
         key1, key2 = jr.split(key)
         params = dict(
             initial=dict(mean=0.2 * jnp.ones(self.state_dim), cov=jnp.eye(self.state_dim)),
@@ -141,6 +162,7 @@ class SimpleNonlinearSSM(SSM):
         return params, param_props
 
     def _make_inference_args(self, params):
+        """Returns the inference arguments."""
         f = lambda state: jnp.sin(params["dynamics"]["weights"] @ to_poly(state, self.dynamics_degree))
         h = lambda state: jnp.cos(params["emissions"]["weights"] @ to_poly(state, self.emission_degree))
         return ParamsNLGSSM(
@@ -152,18 +174,10 @@ class SimpleNonlinearSSM(SSM):
             emission_covariance=params["emissions"]["cov"])
 
 
-def random_nlgssm_args_old(key=0, num_timesteps=15, state_dim=4, emission_dim=2):
-    if isinstance(key, int):
-        key = jr.PRNGKey(key)
-
-    init_key, sample_key = jr.split(key, 2)
-    model = SimpleNonlinearSSM(state_dim, emission_dim)
-    params, _ = model.initialize(init_key)
-    states, emissions = model.sample(params, sample_key, num_timesteps)
-    args = model._make_inference_args(params)
-    return args, states, emissions
-
 def random_nlgssm_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2):
+    """
+    Generates random NLGSSM parameters, states and emissions.
+    """
     if isinstance(key, int):
         key = jr.PRNGKey(key)
     init_key, sample_key = jr.split(key, 2)
@@ -172,7 +186,3 @@ def random_nlgssm_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2):
     states, emissions = model.sample(params, sample_key, num_timesteps)
     return params, states, emissions
 
-if __name__ == "__main__":
-    params, states, emissions = random_lgssm_args()
-    params, states, emissions = random_nlgssm_args()
-    params_new, states_new, emissions_new = random_nlgssm_args_old()

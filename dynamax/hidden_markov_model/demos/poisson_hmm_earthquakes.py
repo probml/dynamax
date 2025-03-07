@@ -22,6 +22,9 @@ EARTHQUAKES = jnp.array(
 
 
 def main(test_mode=False, num_iters=20, num_repeats=10, min_states=2, max_states=4):
+    """
+    Fit a Poisson Hidden Markov Model to earthquake data.
+    """
     emission_dim = 1
     emissions = EARTHQUAKES.reshape(-1, emission_dim)
 

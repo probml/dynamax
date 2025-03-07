@@ -1,31 +1,38 @@
+"""Tests for dynamax.parameters module"""
 import copy
 import jax.numpy as jnp
+import optax
+import tensorflow_probability.substrates.jax.bijectors as tfb
+
+from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained, log_det_jac_constrain
 from jax import jit, value_and_grad, lax
 from jax.tree_util import tree_map, tree_leaves
 from jaxtyping import Float, Array
-from dynamax.parameters import ParameterProperties, to_unconstrained, from_unconstrained, log_det_jac_constrain
-import optax
-import tensorflow_probability.substrates.jax.bijectors as tfb
 from typing import NamedTuple, Union
 
 
 class InitialParams(NamedTuple):
-    probs: Union[Float[Array, "state_dim"], ParameterProperties]
+    """Dummy Initial state distribution parameters"""
+    probs: Union[Float[Array, " state_dim"], ParameterProperties]
 
 class TransitionsParams(NamedTuple):
+    """Dummy Transition matrix parameters"""
     transition_matrix: Union[Float[Array, "state_dim state_dim"], ParameterProperties]
 
 class EmissionsParams(NamedTuple):
+    """Dummy Emission distribution parameters"""
     means: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
     scales: Union[Float[Array, "state_dim emission_dim"], ParameterProperties]
 
 class Params(NamedTuple):
+    """Dummy SSM parameters"""
     initial: InitialParams
     transitions: TransitionsParams
     emissions: EmissionsParams
 
 
 def make_params():
+    """Create a dummy set of parameters and properties"""
     params = Params(
         initial=InitialParams(probs=jnp.ones(3) / 3.0),
         transitions=TransitionsParams(transition_matrix=0.9 * jnp.eye(3) + 0.1 * jnp.ones((3, 3)) / 3),
@@ -41,6 +48,7 @@ def make_params():
 
 
 def test_parameter_tofrom_unconstrained():
+    """Test that to_unconstrained and from_unconstrained are inverses"""
     params, props = make_params()
     unc_params = to_unconstrained(params, props)
     recon_params = from_unconstrained(unc_params, props)
@@ -48,12 +56,13 @@ def test_parameter_tofrom_unconstrained():
 
 
 def test_parameter_pytree_jittable():
+    """Test that the parameter PyTree is jittable"""
     # If there's a problem with our PyTree registration, this should catch it.
     params, props = make_params()
 
     @jit
     def get_trainable(params, props):
-        # test function that includes props in its closure
+        """Return a PyTree of trainable parameters"""
         return tree_map(lambda node, prop: node if prop.trainable else None,
                         params, props,
                         is_leaf=lambda node: isinstance(node, ParameterProperties))
@@ -86,6 +95,7 @@ def test_parameter_constrained():
 
     unc_params = to_unconstrained(params, props)
     def loss(unc_params):
+        """Dummy loss function"""
         params = from_unconstrained(unc_params, props)
         log_initial_probs = jnp.log(params.initial.probs)
         log_transition_matrix = jnp.log(params.transitions.transition_matrix)
@@ -107,6 +117,7 @@ def test_parameter_constrained():
     opt_state = optimizer.init(unc_params)
 
     def step(carry, args):
+        """Optimization step"""
         unc_params, opt_state = carry
         loss, grads = f(unc_params)
         updates, opt_state = optimizer.update(grads, opt_state)
@@ -125,6 +136,7 @@ def test_parameter_constrained():
 
 
 def test_logdet_jacobian():
+    """Test that log_det_jac_constrain is correct"""
     params, props = make_params()
     unc_params = to_unconstrained(params, props)
     logdet = log_det_jac_constrain(params, props)

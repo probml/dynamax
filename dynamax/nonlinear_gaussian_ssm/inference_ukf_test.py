@@ -1,21 +1,24 @@
+"""
+Tests for the unscented Kalman filter and smoother.
+"""
 import jax.numpy as jnp
-import jax.random as jr
 
 from dynamax.nonlinear_gaussian_ssm.inference_ukf import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.sarkka_lib import ukf, uks
 from dynamax.nonlinear_gaussian_ssm.inference_test_utils import random_nlgssm_args
 from dynamax.utils.utils import has_tpu
+from functools import partial
 
 if has_tpu():
-    def allclose(x, y):
-        print(jnp.max(x-y))
-        return jnp.allclose(x, y, atol=1e-1)
+    allclose = partial(jnp.allclose, atol=1e-1)
 else:
-    def allclose(x,y):
-        print(jnp.max(x-y))
-        return jnp.allclose(x, y, atol=1e-1)
+    allclose = partial(jnp.allclose, atol=1e-4)
 
 def test_ukf_nonlinear(key=0, num_timesteps=15):
+    """
+    Test that the unscented Kalman filter produces the correct filtered and smoothed moments
+    by comparing it to the sarkka-jax library.
+    """
     nlgssm_args, _, emissions = random_nlgssm_args(key=key, num_timesteps=num_timesteps)
     hyperparams = UKFHyperParams()
 

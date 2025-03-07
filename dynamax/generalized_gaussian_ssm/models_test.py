@@ -1,3 +1,6 @@
+"""
+Tests for the GeneralizedGaussianSSM class.
+"""
 import pytest
 import jax.random as jr
 import jax.numpy as jnp
@@ -18,10 +21,14 @@ CONFIGS = [
 
 @pytest.mark.parametrize(["key", "kwargs"], CONFIGS)
 def test_poisson_emission(key, kwargs):
+    """
+    Test that the marginal log-likelihood under Poisson emission is higher than 
+    when we treat the count emissions as Gaussian random variables.
+    """
     keys = jr.split(key, 3)
     state_dim = kwargs['state_dim']
     emission_dim = 1 # Univariate Poisson
-    poisson_weights = jr.normal(keys[0], shape=(emission_dim, state_dim))
+    poisson_weights = jr.normal(keys[0], shape=(emission_dim, state_dim)) /  jnp.sqrt(state_dim)
     model = GeneralizedGaussianSSM(state_dim, emission_dim)
     
     # Define model parameters with Poisson emission
@@ -51,51 +58,6 @@ def test_poisson_emission(key, kwargs):
 
     # Fit model with Gaussian emission
     gaussian_marginal_lls = conditional_moments_gaussian_filter(gaussian_params, EKFIntegrals(), emissions).marginal_loglik
-
+    
     # Check that the marginal log-likelihoods under Poisson emission are higher
     assert pois_marginal_lls > gaussian_marginal_lls
-
-
-# @pytest.mark.parametrize(["key", "kwargs"], CONFIGS)
-# def test_categorical_emission(key, kwargs):
-#     keys = jr.split(key, 3)
-#     state_dim = kwargs['state_dim']
-#     emission_dim = kwargs['emission_dim']
-#     categorical_weights = abs(jr.normal(keys[0], shape=(emission_dim, state_dim)))
-#     model = GeneralizedGaussianSSM(state_dim, emission_dim)
-    
-#     # Define model parameters with Categorical emission
-#     normalize = lambda x: x / jnp.sum(x, axis=0)
-#     emission_mean_function = lambda z: normalize(categorical_weights @ z)
-#     def emission_cov_function(z):
-#         ps = jnp.atleast_2d(emission_mean_function(z))
-#         return jnp.diag(ps) - jnp.outer(ps, ps)
-#     cat_params = ParamsGGSSM(
-#         initial_mean=abs(jr.normal(keys[1], (state_dim,))),
-#         initial_covariance=jnp.eye(state_dim),
-#         dynamics_function=lambda z: 0.99 * z,
-#         dynamics_covariance=0.001*jnp.eye(state_dim),
-#         emission_mean_function=emission_mean_function,
-#         emission_cov_function=emission_cov_function,
-#         emission_dist=lambda mu, Sigma: tfd.OneHotCategorical(probs = mu)
-#     )
-#     _, emissions = model.sample(cat_params, keys[2], num_timesteps=NUM_TIMESTEPS)
-
-#     # Define model parameters with default Gaussian emission
-#     gaussian_params = ParamsGGSSM(
-#         initial_mean=abs(jr.normal(keys[1], (state_dim,))),
-#         initial_covariance=jnp.eye(state_dim),
-#         dynamics_function=lambda z: 0.99 * z,
-#         dynamics_covariance=0.001*jnp.eye(state_dim),
-#         emission_mean_function=emission_mean_function,
-#         emission_cov_function=emission_cov_function
-#     )
-
-#     # Fit model with Categorical emission
-#     cat_marginal_lls = conditional_moments_gaussian_filter(cat_params, EKFIntegrals(), emissions).marginal_loglik
-
-#     # Fit model with Gaussian emission
-#     gaussian_marginal_lls = conditional_moments_gaussian_filter(gaussian_params, EKFIntegrals(), emissions).marginal_loglik
-
-#     # Check that the marginal log-likelihoods under Categorical emission are higher
-#     assert cat_marginal_lls > gaussian_marginal_lls
