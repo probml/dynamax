@@ -189,8 +189,11 @@ class TestParallelLGSSMSmootherWithInputs:
 
     def test_marginal_loglik(self):
         """Check if marginal log likelihoods are close."""
-        assert allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik)
-        assert allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior_diag.marginal_loglik)
+        ser_mll = self.serial_posterior.marginal_loglik
+        par_mll = self.parallel_posterior.marginal_loglik
+        par_diag_mll = self.parallel_posterior_diag.marginal_loglik
+        assert jnp.allclose(ser_mll, par_mll, atol=1e-4 * self.num_timesteps)
+        assert jnp.allclose(ser_mll, par_diag_mll, atol=1e-4 * self.num_timesteps)
 
 
 class TestTimeVaryingParallelLGSSMSmoother:
@@ -231,9 +234,11 @@ class TestTimeVaryingParallelLGSSMSmoother:
 
     def test_marginal_loglik(self):
         """Check if marginal log likelihoods are close."""
-        assert allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior.marginal_loglik)
-        assert allclose(self.serial_posterior.marginal_loglik, self.parallel_posterior_diag.marginal_loglik)
-
+        ser_mll = self.serial_posterior.marginal_loglik
+        par_mll = self.parallel_posterior.marginal_loglik
+        par_diag_mll = self.parallel_posterior_diag.marginal_loglik
+        assert jnp.allclose(ser_mll, par_mll, atol=1e-4 * self.num_timesteps)
+        assert jnp.allclose(ser_mll, par_diag_mll, atol=1e-4 * self.num_timesteps)
 
 
 class TestTimeVaryingParallelLGSSMSampler():
