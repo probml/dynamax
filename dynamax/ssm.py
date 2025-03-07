@@ -405,8 +405,8 @@ class SSM(ABC):
         m_step_state = self.initialize_m_step_state(params, props)
         pbar = progress_bar(range(num_iters)) if verbose else range(num_iters)
         for _ in pbar:
-            params, m_step_state, marginal_loglik = em_step(params, m_step_state)
-            log_probs.append(marginal_loglik)
+            params, m_step_state, marginal_logprob = em_step(params, m_step_state)
+            log_probs.append(marginal_logprob)
         return params, jnp.array(log_probs)
 
     def fit_sgd(

@@ -101,10 +101,12 @@ def plot_ellipse(Sigma, mu, ax, n_std=3.0, facecolor="none", edgecolor="k", **kw
     return ax.add_patch(ellipse)
 
 
-def plot_uncertainty_ellipses(means, Sigmas, ax, n_std=3.0, **kwargs):
+def plot_uncertainty_ellipses(means, Sigmas, ax, n_std=3.0, label=None, **kwargs):
     """Loop over means and Sigmas to add ellipses representing uncertainty."""
-    for Sigma, mu in zip(Sigmas, means):
-        plot_ellipse(Sigma, mu, ax, n_std, **kwargs)
+    for i, (Sigma, mu) in enumerate(zip(Sigmas, means)):
+        plot_ellipse(Sigma, mu, ax, n_std, 
+                     label=label if i == 0 else None,
+                     **kwargs)
 
 # Some custom params to make prettier plots.
 custom_rcparams_base = {
