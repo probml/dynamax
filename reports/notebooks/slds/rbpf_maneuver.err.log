@@ -134,14 +134,14 @@ plt.show()
 ------------------
 
 
-[0;31m---------------------------------------------------------------------------[0m
-[0;31mTypeError[0m                                 Traceback (most recent call last)
-Cell [0;32mIn[5], line 87[0m
-[1;32m     84[0m dict_figures[[38;5;124m"[39m[38;5;124mrbpf-maneuver-discrete-belief[39m[38;5;124m"[39m] [38;5;241m=[39m fig
-[1;32m     86[0m [38;5;66;03m# Plot ground truth and MAP estimate[39;00m
-[0;32m---> 87[0m ohe [38;5;241m=[39m [43mOneHotEncoder[49m[43m([49m[43msparse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
-[1;32m     88[0m latent_hmap [38;5;241m=[39m ohe[38;5;241m.[39mfit_transform(dstates[:, [38;5;28;01mNone[39;00m])
-[1;32m     89[0m latent_hmap_est [38;5;241m=[39m ohe[38;5;241m.[39mfit_transform(p_est[38;5;241m.[39margmax(axis[38;5;241m=[39m[38;5;241m1[39m)[:, [38;5;28;01mNone[39;00m])
+[31m---------------------------------------------------------------------------[39m
+[31mTypeError[39m                                 Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[5][39m[32m, line 87[39m
+[32m     84[39m dict_figures[[33m"[39m[33mrbpf-maneuver-discrete-belief[39m[33m"[39m] = fig
+[32m     86[39m [38;5;66;03m# Plot ground truth and MAP estimate[39;00m
+[32m---> [39m[32m87[39m ohe = [43mOneHotEncoder[49m[43m([49m[43msparse[49m[43m=[49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[32m     88[39m latent_hmap = ohe.fit_transform(dstates[:, [38;5;28;01mNone[39;00m])
+[32m     89[39m latent_hmap_est = ohe.fit_transform(p_est.argmax(axis=[32m1[39m)[:, [38;5;28;01mNone[39;00m])
 
-[0;31mTypeError[0m: OneHotEncoder.__init__() got an unexpected keyword argument 'sparse'
+[31mTypeError[39m: OneHotEncoder.__init__() got an unexpected keyword argument 'sparse'
 

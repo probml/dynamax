@@ -16,29 +16,26 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!--
-    this give us a css class that will be invisible only if js is disabled
-  -->
-  <noscript>
-    <style>
-      .pst-js-only { display: none !important; }
-
-    </style>
-  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
-  <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
@@ -53,7 +50,6 @@
     <link rel="prev" title="Casino HMM: Inference (state estimation)" href="casino_hmm_inference.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
   </head>
   
   
@@ -69,8 +65,19 @@
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
-  <dialog id="pst-search-dialog">
-    
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
       action="../../search.html"
       method="get">
@@ -78,6 +85,7 @@
   <input type="search"
          class="form-control"
          name="q"
+         id="search-input"
          placeholder="Search..."
          aria-label="Search..."
          autocomplete="off"
@@ -85,8 +93,8 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form>
-  </dialog>
+</form></div>
+  </div>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
@@ -102,8 +110,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+      <div class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -133,17 +140,21 @@
     
     
     <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
-    <img src="../../_static/logo.gif" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
         <div class="sidebar-primary-item">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
- <i class="fa-solid fa-magnifying-glass"></i>
- <span class="search-button__default-text">Search</span>
- <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-</button></div>
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
@@ -171,7 +182,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">Online Logistic Regression using conditional moments Gaussian filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">Online learning of an MLP Classifier using conditional moments Gaussian filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">State Inference in a Poisson LDS using the Conditional Moments Gaussian Smoother</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
 <ul class="nav bd-sidenav">
@@ -190,14 +201,9 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
-      <div class="sidebar-primary-item">
-<div id="ethical-ad-placement"
-      class="flat"
-      data-ea-publisher="readthedocs"
-      data-ea-type="readthedocs-sidebar"
-      data-ea-manual="true">
-</div></div>
   </div>
+  
+  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -310,16 +316,24 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
 
 
-<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
-</button>
+  </button>
+`);
+</script>
 <button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
 </button>
@@ -348,10 +362,11 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-with-gradient-descent">Learning with Gradient Descent</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gradient-descent-is-a-special-case-of-stochastic-gradient-descent">Gradient descent is a special case of <em>stochastic</em> gradient descent</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic-gradient-descent-with-mini-batches">Stochastic Gradient Descent with Mini-Batches</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#expectation-maximization">Expectation-Maximization</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-the-learning-curves">Compare the learning curves</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hyperparameter-tuning">Hyperparameter Tuning</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-with-expectation-maximization-em">Learning with Expectation-Maximization (EM)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-the-learning-algorithms">Compare the learning algorithms</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
             </nav>
@@ -515,21 +530,29 @@ emission probs:
 <p>Perhaps the simplest learning algorithm is to directly maximize the marginal probability with gradient ascent. Since optimization algorithms are typically formulated as <em>minimization</em> algorithms, we will instead use gradient <em>descent</em> to solve the equivalent problem of <em>minimizing the negative log marginal probability</em>, <span class="math notranslate nohighlight">\(-\log p(y_{1:T}, \theta)\)</span>. On each iteration, we compute the objective, take its gradient, and update our parameters by taking a step in the direction of steepest descent.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Even though JAX code looks just like regular numpy code, it supports automatic differentiation, making gradient descent straightforward to implement.</p>
+<p>Automatic Differentiation
+Even though JAX code looks just like regular numpy code, it supports automatic differentiation, making gradient descent straightforward to implement.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The first step is to randomly initialize new parameters. You can do that by calling <code class="docutils literal notranslate"><span class="pre">hmm.initialize(key)</span></code>,
+<p>Initialization
+The first step is to randomly initialize new parameters. You can do that by calling <code class="docutils literal notranslate"><span class="pre">hmm.initialize(key)</span></code>,
 where <code class="docutils literal notranslate"><span class="pre">key</span></code> is a JAX pseudorandom number generator (PRNG) key. When no other keyword arguments are supplied, this function will return parameters randomly sampled from the prior.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Since we expect the states to persist for some time, we add a little stickiness to the prior distribution on transition probabilities via the <code class="docutils literal notranslate"><span class="pre">transition_matrix_stickiness</span></code> hyperparameter. This hyperparameter changes the prior to,</p>
+<p>Stick Transitions
+Since we expect the states to persist for some time, we add a little stickiness to the prior distribution on transition probabilities via the <code class="docutils literal notranslate"><span class="pre">transition_matrix_stickiness</span></code> hyperparameter. This hyperparameter changes the prior to,</p>
 <div class="amsmath math notranslate nohighlight">
 \[\begin{align*}
 A_k &amp;\sim \mathrm{Dir}(\beta 1_K + \kappa e_k) \quad \text{for } k=1,\ldots, K
 \end{align*}\]</div>
 <p>where <span class="math notranslate nohighlight">\(\kappa \in \mathbb{R}_+\)</span> is the stickiness paramter and <span class="math notranslate nohighlight">\(e_k\)</span> is the one-hot vector with a one in the <span class="math notranslate nohighlight">\(k\)</span>-th position.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Handling Constraints
+Some of the HMM parameters have constraints.  Dynamax uses <em>bijectors</em> to convert these parameters into unconstrained space for optimization. For example, the transition matrix must be a <em>row-stochastic</em> matrix, so we instead optimize an unconstrained, real-valued matrix and map it to a transition matrix via a <a class="reference external" href="https://www.tensorflow.org/probability/api_docs/python/tfp/bijectors/SoftmaxCentered">`tfb.SoftmaxCentered</a> bijector.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -537,10 +560,10 @@ A_k &amp;\sim \mathrm{Dir}(\beta 1_K + \kappa e_k) \quad \text{for } k=1,\ldots,
                      <span class="n">transition_matrix_stickiness</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
 
 <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">fbgd_params</span><span class="p">,</span> <span class="n">fbgd_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="n">init_params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Randomly initialized parameters&quot;</span><span class="p">)</span>
-<span class="n">print_params</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">)</span>
+<span class="n">print_params</span><span class="p">(</span><span class="n">init_params</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -568,13 +591,13 @@ emission probs:
 <p>Dynamax models have a <code class="docutils literal notranslate"><span class="pre">fit_sgd</span></code> function that runs SGD. If you want to run full batch gradient descent, all you have to do set <code class="docutils literal notranslate"><span class="pre">batch_size=num_batches</span></code>, as below.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fbgd_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">fbgd_params</span><span class="p">,</span> <span class="n">fbgd_losses</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">,</span> 
-                                       <span class="n">fbgd_props</span><span class="p">,</span> 
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fbgd_key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">fbgd_params</span><span class="p">,</span> <span class="n">fbgd_losses</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">init_params</span><span class="p">,</span> 
+                                       <span class="n">props</span><span class="p">,</span> 
                                        <span class="n">batch_emissions</span><span class="p">,</span> 
-                                       <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">sgd</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mf">0.95</span><span class="p">),</span>
+                                       <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">sgd</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.025</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mf">0.95</span><span class="p">),</span>
                                        <span class="n">batch_size</span><span class="o">=</span><span class="n">num_batches</span><span class="p">,</span> 
-                                       <span class="n">num_epochs</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> 
+                                       <span class="n">num_epochs</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> 
                                        <span class="n">key</span><span class="o">=</span><span class="n">fbgd_key</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -586,91 +609,78 @@ emission probs:
 <p>Now let’s run it with stochastic gradient descent using a batch size of two sequences per mini-batch.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">sgd_params</span><span class="p">,</span> <span class="n">sgd_param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">sgd_key</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">sgd_params</span><span class="p">,</span> <span class="n">sgd_losses</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">sgd_params</span><span class="p">,</span> 
-                                     <span class="n">sgd_param_props</span><span class="p">,</span> 
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sgd_key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">sgd_params</span><span class="p">,</span> <span class="n">sgd_losses</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">init_params</span><span class="p">,</span> 
+                                     <span class="n">props</span><span class="p">,</span> 
                                      <span class="n">batch_emissions</span><span class="p">,</span> 
-                                     <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">sgd</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mf">0.95</span><span class="p">),</span>
+                                     <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">sgd</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.025</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mf">0.95</span><span class="p">),</span>
                                      <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
-                                     <span class="n">num_epochs</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> 
+                                     <span class="n">num_epochs</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> 
                                      <span class="n">key</span><span class="o">=</span><span class="n">sgd_key</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fbgd_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;full batch GD&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sgd_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;SGD (mini-batch size = 2)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;epoch&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">)</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Full Batch Gradient Descent Learning Curve&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../../_images/72e59dc629f83e341b9a077d4a1aa8110eddf96ea9a238a037b869f20097f12e.png" src="../../_images/72e59dc629f83e341b9a077d4a1aa8110eddf96ea9a238a037b869f20097f12e.png" />
-</div>
-</div>
-<p>As you can see, stochastic gradient descent converges much more quickly that full-batch gradient descent in this example. Intuitively, that’s because SGD takes multiple steps per <em>epoch</em> (i.e. each complete sweep through the dataset), whereas full-batch gradient descent takes only one.</p>
-<p>The algorithms appear to have converged, but have they learned the correct parameters? Let’s see…</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Print the parameters after learning</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Full batch gradient descent params:&quot;</span><span class="p">)</span>
-<span class="n">print_params</span><span class="p">(</span><span class="n">fbgd_params</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stochastic gradient descent params:&quot;</span><span class="p">)</span>
-<span class="n">print_params</span><span class="p">(</span><span class="n">sgd_params</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Full batch gradient descent params:
-initial probs:
-[0.634 0.366]
-transition matrix:
-[[0.883 0.117]
- [0.015 0.985]]
-emission probs:
-[[0.427 0.021 0.051 0.194 0.231 0.077]
- [0.130 0.150 0.151 0.142 0.139 0.288]]
-
-Stochastic gradient descent params:
-initial probs:
-[0.633 0.367]
-transition matrix:
-[[0.839 0.161]
- [0.011 0.989]]
-emission probs:
-[[0.330 0.025 0.066 0.236 0.259 0.085]
- [0.136 0.149 0.147 0.140 0.141 0.287]]
-</pre></div>
-</div>
-</div>
-</div>
-<p>Ok, but not perfect!</p>
 </section>
-<section id="expectation-maximization">
-<h3>Expectation-Maximization<a class="headerlink" href="#expectation-maximization" title="Link to this heading">#</a></h3>
+<section id="hyperparameter-tuning">
+<h3>Hyperparameter Tuning<a class="headerlink" href="#hyperparameter-tuning" title="Link to this heading">#</a></h3>
+<p>SGD and other optimizers like Adam have hyperparameters like the learning rate and momentum. For nonconvex optimization problems like these, the hyperparameters can make a big difference. We recommend sweeping over these parameters to find the most effective setting. Here, we show a simple grid search over the learning rate for Adam.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">adam_key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">adam_learning_rates</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
+<span class="n">adam_results</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">lr</span> <span class="ow">in</span> <span class="n">adam_learning_rates</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training with Adam, learning rate = </span><span class="si">{</span><span class="n">lr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">this_key</span><span class="p">,</span> <span class="n">adam_key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">adam_key</span><span class="p">)</span>
+    <span class="n">these_params</span><span class="p">,</span> <span class="n">these_losses</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">init_params</span><span class="p">,</span> 
+                                             <span class="n">props</span><span class="p">,</span> 
+                                             <span class="n">batch_emissions</span><span class="p">,</span> 
+                                             <span class="n">optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">lr</span><span class="p">),</span>
+                                             <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
+                                             <span class="n">num_epochs</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> 
+                                             <span class="n">key</span><span class="o">=</span><span class="n">this_key</span><span class="p">)</span>
+    
+    <span class="n">adam_results</span><span class="p">[</span><span class="n">lr</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">these_params</span><span class="p">,</span> <span class="n">these_losses</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Training with Adam, learning rate = 0.001
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Training with Adam, learning rate = 0.01
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Training with Adam, learning rate = 0.1
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Training with Adam, learning rate = 0.25
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Training with Adam, learning rate = 0.5
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="learning-with-expectation-maximization-em">
+<h2>Learning with Expectation-Maximization (EM)<a class="headerlink" href="#learning-with-expectation-maximization-em" title="Link to this heading">#</a></h2>
 <p>The more traditional way to estimate the parameters of an HMM is by expectation-maximization (EM). EM alternates between two steps:</p>
 <ul class="simple">
 <li><p><strong>E-step:</strong> Inferring the posterior distribution of latent states <span class="math notranslate nohighlight">\(z_{1:T}\)</span> given the parameters <span class="math notranslate nohighlight">\(\theta = (\pi, A, B)\)</span>. This step essentially runs the HMM forward-backward algorithm from the preceding notebook!</p></li>
 <li><p><strong>M-step:</strong> Updating the parameters to maximize the expected log probability.
 By iteratively performing these two steps, the algorithm converges to a local maximum of the marginal probability, <span class="math notranslate nohighlight">\(p(y_{1:T}, \theta)\)</span>, and hence to a MAP estimate of the parameters.</p></li>
 </ul>
-<p>In practice, EM often converges much quicker than SGD, especially when the models are “nice” (e.g. constructed with exponential family emission distributions). That is why dynamax has closed form M-steps for a variety of HMMs.</p>
+<p>EM often works very well for HMMs, especially when the models are “nice” (e.g. constructed with exponential family emission distributions) where the M-step can be computed in closed form. Dynamax has closed form M-steps for a variety of HMMs, including those with categorical observations and Gaussian observations with several different constraints on the covariance matrix. Please see our other demos for more examples!</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">em_params</span><span class="p">,</span> <span class="n">em_param_props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">em_params</span><span class="p">,</span> <span class="n">log_probs</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">em_params</span><span class="p">,</span> 
-                                  <span class="n">em_param_props</span><span class="p">,</span> 
+<span class="n">em_params</span><span class="p">,</span> <span class="n">log_probs</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">init_params</span><span class="p">,</span> 
+                                  <span class="n">props</span><span class="p">,</span> 
                                   <span class="n">batch_emissions</span><span class="p">,</span> 
-                                  <span class="n">num_iters</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+                                  <span class="n">num_iters</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -693,15 +703,15 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </style>
 </div><div class="output text_html">
     <div>
-      <progress value='400' class='' max='400' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [400/400 00:02&lt;00:00]
+      <progress value='500' class='' max='500' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      100.00% [500/500 00:03&lt;00:00]
     </div>
     </div></div>
 </div>
 </section>
-<section id="compare-the-learning-curves">
-<h3>Compare the learning curves<a class="headerlink" href="#compare-the-learning-curves" title="Link to this heading">#</a></h3>
-<p>Finally, let’s compare the learning curve of EM to those of SGD. For comparison, we plot the loss associated with the true parameters that generated the data.</p>
+<section id="compare-the-learning-algorithms">
+<h2>Compare the learning algorithms<a class="headerlink" href="#compare-the-learning-algorithms" title="Link to this heading">#</a></h2>
+<p>Finally, let’s compare the learning curve of EM to those of gradient-based methods. For comparison, we plot the loss associated with the true parameters that generated the data.</p>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p>To compare the log probabilities returned by <code class="docutils literal notranslate"><span class="pre">fit_em</span></code> to the losses returned by <code class="docutils literal notranslate"><span class="pre">fit_sgd</span></code>, you need to negate the log probabilities and divide by the total number of emissions. This is because optimization library defaults typically assume the loss is scaled to be <span class="math notranslate nohighlight">\(\mathcal{O}(1)\)</span>.</p>
@@ -718,11 +728,14 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 
 <span class="c1"># Plot the learning curves</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fbgd_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;full batch GD&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sgd_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;SGD (mini-batch size = 2)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">em_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;EM&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sgd_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;SGD (m.b. size=2)&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">lr</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">adam_losses</span><span class="p">)</span> <span class="ow">in</span> <span class="n">adam_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">adam_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Adam (m.b. size=2, lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="c1"># plt.plot(adam_losses, label=&quot;Adam (mini-batch size = 2)&quot;)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">em_losses</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;EM&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">true_loss</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;True Params&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;epoch&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Learning Curve Comparison&quot;</span><span class="p">)</span>
@@ -730,19 +743,41 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/1f2dd612be2e1524b846eb08e144958c0f5f53964c69d35cc3f6bb5d2bb7742f.png" src="../../_images/1f2dd612be2e1524b846eb08e144958c0f5f53964c69d35cc3f6bb5d2bb7742f.png" />
+<img alt="../../_images/17c7b5fdcd06b6feb92824c05fec4ddd3d23bea4d865cf557db29b15cb2e7bfa.png" src="../../_images/17c7b5fdcd06b6feb92824c05fec4ddd3d23bea4d865cf557db29b15cb2e7bfa.png" />
 </div>
 </div>
-<p>Not only does EM converge much faster on this example (here, in only a handful of iterations), it also converges to a better estimate of the parameters. Indeed, it essentially matches the loss obtained by the parameters that truly generated the data. We see that its parameter estimates are nearly the same as the true parameters, up to label switching.</p>
-<p>(Label switching refers to the fact that the generated parameters assume state 1 corresponds to the loaded die, whereas the learned parameters assume this is state 0; since these solutions have the same likelihood, and since the prior is also symmetrical, there are two equally good posterior modes, and EM will just find one of them. When you compare inferred  parameters or states between models, you may need to use our <a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.utils.utils.find_permutation">find_permutation</a> function to find the best correspondence between discrete latent labels.)</p>
+<p>For this problem, EM and Adam with a well-tuned learning rate converge the fastest. SGD and full-batch gradient descent appear to get stuck in a local optimum. By contrast, EM and Adam match the loss under the true parameters, and indeed if we look at the parameters below, they nearly recover the true parameters up to label switching.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Label Switching and Identifiability
+Label switching refers to the fact that the generated parameters assume state 1 corresponds to the loaded die, whereas the learned parameters assume this is state 0; since these solutions have the same likelihood, and since the prior is also symmetrical, there are two equally good posterior modes, and EM will just find one of them. When you compare inferred  parameters or states between models, you may need to use our <a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.utils.utils.find_permutation">find_permutation</a> function to find the best correspondence between discrete latent labels.</p>
+</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_params</span><span class="p">(</span><span class="n">em_params</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;True Parameters:&quot;</span><span class="p">)</span>
+<span class="n">print_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;EM Estimated Parameters:&quot;</span><span class="p">)</span>
+<span class="n">print_params</span><span class="p">(</span><span class="n">em_params</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Adam (lr=0.1) Estimated Parameters:&quot;</span><span class="p">)</span>
+<span class="n">print_params</span><span class="p">(</span><span class="n">adam_results</span><span class="p">[</span><span class="mf">0.1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>initial probs:
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>True Parameters:
+initial probs:
+[0.500 0.500]
+transition matrix:
+[[0.950 0.050]
+ [0.100 0.900]]
+emission probs:
+[[0.167 0.167 0.167 0.167 0.167 0.167]
+ [0.100 0.100 0.100 0.100 0.100 0.500]]
+
+EM Estimated Parameters:
+initial probs:
 [0.510 0.490]
 transition matrix:
 [[0.947 0.053]
@@ -750,15 +785,24 @@ transition matrix:
 emission probs:
 [[0.167 0.171 0.169 0.172 0.166 0.156]
  [0.105 0.105 0.113 0.105 0.111 0.462]]
+
+Adam (lr=0.1) Estimated Parameters:
+initial probs:
+[0.449 0.551]
+transition matrix:
+[[0.957 0.043]
+ [0.075 0.925]]
+emission probs:
+[[0.172 0.168 0.159 0.168 0.167 0.166]
+ [0.095 0.102 0.119 0.104 0.113 0.467]]
 </pre></div>
 </div>
 </div>
 </div>
 </section>
-</section>
 <section id="conclusion">
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
-<p>This notebook showed how to learn the parameters of an HMM using SGD (with full batch or with mini-batches) and EM. For many HMMs, especially the exponential family HMMs with exact M-steps implemented in Dynamax, EM tends to converge very quickly.</p>
+<p>This notebook showed how to learn the parameters of an HMM using gradient-based methods (with full batch or with mini-batches) and EM. For many HMMs, especially the exponential family HMMs with exact M-steps implemented in Dynamax, EM tends to converge very quickly.</p>
 <p>This notebook glossed over some important details:</p>
 <ul class="simple">
 <li><p>Both SGD and EM are prone to getting stuck in local optima. For example, if you change the key for the random initialization, you may find that the learned parameters are not as good. There are a few ways around that problem. One is to use a heuristic to initialize the parameters more intelligently. Another is to use many random initializations of the model and keep the one that achieves the best loss.</p></li>
@@ -804,8 +848,7 @@ emission probs:
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
   <div class="sidebar-secondary-item">
@@ -819,10 +862,11 @@ emission probs:
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-with-gradient-descent">Learning with Gradient Descent</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gradient-descent-is-a-special-case-of-stochastic-gradient-descent">Gradient descent is a special case of <em>stochastic</em> gradient descent</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic-gradient-descent-with-mini-batches">Stochastic Gradient Descent with Mini-Batches</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#expectation-maximization">Expectation-Maximization</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-the-learning-curves">Compare the learning curves</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hyperparameter-tuning">Hyperparameter Tuning</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#learning-with-expectation-maximization-em">Learning with Expectation-Maximization (EM)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-the-learning-algorithms">Compare the learning algorithms</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
@@ -872,8 +916,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
 
   <footer class="bd-footer">
   </footer>

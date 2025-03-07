@@ -16,29 +16,26 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!--
-    this give us a css class that will be invisible only if js is disabled
-  -->
-  <noscript>
-    <style>
-      .pst-js-only { display: none !important; }
-
-    </style>
-  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
-  <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
@@ -53,7 +50,6 @@
     <link rel="prev" title="Tracking a spiraling object using the extended / unscented Kalman filter" href="ekf_ukf_spiral.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
   </head>
   
   
@@ -69,8 +65,19 @@
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
-  <dialog id="pst-search-dialog">
-    
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
       action="../../search.html"
       method="get">
@@ -78,6 +85,7 @@
   <input type="search"
          class="form-control"
          name="q"
+         id="search-input"
          placeholder="Search..."
          aria-label="Search..."
          autocomplete="off"
@@ -85,8 +93,8 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form>
-  </dialog>
+</form></div>
+  </div>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
@@ -102,8 +110,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+      <div class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -133,17 +140,21 @@
     
     
     <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
-    <img src="../../_static/logo.gif" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
         <div class="sidebar-primary-item">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
- <i class="fa-solid fa-magnifying-glass"></i>
- <span class="search-button__default-text">Search</span>
- <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-</button></div>
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
@@ -171,7 +182,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">Online Logistic Regression using conditional moments Gaussian filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">Online learning of an MLP Classifier using conditional moments Gaussian filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">State Inference in a Poisson LDS using the Conditional Moments Gaussian Smoother</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
 <ul class="nav bd-sidenav">
@@ -190,14 +201,9 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
-      <div class="sidebar-primary-item">
-<div id="ethical-ad-placement"
-      class="flat"
-      data-ea-publisher="readthedocs"
-      data-ea-type="readthedocs-sidebar"
-      data-ea-manual="true">
-</div></div>
   </div>
+  
+  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -310,16 +316,24 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
 
 
-<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
-</button>
+  </button>
+`);
+</script>
 <button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
 </button>
@@ -343,10 +357,18 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-data-and-plot-it">Sample data and plot it</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extended-kalman-filter-smoother">Extended Kalman Filter  / smoother</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unscented-kalman-filter-smoother">Unscented Kalman Filter  / smoother</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-data-and-plot-it">Sample data and plot it</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#helper-fucntions-for-evaluating-estimates">Helper fucntions for evaluating estimates</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extended-kalman-filter-smoother">Extended Kalman Filter / Smoother</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unscented-kalman-filter-smoother">Unscented Kalman Filter / Smoother</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hyperparameters">Hyperparameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
             </nav>
         </div>
@@ -370,15 +392,15 @@ and <span class="math notranslate nohighlight">\(w(t)\)</span> is a white noise 
 <p>This gives rise to the following differential equation:</p>
 <div class="amsmath math notranslate nohighlight">
 \[\begin{align*}
-\frac{d^2 \alpha}{d t^2}
+\frac{\mathrm{d}^2 \alpha}{\mathrm{d} t^2}
 = -g \sin(\alpha) + w(t)
 \end{align*}\]</div>
 <p>We can write this as a nonlinear SSM by defining the state to be
-<span class="math notranslate nohighlight">\(z_1(t) = \alpha(t)\)</span> and <span class="math notranslate nohighlight">\(z_2(t) = d\alpha(t)/dt\)</span>.
+<span class="math notranslate nohighlight">\(z_1(t) = \alpha(t)\)</span> and <span class="math notranslate nohighlight">\(z_2(t) = \mathrm{d}\alpha(t)/\mathrm{d}t\)</span>.
 Thus</p>
 <div class="amsmath math notranslate nohighlight">
 \[\begin{align*}
-\frac{d z}{dt}
+\frac{\mathrm{d} z}{\mathrm{d}t}
 = \begin{pmatrix} z_2 \\ -g \sin(z_1) \end{pmatrix}
 + \begin{pmatrix} 0 \\ 1 \end{pmatrix} w(t)
 \end{align*}\]</div>
@@ -409,8 +431,17 @@ of the continuous-time noise process.</p>
 \[\begin{align*}
 y_t &amp;= h(z_t) + r_t \\
 h(z_t) &amp;=  \sin(\alpha_t)  = \sin(z_{t,1}) \\
-r_t &amp;\sim N(0,R)
+r_t &amp;\sim \mathrm{N}(0,R)
 \end{align*}\]</div>
+<p>This corresponds to receiving noisy measurements of the horizontal position of the pendulum.</p>
+<p>We show how to perform approximate inference of the latent states in this nonlinear dynamical system model using an Extended Kalman Filter (EKF) or an Unscented Kalman Filter (UKF). These algorithms work by approximating the nonlinear model with a linear Gaussian model, with two different types of approximations. For more detail on these algorithms, see Murphy (2023) or Särkkä and Svensson (2023).</p>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Murphy, Kevin P. Probabilistic machine learning: Advanced topics. MIT press, 2023.</p></li>
+<li><p>Särkkä, Simo, and Lennart Svensson. Bayesian filtering and smoothing. Vol. 17. Cambridge university press, 2023.</p></li>
+</ul>
+</section>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
@@ -428,17 +459,17 @@ r_t &amp;\sim N(0,R)
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Array</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.nonlinear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span> <span class="n">UKFHyperParams</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.nonlinear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">extended_kalman_smoother</span><span class="p">,</span> <span class="n">unscented_kalman_smoother</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.nonlinear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">extended_kalman_smoother</span> <span class="k">as</span> <span class="n">ekf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.nonlinear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">unscented_kalman_smoother</span> <span class="k">as</span> <span class="n">ukf</span>
 </pre></div>
 </div>
 </div>
@@ -534,9 +565,12 @@ r_t &amp;\sim N(0,R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/bdf04ed8308ba3cd80e7e6f95dab8fe04ea28056dc7a44613e263de62b2a5145.png" src="../../_images/bdf04ed8308ba3cd80e7e6f95dab8fe04ea28056dc7a44613e263de62b2a5145.png" />
+<img alt="../../_images/6f4e223997646700c6cf4d095af4fe4c7078b434f701022fcbc1c089dc401e41.png" src="../../_images/6f4e223997646700c6cf4d095af4fe4c7078b434f701022fcbc1c089dc401e41.png" />
 </div>
 </div>
+<section id="helper-fucntions-for-evaluating-estimates">
+<h3>Helper fucntions for evaluating estimates<a class="headerlink" href="#helper-fucntions-for-evaluating-estimates" title="Link to this heading">#</a></h3>
+<p>We use the functions below to compute and print the errors associated with various state estimates.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compute RMSE</span>
@@ -548,15 +582,23 @@ r_t &amp;\sim N(0,R)
 <span class="c1"># standard deviation of measurement noise</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_and_print_rmse_comparison</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">y_est</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">est_type</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
     <span class="n">rmse_est</span> <span class="o">=</span> <span class="n">compute_rmse</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">y_est</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="sa">f</span><span class="s2">&quot;The RMSE of the </span><span class="si">{</span><span class="n">est_type</span><span class="si">}</span><span class="s2"> estimate is&quot;</span><span class="si">:</span><span class="s1">&lt;40</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">rmse_est</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;The std of measurement noise is&quot;</span><span class="si">:</span><span class="s1">&lt;40</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">R</span><span class="p">)</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The RMSE of the </span><span class="si">{</span><span class="n">est_type</span><span class="si">}</span><span class="s2"> estimate is: </span><span class="si">{</span><span class="n">rmse_est</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The std of measurement noise is: </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">R</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </section>
+</section>
 <section id="extended-kalman-filter-smoother">
-<h2>Extended Kalman Filter  / smoother<a class="headerlink" href="#extended-kalman-filter-smoother" title="Link to this heading">#</a></h2>
+<h2>Extended Kalman Filter / Smoother<a class="headerlink" href="#extended-kalman-filter-smoother" title="Link to this heading">#</a></h2>
+<p>The extended Kalman filter (EKF) is an approximate inference algorithm for systems with nonlinear dynamics and/or emissions and Gaussian noise. It works by using a first-order Taylor approximation to the dynamics and/or emissions functions, and the n running a standard Kalman filter on the “linearized” model. The EKF tends to work well when the dynamics and emissions are well-approximated by their first-order Taylor function around the predictive means, and when the Jacobians of these functions are available. Dynamax uses automatic differentiation to compute these Jacobians.</p>
+<p>The <em>filter</em> computes estimates of the latent states based on observations up to and including time <span class="math notranslate nohighlight">\(t\)</span>, whereas the <em>smoother</em> estimates states based on all observations through time <span class="math notranslate nohighlight">\(T\)</span>.</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+p(z_t \mid y_{1:t}; \theta) &amp; &amp; &amp; \text{(filter)} \\
+p(z_t \mid y_{1:T}; \theta) &amp; &amp; &amp; \text{(smoother)}
+\end{align*}\]</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pendulum_params</span> <span class="o">=</span> <span class="n">PendulumParams</span><span class="p">()</span>
@@ -571,7 +613,7 @@ r_t &amp;\sim N(0,R)
     <span class="n">emission_covariance</span><span class="o">=</span><span class="n">pendulum_params</span><span class="o">.</span><span class="n">emission_covariance</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">ekf_posterior</span> <span class="o">=</span> <span class="n">extended_kalman_smoother</span><span class="p">(</span><span class="n">ekf_params</span><span class="p">,</span> <span class="n">obs</span><span class="p">)</span>
+<span class="n">ekf_posterior</span> <span class="o">=</span> <span class="n">ekf</span><span class="p">(</span><span class="n">ekf_params</span><span class="p">,</span> <span class="n">obs</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -585,9 +627,9 @@ r_t &amp;\sim N(0,R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/89be6dd9f7bfa2cde6da54e79dd1de989bf7835d30ba3a0fa86322d5819260a8.png" src="../../_images/89be6dd9f7bfa2cde6da54e79dd1de989bf7835d30ba3a0fa86322d5819260a8.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the EKF estimate is         : 0.13
-The std of measurement noise is         : 0.55
+<img alt="../../_images/bfc50de5bf1fa78ae0a76d42b045ee79af74bda95d24cf953d60beba5cb1e250.png" src="../../_images/bfc50de5bf1fa78ae0a76d42b045ee79af74bda95d24cf953d60beba5cb1e250.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the EKF estimate is: 0.13
+The std of measurement noise is: 0.55
 </pre></div>
 </div>
 </div>
@@ -601,16 +643,23 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a8be22e63306437aad03cf07f1509e3740363bfd0e8e9296ec54742b89b639fc.png" src="../../_images/a8be22e63306437aad03cf07f1509e3740363bfd0e8e9296ec54742b89b639fc.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the EKS estimate is         : 0.06
-The std of measurement noise is         : 0.55
+<img alt="../../_images/ef6894fe599290a68d49303ab0da720028cc7cd11c835f33dfb08fab7d750bf1.png" src="../../_images/ef6894fe599290a68d49303ab0da720028cc7cd11c835f33dfb08fab7d750bf1.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the EKS estimate is: 0.06
+The std of measurement noise is: 0.55
 </pre></div>
 </div>
 </div>
 </div>
 </section>
 <section id="unscented-kalman-filter-smoother">
-<h2>Unscented Kalman Filter  / smoother<a class="headerlink" href="#unscented-kalman-filter-smoother" title="Link to this heading">#</a></h2>
+<h2>Unscented Kalman Filter / Smoother<a class="headerlink" href="#unscented-kalman-filter-smoother" title="Link to this heading">#</a></h2>
+<p>The Unscented Kalman Filter (UKF) works by matching moments of a Gaussian approximation to the filtering and predictive distributions. Briefly, the UKF passes a grid of <em>sigma points</em> through the dynamics and emissions functions, and then uses the weighted mean and covariance of the transformed points to form the Gaussian approximation.</p>
+<p>Should you use an EKF or a UKF for your problem? Särkkä (2023; pg. 160) says the following,</p>
+<blockquote>
+<div><p>the unscented transform is able to capture the higher order moments caused by the non-linear transform better than Taylor series-based approximations. However, as already pointed out in the previous section, although the mean estimate of the UKF is exact for polynomials up to order three, the covariance computation is only exact for polynomials up to first order. In the UKF, the dynamic and model functions are also not required to be formally differentiable nor do their Jacobian matrices need to be computed. The disadvantage over the EKF is that the UKF often re quires slightly more computational operations than the EKF.</p>
+</div></blockquote>
+<p>Furthermore, as we demonstrate below, the UKF is sensitive to the choice of hyperparameters that determine the sigma points, whereas the EKF is essentially hyperparameter-free.</p>
+<p>Finally, as above, you can use either the Unscented Kalman Filter (UKF) or the Unscented Kalman Smoother (UKS) depending on whether you want a causal or acausal state estimate.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pendulum_params</span> <span class="o">=</span> <span class="n">PendulumParams</span><span class="p">()</span>
@@ -624,10 +673,9 @@ The std of measurement noise is         : 0.55
     <span class="n">emission_covariance</span><span class="o">=</span><span class="n">pendulum_params</span><span class="o">.</span><span class="n">emission_covariance</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">ukf_hyperparams</span> <span class="o">=</span> <span class="n">UKFHyperParams</span><span class="p">()</span> <span class="c1"># default gives same results as EKF</span>
-
-
-<span class="n">ukf_posterior</span> <span class="o">=</span> <span class="n">unscented_kalman_smoother</span><span class="p">(</span><span class="n">ukf_params</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">ukf_hyperparams</span><span class="p">)</span>
+<span class="c1"># In this example, the default gives the same results as EKF</span>
+<span class="n">ukf_hyperparams</span> <span class="o">=</span> <span class="n">UKFHyperParams</span><span class="p">()</span> 
+<span class="n">ukf_posterior</span> <span class="o">=</span> <span class="n">ukf</span><span class="p">(</span><span class="n">ukf_params</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">ukf_hyperparams</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -641,9 +689,9 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ed28073388f06e0e2bbb933a0878d15eb381c7f3b58f78794651a1c8c81a759c.png" src="../../_images/ed28073388f06e0e2bbb933a0878d15eb381c7f3b58f78794651a1c8c81a759c.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKF estimate is         : 0.13
-The std of measurement noise is         : 0.55
+<img alt="../../_images/b559537c7f111f3a3b2dbe1ad9d846fede803f039a7cad3e0425039c352eb3c5.png" src="../../_images/b559537c7f111f3a3b2dbe1ad9d846fede803f039a7cad3e0425039c352eb3c5.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKF estimate is: 0.13
+The std of measurement noise is: 0.55
 </pre></div>
 </div>
 </div>
@@ -657,20 +705,21 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/b1987bcc6b7bdc7b3579c46e3e9052a85cdbf52cdc072563cd9aa5da2ecd43f3.png" src="../../_images/b1987bcc6b7bdc7b3579c46e3e9052a85cdbf52cdc072563cd9aa5da2ecd43f3.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKS estimate is         : 0.06
-The std of measurement noise is         : 0.55
+<img alt="../../_images/8589befef490ecb34afb294a3e6aca816f0541431188cd4ff8d1073d60439311.png" src="../../_images/8589befef490ecb34afb294a3e6aca816f0541431188cd4ff8d1073d60439311.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKS estimate is: 0.06
+The std of measurement noise is: 0.55
 </pre></div>
 </div>
 </div>
 </div>
+<section id="hyperparameters">
+<h3>Hyperparameters<a class="headerlink" href="#hyperparameters" title="Link to this heading">#</a></h3>
+<p>The sigma points in the UKF/UKS are based on hyperparameters <span class="math notranslate nohighlight">\((\alpha, \beta, \kappa)\)</span>, which are detailed in the textbooks above. These hyperparameters can have a significant effect on the state estimates, so you may consider testing a range of settings based on your problem. Again, see the books above for more detail.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Let&#39;s see how sensitive UKF is to hyper-params</span>
-
 <span class="n">ukf_hyperparams</span> <span class="o">=</span> <span class="n">UKFHyperParams</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-
-<span class="n">ukf_posterior</span> <span class="o">=</span> <span class="n">unscented_kalman_smoother</span><span class="p">(</span><span class="n">ukf_params</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">ukf_hyperparams</span><span class="p">)</span>
+<span class="n">ukf_posterior</span> <span class="o">=</span> <span class="n">ukf</span><span class="p">(</span><span class="n">ukf_params</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">ukf_hyperparams</span><span class="p">)</span>
 
 <span class="n">m_ukf</span> <span class="o">=</span> <span class="n">ukf_posterior</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
 <span class="n">plot_pendulum</span><span class="p">(</span><span class="n">time_grid</span><span class="p">,</span> <span class="n">states</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">obs</span><span class="p">,</span> <span class="n">x_est</span><span class="o">=</span><span class="n">m_ukf</span><span class="p">,</span> <span class="n">est_type</span><span class="o">=</span><span class="s2">&quot;UKF&quot;</span><span class="p">)</span>
@@ -679,13 +728,18 @@ The std of measurement noise is         : 0.55
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/900c857252799fc011362da8a86823f42f3526a0217f6c37da9a853035bde184.png" src="../../_images/900c857252799fc011362da8a86823f42f3526a0217f6c37da9a853035bde184.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKF estimate is         : 0.43
-The std of measurement noise is         : 0.55
+<img alt="../../_images/ebd166b8e37a4396e0939d761240f9ea776de13680a62b7421a12b089009ade8.png" src="../../_images/ebd166b8e37a4396e0939d761240f9ea776de13680a62b7421a12b089009ade8.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The RMSE of the UKF estimate is: 0.43
+The std of measurement noise is: 0.55
 </pre></div>
 </div>
 </div>
 </div>
+</section>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>This notebook shows how to use the extended and unscented Kalman filter/smoother to infer latent states of a canonical nonlinear dynamical system, a simple pendulum. We saw that the smoothers achieved lower error estimates by considering future observations, but of course that renders them acausal. We also showed how to adjust the UKF hyperparameters, in case the defaults don’t work for your problem.</p>
 </section>
 </section>
 
@@ -725,8 +779,7 @@ The std of measurement noise is         : 0.55
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
   <div class="sidebar-secondary-item">
@@ -735,10 +788,18 @@ The std of measurement noise is         : 0.55
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-data-and-plot-it">Sample data and plot it</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extended-kalman-filter-smoother">Extended Kalman Filter  / smoother</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unscented-kalman-filter-smoother">Unscented Kalman Filter  / smoother</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-data-and-plot-it">Sample data and plot it</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#helper-fucntions-for-evaluating-estimates">Helper fucntions for evaluating estimates</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extended-kalman-filter-smoother">Extended Kalman Filter / Smoother</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unscented-kalman-filter-smoother">Unscented Kalman Filter / Smoother</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hyperparameters">Hyperparameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
 
@@ -787,8 +848,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
 
   <footer class="bd-footer">
   </footer>

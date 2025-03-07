@@ -16,34 +16,33 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!--
-    this give us a css class that will be invisible only if js is disabled
-  -->
-  <noscript>
-    <style>
-      .pst-js-only { display: none !important; }
-
-    </style>
-  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
-  <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/linear_gaussian_ssm/lgssm_learning';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -51,7 +50,6 @@
     <link rel="prev" title="Parallel filtering and smoothing in an LG-SSM" href="lgssm_parallel_inference.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
   </head>
   
   
@@ -67,8 +65,19 @@
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
-  <dialog id="pst-search-dialog">
-    
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
       action="../../search.html"
       method="get">
@@ -76,6 +85,7 @@
   <input type="search"
          class="form-control"
          name="q"
+         id="search-input"
          placeholder="Search..."
          aria-label="Search..."
          autocomplete="off"
@@ -83,8 +93,8 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form>
-  </dialog>
+</form></div>
+  </div>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
@@ -100,8 +110,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+      <div class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -131,17 +140,21 @@
     
     
     <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
-    <img src="../../_static/logo.gif" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
         <div class="sidebar-primary-item">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
- <i class="fa-solid fa-magnifying-glass"></i>
- <span class="search-button__default-text">Search</span>
- <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-</button></div>
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
@@ -169,7 +182,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">Online Logistic Regression using conditional moments Gaussian filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">Online learning of an MLP Classifier using conditional moments Gaussian filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">State Inference in a Poisson LDS using the Conditional Moments Gaussian Smoother</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
 <ul class="nav bd-sidenav">
@@ -188,14 +201,9 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
-      <div class="sidebar-primary-item">
-<div id="ethical-ad-placement"
-      class="flat"
-      data-ea-publisher="readthedocs"
-      data-ea-type="readthedocs-sidebar"
-      data-ea-manual="true">
-</div></div>
   </div>
+  
+  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -308,16 +316,24 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
 
 
-<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
-</button>
+  </button>
+`);
+</script>
 <button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
 </button>
@@ -343,9 +359,16 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data">Data</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-results">Plot results</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-with-em">Fit with EM</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-with-sgd">Fit with SGD</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-emissions-and-model-forecasts">Visualizing the emissions and model forecasts.</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-with-em">Fit with EM</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#identifiability">Identifiability</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-with-sgd">Fit with SGD</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#freezing-parameters">Freezing parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
             </nav>
         </div>
@@ -359,6 +382,15 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="map-parameter-estimation-for-an-lg-ssm-using-em-and-sgd">
 <h1>MAP parameter estimation for an LG-SSM using EM and SGD<a class="headerlink" href="#map-parameter-estimation-for-an-lg-ssm-using-em-and-sgd" title="Link to this heading">#</a></h1>
+<p>This notebook shows how to “fit” a linear Gaussian SSM — i.e., estimate the parameters and infer the latent states — using either expectation-maximization (EM) or stochastic gradient descent (SGD) on the negative log marginal likelihood of the data.</p>
+<p>Here, we work with simulate noisy data from an LG-SSM with known parameters, and then we see how well we can recover the true parameters and states given the observations. The model is,</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+z_{t+1} \mid z_t, \theta &amp;\sim \mathrm{N}(F z_t, Q) \\
+y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
+\end{align*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(z_{1:T}\)</span> are the latent states, <span class="math notranslate nohighlight">\(y_{1:T}\)</span> are the emissions, and <span class="math notranslate nohighlight">\(\theta = (F, Q, H, R)\)</span> are the model parameters. In particular, <span class="math notranslate nohighlight">\(F\)</span> is the dynamics matrix and <span class="math notranslate nohighlight">\(H\)</span> is the emission matrix. For our simulation, we use 2-dimensional latent states, <span class="math notranslate nohighlight">\(z_t \in \mathbb{R}^2\)</span>, and 10-dimensional emissions, <span class="math notranslate nohighlight">\(y_t \in \mathbb{R}^10\)</span>.</p>
+<p>We fit the model to estimate parameters, <span class="math notranslate nohighlight">\(\hat{\theta}\)</span>, using either EM or SGD, as shown below. Once we have estimated the paraemeters, we can also infer the latent states given those parameters.</p>
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
@@ -382,12 +414,15 @@
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.linear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearGaussianConjugateSSM</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">monotonically_increasing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">optax</span><span class="w"> </span><span class="kn">import</span> <span class="n">adam</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.linear_gaussian_ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearGaussianSSM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">monotonically_increasing</span><span class="p">,</span> <span class="n">random_rotation</span>
 </pre></div>
 </div>
 </div>
@@ -395,108 +430,158 @@
 </section>
 <section id="data">
 <h2>Data<a class="headerlink" href="#data" title="Link to this heading">#</a></h2>
+<p>Simulate 2-dimensional latent states and 10-dimensional emissions from a linear Gaussian SSM with randomly initialized parameters. By default, <code class="docutils literal notranslate"><span class="pre">initialize</span></code> sets the dynamics matrix to <span class="math notranslate nohighlight">\(F = 0.99 I\)</span> so that the dynamics are a stable, slowly decaying random walk.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">state_dim</span><span class="o">=</span><span class="mi">2</span>
-<span class="n">emission_dim</span><span class="o">=</span><span class="mi">10</span>
-<span class="n">num_timesteps</span><span class="o">=</span><span class="mi">100</span>
-<span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">state_dim</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">emission_dim</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">k1</span><span class="p">,</span> <span class="n">k2</span><span class="p">,</span> <span class="n">k3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
 
-<span class="n">true_model</span> <span class="o">=</span> <span class="n">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
-<span class="n">key</span><span class="p">,</span> <span class="n">key_root</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">true_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">true_model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="c1"># Construct the true model with randomly initialized parameters</span>
+<span class="n">true_A</span> <span class="o">=</span> <span class="mf">0.99</span> <span class="o">*</span> <span class="n">random_rotation</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">k1</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">true_Sigma</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span>
+<span class="n">true_model</span> <span class="o">=</span> <span class="n">LinearGaussianSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
+<span class="n">true_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">true_model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+    <span class="n">key</span><span class="o">=</span><span class="n">k1</span><span class="p">,</span> <span class="n">dynamics_weights</span><span class="o">=</span><span class="n">true_A</span><span class="p">,</span> <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">true_Sigma</span><span class="p">)</span>            
 
-<span class="n">key</span><span class="p">,</span> <span class="n">key_root</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">true_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
-
-<span class="c1"># Plot the true states and emissions</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">emissions</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">))</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1"># Sample states and emissions from the true model</span>
+<span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">true_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">k3</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(0.0, 99.0)
-</pre></div>
-</div>
-<img alt="../../_images/07439d7022d52e983f282ac93b368d689e5b4f0f748f1b430aa5ef0af76c1cf5.png" src="../../_images/07439d7022d52e983f282ac93b368d689e5b4f0f748f1b430aa5ef0af76c1cf5.png" />
 </div>
 </div>
 </section>
-<section id="plot-results">
-<h2>Plot results<a class="headerlink" href="#plot-results" title="Link to this heading">#</a></h2>
+<section id="visualizing-the-emissions-and-model-forecasts">
+<h2>Visualizing the emissions and model forecasts.<a class="headerlink" href="#visualizing-the-emissions-and-model-forecasts" title="Link to this heading">#</a></h2>
+<p>Before fitting a model, we show how you can use a model to smooth the noisy observations and forecast future emissions.</p>
+<p>Given noisy emissions, <span class="math notranslate nohighlight">\(y_{1:T}\)</span>, and parameters, <span class="math notranslate nohighlight">\(\theta\)</span>, we can compute the posterior mean of the latent states,</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+\mu_{t|T} \triangleq \mathbb{E}[z_{t} \mid y_{1:T}; \theta],
+\end{align*} \]</div>
+<p>using a Kalman smoother. (The <code class="docutils literal notranslate"><span class="pre">model.smoother</span></code> function returns the posterior distribution over latent states.) We can also reconstruct the emissions by passing the posterior mean over states through the emission distribution to obtain,</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+\hat{y}_t 
+&amp;= \mathbb{E}_{z_t \mid y_{1:T}; \theta}[H z_t] \\
+&amp;= H \mu_{t|T}.
+\end{align*}\]</div>
+<p>Similarly, we can compute the covariance of the reconstruction as,</p>
+<div class="amsmath math notranslate nohighlight">
+\[\begin{align*}
+\widehat{\mathbb{V}[y_t]}
+&amp;= \mathbb{V}_{z_t \mid y_{1:T}; \theta}[H z_t + \epsilon_t] \\
+&amp;= H \Sigma_{t|T} H^\top + R,
+\end{align*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\epsilon_t \sim \mathrm{N}(0, R)\)</span> is the emission noise and <span class="math notranslate nohighlight">\(\Sigma_{t|T} = \mathbb{V}[z_t \mid y_{1:T}; \theta]\)</span> is the posterior marginal covariance.</p>
+<p>These quantities are computed by the <code class="docutils literal notranslate"><span class="pre">model.posterior_predictive</span></code> function, as illustrated below. Note that the term <em>posterior predictive</em> distribution can be ambiguous. Here we refer to the predictive distribution of <em>current</em> emissions <span class="math notranslate nohighlight">\(y_{1:T}\)</span> under the posterior distribution <span class="math notranslate nohighlight">\(p(z_{1:T} \mid y_{1:T}; \theta)\)</span>.</p>
+<p>Another type of posterior prediction is over <em>future</em> latent states and emissions. The <code class="docutils literal notranslate"><span class="pre">model.forecast</span></code> function computes these predictions over a specified time horizon. The plots below show the forecasted future emissions based on the given model parameters and the observations up to time <span class="math notranslate nohighlight">\(T\)</span>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_learning_curve</span><span class="p">(</span><span class="n">marginal_lls</span><span class="p">,</span> <span class="n">true_model</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">test_model</span><span class="p">,</span> <span class="n">test_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">):</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;iteration&quot;</span><span class="p">)</span>
-    <span class="n">nsteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">marginal_lls</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">marginal_lls</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;estimated&quot;</span><span class="p">)</span>
-    <span class="n">true_logjoint</span> <span class="o">=</span> <span class="p">(</span><span class="n">true_model</span><span class="o">.</span><span class="n">log_prior</span><span class="p">(</span><span class="n">true_params</span><span class="p">)</span> <span class="o">+</span> <span class="n">true_model</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">))</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">true_logjoint</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;marginal joint probability&quot;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_predictions</span><span class="p">(</span><span class="n">true_model</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">test_model</span><span class="p">,</span> <span class="n">test_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">):</span>
-    <span class="n">smoothed_emissions</span><span class="p">,</span> <span class="n">smoothed_emissions_std</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">posterior_predictive</span><span class="p">(</span><span class="n">test_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_emissions_and_forecast</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> 
+                                <span class="n">num_forecast_timesteps</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> 
+                                <span class="n">spc</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot the true emissions, the reconstructed emissions, and the future forecast.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_timesteps</span> <span class="o">=</span> <span class="n">emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">t_obs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">)</span>
+    <span class="n">t_forecast</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">,</span> <span class="n">num_timesteps</span> <span class="o">+</span> <span class="n">num_forecast_timesteps</span><span class="p">)</span>
+    <span class="n">recon_emissions</span><span class="p">,</span> <span class="n">recon_emissions_std</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior_predictive</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">forecast_emissions</span><span class="p">,</span> <span class="n">forecast_emissions_cov</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">forecast</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_forecast_timesteps</span><span class="p">)</span>
+    <span class="n">forecast_emissions_std</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vmap</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">)(</span><span class="n">forecast_emissions_cov</span><span class="p">))</span>
 
-    <span class="n">spc</span> <span class="o">=</span> <span class="mi">3</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">):</span>
+        <span class="c1"># Plot the emissions</span>
+        <span class="c1"># axs[1].axhline(i *spc, color=&quot;black&quot;, linestyle=&quot;:&quot;, alpha=0.5)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span><span class="p">,</span> <span class="s2">&quot;--k&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">ln</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">smoothed_emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span><span class="p">,</span>
-                        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;smoothed&quot;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ln</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_obs</span><span class="p">,</span> <span class="n">recon_emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span><span class="p">,</span> 
+                      <span class="n">label</span><span class="o">=</span><span class="s2">&quot;smoothed&quot;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">),</span>
-            <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">smoothed_emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">smoothed_emissions_std</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-            <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">smoothed_emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">smoothed_emissions_std</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">t_obs</span><span class="p">,</span>
+            <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">recon_emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">recon_emissions_std</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
+            <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">recon_emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">recon_emissions_std</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
             <span class="n">color</span><span class="o">=</span><span class="n">ln</span><span class="o">.</span><span class="n">get_color</span><span class="p">(),</span>
             <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
         <span class="p">)</span>
+        
+        <span class="c1"># Plot the forecast</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_forecast</span><span class="p">,</span> <span class="n">forecast_emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span><span class="p">,</span> 
+                 <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">ln</span><span class="o">.</span><span class="n">get_color</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;forecast&quot;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
+            <span class="n">t_forecast</span><span class="p">,</span>
+            <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">forecast_emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">forecast_emissions_std</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
+            <span class="n">spc</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">forecast_emissions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">forecast_emissions_std</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">ln</span><span class="o">.</span><span class="n">get_color</span><span class="p">(),</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Draw a dividing line between observations and forecasts</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        
+    <span class="c1"># Label the axes</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;true and predicted emissions&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_timesteps</span> <span class="o">+</span> <span class="n">num_forecast_timesteps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;emissions&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">spc</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">),</span> 
+               <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;dim. </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">emission_dim</span><span class="p">)])</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 </div>
+<p>First, plot the reconstructions under the true model.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot predictions from a random, untrained model</span>
-
-<span class="n">test_model</span> <span class="o">=</span> <span class="n">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
-<span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-<span class="n">plot_predictions</span><span class="p">(</span><span class="n">true_model</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">test_model</span><span class="p">,</span> <span class="n">test_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot_states_and_emissions(true_model, true_params, emissions)</span>
+<span class="n">plot_emissions_and_forecast</span><span class="p">(</span><span class="n">true_model</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;true model&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.02</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a4451c6b9a24a168536ed06d8cbaabc91d0fc15671588d87f87d64375edead5a.png" src="../../_images/a4451c6b9a24a168536ed06d8cbaabc91d0fc15671588d87f87d64375edead5a.png" />
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;true model&#39;)
+</pre></div>
+</div>
+<img alt="../../_images/68adcb5af78c8e7cb387ffb8a80e207c06990e9a300f18215e66e78528729da2.png" src="../../_images/68adcb5af78c8e7cb387ffb8a80e207c06990e9a300f18215e66e78528729da2.png" />
+</div>
+</div>
+<p>Now plot the reconstructions under a randomly initialized model. They’re much worse!</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot predictions from a random, untrained model</span>
+<span class="n">init_key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">LinearGaussianSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">init_key</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_emissions_and_forecast</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;randomly initialized model&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.02</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;randomly initialized model&#39;)
+</pre></div>
+</div>
+<img alt="../../_images/21548fd22823d694ab5c369199300e39f4f29b15a453fae65418018c9c30cc98.png" src="../../_images/21548fd22823d694ab5c369199300e39f4f29b15a453fae65418018c9c30cc98.png" />
 </div>
 </div>
 </section>
 <section id="fit-with-em">
 <h2>Fit with EM<a class="headerlink" href="#fit-with-em" title="Link to this heading">#</a></h2>
+<p>Let’s fit the model to the data using expectation-maximization (EM) algorithm. As with hidden Markov models, EM alternates between inferring the latent states (E-step) and then maximizing the expected log probability of the states and emissions (M-step). The E-step is implemented with a Kalman smoother. The M-step has a closed form solution for linear Gaussian state space models, so the algorithm is very efficient!</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">test_model</span> <span class="o">=</span> <span class="n">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
-<span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="n">num_iters</span> <span class="o">=</span> <span class="mi">100</span>
-<span class="n">test_params</span><span class="p">,</span> <span class="n">marginal_lls</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="n">num_iters</span><span class="p">)</span>
-
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="p">,</span> <span class="n">marginal_lls</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">param_props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">monotonically_increasing</span><span class="p">(</span><span class="n">marginal_lls</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -521,50 +606,178 @@
 </div><div class="output text_html">
     <div>
       <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [100/100 00:01&lt;00:00]
+      100.00% [100/100 00:00&lt;00:00]
     </div>
     </div></div>
 </div>
+<p>We zoom in on the learning curve after the first iteration since the first log likelihood is much lower than the rest.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_learning_curve</span><span class="p">(</span><span class="n">marginal_lls</span><span class="p">,</span> <span class="n">true_model</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">test_model</span><span class="p">,</span> <span class="n">test_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
-<span class="n">plot_predictions</span><span class="p">(</span><span class="n">true_model</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">test_model</span><span class="p">,</span> <span class="n">test_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">true_ll</span> <span class="o">=</span> <span class="n">true_model</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">true_ll</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">marginal_lls</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;estimated&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;iteration&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;marginal log likelihood&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="n">marginal_lls</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">25</span><span class="p">,</span> <span class="n">marginal_lls</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">25</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/b78dada97089af37b1d3b39b4c715cbb4a5121a1c70714cd175b032f8cf0dac0.png" src="../../_images/b78dada97089af37b1d3b39b4c715cbb4a5121a1c70714cd175b032f8cf0dac0.png" />
-<img alt="../../_images/6c87bffcfd402ee80c4140092ee9668d47c7b5bb5c1d94b86e1684dc4d3921a7.png" src="../../_images/6c87bffcfd402ee80c4140092ee9668d47c7b5bb5c1d94b86e1684dc4d3921a7.png" />
+<img alt="../../_images/12f5e722ef13df8b9b02136ab99f4c93d8e58715c346e93ae5cbdaac0dec97e9.png" src="../../_images/12f5e722ef13df8b9b02136ab99f4c93d8e58715c346e93ae5cbdaac0dec97e9.png" />
 </div>
 </div>
+<p>The marginal log likelihood quickly converges. As with the HMM examples, the likelihood under the estimated parameters is larger than the likelihood under the true parameters that generated the data. This isn’t surprising: EM is finding the parameters <span class="math notranslate nohighlight">\(\hat{\theta}_{\mathsf{MLE}}\)</span>, that maximize the likelihood, and with a short sequence like this, the likelihood <span class="math notranslate nohighlight">\(p(x_{1:T}; \hat{\theta}_{\mathsf{MLE}})\)</span> is almost surely larger than <span class="math notranslate nohighlight">\(p(x_{1:T}; \theta_{\mathsf{true}})\)</span>.</p>
+<p>Last but not least, reconstructing the data with the estimated parameters yields nice predictions.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_emissions_and_forecast</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;fitted model&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.02</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;fitted model&#39;)
+</pre></div>
+</div>
+<img alt="../../_images/f587e4990a14fe5978652f8af2d7402762fe6da9ab1a558f4b3b3578105466c6.png" src="../../_images/f587e4990a14fe5978652f8af2d7402762fe6da9ab1a558f4b3b3578105466c6.png" />
+</div>
+</div>
+<section id="identifiability">
+<h3>Identifiability<a class="headerlink" href="#identifiability" title="Link to this heading">#</a></h3>
+<p>Notice how the fitted model is able to reconstruct the emissions, but the inferred latent states do not match the true latent states. That’s because the latent state are only identifiable up to an orthogonal transformation. We can always map <span class="math notranslate nohighlight">\(z_t \mapsto A z_t\)</span> where <span class="math notranslate nohighlight">\(A\)</span> is an orthogonal matrix, and then account for the transformation with a commensurate change in the parameters.</p>
+</section>
 </section>
 <section id="fit-with-sgd">
 <h2>Fit with SGD<a class="headerlink" href="#fit-with-sgd" title="Link to this heading">#</a></h2>
+<p>As with HMMs, we can also fit the model parameters by using (stochastic) gradient descent on the negative marginal log likelihood. You can use an optimizer of your choice, like Adam. You’ll have to explore various learning rates (and possibly other hyperparameters as well). We recommend that you start with EM since it tends to converge more quickly, but currently SGD supports some features that EM doesn’t. For example, SGD allows you to fix certain parameters during training.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">test_model</span> <span class="o">=</span> <span class="n">LinearGaussianConjugateSSM</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">)</span>
-<span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="n">num_iters</span> <span class="o">=</span> <span class="mi">100</span>
-<span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-<span class="n">test_params</span><span class="p">,</span> <span class="n">neg_marginal_lls</span> <span class="o">=</span> <span class="n">test_model</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">test_params</span><span class="p">,</span> <span class="n">param_props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_iters</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
-<span class="n">marginal_lls</span> <span class="o">=</span> <span class="o">-</span><span class="n">neg_marginal_lls</span> <span class="o">*</span> <span class="n">emissions</span><span class="o">.</span><span class="n">size</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_learning_curve</span><span class="p">(</span><span class="n">marginal_lls</span><span class="p">,</span> <span class="n">true_model</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">test_model</span><span class="p">,</span> <span class="n">test_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
-<span class="n">plot_predictions</span><span class="p">(</span><span class="n">true_model</span><span class="p">,</span> <span class="n">true_params</span><span class="p">,</span> <span class="n">test_model</span><span class="p">,</span> <span class="n">test_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sgd_key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>
+<span class="n">learning_rates</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e-2</span><span class="p">,</span> <span class="mf">1e-1</span><span class="p">,</span> <span class="mf">2.5e-1</span><span class="p">]</span>
+<span class="n">all_sgd_params</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">all_sgd_marginal_lls</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">lr</span> <span class="ow">in</span> <span class="n">learning_rates</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fitting with Adam and learning rate </span><span class="si">{</span><span class="n">lr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
+    <span class="n">sgd_params</span><span class="p">,</span> <span class="n">sgd_param_props</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">init_key</span><span class="p">)</span>
+    <span class="n">sgd_params</span><span class="p">,</span> <span class="n">losses</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">sgd_params</span><span class="p">,</span> 
+                                       <span class="n">sgd_param_props</span><span class="p">,</span> 
+                                       <span class="n">emissions</span><span class="p">,</span> 
+                                       <span class="n">num_epochs</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> 
+                                       <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+                                       <span class="n">key</span><span class="o">=</span><span class="n">sgd_key</span><span class="p">)</span>
+    <span class="n">sgd_marginal_lls</span> <span class="o">=</span> <span class="o">-</span><span class="n">losses</span> <span class="o">*</span> <span class="n">emissions</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">all_sgd_marginal_lls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sgd_marginal_lls</span><span class="p">)</span>
+    <span class="n">all_sgd_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7d3346c7f30011fefc5895715fb8e0ddf75c541e77d6493c21509a0544916a55.png" src="../../_images/7d3346c7f30011fefc5895715fb8e0ddf75c541e77d6493c21509a0544916a55.png" />
-<img alt="../../_images/1724c384d005174bc2cf06fb4b44e755e0fed309411e93494fa26078fe7837f7.png" src="../../_images/1724c384d005174bc2cf06fb4b44e755e0fed309411e93494fa26078fe7837f7.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting with Adam and learning rate 0.01
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting with Adam and learning rate 0.1
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fitting with Adam and learning rate 0.25
+</pre></div>
 </div>
 </div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot the SGD learning curves and the true LL for comparison</span>
+<span class="n">true_ll</span> <span class="o">=</span> <span class="n">true_model</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">true_ll</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">lr</span><span class="p">,</span> <span class="n">lls</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">learning_rates</span><span class="p">,</span> <span class="n">all_sgd_marginal_lls</span><span class="p">):</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lls</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;epochs&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;marginal log likelihood&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="n">true_ll</span> <span class="o">-</span> <span class="mi">3000</span><span class="p">,</span> <span class="n">true_ll</span> <span class="o">+</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../../_images/bdba6b4acd26a4393f4cb931973337b4da81c16db87d65885e2f34fd6f6f9f7e.png" src="../../_images/bdba6b4acd26a4393f4cb931973337b4da81c16db87d65885e2f34fd6f6f9f7e.png" />
+</div>
+</div>
+<p>Adam eventually converges, but note that both the y-axis and x-axis scales are much larger than for EM. It takes 100s of epochs to achieve comparable log likelihoods, and each epoch is roughly the equivalent cost to one iteration of EM.</p>
+<section id="freezing-parameters">
+<h3>Freezing parameters<a class="headerlink" href="#freezing-parameters" title="Link to this heading">#</a></h3>
+<p>Now let’s fit an LG-SSM with certain parameters held fixed. For example, the code below freezes the dynamics to the true values.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sgd_key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>
+<span class="n">init_key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="n">sgd_params</span><span class="p">,</span> <span class="n">sgd_param_props</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+    <span class="n">init_key</span><span class="p">,</span> <span class="n">dynamics_weights</span><span class="o">=</span><span class="n">true_A</span><span class="p">,</span> <span class="n">dynamics_covariance</span><span class="o">=</span><span class="n">true_Sigma</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;freeing the dynamics matrix to:</span><span class="se">\n</span><span class="s2"> </span><span class="si">{</span><span class="n">sgd_params</span><span class="o">.</span><span class="n">dynamics</span><span class="o">.</span><span class="n">weights</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">sgd_param_props</span><span class="o">.</span><span class="n">dynamics</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">trainable</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">sgd_param_props</span><span class="o">.</span><span class="n">dynamics</span><span class="o">.</span><span class="n">cov</span><span class="o">.</span><span class="n">trainable</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Fit the model with SGD</span>
+<span class="n">sgd_params</span><span class="p">,</span> <span class="n">losses</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit_sgd</span><span class="p">(</span><span class="n">sgd_params</span><span class="p">,</span> 
+                                   <span class="n">sgd_param_props</span><span class="p">,</span> 
+                                   <span class="n">emissions</span><span class="p">,</span> 
+                                   <span class="n">num_epochs</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> 
+                                   <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+                                   <span class="n">key</span><span class="o">=</span><span class="n">sgd_key</span><span class="p">)</span>
+<span class="n">sgd_marginal_lls</span> <span class="o">=</span> <span class="o">-</span><span class="n">losses</span> <span class="o">*</span> <span class="n">emissions</span><span class="o">.</span><span class="n">size</span>
+
+<span class="c1"># Check that the dynamics matrix has not been updated</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dynamics matrix after fitting:</span><span class="se">\n</span><span class="s2"> </span><span class="si">{</span><span class="n">sgd_params</span><span class="o">.</span><span class="n">dynamics</span><span class="o">.</span><span class="n">weights</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">jnp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">sgd_params</span><span class="o">.</span><span class="n">dynamics</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">true_A</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>freeing the dynamics matrix to:
+ [[ 0.9415461   0.30592695]
+ [-0.30592677  0.9415459 ]]
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>dynamics matrix after fitting:
+ [[ 0.9415461   0.30592695]
+ [-0.30592677  0.9415459 ]]
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot the SGD learning curve and the true LL for comparison</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sgd_marginal_lls</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;estimated&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">true_ll</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;epochs&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;marginal log likelihood&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="n">true_ll</span> <span class="o">-</span> <span class="mi">3000</span><span class="p">,</span> <span class="n">true_ll</span> <span class="o">+</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../../_images/02f9e2de7701d440172644cc07cd01492e5bb70ccceb9aced958aebd74c999d1.png" src="../../_images/02f9e2de7701d440172644cc07cd01492e5bb70ccceb9aced958aebd74c999d1.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading">#</a></h2>
+<p>This notebook shows how to fit linear Gaussian state space models (i.e., linear dynamical systems) using either EM or SGD, and how to use the fitted parameters to infer latent states and denoise the data. You can use the parameters for several other tasks as well. For example,</p>
+<ul class="simple">
+<li><p>You can compute the filtering of the latent states using the <code class="docutils literal notranslate"><span class="pre">model.filter</span></code> function.</p></li>
+<li><p>You can sample new states and observations from the fitted model and use them, for example, to forecast new observations.</p></li>
+<li><p>You can study the system dynamics and their properties in <code class="docutils literal notranslate"><span class="pre">params.dynamics</span></code>.</p></li>
+</ul>
+<p>The next notebook shows how to do Bayesian inference of the parameters using Hamiltonian Monte Carlo.</p>
 </section>
 </section>
 
@@ -604,8 +817,7 @@
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
   <div class="sidebar-secondary-item">
@@ -616,9 +828,16 @@
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data">Data</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-results">Plot results</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-with-em">Fit with EM</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-with-sgd">Fit with SGD</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-emissions-and-model-forecasts">Visualizing the emissions and model forecasts.</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-with-em">Fit with EM</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#identifiability">Identifiability</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-with-sgd">Fit with SGD</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#freezing-parameters">Freezing parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conclusion">Conclusion</a></li>
 </ul>
   </nav></div>
 
@@ -667,8 +886,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
 
   <footer class="bd-footer">
   </footer>

@@ -16,29 +16,26 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!--
-    this give us a css class that will be invisible only if js is disabled
-  -->
-  <noscript>
-    <style>
-      .pst-js-only { display: none !important; }
-
-    </style>
-  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
-  <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
@@ -53,7 +50,6 @@
     <link rel="prev" title="Casino HMM: Learning (parameter estimation)" href="casino_hmm_learning.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
   </head>
   
   
@@ -69,8 +65,19 @@
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
-  <dialog id="pst-search-dialog">
-    
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
       action="../../search.html"
       method="get">
@@ -78,6 +85,7 @@
   <input type="search"
          class="form-control"
          name="q"
+         id="search-input"
          placeholder="Search..."
          aria-label="Search..."
          autocomplete="off"
@@ -85,8 +93,8 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form>
-  </dialog>
+</form></div>
+  </div>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
@@ -102,8 +110,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+      <div class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -133,17 +140,21 @@
     
     
     <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
-    <img src="../../_static/logo.gif" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
         <div class="sidebar-primary-item">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
- <i class="fa-solid fa-magnifying-glass"></i>
- <span class="search-button__default-text">Search</span>
- <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-</button></div>
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
@@ -171,7 +182,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">Online Logistic Regression using conditional moments Gaussian filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">Online learning of an MLP Classifier using conditional moments Gaussian filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">State Inference in a Poisson LDS using the Conditional Moments Gaussian Smoother</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
 <ul class="nav bd-sidenav">
@@ -190,14 +201,9 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
-      <div class="sidebar-primary-item">
-<div id="ethical-ad-placement"
-      class="flat"
-      data-ea-publisher="readthedocs"
-      data-ea-type="readthedocs-sidebar"
-      data-ea-manual="true">
-</div></div>
   </div>
+  
+  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -310,16 +316,24 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
 
 
-<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
-</button>
+  </button>
+`);
+</script>
 <button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
 </button>
@@ -368,8 +382,8 @@
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm-cross-validation-and-model-selection">
 <h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Link to this heading">#</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-d8da74cc-8aca-4fb5-972d-9fbdffe9885a">
-<span class="eqno">(1)<a class="headerlink" href="#equation-d8da74cc-8aca-4fb5-972d-9fbdffe9885a" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-a8511d84-c8ff-4dcf-9c8d-b7527b603f59">
+<span class="eqno">(1)<a class="headerlink" href="#equation-a8511d84-c8ff-4dcf-9c8d-b7527b603f59" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_t \mid z_t, \theta) &amp;= \mathcal{N}(y_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the emission parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -520,6 +534,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 </div>
+<p>Here, we plot the emission distributions, <span class="math notranslate nohighlight">\(p(x_t \mid z_t=k)\)</span> for each <span class="math notranslate nohighlight">\(k=1,\ldots, 5\)</span>. The gray dots indicate the observed points, <span class="math notranslate nohighlight">\(x_t\)</span>, and the lines connect sequential observations. In this example, the transitions switch from blue to red to yellow and so on, since the transition matrix is constructed in a “feed-forward” fashion.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot emissions and true_states in the emissions plane</span>
@@ -529,7 +544,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/960a2c295007f2318b62a2261d54ac36327c4b5d440afcc86f391846cefd7911.png" src="../../_images/960a2c295007f2318b62a2261d54ac36327c4b5d440afcc86f391846cefd7911.png" />
+<img alt="../../_images/bdc5b66727583d2560308197f3953cec8800b2a1a679d814df1ee45deb1ea417.png" src="../../_images/bdc5b66727583d2560308197f3953cec8800b2a1a679d814df1ee45deb1ea417.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -540,7 +555,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/cba35effb094cf6ccc2ed40d98a03acb865b2c503ea28e074f1998fcd8adfbcb.png" src="../../_images/cba35effb094cf6ccc2ed40d98a03acb865b2c503ea28e074f1998fcd8adfbcb.png" />
+<img alt="../../_images/2b4ead6a9259a2d3b3777990db601f41c91c5b60b5631c0695c2ee2089b87fa6.png" src="../../_images/2b4ead6a9259a2d3b3777990db601f41c91c5b60b5631c0695c2ee2089b87fa6.png" />
 </div>
 </div>
 </section>
@@ -634,7 +649,7 @@ determining the number of discrete states.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;avg. validation log prob.&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/4ef588da9e52d0a1285ed3bc8e43530fa116b10c23c68f21455ce7eef79f9af5.png" src="../../_images/4ef588da9e52d0a1285ed3bc8e43530fa116b10c23c68f21455ce7eef79f9af5.png" />
+<img alt="../../_images/3b241651da8ca91071e88fca9c417209d880b24b2ac0d0ddfd06a6acd52a9669.png" src="../../_images/3b241651da8ca91071e88fca9c417209d880b24b2ac0d0ddfd06a6acd52a9669.png" />
 </div>
 </div>
 <p>There’s no right answer for how to choose the number of states, but reasonable heuristics include:</p>
@@ -712,11 +727,15 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f986ea80d90&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f4b924dbed0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/bf240760db315e2cd8fbed1628e0f362bde56b78ec3e956a54fc3d7e1340d268.png" src="../../_images/bf240760db315e2cd8fbed1628e0f362bde56b78ec3e956a54fc3d7e1340d268.png" />
+<img alt="../../_images/0c33af1a92210e0af500908357674a08a071148093fd303235792f0856c94bd2.png" src="../../_images/0c33af1a92210e0af500908357674a08a071148093fd303235792f0856c94bd2.png" />
 </div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note that the fitted model can achieve higher log probability than the true model on the training data. Just because the data was generated using these parameters, it doesn’t mean that the true parameters achieve the maximum likelihood for a finite dataset. As the size of the dataset increases, the gap should decrease.</p>
 </div>
 </section>
 </section>
@@ -732,7 +751,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/372a1ffc838292f5bc43913486f15c2ada6d52f9256b710991594a28aefd6767.png" src="../../_images/372a1ffc838292f5bc43913486f15c2ada6d52f9256b710991594a28aefd6767.png" />
+<img alt="../../_images/3e3b112922a4d63c6b0f0146f4deb673aa447c8c32d179e761cebcdc674cff9a.png" src="../../_images/3e3b112922a4d63c6b0f0146f4deb673aa447c8c32d179e761cebcdc674cff9a.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -742,7 +761,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/81f318bbf98ef1a9dd32023ed3eeaa49ada5aab7109d9ddf02ec042efac565c7.png" src="../../_images/81f318bbf98ef1a9dd32023ed3eeaa49ada5aab7109d9ddf02ec042efac565c7.png" />
+<img alt="../../_images/55992f720cb3bf8491c08b4595fc752b4c1b8feafd5b8637bd0554a8561f5dc4.png" src="../../_images/55992f720cb3bf8491c08b4595fc752b4c1b8feafd5b8637bd0554a8561f5dc4.png" />
 </div>
 </div>
 <div class="admonition important">
@@ -756,7 +775,7 @@ determining the number of discrete states.</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.hidden_markov_model.DiagonalGaussianHMM"><code class="docutils literal notranslate"><span class="pre">DiagonalGaussianHMM</span></code></a> assumes the covariance matrices are diagonal (i.e. <span class="math notranslate nohighlight">\(\Sigma_k = \mathrm{diag}([\sigma_{k,1}^2, \ldots, \sigma_{k,D}^2])\)</span>)</p></li>
 <li><p><a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.hidden_markov_model.SphericalGaussianHMM"><code class="docutils literal notranslate"><span class="pre">SphericalGaussianHMM</span></code></a> assumes the covariance matrices are “spherical” (i.e. <span class="math notranslate nohighlight">\(\Sigma_k = \sigma_k^2 I\)</span>)</p></li>
-<li><p><a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.hidden_markov_model.SharedCovarianceGaussianHMM"><code class="docutils literal notranslate"><span class="pre">SharedCovarianceGaussianHMM</span></code></a> assumes the covariance matrices are the same for all states (i.e. <span class="math notranslate nohighlight">\(\Sigma_k = \Sigma\)</span>)</p></li>
+<li><p><a class="reference external" href="https://probml.github.io/dynamax/api.html#dynamax.hidden_markov_model.SharedCovarianceGaussianHMM"><code class="docutils literal notranslate"><span class="pre">SharedCovarianceGaussianHMM</span></code></a> assumes the covariance matrices are the same for all states (i.e. <span class="math notranslate nohighlight">\(\Sigma_k = \Sigma\)</span>). Here, <span class="math notranslate nohighlight">\(\Sigma\)</span> can be an arbitrary covariance matrix (not just spherical or diagonal).</p></li>
 </ul>
 <p>In this last section, we will compare these models based on the marginal probability they assign to the test data.</p>
 <div class="admonition warning">
@@ -850,8 +869,7 @@ determining the number of discrete states.</p>
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
   <div class="sidebar-secondary-item">
@@ -919,8 +937,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
 
   <footer class="bd-footer">
   </footer>

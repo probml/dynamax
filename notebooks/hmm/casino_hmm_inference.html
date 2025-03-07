@@ -16,29 +16,26 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!--
-    this give us a css class that will be invisible only if js is disabled
-  -->
-  <noscript>
-    <style>
-      .pst-js-only { display: none !important; }
-
-    </style>
-  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
   
-  <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
@@ -53,7 +50,6 @@
     <link rel="prev" title="Welcome to DYNAMAX!" href="../../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
   </head>
   
   
@@ -69,8 +65,19 @@
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
-  <dialog id="pst-search-dialog">
-    
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
       action="../../search.html"
       method="get">
@@ -78,6 +85,7 @@
   <input type="search"
          class="form-control"
          name="q"
+         id="search-input"
          placeholder="Search..."
          aria-label="Search..."
          autocomplete="off"
@@ -85,8 +93,8 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form>
-  </dialog>
+</form></div>
+  </div>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
@@ -102,8 +110,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+      <div class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -133,17 +140,21 @@
     
     
     <img src="../../_static/logo.gif" class="logo__image only-light" alt=" - Home"/>
-    <img src="../../_static/logo.gif" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/logo.gif" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
         <div class="sidebar-primary-item">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
- <i class="fa-solid fa-magnifying-glass"></i>
- <span class="search-button__default-text">Search</span>
- <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-</button></div>
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">HMMs</span></p>
@@ -171,7 +182,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_logistic_regression_demo.html">Online Logistic Regression using conditional moments Gaussian filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_mlp_classification_demo.html">Online learning of an MLP Classifier using conditional moments Gaussian filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">Fitting an LDS with Poisson Likelihood using conditional moments Gaussian filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generalized_gaussian_ssm/cmgf_poisson_demo.html">State Inference in a Poisson LDS using the Conditional Moments Gaussian Smoother</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
 <ul class="nav bd-sidenav">
@@ -190,14 +201,9 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
-      <div class="sidebar-primary-item">
-<div id="ethical-ad-placement"
-      class="flat"
-      data-ea-publisher="readthedocs"
-      data-ea-type="readthedocs-sidebar"
-      data-ea-manual="true">
-</div></div>
   </div>
+  
+  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -310,16 +316,24 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
 
 
-<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
-</button>
+  </button>
+`);
+</script>
 <button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
 </button>
@@ -420,8 +434,8 @@ This is from the book:</p>
 <section id="make-a-categorical-hmm">
 <h2>Make a Categorical HMM<a class="headerlink" href="#make-a-categorical-hmm" title="Link to this heading">#</a></h2>
 <p>First, we’ll construct a categorical hidden Markov model (HMM). The model has discrete latent states <span class="math notranslate nohighlight">\(z_t \in \{1,2\}\)</span> to specify which of the two dice is used on the <span class="math notranslate nohighlight">\(t\)</span>-th roll. You observe the outcomes, or “emissions,” <span class="math notranslate nohighlight">\(y_t \in \{1,\ldots,6\}\)</span>. The categorical HMM specifies a joint distribution over the latent states and emissions,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-745cf50e-f4fa-45b0-beb3-c0001a63587f">
-<span class="eqno">(1)<a class="headerlink" href="#equation-745cf50e-f4fa-45b0-beb3-c0001a63587f" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-2f0b86e5-82f2-417b-94fc-dda8305fb2ed">
+<span class="eqno">(1)<a class="headerlink" href="#equation-2f0b86e5-82f2-417b-94fc-dda8305fb2ed" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_{1:T}, z_{1:T} \mid \theta) 
 &amp;= \mathrm{Cat}(z_1 \mid \pi) 
 \prod_{t=2}^T \mathrm{Cat}(z_t \mid A_{z_{t-1}}) 
@@ -517,7 +531,7 @@ B.shape: (2, 6)
 </section>
 <section id="sample-data-from-model">
 <h2>Sample data from model<a class="headerlink" href="#sample-data-from-model" title="Link to this heading">#</a></h2>
-<p>Now that we’ve initialize the model parameters, we can use them to draw samples from the HMM. The <code class="docutils literal notranslate"><span class="pre">hmm.sample()</span></code> function takes in the parameters, a JAX pseudorandom number generator (see <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#random-numbers">here</a>), and a number of time steps to sample.</p>
+<p>Now that we’ve initialized the model parameters, we can use them to draw samples from the HMM. The <code class="docutils literal notranslate"><span class="pre">hmm.sample()</span></code> function takes in the parameters, a JAX pseudorandom number generator (see <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#random-numbers">here</a>), and a number of time steps to sample.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_timesteps</span> <span class="o">=</span> <span class="mi">300</span>
@@ -598,7 +612,7 @@ batch_emissions.shape: (5, 300, 1)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/4bd769b70a660da63342e1b10bbb06e084721f4ab592445321f754abb05fb554.png" src="../../_images/4bd769b70a660da63342e1b10bbb06e084721f4ab592445321f754abb05fb554.png" />
+<img alt="../../_images/819a6cd078da7e56dbe9ac18b9f82f00666f666412c57d2ef5b1bb25b5b45317.png" src="../../_images/819a6cd078da7e56dbe9ac18b9f82f00666f666412c57d2ef5b1bb25b5b45317.png" />
 </div>
 </div>
 <p>The difference in outcomes is borne out in the empirical frequencies of seeing a six in each state.</p>
@@ -625,8 +639,8 @@ expected frequencies:   [0.16666667 0.5       ]
 <section id="filtering-forwards-algorithm">
 <h2>Filtering (forwards algorithm)<a class="headerlink" href="#filtering-forwards-algorithm" title="Link to this heading">#</a></h2>
 <p>In an HMM, <em>filtering</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given emissions up to and including time <span class="math notranslate nohighlight">\(t\)</span>. Mathematically, the filtering distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-d3b20304-abd1-4c6f-b5e1-fe9a44d703ae">
-<span class="eqno">(2)<a class="headerlink" href="#equation-d3b20304-abd1-4c6f-b5e1-fe9a44d703ae" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-54191eb4-2906-46ec-ab16-3e6b6228498a">
+<span class="eqno">(2)<a class="headerlink" href="#equation-54191eb4-2906-46ec-ab16-3e6b6228498a" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(z_t \mid y_{1:t}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} p(z_{1:t}, y_{1:t} \mid \theta)
 \end{align}\]</div>
 <p>The forward filtering algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.2) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion. It also returns an estimate of the <em>marginal likelihood</em>, <span class="math notranslate nohighlight">\(p(y_{1:T} \mid \theta)\)</span>, which is useful for model comparison and fitting.</p>
@@ -676,7 +690,7 @@ posterior.filtered_probs.shape: (300, 2)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/626734a4923e6651d022b01bba70c4fad31f703664781fcf422c4e372bf25365.png" src="../../_images/626734a4923e6651d022b01bba70c4fad31f703664781fcf422c4e372bf25365.png" />
+<img alt="../../_images/60eb1334f39717933195c90fa548392319d8c93f244f493e24fe395813dd148d.png" src="../../_images/60eb1334f39717933195c90fa548392319d8c93f244f493e24fe395813dd148d.png" />
 </div>
 </div>
 </section>
@@ -684,8 +698,8 @@ posterior.filtered_probs.shape: (300, 2)
 <section id="smoothing-forwards-backwards-algorithm">
 <h2>Smoothing (forwards-backwards algorithm)<a class="headerlink" href="#smoothing-forwards-backwards-algorithm" title="Link to this heading">#</a></h2>
 <p><em>Smoothing</em> means computing the probabilities of the latent state at time <span class="math notranslate nohighlight">\(t\)</span> given all emissions, including those that come after. Mathematically, the smoothing distributions are,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-5c0d8ede-99a0-42cf-a10f-180289ee9992">
-<span class="eqno">(3)<a class="headerlink" href="#equation-5c0d8ede-99a0-42cf-a10f-180289ee9992" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-1e6c5ccc-899a-4875-ad66-216c53812533">
+<span class="eqno">(3)<a class="headerlink" href="#equation-1e6c5ccc-899a-4875-ad66-216c53812533" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{z_{t+1}} \cdots \sum_{z_T} p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>The forward-backward algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.4) computes these probabilities for all timesteps <span class="math notranslate nohighlight">\(t\)</span> in recursive fashion.</p>
@@ -711,7 +725,7 @@ p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/dc07721819e9f6c3c19ba5bc410ac96f649776779110f1dbe4cca7aa5fd843a9.png" src="../../_images/dc07721819e9f6c3c19ba5bc410ac96f649776779110f1dbe4cca7aa5fd843a9.png" />
+<img alt="../../_images/e80d2c1955ef683927b6455a4900d40aaa5a87320303788715f25ef3dda3aa68.png" src="../../_images/e80d2c1955ef683927b6455a4900d40aaa5a87320303788715f25ef3dda3aa68.png" />
 </div>
 </div>
 <p>Compare the smoothed probabilities to the filtered ones. See how the sharp rises in probability (e.g. around time step 235) are attenuated in the smoothing distribution? That’s because the filtering distribution is sensitive to when the die comes up six, thinking it might indicate a switch to the loaded die. The smoothing distributions benefit from future outcomes, which suggest that the six was just a chance event.</p>
@@ -719,8 +733,8 @@ p(z_t \mid y_{1:T}, \theta) &amp;\propto \sum_{z_1} \cdots \sum_{z_{t-1}} \sum_{
 <section id="most-likely-state-sequence-viterbi-algorithm">
 <h2>Most likely state sequence (Viterbi algorithm)<a class="headerlink" href="#most-likely-state-sequence-viterbi-algorithm" title="Link to this heading">#</a></h2>
 <p>Finally, we can compute the most likely state sequence (aka <em>maximum a posteriori</em> or “MAP” sequence) using the Viterbi algorithm (<a class="reference external" href="https://github.com/probml/pml2-book/releases/tag/2022-10-16">Murphy, 2023</a>; Ch 8.2.7). This dynamic programming algorithm solves for</p>
-<div class="amsmath math notranslate nohighlight" id="equation-7c6ec1eb-3005-4ca0-864c-b2c85cc86038">
-<span class="eqno">(4)<a class="headerlink" href="#equation-7c6ec1eb-3005-4ca0-864c-b2c85cc86038" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-9d3bcff2-108c-421d-a493-082daea70908">
+<span class="eqno">(4)<a class="headerlink" href="#equation-9d3bcff2-108c-421d-a493-082daea70908" title="Permalink to this equation">#</a></span>\[\begin{align}
 z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta).
 \end{align}\]</div>
 <p>You can compute the MAP sequence with the following code.</p>
@@ -753,7 +767,7 @@ z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ec331806ab1a11cdad20f40431f103defe448d464353d4e2138af632e933a1e9.png" src="../../_images/ec331806ab1a11cdad20f40431f103defe448d464353d4e2138af632e933a1e9.png" />
+<img alt="../../_images/cf7dda3dde09e815981e74d298230c6c892e3b34703fd5a807bf774f205e5937.png" src="../../_images/cf7dda3dde09e815981e74d298230c6c892e3b34703fd5a807bf774f205e5937.png" />
 </div>
 </div>
 </section>
@@ -799,8 +813,7 @@ z_{1:T}^\star &amp;= \text{arg max}_{z_{1:T}} \; p(z_{1:T}, y_{1:T} \mid \theta)
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
   <div class="sidebar-secondary-item">
@@ -870,8 +883,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
 
   <footer class="bd-footer">
   </footer>
