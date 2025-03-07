@@ -152,7 +152,7 @@ def extended_kalman_filter(params: ParamsNLGSSM,
 
     # Run the extended Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
-    (ll, *_), outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    (ll, _, _), outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
     outputs = {"marginal_loglik": ll, **outputs}
     posterior_filtered = PosteriorGSSMFiltered(
         **outputs,

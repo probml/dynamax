@@ -7,7 +7,7 @@ import tensorflow_probability.substrates.jax.distributions as tfd
 
 from fastprogress.fastprogress import progress_bar
 from functools import partial
-from jax import jit
+from jax import jit, vmap
 from jax.tree_util import tree_map
 from jaxtyping import Array, Float
 from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
@@ -312,13 +312,68 @@ class LinearGaussianSSM(SSM):
         posterior = lgssm_smoother(params, emissions, inputs)
         H = params.emissions.weights
         b = params.emissions.bias
-        R = params.emissions.cov
-        emission_dim = R.shape[0]
+        R = params.emissions.cov if params.emissions.cov.ndim == 2 else jnp.diag(params.emissions.cov)
         smoothed_emissions = posterior.smoothed_means @ H.T + b
         smoothed_emissions_cov = H @ posterior.smoothed_covariances @ H.T + R
-        smoothed_emissions_std = jnp.sqrt(
-            jnp.array([smoothed_emissions_cov[:, i, i] for i in range(emission_dim)]))
+        smoothed_emissions_std = jnp.sqrt(vmap(jnp.diag)(smoothed_emissions_cov))
         return smoothed_emissions, smoothed_emissions_std
+
+    def forecast(self,
+                 params: ParamsLGSSM,
+                 emissions: Float[Array, "num_timesteps emission_dim"],
+                 num_forecast_timesteps: int,
+                 inputs: Optional[Float[Array, "num_timesteps input_dim"]] = None,
+                 forecast_inputs: Optional[Float[Array, "num_forecast_timesteps input_dim"]] = None) \
+                 -> Tuple[Float[Array, "num_forecast_timesteps state_dim"],
+                          Float[Array, "num_forecast_timesteps state_dim state_dim"],
+                          Float[Array, "num_forecast_timesteps emission_dim"],
+                          Float[Array, "num_forecast_timesteps emission_dim emission_dim"]]:
+        """Compute the marginal filtering distribution for each time step.
+        
+        Args:
+            params: model parameters.
+            emissions: sequence of observations.
+            num_forecast_timesteps: number of timesteps to forecast
+            inputs: optional sequence of inputs.
+
+        Returns:
+            forecast state means
+            forecast state covariances
+            forecast emission means
+            forecast emission covariances
+        """
+        # Compute the filtered posterior distribution for the observed data
+        filtered_post = lgssm_filter(params, emissions, inputs)
+
+        # Forecast into the future from the last timestep
+        forecast_params = ParamsLGSSM(
+            initial=ParamsLGSSMInitial(
+                mean=filtered_post.filtered_means[-1],
+                cov=filtered_post.filtered_covariances[-1]),
+            dynamics=params.dynamics,
+            emissions=ParamsLGSSMEmissions(
+                weights=params.emissions.weights,
+                bias=params.emissions.bias,
+                input_weights=params.emissions.input_weights,
+                cov=1e8 * jnp.ones(self.emission_dim)) # ignore dummy observatiosn
+            )
+        
+        dummy_emissions = jnp.zeros((num_forecast_timesteps, self.emission_dim))
+        forecast_inputs = forecast_inputs if forecast_inputs is not None else \
+            jnp.zeros((num_forecast_timesteps, 0))
+        forecast_states = lgssm_filter(forecast_params, dummy_emissions, forecast_inputs)
+
+        # Forecast future emissions
+        H = params.emissions.weights
+        b = params.emissions.bias
+        R = params.emissions.cov if params.emissions.cov.ndim == 2 else jnp.diag(params.emissions.cov)
+        
+        forecast_emissions = forecast_states.filtered_means @ H.T + b
+        forecast_emissions_cov = H @ forecast_states.filtered_covariances @ H.T + R
+        return forecast_states.filtered_means, \
+               forecast_states.filtered_covariances, \
+               forecast_emissions, \
+               forecast_emissions_cov
 
     # Expectation-maximization (EM) code
     def e_step(self,
