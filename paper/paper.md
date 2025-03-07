@@ -62,21 +62,21 @@ There are a few key design choices to make when constructing an SSM:
 - How do the latent states evolve over time? E.g., are the dynamics linear or nonlinear?
 - How are the observations distributed? E.g., are they Gaussian, Poisson, etc.?
 
-Some design choices are so common they have their own names. Hidden Markov models (HMM) are SSMs with discrete latent states, and linear dynamical systems (LDS) are SSMs with continuous latent states, linear dynamics, and additive Gaussian noise.  `Dynamax` supports canonical SSMs and allows the user to construct bespoke models as needed.
+Some design choices are so common they have their own names. Hidden Markov models (HMM) are SSMs with discrete latent states, and linear dynamical systems (LDS) are SSMs with continuous latent states, linear dynamics, and additive Gaussian noise.  `Dynamax` supports canonical SSMs and allows the user to construct bespoke models as needed, simply by inheriting from a base class and specifying a few model-specific functions.
 
 Finally, even for canonical models, there are several algorithms for state inference and parameter estimation. `Dynamax` provides robust implementations of several low-level inference algorithms to suit a variety of applications, allowing users to choose among a host of models and algorithms for their application. More information about state space models and algorithms for state inference and parameter estimation can be found in the textbooks by @murphy2023probabilistic and @sarkka2023bayesian. 
 
 
 # Statement of need
 
-`Dynamax` is an open-source Python package for state space modeling. Since it is built with `JAX` [@jax], it supports just-in-time (JIT) compilation for hardware acceleration on CPU, GPU, and TPU machines. It also supports automatic differentiation for gradient-based model learning. While other libraries exist for state space modeling in Python [@pyhsmm; @ssm; @eeasensors; @seabold2010statsmodels; @hmmlearn],  `Dynamax` provides a unique combination of low-level inference algorithms and high-level modeling objects that can support a wide range of research applications in JAX.
+`Dynamax` is an open-source Python package for state space modeling. Since it is built with `JAX` [@jax], it supports just-in-time (JIT) compilation for hardware acceleration on CPU, GPU, and TPU machines. It also supports automatic differentiation for gradient-based model learning. While other libraries exist for state space modeling in Python [@pyhsmm; @ssm; @eeasensors; @seabold2010statsmodels; @hmmlearn],  `Dynamax` provides a combination of low-level inference algorithms and high-level modeling objects that can support a wide range of research applications in JAX.
 
 The API for `Dynamax` is divided into two parts: a set of core, functionally pure, low-level inference algorithms, and a high-level, object oriented module for constructing and fitting probabilistic SSMs. The low-level inference API provides message passing algorithms for several common types of SSMs. For example, `Dynamax` provides `JAX` implementations for:
 
 - Forward-Backward algorithms for discrete-state hidden Markov models (HMMs), 
 - Kalman filtering and smoothing algorithms for linear Gaussian SSMs, 
 - Extended and unscented generalized Kalman filtering and smoothing for nonlinear and/or non-Gaussian SSMs, and
-- Parallel message passing routines that leverage GPU or TPU acceleration to perform message passing in sublinear time [@stone1975parallel; @sarkka2020temporal; @hassan2021temporal]. 
+- Parallel message passing routines that leverage GPU or TPU acceleration to perform message passing in $O(\log T)$ time on a parallel machine [@stone1975parallel; @sarkka2020temporal; @hassan2021temporal]. Note that these routines are not simply parallelizing over batches of time series, but rather using a parallel algorithm with sublinear depth or span. 
 
 The high-level model API makes it easy to construct, fit, and inspect HMMs and linear Gaussian SSMs. Finally, the online `Dynamax` documentation and tutorials provide a wealth of resources for state space modeling experts and newcomers alike.
 
