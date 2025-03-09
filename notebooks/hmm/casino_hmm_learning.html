@@ -163,6 +163,7 @@
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Casino HMM: Learning (parameter estimation)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gaussian_hmm.html">Gaussian HMM: Cross-validation and Model Selection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="autoregressive_hmm.html">Autoregressive (AR) HMM Demo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_hmm.html">Creating Custom HMMs</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Linear Gaussian SSMs</span></p>
 <ul class="nav bd-sidenav">
@@ -704,7 +705,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div><div class="output text_html">
     <div>
       <progress value='500' class='' max='500' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [500/500 00:03&lt;00:00]
+      100.00% [500/500 00:02&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -743,7 +744,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/17c7b5fdcd06b6feb92824c05fec4ddd3d23bea4d865cf557db29b15cb2e7bfa.png" src="../../_images/17c7b5fdcd06b6feb92824c05fec4ddd3d23bea4d865cf557db29b15cb2e7bfa.png" />
+<img alt="../../_images/187766400a98f5d4311a02a59f3613b960f9b2667be4c12bb515982048a2cbda.png" src="../../_images/187766400a98f5d4311a02a59f3613b960f9b2667be4c12bb515982048a2cbda.png" />
 </div>
 </div>
 <p>For this problem, EM and Adam with a well-tuned learning rate converge the fastest. SGD and full-batch gradient descent appear to get stuck in a local optimum. By contrast, EM and Adam match the loss under the true parameters, and indeed if we look at the parameters below, they nearly recover the true parameters up to label switching.</p>
@@ -794,7 +795,7 @@ transition matrix:
  [0.075 0.925]]
 emission probs:
 [[0.172 0.168 0.159 0.168 0.167 0.166]
- [0.095 0.102 0.119 0.104 0.113 0.467]]
+ [0.095 0.102 0.119 0.104 0.112 0.467]]
 </pre></div>
 </div>
 </div>

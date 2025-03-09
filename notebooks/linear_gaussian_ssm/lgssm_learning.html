@@ -163,6 +163,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../hmm/casino_hmm_learning.html">Casino HMM: Learning (parameter estimation)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../hmm/gaussian_hmm.html">Gaussian HMM: Cross-validation and Model Selection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../hmm/autoregressive_hmm.html">Autoregressive (AR) HMM Demo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmm/custom_hmm.html">Creating Custom HMMs</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Linear Gaussian SSMs</span></p>
 <ul class="current nav bd-sidenav">
@@ -626,7 +627,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/12f5e722ef13df8b9b02136ab99f4c93d8e58715c346e93ae5cbdaac0dec97e9.png" src="../../_images/12f5e722ef13df8b9b02136ab99f4c93d8e58715c346e93ae5cbdaac0dec97e9.png" />
+<img alt="../../_images/aa73fc31d0130cae93360b32ae7f79ddad7fafb9a240c5fce4d30bd823097c44.png" src="../../_images/aa73fc31d0130cae93360b32ae7f79ddad7fafb9a240c5fce4d30bd823097c44.png" />
 </div>
 </div>
 <p>The marginal log likelihood quickly converges. As with the HMM examples, the likelihood under the estimated parameters is larger than the likelihood under the true parameters that generated the data. This isn’t surprising: EM is finding the parameters <span class="math notranslate nohighlight">\(\hat{\theta}_{\mathsf{MLE}}\)</span>, that maximize the likelihood, and with a short sequence like this, the likelihood <span class="math notranslate nohighlight">\(p(x_{1:T}; \hat{\theta}_{\mathsf{MLE}})\)</span> is almost surely larger than <span class="math notranslate nohighlight">\(p(x_{1:T}; \theta_{\mathsf{true}})\)</span>.</p>
@@ -642,7 +643,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;fitted model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/f587e4990a14fe5978652f8af2d7402762fe6da9ab1a558f4b3b3578105466c6.png" src="../../_images/f587e4990a14fe5978652f8af2d7402762fe6da9ab1a558f4b3b3578105466c6.png" />
+<img alt="../../_images/bdb829e0d3bb297563d218b486485700a3a68738768c5c2d52824cbfdf9d243a.png" src="../../_images/bdb829e0d3bb297563d218b486485700a3a68738768c5c2d52824cbfdf9d243a.png" />
 </div>
 </div>
 <section id="identifiability">
@@ -704,7 +705,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/bdba6b4acd26a4393f4cb931973337b4da81c16db87d65885e2f34fd6f6f9f7e.png" src="../../_images/bdba6b4acd26a4393f4cb931973337b4da81c16db87d65885e2f34fd6f6f9f7e.png" />
+<img alt="../../_images/d6afecd141ca90889c078b4999136f7a6d69354ba22c626d7ba8b619e14d3fab.png" src="../../_images/d6afecd141ca90889c078b4999136f7a6d69354ba22c626d7ba8b619e14d3fab.png" />
 </div>
 </div>
 <p>Adam eventually converges, but note that both the y-axis and x-axis scales are much larger than for EM. It takes 100s of epochs to achieve comparable log likelihoods, and each epoch is roughly the equivalent cost to one iteration of EM.</p>
@@ -764,7 +765,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/02f9e2de7701d440172644cc07cd01492e5bb70ccceb9aced958aebd74c999d1.png" src="../../_images/02f9e2de7701d440172644cc07cd01492e5bb70ccceb9aced958aebd74c999d1.png" />
+<img alt="../../_images/e2566cf5cfff1b6ae343323fb5109955ecbe5ffccc14f149a5cec7d48d8f10bb.png" src="../../_images/e2566cf5cfff1b6ae343323fb5109955ecbe5ffccc14f149a5cec7d48d8f10bb.png" />
 </div>
 </div>
 </section>

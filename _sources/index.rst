@@ -190,6 +190,7 @@ If you're new to these models, we recommend you start at the top and work your w
    notebooks/hmm/casino_hmm_learning.ipynb
    notebooks/hmm/gaussian_hmm.ipynb
    notebooks/hmm/autoregressive_hmm.ipynb
+   notebooks/hmm/custom_hmm.ipynb
 
 
 .. toctree::

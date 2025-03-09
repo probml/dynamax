@@ -46,7 +46,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/hmm/autoregressive_hmm';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Tracking an object using the Kalman filter" href="../linear_gaussian_ssm/kf_tracking.html" />
+    <link rel="next" title="Creating Custom HMMs" href="custom_hmm.html" />
     <link rel="prev" title="Gaussian HMM: Cross-validation and Model Selection" href="gaussian_hmm.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -163,6 +163,7 @@
 <li class="toctree-l1"><a class="reference internal" href="casino_hmm_learning.html">Casino HMM: Learning (parameter estimation)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gaussian_hmm.html">Gaussian HMM: Cross-validation and Model Selection</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Autoregressive (AR) HMM Demo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_hmm.html">Creating Custom HMMs</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Linear Gaussian SSMs</span></p>
 <ul class="nav bd-sidenav">
@@ -486,7 +487,7 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f479dd6df90&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fc066962050&gt;
 </pre></div>
 </div>
 <img alt="../../_images/df6982b484d3cd68c1470b7306f5fe4352c7ea8fc1016060f96d28dc755475a9.png" src="../../_images/df6982b484d3cd68c1470b7306f5fe4352c7ea8fc1016060f96d28dc755475a9.png" />
@@ -703,7 +704,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/5c198f01c968b7cb010027d127b6076d73b823e82334bf0d3173f2179e8a6eb0.png" src="../../_images/5c198f01c968b7cb010027d127b6076d73b823e82334bf0d3173f2179e8a6eb0.png" />
+<img alt="../../_images/b14281e6b9afd8d4d8dd462fb76c8b017e6e4d0e7334a2f4e190397a0618bf98.png" src="../../_images/b14281e6b9afd8d4d8dd462fb76c8b017e6e4d0e7334a2f4e190397a0618bf98.png" />
 </div>
 </div>
 </section>
@@ -744,7 +745,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9baf1a153b044416738f017ff452d08391a73616ad35c2958429d8358cc33e9d.png" src="../../_images/9baf1a153b044416738f017ff452d08391a73616ad35c2958429d8358cc33e9d.png" />
+<img alt="../../_images/0661397d4f705d0baeeda3f0a221b6f0b092a007ae8e52390e998b9d45323a72.png" src="../../_images/0661397d4f705d0baeeda3f0a221b6f0b092a007ae8e52390e998b9d45323a72.png" />
 </div>
 </div>
 <p>As in the Gaussian HMM notebook, we see that the inferred dynamics closely match the true dynamics, up to label switching. Again, we could find the best permutation to align true and inferred states using the <code class="docutils literal notranslate"><span class="pre">find_permutation</span></code> function described in the Gaussian HMM notebook.</p>
@@ -849,11 +850,11 @@ f_k(y^star) &amp;= y^star
       </div>
     </a>
     <a class="right-next"
-       href="../linear_gaussian_ssm/kf_tracking.html"
+       href="custom_hmm.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Tracking an object using the Kalman filter</p>
+        <p class="prev-next-title">Creating Custom HMMs</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
