@@ -42,8 +42,8 @@ class InverseWishart(tfd.TransformedDistribution):
         # Wishart distribution
         dim = scale.shape[-1]
         eye = jnp.broadcast_to(jnp.eye(dim), scale.shape)
-        cho_scale = jnp.linalg.cholesky(scale)
-        inv_scale_tril = solve_triangular(cho_scale, eye, lower=True)
+        inv_scale = psd_solve(A=scale, b=eye)
+        inv_scale_tril = jnp.linalg.cholesky(inv_scale)
 
         super().__init__(
             tfd.WishartTriL(df, scale_tril=inv_scale_tril),
