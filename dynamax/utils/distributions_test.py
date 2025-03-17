@@ -57,6 +57,29 @@ def test_inverse_wishart_sample(df=7.0, dim=3, scale_factor=3.0, n_samples=10000
     mc_std = jnp.sqrt(iw.variance() / n_samples)
     assert jnp.allclose(samples.mean(axis=0), iw.mean(), atol=num_std * mc_std)
 
+def test_inverse_wishart_sample_non_diagonal_scale(n_samples: int = 10_000, num_std=3):
+    """Test sample mean of an inverse-Wishart distr. w/ non-diagonal scale matrix."""
+    k = 2
+    𝜈 = 5.5  # 𝜈 > k
+    Ψ = jnp.array([[20.712932, 25.124634],
+        [25.124634, 32.814785]], dtype=jnp.float32)  # k x k
+    Ψ_diag = jnp.diagonal(Ψ)
+    assert all(jnp.linalg.eigvals(Ψ) > 0)  # Is positive definite.
+
+    iw = InverseWishart(df=𝜈, scale=Ψ)
+    Σs = iw.sample(sample_shape=n_samples, seed=jr.key(42))
+    actual_Σ_avg = jnp.mean(Σs, axis=0)
+
+    # Closed form expression of mean.
+    true_Σ_avg = Ψ / (𝜈 - k - 1)
+    # Closed form expression of variance.
+    numerator = (𝜈 - k + 1) * Ψ**2 + (𝜈 - k - 1) * jnp.outer(Ψ_diag, Ψ_diag)
+    denominator = (𝜈 - k) * (𝜈 - k - 1)**2 * (𝜈 - k - 3)
+    true_Σ_var = numerator / denominator
+
+    mc_std = jnp.sqrt(true_Σ_var / n_samples)
+    assert jnp.allclose(actual_Σ_avg, true_Σ_avg, atol=num_std * mc_std)
+
 
 def test_normal_inverse_wishart_mode(loc=0., mean_conc=1.0, df=7.0, dim=3, scale_factor=3.0):
     """
