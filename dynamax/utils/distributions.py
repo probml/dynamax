@@ -97,23 +97,12 @@ class InverseWishart(tfd.TransformedDistribution):
     def _variance(self):
         """Compute the marginal variance of each entry of the matrix.
         """
-        def _single_variance(df, scale):
-            """Compute the marginal variance of each entry of the matrix."""
-            assert scale.ndim == 2
-            assert df.shape == scale.shape
-            dim = scale.shape[-1]
-            diag = jnp.diag(scale)
-            rows = jnp.arange(dim)[:, None].repeat(3, axis=1)
-            cols = jnp.arange(dim)[None, :].repeat(3, axis=0)
-            numer = (df - dim + 1) * scale**2 + (df - dim - 1) * diag[rows] * diag[cols]
-            denom = (df - dim) * (df - dim - 1)**2 * (df - dim - 3)
-            return numer / denom
-
+        dim = self.scale.shape[-1]
         dfs, scales = jnp.broadcast_arrays(jnp.array(self.df)[..., None, None], self.scale)
-        if scales.ndim == 2:
-            return _single_variance(dfs, scales)
-        else:
-            return vmap(_single_variance)(dfs, scales)
+        Ψii_Ψjj = jnp.einsum('...ii,...jj->...ij', scales, scales)
+        numer = (dfs - dim + 1) * scales**2 + (dfs - dim - 1) * Ψii_Ψjj
+        denom = (dfs - dim) * (dfs - dim - 1)**2 * (dfs - dim - 3)
+        return numer / denom
 
 
 class NormalInverseWishart(tfd.JointDistributionSequential):
