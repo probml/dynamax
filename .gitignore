@@ -9,7 +9,6 @@ dist/
 # ignore figures unless manually added
 *.png
 *.jpg
-*.pdf
 *-dot
 *.DS_Store
 .vscode/
