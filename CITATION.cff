@@ -1,22 +1,58 @@
-cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+cff-version: "1.2.0"
 authors:
-- family-names: "Linderman"
-  given-names: "Scott"
+- family-names: Linderman
+  given-names: Scott W.
   orcid: "https://orcid.org/0000-0002-3878-9073"
-- family-names: "Chang"
-  given-names: "Peter"
-- family-names: "Harper-Donnelly"
-  given-names: "Giles"
-- family-names: "Kara"
-  given-names: "Aleyna"
-- family-names: "Li"
-  given-names: "Xinglong"
-- family-names: "Duran-Martin"
-  given-names: "Gerardo"
-- family-names: "Murphy"
-  given-names: "Kevin"
-title: "Dynamax: A Python package for probabilistic state space modeling with JAX"
-version: 0.1.8
-date-released: 2025-02-17
-url: "https://github.com/probml/dynamax"
+- family-names: Chang
+  given-names: Peter
+- family-names: Harper-Donnelly
+  given-names: Giles
+- family-names: Kara
+  given-names: Aleyna
+- family-names: Li
+  given-names: Xinglong
+- family-names: Duran-Martin
+  given-names: Gerardo
+- family-names: Murphy
+  given-names: Kevin
+contact:
+- family-names: Linderman
+  given-names: Scott W.
+  orcid: "https://orcid.org/0000-0002-3878-9073"
+- family-names: Murphy
+  given-names: Kevin
+doi: 10.6084/m9.figshare.28665131
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Linderman
+    given-names: Scott W.
+    orcid: "https://orcid.org/0000-0002-3878-9073"
+  - family-names: Chang
+    given-names: Peter
+  - family-names: Harper-Donnelly
+    given-names: Giles
+  - family-names: Kara
+    given-names: Aleyna
+  - family-names: Li
+    given-names: Xinglong
+  - family-names: Duran-Martin
+    given-names: Gerardo
+  - family-names: Murphy
+    given-names: Kevin
+  date-published: 2025-04-03
+  doi: 10.21105/joss.07069
+  issn: 2475-9066
+  issue: 108
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 7069
+  title: "Dynamax: A Python package for probabilistic state space
+    modeling with JAX"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.07069"
+  volume: 10
+title: "Dynamax: A Python package for probabilistic state space modeling
+  with JAX"
