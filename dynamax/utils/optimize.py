@@ -4,7 +4,7 @@ This module contains functions for optimization.
 import jax.numpy as jnp
 import jax.random as jr
 import optax
-from jax import lax, value_and_grad
+from jax import jit, lax, value_and_grad
 from jax.tree_util import tree_map
 from dynamax.utils.utils import pytree_len
 
@@ -48,44 +48,31 @@ def run_sgd(loss_fn,
         key: RNG key.
 
     Returns:
-        hmm: HMM with optimized parameters.
+        params: The optimized parameters giving a low loss.
         losses: Output of loss_fn stored at each step.
     """
     opt_state = optimizer.init(params)
     num_batches = pytree_len(dataset)
     num_complete_batches, leftover = jnp.divmod(num_batches, batch_size)
     num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
-    loss_grad_fn = value_and_grad(loss_fn)
+    loss_grad_fn = jit(value_and_grad(loss_fn))
 
     if batch_size >= num_batches:
         shuffle = False
 
-    def train_step(carry, key):
-        """One step of the algorithm."""
-        params, opt_state = carry
+    keys = jr.split(key, num_epochs)
+    losses = []
+    for key in keys:
         sample_generator = sample_minibatches(key, dataset, batch_size, shuffle)
-
-        def cond_fun(state):
-            """Condition for while loop."""
-            itr, params, opt_state, avg_loss = state
-            return itr < num_batches
-
-        def body_fun(state):
-            """Body of while loop."""
-            itr, params, opt_state, avg_loss = state
-            minibatch = next(sample_generator)  ## TODO: Does this work inside while_loop??
+        avg_loss = 0.0
+        for itr in range(num_batches):
+            minibatch = next(sample_generator)
             this_loss, grads = loss_grad_fn(params, minibatch)
             updates, opt_state = optimizer.update(grads, opt_state)
             params = optax.apply_updates(params, updates)
-            return itr + 1, params, opt_state, (avg_loss * itr + this_loss) / (itr + 1)
-
-        init_val = (0, params, opt_state, 0.0)
-        _, params, opt_state, avg_loss = lax.while_loop(cond_fun, body_fun, init_val)
-        return (params, opt_state), avg_loss
-
-    keys = jr.split(key, num_epochs)
-    (params, _), losses = lax.scan(train_step, (params, opt_state), keys)
-    return params, losses
+            avg_loss = (avg_loss * itr + this_loss) / (itr + 1)
+        losses.append(avg_loss)
+    return params, jnp.stack(losses)
 
 
 def run_gradient_descent(objective,
