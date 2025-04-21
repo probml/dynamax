@@ -318,12 +318,12 @@ document.write(`
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastprogress.fastprogress</span><span class="w"> </span><span class="kn">import</span> <span class="n">progress_bar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">vmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">vmap</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.tree_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_map</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormalFullCovariance</span> <span class="k">as</span> <span class="n">MVN</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">runtime_checkable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span> 
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.ssm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SSM</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.linear_gaussian_ssm.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">lgssm_joint_sample</span><span class="p">,</span> <span class="n">lgssm_filter</span><span class="p">,</span> <span class="n">lgssm_smoother</span><span class="p">,</span> <span class="n">lgssm_posterior_sample</span>
@@ -335,7 +335,7 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixNormalInverseWishart</span> <span class="k">as</span> <span class="n">MNIW</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseWishart</span> <span class="k">as</span> <span class="n">NIW</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">mniw_posterior_update</span><span class="p">,</span> <span class="n">niw_posterior_update</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">pytree_stack</span><span class="p">,</span> <span class="n">psd_solve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">,</span> <span class="n">pytree_stack</span><span class="p">,</span> <span class="n">psd_solve</span>
 
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SuffStatsLGSSM</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
@@ -533,7 +533,7 @@ document.write(`
                <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKeyT</span><span class="p">,</span>
                <span class="n">num_timesteps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
-                <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps state_dim&quot;</span><span class="p">],</span> 
+                <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps state_dim&quot;</span><span class="p">],</span>
                          <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample from the model.</span>
 <span class="sd">        </span>
@@ -702,7 +702,7 @@ document.write(`
                 <span class="n">input_weights</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">input_weights</span><span class="p">,</span>
                 <span class="n">cov</span><span class="o">=</span><span class="mf">1e8</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span> <span class="c1"># ignore dummy observatiosn</span>
             <span class="p">)</span>
-        
+
         <span class="n">dummy_emissions</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_forecast_timesteps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">))</span>
         <span class="n">forecast_inputs</span> <span class="o">=</span> <span class="n">forecast_inputs</span> <span class="k">if</span> <span class="n">forecast_inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> \
             <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_forecast_timesteps</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
@@ -712,7 +712,7 @@ document.write(`
         <span class="n">H</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">weights</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">bias</span>
         <span class="n">R</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">cov</span> <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">cov</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span>
-        
+
         <span class="n">forecast_emissions</span> <span class="o">=</span> <span class="n">forecast_states</span><span class="o">.</span><span class="n">filtered_means</span> <span class="o">@</span> <span class="n">H</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">b</span>
         <span class="n">forecast_emissions_cov</span> <span class="o">=</span> <span class="n">H</span> <span class="o">@</span> <span class="n">forecast_states</span><span class="o">.</span><span class="n">filtered_covariances</span> <span class="o">@</span> <span class="n">H</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">R</span>
         <span class="k">return</span> <span class="n">forecast_states</span><span class="o">.</span><span class="n">filtered_means</span><span class="p">,</span> \
@@ -1018,18 +1018,20 @@ document.write(`
 <span class="sd">        Returns:</span>
 <span class="sd">            parameter object, where each field has `sample_size` copies as leading batch dimension.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+        <span class="n">batch_emissions</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">emissions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_shape</span><span class="p">)</span>
+        <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs_shape</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">inputs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_timesteps</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">num_batches</span><span class="p">,</span> <span class="n">num_timesteps</span> <span class="o">=</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">sufficient_stats_from_sample</span><span class="p">(</span><span class="n">states</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">batch_inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_batches</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">sufficient_stats_from_sample</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">states</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Convert samples of states to sufficient statistics.&quot;&quot;&quot;</span>
             <span class="n">inputs_joint</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">inputs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">num_timesteps</span><span class="p">,</span> <span class="mi">1</span><span class="p">))),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="c1"># Let xn[t] = x[t+1]          for t = 0...T-2</span>
             <span class="n">x</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">xn</span> <span class="o">=</span> <span class="n">states</span><span class="p">,</span> <span class="n">states</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">states</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
             <span class="n">u</span><span class="p">,</span> <span class="n">up</span> <span class="o">=</span> <span class="n">inputs_joint</span><span class="p">,</span> <span class="n">inputs_joint</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">emissions</span>
 
             <span class="n">init_stats</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -1089,9 +1091,13 @@ document.write(`
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Sample a single set of states and compute their sufficient stats.&quot;&quot;&quot;</span>
             <span class="n">rngs</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
             <span class="c1"># Sample latent states</span>
-            <span class="n">states</span> <span class="o">=</span> <span class="n">lgssm_posterior_sample</span><span class="p">(</span><span class="n">rngs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+            <span class="n">batch_keys</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rngs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">num</span><span class="o">=</span><span class="n">num_batches</span><span class="p">)</span>
+            <span class="n">forward_backward_batched</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">lgssm_posterior_sample</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">_params</span><span class="p">))</span>
+            <span class="n">batch_states</span> <span class="o">=</span> <span class="n">forward_backward_batched</span><span class="p">(</span><span class="n">batch_keys</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">batch_emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">batch_inputs</span><span class="p">)</span>
+            <span class="n">_batch_stats</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">sufficient_stats_from_sample</span><span class="p">)(</span><span class="n">batch_emissions</span><span class="p">,</span> <span class="n">batch_inputs</span><span class="p">,</span> <span class="n">batch_states</span><span class="p">)</span>
+            <span class="c1"># Aggregate statistics from all observations.</span>
+            <span class="n">_stats</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">_batch_stats</span><span class="p">)</span>
             <span class="c1"># Sample parameters</span>
-            <span class="n">_stats</span> <span class="o">=</span> <span class="n">sufficient_stats_from_sample</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">lgssm_params_sample</span><span class="p">(</span><span class="n">rngs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">_stats</span><span class="p">)</span>
 
 
