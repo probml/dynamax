@@ -3,6 +3,8 @@ docs/_build/
 build/
 dist/
 
+.coverage
+
 *egg-info
 *.ipynb_checkpoints
 
