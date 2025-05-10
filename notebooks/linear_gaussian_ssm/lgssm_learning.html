@@ -548,7 +548,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;true model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/68adcb5af78c8e7cb387ffb8a80e207c06990e9a300f18215e66e78528729da2.png" src="../../_images/68adcb5af78c8e7cb387ffb8a80e207c06990e9a300f18215e66e78528729da2.png" />
+<img alt="../../_images/b5c079d14b3df1c3fac4fd074f0a0843faf3ff0299d7e0e40e5cdd0a1ed0b5c5.png" src="../../_images/b5c079d14b3df1c3fac4fd074f0a0843faf3ff0299d7e0e40e5cdd0a1ed0b5c5.png" />
 </div>
 </div>
 <p>Now plot the reconstructions under a randomly initialized model. They’re much worse!</p>
@@ -573,7 +573,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;randomly initialized model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/21548fd22823d694ab5c369199300e39f4f29b15a453fae65418018c9c30cc98.png" src="../../_images/21548fd22823d694ab5c369199300e39f4f29b15a453fae65418018c9c30cc98.png" />
+<img alt="../../_images/59750a051310ac07e709661ea975f14fea6eaad86d252ff6d75184eba40ad936.png" src="../../_images/59750a051310ac07e709661ea975f14fea6eaad86d252ff6d75184eba40ad936.png" />
 </div>
 </div>
 </section>
@@ -627,7 +627,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/aa73fc31d0130cae93360b32ae7f79ddad7fafb9a240c5fce4d30bd823097c44.png" src="../../_images/aa73fc31d0130cae93360b32ae7f79ddad7fafb9a240c5fce4d30bd823097c44.png" />
+<img alt="../../_images/271911b586597d3d4197faf2475ced5b0faa375192d2140e3ebca27fad2eabc5.png" src="../../_images/271911b586597d3d4197faf2475ced5b0faa375192d2140e3ebca27fad2eabc5.png" />
 </div>
 </div>
 <p>The marginal log likelihood quickly converges. As with the HMM examples, the likelihood under the estimated parameters is larger than the likelihood under the true parameters that generated the data. This isn’t surprising: EM is finding the parameters <span class="math notranslate nohighlight">\(\hat{\theta}_{\mathsf{MLE}}\)</span>, that maximize the likelihood, and with a short sequence like this, the likelihood <span class="math notranslate nohighlight">\(p(x_{1:T}; \hat{\theta}_{\mathsf{MLE}})\)</span> is almost surely larger than <span class="math notranslate nohighlight">\(p(x_{1:T}; \theta_{\mathsf{true}})\)</span>.</p>
@@ -643,7 +643,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;fitted model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/bdb829e0d3bb297563d218b486485700a3a68738768c5c2d52824cbfdf9d243a.png" src="../../_images/bdb829e0d3bb297563d218b486485700a3a68738768c5c2d52824cbfdf9d243a.png" />
+<img alt="../../_images/829015e6d0c067c7165e28279ec5eb5792320c90f18ae99e22f6d4c542ab6f31.png" src="../../_images/829015e6d0c067c7165e28279ec5eb5792320c90f18ae99e22f6d4c542ab6f31.png" />
 </div>
 </div>
 <section id="identifiability">
@@ -705,7 +705,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ef1446e92fe0d867a9f99be876f482687a1c24a35fc4354ca5eeccbb123c688c.png" src="../../_images/ef1446e92fe0d867a9f99be876f482687a1c24a35fc4354ca5eeccbb123c688c.png" />
+<img alt="../../_images/f2449df6d355c0c22e6a177da2dcbdee8ed47267543147101b54c3edc307e288.png" src="../../_images/f2449df6d355c0c22e6a177da2dcbdee8ed47267543147101b54c3edc307e288.png" />
 </div>
 </div>
 <p>Adam eventually converges, but note that both the y-axis and x-axis scales are much larger than for EM. It takes 100s of epochs to achieve comparable log likelihoods, and each epoch is roughly the equivalent cost to one iteration of EM.</p>
@@ -765,7 +765,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/5fc83c9a9aba7e1c0582835cb66ab9ba94962283318ebf984c0918b2d0ae539d.png" src="../../_images/5fc83c9a9aba7e1c0582835cb66ab9ba94962283318ebf984c0918b2d0ae539d.png" />
+<img alt="../../_images/1ec30421eb12278c0aa53897a515cfa58e32d56e2633b04dcaf1e71700721859.png" src="../../_images/1ec30421eb12278c0aa53897a515cfa58e32d56e2633b04dcaf1e71700721859.png" />
 </div>
 </div>
 </section>
