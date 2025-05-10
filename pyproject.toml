@@ -15,7 +15,7 @@ dependencies = [
     "scikit-learn",
     "jaxtyping",
     "typing-extensions",
-    "numpy<2.0"
+    "numpy"
 ]
 
 authors = [
