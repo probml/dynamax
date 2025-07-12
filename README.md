@@ -29,6 +29,8 @@ sequential Monte Carlo (SMC)).
 
 ## Documentation
 
+For a highlevel summary, see [this JOSS 2024 article](https://joss.theoj.org/papers/10.21105/joss.07069).
+
 For tutorials and API documentation, see: https://probml.github.io/dynamax/.
 
 For an extension of dynamax that supports structural time series models, 
