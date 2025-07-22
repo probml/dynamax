@@ -41,7 +41,7 @@ for the parameters of an SSM, see https://jax-ml.github.io/bayeux/examples/dynam
 
 ## Installation and Testing
 
-To install the latest releast of dynamax from PyPi:
+To install the latest release of dynamax from PyPi:
 
 ``` {.console}
 pip install dynamax                 # Install dynamax and core dependencies, or
