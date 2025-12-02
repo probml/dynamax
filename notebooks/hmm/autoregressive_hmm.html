@@ -30,7 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
@@ -401,10 +401,10 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
@@ -437,10 +437,10 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 <section id="helper-functions-for-plotting">
 <h3>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Link to this heading">#</a></h3>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s2">&quot;white&quot;</span><span class="p">)</span>
@@ -487,10 +487,10 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f861d1aea10&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f3c20338850&gt;
 </pre></div>
 </div>
-<img alt="../../_images/61de2f6b1332cf48ee80db80fd9f06b61f66a80e68a3387f102e17fc27be7127.png" src="../../_images/61de2f6b1332cf48ee80db80fd9f06b61f66a80e68a3387f102e17fc27be7127.png" />
+<img alt="../../_images/49f5e41cea6eb37fd13345226abddb1ff4adc349ed9010685a47c060578b6e57.png" src="../../_images/49f5e41cea6eb37fd13345226abddb1ff4adc349ed9010685a47c060578b6e57.png" />
 </div>
 </div>
 <section id="construct-and-plot-the-autoregressive-dynamics-distributions">
@@ -553,7 +553,7 @@ p(y_t \mid y_{t-1}, z_t=k) &amp;= \mathrm{N}(y_t \mid A_k y_{t-1} + b_k, Q_k)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8125d273872a604c6519a0ea68d3ba522ad30d3eb0568c78c89ddda83f0c5ca7.png" src="../../_images/8125d273872a604c6519a0ea68d3ba522ad30d3eb0568c78c89ddda83f0c5ca7.png" />
+<img alt="../../_images/df5ba75d69671a87e86bbe76537ee467dfb3046480c6fa56c23c328ddf356c12.png" src="../../_images/df5ba75d69671a87e86bbe76537ee467dfb3046480c6fa56c23c328ddf356c12.png" />
 </div>
 </div>
 <div class="admonition note">
@@ -611,7 +611,7 @@ f_k(y^star) &amp;= y^star
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Sampled trajectory from an AR-HMM, color-coded by discrete state&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/830eef5de686ce8a967c11fceacff952a6b82579ef33e6fa87dbd0b4ae74cbb6.png" src="../../_images/830eef5de686ce8a967c11fceacff952a6b82579ef33e6fa87dbd0b4ae74cbb6.png" />
+<img alt="../../_images/7b7607716e58dd53df70c93dc527de1d1eeb37893cb0af1b106eaae3ac277272.png" src="../../_images/7b7607716e58dd53df70c93dc527de1d1eeb37893cb0af1b106eaae3ac277272.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the autoregressive process for state <span class="math notranslate nohighlight">\(k\)</span> (see note above), while the solid lines are the actual observations sampled from the HMM.</p>
@@ -643,7 +643,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/fd79d922f563c1b7aa0b58ea873cffb1b9e337cf8d99ffb3d067d59f4183f46b.png" src="../../_images/fd79d922f563c1b7aa0b58ea873cffb1b9e337cf8d99ffb3d067d59f4183f46b.png" />
+<img alt="../../_images/3a3df6bc8e0e945568aeebda35c0e9635fc3316309920f59371e00e9cbc0fa5b.png" src="../../_images/3a3df6bc8e0e945568aeebda35c0e9635fc3316309920f59371e00e9cbc0fa5b.png" />
 </div>
 </div>
 </section>
@@ -704,7 +704,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/785934227ca1ab2e42544991a77517acbf4611a696c8543e18a5c191702a7d6a.png" src="../../_images/785934227ca1ab2e42544991a77517acbf4611a696c8543e18a5c191702a7d6a.png" />
+<img alt="../../_images/b669ac4bbad0fe3c844b6b51c0462f41d52c4b9661f1eb1cc667339fda024ce2.png" src="../../_images/b669ac4bbad0fe3c844b6b51c0462f41d52c4b9661f1eb1cc667339fda024ce2.png" />
 </div>
 </div>
 </section>
@@ -745,7 +745,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/1b07624bcadb4345ed1e1a65d2d76604f32a2fc09f1a5691d8bbcc5774363d6c.png" src="../../_images/1b07624bcadb4345ed1e1a65d2d76604f32a2fc09f1a5691d8bbcc5774363d6c.png" />
+<img alt="../../_images/9697397ebc20915afc9777738449947cf17592e2f49ad8f8b91077324833d6b1.png" src="../../_images/9697397ebc20915afc9777738449947cf17592e2f49ad8f8b91077324833d6b1.png" />
 </div>
 </div>
 <p>As in the Gaussian HMM notebook, we see that the inferred dynamics closely match the true dynamics, up to label switching. Again, we could find the best permutation to align true and inferred states using the <code class="docutils literal notranslate"><span class="pre">find_permutation</span></code> function described in the Gaussian HMM notebook.</p>
@@ -785,7 +785,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c90cc6fbbe895183578113f15e6e49fda52c069eca61023841ef4657368bcaf4.png" src="../../_images/c90cc6fbbe895183578113f15e6e49fda52c069eca61023841ef4657368bcaf4.png" />
+<img alt="../../_images/7ece13015bcadf5aa1c91e2765ff3fcf0fe572c24e0459e24e113baa49c2cfbf.png" src="../../_images/7ece13015bcadf5aa1c91e2765ff3fcf0fe572c24e0459e24e113baa49c2cfbf.png" />
 </div>
 </div>
 </section>
@@ -819,7 +819,7 @@ f_k(y^star) &amp;= y^star
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Sampled trajectory from a fitted AR-HMM, color-coded by discrete state&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/02ab0e772ed6231e115a7a7c1d628501d5d6dd19639563acb03f538d0658692f.png" src="../../_images/02ab0e772ed6231e115a7a7c1d628501d5d6dd19639563acb03f538d0658692f.png" />
+<img alt="../../_images/a55f619a975a54a90a7ef88d73fc88feec7e7f3188d414d76e4418965f68da5e.png" src="../../_images/a55f619a975a54a90a7ef88d73fc88feec7e7f3188d414d76e4418965f68da5e.png" />
 </div>
 </div>
 </section>

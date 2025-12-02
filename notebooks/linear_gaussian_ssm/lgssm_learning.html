@@ -30,7 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
@@ -395,10 +395,10 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
@@ -548,7 +548,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;true model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/b5c079d14b3df1c3fac4fd074f0a0843faf3ff0299d7e0e40e5cdd0a1ed0b5c5.png" src="../../_images/b5c079d14b3df1c3fac4fd074f0a0843faf3ff0299d7e0e40e5cdd0a1ed0b5c5.png" />
+<img alt="../../_images/0d8cf8d2c9165d538984b757ee878164d427c16251b5a270a7fe6e1031a9ce5b.png" src="../../_images/0d8cf8d2c9165d538984b757ee878164d427c16251b5a270a7fe6e1031a9ce5b.png" />
 </div>
 </div>
 <p>Now plot the reconstructions under a randomly initialized model. They’re much worse!</p>
@@ -573,7 +573,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;randomly initialized model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/59750a051310ac07e709661ea975f14fea6eaad86d252ff6d75184eba40ad936.png" src="../../_images/59750a051310ac07e709661ea975f14fea6eaad86d252ff6d75184eba40ad936.png" />
+<img alt="../../_images/837388659f16161c4cd40c7eeda2d9d9ddd179186b891ccccd6903bc1d14d1b6.png" src="../../_images/837388659f16161c4cd40c7eeda2d9d9ddd179186b891ccccd6903bc1d14d1b6.png" />
 </div>
 </div>
 </section>
@@ -627,7 +627,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/271911b586597d3d4197faf2475ced5b0faa375192d2140e3ebca27fad2eabc5.png" src="../../_images/271911b586597d3d4197faf2475ced5b0faa375192d2140e3ebca27fad2eabc5.png" />
+<img alt="../../_images/77f5b5f2ed3dceb047cd7120bd047b6ebe438bd9ca299cdfa7dcb12631cf77b1.png" src="../../_images/77f5b5f2ed3dceb047cd7120bd047b6ebe438bd9ca299cdfa7dcb12631cf77b1.png" />
 </div>
 </div>
 <p>The marginal log likelihood quickly converges. As with the HMM examples, the likelihood under the estimated parameters is larger than the likelihood under the true parameters that generated the data. This isn’t surprising: EM is finding the parameters <span class="math notranslate nohighlight">\(\hat{\theta}_{\mathsf{MLE}}\)</span>, that maximize the likelihood, and with a short sequence like this, the likelihood <span class="math notranslate nohighlight">\(p(x_{1:T}; \hat{\theta}_{\mathsf{MLE}})\)</span> is almost surely larger than <span class="math notranslate nohighlight">\(p(x_{1:T}; \theta_{\mathsf{true}})\)</span>.</p>
@@ -643,7 +643,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;fitted model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/829015e6d0c067c7165e28279ec5eb5792320c90f18ae99e22f6d4c542ab6f31.png" src="../../_images/829015e6d0c067c7165e28279ec5eb5792320c90f18ae99e22f6d4c542ab6f31.png" />
+<img alt="../../_images/2c4bf4b73d2bce2a8b7e8ca954b6b2a26d87619151db1953404e66980b5b319a.png" src="../../_images/2c4bf4b73d2bce2a8b7e8ca954b6b2a26d87619151db1953404e66980b5b319a.png" />
 </div>
 </div>
 <section id="identifiability">
@@ -705,7 +705,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6ed0c62dc489d74ef31ee56da436ad064ab59714030fc97051b6505e3ed97af5.png" src="../../_images/6ed0c62dc489d74ef31ee56da436ad064ab59714030fc97051b6505e3ed97af5.png" />
+<img alt="../../_images/7f90be3b4d6c27e4e212bafb45f56acfa3cf7d6adc8ff1d27f6a57c29df7f460.png" src="../../_images/7f90be3b4d6c27e4e212bafb45f56acfa3cf7d6adc8ff1d27f6a57c29df7f460.png" />
 </div>
 </div>
 <p>Adam eventually converges, but note that both the y-axis and x-axis scales are much larger than for EM. It takes 100s of epochs to achieve comparable log likelihoods, and each epoch is roughly the equivalent cost to one iteration of EM.</p>
@@ -765,7 +765,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c6c1295b44520f176c535481ce2772d193bae8b5d9cdc8a2f1508e97fbe91de2.png" src="../../_images/c6c1295b44520f176c535481ce2772d193bae8b5d9cdc8a2f1508e97fbe91de2.png" />
+<img alt="../../_images/3b35e6f21d1c9c6dc78faaa71424b76c76b2ecd1a5692db98cd50fbee4e067b6.png" src="../../_images/3b35e6f21d1c9c6dc78faaa71424b76c76b2ecd1a5692db98cd50fbee4e067b6.png" />
 </div>
 </div>
 </section>

@@ -30,7 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
@@ -383,8 +383,8 @@ document.write(`
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm-cross-validation-and-model-selection">
 <h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Link to this heading">#</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-b1e5f558-de3c-4b38-9917-35030924c429">
-<span class="eqno">(1)<a class="headerlink" href="#equation-b1e5f558-de3c-4b38-9917-35030924c429" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-3e5b8c84-d766-4862-8ff9-8820ad515f56">
+<span class="eqno">(1)<a class="headerlink" href="#equation-3e5b8c84-d766-4862-8ff9-8820ad515f56" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_t \mid z_t, \theta) &amp;= \mathcal{N}(y_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the emission parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -399,10 +399,10 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <section id="setup">
 <h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%capture</span>
@@ -439,10 +439,10 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <section id="helper-functions-for-plotting">
 <h2>Helper functions for plotting<a class="headerlink" href="#helper-functions-for-plotting" title="Link to this heading">#</a></h2>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Helper functions for plotting</span>
@@ -545,7 +545,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c447ebbe8f66abf5513b6bea98b40528fb2de23dc6b1ccb27745b98bc1b7ef2c.png" src="../../_images/c447ebbe8f66abf5513b6bea98b40528fb2de23dc6b1ccb27745b98bc1b7ef2c.png" />
+<img alt="../../_images/80190a70cea9ff6a90dff75472b416b1cccf7fb8045447cc36c2cd0302a38ab7.png" src="../../_images/80190a70cea9ff6a90dff75472b416b1cccf7fb8045447cc36c2cd0302a38ab7.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -556,7 +556,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/bbb9904c36cc8c8770dc86714881c54d2a5cc4d98d92003bf4d4e80a86aa0d5f.png" src="../../_images/bbb9904c36cc8c8770dc86714881c54d2a5cc4d98d92003bf4d4e80a86aa0d5f.png" />
+<img alt="../../_images/a3dd5756de87bd9778081ff14061df2b3d48dc1fc87bce07b35150bac92571be.png" src="../../_images/a3dd5756de87bd9778081ff14061df2b3d48dc1fc87bce07b35150bac92571be.png" />
 </div>
 </div>
 </section>
@@ -650,7 +650,7 @@ determining the number of discrete states.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;avg. validation log prob.&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/348a4c3e4dd3785d200039474f914404facbf3bb2776fdc01e91a9c398d5e76b.png" src="../../_images/348a4c3e4dd3785d200039474f914404facbf3bb2776fdc01e91a9c398d5e76b.png" />
+<img alt="../../_images/2e1ff25cc1f58923d19689046907a8712866768be52232238195c0209a796a5d.png" src="../../_images/2e1ff25cc1f58923d19689046907a8712866768be52232238195c0209a796a5d.png" />
 </div>
 </div>
 <p>There’s no right answer for how to choose the number of states, but reasonable heuristics include:</p>
@@ -728,10 +728,10 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f73b3f76f10&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fb33ab0e3d0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/7bd4e44adefa0bd34bee8295bc5d127ae48274ba9c8942b8acdfe29e26fc2dc9.png" src="../../_images/7bd4e44adefa0bd34bee8295bc5d127ae48274ba9c8942b8acdfe29e26fc2dc9.png" />
+<img alt="../../_images/0fb58713f823878498ca7d71c7ec621b7ce40f1485768e60ec7eeb4965fbe657.png" src="../../_images/0fb58713f823878498ca7d71c7ec621b7ce40f1485768e60ec7eeb4965fbe657.png" />
 </div>
 </div>
 <div class="admonition note">
@@ -752,7 +752,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c108c56d073ede8ed5e27d3a2a414e7a3072660030d04f613b69795ae0dbd90f.png" src="../../_images/c108c56d073ede8ed5e27d3a2a414e7a3072660030d04f613b69795ae0dbd90f.png" />
+<img alt="../../_images/17c9a01685c4b9effc368a1be15fbcf09b9ca9964c43507494120589f7bc1947.png" src="../../_images/17c9a01685c4b9effc368a1be15fbcf09b9ca9964c43507494120589f7bc1947.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -762,7 +762,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/3dfa80e055477837aa1c22cc1a5b2ea2c9c384222ffddf5302000f985d234512.png" src="../../_images/3dfa80e055477837aa1c22cc1a5b2ea2c9c384222ffddf5302000f985d234512.png" />
+<img alt="../../_images/cf0d1d583b74f3e2e2226fb1e25767509e3ae80898080bea2501957d6312f0ee.png" src="../../_images/cf0d1d583b74f3e2e2226fb1e25767509e3ae80898080bea2501957d6312f0ee.png" />
 </div>
 </div>
 <div class="admonition important">
@@ -816,7 +816,7 @@ determining the number of discrete states.</p>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Marginal log probabilities of test data:
                    GaussianHMM:  106.9
            DiagonalGaussianHMM:  113.5
-          SphericalGaussianHMM:  111.0
+          SphericalGaussianHMM:  110.9
    SharedCovarianceGaussianHMM:  112.4
                     True Model:  117.5
 </pre></div>
