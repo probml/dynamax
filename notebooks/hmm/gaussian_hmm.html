@@ -383,8 +383,8 @@ document.write(`
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm-cross-validation-and-model-selection">
 <h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Link to this heading">#</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-3e5b8c84-d766-4862-8ff9-8820ad515f56">
-<span class="eqno">(1)<a class="headerlink" href="#equation-3e5b8c84-d766-4862-8ff9-8820ad515f56" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-d8a0ad99-8c55-4ea6-a49b-8d16d658ff4c">
+<span class="eqno">(1)<a class="headerlink" href="#equation-d8a0ad99-8c55-4ea6-a49b-8d16d658ff4c" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_t \mid z_t, \theta) &amp;= \mathcal{N}(y_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the emission parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -545,7 +545,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/80190a70cea9ff6a90dff75472b416b1cccf7fb8045447cc36c2cd0302a38ab7.png" src="../../_images/80190a70cea9ff6a90dff75472b416b1cccf7fb8045447cc36c2cd0302a38ab7.png" />
+<img alt="../../_images/ae1983e86128e5768afc6c2c872198c90e7e19034b4b6359d46e9a247f269898.png" src="../../_images/ae1983e86128e5768afc6c2c872198c90e7e19034b4b6359d46e9a247f269898.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -556,7 +556,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a3dd5756de87bd9778081ff14061df2b3d48dc1fc87bce07b35150bac92571be.png" src="../../_images/a3dd5756de87bd9778081ff14061df2b3d48dc1fc87bce07b35150bac92571be.png" />
+<img alt="../../_images/2ebc5a3298e62d8c43f061fa3d35bfd7fa972a308f5ca7c768ff8929052d4b7a.png" src="../../_images/2ebc5a3298e62d8c43f061fa3d35bfd7fa972a308f5ca7c768ff8929052d4b7a.png" />
 </div>
 </div>
 </section>
@@ -650,7 +650,7 @@ determining the number of discrete states.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;avg. validation log prob.&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/2e1ff25cc1f58923d19689046907a8712866768be52232238195c0209a796a5d.png" src="../../_images/2e1ff25cc1f58923d19689046907a8712866768be52232238195c0209a796a5d.png" />
+<img alt="../../_images/815a613db7f2b3655bebd448c4992428824028a29e6b847f67985eebe3672e48.png" src="../../_images/815a613db7f2b3655bebd448c4992428824028a29e6b847f67985eebe3672e48.png" />
 </div>
 </div>
 <p>There’s no right answer for how to choose the number of states, but reasonable heuristics include:</p>
@@ -689,26 +689,28 @@ determining the number of discrete states.</p>
 <div class="cell_output docutils container">
 <div class="output text_html">
 <style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
+    progress { appearance: none; border: none; border-radius: 4px; width: 300px;
+        height: 20px; vertical-align: middle; background: #e0e0e0; }
+
+    progress::-webkit-progress-bar { background: #e0e0e0; border-radius: 4px; }
+    progress::-webkit-progress-value { background: #2196F3; border-radius: 4px; }
+    progress::-moz-progress-bar { background: #2196F3; border-radius: 4px; }
+
+    progress:not([value]) {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px); }
+
+    progress.progress-bar-interrupted::-webkit-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-webkit-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted { background: #F44336; }    
+
+    table.fastprogress { border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+    table.fastprogress th, table.fastprogress td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+    table.fastprogress thead tr { background: #f8f9fa; font-weight: bold; }
+    table.fastprogress tbody tr:nth-of-type(even) { background: #f8f9fa; }
 </style>
-</div><div class="output text_html">
-    <div>
-      <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [100/100 00:00&lt;00:00]
-    </div>
-    </div></div>
+</div><div class="output text_html"><div><progress max="100" value="100"></progress> 100.00% [100/100 00:00&lt;00:00]</div></div></div>
 </div>
 <p>Plot the log probabilities over the course of training, along with those of the model with the parameters that generated the data.</p>
 <div class="cell docutils container">
@@ -728,10 +730,10 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fb33ab0e3d0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f5d9d4f5210&gt;
 </pre></div>
 </div>
-<img alt="../../_images/0fb58713f823878498ca7d71c7ec621b7ce40f1485768e60ec7eeb4965fbe657.png" src="../../_images/0fb58713f823878498ca7d71c7ec621b7ce40f1485768e60ec7eeb4965fbe657.png" />
+<img alt="../../_images/37c74a60fe73de8547dc8da3b61fb8765e8cd991d59f2ef57f94da924e96dc5c.png" src="../../_images/37c74a60fe73de8547dc8da3b61fb8765e8cd991d59f2ef57f94da924e96dc5c.png" />
 </div>
 </div>
 <div class="admonition note">
@@ -752,7 +754,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/17c9a01685c4b9effc368a1be15fbcf09b9ca9964c43507494120589f7bc1947.png" src="../../_images/17c9a01685c4b9effc368a1be15fbcf09b9ca9964c43507494120589f7bc1947.png" />
+<img alt="../../_images/a34f96c251de2e36cd5c19a083b1e9dd8e3326c01a2827d5dcbecacda4a575f6.png" src="../../_images/a34f96c251de2e36cd5c19a083b1e9dd8e3326c01a2827d5dcbecacda4a575f6.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -762,7 +764,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/cf0d1d583b74f3e2e2226fb1e25767509e3ae80898080bea2501957d6312f0ee.png" src="../../_images/cf0d1d583b74f3e2e2226fb1e25767509e3ae80898080bea2501957d6312f0ee.png" />
+<img alt="../../_images/0712baa8854e07827386e6a73aa6daa9435b62a19ddb9d6fc6fc2e8b4b7b2277.png" src="../../_images/0712baa8854e07827386e6a73aa6daa9435b62a19ddb9d6fc6fc2e8b4b7b2277.png" />
 </div>
 </div>
 <div class="admonition important">

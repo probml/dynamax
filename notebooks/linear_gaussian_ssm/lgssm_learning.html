@@ -548,7 +548,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;true model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/0d8cf8d2c9165d538984b757ee878164d427c16251b5a270a7fe6e1031a9ce5b.png" src="../../_images/0d8cf8d2c9165d538984b757ee878164d427c16251b5a270a7fe6e1031a9ce5b.png" />
+<img alt="../../_images/bda903cba67b8034efa256339358aa745c08f27cab8381aa8ba77517ddc220b8.png" src="../../_images/bda903cba67b8034efa256339358aa745c08f27cab8381aa8ba77517ddc220b8.png" />
 </div>
 </div>
 <p>Now plot the reconstructions under a randomly initialized model. They’re much worse!</p>
@@ -573,7 +573,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;randomly initialized model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/837388659f16161c4cd40c7eeda2d9d9ddd179186b891ccccd6903bc1d14d1b6.png" src="../../_images/837388659f16161c4cd40c7eeda2d9d9ddd179186b891ccccd6903bc1d14d1b6.png" />
+<img alt="../../_images/589523f4df7ef32b0b269fb012386fec9d49ba8bf116de4b774baab88bf49702.png" src="../../_images/589523f4df7ef32b0b269fb012386fec9d49ba8bf116de4b774baab88bf49702.png" />
 </div>
 </div>
 </section>
@@ -590,26 +590,28 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="cell_output docutils container">
 <div class="output text_html">
 <style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
+    progress { appearance: none; border: none; border-radius: 4px; width: 300px;
+        height: 20px; vertical-align: middle; background: #e0e0e0; }
+
+    progress::-webkit-progress-bar { background: #e0e0e0; border-radius: 4px; }
+    progress::-webkit-progress-value { background: #2196F3; border-radius: 4px; }
+    progress::-moz-progress-bar { background: #2196F3; border-radius: 4px; }
+
+    progress:not([value]) {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px); }
+
+    progress.progress-bar-interrupted::-webkit-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-webkit-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted { background: #F44336; }    
+
+    table.fastprogress { border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+    table.fastprogress th, table.fastprogress td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+    table.fastprogress thead tr { background: #f8f9fa; font-weight: bold; }
+    table.fastprogress tbody tr:nth-of-type(even) { background: #f8f9fa; }
 </style>
-</div><div class="output text_html">
-    <div>
-      <progress value='100' class='' max='100' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [100/100 00:00&lt;00:00]
-    </div>
-    </div></div>
+</div><div class="output text_html"><div><progress max="100" value="100"></progress> 100.00% [100/100 00:00&lt;00:00]</div></div></div>
 </div>
 <p>We zoom in on the learning curve after the first iteration since the first log likelihood is much lower than the rest.</p>
 <div class="cell docutils container">
@@ -627,7 +629,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/77f5b5f2ed3dceb047cd7120bd047b6ebe438bd9ca299cdfa7dcb12631cf77b1.png" src="../../_images/77f5b5f2ed3dceb047cd7120bd047b6ebe438bd9ca299cdfa7dcb12631cf77b1.png" />
+<img alt="../../_images/fab23137a390c5c3b675326ec883d9139e3193c9dfafa5aab247223373ec2667.png" src="../../_images/fab23137a390c5c3b675326ec883d9139e3193c9dfafa5aab247223373ec2667.png" />
 </div>
 </div>
 <p>The marginal log likelihood quickly converges. As with the HMM examples, the likelihood under the estimated parameters is larger than the likelihood under the true parameters that generated the data. This isn’t surprising: EM is finding the parameters <span class="math notranslate nohighlight">\(\hat{\theta}_{\mathsf{MLE}}\)</span>, that maximize the likelihood, and with a short sequence like this, the likelihood <span class="math notranslate nohighlight">\(p(x_{1:T}; \hat{\theta}_{\mathsf{MLE}})\)</span> is almost surely larger than <span class="math notranslate nohighlight">\(p(x_{1:T}; \theta_{\mathsf{true}})\)</span>.</p>
@@ -643,7 +645,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, &#39;fitted model&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/2c4bf4b73d2bce2a8b7e8ca954b6b2a26d87619151db1953404e66980b5b319a.png" src="../../_images/2c4bf4b73d2bce2a8b7e8ca954b6b2a26d87619151db1953404e66980b5b319a.png" />
+<img alt="../../_images/5caaf7b3e82c437e20968129c44ef24d6183f84cee530d02fdbc2a62db07f8b2.png" src="../../_images/5caaf7b3e82c437e20968129c44ef24d6183f84cee530d02fdbc2a62db07f8b2.png" />
 </div>
 </div>
 <section id="identifiability">
@@ -705,7 +707,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7f90be3b4d6c27e4e212bafb45f56acfa3cf7d6adc8ff1d27f6a57c29df7f460.png" src="../../_images/7f90be3b4d6c27e4e212bafb45f56acfa3cf7d6adc8ff1d27f6a57c29df7f460.png" />
+<img alt="../../_images/ac1832d5e94baebba3645b8a5910ef0ac1ca9092126029c14c6e34625a7e2004.png" src="../../_images/ac1832d5e94baebba3645b8a5910ef0ac1ca9092126029c14c6e34625a7e2004.png" />
 </div>
 </div>
 <p>Adam eventually converges, but note that both the y-axis and x-axis scales are much larger than for EM. It takes 100s of epochs to achieve comparable log likelihoods, and each epoch is roughly the equivalent cost to one iteration of EM.</p>
@@ -765,7 +767,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/3b35e6f21d1c9c6dc78faaa71424b76c76b2ecd1a5692db98cd50fbee4e067b6.png" src="../../_images/3b35e6f21d1c9c6dc78faaa71424b76c76b2ecd1a5692db98cd50fbee4e067b6.png" />
+<img alt="../../_images/b2b7bca2586c372ce18bbf7ab51780da1dcf14912420b8e1f84de9be289dc345.png" src="../../_images/b2b7bca2586c372ce18bbf7ab51780da1dcf14912420b8e1f84de9be289dc345.png" />
 </div>
 </div>
 </section>

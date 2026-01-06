@@ -693,7 +693,7 @@ p(\beta) &amp;= \prod_{k=1}^K \prod_{d=1}^D \mathrm{Exp}(\beta_{k,d} \mid \lambd
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e78246797400572b7a3e14b0690494c9517259eb6ea4a34cfd3fc395c4c26513.png" src="../../_images/e78246797400572b7a3e14b0690494c9517259eb6ea4a34cfd3fc395c4c26513.png" />
+<img alt="../../_images/16f2fe1e5c097a6f422e9bf6b2a33a0e5474295bf3e0611ba84a220f1b96658c.png" src="../../_images/16f2fe1e5c097a6f422e9bf6b2a33a0e5474295bf3e0611ba84a220f1b96658c.png" />
 </div>
 </div>
 </section>
@@ -718,26 +718,28 @@ p(\beta) &amp;= \prod_{k=1}^K \prod_{d=1}^D \mathrm{Exp}(\beta_{k,d} \mid \lambd
 <div class="cell_output docutils container">
 <div class="output text_html">
 <style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
+    progress { appearance: none; border: none; border-radius: 4px; width: 300px;
+        height: 20px; vertical-align: middle; background: #e0e0e0; }
+
+    progress::-webkit-progress-bar { background: #e0e0e0; border-radius: 4px; }
+    progress::-webkit-progress-value { background: #2196F3; border-radius: 4px; }
+    progress::-moz-progress-bar { background: #2196F3; border-radius: 4px; }
+
+    progress:not([value]) {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px); }
+
+    progress.progress-bar-interrupted::-webkit-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-webkit-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted { background: #F44336; }    
+
+    table.fastprogress { border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+    table.fastprogress th, table.fastprogress td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+    table.fastprogress thead tr { background: #f8f9fa; font-weight: bold; }
+    table.fastprogress tbody tr:nth-of-type(even) { background: #f8f9fa; }
 </style>
-</div><div class="output text_html">
-    <div>
-      <progress value='50' class='' max='50' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [50/50 00:00&lt;00:00]
-    </div>
-    </div></div>
+</div><div class="output text_html"><div><progress max="50" value="50"></progress> 100.00% [50/50 00:00&lt;00:00]</div></div></div>
 </div>
 <section id="plot-the-log-likelihoods-against-the-true-likelihood-for-comparison">
 <h3>Plot the log likelihoods against the true likelihood, for comparison<a class="headerlink" href="#plot-the-log-likelihoods-against-the-true-likelihood-for-comparison" title="Link to this heading">#</a></h3>
@@ -755,7 +757,7 @@ p(\beta) &amp;= \prod_{k=1}^K \prod_{d=1}^D \mathrm{Exp}(\beta_{k,d} \mid \lambd
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/de83680d353d5806a5b6b9cc2f15434685fa704f89266c783ab187feb5f351ec.png" src="../../_images/de83680d353d5806a5b6b9cc2f15434685fa704f89266c783ab187feb5f351ec.png" />
+<img alt="../../_images/5e96fe4b997c807f5165453bc0739322220f7ed4747d0ec94b8c257d773c6e6e.png" src="../../_images/5e96fe4b997c807f5165453bc0739322220f7ed4747d0ec94b8c257d773c6e6e.png" />
 </div>
 </div>
 </section>
@@ -788,10 +790,10 @@ p(\beta) &amp;= \prod_{k=1}^K \prod_{d=1}^D \mathrm{Exp}(\beta_{k,d} \mid \lambd
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f28b08c6bd0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f1a70270f50&gt;
 </pre></div>
 </div>
-<img alt="../../_images/1a838e63af7d05594feda011706b909d8dfe69936457cd2de4b4d785209055b0.png" src="../../_images/1a838e63af7d05594feda011706b909d8dfe69936457cd2de4b4d785209055b0.png" />
+<img alt="../../_images/fd8dfe642c8a8ac74f6e6e2434ce85404b1eda90463afa053f9c1c0f410f3391.png" src="../../_images/fd8dfe642c8a8ac74f6e6e2434ce85404b1eda90463afa053f9c1c0f410f3391.png" />
 </div>
 </div>
 </section>
@@ -833,7 +835,7 @@ p(\beta) &amp;= \prod_{k=1}^K \prod_{d=1}^D \mathrm{Exp}(\beta_{k,d} \mid \lambd
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/fa40618ee5bd54869aa9f03af46db170b9eaf3ae42031df1a75791b761b6c89a.png" src="../../_images/fa40618ee5bd54869aa9f03af46db170b9eaf3ae42031df1a75791b761b6c89a.png" />
+<img alt="../../_images/74731e4888200b00eb6c2f27435b30f1cf6b6781015e5cf1ce1dfcd539ce21af.png" src="../../_images/74731e4888200b00eb6c2f27435b30f1cf6b6781015e5cf1ce1dfcd539ce21af.png" />
 </div>
 </div>
 </section>

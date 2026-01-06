@@ -688,26 +688,28 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 <div class="cell_output docutils container">
 <div class="output text_html">
 <style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
+    progress { appearance: none; border: none; border-radius: 4px; width: 300px;
+        height: 20px; vertical-align: middle; background: #e0e0e0; }
+
+    progress::-webkit-progress-bar { background: #e0e0e0; border-radius: 4px; }
+    progress::-webkit-progress-value { background: #2196F3; border-radius: 4px; }
+    progress::-moz-progress-bar { background: #2196F3; border-radius: 4px; }
+
+    progress:not([value]) {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px); }
+
+    progress.progress-bar-interrupted::-webkit-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-webkit-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted { background: #F44336; }    
+
+    table.fastprogress { border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+    table.fastprogress th, table.fastprogress td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+    table.fastprogress thead tr { background: #f8f9fa; font-weight: bold; }
+    table.fastprogress tbody tr:nth-of-type(even) { background: #f8f9fa; }
 </style>
-</div><div class="output text_html">
-    <div>
-      <progress value='500' class='' max='500' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [500/500 00:01&lt;00:00]
-    </div>
-    </div></div>
+</div><div class="output text_html"><div><progress max="500" value="500"></progress> 100.00% [500/500 00:01&lt;00:00]</div></div></div>
 </div>
 </section>
 <section id="compare-the-learning-algorithms">
@@ -744,7 +746,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ef82a62902ea21b1a7a9815b728621b64f42792cad224ba2e4378d7fbd7b08e7.png" src="../../_images/ef82a62902ea21b1a7a9815b728621b64f42792cad224ba2e4378d7fbd7b08e7.png" />
+<img alt="../../_images/d48b836bae625b7642b3848a6b7b49548df213cfe18da9cf074fd7be4aa18046.png" src="../../_images/d48b836bae625b7642b3848a6b7b49548df213cfe18da9cf074fd7be4aa18046.png" />
 </div>
 </div>
 <p>For this problem, EM and Adam with a well-tuned learning rate converge the fastest. SGD and full-batch gradient descent appear to get stuck in a local optimum. By contrast, EM and Adam match the loss under the true parameters, and indeed if we look at the parameters below, they nearly recover the true parameters up to label switching.</p>

@@ -487,10 +487,10 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f3c20338850&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7f8d06d69cd0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/49f5e41cea6eb37fd13345226abddb1ff4adc349ed9010685a47c060578b6e57.png" src="../../_images/49f5e41cea6eb37fd13345226abddb1ff4adc349ed9010685a47c060578b6e57.png" />
+<img alt="../../_images/c277dd3a742681f7a07ea547ff0aadd8145996f0cecc8819325288e0e23e7442.png" src="../../_images/c277dd3a742681f7a07ea547ff0aadd8145996f0cecc8819325288e0e23e7442.png" />
 </div>
 </div>
 <section id="construct-and-plot-the-autoregressive-dynamics-distributions">
@@ -553,7 +553,7 @@ p(y_t \mid y_{t-1}, z_t=k) &amp;= \mathrm{N}(y_t \mid A_k y_{t-1} + b_k, Q_k)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/df5ba75d69671a87e86bbe76537ee467dfb3046480c6fa56c23c328ddf356c12.png" src="../../_images/df5ba75d69671a87e86bbe76537ee467dfb3046480c6fa56c23c328ddf356c12.png" />
+<img alt="../../_images/a1f3f695f6f4388445e1bffa3387bb58f17d0bf7b09eb62356d90f95bf8402fa.png" src="../../_images/a1f3f695f6f4388445e1bffa3387bb58f17d0bf7b09eb62356d90f95bf8402fa.png" />
 </div>
 </div>
 <div class="admonition note">
@@ -611,7 +611,7 @@ f_k(y^star) &amp;= y^star
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Sampled trajectory from an AR-HMM, color-coded by discrete state&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/7b7607716e58dd53df70c93dc527de1d1eeb37893cb0af1b106eaae3ac277272.png" src="../../_images/7b7607716e58dd53df70c93dc527de1d1eeb37893cb0af1b106eaae3ac277272.png" />
+<img alt="../../_images/a945df4e742c1a520a4e8a0c21a7e89d4f95f60cd414f252c876edc84f9e4e61.png" src="../../_images/a945df4e742c1a520a4e8a0c21a7e89d4f95f60cd414f252c876edc84f9e4e61.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the autoregressive process for state <span class="math notranslate nohighlight">\(k\)</span> (see note above), while the solid lines are the actual observations sampled from the HMM.</p>
@@ -643,7 +643,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/3a3df6bc8e0e945568aeebda35c0e9635fc3316309920f59371e00e9cbc0fa5b.png" src="../../_images/3a3df6bc8e0e945568aeebda35c0e9635fc3316309920f59371e00e9cbc0fa5b.png" />
+<img alt="../../_images/33f1a3bef6814c9b6680204c28af554ed893a3915fe29e4f5b4e2ad2322c0fee.png" src="../../_images/33f1a3bef6814c9b6680204c28af554ed893a3915fe29e4f5b4e2ad2322c0fee.png" />
 </div>
 </div>
 </section>
@@ -668,26 +668,28 @@ f_k(y^star) &amp;= y^star
 <div class="cell_output docutils container">
 <div class="output text_html">
 <style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
+    progress { appearance: none; border: none; border-radius: 4px; width: 300px;
+        height: 20px; vertical-align: middle; background: #e0e0e0; }
+
+    progress::-webkit-progress-bar { background: #e0e0e0; border-radius: 4px; }
+    progress::-webkit-progress-value { background: #2196F3; border-radius: 4px; }
+    progress::-moz-progress-bar { background: #2196F3; border-radius: 4px; }
+
+    progress:not([value]) {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px); }
+
+    progress.progress-bar-interrupted::-webkit-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-webkit-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted { background: #F44336; }    
+
+    table.fastprogress { border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+    table.fastprogress th, table.fastprogress td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+    table.fastprogress thead tr { background: #f8f9fa; font-weight: bold; }
+    table.fastprogress tbody tr:nth-of-type(even) { background: #f8f9fa; }
 </style>
-</div><div class="output text_html">
-    <div>
-      <progress value='50' class='' max='50' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [50/50 00:00&lt;00:00]
-    </div>
-    </div></div>
+</div><div class="output text_html"><div><progress max="50" value="50"></progress> 100.00% [50/50 00:00&lt;00:00]</div></div></div>
 </div>
 <section id="plot-the-log-likelihoods-against-the-true-likelihood-for-comparison">
 <h3>Plot the log likelihoods against the true likelihood, for comparison<a class="headerlink" href="#plot-the-log-likelihoods-against-the-true-likelihood-for-comparison" title="Link to this heading">#</a></h3>
@@ -704,7 +706,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/b669ac4bbad0fe3c844b6b51c0462f41d52c4b9661f1eb1cc667339fda024ce2.png" src="../../_images/b669ac4bbad0fe3c844b6b51c0462f41d52c4b9661f1eb1cc667339fda024ce2.png" />
+<img alt="../../_images/86c5f6079836385404a4a9368f157dd99d99fe0c63f21ba4971cc9ecda76492c.png" src="../../_images/86c5f6079836385404a4a9368f157dd99d99fe0c63f21ba4971cc9ecda76492c.png" />
 </div>
 </div>
 </section>
@@ -745,7 +747,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/9697397ebc20915afc9777738449947cf17592e2f49ad8f8b91077324833d6b1.png" src="../../_images/9697397ebc20915afc9777738449947cf17592e2f49ad8f8b91077324833d6b1.png" />
+<img alt="../../_images/16cfc4285ab29df4b781f8cf5f4c3e7208baac7ab3e08672f7e60b89b5e1fa71.png" src="../../_images/16cfc4285ab29df4b781f8cf5f4c3e7208baac7ab3e08672f7e60b89b5e1fa71.png" />
 </div>
 </div>
 <p>As in the Gaussian HMM notebook, we see that the inferred dynamics closely match the true dynamics, up to label switching. Again, we could find the best permutation to align true and inferred states using the <code class="docutils literal notranslate"><span class="pre">find_permutation</span></code> function described in the Gaussian HMM notebook.</p>
@@ -785,7 +787,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7ece13015bcadf5aa1c91e2765ff3fcf0fe572c24e0459e24e113baa49c2cfbf.png" src="../../_images/7ece13015bcadf5aa1c91e2765ff3fcf0fe572c24e0459e24e113baa49c2cfbf.png" />
+<img alt="../../_images/7134a4176e377d001d8e211342f2d41ea9b617a05eb384df176fd2ad43f5a754.png" src="../../_images/7134a4176e377d001d8e211342f2d41ea9b617a05eb384df176fd2ad43f5a754.png" />
 </div>
 </div>
 </section>
@@ -819,7 +821,7 @@ f_k(y^star) &amp;= y^star
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Sampled trajectory from a fitted AR-HMM, color-coded by discrete state&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/a55f619a975a54a90a7ef88d73fc88feec7e7f3188d414d76e4418965f68da5e.png" src="../../_images/a55f619a975a54a90a7ef88d73fc88feec7e7f3188d414d76e4418965f68da5e.png" />
+<img alt="../../_images/8f8650b0f469594d4a07e2d765e489b3bc539b72a641e6d32e54d8ca0eea12e8.png" src="../../_images/8f8650b0f469594d4a07e2d765e489b3bc539b72a641e6d32e54d8ca0eea12e8.png" />
 </div>
 </div>
 </section>

@@ -570,7 +570,7 @@ If you set the Markov chain up carefully, you can ensure that the parameters wil
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/89e4f6d468abeb407a6bf083c5ecd88408f86337e4e5484f71e7495b4f343754.png" src="../../_images/89e4f6d468abeb407a6bf083c5ecd88408f86337e4e5484f71e7495b4f343754.png" />
+<img alt="../../_images/986eddce179f0e2c76e35efa3b043a8a24f74a3e2c23d43b9902a33e8d0f8d03.png" src="../../_images/986eddce179f0e2c76e35efa3b043a8a24f74a3e2c23d43b9902a33e8d0f8d03.png" />
 </div>
 </div>
 </section>
@@ -675,47 +675,28 @@ If you set the Markov chain up carefully, you can ensure that the parameters wil
 </div>
 <div class="output text_html">
 <style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
+    progress { appearance: none; border: none; border-radius: 4px; width: 300px;
+        height: 20px; vertical-align: middle; background: #e0e0e0; }
+
+    progress::-webkit-progress-bar { background: #e0e0e0; border-radius: 4px; }
+    progress::-webkit-progress-value { background: #2196F3; border-radius: 4px; }
+    progress::-moz-progress-bar { background: #2196F3; border-radius: 4px; }
+
+    progress:not([value]) {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px); }
+
+    progress.progress-bar-interrupted::-webkit-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-webkit-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted { background: #F44336; }    
+
+    table.fastprogress { border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+    table.fastprogress th, table.fastprogress td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+    table.fastprogress thead tr { background: #f8f9fa; font-weight: bold; }
+    table.fastprogress tbody tr:nth-of-type(even) { background: #f8f9fa; }
 </style>
-</div><div class="output text_html">
-    <div>
-      <progress value='10' class='' max='10' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [10/10 00:00&lt;?]
-    </div>
-    </div><div class="output text_html">
-<style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
-</style>
-</div><div class="output text_html">
-    <div>
-      <progress value='1000' class='' max='1000' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [1000/1000 00:16&lt;00:00]
-    </div>
-    </div></div>
+</div><div class="output text_html"><div><progress max="10" value="10"></progress> 100.00% [10/10 00:00&lt;?]</div></div><div class="output text_html"><div><progress max="1000" value="1000"></progress> 100.00% [1000/1000 00:16&lt;00:00]</div></div></div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -732,10 +713,10 @@ If you set the Markov chain up carefully, you can ensure that the parameters wil
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fc69c8b3890&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fb42c22fed0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/24e96f1824fd353a6a7c963a8bb7c57a8218cf44355b5a84be3fe6ac0fa5036c.png" src="../../_images/24e96f1824fd353a6a7c963a8bb7c57a8218cf44355b5a84be3fe6ac0fa5036c.png" />
+<img alt="../../_images/7e5e467ffc1d7dd17420b95723ba0a0cbe24c35f165acb7a68545e040964f69b.png" src="../../_images/7e5e467ffc1d7dd17420b95723ba0a0cbe24c35f165acb7a68545e040964f69b.png" />
 </div>
 </div>
 </section>
@@ -772,7 +753,7 @@ If you set the Markov chain up carefully, you can ensure that the parameters wil
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d6d9dbac6c8e896cfa059e3cc057fecac21589e2174e1714df18bac922df7dac.png" src="../../_images/d6d9dbac6c8e896cfa059e3cc057fecac21589e2174e1714df18bac922df7dac.png" />
+<img alt="../../_images/192a1fb93b6ef7cb3ad6e03560625dfcdd2cefcde4c7f1527680526459ca2ae1.png" src="../../_images/192a1fb93b6ef7cb3ad6e03560625dfcdd2cefcde4c7f1527680526459ca2ae1.png" />
 </div>
 </div>
 </section>
@@ -817,49 +798,7 @@ which builds on dynamax.).</p>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running window adaptation
 </pre></div>
 </div>
-<div class="output text_html">
-<style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
-</style>
-</div><div class="output text_html">
-    <div>
-      <progress value='10' class='' max='10' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [10/10 00:00&lt;?]
-    </div>
-    </div><div class="output text_html">
-<style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
-</style>
-</div><div class="output text_html">
-    <div>
-      <progress value='1000' class='' max='1000' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [1000/1000 00:15&lt;00:00]
-    </div>
-    </div></div>
+<div class="output text_html"><div><progress max="10" value="10"></progress> 100.00% [10/10 00:00&lt;?]</div></div><div class="output text_html"><div><progress max="1000" value="1000"></progress> 100.00% [1000/1000 00:16&lt;00:00]</div></div></div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -876,10 +815,10 @@ which builds on dynamax.).</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fc694db7b90&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fb424a10590&gt;
 </pre></div>
 </div>
-<img alt="../../_images/c275326143bc3f4bf5444e559aa5ff9bdf229d676af8e87e971867920c7709c7.png" src="../../_images/c275326143bc3f4bf5444e559aa5ff9bdf229d676af8e87e971867920c7709c7.png" />
+<img alt="../../_images/a4f66fae7cd2205da0eb90b3f0e3f56cf2a3f17d92ef1935b3bc23abf920d18e.png" src="../../_images/a4f66fae7cd2205da0eb90b3f0e3f56cf2a3f17d92ef1935b3bc23abf920d18e.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -907,7 +846,7 @@ which builds on dynamax.).</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/90f5d1a0d3255a22243c60ba3279b9c92b2fa5058b7819e7ca8062db965ea2d9.png" src="../../_images/90f5d1a0d3255a22243c60ba3279b9c92b2fa5058b7819e7ca8062db965ea2d9.png" />
+<img alt="../../_images/e0c27a24056bf2915fa0a865a442e0cb12e7d68e955fa954bdb6470e56de17e0.png" src="../../_images/e0c27a24056bf2915fa0a865a442e0cb12e7d68e955fa954bdb6470e56de17e0.png" />
 </div>
 </div>
 </section>
