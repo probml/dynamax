@@ -11,11 +11,11 @@ in [JAX](https://github.com/google/jax). It has code for inference
 (state estimation) and learning (parameter estimation) in a variety of
 SSMs, including:
 
--   Hidden Markov Models (HMMs)
--   Linear Gaussian State Space Models (aka Linear Dynamical Systems)
--   Nonlinear Gaussian State Space Models
--   Generalized Gaussian State Space Models (with non-Gaussian emission
-    models)
+- Hidden Markov Models (HMMs)
+- Linear Gaussian State Space Models (aka Linear Dynamical Systems)
+- Nonlinear Gaussian State Space Models
+- Generalized Gaussian State Space Models (with non-Gaussian emission
+  models)
 
 The library consists of a set of core, functionally pure, low-level
 inference algorithms, as well as a set of model classes which provide a
@@ -33,7 +33,7 @@ For a highlevel summary, see [this JOSS 2024 article](https://joss.theoj.org/pap
 
 For tutorials and API documentation, see: https://probml.github.io/dynamax/.
 
-For an extension of dynamax that supports structural time series models, 
+For an extension of dynamax that supports structural time series models,
 see https://github.com/probml/sts-jax.
 
 For an illustration of how to use dynamax inside of [bayeux](https://jax-ml.github.io/bayeux/) to perform Bayesian inference
@@ -41,23 +41,23 @@ for the parameters of an SSM, see https://jax-ml.github.io/bayeux/examples/dynam
 
 ## Installation and Testing
 
-To install the latest releast of dynamax from PyPi:
+To install the latest release of dynamax from PyPi:
 
-``` {.console}
+```{.console}
 pip install dynamax                 # Install dynamax and core dependencies, or
 pip install dynamax[notebooks]      # Install with demo notebook dependencies
 ```
 
 To install the latest development branch:
 
-``` {.console}
+```{.console}
 pip install git+https://github.com/probml/dynamax.git
 ```
 
 Finally, if you\'re a developer, you can install dynamax along with the
 test and documentation dependencies with:
 
-``` {.console}
+```{.console}
 git clone git@github.com:probml/dynamax.git
 cd dynamax
 pip install -e '.[dev]'
@@ -65,7 +65,7 @@ pip install -e '.[dev]'
 
 To run the tests:
 
-``` {.console}
+```{.console}
 pytest dynamax                         # Run all tests
 pytest dynamax/hmm/inference_test.py   # Run a specific test
 pytest -k lgssm                        # Run tests with lgssm in the name
@@ -108,11 +108,11 @@ transition and emission models, as we discuss below.
 
 More information can be found in these books:
 
-> -   \"Machine Learning: Advanced Topics\", K. Murphy, MIT Press 2023.
->     Available at <https://probml.github.io/pml-book/book2.html>.
-> -   \"Bayesian Filtering and Smoothing, Second Edition\", S. Särkkä and L. Svensson, Cambridge
->     University Press, 2023. Available at
->     <http://users.aalto.fi/~ssarkka/pub/bfs_book_2023_online.pdf>
+> - \"Machine Learning: Advanced Topics\", K. Murphy, MIT Press 2023.
+>   Available at <https://probml.github.io/pml-book/book2.html>.
+> - \"Bayesian Filtering and Smoothing, Second Edition\", S. Särkkä and L. Svensson, Cambridge
+>   University Press, 2023. Available at
+>   <http://users.aalto.fi/~ssarkka/pub/bfs_book_2023_online.pdf>
 
 ## Example usage
 
@@ -181,6 +181,7 @@ Please see [this page](https://github.com/probml/dynamax/blob/main/CONTRIBUTING.
 on how to contribute.
 
 ## About
+
 Core team: Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman, Kevin Murphy.
 
 Other contributors: Adrien Corenflos, Elizabeth DuPre, Gerardo Duran-Martin, Colin Schlager, Libby Zhang and other people [listed here](https://github.com/probml/dynamax/graphs/contributors)
