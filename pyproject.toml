@@ -7,11 +7,11 @@ name = "dynamax"
 dynamic = ["version"]
 requires-python = ">= 3.10"
 dependencies = [
-    "jax>=0.3.15",
+    "jax",
     "jaxlib",
+    "tfp-nightly",
     "fastprogress",
     "optax",
-    "tensorflow_probability",
     "scikit-learn",
     "jaxtyping",
     "typing-extensions",
@@ -70,7 +70,8 @@ test = [
     "coverage",
     "pytest>=3.9",
     "pytest-cov",
-    "interrogate>=1.5.0"
+    "interrogate>=1.5.0",
+    "ipython"
 ]
 
 dev = [
@@ -91,7 +92,8 @@ dev = [
     "coverage",
     "pytest>=3.9",
     "pytest-cov",
-    "interrogate>=1.5.0"
+    "interrogate>=1.5.0",
+    "ipython"
 ]
 
 [tool.setuptools.packages.find]

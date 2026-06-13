@@ -5,9 +5,9 @@ import itertools as it
 import jax.numpy as jnp
 import jax.random as jr
 from jax import vmap
+
 import dynamax.hidden_markov_model.inference as core
 import dynamax.hidden_markov_model.parallel_inference as parallel
-
 from jax.scipy.special import logsumexp
 
 def big_log_joint(initial_probs, transition_matrix, log_likelihoods):
@@ -56,12 +56,16 @@ def random_hmm_args_nonstationary(key, num_timesteps, num_states, scale=1.0):
 
     # we use numpy so we can assign to the matrix.
     # Then we convert to jnp.
+    keys_A = jr.split(k2, num_timesteps - 1)
     trans_mat = jnp.zeros((num_timesteps - 1, num_states, num_states))
-    for t in range(num_timesteps):
-      A = jr.uniform(k2, (num_states, num_states))
-      A /= A.sum(1, keepdims=True)
-      trans_mat = trans_mat.at[t].set(A)
-    return initial_probs, jnp.array(trans_mat), log_likelihoods
+    for t in range(num_timesteps - 1):
+        A = jr.uniform(keys_A[t], (num_states, num_states))
+        A /= A.sum(1, keepdims=True)
+        trans_mat = trans_mat.at[t].set(A)
+
+    return initial_probs, trans_mat, log_likelihoods
+
+
 
 def test_hmm_filter(key=0, num_timesteps=3, num_states=2):
     """
@@ -168,6 +172,16 @@ def test_hmm_smoother(key=0, num_timesteps=5, num_states=2):
     for t in range(num_timesteps):
         smoothed_probs_t = jnp.sum(joint, axis=tuple(jnp.arange(t)) + tuple(jnp.arange(t + 1, num_timesteps)))
         assert jnp.allclose(posterior.smoothed_probs[t], smoothed_probs_t, atol=1e-4)
+
+def test_two_filter_vs_smoother_nonstationary(key=0, num_timesteps=6, num_states=3):
+    key = jr.PRNGKey(key)
+    init, A_t, log_lkhds = random_hmm_args_nonstationary(key, num_timesteps, num_states)
+
+    post_two = core.hmm_two_filter_smoother(init, A_t, log_lkhds)
+    post_rts = core.hmm_smoother(init, A_t, log_lkhds)
+
+    assert jnp.allclose(post_two.smoothed_probs, post_rts.smoothed_probs, atol=1e-4)
+
 
 
 def test_hmm_fixed_lag_smoother(key=0, num_timesteps=5, num_states=2):
@@ -351,3 +365,4 @@ def test_parallel_posterior_sample(
 
     # Compare the joint distributions
     assert jnp.allclose(blj_sample, blj, rtol=0, atol=eps)
+

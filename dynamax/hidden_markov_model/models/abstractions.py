@@ -295,7 +295,7 @@ class HMMTransitions(ABC):
             PyTree of sufficient statistics for updating the transition distribution
 
         """
-        return posterior.trans_probs, pytree_slice(inputs, slice(1, None))
+        return posterior.trans_probs, inputs 
 
     def initialize_m_step_state(self, params: ParameterSet, props:PropertySet) -> Any:
         """Initialize any required state for the M step.

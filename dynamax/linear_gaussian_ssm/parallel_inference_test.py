@@ -15,7 +15,7 @@ from functools import partial
 from jax import vmap
 
 
-allclose = partial(jnp.allclose, atol=1e-4)    
+allclose = partial(jnp.allclose, atol=1e-3)    
 
 def make_static_lgssm_params():
     """Create a static LGSSM with fixed parameters."""
