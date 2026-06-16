@@ -58,6 +58,11 @@ class CategoricalHMMEmissions(HMMEmissions):
         """Return the log prior probability of the emission parameters."""
         return tfd.Dirichlet(self.emission_prior_concentration).log_prob(params.probs).sum()
 
+    def _check_emissions_format(self, emission_probs):
+        assert emission_probs.shape == (self.num_states, self.emission_dim, self.num_classes), f"'emission_probs' must have shape (num_states, emission_dim, num_classes)={(self.num_states, self.emission_dim, self.num_classes)} but {emission_probs.shape} provided."
+        assert jnp.all(emission_probs >= 0), "All entries in 'emission_probs' must be non-negative."
+        assert jnp.allclose(emission_probs.sum(axis=2), 1.0), "Each row of 'emission_probs' must sum to 1."
+    
     def initialize(self,
                    key:Optional[Array]=jr.PRNGKey(0),
                    method="prior",
@@ -91,11 +96,8 @@ class CategoricalHMMEmissions(HMMEmissions):
                 raise NotImplementedError("kmeans initialization is not yet implemented!")
             else:
                 raise Exception("invalid initialization method: {}".format(method))
-        else:
-            assert emission_probs.shape == (self.num_states, self.emission_dim, self.num_classes)
-            assert jnp.all(emission_probs >= 0)
-            assert jnp.allclose(emission_probs.sum(axis=2), 1.0)
-
+            
+        self._check_emissions_format(emission_probs=emission_probs)
         # Add parameters to the dictionary
         params = ParamsCategoricalHMMEmissions(probs=emission_probs)
         props = ParamsCategoricalHMMEmissions(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
