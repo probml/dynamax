@@ -8,7 +8,7 @@ import jax.random as jr
 
 from functools import partial
 from jax import jit
-from jax import vmap
+from jax import vmap, lax
 from jax.tree_util import tree_map, tree_leaves, tree_flatten, tree_unflatten
 from jaxtyping import Array, Int
 from scipy.optimize import linear_sum_assignment
@@ -220,3 +220,79 @@ def psd_solve(A, b, diagonal_boost=1e-9):
 def symmetrize(A):
     """Symmetrize one or more matrices."""
     return 0.5 * (A + jnp.swapaxes(A, -1, -2))
+
+def multilinear_product(core, factors):
+    """Multilinear map of a core tensor of order p with p matrices. 
+    For an order 3 core tensor of shape (I, J, K), the factor matrices have 
+    shape (P, I), (Q, J) and (R, K) respectively. The output has shape 
+    (P, Q, R).
+    """
+    order = core.ndim
+    assert order == len(factors)
+    einsum_args = [core, list(range(order))]
+    for i, factor in enumerate(factors):
+        einsum_args.append(factor)
+        einsum_args.append([i, i+order])
+    einsum_args.append(list(range(order, 2*order)))
+
+    return jnp.einsum(*einsum_args)
+
+def low_rank_pinv(X, k):
+    """Find the Moore-Penrose Pseudoinverse of a matrix X with rank k.
+    This is more robust than jnp.linalg.pinv since the sample cross moments
+    will likely have higher rank than the population cross moments.
+
+    Here, we find the SVD which sorts in descending order of the singular
+    values and truncate the first k.
+    """
+    
+    u, s, vt = jnp.linalg.svd(X)
+    u_trunc = u[:,:k]
+    s_trunc = s[:k]
+    vt_trunc = vt[:k,:]
+    return vt_trunc.T @ jnp.diag(1.0/s_trunc) @ u_trunc.T
+
+def rtpm_eigvals(X, y):
+    """Find the eigenvalues of X corresponding to the eigenvectors $y$."""
+    return multilinear_product(X, [y, y, y])
+
+def rtpm(X, key=jr.PRNGKey(0), L=100, N=1000):
+    """Applies the robust tensor power method to a tensor X and returns the
+    deflated tensor, robust eigenvectors and eigenvalues.
+    """
+    assert X.ndim == 3
+    assert len(set(X.shape)) == 1
+    keys = jr.split(key, L)
+    k = X.shape[0]
+
+    def power_iter_update(theta, _):
+        mlm = multilinear_product(X, [jnp.eye(k), theta, theta]).squeeze(-1)
+        return jnp.divide(mlm, jnp.linalg.norm(mlm)), None
+    
+    def theta_sample(theta_key):
+        # random point on the unit sphere in R^k
+        Z = jr.normal(theta_key, shape=(k,1))
+        norm_Z = jnp.linalg.norm(Z)
+        theta_init = jnp.divide(Z, norm_Z)
+
+        theta_N, _ = lax.scan(power_iter_update, 
+                            theta_init,
+                            length=N)
+        return theta_N
+        
+    theta_arr = vmap(theta_sample)(keys)
+    tau_star = jnp.argmax(vmap(partial(rtpm_eigvals, X))(theta_arr))
+    theta_hat, _ = lax.scan(power_iter_update,
+                             theta_arr[tau_star],
+                             length=N)
+    lambda_hat = rtpm_eigvals(X, theta_hat).squeeze()
+    theta_hat = theta_hat.squeeze()
+    def_X = X - lambda_hat * jnp.einsum('a,b,c-> a b c', theta_hat, theta_hat, theta_hat)
+    return def_X, (theta_hat, lambda_hat)
+
+def cp_decomp(X, L, N, k, key):
+    """Apply the robust tensor power method iteratively, returning the robust 
+    eigenvectors and eigenvalues.
+    """
+    _, (eigvecs, eigvals) = lax.scan(partial(rtpm, L=L, N=N), X, jr.split(key,k))
+    return eigvecs, eigvals
