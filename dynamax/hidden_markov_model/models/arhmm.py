@@ -40,6 +40,11 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
         input_dim = num_lags * emission_dim
         super().__init__(num_states, input_dim, emission_dim)
 
+    def _check_emissions_format(self, emission_weights, emission_biases, emission_covariances):
+        assert emission_weights.shape == (self.num_states, self.emission_dim, self.input_dim), f"'emission_weights' must have shape (num_states, emission_dim, input_dim)={(self.num_states, self.emission_dim, self.input_dim)} but {emission_weights.shape} provided."
+        assert emission_biases.shape == (self.num_states, self.emission_dim), f"'emission_biases' must have shape (num_states, emission_dim)={(self.num_states, self.emission_dim)} but {emission_biases.shape} provided."
+        assert emission_covariances.shape == (self.num_states, self.emission_dim, self.emission_dim), f"'emission_covariances' must have shape (num_states, emission_dim, emission_dim)={(self.num_states, self.emission_dim, self.emission_dim)} but {emission_covariances.shape} provided."
+
     def initialize(self,
                    key: Array=jr.PRNGKey(0),
                    method: str="prior",
@@ -93,6 +98,9 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
             weights=ParameterProperties(),
             biases=ParameterProperties(),
             covs=ParameterProperties(constrainer=RealToPSDBijector()))
+        
+        self._check_emissions_format(emission_weights=params.weights, emission_biases=params.biases, emission_covariances=params.covs)
+
         return params, props
 
 

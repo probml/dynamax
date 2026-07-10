@@ -35,6 +35,11 @@ class StandardHMMInitialState(HMMInitialState):
         """Return the distribution object of the initial distribution."""
         return tfd.Categorical(probs=params.probs)
 
+    def _check_initialization_format(self, initial_probs: Float[Array, " num_states"]) -> None:
+        assert initial_probs.shape == (self.num_states,), f"'initial_probs' must have shape (num_states,)={(self.num_states,)} but {initial_probs.shape} provided."
+        assert jnp.all(initial_probs >= 0.0), f"All entries in 'initial_probs' must be non-negative."
+        assert jnp.isclose(initial_probs.sum(), 1.0), ValueError(f"'initial_probs' must sum to 1.0.")
+
     def initialize(
             self,
             key: Optional[Array]=None,
@@ -59,6 +64,7 @@ class StandardHMMInitialState(HMMInitialState):
                 this_key, key = jr.split(key)
                 initial_probs = tfd.Dirichlet(self.initial_probs_concentration).sample(seed=this_key)
 
+        self._check_initialization_format(initial_probs=initial_probs)
         # Package the results into dictionaries
         params = ParamsStandardHMMInitialState(probs=initial_probs)
         props = ParamsStandardHMMInitialState(probs=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
