@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -47,6 +47,7 @@
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/hmm/autoregressive_hmm';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Creating Custom HMMs" href="custom_hmm.html" />
@@ -54,20 +55,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -93,7 +100,51 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
     </header>
   
 
@@ -311,11 +362,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -343,7 +401,7 @@
                 <h2> Contents </h2>
             </div>
             <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#helper-functions-for-plotting">Helper functions for plotting</a></li>
 </ul>
@@ -473,10 +531,10 @@ y_t \mid y_{t-1}, z_t &amp;\sim
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7efc7421b590&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.colorbar.Colorbar at 0x7fd7282bd910&gt;
 </pre></div>
 </div>
-<img alt="../../_images/293841fafe66613d79d2a91df9d4fd7ca0cec0e3c68be1e38c86db063ba3030a.png" src="../../_images/293841fafe66613d79d2a91df9d4fd7ca0cec0e3c68be1e38c86db063ba3030a.png" />
+<img alt="../../_images/998ed81652cfa2c00ffcbc1d60abd2e0a27c5ecf75166f5b31388e457c493fbb.png" src="../../_images/998ed81652cfa2c00ffcbc1d60abd2e0a27c5ecf75166f5b31388e457c493fbb.png" />
 </div>
 </div>
 <section id="construct-and-plot-the-autoregressive-dynamics-distributions">
@@ -539,7 +597,7 @@ p(y_t \mid y_{t-1}, z_t=k) &amp;= \mathrm{N}(y_t \mid A_k y_{t-1} + b_k, Q_k)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/e4e591c42e6a77153e7ac36be44dd388f12897a639e80a9a3be524d96d6ca99f.png" src="../../_images/e4e591c42e6a77153e7ac36be44dd388f12897a639e80a9a3be524d96d6ca99f.png" />
+<img alt="../../_images/bb41fc67d40148be0f436ad71cef3e6a31ea8869282eb340739632db2a5520a0.png" src="../../_images/bb41fc67d40148be0f436ad71cef3e6a31ea8869282eb340739632db2a5520a0.png" />
 </div>
 </div>
 <div class="admonition note">
@@ -597,7 +655,7 @@ f_k(y^star) &amp;= y^star
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Sampled trajectory from an AR-HMM, color-coded by discrete state&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/9bc98eeb596b15ff073b1288448efbfd4c3d09d3c746f7ce79e5c8ab241fdc60.png" src="../../_images/9bc98eeb596b15ff073b1288448efbfd4c3d09d3c746f7ce79e5c8ab241fdc60.png" />
+<img alt="../../_images/270909d22706474e59495453daa8afdb91f3079a6d30ba97871a557f7b037ac9.png" src="../../_images/270909d22706474e59495453daa8afdb91f3079a6d30ba97871a557f7b037ac9.png" />
 </div>
 </div>
 <p>Below, we visualize each component of of the observation variable as a time series. The colors correspond to the latent state. The dotted lines represent the stationary point of the autoregressive process for state <span class="math notranslate nohighlight">\(k\)</span> (see note above), while the solid lines are the actual observations sampled from the HMM.</p>
@@ -629,7 +687,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a9fa70e33147e8c86f1c3cae5ce6f19353d37f6a6faddf49c296d520ec1dd980.png" src="../../_images/a9fa70e33147e8c86f1c3cae5ce6f19353d37f6a6faddf49c296d520ec1dd980.png" />
+<img alt="../../_images/656d245ef9f55fbcbaf908303ee805326e11ec4f0f6bf6eaeff58a3c69e75255.png" src="../../_images/656d245ef9f55fbcbaf908303ee805326e11ec4f0f6bf6eaeff58a3c69e75255.png" />
 </div>
 </div>
 </section>
@@ -692,7 +750,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/cd69b1e87ab43aa66f58335857fb49ecb10a38c903f3247c91d141a97b48bc51.png" src="../../_images/cd69b1e87ab43aa66f58335857fb49ecb10a38c903f3247c91d141a97b48bc51.png" />
+<img alt="../../_images/2035ccac4cfe020febf87a4834aea108320162f7c397f421cc2f59467c1ec64f.png" src="../../_images/2035ccac4cfe020febf87a4834aea108320162f7c397f421cc2f59467c1ec64f.png" />
 </div>
 </div>
 </section>
@@ -733,7 +791,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/acc9d177febb7fdf2c8450a86ff10a47602a4d8fd33c9f89a0ab76ab8d577138.png" src="../../_images/acc9d177febb7fdf2c8450a86ff10a47602a4d8fd33c9f89a0ab76ab8d577138.png" />
+<img alt="../../_images/13f40722ef09313ffb66aadd60c39ca4cc38ca2ea175ce5cb1767bf82dd6bd25.png" src="../../_images/13f40722ef09313ffb66aadd60c39ca4cc38ca2ea175ce5cb1767bf82dd6bd25.png" />
 </div>
 </div>
 <p>As in the Gaussian HMM notebook, we see that the inferred dynamics closely match the true dynamics, up to label switching. Again, we could find the best permutation to align true and inferred states using the <code class="docutils literal notranslate"><span class="pre">find_permutation</span></code> function described in the Gaussian HMM notebook.</p>
@@ -773,7 +831,7 @@ f_k(y^star) &amp;= y^star
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d6b9e42b8a67975565e2cf7427c117966e92f85fe2566745cd4c131b3655cf78.png" src="../../_images/d6b9e42b8a67975565e2cf7427c117966e92f85fe2566745cd4c131b3655cf78.png" />
+<img alt="../../_images/94e1ce3a13917a6f3a8c9492e0fca258a56097c228b83172b18a755255cd8929.png" src="../../_images/94e1ce3a13917a6f3a8c9492e0fca258a56097c228b83172b18a755255cd8929.png" />
 </div>
 </div>
 </section>
@@ -807,7 +865,7 @@ f_k(y^star) &amp;= y^star
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Sampled trajectory from a fitted AR-HMM, color-coded by discrete state&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/fb57daa1ebc162d4fd8472354f34bcbec7d7fa64a05359d4e68db64a363c3bc3.png" src="../../_images/fb57daa1ebc162d4fd8472354f34bcbec7d7fa64a05359d4e68db64a363c3bc3.png" />
+<img alt="../../_images/16940289c24f02688a3e4e7d082b8ec2cc35850daca9106d59fa96ff8e971043.png" src="../../_images/16940289c24f02688a3e4e7d082b8ec2cc35850daca9106d59fa96ff8e971043.png" />
 </div>
 </div>
 </section>
@@ -863,7 +921,7 @@ f_k(y^star) &amp;= y^star
     <i class="fa-solid fa-list"></i> Contents
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#helper-functions-for-plotting">Helper functions for plotting</a></li>
 </ul>
@@ -929,8 +987,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

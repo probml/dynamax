@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -47,6 +47,7 @@
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/generalized_gaussian_ssm/cmgf_logistic_regression_demo';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Online learning of an MLP Classifier using conditional moments Gaussian filter" href="cmgf_mlp_classification_demo.html" />
@@ -54,20 +55,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -93,7 +100,51 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
     </header>
   
 
@@ -311,11 +362,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -343,7 +401,7 @@
                 <h2> Contents </h2>
             </div>
             <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#imports">Imports</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-and-plotting">Simulation and Plotting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-posterior-predictive">Visualizing the posterior predictive</a></li>
@@ -483,7 +541,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ad451b154d4e7dd3fa3e60e6ee1d795a0771c2bcaa527ddf89b53b720e65cae0.png" src="../../_images/ad451b154d4e7dd3fa3e60e6ee1d795a0771c2bcaa527ddf89b53b720e65cae0.png" />
+<img alt="../../_images/08a30eace3822f79d2631d0b23aff9c6fff81159659d6cb912bc47bb9197fe2f.png" src="../../_images/08a30eace3822f79d2631d0b23aff9c6fff81159659d6cb912bc47bb9197fe2f.png" />
 </div>
 </div>
 </section>
@@ -664,7 +722,7 @@ p(\theta \mid \mathbf{X}, \mathbf{y})
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Posterior predictive with Laplace approximation&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/e43b53ddadcd6c984941c96cafd54eb280ef42edb9f7c9f2525244483a6492f8.png" src="../../_images/e43b53ddadcd6c984941c96cafd54eb280ef42edb9f7c9f2525244483a6492f8.png" />
+<img alt="../../_images/93081094f45577830849c69ef136387340feb367328117dac783c305b3e008c7.png" src="../../_images/93081094f45577830849c69ef136387340feb367328117dac783c305b3e008c7.png" />
 </div>
 </div>
 </section>
@@ -765,7 +823,7 @@ p(\theta \mid \mathbf{X}, \mathbf{y})
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/6445a1219cb7002b1d1381c10d41c7455460cf2e44198b686ed54b5612409c9f.png" src="../../_images/6445a1219cb7002b1d1381c10d41c7455460cf2e44198b686ed54b5612409c9f.png" />
+<img alt="../../_images/e97fdbb78f8ea35af4ad4441ab97bfa001dc827ee631f8816e12bbf8426148e7.png" src="../../_images/e97fdbb78f8ea35af4ad4441ab97bfa001dc827ee631f8816e12bbf8426148e7.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -779,7 +837,7 @@ p(\theta \mid \mathbf{X}, \mathbf{y})
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.05, &#39;Online inference of weights with CMGF-EKF&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/4f4804c941fc9ea27bef79a263147f1bd41e7de1e2dcac4b268462b8a8cda538.png" src="../../_images/4f4804c941fc9ea27bef79a263147f1bd41e7de1e2dcac4b268462b8a8cda538.png" />
+<img alt="../../_images/15f0c6f9484706fbcb3d5e2e24a860523622cab083e0057ce22d5e9db5ea17c2.png" src="../../_images/15f0c6f9484706fbcb3d5e2e24a860523622cab083e0057ce22d5e9db5ea17c2.png" />
 </div>
 </div>
 </section>
@@ -804,7 +862,7 @@ p(\theta \mid \mathbf{X}, \mathbf{y})
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ed0c5048213142b9521c19001b55a05decc13f7d42388f4aacd22b697cdf0a0f.png" src="../../_images/ed0c5048213142b9521c19001b55a05decc13f7d42388f4aacd22b697cdf0a0f.png" />
+<img alt="../../_images/f4a4855feffe6d0612356902245f08d061cd391f6b236907244b1b095f647047.png" src="../../_images/f4a4855feffe6d0612356902245f08d061cd391f6b236907244b1b095f647047.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -818,7 +876,7 @@ p(\theta \mid \mathbf{X}, \mathbf{y})
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.05, &#39;Online inference of weights with CMGF-UKF&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/489e43deb990f5b4fd77cd3b7bf6548032b48261355c914ea314cdc3d2b2a502.png" src="../../_images/489e43deb990f5b4fd77cd3b7bf6548032b48261355c914ea314cdc3d2b2a502.png" />
+<img alt="../../_images/eabfa794880b1b4885b3d7a413c466c4f859bb197278e4a18e6688b17a8574b1.png" src="../../_images/eabfa794880b1b4885b3d7a413c466c4f859bb197278e4a18e6688b17a8574b1.png" />
 </div>
 </div>
 </section>
@@ -843,7 +901,7 @@ p(\theta \mid \mathbf{X}, \mathbf{y})
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/2d5e9dfa7cc1ed96caf05692070f0d618411390223ceda7e8a4186f36dfcf150.png" src="../../_images/2d5e9dfa7cc1ed96caf05692070f0d618411390223ceda7e8a4186f36dfcf150.png" />
+<img alt="../../_images/70afe93aa250f78a041f1499c00d8b960d9b03c9007a8e04a90b0f3b8fe6bf89.png" src="../../_images/70afe93aa250f78a041f1499c00d8b960d9b03c9007a8e04a90b0f3b8fe6bf89.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -857,7 +915,7 @@ p(\theta \mid \mathbf{X}, \mathbf{y})
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.05, &#39;Online inference of weights with CMGF-GHKF&#39;)
 </pre></div>
 </div>
-<img alt="../../_images/0927e64bebdd84fc4810b33d1e6464d52d2b4ae4c42b44b0099cc0b3c5682004.png" src="../../_images/0927e64bebdd84fc4810b33d1e6464d52d2b4ae4c42b44b0099cc0b3c5682004.png" />
+<img alt="../../_images/2e73f440cecbee0e7371d3b6547cccf79007166735e08224b81f0649cc2af2e1.png" src="../../_images/2e73f440cecbee0e7371d3b6547cccf79007166735e08224b81f0649cc2af2e1.png" />
 </div>
 </div>
 </section>
@@ -916,7 +974,7 @@ p(\theta \mid \mathbf{X}, \mathbf{y})
     <i class="fa-solid fa-list"></i> Contents
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#imports">Imports</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-and-plotting">Simulation and Plotting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-posterior-predictive">Visualizing the posterior predictive</a></li>
@@ -978,8 +1036,8 @@ By Peter Chang, Giles Harper-Donnelly, Aleyna Kara, Xinglong Li, Scott Linderman
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>
