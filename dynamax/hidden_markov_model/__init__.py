@@ -10,6 +10,8 @@ from dynamax.hidden_markov_model.models.linreg_hmm import LinearRegressionHMM
 from dynamax.hidden_markov_model.models.logreg_hmm import LogisticRegressionHMM
 from dynamax.hidden_markov_model.models.multinomial_hmm import MultinomialHMM
 from dynamax.hidden_markov_model.models.poisson_hmm import PoissonHMM
+from dynamax.hidden_markov_model.models.inputdriven_linreg_hmm import InputDrivenLinearRegressionHMM
+from dynamax.hidden_markov_model.models.inputdriven_categoricalreg_hmm import InputDrivenCategoricalRegressionHMM
 
 from dynamax.hidden_markov_model.inference import HMMPosterior
 from dynamax.hidden_markov_model.inference import HMMPosteriorFiltered

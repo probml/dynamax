@@ -26,6 +26,8 @@ CONFIGS = [
     (models.LogisticRegressionHMM, dict(num_states=4, input_dim=5), jnp.ones((NUM_TIMESTEPS, 5))),
     (models.MultinomialHMM, dict(num_states=4, emission_dim=3, num_classes=5, num_trials=10), None),
     (models.PoissonHMM, dict(num_states=4, emission_dim=3), None),
+    (models.InputDrivenLinearRegressionHMM, dict(num_states=3, emission_dim=3, input_dim=2), jr.normal(jr.PRNGKey(0),(NUM_TIMESTEPS, 2))),
+    (models.InputDrivenCategoricalRegressionHMM, dict(num_states=3, num_classes=3, input_dim=2), jnp.ones((NUM_TIMESTEPS, 2))),
 ]
 
 
@@ -102,6 +104,23 @@ def test_sample_and_fit_arhmm():
     fitted_params, lps = arhmm.fit_em(params, param_props, emissions, inputs=inputs, num_iters=10)
     assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
     fitted_params, lps = arhmm.fit_sgd(params, param_props, emissions, inputs=inputs, num_epochs=10)
+
+
+def test_transitions_and_initial_state_depend_on_inputs():
+    """Test that the initial-state and transition distributions change with the input."""
+    hmm = models.InputDrivenLinearRegressionHMM(num_states=3, input_dim=5, emission_dim=3)
+    params, _ = hmm.initialize(jr.PRNGKey(0))
+
+    u_a = -3.0 * jnp.ones(5)
+    u_b = 3.0 * jnp.ones(5)
+
+    init_a = hmm.initial_distribution(params, u_a).probs_parameter()
+    init_b = hmm.initial_distribution(params, u_b).probs_parameter()
+    assert not jnp.allclose(init_a, init_b, atol=1e-3)
+
+    trans_a = hmm.transition_distribution(params, 0, u_a).probs_parameter()
+    trans_b = hmm.transition_distribution(params, 0, u_b).probs_parameter()
+    assert not jnp.allclose(trans_a, trans_b, atol=1e-3)
 
 
 # @pytest.mark.skip(reason="this would introduce a torch dependency")
