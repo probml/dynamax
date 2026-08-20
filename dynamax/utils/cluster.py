@@ -3,7 +3,7 @@
 from functools import partial
 from typing import NamedTuple
 
-from jax import jit, lax, vmap
+from jax import jit, lax
 from jax import numpy as jnp
 from jax import random as jr
 from jaxtyping import Array, Float, Int
@@ -140,8 +140,11 @@ def kmeans(
     """Cluster `X` into `k` groups with Lloyd's algorithm and k-means++ seeding.
 
     Runs `n_init` independent restarts and returns the one with the lowest inertia,
-    because a single restart can settle in a poor local optimum. Restarts are
-    vectorized with `vmap`, so they cost little more than one run on an accelerator.
+    because a single restart can settle in a poor local optimum. Restarts run
+    sequentially via `lax.map`, so peak memory stays independent of `n_init`
+    instead of scaling with it as a vectorized batch would. This is also faster
+    in practice, since each restart exits at its own convergence rather than
+    the whole batch waiting for the slowest one.
 
     Args:
         X: samples to cluster.
@@ -176,7 +179,7 @@ def kmeans(
         centroids, _, inertia, n_iter = lax.while_loop(cond, body, carry)
         return KMeansState(centroids, _assign(X, centroids), inertia, n_iter)
 
-    restarts = vmap(single_run)(jr.split(key, n_init))
+    restarts = lax.map(single_run, jr.split(key, n_init))
     best = jnp.argmin(restarts.inertia)
     return KMeansState(
         restarts.centroids[best],
