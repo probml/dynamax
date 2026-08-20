@@ -75,18 +75,21 @@ def test_kmeans_is_deterministic_given_key():
 
 
 def test_kmeans_restarts_beat_single_init():
-    """n_init restarts find an optimum at least as good as a single restart."""
-    key = jr.PRNGKey(0)
-    means = jnp.array([[-4.0, -4.0], [0.0, 0.0], [4.0, 4.0], [8.0, -4.0]])
-    x = jnp.concatenate([m + 0.6 * jr.normal(k, (60, 2)) for m, k in zip(means, jr.split(key, 4))])
-    # Seed 3 lands in a bad local optimum with a single initialization.
-    single = kmeans(x, 4, jr.PRNGKey(3), n_init=1)
-    many = kmeans(x, 4, jr.PRNGKey(3), n_init=10)
-    # Not a hard invariant: single/many draw from disjoint key streams (jr.split(key, 1)
-    # vs jr.split(key, 10)), so this ordering is empirical, not structural. The real
-    # signal is the inertia threshold below.
-    assert many.inertia <= single.inertia
-    assert many.inertia < 200.0  # the good optimum; the bad one is ~1045
+    """Restarts still buy quality that better seeding alone cannot.
+
+    Greedy k-means++ scores every candidate against the centroids already chosen,
+    so it cannot recover from a bad early commitment; only a fresh restart
+    resamples one. On this fixture a single initialization reaches a bad optimum
+    on most seeds regardless of how many candidates each step considers, which is
+    why n_init stays above 1 by default.
+    """
+    means = 4.0 * jr.normal(jr.PRNGKey(11), (5, 2))
+    idx = jr.randint(jr.PRNGKey(12), (1000,), 0, 5)
+    x = means[idx] + 0.7 * jr.normal(jr.PRNGKey(13), (1000, 2))
+    single = min(float(kmeans(x, 5, jr.PRNGKey(s), n_init=1).inertia) for s in range(6))
+    many = min(float(kmeans(x, 5, jr.PRNGKey(s), n_init=10).inertia) for s in range(6))
+    assert many <= single
+    assert many < 900.0  # the good optimum is 883.9; the bad one is ~1048
 
 
 def test_kmeans_single_init_finds_optimum_on_separated_blobs():
@@ -103,6 +106,16 @@ def test_kmeans_single_init_finds_optimum_on_separated_blobs():
     for seed in range(8):
         inertia = kmeans(x, 4, jr.PRNGKey(seed), n_init=1).inertia
         assert inertia < 200.0, f"seed {seed} landed in a bad local optimum (inertia {inertia:.1f})"
+
+
+def test_kmeans_n_local_trials_is_configurable():
+    """n_local_trials is honored, and one trial reproduces plain k-means++."""
+    key = jr.PRNGKey(0)
+    means = jnp.array([[-4.0, -4.0], [0.0, 0.0], [4.0, 4.0], [8.0, -4.0]])
+    x = jnp.concatenate([m + 0.6 * jr.normal(k, (60, 2)) for m, k in zip(means, jr.split(key, 4))])
+    # Seed 0 is one of the seeds a single candidate per step gets wrong.
+    assert kmeans(x, 4, jr.PRNGKey(0), n_init=1, n_local_trials=1).inertia > 200.0
+    assert kmeans(x, 4, jr.PRNGKey(0), n_init=1, n_local_trials=16).inertia < 200.0
 
 
 def test_kmeans_is_jittable_and_vmappable():
