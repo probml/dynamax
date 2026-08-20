@@ -141,10 +141,12 @@ def kmeans(
 
     Runs `n_init` independent restarts and returns the one with the lowest inertia,
     because a single restart can settle in a poor local optimum. Restarts run
-    sequentially via `lax.map`, so peak memory stays independent of `n_init`
-    instead of scaling with it as a vectorized batch would. This is also faster
-    in practice, since each restart exits at its own convergence rather than
-    the whole batch waiting for the slowest one.
+    sequentially via `lax.map` rather than as one vectorized batch: batching
+    materializes a `(n_init, num_samples, k)` distance temporary, whereas
+    `lax.map` only stacks each restart's `(num_samples,)` assignments, so peak
+    memory grows `k` times more slowly in `n_init`. On CPU this is also faster,
+    since each restart exits at its own convergence instead of the whole batch
+    running until the slowest one converges.
 
     Args:
         X: samples to cluster.
