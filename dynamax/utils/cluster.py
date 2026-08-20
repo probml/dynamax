@@ -1,102 +1,178 @@
+"""K-means clustering in JAX, used to initialize HMM emission parameters."""
+
 from functools import partial
-from jax import lax, jit
+from typing import NamedTuple
+
+from jax import jit, lax, vmap
 from jax import numpy as jnp
 from jax import random as jr
-from jaxtyping import Array, Int, Float
-from typing import NamedTuple, Tuple
+from jaxtyping import Array, Float, Int
 
-
-def kmeans_sklearn(
-    k: int, X: Float[Array, "num_samples state_dim"], key: Array
-) -> Tuple[Float[Array, "num_states state_dim"], Float[Array, "num_samples"]]:
-    """
-    Compute the cluster centers and assignments using the sklearn K-means algorithm.
-
-    Args:
-        k (int): The number of clusters.
-        X (Array(N, D)): The input data array. N samples of dimension D.
-        key (Array): The random seed array.
-
-    Returns:
-        Array(k, D), Array(N,): The cluster centers and labels
-    """
-    from sklearn.cluster import KMeans
-
-    key, subkey = jr.split(key)  # Create a random seed for SKLearn.
-    sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-    km = KMeans(k, random_state=int(sklearn_key)).fit(X)
-    return jnp.array(km.cluster_centers_), jnp.array(km.labels_)
+from dynamax.types import PRNGKeyT, Scalar
 
 
 class KMeansState(NamedTuple):
-    centroids: Float[Array, "num_states state_dim"]
-    assignments: Int[Array, "num_samples"]
-    prev_centroids: Float[Array, "num_states state_dim"]
-    itr: int
+    """Result of a k-means fit.
 
-
-@partial(jit, static_argnums=(1, 3))
-def kmeans_jax(
-    X: Float[Array, "num_samples state_dim"],
-    k: int,
-    key: Array = jr.PRNGKey(0),
-    max_iters: int = 1000,
-) -> KMeansState:
+    Attributes:
+        centroids: cluster centers.
+        assignments: index of the closest centroid for each sample.
+        inertia: sum of squared distances from each sample to its centroid.
+        n_iter: number of Lloyd iterations run by the selected restart.
     """
-    Perform k-means clustering using JAX.
 
-    K-means++ initialization is used to initialize the centroids.
+    centroids: Float[Array, "num_clusters num_features"]
+    assignments: Int[Array, " num_samples"]
+    inertia: Float[Array, ""]
+    n_iter: Int[Array, ""]
+
+
+def _squared_distances(
+    X: Float[Array, "num_samples num_features"],
+    centroids: Float[Array, "num_clusters num_features"],
+) -> Float[Array, "num_samples num_clusters"]:
+    """Compute squared euclidean distances from every sample to every centroid.
+
+    Expands ||x - c||^2 to ||x||^2 - 2 x.c + ||c||^2 so that no
+    (num_samples, num_clusters, num_features) intermediate is materialized.
+    """
+    return (
+        jnp.sum(X**2, axis=1)[:, None]
+        - 2.0 * X @ centroids.T
+        + jnp.sum(centroids**2, axis=1)[None, :]
+    )
+
+
+def _assign(
+    X: Float[Array, "num_samples num_features"],
+    centroids: Float[Array, "num_clusters num_features"],
+) -> Int[Array, " num_samples"]:
+    """Assign each sample to its closest centroid."""
+    return jnp.argmin(_squared_distances(X, centroids), axis=1)
+
+
+def _update_centroids(
+    X: Float[Array, "num_samples num_features"],
+    assignments: Int[Array, " num_samples"],
+    num_clusters: int,
+    previous: Float[Array, "num_clusters num_features"],
+) -> Float[Array, "num_clusters num_features"]:
+    """Recompute centroids as the mean of their assigned samples.
+
+    A cluster that captured no samples retains its previous centroid. Averaging an
+    empty cluster would produce NaN, which propagates into the emission parameters
+    and also prevents the fixed-point loop from ever terminating.
+    """
+    num_features = X.shape[1]
+    sums = jnp.zeros((num_clusters, num_features), X.dtype).at[assignments].add(X)
+    counts = jnp.zeros((num_clusters,), X.dtype).at[assignments].add(1.0)
+    means = sums / jnp.maximum(counts, 1.0)[:, None]
+    return jnp.where(counts[:, None] > 0, means, previous)
+
+
+def _inertia(
+    X: Float[Array, "num_samples num_features"],
+    centroids: Float[Array, "num_clusters num_features"],
+) -> Float[Array, ""]:
+    """Sum of squared distances from each sample to its closest centroid."""
+    return jnp.sum(jnp.min(_squared_distances(X, centroids), axis=1))
+
+
+def _kmeans_plusplus(
+    key: PRNGKeyT,
+    X: Float[Array, "num_samples num_features"],
+    num_clusters: int,
+) -> Float[Array, "num_clusters num_features"]:
+    """Choose initial centroids with k-means++.
+
+    Samples each successive centroid with probability proportional to its squared
+    distance from the closest already-chosen centroid. This spreads the initial
+    centroids out, which converges faster and more reliably than a uniform draw.
+    Ref: Arthur, D., & Vassilvitskii, S. (2006). "k-means++: the advantages of
+    careful seeding."
+    """
+    num_samples, num_features = X.shape
+    key, subkey = jr.split(key)
+    centroids = jnp.zeros((num_clusters, num_features), X.dtype).at[0].set(jr.choice(subkey, X))
+
+    def step(carry, _):
+        """Sample one additional centroid proportional to squared distance."""
+        centroids, i, key = carry
+        key, subkey = jr.split(key)
+        # Mask the not-yet-chosen centroid slots so their zeros do not skew distances.
+        distances = jnp.where(
+            (jnp.arange(num_clusters) < i)[None, :],
+            _squared_distances(X, centroids),
+            jnp.inf,
+        )
+        min_distances = jnp.min(distances, axis=1)
+        total = jnp.sum(min_distances)
+        # If every sample already sits on a centroid, fall back to a uniform draw.
+        probs = jnp.where(
+            total > 0,
+            min_distances / jnp.where(total > 0, total, 1.0),
+            jnp.ones_like(min_distances) / num_samples,
+        )
+        centroid = jr.choice(subkey, X, p=probs)
+        return (centroids.at[i].set(centroid), i + 1, key), None
+
+    (centroids, _, _), _ = lax.scan(step, (centroids, 1, key), None, length=num_clusters - 1)
+    return centroids
+
+
+@partial(jit, static_argnames=("k", "max_iters", "n_init"))
+def kmeans(
+    X: Float[Array, "num_samples num_features"],
+    k: int,
+    key: PRNGKeyT,
+    max_iters: int = 100,
+    tol: Scalar = 1e-6,
+    n_init: int = 10,
+) -> KMeansState:
+    """Cluster `X` into `k` groups with Lloyd's algorithm and k-means++ seeding.
+
+    Runs `n_init` independent restarts and returns the one with the lowest inertia,
+    because a single restart can settle in a poor local optimum. Restarts are
+    vectorized with `vmap`, so they cost little more than one run on an accelerator.
 
     Args:
-        X (Array): The input data array of shape (n_samples, n_features).
-        k (int): The number of clusters.
-        max_iters (int, optional): The maximum number of iterations. Defaults to 1000.
-        key (PRNGKey, optional): The random key for initialization. Defaults to jr.PRNGKey(0).
+        X: samples to cluster.
+        k: number of clusters. Static: changing it triggers recompilation.
+        key: random seed for k-means++ initialization.
+        max_iters: cap on Lloyd iterations per restart. Static.
+        tol: stop once an iteration improves inertia by no more than this.
+        n_init: number of independent restarts. Static.
 
     Returns:
-        KMeansState: A named tuple containing the final centroids array of shape (k, n_features),
-        the assignments array of shape (n_samples,) indicating the cluster index for each sample,
-        the previous centroids array of shape (k, n_features), and the number of iterations.
+        The best `KMeansState` across restarts.
     """
 
-    def _update_centroids(X: Array, assignments: Array):
-        new_centroids = jnp.array([jnp.mean(X, axis=0, where=(assignments == i)[:, None]) for i in range(k)])
-        return new_centroids
+    def single_run(key: PRNGKeyT) -> KMeansState:
+        """Run one restart of Lloyd's algorithm from a k-means++ seeding."""
 
-    def _update_assignments(X, centroids):
-        return jnp.argmin(jnp.linalg.norm(X[:, None] - centroids, axis=2), axis=1)
+        def cond(carry):
+            """Continue while inertia is still improving by more than tol."""
+            _, previous_inertia, inertia, i = carry
+            return (i < max_iters) & (previous_inertia - inertia > tol)
 
-    def body(carry: KMeansState):
-        centroids, assignments, *_ = carry
-        new_centroids = _update_centroids(X, assignments)
-        new_assignments = _update_assignments(X, new_centroids)
-        return KMeansState(new_centroids, new_assignments, centroids, carry.itr + 1)
+        def body(carry):
+            """Run one Lloyd iteration: reassign samples, then recompute centroids."""
+            centroids, _, inertia, i = carry
+            assignments = _assign(X, centroids)
+            new_centroids = _update_centroids(X, assignments, k, centroids)
+            return new_centroids, inertia, _inertia(X, new_centroids), i + 1
 
-    def cond(carry: KMeansState):
-        return jnp.any(carry.centroids != carry.prev_centroids) & (carry.itr < max_iters)
+        initial = _kmeans_plusplus(key, X, k)
+        centroids = _update_centroids(X, _assign(X, initial), k, initial)
+        carry = (centroids, jnp.inf, _inertia(X, centroids), 1)
+        centroids, _, inertia, n_iter = lax.while_loop(cond, body, carry)
+        return KMeansState(centroids, _assign(X, centroids), inertia, n_iter)
 
-    def init(key):
-        """kmeans++ initialization of centroids
-
-        Iteratively sample new centroids with probability proportional to the squared distance
-        from the closest centroid. This initialization method is more stable than random
-        initialization and leads to faster convergence.
-        Ref: Arthur, D., & Vassilvitskii, S. (2006).
-        """
-        centroids = jnp.zeros((k, X.shape[1]))
-        centroids = centroids.at[0, :].set(jr.choice(key, X))
-        for i in range(1, k):
-            squared_diffs = jnp.sum((X[:, None, :] - centroids[None, :i, :]) ** 2, axis=2)
-            min_squared_dists = jnp.min(squared_diffs, axis=1)
-            probs = min_squared_dists / jnp.sum(min_squared_dists)
-            centroids = centroids.at[i, :].set(jr.choice(key, X, p=probs))
-        assignments = _update_assignments(X, centroids)
-        # Perform one iteration to update centroids
-        updated_centroids = _update_centroids(X, assignments)
-        updated_assignments = _update_assignments(X, updated_centroids)
-        return KMeansState(updated_centroids, updated_assignments, centroids, 1)
-
-    init_state = init(key)
-    state = lax.while_loop(cond, body, init_state)
-
-    return state
+    restarts = vmap(single_run)(jr.split(key, n_init))
+    best = jnp.argmin(restarts.inertia)
+    return KMeansState(
+        restarts.centroids[best],
+        restarts.assignments[best],
+        restarts.inertia[best],
+        restarts.n_iter[best],
+    )
