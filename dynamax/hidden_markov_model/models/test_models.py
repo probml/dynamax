@@ -235,7 +235,8 @@ def test_logreg_hmm_kmeans_finite_bias_with_saturated_cluster():
     straight into the logit used to produce +/-inf biases even though the existing
     NaN guard (for genuinely empty clusters) passed. Construct inputs as two
     well-separated blobs so kmeans reliably keeps them apart, and make one blob's
-    emissions uniformly 0 so its cluster mean is guaranteed to saturate at 0.0.
+    emissions uniformly 0 and the other uniformly 1, so the cluster means saturate
+    at both 0.0 and 1.0 and exercise both the lower and upper clip bounds.
     """
     from dynamax.hidden_markov_model.models.logreg_hmm import LogisticRegressionHMMEmissions
 
@@ -246,12 +247,14 @@ def test_logreg_hmm_kmeans_finite_bias_with_saturated_cluster():
     ], axis=0)
     emissions = jnp.concatenate([
         jnp.zeros(10),
-        jnp.array([0., 1., 0., 1., 0., 1., 0., 1., 0., 1.]),
+        jnp.ones(10),
     ], axis=0)
 
     for seed in range(10):
         params, _ = emission_component.initialize(
             jr.PRNGKey(seed), method="kmeans", emissions=emissions, inputs=inputs)
         assert jnp.all(jnp.isfinite(params.biases)), f"seed {seed} produced a non-finite bias"
-        # Sanity check that this seed really did hit the saturated-cluster case.
+        # Sanity check that this seed really did hit both the low- and high-saturated
+        # cluster cases (the clip's eps floor and its 1 - eps ceiling).
         assert jnp.any(params.biases < 0)
+        assert jnp.any(params.biases > 0)
