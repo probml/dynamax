@@ -35,11 +35,19 @@ def _squared_distances(
 
     Expands ||x - c||^2 to ||x||^2 - 2 x.c + ||c||^2 so that no
     (num_samples, num_clusters, num_features) intermediate is materialized.
+    Centers both operands on the sample mean first: the uncentered expansion
+    is not offset-stable in float32 and returns negative "squared" distances
+    once the data sits a few orders of magnitude from the origin, which
+    silently corrupts both clustering and n_init restart selection.
     """
-    return (
-        jnp.sum(X**2, axis=1)[:, None]
-        - 2.0 * X @ centroids.T
-        + jnp.sum(centroids**2, axis=1)[None, :]
+    offset = jnp.mean(X, axis=0)
+    centered_X = X - offset
+    centered_centroids = centroids - offset
+    return jnp.maximum(
+        jnp.sum(centered_X**2, axis=1)[:, None]
+        - 2.0 * centered_X @ centered_centroids.T
+        + jnp.sum(centered_centroids**2, axis=1)[None, :],
+        0.0,
     )
 
 
@@ -65,7 +73,7 @@ def _update_centroids(
     """
     num_features = X.shape[1]
     sums = jnp.zeros((num_clusters, num_features), X.dtype).at[assignments].add(X)
-    counts = jnp.zeros((num_clusters,), X.dtype).at[assignments].add(1.0)
+    counts = jnp.zeros((num_clusters,), X.dtype).at[assignments].add(jnp.ones((), X.dtype))
     means = sums / jnp.maximum(counts, 1.0)[:, None]
     return jnp.where(counts[:, None] > 0, means, previous)
 

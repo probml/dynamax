@@ -81,6 +81,9 @@ def test_kmeans_restarts_beat_single_init():
     # Seed 3 lands in a bad local optimum with a single initialization.
     single = kmeans(x, 4, jr.PRNGKey(3), n_init=1)
     many = kmeans(x, 4, jr.PRNGKey(3), n_init=10)
+    # Not a hard invariant: single/many draw from disjoint key streams (jr.split(key, 1)
+    # vs jr.split(key, 10)), so this ordering is empirical, not structural. The real
+    # signal is the inertia threshold below.
     assert many.inertia <= single.inertia
     assert many.inertia < 200.0  # the good optimum; the bad one is ~1045
 
@@ -96,3 +99,23 @@ def test_kmeans_is_jittable_and_vmappable():
 
     single = jit(lambda d, k: kmeans(d, 3, k))(x[0], keys[0])
     assert jnp.allclose(single.centroids, batched.centroids[0])
+
+
+def test_kmeans_stable_at_large_offset():
+    """Squared distances stay non-negative and assignments stay correct far from the origin.
+
+    Regression test: expanding ||x - c||^2 to ||x||^2 - 2 x.c + ||c||^2 without first
+    centering on the data is not offset-stable in float32 and can return negative
+    "squared" distances, which silently corrupts both clustering and n_init restart
+    selection (kmeans picks the restart with the lowest, possibly negative, inertia).
+    """
+    key = jr.PRNGKey(0)
+    means = jnp.array([[-6.0, -6.0], [0.0, 0.0], [6.0, 6.0]])
+    x = jnp.concatenate([m + 0.3 * jr.normal(k, (40, 2)) for m, k in zip(means, jr.split(key, 3))])
+    x_shifted = x + 1e5
+    state = kmeans(x_shifted, 3, jr.PRNGKey(1))
+    assert state.inertia >= 0
+    true_labels = jnp.repeat(jnp.arange(3), 40)
+    for blob in range(3):
+        assert jnp.unique(state.assignments[true_labels == blob]).size == 1
+    assert jnp.unique(state.assignments).size == 3
