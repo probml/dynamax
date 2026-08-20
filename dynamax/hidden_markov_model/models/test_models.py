@@ -258,3 +258,39 @@ def test_logreg_hmm_kmeans_finite_bias_with_saturated_cluster():
         # cluster cases (the clip's eps floor and its 1 - eps ceiling).
         assert jnp.any(params.biases < 0)
         assert jnp.any(params.biases > 0)
+
+
+def test_initialize_kmeans_is_jax_transformable():
+    """Kmeans initialization must stay compatible with `jax.jit` and `jax.vmap`.
+
+    `LogisticRegressionHMMEmissions.initialize`'s kmeans branch computes each
+    cluster's emission mean with `jnp.mean(flat_emissions, where=(assignments == k))`.
+    The seemingly-equivalent `flat_emissions[assignments == k].mean()` also passes
+    eagerly, but it boolean-mask-indexes with a *traced* array, which produces a
+    variable-shaped intermediate. That is illegal under `jax.jit`/`jax.vmap` (it
+    raises `NonConcreteBooleanIndexError`), even though nothing catches it outside
+    a JAX transformation. If this test starts failing with that error, the fix is
+    to restore the `where=` form in the kmeans branch of `initialize` -- not to
+    delete this test.
+    """
+    num_states, input_dim = 4, 5
+    hmm = models.LogisticRegressionHMM(num_states=num_states, input_dim=input_dim)
+    key1, key2 = jr.split(jr.PRNGKey(0), 2)
+    params, _ = hmm.initialize(key1)
+    inputs = jr.normal(key2, (NUM_TIMESTEPS, input_dim))
+    _, emissions = hmm.sample(params, jr.PRNGKey(1), num_timesteps=NUM_TIMESTEPS, inputs=inputs)
+
+    def init_kmeans(key, emissions, inputs):
+        km_params, _ = hmm.initialize(key, method="kmeans", emissions=emissions, inputs=inputs)
+        return km_params
+
+    jitted_params = jax.jit(init_kmeans)(jr.PRNGKey(2), emissions, inputs)
+    assert jnp.all(jnp.isfinite(jitted_params.emissions.biases))
+
+    batch_size = 3
+    batch_keys = jr.split(jr.PRNGKey(3), batch_size)
+    batch_emissions = jnp.stack([emissions] * batch_size)
+    batch_inputs = jnp.stack([inputs] * batch_size)
+    vmapped_params = vmap(init_kmeans)(batch_keys, batch_emissions, batch_inputs)
+    assert vmapped_params.emissions.biases.shape == (batch_size, num_states)
+    assert jnp.all(jnp.isfinite(vmapped_params.emissions.biases))
