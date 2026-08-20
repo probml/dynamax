@@ -143,10 +143,12 @@ def kmeans(
     because a single restart can settle in a poor local optimum. Restarts run
     sequentially via `lax.map` rather than as one vectorized batch: batching
     materializes a `(n_init, num_samples, k)` distance temporary, whereas
-    `lax.map` only stacks each restart's `(num_samples,)` assignments, so peak
-    memory grows `k` times more slowly in `n_init`. On CPU this is also faster,
-    since each restart exits at its own convergence instead of the whole batch
-    running until the slowest one converges.
+    `lax.map` stacks only each restart's returned state, which is dominated by
+    the `(num_samples,)` assignments whenever `num_samples` exceeds
+    `k * num_features`. Peak memory therefore grows roughly `k` times more
+    slowly in `n_init`. On CPU this is also faster, since each restart exits at
+    its own convergence instead of the whole batch running until the slowest
+    one converges.
 
     Args:
         X: samples to cluster.
