@@ -89,6 +89,22 @@ def test_kmeans_restarts_beat_single_init():
     assert many.inertia < 200.0  # the good optimum; the bad one is ~1045
 
 
+def test_kmeans_single_init_finds_optimum_on_separated_blobs():
+    """A single initialization must reach the good optimum on well-separated blobs.
+
+    Drawing one candidate per k-means++ step lands in a bad local optimum on seeds
+    0, 5 and 7 of this fixture (inertia ~1044, ~1229, ~1044 against an optimum of
+    184.3), which is what forced a high n_init default. Drawing several candidates
+    per step and keeping the one that most reduces inertia fixes all of them.
+    """
+    key = jr.PRNGKey(0)
+    means = jnp.array([[-4.0, -4.0], [0.0, 0.0], [4.0, 4.0], [8.0, -4.0]])
+    x = jnp.concatenate([m + 0.6 * jr.normal(k, (60, 2)) for m, k in zip(means, jr.split(key, 4))])
+    for seed in range(8):
+        inertia = kmeans(x, 4, jr.PRNGKey(seed), n_init=1).inertia
+        assert inertia < 200.0, f"seed {seed} landed in a bad local optimum (inertia {inertia:.1f})"
+
+
 def test_kmeans_is_jittable_and_vmappable():
     """Works under jit and vmap over a batch of datasets."""
     x = jr.normal(jr.PRNGKey(8), (4, 60, 2)) * 2

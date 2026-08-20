@@ -1,5 +1,6 @@
 """K-means clustering in JAX, used to initialize HMM emission parameters."""
 
+import math
 from functools import partial
 from typing import NamedTuple
 
@@ -90,41 +91,55 @@ def _kmeans_plusplus(
     key: PRNGKeyT,
     X: Float[Array, "num_samples num_features"],
     num_clusters: int,
+    n_local_trials: int,
 ) -> Float[Array, "num_clusters num_features"]:
-    """Choose initial centroids with k-means++.
+    """Choose initial centroids with greedy k-means++.
 
     Samples each successive centroid with probability proportional to its squared
     distance from the closest already-chosen centroid. This spreads the initial
     centroids out, which converges faster and more reliably than a uniform draw.
     Ref: Arthur, D., & Vassilvitskii, S. (2006). "k-means++: the advantages of
     careful seeding."
+
+    Each step draws `n_local_trials` candidates from that distribution rather than
+    one, and keeps whichever candidate leaves the lowest total inertia. Drawing a
+    single candidate leaves the seeding at the mercy of one unlucky draw: on
+    well-separated blobs it lands in a bad local optimum on roughly a third of
+    seeds, and recovering from that needs about ten restarts. Greedy selection
+    removes those failures at a cost of one extra `(num_samples, n_local_trials)`
+    distance block per step. Note that trials are not a substitute for restarts --
+    every candidate is scored against the same already-chosen prefix, so no number
+    of trials can undo a bad early commitment.
     """
     num_samples, num_features = X.shape
     key, subkey = jr.split(key)
-    centroids = jnp.zeros((num_clusters, num_features), X.dtype).at[0].set(jr.choice(subkey, X))
+    first = jr.choice(subkey, X)
+    centroids = jnp.zeros((num_clusters, num_features), X.dtype).at[0].set(first)
+    # Distance from every sample to its closest chosen centroid, carried forward
+    # rather than recomputed. Recomputing costs a (num_samples, num_clusters) block
+    # per step; carrying it costs a (num_samples, n_local_trials) block, which is
+    # smaller as soon as n_local_trials < num_clusters and does not grow with k.
+    closest = _squared_distances(X, first[None, :])[:, 0]
 
-    def step(carry, _):
-        """Sample one additional centroid proportional to squared distance."""
-        centroids, i, key = carry
+    def step(carry, i):
+        """Draw several candidate centroids and keep the one minimizing inertia."""
+        centroids, closest, key = carry
         key, subkey = jr.split(key)
-        # Mask the not-yet-chosen centroid slots so their zeros do not skew distances.
-        distances = jnp.where(
-            (jnp.arange(num_clusters) < i)[None, :],
-            _squared_distances(X, centroids),
-            jnp.inf,
-        )
-        min_distances = jnp.min(distances, axis=1)
-        total = jnp.sum(min_distances)
+        total = jnp.sum(closest)
         # If every sample already sits on a centroid, fall back to a uniform draw.
         probs = jnp.where(
             total > 0,
-            min_distances / jnp.where(total > 0, total, 1.0),
-            jnp.ones_like(min_distances) / num_samples,
+            closest / jnp.where(total > 0, total, 1.0),
+            jnp.full((num_samples,), 1.0 / num_samples, closest.dtype),
         )
-        centroid = jr.choice(subkey, X, p=probs)
-        return (centroids.at[i].set(centroid), i + 1, key), None
+        candidate_ids = jr.choice(subkey, num_samples, shape=(n_local_trials,), p=probs)
+        candidates = X[candidate_ids]
+        # Column j holds what `closest` would become if candidate j were chosen.
+        distances = jnp.minimum(closest[:, None], _squared_distances(X, candidates))
+        best = jnp.argmin(jnp.sum(distances, axis=0))
+        return (centroids.at[i].set(candidates[best]), distances[:, best], key), None
 
-    (centroids, _, _), _ = lax.scan(step, (centroids, 1, key), None, length=num_clusters - 1)
+    (centroids, _, _), _ = lax.scan(step, (centroids, closest, key), jnp.arange(1, num_clusters))
     return centroids
 
 
@@ -177,7 +192,7 @@ def kmeans(
             new_centroids = _update_centroids(X, assignments, k, centroids)
             return new_centroids, inertia, _inertia(X, new_centroids), i + 1
 
-        initial = _kmeans_plusplus(key, X, k)
+        initial = _kmeans_plusplus(key, X, k, 2 + int(math.log(k)))
         centroids = _update_centroids(X, _assign(X, initial), k, initial)
         carry = (centroids, jnp.inf, _inertia(X, centroids), 1)
         centroids, _, inertia, n_iter = lax.while_loop(cond, body, carry)
