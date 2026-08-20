@@ -1,6 +1,7 @@
 """Tests for the HMM models."""
 
 import dynamax.hidden_markov_model as models
+import jax
 import jax.numpy as jnp
 import jax.random as jr
 import pytest
@@ -169,3 +170,60 @@ def test_sample_and_fit_arhmm():
 #     test_cov = test_hmm.emission_covariance_matrices.value
 #     assert jnp.alltrue(test_cov.shape == (10, 2, 2))
 #     assert jnp.allclose(jnp.linalg.norm(test_cov-refr_cov, axis=-1), 0., atol=1)
+
+
+# Models whose emissions support kmeans initialization. BernoulliHMM, CategoricalHMM,
+# MultinomialHMM and PoissonHMM deliberately raise NotImplementedError instead.
+KMEANS_CONFIGS = [
+    # (cls, kwargs, inputs, init_takes_inputs)
+    (models.GammaHMM, dict(num_states=4), None, False),
+    (models.GaussianHMM, dict(num_states=4, emission_dim=3), None, False),
+    (models.DiagonalGaussianHMM, dict(num_states=4, emission_dim=3), None, False),
+    (models.SphericalGaussianHMM, dict(num_states=4, emission_dim=3), None, False),
+    (models.SharedCovarianceGaussianHMM, dict(num_states=4, emission_dim=3), None, False),
+    (models.LowRankGaussianHMM, dict(num_states=4, emission_dim=3, emission_rank=1), None, False),
+    (models.GaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None, False),
+    (models.DiagonalGaussianMixtureHMM, dict(num_states=4, num_components=2, emission_dim=3), None, False),
+    (models.LinearRegressionHMM, dict(num_states=3, emission_dim=3, input_dim=5),
+     jr.normal(jr.PRNGKey(0), (NUM_TIMESTEPS, 5)), False),
+    (models.LogisticRegressionHMM, dict(num_states=4, input_dim=5),
+     jr.normal(jr.PRNGKey(0), (NUM_TIMESTEPS, 5)), True),
+]
+
+
+@pytest.mark.parametrize(["cls", "kwargs", "inputs", "init_takes_inputs"], KMEANS_CONFIGS)
+def test_initialize_kmeans(cls, kwargs, inputs, init_takes_inputs):
+    """Test that kmeans initialization produces finite, fittable parameters."""
+    hmm = cls(**kwargs)
+    key1, key2, key3 = jr.split(jr.PRNGKey(42), 3)
+    params, _ = hmm.initialize(key1)
+    _, emissions = hmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS, inputs=inputs)
+
+    # Only LogisticRegressionHMM clusters its inputs, so only it accepts them here.
+    init_kwargs = dict(emissions=emissions)
+    if init_takes_inputs:
+        init_kwargs["inputs"] = inputs
+    km_params, km_props = hmm.initialize(key3, method="kmeans", **init_kwargs)
+
+    # No parameter may come back NaN or infinite; that was the failure mode of an
+    # unguarded empty cluster.
+    for leaf in jax.tree_util.tree_leaves(km_params):
+        assert jnp.all(jnp.isfinite(leaf))
+
+    # The initialization must be usable: EM from it improves monotonically.
+    _, lps = hmm.fit_em(km_params, km_props, emissions, inputs=inputs, num_iters=3, verbose=False)
+    assert monotonically_increasing(lps, atol=1e-2, rtol=1e-2)
+
+
+def test_initialize_kmeans_arhmm():
+    """Test that kmeans initialization works for a LinearAutoregressiveHMM."""
+    arhmm = models.LinearAutoregressiveHMM(num_states=4, emission_dim=2, num_lags=1)
+    key1, key2, key3 = jr.split(jr.PRNGKey(42), 3)
+    params, _ = arhmm.initialize(key1)
+    _, emissions = arhmm.sample(params, key2, num_timesteps=NUM_TIMESTEPS)
+
+    km_params, _ = arhmm.initialize(key3, method="kmeans", emissions=emissions)
+
+    for leaf in jax.tree_util.tree_leaves(km_params):
+        assert jnp.all(jnp.isfinite(leaf))
+    assert km_params.emissions.biases.shape == (4, 2)
