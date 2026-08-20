@@ -14,6 +14,7 @@ from dynamax.hidden_markov_model.models.abstractions import HMM, HMMEmissions, H
 from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState, ParamsStandardHMMInitialState
 from dynamax.hidden_markov_model.models.transitions import StandardHMMTransitions, ParamsStandardHMMTransitions
 from dynamax.types import IntScalar, Scalar
+from dynamax.utils.cluster import kmeans
 
 
 class ParamsLogisticRegressionHMMEmissions(NamedTuple):
@@ -80,16 +81,18 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
             assert inputs is not None, "Need inputs to initialize the model with K-Means!"
-            from sklearn.cluster import KMeans
-
             flat_emissions = emissions.reshape(-1,)
             flat_inputs = inputs.reshape(-1, self.input_dim)
-            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
-            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(flat_inputs)
+
+            assignments = kmeans(flat_inputs, self.num_states, key).assignments
             _emission_weights = jnp.zeros((self.num_states, self.input_dim))
-            _emission_biases = jnp.array([tfb.Sigmoid().inverse(flat_emissions[km.labels_ == k].mean())
-                                          for k in range(self.num_states)])
+            # A cluster with no assigned samples has an undefined mean; fall back to
+            # the pooled mean so the bias stays finite.
+            cluster_means = jnp.array(
+                [jnp.mean(flat_emissions, where=(assignments == k)) for k in range(self.num_states)]
+            )
+            cluster_means = jnp.where(jnp.isnan(cluster_means), flat_emissions.mean(), cluster_means)
+            _emission_biases = tfb.Sigmoid().inverse(cluster_means)
 
         elif method.lower() == "prior":
             # TODO: Use an MNIW prior
