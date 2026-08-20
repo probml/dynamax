@@ -87,12 +87,15 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
             assignments = kmeans(flat_inputs, self.num_states, key).assignments
             _emission_weights = jnp.zeros((self.num_states, self.input_dim))
             # A cluster with no assigned samples has an undefined mean; fall back to
-            # the pooled mean so the bias stays finite.
+            # the pooled mean so the bias stays finite. Also clip away from 0 and 1 so
+            # the logit below stays finite when a cluster's binary emissions are all
+            # the same value (a common, non-empty degenerate case).
             cluster_means = jnp.array(
                 [jnp.mean(flat_emissions, where=(assignments == k)) for k in range(self.num_states)]
             )
             cluster_means = jnp.where(jnp.isnan(cluster_means), flat_emissions.mean(), cluster_means)
-            _emission_biases = tfb.Sigmoid().inverse(cluster_means)
+            eps = jnp.finfo(cluster_means.dtype).eps
+            _emission_biases = tfb.Sigmoid().inverse(jnp.clip(cluster_means, eps, 1.0 - eps))
 
         elif method.lower() == "prior":
             # TODO: Use an MNIW prior

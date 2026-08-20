@@ -227,3 +227,31 @@ def test_initialize_kmeans_arhmm():
     for leaf in jax.tree_util.tree_leaves(km_params):
         assert jnp.all(jnp.isfinite(leaf))
     assert km_params.emissions.biases.shape == (4, 2)
+
+
+def test_logreg_hmm_kmeans_finite_bias_with_saturated_cluster():
+    """A cluster whose assigned emissions are all 0 (or all 1) is not the same as an
+    empty cluster, but it drives the cluster mean to exactly 0.0 or 1.0. Feeding that
+    straight into the logit used to produce +/-inf biases even though the existing
+    NaN guard (for genuinely empty clusters) passed. Construct inputs as two
+    well-separated blobs so kmeans reliably keeps them apart, and make one blob's
+    emissions uniformly 0 so its cluster mean is guaranteed to saturate at 0.0.
+    """
+    from dynamax.hidden_markov_model.models.logreg_hmm import LogisticRegressionHMMEmissions
+
+    emission_component = LogisticRegressionHMMEmissions(num_states=2, input_dim=2)
+    inputs = jnp.concatenate([
+        jnp.tile(jnp.array([1000.0, 0.0]), (10, 1)),
+        jnp.tile(jnp.array([-1000.0, 0.0]), (10, 1)),
+    ], axis=0)
+    emissions = jnp.concatenate([
+        jnp.zeros(10),
+        jnp.array([0., 1., 0., 1., 0., 1., 0., 1., 0., 1.]),
+    ], axis=0)
+
+    for seed in range(10):
+        params, _ = emission_component.initialize(
+            jr.PRNGKey(seed), method="kmeans", emissions=emissions, inputs=inputs)
+        assert jnp.all(jnp.isfinite(params.biases)), f"seed {seed} produced a non-finite bias"
+        # Sanity check that this seed really did hit the saturated-cluster case.
+        assert jnp.any(params.biases < 0)
