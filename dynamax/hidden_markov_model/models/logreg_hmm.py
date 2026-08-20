@@ -86,10 +86,8 @@ class LogisticRegressionHMMEmissions(HMMEmissions):
 
             assignments = kmeans(flat_inputs, self.num_states, key).assignments
             _emission_weights = jnp.zeros((self.num_states, self.input_dim))
-            # A cluster with no assigned samples has an undefined mean; fall back to
-            # the pooled mean so the bias stays finite. Also clip away from 0 and 1 so
-            # the logit below stays finite when a cluster's binary emissions are all
-            # the same value (a common, non-empty degenerate case).
+            # Both guards keep the logit below finite: an empty cluster has an undefined
+            # mean, and an all-0s or all-1s cluster would otherwise logit to -/+ infinity.
             cluster_means = jnp.array(
                 [jnp.mean(flat_emissions, where=(assignments == k)) for k in range(self.num_states)]
             )

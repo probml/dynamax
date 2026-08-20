@@ -39,12 +39,13 @@ def test_kmeans_empty_clusters_do_not_produce_nans():
     assert int(state.n_iter) < 10  # terminates promptly instead of spinning to max_iters
 
 
-def test_kmeans_k_greater_than_distinct_points():
-    """Degenerate data with fewer distinct points than clusters stays finite."""
+def test_kmeans_one_cluster_per_sample():
+    """With k equal to the sample count, every sample becomes its own centroid."""
     x = jnp.array([[0.0, 0.0], [0.1, 0.0], [10.0, 10.0]])
     state = kmeans(x, 3, jr.PRNGKey(0))
-    assert jnp.all(jnp.isfinite(state.centroids))
-    assert jnp.all(jnp.isfinite(state.inertia))
+    assert jnp.unique(state.assignments).size == 3
+    assert jnp.allclose(state.centroids[state.assignments], x, atol=1e-5)
+    assert jnp.allclose(state.inertia, 0.0, atol=1e-5)
 
 
 def test_kmeans_one_dimensional_data():
