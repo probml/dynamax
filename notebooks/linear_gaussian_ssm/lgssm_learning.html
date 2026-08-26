@@ -592,7 +592,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, 'true model')
 </pre></div>
 </div>
-<img alt="../../_images/f4759fb786ca505e16421aa82f4df815fcf1f6de417bd740edbc047ef5d681c5.png" src="../../_images/f4759fb786ca505e16421aa82f4df815fcf1f6de417bd740edbc047ef5d681c5.png" />
+<img alt="../../_images/7857e3441a2972f758fb461eaabc4454f7b4bdbd4a3be1d8e72764ef2e30b783.png" src="../../_images/7857e3441a2972f758fb461eaabc4454f7b4bdbd4a3be1d8e72764ef2e30b783.png" />
 </div>
 </div>
 <p>Now plot the reconstructions under a randomly initialized model. They’re much worse!</p>
@@ -617,7 +617,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, 'randomly initialized model')
 </pre></div>
 </div>
-<img alt="../../_images/a5261542d1cfb4e33a138ff6bf1f14e89ba18ed21818012c9daf51ca88854330.png" src="../../_images/a5261542d1cfb4e33a138ff6bf1f14e89ba18ed21818012c9daf51ca88854330.png" />
+<img alt="../../_images/345f8a28a66b7eb6618ac686e2b655caab076808044e005341763fbcc77c55e1.png" src="../../_images/345f8a28a66b7eb6618ac686e2b655caab076808044e005341763fbcc77c55e1.png" />
 </div>
 </div>
 </section>
@@ -673,7 +673,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/2863dbbf3931f680fc79cdc99c225fc311411d10e1b540472bae39bc8bbdf764.png" src="../../_images/2863dbbf3931f680fc79cdc99c225fc311411d10e1b540472bae39bc8bbdf764.png" />
+<img alt="../../_images/c4ae2c20e2540ca6fdb41ca9e8f0ccce5973673b3b6916a8f0017a7aba95eb9a.png" src="../../_images/c4ae2c20e2540ca6fdb41ca9e8f0ccce5973673b3b6916a8f0017a7aba95eb9a.png" />
 </div>
 </div>
 <p>The marginal log likelihood quickly converges. As with the HMM examples, the likelihood under the estimated parameters is larger than the likelihood under the true parameters that generated the data. This isn’t surprising: EM is finding the parameters <span class="math notranslate nohighlight">\(\hat{\theta}_{\mathsf{MLE}}\)</span>, that maximize the likelihood, and with a short sequence like this, the likelihood <span class="math notranslate nohighlight">\(p(x_{1:T}; \hat{\theta}_{\mathsf{MLE}})\)</span> is almost surely larger than <span class="math notranslate nohighlight">\(p(x_{1:T}; \theta_{\mathsf{true}})\)</span>.</p>
@@ -689,7 +689,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, 'fitted model')
 </pre></div>
 </div>
-<img alt="../../_images/5ab08682c6b7d953b7bfce59b520e67c600e26a4f80728f76ef9cda9feee7b41.png" src="../../_images/5ab08682c6b7d953b7bfce59b520e67c600e26a4f80728f76ef9cda9feee7b41.png" />
+<img alt="../../_images/c3bf0c1946151f004d384dd163fa5b33328f63031b580215cd5c28c247573d4b.png" src="../../_images/c3bf0c1946151f004d384dd163fa5b33328f63031b580215cd5c28c247573d4b.png" />
 </div>
 </div>
 <section id="identifiability">
@@ -751,7 +751,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/4987c481035353259408831feb3bd13e6a9c4f4ffb42ec7f4a2ca6f9d8262712.png" src="../../_images/4987c481035353259408831feb3bd13e6a9c4f4ffb42ec7f4a2ca6f9d8262712.png" />
+<img alt="../../_images/2cbcdd91c9bd85ec0447b98dcff47ef872df06b213c65389b6bf82a912e9237c.png" src="../../_images/2cbcdd91c9bd85ec0447b98dcff47ef872df06b213c65389b6bf82a912e9237c.png" />
 </div>
 </div>
 <p>Adam eventually converges, but note that both the y-axis and x-axis scales are much larger than for EM. It takes 100s of epochs to achieve comparable log likelihoods, and each epoch is roughly the equivalent cost to one iteration of EM.</p>
@@ -787,13 +787,13 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>freeing the dynamics matrix to:
- [[ 0.9415461   0.30592692]
- [-0.3059268   0.941546  ]]
+ [[ 0.9415461   0.30592695]
+ [-0.30592677  0.9415459 ]]
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>dynamics matrix after fitting:
- [[ 0.9415461   0.30592692]
- [-0.3059268   0.941546  ]]
+ [[ 0.9415461   0.30592695]
+ [-0.30592677  0.9415459 ]]
 </pre></div>
 </div>
 </div>
@@ -811,7 +811,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d89eb1669a87f8e6da3049612c6240eab5a5a05b9aedb4076b4ea9bc674ed233.png" src="../../_images/d89eb1669a87f8e6da3049612c6240eab5a5a05b9aedb4076b4ea9bc674ed233.png" />
+<img alt="../../_images/1807821887d264fb975031b3b27a006ba0b6cfb1aea512eba0e851d5d672afa3.png" src="../../_images/1807821887d264fb975031b3b27a006ba0b6cfb1aea512eba0e851d5d672afa3.png" />
 </div>
 </div>
 </section>
