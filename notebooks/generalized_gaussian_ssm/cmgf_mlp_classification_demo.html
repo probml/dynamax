@@ -449,7 +449,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing dynamax&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'installing dynamax'</span><span class="p">)</span>
     <span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">dynamax</span><span class="p">[</span><span class="n">notebooks</span><span class="p">]</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">dynamax</span>
 </pre></div>
@@ -469,7 +469,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">flax.linen</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;installing flax&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'installing flax'</span><span class="p">)</span>
     <span class="o">%</span><span class="k">pip</span> install -qq flax
 <span class="kn">import</span><span class="w"> </span><span class="nn">flax.linen</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 </pre></div>
@@ -500,9 +500,9 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_posterior_predictive</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">Xspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Zspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">rainbow</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">Xspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Zspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">Xspace</span><span class="o">.</span><span class="n">T</span><span class="p">),</span> <span class="p">(</span><span class="n">Zspace</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
-    <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;red&#39;</span> <span class="k">if</span> <span class="n">y</span> <span class="k">else</span> <span class="s1">&#39;blue&#39;</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">Y</span><span class="p">]</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'red'</span> <span class="k">if</span> <span class="n">y</span> <span class="k">else</span> <span class="s1">'blue'</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">Y</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">'black'</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ax</span>
 </pre></div>
@@ -558,7 +558,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <span class="c1"># Plot data</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 
-<span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Spiral-shaped binary classification data&quot;</span>
+<span class="n">title</span> <span class="o">=</span> <span class="s2">"Spiral-shaped binary classification data"</span>
 <span class="n">plot_posterior_predictive</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">title</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -588,10 +588,10 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <p>Next, we define a function to that returns the posterior predictive probability for each point in grid.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># &#39;binary=True&#39; indicates rounding probabilities to binary outputs</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># 'binary=True' indicates rounding probabilities to binary outputs</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">posterior_predictive_grid</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">apply</span><span class="p">,</span> <span class="n">binary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="n">inferred_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">apply</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-    <span class="n">fn_vec</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">inferred_fn</span><span class="p">,</span> <span class="n">signature</span><span class="o">=</span><span class="s1">&#39;(2)-&gt;(3)&#39;</span><span class="p">)</span>
+    <span class="n">fn_vec</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">inferred_fn</span><span class="p">,</span> <span class="n">signature</span><span class="o">=</span><span class="s1">'(2)-&gt;(3)'</span><span class="p">)</span>
     <span class="n">Z</span> <span class="o">=</span> <span class="n">fn_vec</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">binary</span><span class="p">:</span>
         <span class="n">Z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span>
@@ -688,7 +688,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 
 <span class="c1"># Plot the final result</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-<span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;CMGF-EKF One-Pass Trained MLP Classifier&quot;</span>
+<span class="n">title</span> <span class="o">=</span> <span class="s2">"CMGF-EKF One-Pass Trained MLP Classifier"</span>
 <span class="n">plot_posterior_predictive</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">input_grid</span><span class="p">,</span> <span class="n">Z</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -704,7 +704,7 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">axi</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">intermediate_steps</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">flatten</span><span class="p">()):</span>
     <span class="n">Zi</span> <span class="o">=</span> <span class="n">posterior_predictive_grid</span><span class="p">(</span><span class="n">input_grid</span><span class="p">,</span> <span class="n">w_means</span><span class="p">[</span><span class="n">step</span><span class="p">],</span> <span class="n">sigmoid_fn</span><span class="p">)</span>
-    <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;step=</span><span class="si">{</span><span class="n">step</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'step=</span><span class="si">{</span><span class="n">step</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">'</span>
     <span class="n">plot_posterior_predictive</span><span class="p">(</span><span class="n">axi</span><span class="p">,</span> <span class="nb">input</span><span class="p">[:</span><span class="n">step</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">output</span><span class="p">[:</span><span class="n">step</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">title</span><span class="p">,</span> <span class="n">input_grid</span><span class="p">,</span> <span class="n">Zi</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
@@ -727,13 +727,13 @@ For more details, see sec 8.7.7 of <a class="reference external" href="https://p
 <span class="c1">#     ax.cla()</span>
 <span class="c1">#     w_curr = w_means[i]</span>
 <span class="c1">#     Zi = posterior_predictive_grid(input_grid, w_means[i], sigmoid_fn)</span>
-<span class="c1">#     title = f&#39;CMGF-EKF-MLP ({i+1}/500)&#39;</span>
+<span class="c1">#     title = f'CMGF-EKF-MLP ({i+1}/500)'</span>
 <span class="c1">#     plot_posterior_predictive(ax, input[:i+1], output[:i+1], title, input_grid, Zi) </span>
 <span class="c1">#     return ax</span>
 
 <span class="c1"># fig, ax = plt.subplots(figsize=(6, 5))</span>
 <span class="c1"># anim = animation.FuncAnimation(fig, animate, frames=500, interval=50)</span>
-<span class="c1"># anim.save(&quot;cmgf_mlp_classifier.mp4&quot;, dpi=200, bitrate=-1, fps=24)</span>
+<span class="c1"># anim.save("cmgf_mlp_classifier.mp4", dpi=200, bitrate=-1, fps=24)</span>
 
 <span class="c1"># HTML(anim.to_html5_video())</span>
 </pre></div>

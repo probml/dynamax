@@ -349,9 +349,9 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.nonlinear_gaussian_ssm.inference_ukf</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">Unscented Kalman Filter and Smoother for Nonlinear Gaussian State Space Models.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
@@ -364,10 +364,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.linear_gaussian_ssm.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">,</span> <span class="n">PosteriorGSSMSmoothed</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">UKFHyperParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight container for UKF hyperparameters.</span>
+<span class="w">    </span><span class="sd">"""Lightweight container for UKF hyperparameters.</span>
 
 <span class="sd">    Default values taken from https://github.com/sbitzer/UKF-exposed</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
     <span class="n">beta</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">kappa</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
@@ -381,12 +381,12 @@
 <span class="n">_compute_lambda</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">z</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_compute_sigmas</span><span class="p">(</span><span class="n">mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> 
-                    <span class="n">cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span> 
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_sigmas</span><span class="p">(</span><span class="n">mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim"</span><span class="p">],</span> 
+                    <span class="n">cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim state_dim"</span><span class="p">],</span> 
                     <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> 
                     <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> \
-                    <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute (2n+1) sigma points used for inputs to  unscented transform.</span>
+                    <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"2*state_dim+1"</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Compute (2n+1) sigma points used for inputs to  unscented transform.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        mean (dim,): mean.</span>
@@ -396,7 +396,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        sigmas (2*dim+1,): 2dim+1 sigma points.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">distances</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span> <span class="o">+</span> <span class="n">scale</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span>
     <span class="n">sigma_plus</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">mean</span> <span class="o">+</span> <span class="n">distances</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">)])</span>
     <span class="n">sigma_minus</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">mean</span> <span class="o">-</span> <span class="n">distances</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">)])</span>
@@ -407,9 +407,9 @@
                      <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
                      <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
                      <span class="n">lamb</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> \
-                     <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span> 
-                              <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute weights used to compute predicted mean and covariance (Sarkka 5.77).</span>
+                     <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"2*state_dim+1"</span><span class="p">],</span> 
+                              <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"2*state_dim+1"</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Compute weights used to compute predicted mean and covariance (Sarkka 5.77).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        dim (int): number of state dimensions.</span>
@@ -420,25 +420,25 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        w_mean (2*n+1,): 2n+1 weights to compute predicted mean.</span>
 <span class="sd">        w_cov (2*n+1,): 2n+1 weights to compute predicted covariance.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">factor</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">dim</span> <span class="o">+</span> <span class="n">lamb</span><span class="p">))</span>
     <span class="n">w_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">lamb</span> <span class="o">/</span> <span class="p">(</span><span class="n">dim</span> <span class="o">+</span> <span class="n">lamb</span><span class="p">)]),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">factor</span><span class="p">))</span>
     <span class="n">w_cov</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">lamb</span> <span class="o">/</span> <span class="p">(</span><span class="n">dim</span> <span class="o">+</span> <span class="n">lamb</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">beta</span><span class="p">)]),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">factor</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">w_mean</span><span class="p">,</span> <span class="n">w_cov</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_predict</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span> 
-             <span class="n">prior_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_predict</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim"</span><span class="p">],</span> 
+             <span class="n">prior_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim state_dim"</span><span class="p">],</span>
              <span class="n">dynamics_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
-             <span class="n">dynamics_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+             <span class="n">dynamics_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim state_dim"</span><span class="p">],</span>
              <span class="n">lamb</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
-             <span class="n">weights_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span>
-             <span class="n">weights_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span>
-             <span class="n">inpt</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">])</span> \
-             <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
-                      <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
-                      <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict next mean and covariance using additive UKF</span>
+             <span class="n">weights_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"2*state_dim+1"</span><span class="p">],</span>
+             <span class="n">weights_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"2*state_dim+1"</span><span class="p">],</span>
+             <span class="n">inpt</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"input_dim"</span><span class="p">])</span> \
+             <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim"</span><span class="p">],</span>
+                      <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim state_dim"</span><span class="p">],</span>
+                      <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim state_dim"</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Predict next mean and covariance using additive UKF</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        prior_mean: prior mean.</span>
@@ -454,7 +454,7 @@
 <span class="sd">        m_pred: predicted mean.</span>
 <span class="sd">        P_pred: predicted covariance.</span>
 <span class="sd">        P_cross: predicted cross-covariance.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">)</span>
     <span class="c1"># Form sigma points and propagate</span>
     <span class="n">sigmas_pred</span> <span class="o">=</span> <span class="n">_compute_sigmas</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lamb</span><span class="p">)</span>
@@ -473,26 +473,26 @@
     <span class="k">return</span> <span class="n">m_pred</span><span class="p">,</span> <span class="n">P_pred</span><span class="p">,</span> <span class="n">P_cross</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_condition_on</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
-                  <span class="n">prior_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">],</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_condition_on</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim"</span><span class="p">],</span>
+                  <span class="n">prior_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim state_dim"</span><span class="p">],</span>
                   <span class="n">emission_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> 
-                  <span class="n">emission_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">],</span>
+                  <span class="n">emission_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"emission_dim emission_dim"</span><span class="p">],</span>
                   <span class="n">lamb</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
-                  <span class="n">weights_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span>
-                  <span class="n">weights_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2*state_dim+1&quot;</span><span class="p">],</span>
-                  <span class="n">inpt</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;input_dim&quot;</span><span class="p">],</span>
-                  <span class="n">emission</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim&quot;</span><span class="p">])</span> \
+                  <span class="n">weights_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"2*state_dim+1"</span><span class="p">],</span>
+                  <span class="n">weights_cov</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"2*state_dim+1"</span><span class="p">],</span>
+                  <span class="n">inpt</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"input_dim"</span><span class="p">],</span>
+                  <span class="n">emission</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"emission_dim"</span><span class="p">])</span> \
                   <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> 
-                           <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim&quot;</span><span class="p">],</span>
-                           <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Condition a Gaussian potential on a new observation</span>
+                           <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim"</span><span class="p">],</span>
+                           <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim state_dim"</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Condition a Gaussian potential on a new observation</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ll (float): log-likelihood of observation</span>
 <span class="sd">        m_cond (D_hid,): filtered mean.</span>
 <span class="sd">        P_cond (D_hid,D_hid): filtered covariance.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">)</span>
     <span class="c1"># Form sigma points and propagate</span>
     <span class="n">sigmas_cond</span> <span class="o">=</span> <span class="n">_compute_sigmas</span><span class="p">(</span><span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_cov</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lamb</span><span class="p">)</span>
@@ -517,12 +517,12 @@
 <div class="viewcode-block" id="unscented_kalman_filter">
 <a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.unscented_kalman_filter">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">unscented_kalman_filter</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
-                            <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
+                            <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime emission_dim"</span><span class="p">],</span>
                             <span class="n">hyperparams</span><span class="p">:</span> <span class="n">UKFHyperParams</span><span class="p">,</span>
-                            <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                            <span class="n">output_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;filtered_means&quot;</span><span class="p">,</span> <span class="s2">&quot;filtered_covariances&quot;</span><span class="p">,</span> <span class="s2">&quot;predicted_means&quot;</span><span class="p">,</span> <span class="s2">&quot;predicted_covariances&quot;</span><span class="p">])</span> \
+                            <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">output_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span><span class="o">=</span><span class="p">[</span><span class="s2">"filtered_means"</span><span class="p">,</span> <span class="s2">"filtered_covariances"</span><span class="p">,</span> <span class="s2">"predicted_means"</span><span class="p">,</span> <span class="s2">"predicted_covariances"</span><span class="p">])</span> \
                             <span class="o">-&gt;</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a unscented Kalman filter to produce the marginal likelihood and</span>
+<span class="w">    </span><span class="sd">"""Run a unscented Kalman filter to produce the marginal likelihood and</span>
 <span class="sd">    filtered state estimates.</span>
 
 <span class="sd">    Args:</span>
@@ -534,7 +534,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        filtered_posterior: posterior object.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
     <span class="n">state_dim</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
@@ -549,7 +549,7 @@
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">_process_input</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;One step of the UKF&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""One step of the UKF"""</span>
         <span class="n">ll</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span> <span class="o">=</span> <span class="n">carry</span>
 
         <span class="c1"># Get parameters and inputs for time t</span>
@@ -572,11 +572,11 @@
         <span class="c1"># Build carry and output states</span>
         <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span><span class="p">)</span>
         <span class="n">outputs</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;filtered_means&quot;</span><span class="p">:</span> <span class="n">filtered_mean</span><span class="p">,</span>
-            <span class="s2">&quot;filtered_covariances&quot;</span><span class="p">:</span> <span class="n">filtered_cov</span><span class="p">,</span>
-            <span class="s2">&quot;predicted_means&quot;</span><span class="p">:</span> <span class="n">pred_mean</span><span class="p">,</span>
-            <span class="s2">&quot;predicted_covariances&quot;</span><span class="p">:</span> <span class="n">pred_cov</span><span class="p">,</span>
-            <span class="s2">&quot;marginal_loglik&quot;</span><span class="p">:</span> <span class="n">ll</span><span class="p">,</span>
+            <span class="s2">"filtered_means"</span><span class="p">:</span> <span class="n">filtered_mean</span><span class="p">,</span>
+            <span class="s2">"filtered_covariances"</span><span class="p">:</span> <span class="n">filtered_cov</span><span class="p">,</span>
+            <span class="s2">"predicted_means"</span><span class="p">:</span> <span class="n">pred_mean</span><span class="p">,</span>
+            <span class="s2">"predicted_covariances"</span><span class="p">:</span> <span class="n">pred_cov</span><span class="p">,</span>
+            <span class="s2">"marginal_loglik"</span><span class="p">:</span> <span class="n">ll</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="n">outputs</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">val</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">output_fields</span><span class="p">}</span>
         <span class="k">return</span> <span class="n">carry</span><span class="p">,</span> <span class="n">outputs</span>
@@ -585,7 +585,7 @@
     <span class="c1"># Run the Unscented Kalman Filter</span>
     <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">initial_mean</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">initial_covariance</span><span class="p">)</span>
     <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span><span class="p">),</span> <span class="n">outputs</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">))</span>
-    <span class="n">outputs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;marginal_loglik&quot;</span><span class="p">:</span> <span class="n">ll</span><span class="p">,</span> <span class="o">**</span><span class="n">outputs</span><span class="p">}</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"marginal_loglik"</span><span class="p">:</span> <span class="n">ll</span><span class="p">,</span> <span class="o">**</span><span class="n">outputs</span><span class="p">}</span>
     <span class="n">posterior_filtered</span> <span class="o">=</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">(</span>
         <span class="o">**</span><span class="n">outputs</span><span class="p">,</span>
     <span class="p">)</span>
@@ -596,11 +596,11 @@
 <div class="viewcode-block" id="unscented_kalman_smoother">
 <a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.unscented_kalman_smoother">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">unscented_kalman_smoother</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
-                              <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
+                              <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime emission_dim"</span><span class="p">],</span>
                               <span class="n">hyperparams</span><span class="p">:</span> <span class="n">UKFHyperParams</span><span class="p">,</span>
-                              <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> \
+                              <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> \
                               <span class="o">-&gt;</span> <span class="n">PosteriorGSSMSmoothed</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a unscented Kalman (RTS) smoother.</span>
+<span class="w">    </span><span class="sd">"""Run a unscented Kalman (RTS) smoother.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        params: model parameters.</span>
@@ -611,7 +611,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        nlgssm_posterior: posterior object.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
     <span class="n">state_dim</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
@@ -632,7 +632,7 @@
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">_process_input</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;One step of the UKS&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""One step of the UKS"""</span>
         <span class="c1"># Unpack the inputs</span>
         <span class="n">smoothed_mean_next</span><span class="p">,</span> <span class="n">smoothed_cov_next</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">t</span><span class="p">,</span> <span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span> <span class="o">=</span> <span class="n">args</span>

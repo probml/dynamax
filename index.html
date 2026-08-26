@@ -409,7 +409,7 @@ or sequential Monte Carlo (SMC)).</p>
 <p>Finally, if you’re a developer, you can install dynamax along with the test and documentation dependencies with:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">git clone git@github.com:probml/dynamax.git</span>
 <span class="go">cd dynamax</span>
-<span class="go">pip install -e &#39;.[dev]&#39;</span>
+<span class="go">pip install -e '.[dev]'</span>
 </pre></div>
 </div>
 <p>To run the tests:</p>
@@ -487,13 +487,13 @@ a runnable version of this code.)</p>
 <span class="n">true_states</span><span class="p">,</span> <span class="n">emissions</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">true_params</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
 
 <span class="c1"># Make a new Gaussian HMM and fit it with EM</span>
-<span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"kmeans"</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">emissions</span><span class="p">)</span>
 <span class="n">params</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 
 <span class="c1"># Plot the marginal log probs across EM iterations</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lls</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;EM iterations&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;marginal log prob.&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"EM iterations"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"marginal log prob."</span><span class="p">)</span>
 
 <span class="c1"># Use fitted model for posterior inference</span>
 <span class="n">post</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">smoother</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">emissions</span><span class="p">)</span>
@@ -512,7 +512,7 @@ For example, you can sample and then fit to a batch of emissions as shown below.
 <span class="nb">print</span><span class="p">(</span><span class="n">batch_true_states</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># (200,1000) and (200,1000,2)</span>
 
 <span class="c1"># Make a new Gaussian HMM and fit it with EM</span>
-<span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">batch_emissions</span><span class="p">)</span>
+<span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"kmeans"</span><span class="p">,</span> <span class="n">emissions</span><span class="o">=</span><span class="n">batch_emissions</span><span class="p">)</span>
 <span class="n">params</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">hmm</span><span class="o">.</span><span class="n">fit_em</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_emissions</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 </pre></div>
 </div>

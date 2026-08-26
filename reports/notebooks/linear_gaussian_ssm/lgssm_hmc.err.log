@@ -1,20 +1,20 @@
 Traceback (most recent call last):
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
     executenb(
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/nbclient/client.py", line 1323, in execute
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/nbclient/client.py", line 1323, in execute
     return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
     return loop.run_until_complete(inner)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
     return future.result()
            ^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/nbclient/client.py", line 709, in async_execute
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/nbclient/client.py", line 709, in async_execute
     await self.async_execute_cell(
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/nbclient/client.py", line 1062, in async_execute_cell
     await self._check_raise_for_error(cell, cell_index, exec_reply)
-  File "/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
@@ -57,7 +57,7 @@ param_samples, lps = fit_hmc(model,
 [32m     34[39m 
 [32m     35[39m     @jit
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:763[39m, in [36mstaged_adaptation.<locals>.run[39m[34m(rng_key, position, num_steps)[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:763[39m, in [36mstaged_adaptation.<locals>.run[39m[34m(rng_key, position, num_steps)[39m
 [32m    761[39m keys = jax.random.split(rng_key, num_steps)
 [32m    762[39m schedule = _resolved_schedule_fn(num_steps)
 [32m--> [39m[32m763[39m last_state, info = [30;43mjax[39;49m[30;43m.[39;49m[30;43mlax[39;49m[30;43m.[39;49m[30;43mscan[39;49m[30;43m([39;49m
@@ -70,7 +70,7 @@ param_samples, lps = fit_hmc(model,
 
     [31m[... skipping hidden 4 frame][39m
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:673[39m, in [36mstaged_adaptation.<locals>.one_step[39m[34m(carry, xs)[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:673[39m, in [36mstaged_adaptation.<locals>.one_step[39m[34m(carry, xs)[39m
 [32m    670[39m _, rng_key, adaptation_stage = xs
 [32m    671[39m state, adaptation_state = carry
 [32m--> [39m[32m673[39m new_state, info = [30;43mmcmc_kernel[39;49m[30;43m([39;49m

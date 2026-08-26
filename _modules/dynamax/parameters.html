@@ -349,9 +349,9 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.parameters</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">Helpers for managing parameters and their properties as PyTrees.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.tree_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_reduce</span><span class="p">,</span> <span class="n">tree_map</span><span class="p">,</span> <span class="n">register_pytree_node_class</span>
@@ -365,9 +365,9 @@
 <a class="viewcode-back" href="../../api.html#dynamax.parameters.ParameterSet">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ParameterSet</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.</span>
+<span class="w">    </span><span class="sd">"""A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">pass</span></div>
 
 
@@ -375,9 +375,9 @@
 <a class="viewcode-back" href="../../api.html#dynamax.parameters.PropertySet">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PropertySet</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A matching :class:`NamedTuple` with :class:`ParameterProperties` stored in the leaf nodes.</span>
+<span class="w">    </span><span class="sd">"""A matching :class:`NamedTuple` with :class:`ParameterProperties` stored in the leaf nodes.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">pass</span></div>
 
 
@@ -386,7 +386,7 @@
 <a class="viewcode-back" href="../../api.html#dynamax.parameters.ParameterProperties">[docs]</a>
 <span class="nd">@register_pytree_node_class</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ParameterProperties</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A PyTree containing parameter metadata (properties).</span>
+<span class="w">    </span><span class="sd">"""A PyTree containing parameter metadata (properties).</span>
 
 <span class="sd">    Note: the properties are stored in the aux_data of this PyTree so that</span>
 <span class="sd">    changes will trigger recompilation of functions that rely on them.</span>
@@ -395,7 +395,7 @@
 <span class="sd">        trainable (bool): flag specifying whether or not to fit this parameter is adjustable.</span>
 <span class="sd">        constrainer (Optional tfb.Bijector): bijector mapping to constrained form.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">trainable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
                  <span class="n">constrainer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">tfb</span><span class="o">.</span><span class="n">Bijector</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -403,22 +403,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">constrainer</span> <span class="o">=</span> <span class="n">constrainer</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">tree_flatten</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flatten the PyTree into a tuple of aux_data and children.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Flatten the PyTree into a tuple of aux_data and children."""</span>
         <span class="k">return</span> <span class="p">(),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trainable</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">constrainer</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">tree_unflatten</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">aux_data</span><span class="p">,</span> <span class="n">children</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reconstruct the PyTree from the tuple of aux_data and children.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Reconstruct the PyTree from the tuple of aux_data and children."""</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">aux_data</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a string representation of the PyTree.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ParameterProperties(trainable=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">trainable</span><span class="si">}</span><span class="s2">, constrainer=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">constrainer</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+<span class="w">        </span><span class="sd">"""Return a string representation of the PyTree."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"ParameterProperties(trainable=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">trainable</span><span class="si">}</span><span class="s2">, constrainer=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">constrainer</span><span class="si">}</span><span class="s2">)"</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert the constrained parameters to unconstrained form.</span>
+<span class="w">    </span><span class="sd">"""Convert the constrained parameters to unconstrained form.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        params: (nested) named tuple whose leaf values are DeviceArrays containing</span>
@@ -430,7 +430,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        unc_params: named tuple containing parameters in unconstrained form.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">to_unc</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">value</span><span class="p">,</span> <span class="n">prop</span><span class="p">:</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> \
         <span class="k">if</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">value</span>
     <span class="n">is_leaf</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">node</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ParameterProperties</span><span class="p">,))</span>
@@ -438,7 +438,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert the unconstrained parameters to constrained form.</span>
+<span class="w">    </span><span class="sd">"""Convert the unconstrained parameters to constrained form.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        unc_params: (nested) named tuple whose leaf values are DeviceArrays containing</span>
@@ -450,12 +450,12 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        params: named tuple containing parameters in constrained form.</span>
 <span class="sd">                 If a parameter is marked with trainable=False (frozen) in the properties structure,</span>
-<span class="sd">                 it will be tagged with a &quot;stop gradient&quot;. Thus the gradient of any loss function computed</span>
+<span class="sd">                 it will be tagged with a "stop gradient". Thus the gradient of any loss function computed</span>
 <span class="sd">                 using these frozen constrained parameters will be zero.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_unc</span><span class="p">(</span><span class="n">unc_value</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the unconstrained value to constrained form.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Convert the unconstrained value to constrained form."""</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span><span class="p">(</span><span class="n">unc_value</span><span class="p">)</span> <span class="k">if</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">unc_value</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">prop</span><span class="o">.</span><span class="n">trainable</span> <span class="k">else</span> <span class="n">value</span>
         <span class="k">return</span> <span class="n">value</span>
@@ -465,7 +465,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">log_det_jac_constrain</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log determinant of the Jacobian matrix evaluated at the unconstrained parameters.</span>
+<span class="w">    </span><span class="sd">"""Log determinant of the Jacobian matrix evaluated at the unconstrained parameters.</span>
 
 <span class="sd">    Let x be the unconstrained parameter and f(x) be the constrained parameter, so</span>
 <span class="sd">    that in code, `props.constrainer` is the Bijector f. To perform Hamiltonian</span>
@@ -481,10 +481,10 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        logdet: the log determinant of the forward Jacobian.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_logdet</span><span class="p">(</span><span class="n">unc_value</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the log determinant of the Jacobian matrix.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Compute the log determinant of the Jacobian matrix."""</span>
         <span class="n">logdet</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span><span class="o">.</span><span class="n">forward_log_det_jacobian</span><span class="p">(</span><span class="n">unc_value</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> \
             <span class="k">if</span> <span class="n">prop</span><span class="o">.</span><span class="n">constrainer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.0</span>
         <span class="k">return</span> <span class="n">logdet</span> <span class="k">if</span> <span class="n">prop</span><span class="o">.</span><span class="n">trainable</span> <span class="k">else</span> <span class="mf">0.0</span>

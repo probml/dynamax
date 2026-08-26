@@ -349,9 +349,9 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.ssm</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">Base classes for state space models (SSMs).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
@@ -376,18 +376,18 @@
 
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Posterior</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A :class:`NamedTuple` with parameters stored as :class:`jax.DeviceArray` in the leaf nodes."""</span>
     <span class="k">pass</span>
 
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SuffStatsSSM</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A :class:`NamedTuple` with sufficient statics stored as :class:`jax.DeviceArray` in the leaf nodes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A :class:`NamedTuple` with sufficient statics stored as :class:`jax.DeviceArray` in the leaf nodes."""</span>
     <span class="k">pass</span>
 
 <div class="viewcode-block" id="SSM">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SSM</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;A base class for state space models. Such models consist of parameters, which</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A base class for state space models. Such models consist of parameters, which</span>
 <span class="sd">    we may learn, as well as hyperparameters, which specify static properties of the</span>
 <span class="sd">    model. This base class allows parameters to be indicated a standardized way</span>
 <span class="sd">    so that they can easily be converted to/from unconstrained form for optimization.</span>
@@ -438,7 +438,7 @@
 
 <span class="sd">    * :meth:`fit_sgd` run SGD to minimize the *negative* marginal log probability.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SSM.initial_distribution">
 <a class="viewcode-back" href="../../api.html#dynamax.ssm.SSM.initial_distribution">[docs]</a>
@@ -446,9 +446,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">initial_distribution</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]]</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" input_dim"</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return an initial distribution over latent states.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return an initial distribution over latent states.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
@@ -457,7 +457,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            distribution over initial latent state, $p(z_1 \mid \theta)$.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -467,10 +467,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">transition_distribution</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]]</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" input_dim"</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a distribution over next latent state given current state.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return a distribution over next latent state given current state.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
@@ -480,7 +480,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            conditional distribution of next latent state $p(z_{t+1} \mid z_t, u_t, \theta)$.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -490,10 +490,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">emission_distribution</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a distribution over emissions given current state.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return a distribution over emissions given current state.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
@@ -503,7 +503,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            conditional distribution of current emission $p(y_t \mid z_t, u_t, \theta)$</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -513,29 +513,29 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return the log prior probability of any model parameters.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return the log prior probability of any model parameters.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            lp (Scalar): log prior probability.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="mf">0.0</span></div>
 
 
     <span class="nd">@property</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a pytree matching the pytree of tuples specifying the shape of a single time step&#39;s emissions.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return a pytree matching the pytree of tuples specifying the shape of a single time step's emissions.</span>
 
 <span class="sd">        For example, a `GaussianHMM` with $D$ dimensional emissions would return `(D,)`.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inputs_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a pytree matching the pytree of tuples specifying the shape of a single time step&#39;s inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return a pytree matching the pytree of tuples specifying the shape of a single time step's inputs.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="c1"># All SSMs support sampling</span>
@@ -546,10 +546,10 @@
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKeyT</span><span class="p">,</span>
         <span class="n">num_timesteps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps state_dim&quot;</span><span class="p">],</span>
-              <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps state_dim"</span><span class="p">],</span>
+              <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps emission_dim"</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
@@ -560,9 +560,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            latent states and emissions</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;Sample the next state and emission given the previous state and input.&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">"""Sample the next state and emission given the previous state and input."""</span>
             <span class="n">key</span><span class="p">,</span> <span class="n">inpt</span> <span class="o">=</span> <span class="n">args</span>
             <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
             <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">prev_state</span><span class="p">,</span> <span class="n">inpt</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">)</span>
@@ -592,14 +592,14 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">states</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps state_dim&quot;</span><span class="p">],</span>
-        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="n">states</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps state_dim"</span><span class="p">],</span>
+        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps emission_dim"</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the log joint probability of the states and observations&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the log joint probability of the states and observations"""</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;Compute the log probability of the next time step.&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">"""Compute the log probability of the next time step."""</span>
             <span class="n">lp</span><span class="p">,</span> <span class="n">prev_state</span> <span class="o">=</span> <span class="n">carry</span>
             <span class="n">state</span><span class="p">,</span> <span class="n">emission</span><span class="p">,</span> <span class="n">inpt</span> <span class="o">=</span> <span class="n">args</span>
             <span class="n">lp</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_distribution</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">prev_state</span><span class="p">,</span> <span class="n">inpt</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
@@ -627,10 +627,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">marginal_log_prob</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime emission_dim"</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute log marginal likelihood of observations, $\log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)$.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute log marginal likelihood of observations, $\log \sum_{z_{1:T}} p(y_{1:T}, z_{1:T} \mid \theta)$.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
@@ -640,7 +640,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            marginal log probability</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -649,10 +649,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">filter</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime emission_dim"</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute filtering distributions, $p(z_t \mid y_{1:t}, u_{1:t}, \theta)$ for $t=1,\ldots,T$.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute filtering distributions, $p(z_t \mid y_{1:t}, u_{1:t}, \theta)$ for $t=1,\ldots,T$.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
@@ -662,7 +662,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            filtering distributions</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -671,10 +671,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">smoother</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime emission_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;ntime input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime emission_dim"</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"ntime input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute smoothing distribution, $p(z_t \mid y_{1:T}, u_{1:T}, \theta)$ for $t=1,\ldots,T$.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute smoothing distribution, $p(z_t \mid y_{1:T}, u_{1:T}, \theta)$ for $t=1,\ldots,T$.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
@@ -684,7 +684,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            smoothing distributions</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -694,10 +694,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
-        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
+        <span class="n">emissions</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps emission_dim"</span><span class="p">],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">SuffStatsSSM</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Perform an E-step to compute expected sufficient statistics under the posterior, $p(z_{1:T} \mid y_{1:T}, u_{1:T}, \theta)$.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Perform an E-step to compute expected sufficient statistics under the posterior, $p(z_{1:T} \mid y_{1:T}, u_{1:T}, \theta)$.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params: model parameters $\theta$</span>
@@ -707,7 +707,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Expected sufficient statistics under the posterior.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -720,7 +720,7 @@
         <span class="n">batch_stats</span><span class="p">:</span> <span class="n">SuffStatsSSM</span><span class="p">,</span>
         <span class="n">m_step_state</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Perform an M-step to find parameters that maximize the expected log joint probability.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Perform an M-step to find parameters that maximize the expected log joint probability.</span>
 
 <span class="sd">        Specifically, compute</span>
 
@@ -735,7 +735,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            new parameters</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -745,20 +745,20 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span>
-        <span class="n">emissions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Real</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
-                         <span class="n">Real</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_batches num_timesteps emission_dim&quot;</span><span class="p">]],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">],</span>
-                               <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_batches num_timesteps input_dim&quot;</span><span class="p">]]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">emissions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Real</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps emission_dim"</span><span class="p">],</span>
+                         <span class="n">Real</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_batches num_timesteps emission_dim"</span><span class="p">]],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps input_dim"</span><span class="p">],</span>
+                               <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_batches num_timesteps input_dim"</span><span class="p">]]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">num_iters</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
         <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_iters&quot;</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" num_iters"</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).</span>
 
 <span class="sd">        EM aims to find parameters that maximize the marginal log probability,</span>
 
 <span class="sd">        $$\theta^\star = \mathrm{argmax}_\theta \; \log p(y_{1:T}, \theta \mid u_{1:T})$$</span>
 
-<span class="sd">        It does so by iteratively forming a lower bound (the &quot;E-step&quot;) and then maximizing it (the &quot;M-step&quot;).</span>
+<span class="sd">        It does so by iteratively forming a lower bound (the "E-step") and then maximizing it (the "M-step").</span>
 
 <span class="sd">        *Note:* ``emissions`` *and* ``inputs`` *can either be single sequences or batches of sequences.*</span>
 
@@ -773,7 +773,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple of new parameters and log likelihoods over the course of EM iterations.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># Make sure the emissions and inputs have batch dimensions</span>
         <span class="n">batch_emissions</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">emissions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_shape</span><span class="p">)</span>
@@ -781,12 +781,12 @@
 
         <span class="nd">@jit</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">em_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;Perform one EM step.&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">"""Perform one EM step."""</span>
             <span class="n">batch_stats</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">e_step</span><span class="p">,</span> <span class="n">params</span><span class="p">))(</span><span class="n">batch_emissions</span><span class="p">,</span> <span class="n">batch_inputs</span><span class="p">)</span>
             <span class="n">lp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prior</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="n">lls</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
             <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">)</span>
-            <span class="c1"># debug.print(&#39;e_step: {x}&#39;, x=(batch_stats, lls))</span>
-            <span class="c1"># debug.print(&#39;m_step{y}&#39;, y=params)</span>
+            <span class="c1"># debug.print('e_step: {x}', x=(batch_stats, lls))</span>
+            <span class="c1"># debug.print('m_step{y}', y=params)</span>
             <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">,</span> <span class="n">lp</span>
 
         <span class="n">log_probs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -804,17 +804,17 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span>
         <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span>
-        <span class="n">emissions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps emission_dim&quot;</span><span class="p">],</span>
-                         <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_batches num_timesteps emission_dim&quot;</span><span class="p">]],</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_timesteps input_dim&quot;</span><span class="p">],</span>
-                               <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_batches num_timesteps input_dim&quot;</span><span class="p">]]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">emissions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps emission_dim"</span><span class="p">],</span>
+                         <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_batches num_timesteps emission_dim"</span><span class="p">]],</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps input_dim"</span><span class="p">],</span>
+                               <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_batches num_timesteps input_dim"</span><span class="p">]]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">optimizer</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">),</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">num_epochs</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
         <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">key</span><span class="p">:</span> <span class="n">PRNGKeyT</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; niter&quot;</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute parameter MLE/ MAP estimate using Stochastic Gradient Descent (SGD).</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" niter"</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute parameter MLE/ MAP estimate using Stochastic Gradient Descent (SGD).</span>
 
 <span class="sd">        SGD aims to find parameters that maximize the marginal log probability,</span>
 
@@ -841,7 +841,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple of new parameters and losses (negative scaled marginal log probs) over the course of SGD iterations.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># Make sure the emissions and inputs have batch dimensions</span>
         <span class="n">batch_emissions</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">emissions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_shape</span><span class="p">)</span>
         <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs_shape</span><span class="p">)</span>
@@ -849,7 +849,7 @@
         <span class="n">unc_params</span> <span class="o">=</span> <span class="n">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_loss_fn</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">):</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;Default objective function.&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">"""Default objective function."""</span>
             <span class="n">params</span> <span class="o">=</span> <span class="n">from_unconstrained</span><span class="p">(</span><span class="n">unc_params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
             <span class="n">minibatch_emissions</span><span class="p">,</span> <span class="n">minibatch_inputs</span> <span class="o">=</span> <span class="n">minibatch</span>
             <span class="n">scale</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_emissions</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">minibatch_emissions</span><span class="p">)</span>

@@ -349,9 +349,9 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.nonlinear_gaussian_ssm.models</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">Nonlinear Gaussian State Space Model objects.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tfp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tfd</span>
 
@@ -361,16 +361,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Callable</span>
 
 
-<span class="n">FnStateToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">]]</span>
-<span class="n">FnStateAndInputToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">]]</span>
-<span class="n">FnStateToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; emission_dim&quot;</span><span class="p">]]</span>
-<span class="n">FnStateAndInputToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]</span> <span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; emission_dim&quot;</span><span class="p">]]</span>
+<span class="n">FnStateToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">]]</span>
+<span class="n">FnStateAndInputToState</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" input_dim"</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">]]</span>
+<span class="n">FnStateToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">]],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" emission_dim"</span><span class="p">]]</span>
+<span class="n">FnStateAndInputToEmission</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span> <span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" input_dim"</span><span class="p">]</span> <span class="p">],</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" emission_dim"</span><span class="p">]]</span>
 
 
 <div class="viewcode-block" id="ParamsNLGSSM">
 <a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ParamsNLGSSM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for a NLGSSM model.</span>
+<span class="w">    </span><span class="sd">"""Parameters for a NLGSSM model.</span>
 
 <span class="sd">    $$p(z_t | z_{t-1}, u_t) = N(z_t | f(z_{t-1}, u_t), Q_t)$$</span>
 <span class="sd">    $$p(y_t | z_t) = N(y_t | h(z_t, u_t), R_t)$$</span>
@@ -385,21 +385,21 @@
 <span class="sd">    :param initial_mean: $m$</span>
 <span class="sd">    :param initial_covariance: $S$</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">initial_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">]</span>
-    <span class="n">initial_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]</span>
+    <span class="n">initial_mean</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">]</span>
+    <span class="n">initial_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim state_dim"</span><span class="p">]</span>
     <span class="n">dynamics_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FnStateToState</span><span class="p">,</span> <span class="n">FnStateAndInputToState</span><span class="p">]</span>
-    <span class="n">dynamics_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim state_dim&quot;</span><span class="p">]</span>
+    <span class="n">dynamics_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim state_dim"</span><span class="p">]</span>
     <span class="n">emission_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FnStateToEmission</span><span class="p">,</span> <span class="n">FnStateAndInputToEmission</span><span class="p">]</span>
-    <span class="n">emission_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;emission_dim emission_dim&quot;</span><span class="p">]</span></div>
+    <span class="n">emission_covariance</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"emission_dim emission_dim"</span><span class="p">]</span></div>
 
 
 
 <div class="viewcode-block" id="NonlinearGaussianSSM">
 <a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NonlinearGaussianSSM</span><span class="p">(</span><span class="n">SSM</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Nonlinear Gaussian State Space Model.</span>
 
 <span class="sd">    The model is defined as follows</span>
@@ -422,7 +422,7 @@
 
 
 <span class="sd">    These parameters of the model are stored in a separate object of type :class:`ParamsNLGSSM`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">emission_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state_dim</span> <span class="o">=</span> <span class="n">state_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
@@ -430,21 +430,21 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the shape of the emission distribution.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Returns the shape of the emission distribution."""</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span><span class="p">,)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inputs_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the shape of the input distribution.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Returns the shape of the input distribution."""</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">,)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="NonlinearGaussianSSM.initial_distribution">
 <a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM.initial_distribution">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">initial_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                              <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
-                             <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
+                             <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" input_dim"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
                              <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the initial distribution.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Returns the initial distribution."""</span>
         <span class="k">return</span> <span class="n">MVN</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">initial_mean</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">initial_covariance</span><span class="p">)</span></div>
 
 
@@ -452,10 +452,10 @@
 <a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM.transition_distribution">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">transition_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                                 <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
-                                <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">],</span>
-                                <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
+                                <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">],</span>
+                                <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" input_dim"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
                                 <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the nonlinear dynamics distribution.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Returns the nonlinear dynamics distribution."""</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamics_function</span>
         <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">mean</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
@@ -468,10 +468,10 @@
 <a class="viewcode-back" href="../../../api.html#dynamax.nonlinear_gaussian_ssm.NonlinearGaussianSSM.emission_distribution">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">emission_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                               <span class="n">params</span><span class="p">:</span> <span class="n">ParamsNLGSSM</span><span class="p">,</span>
-                              <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; state_dim&quot;</span><span class="p">],</span>
-                              <span class="n">inputs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
+                              <span class="n">state</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" state_dim"</span><span class="p">],</span>
+                              <span class="n">inputs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" input_dim"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
                               <span class="o">-&gt;</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the nonlinear emission distribution.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Returns the nonlinear emission distribution."""</span>
         <span class="n">h</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">emission_function</span>
         <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">mean</span> <span class="o">=</span> <span class="n">h</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>

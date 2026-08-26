@@ -349,9 +349,9 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.utils.utils</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">Utility functions for the library.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jaxlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -366,7 +366,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cho_factor</span><span class="p">,</span> <span class="n">cho_solve</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">has_tpu</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the current device is a TPU.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Check if the current device is a TPU."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">devices</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">jaxlib</span><span class="o">.</span><span class="n">xla_extension</span><span class="o">.</span><span class="n">TpuDevice</span><span class="p">)</span>
     <span class="k">except</span><span class="p">:</span>
@@ -375,7 +375,7 @@
 
 <span class="nd">@jit</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">pad_sequences</span><span class="p">(</span><span class="n">observations</span><span class="p">,</span> <span class="n">valid_lens</span><span class="p">,</span> <span class="n">pad_val</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Pad ragged sequences to a fixed length.</span>
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -389,10 +389,10 @@
 <span class="sd">    -------</span>
 <span class="sd">    * array(n, max_len)</span>
 <span class="sd">        Ragged dataset</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">pad</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="nb">len</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pad a single sequence.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Pad a single sequence."""</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seq</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">idx</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">pad_val</span><span class="p">)</span>
 
@@ -401,13 +401,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">monotonically_increasing</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">0.</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an array is monotonically increasing.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Check if an array is monotonically increasing."""</span>
     <span class="n">thresh</span> <span class="o">=</span> <span class="n">atol</span> <span class="o">+</span> <span class="n">rtol</span><span class="o">*</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">thresh</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">pytree_len</span><span class="p">(</span><span class="n">pytree</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the number of leaves in a PyTree.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return the number of leaves in a PyTree."""</span>
     <span class="k">if</span> <span class="n">pytree</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="mi">0</span>
     <span class="k">else</span><span class="p">:</span>
@@ -415,23 +415,23 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">pytree_sum</span><span class="p">(</span><span class="n">pytree</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sum all the leaves in a PyTree.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Sum all the leaves in a PyTree."""</span>
     <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="n">keepdims</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">),</span> <span class="n">pytree</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">pytree_slice</span><span class="p">(</span><span class="n">pytree</span><span class="p">,</span> <span class="n">slc</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Slice all the leaves in a Pytree.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Slice all the leaves in a Pytree."""</span>
     <span class="k">return</span> <span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">pytree</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">pytree_stack</span><span class="p">(</span><span class="n">pytrees</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stack all the leaves in a list of PyTrees.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Stack all the leaves in a list of PyTrees."""</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">treedef</span> <span class="o">=</span> <span class="n">tree_flatten</span><span class="p">(</span><span class="n">pytrees</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">leaves</span> <span class="o">=</span> <span class="p">[</span><span class="n">tree_leaves</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span> <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">pytrees</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">tree_unflatten</span><span class="p">(</span><span class="n">treedef</span><span class="p">,</span> <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="k">for</span> <span class="n">vals</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">leaves</span><span class="p">)])</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">random_rotation</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Helper function to create a rotating linear system.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Helper function to create a rotating linear system.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        seed (jax.random.PRNGKey): JAX random seed.</span>
@@ -440,7 +440,7 @@
 <span class="sd">            a random angle sampled from a standard Gaussian scaled by ::math::`\pi / 2`. Defaults to None.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        [type]: [description]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
 
@@ -459,7 +459,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">instance_shapes</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a batch dimension to a PyTree, if necessary.</span>
+<span class="w">    </span><span class="sd">"""Add a batch dimension to a PyTree, if necessary.</span>
 
 <span class="sd">    Example: If `tree` is an array of shape (T, D) where `T` is</span>
 <span class="sd">    the number of time steps and `D` is the emission dimension,</span>
@@ -478,21 +478,21 @@
 <span class="sd">    is equivalent to `(jnp.expand_dims(A, 0), jnp.expand_dims(B, 0))`.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        tree (_type_): PyTree whose leaves&#39; shapes are either</span>
+<span class="sd">        tree (_type_): PyTree whose leaves' shapes are either</span>
 <span class="sd">            (batch, length) + instance_shape or (length,) + instance_shape.</span>
 <span class="sd">            If the latter, this function adds a batch dimension of 1 to</span>
 <span class="sd">            each leaf node.</span>
 
-<span class="sd">        instance_shape (_type_): matching PyTree where the &quot;leaves&quot; are</span>
-<span class="sd">            tuples of integers specifying the shape of one &quot;instance&quot; or</span>
+<span class="sd">        instance_shape (_type_): matching PyTree where the "leaves" are</span>
+<span class="sd">            tuples of integers specifying the shape of one "instance" or</span>
 <span class="sd">            entry in the array.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_expand_dim</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shp</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a batch dimension to an array, if necessary.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Add a batch dimension to an array, if necessary."""</span>
         <span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="n">ndim</span><span class="p">,</span> <span class="s2">&quot;array does not match expected shape!&quot;</span>
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="n">ndim</span><span class="p">,</span> <span class="s2">"array does not match expected shape!"</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([(</span><span class="n">d1</span> <span class="o">==</span> <span class="n">d2</span><span class="p">)</span> <span class="k">for</span> <span class="n">d1</span><span class="p">,</span> <span class="n">d2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">ndim</span><span class="p">:],</span> <span class="n">shp</span><span class="p">)]),</span> \
-            <span class="s2">&quot;array does not match expected shape!&quot;</span>
+            <span class="s2">"array does not match expected shape!"</span>
 
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">ndim</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:</span>
             <span class="c1"># x already has a batch dim</span>
@@ -501,7 +501,7 @@
             <span class="c1"># x has a leading time dimension but no batch dim</span>
             <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;array has too many dimensions!&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">"array has too many dimensions!"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">tree</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -510,10 +510,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_state_overlap</span><span class="p">(</span>
-    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_timesteps&quot;</span><span class="p">],</span>
-    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_timesteps&quot;</span><span class="p">]</span>
+    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" num_timesteps"</span><span class="p">],</span>
+    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" num_timesteps"</span><span class="p">]</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Compute a matrix describing the state-wise overlap between two state vectors</span>
 <span class="sd">    ``z1`` and ``z2``.</span>
 
@@ -525,7 +525,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        overlap matrix: Matrix of cumulative overlap events.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">assert</span> <span class="n">z1</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">z2</span><span class="o">.</span><span class="n">shape</span>
     <span class="k">assert</span> <span class="n">z1</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">z2</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">0</span>
 
@@ -542,10 +542,10 @@
 <div class="viewcode-block" id="find_permutation">
 <a class="viewcode-back" href="../../../api.html#dynamax.utils.utils.find_permutation">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">find_permutation</span><span class="p">(</span>
-    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_timesteps&quot;</span><span class="p">],</span>
-    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_timesteps&quot;</span><span class="p">]</span>
+    <span class="n">z1</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" num_timesteps"</span><span class="p">],</span>
+    <span class="n">z2</span><span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" num_timesteps"</span><span class="p">]</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Find the permutation of the state labels in sequence ``z1`` so that they</span>
 <span class="sd">    best align with the labels in ``z2``.</span>
 
@@ -557,7 +557,7 @@
 <span class="sd">        permutation such that ``jnp.take(perm, z1)`` best aligns with ``z2``.</span>
 <span class="sd">        Thus, ``len(perm) = min(z1.max(), z2.max()) + 1``.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">overlap</span> <span class="o">=</span> <span class="n">compute_state_overlap</span><span class="p">(</span><span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">)</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">perm</span> <span class="o">=</span> <span class="n">linear_sum_assignment</span><span class="p">(</span><span class="o">-</span><span class="n">overlap</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">perm</span></div>
@@ -565,14 +565,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">psd_solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">diagonal_boost</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper for coordinating the linalg solvers used in the library for psd matrices.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A wrapper for coordinating the linalg solvers used in the library for psd matrices."""</span>
     <span class="n">A</span> <span class="o">=</span> <span class="n">symmetrize</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">+</span> <span class="n">diagonal_boost</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">L</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="n">cho_factor</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">((</span><span class="n">L</span><span class="p">,</span> <span class="n">lower</span><span class="p">),</span> <span class="n">b</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">x</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">symmetrize</span><span class="p">(</span><span class="n">A</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Symmetrize one or more matrices.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Symmetrize one or more matrices."""</span>
     <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
 

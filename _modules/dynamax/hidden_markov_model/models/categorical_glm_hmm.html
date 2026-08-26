@@ -349,10 +349,10 @@
                 <article class="bd-article">
                   
   <h1>Source code for dynamax.hidden_markov_model.models.categorical_glm_hmm</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">This module contains a Hidden Markov Model (HMM) with categorical emissions </span>
 <span class="sd">from a regression model.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tfd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Array</span>
@@ -366,31 +366,31 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ParamsCategoricalRegressionHMMEmissions</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for the emission distribution of a Categorical Regression HMM.&quot;&quot;&quot;</span>
-    <span class="n">weights</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim num_classes feature_dim&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
-    <span class="n">biases</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;state_dim num_classes&quot;</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""Parameters for the emission distribution of a Categorical Regression HMM."""</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim num_classes feature_dim"</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
+    <span class="n">biases</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"state_dim num_classes"</span><span class="p">],</span> <span class="n">ParameterProperties</span><span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ParamsCategoricalRegressionHMM</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for a Categorical Regression HMM.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Parameters for a Categorical Regression HMM."""</span>
     <span class="n">initial</span><span class="p">:</span> <span class="n">ParamsStandardHMMInitialState</span>
     <span class="n">transitions</span><span class="p">:</span> <span class="n">ParamsStandardHMMTransitions</span>
     <span class="n">emissions</span><span class="p">:</span> <span class="n">ParamsCategoricalRegressionHMMEmissions</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">CategoricalRegressionHMMEmissions</span><span class="p">(</span><span class="n">HMMEmissions</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Emission distribution for a Categorical Regression HMM.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Emission distribution for a Categorical Regression HMM."""</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                  <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                  <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                  <span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
                  <span class="n">m_step_num_iters</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;_summary_</span>
+<span class="w">        </span><span class="sd">"""_summary_</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            emission_probs (_type_): _description_</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">m_step_optimizer</span><span class="o">=</span><span class="n">m_step_optimizer</span><span class="p">,</span> <span class="n">m_step_num_iters</span><span class="o">=</span><span class="n">m_step_num_iters</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="n">num_classes</span>
@@ -398,29 +398,29 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shape of the emission distribution.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Shape of the emission distribution."""</span>
         <span class="k">return</span> <span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inputs_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shape of the inputs to the emission distribution.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Shape of the inputs to the emission distribution."""</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_dim</span><span class="p">,)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log prior probability of the parameters.</span>
+<span class="w">        </span><span class="sd">"""Log prior probability of the parameters.</span>
 <span class="sd">        </span>
 <span class="sd">        Currently, there is no prior so this is always 0.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="mf">0.0</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">key</span><span class="p">:</span> <span class="n">Array</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
-            <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
-            <span class="n">emission_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_classes input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">emission_biases</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_classes&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">"prior"</span><span class="p">,</span>
+            <span class="n">emission_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_states num_classes input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">emission_biases</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_states num_classes"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+<span class="w">        </span><span class="sd">"""Initialize the model parameters and their corresponding properties.</span>
 
 <span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
 <span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
@@ -430,24 +430,24 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            key (PRNGKey, optional): random number generator for unspecified parameters. Must not be None if there are any unspecified parameters. Defaults to jr.PRNGKey(0).</span>
-<span class="sd">            method (str, optional): method for initializing unspecified parameters. Currently, only &quot;prior&quot; is allowed. Defaults to &quot;prior&quot;.</span>
+<span class="sd">            method (str, optional): method for initializing unspecified parameters. Currently, only "prior" is allowed. Defaults to "prior".</span>
 <span class="sd">            emission_weights (array, optional): manually specified emission weights. Defaults to None.</span>
 <span class="sd">            emission_biases (array, optional): manually specified emission biases. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            params: nested dataclasses of arrays containing model parameters.</span>
 <span class="sd">            props: a nested dictionary of ParameterProperties to specify parameter constraints and whether or not they should be trained.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;prior&quot;</span><span class="p">:</span>
-            <span class="c1"># technically there&#39;s no prior, so just sample standard normals</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"prior"</span><span class="p">:</span>
+            <span class="c1"># technically there's no prior, so just sample standard normals</span>
             <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
             <span class="n">_emission_weights</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_dim</span><span class="p">))</span>
             <span class="n">_emission_biases</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">))</span>
 
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid initialization method: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">"Invalid initialization method: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
 
-        <span class="c1"># Only use the values above if the user hasn&#39;t specified their own</span>
+        <span class="c1"># Only use the values above if the user hasn't specified their own</span>
         <span class="n">default</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">ParamsCategoricalRegressionHMMEmissions</span><span class="p">(</span>
             <span class="n">weights</span><span class="o">=</span><span class="n">default</span><span class="p">(</span><span class="n">emission_weights</span><span class="p">,</span> <span class="n">_emission_weights</span><span class="p">),</span>
@@ -461,8 +461,8 @@
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">params</span><span class="p">:</span> <span class="n">ParamsCategoricalRegressionHMMEmissions</span><span class="p">,</span>
             <span class="n">state</span><span class="p">:</span> <span class="n">IntScalar</span><span class="p">,</span>
-            <span class="n">inputs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; input_dim&quot;</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the emission distribution for a given state and input.&quot;&quot;&quot;</span>
+            <span class="n">inputs</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" input_dim"</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">"""Return the emission distribution for a given state and input."""</span>
         <span class="n">logits</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">state</span><span class="p">]</span> <span class="o">@</span> <span class="n">inputs</span> <span class="o">+</span> <span class="n">params</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="n">state</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">)</span>
 
@@ -470,7 +470,7 @@
 <div class="viewcode-block" id="CategoricalRegressionHMM">
 <a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.CategoricalRegressionHMM">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CategoricalRegressionHMM</span><span class="p">(</span><span class="n">HMM</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;An HMM whose emissions come from a categorical regression with state-dependent weights.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""An HMM whose emissions come from a categorical regression with state-dependent weights.</span>
 <span class="sd">    This is also known as a *switching multiclass logistic regression* model.</span>
 
 <span class="sd">    Let $y_t \in \{1, \ldots, C\}$ and $u_t \in \mathbb{R}^M$ denote categorical emissions</span>
@@ -491,13 +491,13 @@
 <span class="sd">    :param m_step_optimizer: ``optax`` optimizer, like Adam.</span>
 <span class="sd">    :param m_step_num_iters: number of optimizer steps per M-step.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                  <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
                  <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-                 <span class="n">initial_probs_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
-                 <span class="n">transition_matrix_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">initial_probs_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" num_states"</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                 <span class="n">transition_matrix_concentration</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" num_states"</span><span class="p">]]</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
                  <span class="n">transition_matrix_stickiness</span><span class="p">:</span> <span class="n">Scalar</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                  <span class="n">m_step_optimizer</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span><span class="o">=</span><span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">),</span>
                  <span class="n">m_step_num_iters</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
@@ -509,20 +509,20 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inputs_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shape of the inputs to the emission distribution.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Shape of the inputs to the emission distribution."""</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">,)</span>
 
 <div class="viewcode-block" id="CategoricalRegressionHMM.initialize">
 <a class="viewcode-back" href="../../../../api.html#dynamax.hidden_markov_model.CategoricalRegressionHMM.initialize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                    <span class="n">key</span><span class="p">:</span> <span class="n">Array</span><span class="o">=</span><span class="n">jr</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
-                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
-                   <span class="n">initial_probs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot; num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                   <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_states&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                   <span class="n">emission_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_classes input_dim&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                   <span class="n">emission_biases</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;num_states num_classes&quot;</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">"prior"</span><span class="p">,</span>
+                   <span class="n">initial_probs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" num_states"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_states num_states"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_states num_classes input_dim"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">emission_biases</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_states num_classes"</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HMMParameterSet</span><span class="p">,</span> <span class="n">HMMPropertySet</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the model parameters and their corresponding properties.</span>
+<span class="w">        </span><span class="sd">"""Initialize the model parameters and their corresponding properties.</span>
 
 <span class="sd">        You can either specify parameters manually via the keyword arguments, or you can have</span>
 <span class="sd">        them set automatically. If any parameters are not specified, you must supply a PRNGKey.</span>
@@ -530,7 +530,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            key: random number generator for unspecified parameters. Must not be None if there are any unspecified parameters.</span>
-<span class="sd">            method: method for initializing unspecified parameters. Both &quot;prior&quot; and &quot;kmeans&quot; are supported.</span>
+<span class="sd">            method: method for initializing unspecified parameters. Both "prior" and "kmeans" are supported.</span>
 <span class="sd">            initial_probs: manually specified initial state probabilities.</span>
 <span class="sd">            transition_matrix: manually specified transition matrix.</span>
 <span class="sd">            emission_weights: manually specified emission weights.</span>
@@ -539,12 +539,12 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Model parameters and their properties.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span> <span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
         <span class="n">params</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
-        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;transitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">)</span>
-        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;emissions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">emission_weights</span><span class="o">=</span><span class="n">emission_weights</span><span class="p">,</span> <span class="n">emission_biases</span><span class="o">=</span><span class="n">emission_biases</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">"initial"</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">"initial"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initial_probs</span><span class="o">=</span><span class="n">initial_probs</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">"transitions"</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">"transitions"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">transition_matrix</span><span class="o">=</span><span class="n">transition_matrix</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">"emissions"</span><span class="p">],</span> <span class="n">props</span><span class="p">[</span><span class="s2">"emissions"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">emission_weights</span><span class="o">=</span><span class="n">emission_weights</span><span class="p">,</span> <span class="n">emission_biases</span><span class="o">=</span><span class="n">emission_biases</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ParamsCategoricalRegressionHMM</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">),</span> <span class="n">ParamsCategoricalRegressionHMM</span><span class="p">(</span><span class="o">**</span><span class="n">props</span><span class="p">)</span></div>
 </div>
 
