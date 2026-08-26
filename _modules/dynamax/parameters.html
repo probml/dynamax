@@ -354,9 +354,9 @@
 <span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jax.tree_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_reduce</span><span class="p">,</span> <span class="n">tree_map</span><span class="p">,</span> <span class="n">register_pytree_node_class</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.tree_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_reduce</span><span class="p">,</span> <span class="n">tree_map</span><span class="p">,</span> <span class="n">tree_leaves</span><span class="p">,</span> <span class="n">register_pytree_node_class</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.bijectors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tfb</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">runtime_checkable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scalar</span>
@@ -415,6 +415,37 @@
 <span class="w">        </span><span class="sd">"""Return a string representation of the PyTree."""</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"ParameterProperties(trainable=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">trainable</span><span class="si">}</span><span class="s2">, constrainer=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">constrainer</span><span class="si">}</span><span class="s2">)"</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">trainable_flags</span><span class="p">(</span><span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""List the ``trainable`` flag of every :class:`ParameterProperties` in ``props``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        props: (nested) named tuple whose leaf values are ParameterProperties.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        flags: list of boolean ``trainable`` flags, one per property.</span>
+<span class="sd">    """</span>
+    <span class="n">is_leaf</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">node</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ParameterProperties</span><span class="p">,))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">prop</span><span class="o">.</span><span class="n">trainable</span> <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">tree_leaves</span><span class="p">(</span><span class="n">props</span><span class="p">,</span> <span class="n">is_leaf</span><span class="o">=</span><span class="n">is_leaf</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure_all_or_none_trainable</span><span class="p">(</span><span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"emission parameters"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise if some but not all of the properties in ``props`` are frozen.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        props: (nested) named tuple whose leaf values are ParameterProperties.</span>
+<span class="sd">        what: name for the parameters in ``props``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        all_trainable: True if all properties are trainable, False if all are frozen.</span>
+<span class="sd">    """</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="n">trainable_flags</span><span class="p">(</span><span class="n">props</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">flags</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"This model's fit_em() does not support fitting some but not all of the "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2">; set them all trainable or all frozen, or use fit_sgd()."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">to_unconstrained</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ParameterSet</span><span class="p">,</span> <span class="n">props</span><span class="p">:</span> <span class="n">PropertySet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterSet</span><span class="p">:</span>
