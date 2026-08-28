@@ -602,7 +602,8 @@ class HMM(SSM):
                         emissions: Array, 
                         inputs: Optional[Array]) -> Tuple:
         """Return the arguments needed for inference."""
-        return (self.initial_component._compute_initial_probs(params.initial, inputs),
+        initial_inputs = pytree_slice(inputs, 0) if inputs is not None else None
+        return (self.initial_component._compute_initial_probs(params.initial, initial_inputs),
                 self.transition_component._compute_transition_matrices(params.transitions, inputs),
                 self.emission_component._compute_conditional_logliks(params.emissions, emissions, inputs))
 
