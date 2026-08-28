@@ -255,6 +255,22 @@ def _predict(prior_mean: Float[Array, "state_dim"],
     return mu_pred, Sigma_pred
 
 
+def _mask_emission_weights_and_covar(H_t, R_t, is_missing):
+    """
+    Handle partial + full missing emissions by redefining the weights and covariance.
+    """
+    P_obs = jnp.diag(1 - is_missing.astype(int))  # Projects onto observed emissions.
+    P_mis = jnp.diag(is_missing.astype(int))  # Projects onto missing emissions.
+
+    H = P_obs @ H_t
+
+    epsilon = 1e-8  # Prevent matrix from becoming singular.
+    if R_t.ndim == 2:
+        R = P_obs @ R_t @ P_obs + epsilon * P_mis
+    else:
+        R = P_obs @ R_t + epsilon * is_missing.astype(int)
+    return H, R
+
 def _condition_on(prior_mean: Float[Array, "state_dim"],
                   prior_cov: Float[Array, "state_dim state_dim"],
                   emission_matrix: Float[Array, "emission_dim state_dim"],
@@ -279,6 +295,13 @@ def _condition_on(prior_mean: Float[Array, "state_dim"],
          mu_pred (D_hid,): predicted mean.
          Sigma_pred (D_hid,D_hid): predicted covariance.
     """
+    is_missing = jnp.isnan(emission)
+    dummy_value = 0.0  # Any finite value will do, as long as 0 * dummy != nan.
+    emission = jnp.where(~is_missing, emission, dummy_value)
+    emission_matrix, emission_cov = _mask_emission_weights_and_covar(
+        emission_matrix, emission_cov, is_missing,
+    )
+
     if emission_cov.ndim == 2:
         S = emission_cov + emission_matrix @ prior_cov @ emission_matrix.T
         K = psd_solve(S, emission_matrix @ prior_cov).T
@@ -465,7 +488,7 @@ def lgssm_filter(params: ParamsLGSSM,
 
     Args:
         params: model parameters
-        emissions: array of observations.
+        emissions: array of observations. Values set to NaN are considered missing.
         inputs: optional array of inputs.
 
     Returns:
@@ -477,13 +500,27 @@ def lgssm_filter(params: ParamsLGSSM,
 
     def _log_likelihood(pred_mean, pred_cov, H, D, d, R, u, y):
         """Compute the log likelihood of an observation under a linear Gaussian model."""
+        is_missing = jnp.isnan(y)
+        missing_mask = is_missing.astype(int)
+        n_missing = sum(is_missing)
+        H, R = _mask_emission_weights_and_covar(H, R, is_missing)
+
         m = H @ pred_mean + D @ u + d
+
+        # Fill missing values with mean, so that the (y - m) term in the exponent is 0.
+        y_filled = jnp.where(is_missing, m, y)
+        # We set variance of missing values to one, so that the normalization constant
+        # equals sqrt[2pi].
+        variance_mis = 1.0
+        # We than substract the normalization constants from the missing (marginalized)
+        # observations.
+        correction = -n_missing / 2 * jnp.log(2 * jnp.pi)
         if R.ndim==2:
-            S = R + H @ pred_cov @ H.T
-            return MVN(m, S).log_prob(y)
+            S = R + H @ pred_cov @ H.T + variance_mis * jnp.diag(missing_mask)
+            return MVN(m, S).log_prob(y_filled) - correction
         else:
             L = H @ jnp.linalg.cholesky(pred_cov)
-            return MVNLowRank(m, R, L).log_prob(y)
+            return MVNLowRank(m, R + variance_mis * missing_mask, L).log_prob(y_filled) - correction
 
 
     def _step(carry, t):
