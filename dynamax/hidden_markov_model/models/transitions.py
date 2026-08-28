@@ -51,6 +51,11 @@ class StandardHMMTransitions(HMMTransitions):
         """Return the distribution over the next state given the current state."""
         return tfd.Categorical(probs=params.transition_matrix[state])
 
+    def _check_transitions_format(self, transition_matrix: Float[Array, "num_states num_states"]):
+        assert transition_matrix.shape == (self.num_states, self.num_states), f"'transition_matrix' must have shape (num_states, num_states)={(self.num_states, self.num_states)} but {transition_matrix.shape} provided."
+        assert jnp.all(transition_matrix >= 0.0), f"All entries in 'transition_matrix' must be non-negative."
+        assert jnp.isclose(transition_matrix.sum(axis=1), 1.0).all(), f"Each row of 'transition_matrix' must sum to 1.0."
+
     def initialize(
             self,
             key: Optional[Array]=None,
@@ -73,7 +78,8 @@ class StandardHMMTransitions(HMMTransitions):
             else:
                 transition_matrix_sample = tfd.Dirichlet(self.concentration).sample(seed=key)
                 transition_matrix = cast(Float[Array, "num_states num_states"], transition_matrix_sample)
-
+        
+        self._check_transitions_format(transition_matrix=transition_matrix)
         # Package the results into dictionaries
         params = ParamsStandardHMMTransitions(transition_matrix=transition_matrix)
         props = ParamsStandardHMMTransitions(transition_matrix=ParameterProperties(constrainer=tfb.SoftmaxCentered()))
