@@ -526,15 +526,15 @@ class HMM(SSM):
 
     The model is defined as follows
 
-    $$z_1 \mid u_1 \sim \mathrm{Cat}(\pi_0(u_1, \\theta_{\mathsf{init}}))$$
-    $$z_t \mid z_{t-1}, u_t, \\theta \sim \mathrm{Cat}(\pi(z_{t-1}, u_t, \\theta_{\mathsf{trans}}))$$
-    $$y_t | z_t, u_t, \\theta \sim p(y_t \mid z_t, u_t, \\theta_{\mathsf{emis}})$$
+    $$z_1 \mid u_1 \sim \mathrm{Cat}(\pi_0(u_1, \theta_{\mathsf{init}}))$$
+    $$z_t \mid z_{t-1}, u_t, \theta \sim \mathrm{Cat}(\pi(z_{t-1}, u_t, \theta_{\mathsf{trans}}))$$
+    $$y_t | z_t, u_t, \theta \sim p(y_t \mid z_t, u_t, \theta_{\mathsf{emis}})$$
 
     where $z_t \in \{1,\ldots,K\}$ is a *discrete* latent state.
     There are parameters for the initial distribution, the transition distribution,
     and the emission distribution:
 
-    $$\\theta = (\\theta_{\mathsf{init}}, \\theta_{\mathsf{trans}}, \\theta_{\mathsf{emis}})$$
+    $$\theta = (\theta_{\mathsf{init}}, \theta_{\mathsf{trans}}, \theta_{\mathsf{emis}})$$
 
     For "standard" models, we will assume the initial distribution is fixed and the transitions
     follow a simple transition matrix,
@@ -542,7 +542,7 @@ class HMM(SSM):
     $$z_1 \mid u_1 \sim \mathrm{Cat}(\pi_0)$$
     $$z_t \mid z_{t-1}=k \sim \mathrm{Cat}(\pi_{z_k})$$
 
-    where $\\theta_{\mathsf{init}} = \pi_0$ and $\\theta_{\mathsf{trans}} = \{\pi_k\}_{k=1}^K$.
+    where $\theta_{\mathsf{init}} = \pi_0$ and $\theta_{\mathsf{trans}} = \{\pi_k\}_{k=1}^K$.
 
     The parameters are stored in a :class:`HMMParameterSet` object.
 
