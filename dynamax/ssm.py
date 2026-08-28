@@ -478,3 +478,32 @@ class SSM(ABC):
 
         params = from_unconstrained(unc_params, props)
         return params, losses
+
+    def fit_moments(
+        self,
+        params: ParameterSet,
+        props: PropertySet,
+        emissions: Union[Float[Array, "num_timesteps emission_dim"],
+                         Float[Array, "num_batches num_timesteps emission_dim"]],
+        key: Array=jr.PRNGKey(0)
+    ) -> ParameterSet:
+        r"""Estimate the parameters using method of moments.
+
+        Specifically, compute the second and third moments. Since the model is time 
+        homogeneous, you can take it over all consecutive 2 or 3 timesteps respectively.
+
+        $$M_2 = \mathbb{E}[x_1 \otimes x_2]$$
+        $$M_3 = \mathbb{E}[x_1 \otimes x_2 \otimes x_3]$$
+
+        Then 
+
+        Args:
+            params: model parameters $\theta$
+            props: properties specifying which parameters should be learned
+            key: sufficient statistics from each sequence
+
+        Returns:
+            new parameters
+
+        """
+        raise NotImplemented
