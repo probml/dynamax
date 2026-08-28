@@ -179,7 +179,7 @@ Types
 .. autoclass:: dynamax.linear_gaussian_ssm.PosteriorGSSMFiltered
 .. autoclass:: dynamax.linear_gaussian_ssm.PosteriorGSSMSmoothed
 
-Nonlinear Gaussian GSSM
+Nonlinear Gaussian SSM
 ========================
 
 
@@ -204,7 +204,7 @@ Types
 .. autoclass:: dynamax.nonlinear_gaussian_ssm.ParamsNLGSSM
 
 
-Generalized Gaussian GSSM
+Generalized Gaussian SSM
 ==========================
 
 High-level class
