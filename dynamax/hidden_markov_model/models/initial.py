@@ -57,7 +57,7 @@ class StandardHMMInitialState(HMMInitialState):
                 raise ValueError("key must be provided if initial_probs is not provided.")
             else:
                 this_key, key = jr.split(key)
-                initial_probs = tfd.Dirichlet(self.initial_probs_concentration).sample(seed=this_key)
+                initial_probs = jr.dirichlet(this_key, self.initial_probs_concentration)
 
         # Package the results into dictionaries
         params = ParamsStandardHMMInitialState(probs=initial_probs)

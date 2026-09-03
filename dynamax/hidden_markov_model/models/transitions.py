@@ -1,5 +1,6 @@
 """Module for HMM transition models."""
 import jax.numpy as jnp
+import jax.random as jr
 import tensorflow_probability.substrates.jax.distributions as tfd
 import tensorflow_probability.substrates.jax.bijectors as tfb
 
@@ -71,7 +72,7 @@ class StandardHMMTransitions(HMMTransitions):
             if key is None:
                 raise ValueError("key must be provided if transition_matrix is not provided.")
             else:
-                transition_matrix_sample = tfd.Dirichlet(self.concentration).sample(seed=key)
+                transition_matrix_sample = jr.dirichlet(key, self.concentration)
                 transition_matrix = cast(Float[Array, "num_states num_states"], transition_matrix_sample)
 
         # Package the results into dictionaries
