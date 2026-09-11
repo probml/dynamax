@@ -12,6 +12,7 @@ from functools import partial
 from jax import jit, lax, vmap
 from jax.tree_util import tree_map
 from jaxtyping import Array, Float, Real
+from numbers import Integral
 from tensorflow_probability.substrates.jax import distributions as tfd
 from typing import Optional, Union, Tuple, Any, runtime_checkable
 from typing_extensions import Protocol
@@ -362,7 +363,8 @@ class SSM(ABC):
         inputs: Optional[Union[Float[Array, "num_timesteps input_dim"],
                                Float[Array, "num_batches num_timesteps input_dim"]]]=None,
         num_iters: int=50,
-        verbose: bool=True
+        verbose: bool=True,
+        print_every: int=1,
     ) -> Tuple[ParameterSet, Float[Array, " num_iters"]]:
         r"""Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).
 
@@ -375,12 +377,16 @@ class SSM(ABC):
         *Note:* ``emissions`` *and* ``inputs`` *can either be single sequences or batches of sequences.*
 
         Args:
-            params: model parameters $\theta$
+            params: model parameters $\theta$. Parameters you supply yourself must have the
+                same shapes and dtypes that ``initialize`` produces.
             props: properties specifying which parameters should be learned
             emissions: one or more sequences of emissions
             inputs: one or more sequences of corresponding inputs
             num_iters: number of iterations of EM to run
-            verbose: whether or not to show a progress bar
+            verbose: whether or not to show a progress bar. Use ``False`` when calling
+                ``fit_em`` inside ``jit`` or ``vmap``.
+            print_every: number of EM iterations between progress bar updates. Ignored when
+                ``verbose=False``.
 
         Returns:
             tuple of new parameters and log likelihoods over the course of EM iterations.
@@ -391,23 +397,43 @@ class SSM(ABC):
         batch_emissions = ensure_array_has_batch_dim(emissions, self.emission_shape)
         batch_inputs = ensure_array_has_batch_dim(inputs, self.inputs_shape)
 
-        @jit
-        def em_step(params, m_step_state):
+        def em_step(carry, _):
             """Perform one EM step."""
+            params, m_step_state = carry
             batch_stats, lls = vmap(partial(self.e_step, params))(batch_emissions, batch_inputs)
             lp = self.log_prior(params) + lls.sum()
             params, m_step_state = self.m_step(params, props, batch_stats, m_step_state)
-            # debug.print('e_step: {x}', x=(batch_stats, lls))
-            # debug.print('m_step{y}', y=params)
-            return params, m_step_state, lp
+            return (params, m_step_state), lp
 
+        @partial(jit, static_argnums=1)
+        def run_em(carry, num_steps):
+            """Run `num_steps` EM steps."""
+            return lax.scan(em_step, carry, xs=None, length=num_steps)
+
+        if num_iters <= 0:
+            return params, jnp.array([])
+
+        # The scan carries (params, m_step_state), so their structure, shapes and dtypes must
+        # not change between iterations; initialize() produces parameters that match the M-step.
+        carry = (params, self.initialize_m_step_state(params, props))
+        if not verbose:
+            (params, _), log_probs = run_em(carry, num_iters)
+            return params, log_probs
+
+        if not isinstance(print_every, Integral) or print_every < 1:
+            raise ValueError(f"print_every must be a positive integer, got {print_every!r}")
+
+        # Run `print_every` iterations per dispatch and update the bar in between. The bar counts
+        # dispatched blocks without waiting for the device, so it can run ahead of the computation.
         log_probs = []
-        m_step_state = self.initialize_m_step_state(params, props)
-        pbar = progress_bar(range(num_iters)) if verbose else range(num_iters)
-        for _ in pbar:
-            params, m_step_state, marginal_logprob = em_step(params, m_step_state)
-            log_probs.append(marginal_logprob)
-        return params, jnp.array(log_probs)
+        pbar = progress_bar(range(num_iters))
+        pbar.update(0)
+        for start in range(0, num_iters, print_every):
+            num_steps = min(print_every, num_iters - start)
+            carry, chunk_log_probs = run_em(carry, num_steps)
+            log_probs.append(chunk_log_probs)
+            pbar.update(start + num_steps)
+        return carry[0], jnp.concatenate(log_probs)
 
     def fit_sgd(
         self,

@@ -49,8 +49,8 @@ class BernoulliHMMEmissions(HMMEmissions):
     ):
         self.num_states = num_states
         self.emission_dim = emission_dim
-        self.emission_prior_concentration0 = emission_prior_concentration0
-        self.emission_prior_concentration1 = emission_prior_concentration1
+        self.emission_prior_concentration0 = jnp.asarray(emission_prior_concentration0, dtype=float)
+        self.emission_prior_concentration1 = jnp.asarray(emission_prior_concentration1, dtype=float)
 
     @property
     def emission_shape(self) -> Tuple[int]:

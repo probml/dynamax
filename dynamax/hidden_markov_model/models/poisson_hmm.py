@@ -39,8 +39,8 @@ class PoissonHMMEmissions(HMMEmissions):
                  emission_prior_rate: Scalar = 0.1):
         self.num_states = num_states
         self.emission_dim = emission_dim
-        self.emission_prior_concentration = emission_prior_concentration
-        self.emission_prior_rate = emission_prior_rate
+        self.emission_prior_concentration = jnp.asarray(emission_prior_concentration, dtype=float)
+        self.emission_prior_rate = jnp.asarray(emission_prior_rate, dtype=float)
 
     @property
     def emission_shape(self) -> Tuple[int]:
