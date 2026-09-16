@@ -427,8 +427,8 @@
   <section class="tex2jax_ignore mathjax_ignore" id="gaussian-hmm-cross-validation-and-model-selection">
 <h1>Gaussian HMM: Cross-validation and Model Selection<a class="headerlink" href="#gaussian-hmm-cross-validation-and-model-selection" title="Link to this heading">#</a></h1>
 <p>A Gaussian HMM has emissions of the form,</p>
-<div class="amsmath math notranslate nohighlight" id="equation-b6be4ea8-cbdd-432a-8c7c-68dde8245979">
-<span class="eqno">(1)<a class="headerlink" href="#equation-b6be4ea8-cbdd-432a-8c7c-68dde8245979" title="Permalink to this equation">#</a></span>\[\begin{align}
+<div class="amsmath math notranslate nohighlight" id="equation-28e0f35a-8c2a-4a85-a2ca-f90b7d082b6f">
+<span class="eqno">(1)<a class="headerlink" href="#equation-28e0f35a-8c2a-4a85-a2ca-f90b7d082b6f" title="Permalink to this equation">#</a></span>\[\begin{align}
 p(y_t \mid z_t, \theta) &amp;= \mathcal{N}(y_t \mid \mu_{z_t}, \Sigma_{z_t})
 \end{align}\]</div>
 <p>where the emission parameters <span class="math notranslate nohighlight">\(\theta = \{(\mu_k, \Sigma_k)\}_{k=1}^K\)</span> include the means and covariances for each of the <span class="math notranslate nohighlight">\(K\)</span> discrete states.</p>
@@ -468,7 +468,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jr</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">vmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">vmap</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianHMM</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dynamax.hidden_markov_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiagonalGaussianHMM</span>
@@ -589,7 +589,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/dd64355107119d2bc8bbe37f032d44fc96a8dc2e2716cf59bb6713860a6d4128.png" src="../../_images/dd64355107119d2bc8bbe37f032d44fc96a8dc2e2716cf59bb6713860a6d4128.png" />
+<img alt="../../_images/7ee014512e23887a81e39a5dcb0f79abd800c9c371b7c9908a208bfed5db0f40.png" src="../../_images/7ee014512e23887a81e39a5dcb0f79abd800c9c371b7c9908a208bfed5db0f40.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -600,7 +600,7 @@ It also includes prior distributions on the parameters. For example, it uses a c
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/0604a658e23eb9f72dc0c3fa2420f0332fa18b2e37b1ba3202a1b172e1199fcb.png" src="../../_images/0604a658e23eb9f72dc0c3fa2420f0332fa18b2e37b1ba3202a1b172e1199fcb.png" />
+<img alt="../../_images/8bcb4addb0f57fa604f2c0eef404a374c98c0b4eeab72e30855be047874ac177.png" src="../../_images/8bcb4addb0f57fa604f2c0eef404a374c98c0b4eeab72e30855be047874ac177.png" />
 </div>
 </div>
 </section>
@@ -629,13 +629,14 @@ determining the number of discrete states.</p>
                                              <span class="n">num_iters</span><span class="o">=</span><span class="n">num_iters</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">marginal_log_prob</span><span class="p">(</span><span class="n">fit_params</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)</span>
 
-    <span class="n">val_lls</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">_fit_fold</span><span class="p">)(</span><span class="n">folds</span><span class="p">,</span> <span class="n">train_emissions</span><span class="p">)</span>
+    <span class="c1"># jit is optional here: it compiles the fits for all folds into one program, which is faster.</span>
+    <span class="n">val_lls</span> <span class="o">=</span> <span class="n">jit</span><span class="p">(</span><span class="n">vmap</span><span class="p">(</span><span class="n">_fit_fold</span><span class="p">))(</span><span class="n">folds</span><span class="p">,</span> <span class="n">train_emissions</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">val_lls</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">val_lls</span>
 </pre></div>
 </div>
 </div>
 </div>
-<p>Now run the cross-validation function on a sequence of models with number of states ranging from 2 to 10.</p>
+<p>Now run the cross-validation function on a sequence of models with number of states ranging from 2 to 9.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make a range of Gaussian HMMs</span>
@@ -694,7 +695,7 @@ determining the number of discrete states.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, 'avg. validation log prob.')
 </pre></div>
 </div>
-<img alt="../../_images/187fbf123edf527a972b52f0ccd3ac99e8401f65c43e37bba604332f8d31a766.png" src="../../_images/187fbf123edf527a972b52f0ccd3ac99e8401f65c43e37bba604332f8d31a766.png" />
+<img alt="../../_images/dbf572f7485ca2c137b8c6c68dd54b0ae60d39a2d8a6ded35c5a72695801896f.png" src="../../_images/dbf572f7485ca2c137b8c6c68dd54b0ae60d39a2d8a6ded35c5a72695801896f.png" />
 </div>
 </div>
 <p>There’s no right answer for how to choose the number of states, but reasonable heuristics include:</p>
@@ -774,10 +775,10 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f163e0d2a50&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f6395eb33d0&gt;
 </pre></div>
 </div>
-<img alt="../../_images/7a003e0815933d7025e512e62b7a54631ea29b0bff095181a7b2147c397643a1.png" src="../../_images/7a003e0815933d7025e512e62b7a54631ea29b0bff095181a7b2147c397643a1.png" />
+<img alt="../../_images/4c441556c55e4c12005664e16cf58a179e99f5d750d38c5722fbb5edf72a4942.png" src="../../_images/4c441556c55e4c12005664e16cf58a179e99f5d750d38c5722fbb5edf72a4942.png" />
 </div>
 </div>
 <div class="admonition note">
@@ -798,7 +799,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/31a6872c1cf9ceb6d401abb6124d2e4a5ef858bfa1f041c7e184a070e8e85eb3.png" src="../../_images/31a6872c1cf9ceb6d401abb6124d2e4a5ef858bfa1f041c7e184a070e8e85eb3.png" />
+<img alt="../../_images/787a7f57ec8833c69c211c9f42fba8b0e8cb3a5b833319420334470e580042eb.png" src="../../_images/787a7f57ec8833c69c211c9f42fba8b0e8cb3a5b833319420334470e580042eb.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -808,7 +809,7 @@ determining the number of discrete states.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/39d2ed36715af3a87b39cb1042516a31835f67bf49846f74ae1d3b1ca83fe866.png" src="../../_images/39d2ed36715af3a87b39cb1042516a31835f67bf49846f74ae1d3b1ca83fe866.png" />
+<img alt="../../_images/fddb7fb0fb2620b5822aa1103cc7156ec408e2c63ed230d7ac95a30d68fa2a58.png" src="../../_images/fddb7fb0fb2620b5822aa1103cc7156ec408e2c63ed230d7ac95a30d68fa2a58.png" />
 </div>
 </div>
 <div class="admonition important">
@@ -860,7 +861,7 @@ determining the number of discrete states.</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Marginal log probabilities of test data:
-                   GaussianHMM:  106.8
+                   GaussianHMM:  106.9
            DiagonalGaussianHMM:  113.5
           SphericalGaussianHMM:  110.8
    SharedCovarianceGaussianHMM:  112.4

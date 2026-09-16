@@ -400,8 +400,8 @@
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_states</span> <span class="o">=</span> <span class="n">num_states</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emission_dim</span> <span class="o">=</span> <span class="n">emission_dim</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_concentration0</span> <span class="o">=</span> <span class="n">emission_prior_concentration0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_concentration1</span> <span class="o">=</span> <span class="n">emission_prior_concentration1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_concentration0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">emission_prior_concentration0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_prior_concentration1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">emission_prior_concentration1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">emission_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>

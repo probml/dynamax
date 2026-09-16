@@ -363,6 +363,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">lax</span><span class="p">,</span> <span class="n">vmap</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.tree_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_map</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Real</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numbers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Integral</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">tfd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">runtime_checkable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
@@ -750,7 +751,8 @@
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_timesteps input_dim"</span><span class="p">],</span>
                                <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">"num_batches num_timesteps input_dim"</span><span class="p">]]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">num_iters</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">print_every</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ParameterSet</span><span class="p">,</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">" num_iters"</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute parameter MLE/ MAP estimate using Expectation-Maximization (EM).</span>
 
@@ -763,12 +765,16 @@
 <span class="sd">        *Note:* ``emissions`` *and* ``inputs`` *can either be single sequences or batches of sequences.*</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            params: model parameters $\theta$</span>
+<span class="sd">            params: model parameters $\theta$. Parameters you supply yourself must have the</span>
+<span class="sd">                same shapes and dtypes that ``initialize`` produces.</span>
 <span class="sd">            props: properties specifying which parameters should be learned</span>
 <span class="sd">            emissions: one or more sequences of emissions</span>
 <span class="sd">            inputs: one or more sequences of corresponding inputs</span>
 <span class="sd">            num_iters: number of iterations of EM to run</span>
-<span class="sd">            verbose: whether or not to show a progress bar</span>
+<span class="sd">            verbose: whether or not to show a progress bar. Use ``False`` when calling</span>
+<span class="sd">                ``fit_em`` inside ``jit`` or ``vmap``.</span>
+<span class="sd">            print_every: number of EM iterations between progress bar updates. Ignored when</span>
+<span class="sd">                ``verbose=False``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple of new parameters and log likelihoods over the course of EM iterations.</span>
@@ -779,23 +785,43 @@
         <span class="n">batch_emissions</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">emissions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emission_shape</span><span class="p">)</span>
         <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">ensure_array_has_batch_dim</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs_shape</span><span class="p">)</span>
 
-        <span class="nd">@jit</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">em_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">em_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">"""Perform one EM step."""</span>
+            <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span> <span class="o">=</span> <span class="n">carry</span>
             <span class="n">batch_stats</span><span class="p">,</span> <span class="n">lls</span> <span class="o">=</span> <span class="n">vmap</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">e_step</span><span class="p">,</span> <span class="n">params</span><span class="p">))(</span><span class="n">batch_emissions</span><span class="p">,</span> <span class="n">batch_inputs</span><span class="p">)</span>
             <span class="n">lp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prior</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">+</span> <span class="n">lls</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
             <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">batch_stats</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">)</span>
-            <span class="c1"># debug.print('e_step: {x}', x=(batch_stats, lls))</span>
-            <span class="c1"># debug.print('m_step{y}', y=params)</span>
-            <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">,</span> <span class="n">lp</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">),</span> <span class="n">lp</span>
 
+        <span class="nd">@partial</span><span class="p">(</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnums</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">run_em</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">"""Run `num_steps` EM steps."""</span>
+            <span class="k">return</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">em_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">xs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">num_steps</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">num_iters</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+
+        <span class="c1"># The scan carries (params, m_step_state), so their structure, shapes and dtypes must</span>
+        <span class="c1"># not change between iterations; initialize() produces parameters that match the M-step.</span>
+        <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_m_step_state</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">log_probs</span> <span class="o">=</span> <span class="n">run_em</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">log_probs</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">print_every</span><span class="p">,</span> <span class="n">Integral</span><span class="p">)</span> <span class="ow">or</span> <span class="n">print_every</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"print_every must be a positive integer, got </span><span class="si">{</span><span class="n">print_every</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># Run `print_every` iterations per dispatch and update the bar in between. The bar counts</span>
+        <span class="c1"># dispatched blocks without waiting for the device, so it can run ahead of the computation.</span>
         <span class="n">log_probs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">m_step_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_m_step_state</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
-        <span class="n">pbar</span> <span class="o">=</span> <span class="n">progress_bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_iters</span><span class="p">))</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_iters</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">pbar</span><span class="p">:</span>
-            <span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">,</span> <span class="n">marginal_logprob</span> <span class="o">=</span> <span class="n">em_step</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">m_step_state</span><span class="p">)</span>
-            <span class="n">log_probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">marginal_logprob</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">log_probs</span><span class="p">)</span></div>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">progress_bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_iters</span><span class="p">))</span>
+        <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">,</span> <span class="n">print_every</span><span class="p">):</span>
+            <span class="n">num_steps</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">print_every</span><span class="p">,</span> <span class="n">num_iters</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+            <span class="n">carry</span><span class="p">,</span> <span class="n">chunk_log_probs</span> <span class="o">=</span> <span class="n">run_em</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+            <span class="n">log_probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk_log_probs</span><span class="p">)</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">start</span> <span class="o">+</span> <span class="n">num_steps</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">carry</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">log_probs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SSM.fit_sgd">

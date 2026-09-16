@@ -615,10 +615,10 @@ Some of the HMM parameters have constraints.  Dynamax uses <em>bijectors</em> to
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Randomly initialized parameters
 initial probs:
-[0.635 0.365]
+[0.629 0.371]
 transition matrix:
-[[0.920 0.080]
- [0.023 0.977]]
+[[0.998 0.002]
+ [0.014 0.986]]
 emission probs:
 [[0.569 0.016 0.037 0.150 0.164 0.064]
  [0.127 0.141 0.070 0.306 0.058 0.298]]
@@ -790,7 +790,7 @@ By iteratively performing these two steps, the algorithm converges to a local ma
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/c1027703655b6a50b645b68575798543d43dd7efb14bab694f2bbf935c6c7478.png" src="../../_images/c1027703655b6a50b645b68575798543d43dd7efb14bab694f2bbf935c6c7478.png" />
+<img alt="../../_images/545dd022338a52567a53e9f5af26f8ab769c836cc6a50e614907f113a0e002e0.png" src="../../_images/545dd022338a52567a53e9f5af26f8ab769c836cc6a50e614907f113a0e002e0.png" />
 </div>
 </div>
 <p>For this problem, EM and Adam with a well-tuned learning rate converge the fastest. SGD and full-batch gradient descent appear to get stuck in a local optimum. By contrast, EM and Adam match the loss under the true parameters, and indeed if we look at the parameters below, they nearly recover the true parameters up to label switching.</p>
