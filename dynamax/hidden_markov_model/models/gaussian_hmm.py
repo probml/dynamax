@@ -626,8 +626,8 @@ class LowRankGaussianHMMEmissions(HMMEmissions):
         self.num_states = num_states
         self.emission_dim = emission_dim
         self.emission_rank = emission_rank
-        self.emission_diag_factor_conc = emission_diag_factor_concentration
-        self.emission_diag_factor_rate = emission_diag_factor_rate
+        self.emission_diag_factor_conc = jnp.asarray(emission_diag_factor_concentration, dtype=float)
+        self.emission_diag_factor_rate = jnp.asarray(emission_diag_factor_rate, dtype=float)
 
     def initialize(self, 
                    key: Array = jr.PRNGKey(0),
