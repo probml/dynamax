@@ -203,7 +203,7 @@ def kmeans(
         def cond(carry):
             """Continue while relative inertia improvement exceeds tol."""
             _, previous_inertia, inertia, i = carry
-            # The first comparison uses an infinite sentinel, not a measured inertia.
+            # Allow the first loop iteration; previous_inertia starts at infinity.
             improving = (i == 1) | (previous_inertia - inertia > tol * previous_inertia)
             return (i < max_iters) & improving
 
