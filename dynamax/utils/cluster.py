@@ -184,7 +184,8 @@ def kmeans(
         k: number of clusters. Static: changing it triggers recompilation.
         key: random seed for k-means++ initialization.
         max_iters: cap on Lloyd iterations per restart. Static.
-        tol: stop once an iteration improves inertia by no more than this.
+        tol: stop once the decrease in inertia is no more than this fraction
+            of the previous iteration's inertia.
         n_init: number of independent restarts. Static.
         n_local_trials: candidate centroids evaluated per k-means++ step. Defaults to
             `2 + int(log(k))`. Higher values improve seeding with diminishing returns
@@ -200,9 +201,11 @@ def kmeans(
         """Run one restart of Lloyd's algorithm from a k-means++ seeding."""
 
         def cond(carry):
-            """Continue while inertia is still improving by more than tol."""
+            """Continue while relative inertia improvement exceeds tol."""
             _, previous_inertia, inertia, i = carry
-            return (i < max_iters) & (previous_inertia - inertia > tol)
+            # The first comparison uses an infinite sentinel, not a measured inertia.
+            improving = (i == 1) | (previous_inertia - inertia > tol * previous_inertia)
+            return (i < max_iters) & improving
 
         def body(carry):
             """Run one Lloyd iteration: reassign samples, then recompute centroids."""

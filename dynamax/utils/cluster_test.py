@@ -65,6 +65,28 @@ def test_kmeans_inertia_matches_assignments():
     assert jnp.allclose(state.inertia, recomputed, rtol=1e-5)
 
 
+def test_kmeans_convergence_is_scale_invariant():
+    """Changing units must not stop Lloyd refinement prematurely."""
+    x = jr.normal(jr.PRNGKey(4), (100, 3))
+    key = jr.PRNGKey(0)
+    state = kmeans(x, 4, key, n_init=1)
+    scale = 1e-4
+    scaled = kmeans(scale * x, 4, key, n_init=1)
+    assert jnp.allclose(scaled.centroids / scale, state.centroids, atol=1e-5)
+    assert jnp.all(scaled.assignments == state.assignments)
+    assert jnp.allclose(scaled.inertia / scale**2, state.inertia, rtol=1e-5)
+
+
+def test_kmeans_converged_centroids_match_assigned_means():
+    """Refinement must continue beyond the first centroid update."""
+    x = jr.normal(jr.PRNGKey(4), (100, 3))
+    state = kmeans(x, 4, jr.PRNGKey(5), n_init=1, tol=1e-6)
+    for i, centroid in enumerate(state.centroids):
+        assigned = x[state.assignments == i]
+        if assigned.shape[0] > 0:
+            assert jnp.allclose(centroid, jnp.mean(assigned, axis=0), atol=1e-6)
+
+
 def test_kmeans_is_deterministic_given_key():
     """The same key produces identical results."""
     x = jr.normal(jr.PRNGKey(6), (80, 2))
