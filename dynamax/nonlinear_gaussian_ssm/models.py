@@ -70,7 +70,7 @@ class NonlinearGaussianSSM(SSM):
     def __init__(self, state_dim: int, emission_dim: int, input_dim: int = 0):
         self.state_dim = state_dim
         self.emission_dim = emission_dim
-        self.input_dim = 0
+        self.input_dim = input_dim
 
     @property
     def emission_shape(self):
