@@ -15,6 +15,7 @@ from dynamax.hidden_markov_model.models.linreg_hmm import LinearRegressionHMMEmi
 from dynamax.parameters import ParameterProperties
 from dynamax.types import Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
+from dynamax.utils.cluster import kmeans
 from tensorflow_probability.substrates import jax as tfp
 
 tfd = tfp.distributions
@@ -64,12 +65,8 @@ class LinearAutoregressiveHMMEmissions(LinearRegressionHMMEmissions):
 
         if method.lower() == "kmeans":
             assert emissions is not None, "Need emissions to initialize the model with K-Means!"
-            from sklearn.cluster import KMeans
-            key, subkey = jr.split(key)  # Create a random seed for SKLearn.
-            sklearn_key = jr.randint(subkey, shape=(), minval=0, maxval=2147483647)  # Max int32 value.
-            km = KMeans(self.num_states, random_state=int(sklearn_key)).fit(emissions.reshape(-1, self.emission_dim))
             _emission_weights = jnp.zeros((self.num_states, self.emission_dim, self.emission_dim * self.num_lags))
-            _emission_biases = jnp.array(km.cluster_centers_)
+            _emission_biases = kmeans(emissions.reshape(-1, self.emission_dim), self.num_states, key).centroids
             _emission_covs = jnp.tile(jnp.eye(self.emission_dim)[None, :, :], (self.num_states, 1, 1))
 
         elif method.lower() == "prior":
