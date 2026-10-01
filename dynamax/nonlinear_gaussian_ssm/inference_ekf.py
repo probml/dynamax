@@ -53,7 +53,7 @@ def _condition_on(prior_mean: Float[Array, " state_dim"],
     r"""Condition a Gaussian potential on a new observation.
 
        p(z_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
-         propto p(z_t | y_{1:t-1}, u_{1:t-1}) p(y_t | z_t, u_t)
+         propto p(z_t | y_{1:t-1}, u_{1:t}) p(y_t | z_t, u_t)
          = N(z_t | m, S) N(y_t | h_t(z_t, u_t), R_t)
          = N(z_t | mm, SS)
      where
@@ -106,10 +106,14 @@ def extended_kalman_filter(params: ParamsNLGSSM,
             "predicted_means", "predicted_covariances", and "marginal_loglik".
 
     Returns:
-        post: posterior object.
+        post: posterior object. Predicted entry ``t`` is for state ``t + 1``.
+            Predicted fields have length ``T`` when inputs are omitted and
+            dynamics covariance is static, otherwise ``T - 1``.
 
     """
     num_timesteps = len(emissions)
+    predict_final = inputs is None and params.dynamics_covariance.ndim == 2
+    assert params.dynamics_covariance.ndim != 3 or params.dynamics_covariance.shape[0] == num_timesteps
 
     # Dynamics and emission functions and their Jacobians
     f, h = params.dynamics_function, params.emission_function
@@ -117,12 +121,11 @@ def extended_kalman_filter(params: ParamsNLGSSM,
     f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
     inputs = _process_input(inputs, num_timesteps)
 
-    def _step(carry, t):
+    def _step(carry, t, predict=True):
         """Iteratively update the state estimate and log likelihood."""
         ll, pred_mean, pred_cov = carry
 
         # Get parameters and inputs for time index t
-        Q = _get_params(params.dynamics_covariance, 2, t)
         R = _get_params(params.emission_covariance, 2, t)
         u = inputs[t]
         y = emissions[t]
@@ -135,7 +138,10 @@ def extended_kalman_filter(params: ParamsNLGSSM,
         filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, h, H, R, u, y, num_iter)
 
         # Predict the next state
-        pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, f, F, Q, u)
+        if predict:
+            Q = _get_params(params.dynamics_covariance, 2, t + 1)
+            u_next = inputs[t + 1] if not predict_final else u
+            pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, f, F, Q, u_next)
 
         # Build carry and output states
         carry = (ll, pred_mean, pred_cov)
@@ -152,7 +158,11 @@ def extended_kalman_filter(params: ParamsNLGSSM,
 
     # Run the extended Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
-    (ll, _, _), outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    carry, outputs = lax.scan(_step, carry, jnp.arange(num_timesteps - 1))
+    (ll, _, _), final_outputs = _step(carry, num_timesteps - 1, predict=predict_final)
+    outputs = {key: jnp.concatenate((val, final_outputs[key][None])) for key, val in outputs.items()}
+    if not predict_final:
+        outputs = {key: val[:-1] if key.startswith("predicted") else val for key, val in outputs.items()}
     outputs = {"marginal_loglik": ll, **outputs}
     posterior_filtered = PosteriorGSSMFiltered(
         **outputs,
@@ -178,6 +188,7 @@ def extended_kalman_smoother(params: ParamsNLGSSM,
 
     """
     num_timesteps = len(emissions)
+    assert params.dynamics_covariance.ndim != 3 or params.dynamics_covariance.shape[0] == num_timesteps
 
     # Get filtered posterior
     if filtered_posterior is None:
@@ -198,10 +209,10 @@ def extended_kalman_smoother(params: ParamsNLGSSM,
         smoothed_mean_next, smoothed_cov_next = carry
         t, filtered_mean, filtered_cov = args
 
-        # Get parameters and inputs for time index t
-        Q = _get_params(params.dynamics_covariance, 2, t)
+        # Get parameters and inputs for times t and t + 1
+        Q = _get_params(params.dynamics_covariance, 2, t + 1)
         R = _get_params(params.emission_covariance, 2, t)
-        u = inputs[t]
+        u = inputs[t + 1]
         F_x = F(filtered_mean, u)
 
         # Prediction step
@@ -272,9 +283,9 @@ def extended_kalman_posterior_sample(key: PRNGKeyT,
         next_state = carry
         key, filtered_mean, filtered_cov, t = args
 
-        # Get parameters and inputs for time index t
-        Q = _get_params(params.dynamics_covariance, 2, t)
-        u = inputs[t]
+        # Get parameters and inputs for time index t + 1
+        Q = _get_params(params.dynamics_covariance, 2, t + 1)
+        u = inputs[t + 1]
 
         # Condition on next state
         smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, f, F, Q, u, next_state, 1)
