@@ -184,10 +184,10 @@ def _predict(prior_mean: Float[Array, "state_dim"],
         where
             mu_pred = gaussian_expec(f, m, P)
                     \approx \int f(x_t, u) N(x_t | m, P) dx_t
-            Sigma_pred = gaussian_crosscov(f(x_t, u_t), f(x_t, u_t); m, P) + Q
+            Sigma_pred = gaussian_crosscov(f(x_t, u), f(x_t, u); m, P) + Q
                        \approx \int (f(x_t, u) - mu_pred)(f(x_t, u) - mu_pred)^T N(x_t | m, P)dx_t + Q
-            cross_pred = gaussian_crosscov(x_t, f(x_t, u_t); m, P)
-                       \approx \int (x_t - m)(f(x_t, u_t) - mu_pred)^T N(x_t | m, P)dx_t
+            cross_pred = gaussian_crosscov(x_t, f(x_t, u); m, P)
+                       \approx \int (x_t - m)(f(x_t, u) - mu_pred)^T N(x_t | m, P)dx_t
 
     Args:
         prior_mean (state_dim,): prior mean.
@@ -232,7 +232,7 @@ def _condition_on(prior_mean: Float[Array, "state_dim"],
        Gaussian approximation.
 
        p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})
-         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)
+         propto p(x_t | y_{1:t-1}, u_{1:t}) p(y_t | x_t, u_t)
          \approx N(x_t | m, P) ArbitraryDist(y_t | emission_mean(x_t, u_t), emission_cov(x_t, u_t))
          \approx N(x_t | mu_cond, Sigma_cond)
      
@@ -305,6 +305,7 @@ def conditional_moments_gaussian_filter(model_params: ParamsGGSSM,
 
     """
     num_timesteps = len(emissions)
+    assert model_params.dynamics_covariance.ndim != 3 or model_params.dynamics_covariance.shape[0] == num_timesteps
 
     # Process dynamics function and conditional emission moments to take in control inputs
     f = model_params.dynamics_function
@@ -319,12 +320,11 @@ def conditional_moments_gaussian_filter(model_params: ParamsGGSSM,
     # Emission distribution
     emission_dist = model_params.emission_dist
 
-    def _step(carry, t):
+    def _step(carry, t, predict=True):
         """One step of the CMGF"""
         ll, pred_mean, pred_cov = carry
 
         # Get parameters and inputs for time index t
-        Q = _get_params(model_params.dynamics_covariance, 2, t)
         u = inputs[t]
         y = emissions[t]
 
@@ -334,13 +334,17 @@ def conditional_moments_gaussian_filter(model_params: ParamsGGSSM,
         ll += log_likelihood
 
         # Predict the next state
-        pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, u, g_ev, g_cov)
+        if predict:
+            Q = _get_params(model_params.dynamics_covariance, 2, t + 1)
+            pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, inputs[t + 1], g_ev, g_cov)
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
     # Run the general linearization filter
     carry = (0.0, model_params.initial_mean, model_params.initial_covariance)
-    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    carry, outputs = lax.scan(_step, carry, jnp.arange(num_timesteps - 1))
+    (ll, _, _), final_outputs = _step(carry, num_timesteps - 1, predict=False)
+    filtered_means, filtered_covs = [jnp.concatenate((a, b[None])) for a, b in zip(outputs, final_outputs)]
     return PosteriorGSSMFiltered(marginal_loglik=ll, 
                                  filtered_means=filtered_means, 
                                  filtered_covariances=filtered_covs)
@@ -366,6 +370,7 @@ def conditional_moments_gaussian_smoother(model_params: ParamsGGSSM,
 
     """
     num_timesteps = len(emissions)
+    assert model_params.dynamics_covariance.ndim != 3 or model_params.dynamics_covariance.shape[0] == num_timesteps
 
     # Get filtered posterior
     if filtered_posterior is None:
@@ -386,9 +391,9 @@ def conditional_moments_gaussian_smoother(model_params: ParamsGGSSM,
         smoothed_mean_next, smoothed_cov_next = carry
         t, filtered_mean, filtered_cov = args
 
-        # Get parameters and inputs for time index t
-        Q = _get_params(model_params.dynamics_covariance, 2, t)
-        u = inputs[t]
+        # Get parameters and inputs for time index t + 1
+        Q = _get_params(model_params.dynamics_covariance, 2, t + 1)
+        u = inputs[t + 1]
 
         # Prediction step
         pred_mean, pred_cov, pred_cross = _predict(filtered_mean, filtered_cov, f, Q, u, g_ev, g_cov)
