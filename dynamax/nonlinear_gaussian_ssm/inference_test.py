@@ -1,5 +1,5 @@
 """
-Tests for the extended Kalman filter and smoother.
+Tests for the extended and unscented Kalman filters and smoothers.
 """
 import numpy as np
 import pytest
@@ -10,6 +10,7 @@ from functools import partial
 from dynamax.linear_gaussian_ssm import lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference_test_utils import assert_sample_moments
 from dynamax.nonlinear_gaussian_ssm.inference_ekf import extended_kalman_filter, extended_kalman_smoother, extended_kalman_posterior_sample
+from dynamax.nonlinear_gaussian_ssm.inference_ukf import unscented_kalman_filter, unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.inference_test_utils import lgssm_to_nlgssm, random_lgssm_args, random_nlgssm_args, make_affine_timing_case
 from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM
 from dynamax.nonlinear_gaussian_ssm.sarkka_lib import ekf, eks
@@ -138,8 +139,12 @@ def test_extended_kalman_sampler_nonlinear(key=0, num_timesteps=15, sample_size=
     "filter_fn,smoother_fn",
     [
         (extended_kalman_filter, extended_kalman_smoother),
+        (
+            partial(unscented_kalman_filter, hyperparams=UKFHyperParams()),
+            partial(unscented_kalman_smoother, hyperparams=UKFHyperParams()),
+        ),
     ],
-    ids=["extended"],
+    ids=["extended", "unscented"],
 )
 @pytest.mark.parametrize("num_timesteps", [1, 3])
 def test_kalman_inference_input_indexing(filter_fn, smoother_fn, num_timesteps):
@@ -156,8 +161,8 @@ def test_kalman_inference_input_indexing(filter_fn, smoother_fn, num_timesteps):
 
 @pytest.mark.parametrize(
     "filter_fn",
-    [extended_kalman_filter],
-    ids=["extended"],
+    [extended_kalman_filter, partial(unscented_kalman_filter, hyperparams=UKFHyperParams())],
+    ids=["extended", "unscented"],
 )
 @pytest.mark.parametrize("num_timesteps", [1, 4])
 @pytest.mark.parametrize("time_varying_covariance", [False, True])
@@ -208,6 +213,7 @@ def test_kalman_inference_rejects_short_dynamics_covariance():
     params = params._replace(dynamics_covariance=params.dynamics_covariance[:-1])
     for inference in (
         lambda y, u: extended_kalman_filter(params, y, inputs=u),
+        lambda y, u: unscented_kalman_filter(params, y, UKFHyperParams(), inputs=u),
         lambda y, u: extended_kalman_smoother(params, y, filtered_posterior=filtered, inputs=u),
     ):
         with pytest.raises(AssertionError):
