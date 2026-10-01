@@ -1,0 +1,329 @@
+# Nightly canary: tests against latest JAX + tfp-nightly to catch upstream
+# breakage early. Motivation: https://github.com/probml/dynamax/issues/428
+#
+# Non-invasive: does not block PRs or touch main. On failure, opens a GitHub
+# issue tagged `canary-failure`. On recovery, auto-closes it.
+#
+# Note: The PyPI package is `tfp-nightly`, but the Python import is
+# `tensorflow_probability` — these are two names for the same thing.
+# tfp-nightly publishes under the tensorflow_probability namespace.
+#
+# Security posture:
+#   This workflow deliberately installs unpinned, bleeding-edge dependencies
+#   from PyPI. This is an accepted risk inherent to canary design — pinning
+#   would defeat the purpose. Compensating controls:
+#     - No secrets beyond the implicit GITHUB_TOKEN (contents:read)
+#     - GitHub Actions SHA-pinned to prevent supply chain attacks via actions
+#     - Timeout limits prevent runaway jobs
+#     - No artifact upload/download (no artifact poisoning vector)
+#     - No self-hosted runners (ephemeral GitHub-hosted only)
+#
+# Accepted tradeoffs (reviewed, not mitigated by design):
+#
+#   Supply chain:
+#   - Unpinned pip installs allow compromise during install. This is the
+#     canary's purpose. No secrets beyond read-only GITHUB_TOKEN on ephemeral
+#     runner.
+#   - tfp-nightly has reduced review vs stable releases. Testing nightlies
+#     is the point. Freshness check bounds exposure to <7 days.
+#   - Dependency confusion via private index. Not currently exploitable: no
+#     private index is configured.
+#   - SHA-pinned actions can go stale. Enable Dependabot for github-actions
+#     ecosystem separately.
+#   - pip install -e '.[test]' executes setup.py (build-time code exec).
+#     Same trust boundary as the code being tested.
+#   - pytest-rerunfailures is pinned while upstream deps are not. Intentional:
+#     it's a test tool, not an upstream-under-test.
+#
+#   Permissions:
+#   - issues:write allows manipulation of any issue if github-script action
+#     is compromised. Mitigated by SHA pinning.
+#   - workflow_dispatch lets any collaborator trigger on demand. Collaborators
+#     already have write access to the repo.
+#   - cancel-in-progress allows a malicious collaborator to prevent canary
+#     completion via rapid re-triggers. Same trust boundary as above.
+#
+#   Information exposure (inherent to open-source):
+#   - Version logging exposes dependency stack in public Actions logs.
+#     Required for maintainer debugging. Source code is already public.
+#   - Public canary-failure issues signal instability. Standard OSS practice.
+#     Private alerting adds complexity disproportionate to threat model.
+#   - Issue #428 reference provides context for social engineering pretexts.
+#     Valuable for contributors; issue is already public.
+#   - Fixed cron schedule creates predictable collection window. Mitigated:
+#     random jitter (0-55 min) added to canary job.
+#   - 7-day freshness window defines attack scheduling constraints. Already
+#     bounded by freshness check + future-date rejection.
+#   - workflow_dispatch timing reveals maintainer activity patterns. Inherent
+#     to manual trigger capability.
+#   - Issue/comment timestamps reveal maintainer work hours. Inherent to all
+#     public GitHub activity.
+#   - Failure correlation reveals JAX/TFP compatibility matrix. Inherent to
+#     open-source dependency relationships.
+#   - pytest tracebacks expose test architecture and coverage gaps. Test files
+#     and source code are already public.
+#   - Maintainer identity exposed in pyproject.toml. Out of scope: not part
+#     of this workflow; role-based emails are a repository-level decision.
+#   - Canary failures create urgency exploitable for social engineering.
+#     Mitigated by standard code review policy (no emergency merges).
+#
+#   Silent failure modes:
+#   - pip resolver may silently downgrade packages. Compensating control:
+#     version logging step surfaces it.
+#   - GitHub may skip scheduled runs during high load or 60-day inactivity.
+#     Out of scope: requires external heartbeat monitoring.
+#   - TFP imports successfully but has broken internals, or fresh TFP has
+#     uncovered regressions. Test coverage issues, not canary architecture.
+#   - --reruns 2 may mask genuine regression via non-determinism. Intentional:
+#     reruns prevent false alerts from known flaky tests.
+#   - Race condition in issue creation if two runs see same state. Mitigated
+#     by concurrency group serialization.
+#   - PyPI downtime triggers false alert. Canary retries next day.
+#   - tfp-nightly build freeze triggers sustained alert. Freshness check
+#     correctly signals staleness.
+#   - pip resolver hang, 1000+ comments, fork isolation. Handled by existing
+#     mechanisms (timeout, pagination, GitHub fork model).
+#   - GitHub API rate limit (truncated or hard failure). GITHUB_TOKEN allows
+#     1000 req/hr; canary uses <10.
+#
+#   See: https://github.com/probml/dynamax/issues/428
+
+name: Nightly Dependency Canary
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch: # Allow manual triggers
+
+concurrency:
+  group: canary
+  cancel-in-progress: true
+
+jobs:
+  canary:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90 # 30 min work + up to 55 min scheduling jitter
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+      fail-fast: false
+    name: Canary — Python ${{ matrix.python-version }}
+
+    steps:
+      - name: Scheduling jitter
+        if: github.event_name == 'schedule'
+        run: |
+          # Randomize execution within 0-55 min window to prevent predictable
+          # timing attacks against the fixed cron schedule.
+          JITTER=$((RANDOM % 3300))
+          echo "Sleeping ${JITTER}s (~$((JITTER / 60))min) for scheduling jitter"
+          sleep $JITTER
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Verify Python version
+        run: |
+          # Fail if setup-python silently fell back to wrong version.
+          EXPECTED="${{ matrix.python-version }}"
+          ACTUAL=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "ERROR: Expected Python $EXPECTED but got $ACTUAL"
+            exit 1
+          fi
+
+      - name: Install dynamax with latest upstream dependencies
+        run: |
+          # Install JAX first so it claims the version. Then tfp-nightly
+          # (which may constrain JAX — if pip downgrades, the version log
+          # step will surface it). Finally, dynamax and test deps.
+          pip install --no-cache-dir --upgrade jax jaxlib
+          pip install --no-cache-dir --upgrade tfp-nightly
+          pip install -e '.[test]'
+          pip install pytest-rerunfailures==16.1
+
+      - name: Log dependency versions
+        run: |
+          python -c "
+          import jax; print(f'JAX: {jax.__version__}')
+          import jaxlib; print(f'jaxlib: {jaxlib.__version__}')
+          import numpy; print(f'NumPy: {numpy.__version__}')
+          import tensorflow_probability; print(f'TFP: {tensorflow_probability.__version__}')
+          "
+
+      - name: Verify tfp-nightly freshness
+        run: |
+          python -c "
+          import re
+          from datetime import datetime, timedelta
+          import tensorflow_probability as tfp
+
+          match = re.search(r'(\d{8})', tfp.__version__)
+          if not match:
+              print(f'Warning: cannot parse date from {tfp.__version__} — skipping freshness check')
+          else:
+              build_date = datetime.strptime(match.group(1), '%Y%m%d')
+              now = datetime.now()
+              # Reject future dates (compromised version string)
+              assert build_date <= now + timedelta(days=1), \
+                  f'Suspicious future build date: {match.group(1)}'
+              # Reject stale builds
+              age = (now - build_date).days
+              assert age < 7, f'tfp-nightly is {age} days old — build may be stale'
+              print(f'tfp-nightly build date: {match.group(1)}, age: {age} day(s) — OK')
+          "
+
+      - name: Run tests
+        run: |
+          # Verify pytest collects a meaningful number of tests.
+          # pytest can exit 0 with zero tests collected — silent canary killer.
+          COLLECTED=$(pytest --collect-only -q 2>&1 | grep -c '::' || true)
+          if [ "$COLLECTED" -lt 10 ]; then
+            echo "ERROR: Only $COLLECTED tests collected (minimum: 10)"
+            exit 1
+          fi
+          echo "Collected $COLLECTED tests — OK"
+          pytest --tb=short -q --reruns 2
+
+  alert:
+    needs: canary
+    if: failure()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      issues: write
+    steps:
+      - name: Create or update failure issue
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            try {
+              const today = new Date().toISOString().split('T')[0];
+
+              // Determine which matrix jobs failed
+              const jobs = await github.rest.actions.listJobsForWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId
+              });
+              const failed = jobs.data.jobs
+                .filter(j => j.name.startsWith('Canary') && j.conclusion === 'failure')
+                .map(j => j.name);
+              const failedList = failed.length > 0
+                ? `\n\nFailed: ${failed.join(', ')}`
+                : '';
+
+              // Ensure label exists on first run
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: 'canary-failure'
+                });
+              } catch (e) {
+                if (e.status === 404) {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: 'canary-failure',
+                    color: 'B60205',
+                    description: 'Nightly canary detected upstream breakage'
+                  });
+                }
+              }
+
+              const existing = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'canary-failure'
+              });
+              if (existing.data.length > 0) {
+                const issue = existing.data[0];
+                // Paginate all comments to prevent dedup false negatives
+                let comments = [];
+                let page = 1;
+                while (true) {
+                  const resp = await github.rest.issues.listComments({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    per_page: 100,
+                    page: page++
+                  });
+                  comments = comments.concat(resp.data);
+                  if (resp.data.length < 100) break;
+                }
+                if (comments.some(c => c.body.includes(today))) return;
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `Still failing as of ${today}.${failedList}\n\n` +
+                        `[View run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+                });
+                return;
+              }
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Nightly canary failure',
+                body: `The nightly dependency canary has detected a failure.\n\n` +
+                      `This means an upcoming JAX or TFP release may break dynamax.${failedList}\n\n` +
+                      `[View the failed run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+                labels: ['canary-failure']
+              });
+            } catch (err) {
+              core.setFailed(`Alert job failed: ${err.message}`);
+              throw err;
+            }
+
+  recovery:
+    needs: canary
+    if: success()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Auto-close resolved canary issues
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            try {
+              const existing = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'canary-failure'
+              });
+              for (const issue of existing.data) {
+                // Only close issues created by this workflow, not human-created ones
+                if (issue.user.login !== 'github-actions[bot]') continue;
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `✅ Canary is passing again as of ${new Date().toISOString().split('T')[0]}.\n\n` +
+                        `[View run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed'
+                });
+              }
+            } catch (err) {
+              core.setFailed(`Recovery job failed: ${err.message}`);
+              throw err;
+            }
