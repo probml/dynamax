@@ -179,11 +179,15 @@ def unscented_kalman_filter(params: ParamsNLGSSM,
         inputs: optional array of inputs.
 
     Returns:
-        filtered_posterior: posterior object.
+        filtered_posterior: posterior object. Predicted entry ``t`` is for state ``t + 1``.
+            Predicted fields have length ``T`` when inputs are omitted and
+            dynamics covariance is static, otherwise ``T - 1``.
 
     """
     num_timesteps = len(emissions)
-    state_dim = params.dynamics_covariance.shape[0]
+    predict_final = inputs is None and params.dynamics_covariance.ndim == 2
+    assert params.dynamics_covariance.ndim != 3 or params.dynamics_covariance.shape[0] == num_timesteps
+    state_dim = params.initial_mean.shape[0]
 
     # Compute lambda and weights from from hyperparameters
     alpha, beta, kappa = hyperparams.alpha, hyperparams.beta, hyperparams.kappa
@@ -195,12 +199,11 @@ def unscented_kalman_filter(params: ParamsNLGSSM,
     f, h = (_process_fn(fn, inputs) for fn in (f, h))
     inputs = _process_input(inputs, num_timesteps)
 
-    def _step(carry, t):
+    def _step(carry, t, predict=True):
         """One step of the UKF"""
         ll, pred_mean, pred_cov = carry
 
         # Get parameters and inputs for time t
-        Q = _get_params(params.dynamics_covariance, 2, t)
         R = _get_params(params.emission_covariance, 2, t)
         u = inputs[t]
         y = emissions[t]
@@ -214,7 +217,10 @@ def unscented_kalman_filter(params: ParamsNLGSSM,
         ll += log_likelihood
 
         # Predict the next state
-        pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, lamb, w_mean, w_cov, u)
+        if predict:
+            Q = _get_params(params.dynamics_covariance, 2, t + 1)
+            u_next = inputs[t + 1] if not predict_final else u
+            pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, lamb, w_mean, w_cov, u_next)
 
         # Build carry and output states
         carry = (ll, pred_mean, pred_cov)
@@ -231,7 +237,11 @@ def unscented_kalman_filter(params: ParamsNLGSSM,
 
     # Run the Unscented Kalman Filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
-    (ll, *_), outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    carry, outputs = lax.scan(_step, carry, jnp.arange(num_timesteps - 1))
+    (ll, _, _), final_outputs = _step(carry, num_timesteps - 1, predict=predict_final)
+    outputs = {key: jnp.concatenate((val, final_outputs[key][None])) for key, val in outputs.items()}
+    if not predict_final:
+        outputs = {key: val[:-1] if key.startswith("predicted") else val for key, val in outputs.items()}
     outputs = {"marginal_loglik": ll, **outputs}
     posterior_filtered = PosteriorGSSMFiltered(
         **outputs,
@@ -257,7 +267,7 @@ def unscented_kalman_smoother(params: ParamsNLGSSM,
 
     """
     num_timesteps = len(emissions)
-    state_dim = params.dynamics_covariance.shape[0]
+    state_dim = params.initial_mean.shape[0]
 
     # Run the unscented Kalman filter
     ukf_posterior = unscented_kalman_filter(params, emissions, hyperparams, inputs)
@@ -281,10 +291,10 @@ def unscented_kalman_smoother(params: ParamsNLGSSM,
         smoothed_mean_next, smoothed_cov_next = carry
         t, filtered_mean, filtered_cov = args
 
-        # Get parameters and inputs for time t
-        Q = _get_params(params.dynamics_covariance, 2, t)
+        # Get parameters and inputs for times t and t + 1
+        Q = _get_params(params.dynamics_covariance, 2, t + 1)
         R = _get_params(params.emission_covariance, 2, t)
-        u = inputs[t]
+        u = inputs[t + 1]
         y = emissions[t]
 
         # Prediction step
