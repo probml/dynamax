@@ -129,3 +129,41 @@ def test_extended_kalman_sampler_nonlinear(key=0, num_timesteps=15, sample_size=
     empirical_means = ekf_samples.mean(0)
     assert jnp.all(abs(empirical_means - ekf_post.smoothed_means) < threshold)
     
+
+def test_iterated_extended_kalman_filter_linear(key=0, num_timesteps=15):
+    """
+    Test that re-linearizing in the update step leaves the exact result of the
+    linear Gaussian case unchanged.
+    """
+    args, _, emissions = random_lgssm_args(key=key, num_timesteps=num_timesteps)
+    kf_post = lgssm_filter(args, emissions)
+    ekf_post = extended_kalman_filter(lgssm_to_nlgssm(args), emissions, num_iter=4)
+
+    assert allclose(kf_post.filtered_means, ekf_post.filtered_means)
+    assert allclose(kf_post.filtered_covariances, ekf_post.filtered_covariances)
+    assert allclose(kf_post.marginal_loglik, ekf_post.marginal_loglik)
+
+
+def test_iterated_extended_kalman_filter_converges_to_map():
+    """
+    With a nonlinear emission function the iterated update is a Gauss-Newton
+    solve for the posterior mode, which can be found independently on a grid.
+    """
+    from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM
+
+    params = ParamsNLGSSM(
+        initial_mean=jnp.array([0.5]),
+        initial_covariance=jnp.array([[1.0]]),
+        dynamics_function=lambda x: x,
+        dynamics_covariance=jnp.array([[1.0]]),
+        emission_function=lambda x: x + 0.5 * x ** 3,
+        emission_covariance=jnp.array([[0.1]]),
+    )
+    emissions = jnp.array([[3.0]])
+
+    grid = jnp.linspace(-3.0, 3.0, 600001)
+    neg_log_post = 0.5 * (grid - 0.5) ** 2 / 1.0 + 0.5 * (3.0 - (grid + 0.5 * grid ** 3)) ** 2 / 0.1
+    x_map = grid[jnp.argmin(neg_log_post)]
+
+    post = extended_kalman_filter(params, emissions, num_iter=10)
+    assert jnp.allclose(post.filtered_means[0, 0], x_map, atol=1e-3)

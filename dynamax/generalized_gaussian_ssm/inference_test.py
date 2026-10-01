@@ -4,7 +4,7 @@ Tests for inference in the generalized Gaussian SSM.
 import jax.numpy as jnp
 
 from dynamax.generalized_gaussian_ssm.models import ParamsGGSSM
-from dynamax.generalized_gaussian_ssm.inference import conditional_moments_gaussian_smoother, EKFIntegrals, UKFIntegrals
+from dynamax.generalized_gaussian_ssm.inference import conditional_moments_gaussian_filter, conditional_moments_gaussian_smoother, EKFIntegrals, UKFIntegrals
 from dynamax.nonlinear_gaussian_ssm.inference_ekf import extended_kalman_smoother
 from dynamax.nonlinear_gaussian_ssm.inference_ukf import unscented_kalman_smoother, UKFHyperParams
 from dynamax.nonlinear_gaussian_ssm.inference_test_utils import random_nlgssm_args
@@ -72,3 +72,27 @@ def test_ukf(key=1, num_timesteps=15):
     assert allclose(ukf_post.filtered_covariances, ggf_post.filtered_covariances)
     assert allclose(ukf_post.smoothed_means, ggf_post.smoothed_means)
     assert allclose(ukf_post.smoothed_covariances, ggf_post.smoothed_covariances)
+
+def _scalar_linear_ggssm():
+    return ParamsGGSSM(
+        initial_mean=jnp.zeros(1),
+        initial_covariance=jnp.eye(1),
+        dynamics_function=lambda x: x,
+        dynamics_covariance=jnp.eye(1),
+        emission_mean_function=lambda x: x,
+        emission_cov_function=lambda x: jnp.eye(1),
+    )
+
+
+def test_iterated_update_is_exact_for_linear_model():
+    """
+    Re-linearizing in the update step must not change the exact posterior of a
+    linear Gaussian model: N(1, 0.5) for prior N(0, 1), unit noise and y = 2.
+    """
+    params = _scalar_linear_ggssm()
+    emissions = jnp.array([[2.0]])
+    for integrals in (EKFIntegrals(), UKFIntegrals()):
+        for num_iter in (1, 2, 5):
+            post = conditional_moments_gaussian_filter(params, integrals, emissions, num_iter=num_iter)
+            assert allclose(post.filtered_means[0], 1.0)
+            assert allclose(post.filtered_covariances[0], 0.5)

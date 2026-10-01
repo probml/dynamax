@@ -267,18 +267,31 @@ def _condition_on(prior_mean: Float[Array, "state_dim"],
     identity_fn = lambda x: x
 
     def _step(carry, _):
-        """Iteratively re-linearize around the posterior mean and covariance."""
-        prior_mean, prior_cov = carry
-        yhat = gaussian_expec(m_Y, prior_mean, prior_cov)
-        S = gaussian_expec(Cov_Y, prior_mean, prior_cov) + gaussian_crosscov(m_Y, m_Y, prior_mean, prior_cov)
-        log_likelihood = emission_dist(yhat, S).log_prob(jnp.atleast_1d(emission)).sum()
-        C = gaussian_crosscov(identity_fn, m_Y, prior_mean, prior_cov)
-        K = psd_solve(S, C.T).T
-        posterior_mean = prior_mean + K @ (emission - yhat)
-        posterior_cov = prior_cov - K @ S @ K.T
+        """Re-linearize around the current posterior approximation.
+
+        The moments are taken under the current iterate, but the update always
+        conditions the original prior, so the observation is only counted once.
+        """
+        mean_i, cov_i = carry
+        yhat = gaussian_expec(m_Y, mean_i, cov_i)
+        S = gaussian_expec(Cov_Y, mean_i, cov_i) + gaussian_crosscov(m_Y, m_Y, mean_i, cov_i)
+        C = gaussian_crosscov(identity_fn, m_Y, mean_i, cov_i)
+
+        # Statistical linearization y ~ A x + b + N(0, Omega) around N(mean_i, cov_i)
+        A = psd_solve(cov_i, C).T
+        b = yhat - A @ mean_i
+        Omega = S - A @ cov_i @ A.T
+
+        # Kalman update of the original prior under the linearized model
+        yhat_prior = A @ prior_mean + b
+        S_prior = A @ prior_cov @ A.T + Omega
+        log_likelihood = emission_dist(yhat_prior, S_prior).log_prob(jnp.atleast_1d(emission)).sum()
+        K = psd_solve(S_prior, A @ prior_cov).T
+        posterior_mean = prior_mean + K @ (emission - yhat_prior)
+        posterior_cov = prior_cov - K @ S_prior @ K.T
         return (posterior_mean, posterior_cov), log_likelihood
 
-    # Iterate re-linearization over posterior mean and covariance
+    # Iterate re-linearization around the posterior approximation
     carry = (prior_mean, prior_cov)
     (mu_cond, Sigma_cond), lls = lax.scan(_step, carry, jnp.arange(num_iter))
     return lls[0], mu_cond, Sigma_cond
