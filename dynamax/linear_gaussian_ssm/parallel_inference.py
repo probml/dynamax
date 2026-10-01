@@ -385,7 +385,7 @@ def _initialize_sampling_messages(key, params, filtered_means, filtered_covarian
     Given parallel smoothing messages `z_i ~ N(E_i z_{i+1} + g_i, L_i)`, 
     the parallel sampling messages are `(E_i,h_i)` where `h_i ~ N(g_i, L_i)`.
     """
-    E, g, L = _initialize_smoothing_messages(params, filtered_means, filtered_covariances)
+    E, g, L = _initialize_smoothing_messages(params, filtered_means, filtered_covariances, inputs)
     return SampleMessage(E=E, h=MVN(g, L).sample(seed=key))
 
 
