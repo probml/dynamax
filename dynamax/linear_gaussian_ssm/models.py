@@ -415,7 +415,7 @@ class LinearGaussianSSM(SSM):
 
         # Append bias to the inputs
         inputs = jnp.concatenate((inputs, jnp.ones((num_timesteps, 1))), axis=1)
-        up = inputs[:-1]
+        up = inputs[1:]
         u = inputs
         y = emissions
 
@@ -425,7 +425,7 @@ class LinearGaussianSSM(SSM):
         init_stats = (Ex0, Ex0x0T, 1)
 
         # expected sufficient statistics for the dynamics tfd.Distribution
-        # let zp[t] = [x[t], u[t]] for t = 0...T-2
+        # let zp[t] = [x[t], u[t+1]] for t = 0...T-2
         # let xn[t] = x[t+1]          for t = 0...T-2
         sum_zpzpT = jnp.block([[Exp.T @ Exp, Exp.T @ up], [up.T @ Exp, up.T @ up]])
         sum_zpzpT = sum_zpzpT.at[:self.state_dim, :self.state_dim].add(Vxp.sum(0))
