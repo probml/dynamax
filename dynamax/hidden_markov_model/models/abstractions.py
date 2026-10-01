@@ -230,7 +230,7 @@ class HMMTransitions(ABC):
         Args:
             params: transition parameters
             state: current latent state
-            inputs: current inputs
+            inputs: next inputs
 
         Returns:
             conditional distribution of next state.
