@@ -121,13 +121,15 @@ class PosteriorGSSMFiltered(NamedTuple):
     :param marginal_loglik: marginal log likelihood, $p(y_{1:T} \mid u_{1:T})$
     :param filtered_means: array of filtered means $\mathbb{E}[z_t \mid y_{1:t}, u_{1:t}]$
     :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[z_t \mid y_{1:t}, u_{1:t}]$
+    :param predicted_means: array of predicted means $\mathbb{E}[z_{t+1} \mid y_{1:t}, u_{1:t+1}]$
+    :param predicted_covariances: array of predicted covariances $\mathrm{Cov}[z_{t+1} \mid y_{1:t}, u_{1:t+1}]$
 
     """
     marginal_loglik: Union[Scalar, Float[Array, " ntime"]]
     filtered_means: Optional[Float[Array, "ntime state_dim"]] = None
     filtered_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
-    predicted_means: Optional[Float[Array, "ntime state_dim"]] = None
-    predicted_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
+    predicted_means: Optional[Float[Array, "num_predictions state_dim"]] = None
+    predicted_covariances: Optional[Float[Array, "num_predictions state_dim state_dim"]] = None
 
 
 class PosteriorGSSMSmoothed(NamedTuple):
