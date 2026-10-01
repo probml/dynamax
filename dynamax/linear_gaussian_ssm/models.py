@@ -674,12 +674,12 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             inputs_joint = jnp.concatenate((inputs, jnp.ones((num_timesteps, 1))), axis=1)
             # Let xn[t] = x[t+1]          for t = 0...T-2
             x, xp, xn = states, states[:-1], states[1:]
-            u, up = inputs_joint, inputs_joint[:-1]
+            u, up = inputs_joint, inputs_joint[1:]
 
             init_stats = (x[0], jnp.outer(x[0], x[0]), 1)
 
             # Quantities for the dynamics distribution
-            # Let zp[t] = [x[t], u[t]] for t = 0...T-2
+            # Let zp[t] = [x[t], u[t+1]] for t = 0...T-2
             sum_zpzpT = jnp.block([[xp.T @ xp, xp.T @ up], [up.T @ xp, up.T @ up]])
             sum_zpxnT = jnp.block([[xp.T @ xn], [up.T @ xn]])
             sum_xnxnT = xn.T @ xn
