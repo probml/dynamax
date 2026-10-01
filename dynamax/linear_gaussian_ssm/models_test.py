@@ -4,8 +4,9 @@ Tests for the linear Gaussian SSM models.
 from functools import partial
 from itertools import count
 
+import numpy as np
 import pytest
-from jax import vmap
+from jax import jit, vmap
 from jax.tree_util import tree_leaves, tree_map
 import jax.numpy as jnp
 import jax.random as jr
@@ -20,6 +21,35 @@ CONFIGS = [
     (LinearGaussianSSM, dict(state_dim=2, emission_dim=10), None),
     (LinearGaussianConjugateSSM, dict(state_dim=2, emission_dim=10), None),
 ]
+
+
+@pytest.mark.parametrize("num_forecast_timesteps", [1, 3])
+@pytest.mark.parametrize("has_inputs", [False, True])
+def test_forecast_matches_expected_moments(num_forecast_timesteps, has_inputs):
+    """Check forecast state and observation means and covariances against hand-computed values."""
+    model = LinearGaussianSSM(state_dim=1, emission_dim=1, input_dim=int(has_inputs))
+    params, _ = model.initialize(
+        initial_mean=jnp.zeros(1), initial_covariance=jnp.eye(1),
+        dynamics_weights=jnp.array([[0.5]]), dynamics_covariance=jnp.eye(1),
+        dynamics_input_weights=jnp.ones((1, int(has_inputs))),
+        emission_weights=jnp.eye(1), emission_covariance=jnp.eye(1))
+    params = params._replace(dynamics=params.dynamics._replace(
+        bias=None, input_weights=params.dynamics.input_weights if has_inputs else None))
+    inputs = jnp.zeros((1, 1)) if has_inputs else None
+    future_inputs = jnp.array([[10.0], [20.0], [30.0]])[:num_forecast_timesteps] if has_inputs else None
+
+    forecasts = jit(partial(model.forecast, num_forecast_timesteps=num_forecast_timesteps))(
+        params, jnp.array([[4.88]]), inputs=inputs, forecast_inputs=future_inputs)
+
+    # Filtering y=4.88 with unit prior/emission variance gives m=2.44, P=0.5.
+    # Each future step applies m <- 0.5*m + u and P <- 0.25*P + 1.
+    means = [11.22, 25.61, 42.805] if has_inputs else [1.22, 0.61, 0.305]
+    expected_means = np.array(means)[:num_forecast_timesteps, None]
+    expected_covs = np.array([1.125, 1.28125, 1.3203125])[:num_forecast_timesteps, None, None]
+    np.testing.assert_allclose(forecasts[0], expected_means, rtol=1e-6)
+    np.testing.assert_allclose(forecasts[1], expected_covs, rtol=1e-6)
+    np.testing.assert_allclose(forecasts[2], expected_means, rtol=1e-6)
+    np.testing.assert_allclose(forecasts[3], expected_covs + 1, rtol=1e-6)
 
 
 @pytest.mark.parametrize(["cls", "kwargs", "inputs"], CONFIGS)
