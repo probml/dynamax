@@ -26,7 +26,7 @@ or sequential Monte Carlo (SMC)).
 Installation and Testing
 ------------------------
 
-To install the latest releast of dynamax from PyPi:
+To install the latest release of dynamax from PyPI:
 
 .. code-block:: console
 
@@ -110,7 +110,7 @@ as we discuss below.
 More information can be found in these books:
 
    * "Machine Learning: Advanced Topics", K. Murphy, MIT Press 2023. Available at https://probml.github.io/pml-book/book2.html.
-   * "Bayesian Filtering and Smoothing, Second Edition", S. Särkkä and L. Svensson, Cambridge University Press, 2023. Available at http://users.aalto.fi/~ssarkka/pub/bfs_book_2023_online.pdf
+   * "Bayesian Filtering and Smoothing, Second Edition", S. Särkkä and L. Svensson, Cambridge University Press, 2023. Available at https://users.aalto.fi/~ssarkka/pub/bfs_book_2023_online.pdf
 
 Quickstart
 ----------
@@ -242,8 +242,8 @@ Related Libraries
 * hmmlearn_: Numpy / C++ library for HMMs
 * linderman-ssm-jax_:  JAX library for SSMs (replaced by dynamax)
 * linderman-ssm-numpy_:  Numpy / numba / autograd library for SSMs  (replaced by dynamax)
-* mattjj-pyhsmm_:  Numpy / Cython library library for HMMs
-* mattjj-pylds_:  Numpy / Cython library library for linear dynamical systems
+* mattjj-pyhsmm_:  Numpy / Cython library for HMMs
+* mattjj-pylds_:  Numpy / Cython library for linear dynamical systems
 * pgm-jax_: JAX library for factor graphs
 * JSL_: JAX library for SSMs (replaced by dynamax)
 * pykalman_: Numpy library for (extended) Kalman filtering
@@ -256,13 +256,13 @@ Related Libraries
 .. _distrax_hmm: https://github.com/deepmind/distrax/blob/master/distrax/_src/utils/hmm.py
 .. _filterpy: https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python
 .. _hmmlearn: https://github.com/hmmlearn/hmmlearn
-.. _JAX: https://github.com/google/jax
+.. _JAX: https://github.com/jax-ml/jax
 .. _JSL: https://github.com/probml/JSL
 .. _linderman-ssm-jax: https://github.com/lindermanlab/ssm-jax
 .. _linderman-ssm-numpy: https://github.com/lindermanlab/ssm
 .. _mattjj-pyhsmm: https://github.com/mattjj/pyhsmm
 .. _mattjj-pylds: https://github.com/mattjj/pylds
-.. _optax: https://github.com/deepmind/optax
+.. _optax: https://github.com/google-deepmind/optax
 .. _pgm-jax: https://github.com/probml/pgm-jax
 .. _pykalman: https://pykalman.github.io/
 .. _sarkka-parallel-non-linear-gaussian-smoothers: https://github.com/EEA-sensors/parallel-non-linear-gaussian-smoothers
