@@ -4,7 +4,7 @@ Tests for the HMM inference functions.
 import itertools as it
 import jax.numpy as jnp
 import jax.random as jr
-from jax import vmap
+from jax import config, vmap
 
 import dynamax.hidden_markov_model.inference as core
 import dynamax.hidden_markov_model.parallel_inference as parallel
@@ -384,3 +384,27 @@ def test_hmm_fixed_lag_smoother_nonstationary():
     posterior = core.hmm_fixed_lag_smoother(
         jnp.array([0.5, 0.5]), transitions, log_likelihoods, window_size=2)
     assert jnp.allclose(posterior.smoothed_probs[1], jnp.array([[0.9, 0.1], [0.9, 0.1]]))
+
+
+def test_hmm_single_observation_nonstationary(request):
+    """One observation needs no transition, including in traced empty scans."""
+    x64_enabled = config.x64_enabled
+    request.addfinalizer(lambda: config.update("jax_enable_x64", x64_enabled))
+    config.update("jax_enable_x64", True)
+    initial_probs = jnp.array([0.5, 0.5], dtype=jnp.float32)
+    transitions = jnp.empty((0, 2, 2), dtype=jnp.float32)
+    log_likelihoods = jnp.log(jnp.array([[0.25, 0.75]], dtype=jnp.float32))
+    args = initial_probs, transitions, log_likelihoods
+    for smoother in (core.hmm_smoother, core.hmm_two_filter_smoother):
+        posterior = smoother(*args)
+        assert jnp.allclose(posterior.marginal_loglik, jnp.log(0.5))
+        assert jnp.allclose(posterior.predicted_probs, initial_probs[None])
+        assert jnp.allclose(posterior.filtered_probs, jnp.array([[0.25, 0.75]], dtype=jnp.float32))
+        assert jnp.allclose(posterior.smoothed_probs, posterior.filtered_probs)
+        assert posterior.trans_probs.shape == (0, 2, 2)
+    posterior = core.hmm_fixed_lag_smoother(*args, window_size=2)
+    assert jnp.allclose(posterior.smoothed_probs[:, -1], jnp.array([[0.25, 0.75]], dtype=jnp.float32))
+    assert jnp.array_equal(core.hmm_posterior_mode(*args), jnp.array([1]))
+    loglik, states = core.hmm_posterior_sample(jr.PRNGKey(0), *args)
+    assert jnp.allclose(loglik, jnp.log(0.5))
+    assert states.shape == (1,)

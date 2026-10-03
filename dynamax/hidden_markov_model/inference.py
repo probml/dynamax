@@ -141,7 +141,8 @@ def hmm_filter(
         """Filtering step."""
         log_normalizer, predicted_probs = carry
 
-        A = get_trans_mat(transition_matrix, transition_fn, t)
+        # One observation needs no transition, even in traced scan bodies.
+        A = get_trans_mat(transition_matrix, transition_fn, t) if num_timesteps > 1 else jnp.eye(num_states, dtype=log_likelihoods.dtype)
         ll = log_likelihoods[t]
 
         filtered_probs, log_norm = _condition_on(predicted_probs, ll)
@@ -188,7 +189,7 @@ def hmm_backward_filter(
     def _step(carry, t):
         """Backward filtering step."""
         log_normalizer, backward_pred_probs = carry
-        A = get_trans_mat(transition_matrix, transition_fn, t-1)
+        A = get_trans_mat(transition_matrix, transition_fn, t-1) if num_timesteps > 1 else jnp.eye(num_states, dtype=log_likelihoods.dtype)
         ll = log_likelihoods[t]
 
         # Condition on emission at time t, being careful not to overflow.
@@ -288,7 +289,7 @@ def hmm_smoother(
         posterior distribution
 
     """
-    num_timesteps = log_likelihoods.shape[0]
+    num_timesteps, num_states = log_likelihoods.shape
 
     # Run the HMM filter
     post = hmm_filter(initial_distribution, transition_matrix, log_likelihoods, transition_fn)
@@ -302,7 +303,7 @@ def hmm_smoother(
         smoothed_probs_next = carry
         t, filtered_probs, predicted_probs_next = args
 
-        A = get_trans_mat(transition_matrix, transition_fn, t)
+        A = get_trans_mat(transition_matrix, transition_fn, t) if num_timesteps > 1 else jnp.eye(num_states, dtype=log_likelihoods.dtype)
 
         # Fold in the next state (Eq. 8.2 of Saarka, 2013)
         # If hard 0. in predicted_probs_next, set relative_probs_next as 0. to avoid NaN values
@@ -379,7 +380,7 @@ def hmm_fixed_lag_smoother(
         log_normalizers, filtered_probs, predicted_probs, bmatrices = carry
 
         # Get parameters for time t
-        A_fwd = get_trans_mat(transition_matrix, transition_fn, t-1)
+        A_fwd = get_trans_mat(transition_matrix, transition_fn, t-1) if num_timesteps > 1 else jnp.eye(num_states, dtype=log_likelihoods.dtype)
         A_bwd = A_fwd
         ll = log_likelihoods[t]
 
@@ -481,7 +482,7 @@ def hmm_posterior_mode(
     # Run the backward pass
     def _backward_pass(best_next_score, t):
         """Viterbi backward step."""
-        A = get_trans_mat(transition_matrix, transition_fn, t)
+        A = get_trans_mat(transition_matrix, transition_fn, t) if num_timesteps > 1 else jnp.eye(num_states, dtype=log_likelihoods.dtype)
 
         scores = jnp.log(A) + best_next_score + log_likelihoods[t + 1]
         best_next_state = jnp.argmax(scores, axis=1)
@@ -539,7 +540,7 @@ def hmm_posterior_sample(
         next_state = carry
         t, subkey, filtered_probs = args
 
-        A = get_trans_mat(transition_matrix, transition_fn, t)
+        A = get_trans_mat(transition_matrix, transition_fn, t) if num_timesteps > 1 else jnp.eye(num_states, dtype=log_likelihoods.dtype)
 
         # Fold in the next state and renormalize
         smoothed_probs = filtered_probs * A[:, next_state]
@@ -616,6 +617,8 @@ def _compute_all_transition_probs(
         hmm_posterior (_type_): _description_
     """
     filtered_probs = hmm_posterior.filtered_probs[:-1]
+    if len(filtered_probs) == 0:
+        return jnp.empty((0, filtered_probs.shape[1], filtered_probs.shape[1]), dtype=filtered_probs.dtype)
     smoothed_probs_next = hmm_posterior.smoothed_probs[1:]
     predicted_probs_next = hmm_posterior.predicted_probs[1:]
     relative_probs_next = smoothed_probs_next / predicted_probs_next
