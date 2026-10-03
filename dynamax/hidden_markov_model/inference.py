@@ -554,7 +554,7 @@ def hmm_posterior_sample(
     keys = jr.split(key, num_timesteps)
     last_state = jr.choice(keys[-1], a=num_states, p=filtered_probs[-1])
     _, states = lax.scan(
-        _step, last_state, (jnp.arange(1, num_timesteps), keys[:-1], filtered_probs[:-1]),
+        _step, last_state, (jnp.arange(num_timesteps - 1), keys[:-1], filtered_probs[:-1]),
         reverse=True
     )
 
