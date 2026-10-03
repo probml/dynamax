@@ -1,6 +1,7 @@
 """Categorical Hidden Markov Model."""
 from typing import NamedTuple, Optional, Tuple, Union
 
+import jax
 import jax.numpy as jnp
 import jax.random as jr
 import tensorflow_probability.substrates.jax.bijectors as tfb
@@ -123,7 +124,7 @@ class CategoricalHMMEmissions(HMMEmissions):
 class CategoricalHMM(HMM):
     r"""An HMM with conditionally independent categorical emissions.
 
-    Let $y_t \in \{1,\ldots,C\}^N$ denote a vector of $N$ conditionally independent
+    Let $y_t \in \{0,\ldots,C-1\}^N$ denote a vector of $N$ conditionally independent
     categorical emissions from $C$ classes at time $t$. In this model,the emission
     distribution is,
 
@@ -141,6 +142,10 @@ class CategoricalHMM(HMM):
     :param transition_matrix_stickiness: optional hyperparameter to boost the concentration on the diagonal of the transition matrix.
     :param emission_prior_concentration: $\gamma$
 
+    .. note::
+        Emissions are zero-indexed integer class labels in $\{0, \ldots, C-1\}$.
+        ``fit_em`` and ``fit_sgd`` raise a ``ValueError`` for emissions outside this range.
+
     """
     def __init__(self, num_states: int,
                  emission_dim: int,
@@ -154,6 +159,39 @@ class CategoricalHMM(HMM):
         transition_component = StandardHMMTransitions(num_states, concentration=transition_matrix_concentration, stickiness=transition_matrix_stickiness)
         emission_component = CategoricalHMMEmissions(num_states, emission_dim, num_classes, emission_prior_concentration=emission_prior_concentration)
         super().__init__(num_states, initial_component, transition_component, emission_component)
+
+    def _check_emissions(self, emissions) -> None:
+        """Raise a ``ValueError`` if emissions are not integer class labels in ``0..num_classes-1``.
+
+        Out-of-range labels are otherwise accepted silently and give meaningless fits.
+        The check needs concrete values, so it is skipped for traced arrays (e.g. when
+        the caller wraps ``fit_em`` in ``jax.jit``).
+        """
+        num_classes = self.emission_component.num_classes
+        for leaf in jax.tree_util.tree_leaves(emissions):
+            if isinstance(leaf, jax.core.Tracer):
+                continue
+            leaf = jnp.asarray(leaf)
+            if leaf.size == 0:
+                continue
+            if not bool(jnp.all(leaf == jnp.round(leaf))):
+                raise ValueError(
+                    "CategoricalHMM emissions must be integer class labels, "
+                    "but found non-integer values.")
+            lo, hi = int(leaf.min()), int(leaf.max())
+            if lo < 0 or hi >= num_classes:
+                raise ValueError(
+                    f"CategoricalHMM emissions must be integer labels in 0..{num_classes - 1} "
+                    f"(num_classes={num_classes}), but found values in [{lo}, {hi}]. "
+                    "Labels are zero-indexed: re-code them (e.g. subtract 1 from 1-based labels).")
+
+    def fit_em(self, params, props, emissions, *args, **kwargs):
+        self._check_emissions(emissions)
+        return super().fit_em(params, props, emissions, *args, **kwargs)
+
+    def fit_sgd(self, params, props, emissions, *args, **kwargs):
+        self._check_emissions(emissions)
+        return super().fit_sgd(params, props, emissions, *args, **kwargs)
 
     def initialize(self,
                    key: Array=jr.PRNGKey(0),
