@@ -369,3 +369,30 @@ def test_initialize_kmeans_is_jax_transformable():
     vmapped_params = vmap(init_kmeans)(batch_keys, batch_emissions, batch_inputs)
     assert vmapped_params.emissions.biases.shape == (batch_size, num_states)
     assert jnp.all(jnp.isfinite(vmapped_params.emissions.biases))
+
+
+@pytest.mark.parametrize("fit", ["fit_em", "fit_sgd"])
+@pytest.mark.parametrize("bad_emissions, match", [
+    (lambda good: good + 1, r"in \[1, 3\]"),                 # 1-based labels: 3 is out of range
+    (lambda good: good.at[0, 0].set(-1), r"in \[-1, 2\]"),    # negative label
+    (lambda good: good.astype(jnp.float32) + 0.5, "non-integer"),
+])
+def test_categorical_hmm_rejects_invalid_emissions(fit, bad_emissions, match):
+    """CategoricalHMM expects zero-indexed integer labels and should fail loudly otherwise (#421)."""
+    hmm = models.CategoricalHMM(num_states=2, emission_dim=1, num_classes=3)
+    params, props = hmm.initialize(jr.PRNGKey(0))
+    good = jr.randint(jr.PRNGKey(1), (100, 1), 0, 3)
+
+    kwargs = dict(num_iters=2) if fit == "fit_em" else dict(num_epochs=2)
+    kwargs["verbose"] = False if fit == "fit_em" else kwargs.get("verbose", None)
+    kwargs = {k: v for k, v in kwargs.items() if v is not None}
+    with pytest.raises(ValueError, match=match):
+        getattr(hmm, fit)(params, props, bad_emissions(good), **kwargs)
+
+
+def test_categorical_hmm_accepts_valid_and_batched_emissions():
+    hmm = models.CategoricalHMM(num_states=2, emission_dim=2, num_classes=3)
+    params, props = hmm.initialize(jr.PRNGKey(0))
+    good = jr.randint(jr.PRNGKey(1), (4, 50, 2), 0, 3)  # batched, int32
+    hmm.fit_em(params, props, good, num_iters=2, verbose=False)
+    hmm.fit_em(params, props, good[0].astype(jnp.float32), num_iters=2, verbose=False)  # integer-valued floats OK
