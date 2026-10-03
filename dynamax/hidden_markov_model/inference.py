@@ -380,7 +380,7 @@ def hmm_fixed_lag_smoother(
 
         # Get parameters for time t
         A_fwd = get_trans_mat(transition_matrix, transition_fn, t-1)
-        A_bwd = get_trans_mat(transition_matrix, transition_fn, t)
+        A_bwd = A_fwd
         ll = log_likelihoods[t]
 
         # Shift window forward by 1
