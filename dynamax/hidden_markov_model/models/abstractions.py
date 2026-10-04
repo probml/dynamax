@@ -230,7 +230,7 @@ class HMMTransitions(ABC):
         Args:
             params: transition parameters
             state: current latent state
-            inputs: current inputs
+            inputs: next inputs
 
         Returns:
             conditional distribution of next state.
@@ -602,7 +602,7 @@ class HMM(SSM):
                         emissions: Array, 
                         inputs: Optional[Array]) -> Tuple:
         """Return the arguments needed for inference."""
-        return (self.initial_component._compute_initial_probs(params.initial, inputs),
+        return (self.initial_component._compute_initial_probs(params.initial, pytree_slice(inputs, 0)),
                 self.transition_component._compute_transition_matrices(params.transitions, inputs),
                 self.emission_component._compute_conditional_logliks(params.emissions, emissions, inputs))
 

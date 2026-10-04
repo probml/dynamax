@@ -36,10 +36,13 @@ class ParamsLGSSMInitial(NamedTuple):
 
 
 class ParamsLGSSMDynamics(NamedTuple):
-    r"""Parameters of the emission distribution
+    r"""Parameters of the dynamics distribution
 
-    $$p(z_{t+1} \mid z_t, u_t) = \mathcal{N}(z_{t+1} \mid F z_t + B u_t + b, Q)$$
+    $$p(z_{t+1} \mid z_t, u_{t+1}) = \mathcal{N}(z_{t+1} \mid F z_t + B u_{t+1} + b, Q)$$
 
+    Time-varying parameter arrays have one entry per timestep. The transition
+    from z_t to z_{t+1} uses entry t+1. Entry zero is ignored; initial-state
+    parameters are supplied separately in params.initial.
     The tuple doubles as a container for the ParameterProperties.
 
     :param weights: dynamics weights $F$
@@ -118,13 +121,15 @@ class PosteriorGSSMFiltered(NamedTuple):
     :param marginal_loglik: marginal log likelihood, $p(y_{1:T} \mid u_{1:T})$
     :param filtered_means: array of filtered means $\mathbb{E}[z_t \mid y_{1:t}, u_{1:t}]$
     :param filtered_covariances: array of filtered covariances $\mathrm{Cov}[z_t \mid y_{1:t}, u_{1:t}]$
+    :param predicted_means: array of predicted means $\mathbb{E}[z_{t+1} \mid y_{1:t}, u_{1:t+1}]$
+    :param predicted_covariances: array of predicted covariances $\mathrm{Cov}[z_{t+1} \mid y_{1:t}, u_{1:t+1}]$
 
     """
     marginal_loglik: Union[Scalar, Float[Array, " ntime"]]
     filtered_means: Optional[Float[Array, "ntime state_dim"]] = None
     filtered_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
-    predicted_means: Optional[Float[Array, "ntime state_dim"]] = None
-    predicted_covariances: Optional[Float[Array, "ntime state_dim state_dim"]] = None
+    predicted_means: Optional[Float[Array, "num_predictions state_dim"]] = None
+    predicted_covariances: Optional[Float[Array, "num_predictions state_dim state_dim"]] = None
 
 
 class PosteriorGSSMSmoothed(NamedTuple):
@@ -265,7 +270,7 @@ def _condition_on(prior_mean: Float[Array, "state_dim"],
                   emission: Float[Array, "emission_dim"]):
     r"""Condition a Gaussian potential on a new linear Gaussian observation
        p(z_t \mid y_t, u_t, y_{1:t-1}, u_{1:t-1})
-         propto p(z_t \mid y_{1:t-1}, u_{1:t-1}) p(y_t \mid z_t, u_t)
+         propto p(z_t \mid y_{1:t-1}, u_{1:t}) p(y_t \mid z_t, u_t)
          = N(z_t \mid m, P) N(y_t \mid H_t z_t + D_t u_t + d_t, R_t)
          = N(z_t \mid mm, PP)
      where
@@ -328,6 +333,11 @@ def preprocess_params_and_inputs(params: ParamsLGSSM,
     assert params.dynamics.cov is not None
     assert params.emissions.weights is not None
     assert params.emissions.cov is not None
+
+    for param, ndim in ((params.dynamics.weights, 2), (params.dynamics.input_weights, 2),
+                        (params.dynamics.bias, 1), (params.dynamics.cov, 2)):
+        if param is not None and not callable(param) and param.ndim == ndim + 1:
+            assert param.shape[0] == num_timesteps
 
     # Get shapes
     emission_dim, state_dim = params.emissions.weights.shape[-2:]
@@ -486,12 +496,12 @@ def lgssm_filter(params: ParamsLGSSM,
             return MVNLowRank(m, R, L).log_prob(y)
 
 
-    def _step(carry, t):
+    def _step(carry, t, predict=True):
         """Run one step of the Kalman filter."""
         ll, pred_mean, pred_cov = carry
 
         # Shorthand: get parameters and inputs for time index t
-        F, B, b, Q, H, D, d, R = _get_params(params, num_timesteps, t)
+        H, D, d, R = _get_params(params, num_timesteps, t)[4:]
         u = inputs[t]
         y = emissions[t]
 
@@ -502,13 +512,18 @@ def lgssm_filter(params: ParamsLGSSM,
         filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, H, D, d, R, u, y)
 
         # Predict the next state
-        pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, F, B, b, Q, u)
+        if predict:
+            F, B, b, Q = _get_params(params, num_timesteps, t + 1)[:4]
+            pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, F, B, b, Q, inputs[t + 1])
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
     # Run the Kalman filter
     carry = (0.0, params.initial.mean, params.initial.cov)
-    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
+    carry, (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps - 1))
+    (ll, _, _), (filtered_mean, filtered_cov) = _step(carry, num_timesteps - 1, predict=False)
+    filtered_means = jnp.concatenate((filtered_means, filtered_mean[None]))
+    filtered_covs = jnp.concatenate((filtered_covs, filtered_cov[None]))
     return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 
@@ -544,9 +559,9 @@ def lgssm_smoother(params: ParamsLGSSM,
         smoothed_mean_next, smoothed_cov_next = carry
         t, filtered_mean, filtered_cov = args
 
-        # Get parameters and inputs for time index t
-        F, B, b, Q = _get_params(params, num_timesteps, t)[:4]
-        u = inputs[t]
+        # Get parameters and inputs for time index t+1
+        F, B, b, Q = _get_params(params, num_timesteps, t + 1)[:4]
+        u = inputs[t + 1]
 
         # This is like the Kalman gain but in reverse
         # See Eq 8.11 of Saarka's "Bayesian Filtering and Smoothing"
@@ -614,9 +629,9 @@ def lgssm_posterior_sample(key: PRNGKeyT,
         next_state = carry
         key, filtered_mean, filtered_cov, t = args
 
-        # Shorthand: get parameters and inputs for time index t
-        F, B, b, Q = _get_params(params, num_timesteps, t)[:4]
-        u = inputs[t]
+        # Shorthand: get parameters and inputs for time index t+1
+        F, B, b, Q = _get_params(params, num_timesteps, t + 1)[:4]
+        u = inputs[t + 1]
 
         # Condition on next state
         smoothed_mean, smoothed_cov = _condition_on(filtered_mean, filtered_cov, F, B, b, Q, u, next_state)

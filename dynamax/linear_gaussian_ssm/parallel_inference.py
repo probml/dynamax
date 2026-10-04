@@ -159,6 +159,10 @@ def _initialize_filtering_messages(
     """Preprocess observations to construct input for filtering assocative scan."""
 
     num_timesteps = emissions.shape[0]
+    for param, ndim in ((params.dynamics.weights, 2), (params.dynamics.input_weights, 2),
+                        (params.dynamics.bias, 1), (params.dynamics.cov, 2)):
+        if param is not None and not callable(param) and param.ndim == ndim + 1:
+            assert param.shape[0] == num_timesteps
     inputs = _zeros_if_none(inputs, (num_timesteps, 0))
     
     # Get the emission covariance dimension
@@ -187,13 +191,13 @@ def _initialize_filtering_messages(
         return A, b, C, J, eta, logZ
 
 
-    @partial(vmap, in_axes=(None, 0, 0, 0, 0))
-    def _generic_message(params, y, ut, utm1, t):
+    @partial(vmap, in_axes=(None, 0, 0, 0))
+    def _generic_message(params, y, ut, t):
         """Compute the generic filtering message."""
-        F = _get_one_param(params.dynamics.weights, 2, t-1)
-        B = _get_one_param(params.dynamics.input_weights, 2, t-1)
-        b = _get_one_param(params.dynamics.bias, 1, t-1)
-        Q = _get_one_param(params.dynamics.cov, 2, t-1)
+        F = _get_one_param(params.dynamics.weights, 2, t)
+        B = _get_one_param(params.dynamics.input_weights, 2, t)
+        b = _get_one_param(params.dynamics.bias, 1, t)
+        Q = _get_one_param(params.dynamics.cov, 2, t)
         H = _get_one_param(params.emissions.weights, 2, t)
         D = _get_one_param(params.emissions.input_weights, 2, t)
         d = _get_one_param(params.emissions.bias, 1, t)
@@ -202,10 +206,10 @@ def _initialize_filtering_messages(
         S_inv = _emissions_scale(Q, H, R)
         K = Q @ H.T @ S_inv
         
-        bias_tm1 = B @ utm1 + b
-        innov = (y - D @ ut - d - H @ bias_tm1)
+        bias_t = B @ ut + b
+        innov = (y - D @ ut - d - H @ bias_t)
         A = F - K @ H @ F
-        b = bias_tm1 + K @ innov
+        b = bias_t + K @ innov
         C = symmetrize(Q - K @ H @ Q)
         eta = F.T @ H.T @ S_inv @ innov
         J = symmetrize(F.T @ H.T @ S_inv @ H @ F)
@@ -214,7 +218,7 @@ def _initialize_filtering_messages(
         return A, b, C, J, eta, logZ
 
     A0, b0, C0, J0, eta0, logZ0 = _first_message(params, emissions[0], inputs[0])
-    At, bt, Ct, Jt, etat, logZt = _generic_message(params, emissions[1:], inputs[1:], inputs[:-1], jnp.arange(1, len(emissions)))
+    At, bt, Ct, Jt, etat, logZt = _generic_message(params, emissions[1:], inputs[1:], jnp.arange(1, len(emissions)))
 
     return FilterMessage(
         A=jnp.concatenate([A0[None], At]),
@@ -314,7 +318,7 @@ def _initialize_smoothing_messages(params: ParamsLGSSM,
         return E, g, L
     
     En, gn, Ln = _last_message(filtered_means[-1], filtered_covariances[-1])
-    Et, gt, Lt = _generic_message(params, filtered_means[:-1], filtered_covariances[:-1], inputs[:-1], jnp.arange(len(filtered_means)-1))
+    Et, gt, Lt = _generic_message(params, filtered_means[:-1], filtered_covariances[:-1], inputs[1:], jnp.arange(1, len(filtered_means)))
     
     return SmoothMessage(
         E=jnp.concatenate([Et, En[None]]),
@@ -381,7 +385,7 @@ def _initialize_sampling_messages(key, params, filtered_means, filtered_covarian
     Given parallel smoothing messages `z_i ~ N(E_i z_{i+1} + g_i, L_i)`, 
     the parallel sampling messages are `(E_i,h_i)` where `h_i ~ N(g_i, L_i)`.
     """
-    E, g, L = _initialize_smoothing_messages(params, filtered_means, filtered_covariances)
+    E, g, L = _initialize_smoothing_messages(params, filtered_means, filtered_covariances, inputs)
     return SampleMessage(E=E, h=MVN(g, L).sample(seed=key))
 
 
