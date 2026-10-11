@@ -496,7 +496,7 @@ def lgssm_filter(params: ParamsLGSSM,
             return MVNLowRank(m, R, L).log_prob(y)
 
 
-    def _step(carry, t, predict=True):
+    def _step(carry, t):
         """Run one step of the Kalman filter."""
         ll, pred_mean, pred_cov = carry
 
@@ -512,18 +512,15 @@ def lgssm_filter(params: ParamsLGSSM,
         filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, H, D, d, R, u, y)
 
         # Predict the next state
-        if predict:
-            F, B, b, Q = _get_params(params, num_timesteps, t + 1)[:4]
-            pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, F, B, b, Q, inputs[t + 1])
+        t_next = jnp.minimum(t + 1, num_timesteps - 1)
+        F, B, b, Q = _get_params(params, num_timesteps, t_next)[:4]
+        pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, F, B, b, Q, inputs[t_next])
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
     # Run the Kalman filter
     carry = (0.0, params.initial.mean, params.initial.cov)
-    carry, (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps - 1))
-    (ll, _, _), (filtered_mean, filtered_cov) = _step(carry, num_timesteps - 1, predict=False)
-    filtered_means = jnp.concatenate((filtered_means, filtered_mean[None]))
-    filtered_covs = jnp.concatenate((filtered_covs, filtered_cov[None]))
+    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     return PosteriorGSSMFiltered(marginal_loglik=ll, filtered_means=filtered_means, filtered_covariances=filtered_covs)
 
 

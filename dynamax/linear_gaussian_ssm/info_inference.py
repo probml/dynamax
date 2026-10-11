@@ -192,7 +192,7 @@ def lgssm_info_filter(
         if param is not None and not callable(param) and param.ndim == ndim + 1:
             assert param.shape[0] == num_timesteps
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-    def _filter_step(carry, t, predict=True):
+    def _filter_step(carry, t):
         """Run a single step of the Kalman filter."""
         ll, pred_eta, pred_prec = carry
 
@@ -212,22 +212,19 @@ def lgssm_info_filter(
         filtered_eta, filtered_prec = _info_condition_on(pred_eta, pred_prec, H, R_prec, D, u, d, y)
 
         # Predict the next state
-        if predict:
-            F = _get_params(params.dynamics_weights, 2, t + 1)
-            Q_prec = _get_params(params.dynamics_precision, 2, t + 1)
-            B = _get_params(params.dynamics_input_weights, 2, t + 1)
-            b = _get_params(params.dynamics_bias, 1, t + 1)
-            pred_eta, pred_prec = _info_predict(filtered_eta, filtered_prec, F, Q_prec, B, inputs[t + 1], b)
+        t_next = jnp.minimum(t + 1, num_timesteps - 1)
+        F = _get_params(params.dynamics_weights, 2, t_next)
+        Q_prec = _get_params(params.dynamics_precision, 2, t_next)
+        B = _get_params(params.dynamics_input_weights, 2, t_next)
+        b = _get_params(params.dynamics_bias, 1, t_next)
+        pred_eta, pred_prec = _info_predict(filtered_eta, filtered_prec, F, Q_prec, B, inputs[t_next], b)
 
         return (ll, pred_eta, pred_prec), (filtered_eta, filtered_prec)
 
     # Run the Kalman filter
     initial_eta = params.initial_precision @ params.initial_mean
     carry = (0.0, initial_eta, params.initial_precision)
-    carry, (filtered_etas, filtered_precisions) = lax.scan(_filter_step, carry, jnp.arange(num_timesteps - 1))
-    (ll, _, _), (filtered_eta, filtered_prec) = _filter_step(carry, num_timesteps - 1, predict=False)
-    filtered_etas = jnp.concatenate((filtered_etas, filtered_eta[None]))
-    filtered_precisions = jnp.concatenate((filtered_precisions, filtered_prec[None]))
+    (ll, _, _), (filtered_etas, filtered_precisions) = lax.scan(_filter_step, carry, jnp.arange(num_timesteps))
     return PosteriorGSSMInfoFiltered(marginal_loglik=ll, filtered_etas=filtered_etas, filtered_precisions=filtered_precisions)
 
 
