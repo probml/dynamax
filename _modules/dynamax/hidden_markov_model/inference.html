@@ -486,7 +486,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        initial_distribution: $p(z_1 \mid u_1, \theta)$</span>
-<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$</span>
+<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$</span>
 <span class="sd">        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.</span>
 <span class="sd">        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.</span>
 
@@ -535,7 +535,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        initial_distribution: $p(z_1 \mid u_1, \theta)$</span>
-<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$</span>
+<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$</span>
 <span class="sd">        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.</span>
 <span class="sd">        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.</span>
 
@@ -586,7 +586,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        initial_distribution: $p(z_1 \mid u_1, \theta)$</span>
-<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$</span>
+<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$</span>
 <span class="sd">        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.</span>
 <span class="sd">        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.</span>
 
@@ -645,7 +645,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        initial_distribution: $p(z_1 \mid u_1, \theta)$</span>
-<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$</span>
+<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$</span>
 <span class="sd">        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.</span>
 <span class="sd">        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.</span>
 
@@ -730,7 +730,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        initial_distribution: $p(z_1 \mid u_1, \theta)$</span>
-<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$</span>
+<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$</span>
 <span class="sd">        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.</span>
 <span class="sd">        window_size: the number of future steps to use, $L$</span>
 <span class="sd">        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.</span>
@@ -748,7 +748,7 @@
 
         <span class="c1"># Get parameters for time t</span>
         <span class="n">A_fwd</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">A_bwd</span> <span class="o">=</span> <span class="n">get_trans_mat</span><span class="p">(</span><span class="n">transition_matrix</span><span class="p">,</span> <span class="n">transition_fn</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">A_bwd</span> <span class="o">=</span> <span class="n">A_fwd</span>
         <span class="n">ll</span> <span class="o">=</span> <span class="n">log_likelihoods</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
 
         <span class="c1"># Shift window forward by 1</span>
@@ -839,7 +839,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        initial_distribution: $p(z_1 \mid u_1, \theta)$</span>
-<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$</span>
+<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$</span>
 <span class="sd">        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.</span>
 <span class="sd">        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.</span>
 
@@ -893,7 +893,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        rng: random number generator</span>
 <span class="sd">        initial_distribution: $p(z_1 \mid u_1, \theta)$</span>
-<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$</span>
+<span class="sd">        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$</span>
 <span class="sd">        log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.</span>
 <span class="sd">        transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.</span>
 
@@ -928,7 +928,7 @@
     <span class="n">keys</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">)</span>
     <span class="n">last_state</span> <span class="o">=</span> <span class="n">jr</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">a</span><span class="o">=</span><span class="n">num_states</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">filtered_probs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">states</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-        <span class="n">_step</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_timesteps</span><span class="p">),</span> <span class="n">keys</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_probs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="n">_step</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">keys</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">filtered_probs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
         <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
 

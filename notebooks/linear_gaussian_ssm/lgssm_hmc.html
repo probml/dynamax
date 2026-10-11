@@ -614,7 +614,7 @@ If you set the Markov chain up carefully, you can ensure that the parameters wil
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/87fc5d94a816312a49ec015c18bfda39153534a00e84dbee37f5e682fc91a896.png" src="../../_images/87fc5d94a816312a49ec015c18bfda39153534a00e84dbee37f5e682fc91a896.png" />
+<img alt="../../_images/a9de710c65454693657bd375aa1a99afb4e1556f308ead9ec456c48b170ca288.png" src="../../_images/a9de710c65454693657bd375aa1a99afb4e1556f308ead9ec456c48b170ca288.png" />
 </div>
 </div>
 </section>
@@ -736,39 +736,41 @@ If you set the Markov chain up carefully, you can ensure that the parameters wil
 <span class="g g-Whitespace">     </span><span class="mi">34</span> 
 <span class="g g-Whitespace">     </span><span class="mi">35</span>     <span class="nd">@jit</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:763,</span> in <span class="ni">staged_adaptation.&lt;locals&gt;.run</span><span class="nt">(rng_key, position, num_steps)</span>
-<span class="g g-Whitespace">    </span><span class="mi">761</span> <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">762</span> <span class="n">schedule</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">763</span> <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">764</span>     <span class="n">one_step</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">765</span>     <span class="n">start_state</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">766</span>     <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">),</span>
-<span class="g g-Whitespace">    </span><span class="mi">767</span> <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">769</span> <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
-<span class="g g-Whitespace">    </span><span class="mi">771</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">adapt_final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:986,</span> in <span class="ni">staged_adaptation.&lt;locals&gt;.run</span><span class="nt">(rng_key, position, num_steps)</span>
+<span class="g g-Whitespace">    </span><span class="mi">984</span>     <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">985</span>     <span class="n">schedule</span> <span class="o">=</span> <span class="n">_eff_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">986</span>     <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">,</span> <span class="n">one_step</span><span class="p">))(</span>
+<span class="g g-Whitespace">    </span><span class="mi">987</span>         <span class="n">start_state</span><span class="p">,</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">988</span>     <span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">990</span>     <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
+<span class="g g-Whitespace">    </span><span class="mi">992</span> <span class="k">else</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">993</span>     <span class="c1"># ----------------------------------------------------------------</span>
+<span class="g g-Whitespace">    </span><span class="mi">994</span>     <span class="c1"># Multi-chain path (n_chains &gt; 1): vmap MCMC kernel over M chains.</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>   <span class="mi">1008</span>     <span class="c1"># (NUTS does; HMC and other non-NUTS kernels do not — they raise TypeError</span>
+<span class="g g-Whitespace">   </span><span class="mi">1009</span>     <span class="c1"># on an unknown kwarg if we inject it unconditionally).</span>
 
-    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">4</span> <span class="n">frame</span><span class="p">]</span>
+    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">9</span> <span class="n">frame</span><span class="p">]</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:673,</span> in <span class="ni">staged_adaptation.&lt;locals&gt;.one_step</span><span class="nt">(carry, xs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">670</span> <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">adaptation_stage</span> <span class="o">=</span> <span class="n">xs</span>
-<span class="g g-Whitespace">    </span><span class="mi">671</span> <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
-<span class="ne">--&gt; </span><span class="mi">673</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_kernel</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">674</span>     <span class="n">rng_key</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">675</span>     <span class="n">state</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">676</span>     <span class="n">logdensity_fn</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">677</span>     <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">678</span>     <span class="n">adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">679</span>     <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">680</span> <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">681</span> <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_step</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">682</span>     <span class="n">adaptation_state</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">683</span>     <span class="n">adaptation_stage</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>    <span class="mi">686</span>     <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">687</span> <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">689</span> <span class="k">return</span> <span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">690</span>     <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
-<span class="g g-Whitespace">    </span><span class="mi">691</span>     <span class="n">adaptation_info_fn</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
-<span class="g g-Whitespace">    </span><span class="mi">692</span> <span class="p">)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:850,</span> in <span class="ni">staged_adaptation.&lt;locals&gt;.one_step</span><span class="nt">(carry, xs)</span>
+<span class="g g-Whitespace">    </span><span class="mi">847</span> <span class="n">warmup_step_index</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">adaptation_stage</span> <span class="o">=</span> <span class="n">xs</span>
+<span class="g g-Whitespace">    </span><span class="mi">848</span> <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
+<span class="ne">--&gt; </span><span class="mi">850</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_kernel</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">851</span>     <span class="n">rng_key</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">852</span>     <span class="n">state</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">853</span>     <span class="n">logdensity_fn</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">854</span>     <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">855</span>     <span class="n">adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">856</span>     <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">857</span> <span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">858</span> <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_step</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">859</span>     <span class="n">adaptation_state</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">860</span>     <span class="n">adaptation_stage</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>    <span class="mi">864</span>     <span class="n">warmup_step_index</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">865</span> <span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">867</span> <span class="k">return</span> <span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">868</span>     <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
+<span class="g g-Whitespace">    </span><span class="mi">869</span>     <span class="n">adaptation_info_fn</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
+<span class="g g-Whitespace">    </span><span class="mi">870</span> <span class="p">)</span>
 
 <span class="ne">TypeError</span>: build_kernel.&lt;locals&gt;.kernel() got an unexpected keyword argument 'progress_bar'
 </pre></div>

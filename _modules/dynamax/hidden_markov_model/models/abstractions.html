@@ -612,7 +612,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            params: transition parameters</span>
 <span class="sd">            state: current latent state</span>
-<span class="sd">            inputs: current inputs</span>
+<span class="sd">            inputs: next inputs</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            conditional distribution of next state.</span>
@@ -1036,7 +1036,7 @@
                         <span class="n">emissions</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> 
                         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Array</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return the arguments needed for inference."""</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">_compute_initial_probs</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">initial</span><span class="p">,</span> <span class="n">inputs</span><span class="p">),</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_component</span><span class="o">.</span><span class="n">_compute_initial_probs</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">initial</span><span class="p">,</span> <span class="n">pytree_slice</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">transition_component</span><span class="o">.</span><span class="n">_compute_transition_matrices</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">transitions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">),</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">emission_component</span><span class="o">.</span><span class="n">_compute_conditional_logliks</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">emissions</span><span class="p">,</span> <span class="n">emissions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">))</span>
 

@@ -1,20 +1,20 @@
 Traceback (most recent call last):
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
     executenb(
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/nbclient/client.py", line 1323, in execute
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/nbclient/client.py", line 1323, in execute
     return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
     return loop.run_until_complete(inner)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
     return future.result()
            ^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/nbclient/client.py", line 709, in async_execute
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/nbclient/client.py", line 709, in async_execute
     await self.async_execute_cell(
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/nbclient/client.py", line 1062, in async_execute_cell
     await self._check_raise_for_error(cell, cell_index, exec_reply)
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
@@ -57,39 +57,41 @@ param_samples, lps = fit_hmc(model,
 [32m     34[39m 
 [32m     35[39m     @jit
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:763[39m, in [36mstaged_adaptation.<locals>.run[39m[34m(rng_key, position, num_steps)[39m
-[32m    761[39m keys = jax.random.split(rng_key, num_steps)
-[32m    762[39m schedule = _resolved_schedule_fn(num_steps)
-[32m--> [39m[32m763[39m last_state, info = [30;43mjax[39;49m[30;43m.[39;49m[30;43mlax[39;49m[30;43m.[39;49m[30;43mscan[39;49m[30;43m([39;49m
-[32m    764[39m [30;43m    [39;49m[30;43mone_step[39;49m[30;43m,[39;49m
-[32m    765[39m [30;43m    [39;49m[30;43mstart_state[39;49m[30;43m,[39;49m
-[32m    766[39m [30;43m    [39;49m[30;43m([39;49m[30;43mjnp[39;49m[30;43m.[39;49m[30;43marange[39;49m[30;43m([39;49m[30;43mnum_steps[39;49m[30;43m)[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mkeys[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mschedule[39;49m[30;43m)[39;49m[30;43m,[39;49m
-[32m    767[39m [30;43m[39;49m[30;43m)[39;49m
-[32m    769[39m last_chain_state, last_warmup_state, *_ = last_state
-[32m    771[39m step_size, inverse_mass_matrix = adapt_final(last_warmup_state)
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:986[39m, in [36mstaged_adaptation.<locals>.run[39m[34m(rng_key, position, num_steps)[39m
+[32m    984[39m     keys = jax.random.split(rng_key, num_steps)
+[32m    985[39m     schedule = _eff_schedule_fn(num_steps)
+[32m--> [39m[32m986[39m     last_state, info = [30;43mjax[39;49m[30;43m.[39;49m[30;43mjit[39;49m[30;43m([39;49m[30;43mpartial[39;49m[30;43m([39;49m[30;43mjax[39;49m[30;43m.[39;49m[30;43mlax[39;49m[30;43m.[39;49m[30;43mscan[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mone_step[39;49m[30;43m)[39;49m[30;43m)[39;49m[30;43m([39;49m
+[32m    987[39m [30;43m        [39;49m[30;43mstart_state[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43m([39;49m[30;43mjnp[39;49m[30;43m.[39;49m[30;43marange[39;49m[30;43m([39;49m[30;43mnum_steps[39;49m[30;43m)[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mkeys[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mschedule[39;49m[30;43m)[39;49m
+[32m    988[39m [30;43m    [39;49m[30;43m)[39;49m
+[32m    990[39m     last_chain_state, last_warmup_state, *_ = last_state
+[32m    992[39m [38;5;28;01melse[39;00m:
+[32m    993[39m     [38;5;66;03m# ----------------------------------------------------------------[39;00m
+[32m    994[39m     [38;5;66;03m# Multi-chain path (n_chains > 1): vmap MCMC kernel over M chains.[39;00m
+[32m   (...)[39m[32m   1008[39m     [38;5;66;03m# (NUTS does; HMC and other non-NUTS kernels do not — they raise TypeError[39;00m
+[32m   1009[39m     [38;5;66;03m# on an unknown kwarg if we inject it unconditionally).[39;00m
 
-    [31m[... skipping hidden 4 frame][39m
+    [31m[... skipping hidden 9 frame][39m
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:673[39m, in [36mstaged_adaptation.<locals>.one_step[39m[34m(carry, xs)[39m
-[32m    670[39m _, rng_key, adaptation_stage = xs
-[32m    671[39m state, adaptation_state = carry
-[32m--> [39m[32m673[39m new_state, info = [30;43mmcmc_kernel[39;49m[30;43m([39;49m
-[32m    674[39m [30;43m    [39;49m[30;43mrng_key[39;49m[30;43m,[39;49m
-[32m    675[39m [30;43m    [39;49m[30;43mstate[39;49m[30;43m,[39;49m
-[32m    676[39m [30;43m    [39;49m[30;43mlogdensity_fn[39;49m[30;43m,[39;49m
-[32m    677[39m [30;43m    [39;49m[30;43madaptation_state[39;49m[30;43m.[39;49m[30;43mstep_size[39;49m[30;43m,[39;49m
-[32m    678[39m [30;43m    [39;49m[30;43madaptation_state[39;49m[30;43m.[39;49m[30;43minverse_mass_matrix[39;49m[30;43m,[39;49m
-[32m    679[39m [30;43m    [39;49m[30;43m*[39;49m[30;43m*[39;49m[30;43mextra_parameters[39;49m[30;43m,[39;49m
-[32m    680[39m [30;43m[39;49m[30;43m)[39;49m
-[32m    681[39m new_adaptation_state = adapt_step(
-[32m    682[39m     adaptation_state,
-[32m    683[39m     adaptation_stage,
-[32m   (...)[39m[32m    686[39m     info.acceptance_rate,
-[32m    687[39m )
-[32m    689[39m [38;5;28;01mreturn[39;00m (
-[32m    690[39m     (new_state, new_adaptation_state),
-[32m    691[39m     adaptation_info_fn(new_state, info, new_adaptation_state),
-[32m    692[39m )
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/blackjax/adaptation/staged_adaptation.py:850[39m, in [36mstaged_adaptation.<locals>.one_step[39m[34m(carry, xs)[39m
+[32m    847[39m warmup_step_index, rng_key, adaptation_stage = xs
+[32m    848[39m state, adaptation_state = carry
+[32m--> [39m[32m850[39m new_state, info = [30;43mmcmc_kernel[39;49m[30;43m([39;49m
+[32m    851[39m [30;43m    [39;49m[30;43mrng_key[39;49m[30;43m,[39;49m
+[32m    852[39m [30;43m    [39;49m[30;43mstate[39;49m[30;43m,[39;49m
+[32m    853[39m [30;43m    [39;49m[30;43mlogdensity_fn[39;49m[30;43m,[39;49m
+[32m    854[39m [30;43m    [39;49m[30;43madaptation_state[39;49m[30;43m.[39;49m[30;43mstep_size[39;49m[30;43m,[39;49m
+[32m    855[39m [30;43m    [39;49m[30;43madaptation_state[39;49m[30;43m.[39;49m[30;43minverse_mass_matrix[39;49m[30;43m,[39;49m
+[32m    856[39m [30;43m    [39;49m[30;43m*[39;49m[30;43m*[39;49m[30;43mextra_parameters[39;49m[30;43m,[39;49m
+[32m    857[39m [30;43m[39;49m[30;43m)[39;49m
+[32m    858[39m new_adaptation_state = adapt_step(
+[32m    859[39m     adaptation_state,
+[32m    860[39m     adaptation_stage,
+[32m   (...)[39m[32m    864[39m     warmup_step_index,
+[32m    865[39m )
+[32m    867[39m [38;5;28;01mreturn[39;00m (
+[32m    868[39m     (new_state, new_adaptation_state),
+[32m    869[39m     adaptation_info_fn(new_state, info, new_adaptation_state),
+[32m    870[39m )
 
 [31mTypeError[39m: build_kernel.<locals>.kernel() got an unexpected keyword argument 'progress_bar'
 

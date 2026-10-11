@@ -534,11 +534,11 @@
 <span class="sd">        p(x_{t+1}) = N(x_{t+1} | mu_pred, Sigma_pred)</span>
 <span class="sd">        where</span>
 <span class="sd">            mu_pred = gaussian_expec(f, m, P)</span>
-<span class="sd">                    \approx \int f(x_t, u) N(x_t | m, P) dx_t</span>
-<span class="sd">            Sigma_pred = gaussian_crosscov(f(x_t, u_t), f(x_t, u_t); m, P) + Q</span>
-<span class="sd">                       \approx \int (f(x_t, u) - mu_pred)(f(x_t, u) - mu_pred)^T N(x_t | m, P)dx_t + Q</span>
-<span class="sd">            cross_pred = gaussian_crosscov(x_t, f(x_t, u_t); m, P)</span>
-<span class="sd">                       \approx \int (x_t - m)(f(x_t, u_t) - mu_pred)^T N(x_t | m, P)dx_t</span>
+<span class="sd">                    \approx \int f(x_t, u_{t+1}) N(x_t | m, P) dx_t</span>
+<span class="sd">            Sigma_pred = gaussian_crosscov(f(x_t, u_{t+1}), f(x_t, u_{t+1}); m, P) + Q</span>
+<span class="sd">                       \approx \int (f(x_t, u_{t+1}) - mu_pred)(f(x_t, u_{t+1}) - mu_pred)^T N(x_t | m, P)dx_t + Q</span>
+<span class="sd">            cross_pred = gaussian_crosscov(x_t, f(x_t, u_{t+1}); m, P)</span>
+<span class="sd">                       \approx \int (x_t - m)(f(x_t, u_{t+1}) - mu_pred)^T N(x_t | m, P)dx_t</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        prior_mean (state_dim,): prior mean.</span>
@@ -583,7 +583,7 @@
 <span class="sd">       Gaussian approximation.</span>
 
 <span class="sd">       p(x_t | y_t, u_t, y_{1:t-1}, u_{1:t-1})</span>
-<span class="sd">         propto p(x_t | y_{1:t-1}, u_{1:t-1}) p(y_t | x_t, u_t)</span>
+<span class="sd">         propto p(x_t | y_{1:t-1}, u_{1:t}) p(y_t | x_t, u_t)</span>
 <span class="sd">         \approx N(x_t | m, P) ArbitraryDist(y_t | emission_mean(x_t, u_t), emission_cov(x_t, u_t))</span>
 <span class="sd">         \approx N(x_t | mu_cond, Sigma_cond)</span>
 <span class="sd">     </span>
@@ -658,6 +658,7 @@
 
 <span class="sd">    """</span>
     <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">model_params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">3</span> <span class="ow">or</span> <span class="n">model_params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">num_timesteps</span>
 
     <span class="c1"># Process dynamics function and conditional emission moments to take in control inputs</span>
     <span class="n">f</span> <span class="o">=</span> <span class="n">model_params</span><span class="o">.</span><span class="n">dynamics_function</span>
@@ -672,12 +673,11 @@
     <span class="c1"># Emission distribution</span>
     <span class="n">emission_dist</span> <span class="o">=</span> <span class="n">model_params</span><span class="o">.</span><span class="n">emission_dist</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">predict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""One step of the CMGF"""</span>
         <span class="n">ll</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span> <span class="o">=</span> <span class="n">carry</span>
 
-        <span class="c1"># Get parameters and inputs for time index t</span>
-        <span class="n">Q</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="n">model_params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="c1"># Get the input and observation at time t</span>
         <span class="n">u</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">emissions</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
 
@@ -687,13 +687,17 @@
         <span class="n">ll</span> <span class="o">+=</span> <span class="n">log_likelihood</span>
 
         <span class="c1"># Predict the next state</span>
-        <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_predict</span><span class="p">(</span><span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">g_ev</span><span class="p">,</span> <span class="n">g_cov</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">predict</span><span class="p">:</span>
+            <span class="n">Q</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="n">model_params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_predict</span><span class="p">(</span><span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">inputs</span><span class="p">[</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">g_ev</span><span class="p">,</span> <span class="n">g_cov</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span><span class="p">),</span> <span class="p">(</span><span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span><span class="p">)</span>
 
     <span class="c1"># Run the general linearization filter</span>
     <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model_params</span><span class="o">.</span><span class="n">initial_mean</span><span class="p">,</span> <span class="n">model_params</span><span class="o">.</span><span class="n">initial_covariance</span><span class="p">)</span>
-    <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="p">(</span><span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covs</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span><span class="p">))</span>
+    <span class="n">carry</span><span class="p">,</span> <span class="n">outputs</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_step</span><span class="p">,</span> <span class="n">carry</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">final_outputs</span> <span class="o">=</span> <span class="n">_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">num_timesteps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">predict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">filtered_means</span><span class="p">,</span> <span class="n">filtered_covs</span> <span class="o">=</span> <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">[</span><span class="kc">None</span><span class="p">]))</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">final_outputs</span><span class="p">)]</span>
     <span class="k">return</span> <span class="n">PosteriorGSSMFiltered</span><span class="p">(</span><span class="n">marginal_loglik</span><span class="o">=</span><span class="n">ll</span><span class="p">,</span> 
                                  <span class="n">filtered_means</span><span class="o">=</span><span class="n">filtered_means</span><span class="p">,</span> 
                                  <span class="n">filtered_covariances</span><span class="o">=</span><span class="n">filtered_covs</span><span class="p">)</span></div>
@@ -722,6 +726,7 @@
 
 <span class="sd">    """</span>
     <span class="n">num_timesteps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">model_params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">3</span> <span class="ow">or</span> <span class="n">model_params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">num_timesteps</span>
 
     <span class="c1"># Get filtered posterior</span>
     <span class="k">if</span> <span class="n">filtered_posterior</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -742,9 +747,9 @@
         <span class="n">smoothed_mean_next</span><span class="p">,</span> <span class="n">smoothed_cov_next</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">t</span><span class="p">,</span> <span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span> <span class="o">=</span> <span class="n">args</span>
 
-        <span class="c1"># Get parameters and inputs for time index t</span>
-        <span class="n">Q</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="n">model_params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
-        <span class="n">u</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="c1"># Get parameters and inputs for time index t + 1</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="n">model_params</span><span class="o">.</span><span class="n">dynamics_covariance</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="c1"># Prediction step</span>
         <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span><span class="p">,</span> <span class="n">pred_cross</span> <span class="o">=</span> <span class="n">_predict</span><span class="p">(</span><span class="n">filtered_mean</span><span class="p">,</span> <span class="n">filtered_cov</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">g_ev</span><span class="p">,</span> <span class="n">g_cov</span><span class="p">)</span>
