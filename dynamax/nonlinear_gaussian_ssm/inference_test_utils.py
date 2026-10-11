@@ -10,6 +10,7 @@ from typing import Tuple, Union
 import tensorflow_probability.substrates.jax as tfp
 
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM
+from dynamax.linear_gaussian_ssm.inference_test_utils import make_timing_case
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.nonlinear_gaussian_ssm.models import ParamsNLGSSM, NonlinearGaussianSSM
 from dynamax.parameters import ParameterProperties
@@ -186,3 +187,16 @@ def random_nlgssm_args(key=0, num_timesteps=15, state_dim=4, emission_dim=2):
     states, emissions = model.sample(params, sample_key, num_timesteps)
     return params, states, emissions
 
+
+def make_affine_timing_case(num_timesteps=3):
+    """Convert the model from make_timing_case to ParamsNLGSSM."""
+    params, emissions, inputs, expected = make_timing_case(num_timesteps)
+    nonlinear_params = ParamsNLGSSM(
+        initial_mean=params.initial.mean,
+        initial_covariance=params.initial.cov,
+        dynamics_function=lambda state, inpt: inpt * state / 2 + inpt * (inpt + 1) / 2,
+        dynamics_covariance=params.dynamics.cov,
+        emission_function=lambda state, inpt: state + inpt / 2,
+        emission_covariance=params.emissions.cov,
+    )
+    return nonlinear_params, emissions, inputs, expected

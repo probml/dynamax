@@ -4,12 +4,13 @@ Tests for information form inference in linear Gaussian SSMs.
 import jax.numpy as jnp
 
 from functools import partial
+from types import SimpleNamespace
 from jax import random as jr
 
 from dynamax.linear_gaussian_ssm.inference import  lgssm_smoother, lgssm_filter
 from dynamax.linear_gaussian_ssm.inference import  ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.info_inference import lgssm_info_filter, lgssm_info_smoother, info_to_moment_form
-from dynamax.linear_gaussian_ssm.info_inference import ParamsLGSSMInfo
+from dynamax.linear_gaussian_ssm.info_inference import ParamsLGSSMInfo, lds_to_block_tridiag
 from dynamax.utils.utils import has_tpu
 
 # Use lower tolerance for TPU tests.
@@ -180,3 +181,22 @@ class TestInfoKFLinReg:
     def test_filtered_covs(self):
         """Test filtered covariances."""
         assert allclose(self.info_filtered_covs, self.lgssm_moment_posterior.filtered_covariances)
+
+
+def test_block_tridiag_transition_indices():
+    """Check that transitions from z_{t-1} to z_t use parameters and inputs at t."""
+    weights = jnp.array([jnp.nan, 2., 3.])[:, None, None]
+    input_weights = jnp.array([jnp.nan, 5., 7.])[:, None, None]
+    covariances = jnp.array([jnp.nan, 11., 13.])[:, None, None]
+    lds = SimpleNamespace(
+        initial_mean=jnp.zeros(1), initial_covariance=jnp.eye(1),
+        dynamics_matrix=weights.__getitem__, dynamics_input_weights=input_weights.__getitem__,
+        dynamics_noise_covariance=covariances.__getitem__,
+        emissions_matrix=lambda t: jnp.eye(1), emissions_input_weights=lambda t: jnp.zeros((1, 1)),
+        emissions_noise_covariance=lambda t: jnp.eye(1),
+    )
+    diagonal, lower, h = lds_to_block_tridiag(lds, jnp.zeros((3, 1)), jnp.array([[100.], [2.], [-1.]]))
+    # Expand z0**2 + (z1-2*z0-10)**2/11 + (z2-3*z1+7)**2/13 + sum(zt**2).
+    assert allclose(diagonal[:, 0, 0], jnp.array([2 + 4/11, 1 + 1/11 + 9/13, 1 + 1/13]))
+    assert allclose(lower[:, 0, 0], jnp.array([-2/11, -3/13]))
+    assert allclose(h[:, 0], jnp.array([-20/11, 10/11 + 21/13, -7/13]))

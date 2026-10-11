@@ -18,6 +18,7 @@ from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_joint_sample, lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
+from dynamax.linear_gaussian_ssm.inference import _predict, preprocess_params_and_inputs
 from dynamax.parameters import ParameterProperties, ensure_all_or_none_trainable
 from dynamax.types import PRNGKeyT, Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
@@ -328,13 +329,14 @@ class LinearGaussianSSM(SSM):
                           Float[Array, "num_forecast_timesteps state_dim state_dim"],
                           Float[Array, "num_forecast_timesteps emission_dim"],
                           Float[Array, "num_forecast_timesteps emission_dim emission_dim"]]:
-        """Compute the marginal filtering distribution for each time step.
+        """Compute the marginal forecast distribution for each time step.
         
         Args:
             params: model parameters.
             emissions: sequence of observations.
             num_forecast_timesteps: number of timesteps to forecast
             inputs: optional sequence of inputs.
+            forecast_inputs: optional future inputs, beginning with the first forecast timestep.
 
         Returns:
             forecast state means
@@ -346,10 +348,14 @@ class LinearGaussianSSM(SSM):
         filtered_post = lgssm_filter(params, emissions, inputs)
 
         # Forecast into the future from the last timestep
+        params, forecast_inputs = preprocess_params_and_inputs(
+            params, num_forecast_timesteps, forecast_inputs)
+        forecast_mean, forecast_cov = _predict(
+            filtered_post.filtered_means[-1], filtered_post.filtered_covariances[-1],
+            params.dynamics.weights, params.dynamics.input_weights, params.dynamics.bias,
+            params.dynamics.cov, forecast_inputs[0])
         forecast_params = ParamsLGSSM(
-            initial=ParamsLGSSMInitial(
-                mean=filtered_post.filtered_means[-1],
-                cov=filtered_post.filtered_covariances[-1]),
+            initial=ParamsLGSSMInitial(mean=forecast_mean, cov=forecast_cov),
             dynamics=params.dynamics,
             emissions=ParamsLGSSMEmissions(
                 weights=params.emissions.weights,
@@ -359,8 +365,6 @@ class LinearGaussianSSM(SSM):
             )
 
         dummy_emissions = jnp.zeros((num_forecast_timesteps, self.emission_dim))
-        forecast_inputs = forecast_inputs if forecast_inputs is not None else \
-            jnp.zeros((num_forecast_timesteps, 0))
         forecast_states = lgssm_filter(forecast_params, dummy_emissions, forecast_inputs)
 
         # Forecast future emissions
@@ -411,7 +415,7 @@ class LinearGaussianSSM(SSM):
 
         # Append bias to the inputs
         inputs = jnp.concatenate((inputs, jnp.ones((num_timesteps, 1))), axis=1)
-        up = inputs[:-1]
+        up = inputs[1:]
         u = inputs
         y = emissions
 
@@ -421,7 +425,7 @@ class LinearGaussianSSM(SSM):
         init_stats = (Ex0, Ex0x0T, 1)
 
         # expected sufficient statistics for the dynamics tfd.Distribution
-        # let zp[t] = [x[t], u[t]] for t = 0...T-2
+        # let zp[t] = [x[t], u[t+1]] for t = 0...T-2
         # let xn[t] = x[t+1]          for t = 0...T-2
         sum_zpzpT = jnp.block([[Exp.T @ Exp, Exp.T @ up], [up.T @ Exp, up.T @ up]])
         sum_zpzpT = sum_zpzpT.at[:self.state_dim, :self.state_dim].add(Vxp.sum(0))
@@ -670,12 +674,12 @@ class LinearGaussianConjugateSSM(LinearGaussianSSM):
             inputs_joint = jnp.concatenate((inputs, jnp.ones((num_timesteps, 1))), axis=1)
             # Let xn[t] = x[t+1]          for t = 0...T-2
             x, xp, xn = states, states[:-1], states[1:]
-            u, up = inputs_joint, inputs_joint[:-1]
+            u, up = inputs_joint, inputs_joint[1:]
 
             init_stats = (x[0], jnp.outer(x[0], x[0]), 1)
 
             # Quantities for the dynamics distribution
-            # Let zp[t] = [x[t], u[t]] for t = 0...T-2
+            # Let zp[t] = [x[t], u[t+1]] for t = 0...T-2
             sum_zpzpT = jnp.block([[xp.T @ xp, xp.T @ up], [up.T @ xp, up.T @ up]])
             sum_zpxnT = jnp.block([[xp.T @ xn], [up.T @ xn]])
             sum_xnxnT = xn.T @ xn

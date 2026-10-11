@@ -96,16 +96,16 @@ def _info_predict(eta, Lambda, F, Q_prec, B, u, b):
 
     Marginalising over the uncertainty in z_t the predicted latent state at
     the next time step is given by:
-        p(z_{t+1}\mid z_t, u_t)
-            = \int p(z_{t+1}, z_t \mid u_t) dz_t
-            = \int N(z_t \mid mu_t, Sigma_t) N(z_{t+1} \mid F z_t + B u_t + b, Q) dz_t
+        p(z_{t+1}\mid z_t, u_{t+1})
+            = \int p(z_{t+1}, z_t \mid u_{t+1}) dz_t
+            = \int N(z_t \mid mu_t, Sigma_t) N(z_{t+1} \mid F z_t + B u_{t+1} + b, Q) dz_t
             = N(z_t \mid m_{t+1\midt}, Sigma_{t+1\mid t})
     with
-        m_{t+1 \mid t} = F m_t + B u_t + b
+        m_{t+1 \mid t} = F m_t + B u_{t+1} + b
         Sigma_{t+1 \mid t} = F Sigma_t F^T + Q
 
     The corresponding information form parameters are:
-        eta_{t+1 \mid t} = K eta_t + Lambda_{t+1 \mid t} (B u_t + b)
+        eta_{t+1 \mid t} = K eta_t + Lambda_{t+1 \mid t} (B u_{t+1} + b)
         Lambda_{t+1 \mid t} = L Q_prec L^T + K Lambda_t K^T
     where
         K = Q_prec F ( Lambda_t + F^T Q_prec F)^{-1}
@@ -187,18 +187,18 @@ def lgssm_info_filter(
             filtered_precisions
     """
     num_timesteps = len(emissions)
+    for param, ndim in ((params.dynamics_weights, 2), (params.dynamics_input_weights, 2),
+                        (params.dynamics_bias, 1), (params.dynamics_precision, 2)):
+        if param is not None and not callable(param) and param.ndim == ndim + 1:
+            assert param.shape[0] == num_timesteps
     inputs = jnp.zeros((num_timesteps, 0)) if inputs is None else inputs
-    def _filter_step(carry, t):
+    def _filter_step(carry, t, predict=True):
         """Run a single step of the Kalman filter."""
         ll, pred_eta, pred_prec = carry
 
         # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_weights, 2, t)
-        Q_prec = _get_params(params.dynamics_precision, 2, t)
         H = _get_params(params.emission_weights, 2, t)
         R_prec = _get_params(params.emission_precision, 2, t)
-        B = _get_params(params.dynamics_input_weights, 2, t)
-        b = _get_params(params.dynamics_bias, 1, t)
         D = _get_params(params.emission_input_weights, 2, t)
         d = _get_params(params.emission_bias, 1, t)
         u = inputs[t]
@@ -212,14 +212,22 @@ def lgssm_info_filter(
         filtered_eta, filtered_prec = _info_condition_on(pred_eta, pred_prec, H, R_prec, D, u, d, y)
 
         # Predict the next state
-        pred_eta, pred_prec = _info_predict(filtered_eta, filtered_prec, F, Q_prec, B, u, b)
+        if predict:
+            F = _get_params(params.dynamics_weights, 2, t + 1)
+            Q_prec = _get_params(params.dynamics_precision, 2, t + 1)
+            B = _get_params(params.dynamics_input_weights, 2, t + 1)
+            b = _get_params(params.dynamics_bias, 1, t + 1)
+            pred_eta, pred_prec = _info_predict(filtered_eta, filtered_prec, F, Q_prec, B, inputs[t + 1], b)
 
         return (ll, pred_eta, pred_prec), (filtered_eta, filtered_prec)
 
     # Run the Kalman filter
     initial_eta = params.initial_precision @ params.initial_mean
     carry = (0.0, initial_eta, params.initial_precision)
-    (ll, _, _), (filtered_etas, filtered_precisions) = lax.scan(_filter_step, carry, jnp.arange(num_timesteps))
+    carry, (filtered_etas, filtered_precisions) = lax.scan(_filter_step, carry, jnp.arange(num_timesteps - 1))
+    (ll, _, _), (filtered_eta, filtered_prec) = _filter_step(carry, num_timesteps - 1, predict=False)
+    filtered_etas = jnp.concatenate((filtered_etas, filtered_eta[None]))
+    filtered_precisions = jnp.concatenate((filtered_precisions, filtered_prec[None]))
     return PosteriorGSSMInfoFiltered(marginal_loglik=ll, filtered_etas=filtered_etas, filtered_precisions=filtered_precisions)
 
 
@@ -255,12 +263,12 @@ def lgssm_info_smoother(
         smoothed_eta_next, smoothed_prec_next = carry
         t, filtered_eta, filtered_prec = args
 
-        # Shorthand: get parameters and inputs for time index t
-        F = _get_params(params.dynamics_weights, 2, t)
-        B = _get_params(params.dynamics_input_weights, 2, t)
-        b = _get_params(params.dynamics_bias, 1, t)
-        Q_prec = _get_params(params.dynamics_precision, 2, t)
-        u = inputs[t]
+        # Shorthand: get parameters and inputs for time index t+1
+        F = _get_params(params.dynamics_weights, 2, t + 1)
+        B = _get_params(params.dynamics_input_weights, 2, t + 1)
+        b = _get_params(params.dynamics_bias, 1, t + 1)
+        Q_prec = _get_params(params.dynamics_precision, 2, t + 1)
+        u = inputs[t + 1]
 
         # Predict the next state
         # TODO: Pass predicted params from lgssm_info_filter?
@@ -464,16 +472,16 @@ def lds_to_block_tridiag(lds: ParamsLGSSM,
     # diagonal blocks of precision matrix
     J_diag = jnp.array([jnp.dot(C(t).T, psd_solve(R(t), C(t))) for t in range(T)])
     J_diag = J_diag.at[0].add(jnp.linalg.inv(Q0))
-    J_diag = J_diag.at[:-1].add(jnp.array([jnp.dot(A(t).T, psd_solve(Q(t), A(t))) for t in range(T - 1)]))
-    J_diag = J_diag.at[1:].add(jnp.array([jnp.linalg.inv(Q(t)) for t in range(0, T - 1)]))
+    J_diag = J_diag.at[:-1].add(jnp.array([jnp.dot(A(t).T, psd_solve(Q(t), A(t))) for t in range(1, T)]))
+    J_diag = J_diag.at[1:].add(jnp.array([jnp.linalg.inv(Q(t)) for t in range(1, T)]))
 
     # lower diagonal blocks of precision matrix
-    J_lower_diag = jnp.array([-psd_solve(Q(t), A(t)) for t in range(T - 1)])
+    J_lower_diag = jnp.array([-psd_solve(Q(t), A(t)) for t in range(1, T)])
 
     # linear potential
     h = jnp.array([jnp.dot(data[t] - D(t) @ inputs[t], psd_solve(R(t), C(t))) for t in range(T)])
     h = h.at[0].add(psd_solve(Q0, m0))
-    h = h.at[:-1].add(jnp.array([-jnp.dot(A(t).T, psd_solve(Q(t), B(t) @ inputs[t])) for t in range(T - 1)]))
-    h = h.at[1:].add(jnp.array([psd_solve(Q(t), B(t) @ inputs[t]) for t in range(T - 1)]))
+    h = h.at[:-1].add(jnp.array([-jnp.dot(A(t).T, psd_solve(Q(t), B(t) @ inputs[t])) for t in range(1, T)]))
+    h = h.at[1:].add(jnp.array([psd_solve(Q(t), B(t) @ inputs[t]) for t in range(1, T)]))
 
     return J_diag, J_lower_diag, h

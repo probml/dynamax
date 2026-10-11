@@ -49,7 +49,7 @@ def hmm_filter(initial_probs: Float[Array, " num_states"],
 
     Args:
         initial_distribution: $p(z_1 \mid u_1, \theta)$
-        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$
         log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
 
     Returns:
@@ -114,7 +114,7 @@ def hmm_smoother(initial_probs: Float[Array, " num_states"],
 
     Args:
         initial_distribution: $p(z_1 \mid u_1, \theta)$
-        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$
         log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
 
     Returns:
@@ -185,7 +185,7 @@ def hmm_posterior_sample(key: Array,
     Args:
         key: random number generator
         initial_distribution: $p(z_1 \mid u_1, \theta)$
-        transition_matrix: $p(z_{t+1} \mid z_t, u_t, \theta)$
+        transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$
         log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
  
     Returns:

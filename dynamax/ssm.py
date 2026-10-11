@@ -118,10 +118,10 @@ class SSM(ABC):
         Args:
             params: model parameters $\theta$
             state: current latent state $z_t$
-            inputs: current inputs  $u_t$
+            inputs: next inputs  $u_{t+1}$
 
         Returns:
-            conditional distribution of next latent state $p(z_{t+1} \mid z_t, u_t, \theta)$.
+            conditional distribution of next latent state $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$.
 
         """
         raise NotImplementedError

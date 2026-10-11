@@ -5,6 +5,9 @@ import jax
 import jax.numpy as jnp
 import jax.random as jr
 import pytest
+from dynamax.hidden_markov_model.models.abstractions import HMMInitialState
+from dynamax.hidden_markov_model.models.initial import StandardHMMInitialState
+from tensorflow_probability.substrates.jax import distributions as tfd
 
 from jax import vmap
 from jax.tree_util import tree_leaves, tree_map
@@ -369,3 +372,20 @@ def test_initialize_kmeans_is_jax_transformable():
     vmapped_params = vmap(init_kmeans)(batch_keys, batch_emissions, batch_inputs)
     assert vmapped_params.emissions.biases.shape == (batch_size, num_states)
     assert jnp.all(jnp.isfinite(vmapped_params.emissions.biases))
+
+
+def test_hmm_input_dependent_initial_distribution():
+    """Check that HMM inference uses the first input to compute initial probabilities."""
+    class InputInitialState(StandardHMMInitialState):
+        _compute_initial_probs = HMMInitialState._compute_initial_probs
+
+        def distribution(self, params, inputs=None):
+            return tfd.Categorical(logits=inputs)
+
+    hmm = models.GaussianHMM(num_states=2, emission_dim=1)
+    params, _ = hmm.initialize(jr.PRNGKey(0))
+    hmm.initial_component = InputInitialState(2)
+    inputs = jnp.array([[3., 0.], [0., 3.], [2., 1.]])
+    posterior = hmm.filter(params, jnp.zeros((3, 1)), inputs=inputs)
+    expected = hmm.initial_distribution(params, inputs[0]).probs_parameter()
+    assert jnp.allclose(posterior.predicted_probs[0], expected)
