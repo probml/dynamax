@@ -592,7 +592,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, 'true model')
 </pre></div>
 </div>
-<img alt="../../_images/1ba69e9dce181099294cbc1e3c169fdd369f466cdc5cb023044c22a4ea0e5d93.png" src="../../_images/1ba69e9dce181099294cbc1e3c169fdd369f466cdc5cb023044c22a4ea0e5d93.png" />
+<img alt="../../_images/37e2983caeb59346774327357e75dab79d2c7b840301467592fa855d8d8fde95.png" src="../../_images/37e2983caeb59346774327357e75dab79d2c7b840301467592fa855d8d8fde95.png" />
 </div>
 </div>
 <p>Now plot the reconstructions under a randomly initialized model. They’re much worse!</p>
@@ -617,7 +617,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, 'randomly initialized model')
 </pre></div>
 </div>
-<img alt="../../_images/df0d384e4b099ffbb6a466c5a97eae7c58ff859f3c49c24e53094809110e37fb.png" src="../../_images/df0d384e4b099ffbb6a466c5a97eae7c58ff859f3c49c24e53094809110e37fb.png" />
+<img alt="../../_images/7da0de6aa4c8815fe9f6cb84d78c259c277cec2ca13a085a3c5563748465b15d.png" src="../../_images/7da0de6aa4c8815fe9f6cb84d78c259c277cec2ca13a085a3c5563748465b15d.png" />
 </div>
 </div>
 </section>
@@ -655,7 +655,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
     table.fastprogress thead tr { background: #f8f9fa; font-weight: bold; }
     table.fastprogress tbody tr:nth-of-type(even) { background: #f8f9fa; }
 </style>
-</div><div class="output text_html"><div><progress max="100" value="100"></progress> 100.00% [100/100 00:00&lt;00:00]</div></div></div>
+</div><div class="output text_html"><div><progress max="100" value="100"></progress> 100.00% [100/100 00:01&lt;00:00]</div></div></div>
 </div>
 <p>We zoom in on the learning curve after the first iteration since the first log likelihood is much lower than the rest.</p>
 <div class="cell docutils container">
@@ -673,7 +673,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/967e440f7e00350e0fe59406d96c87ed908862f58647dd9ad6b84771e68cf315.png" src="../../_images/967e440f7e00350e0fe59406d96c87ed908862f58647dd9ad6b84771e68cf315.png" />
+<img alt="../../_images/cef1a5f293c9c668de676f0367edec260fcbe6dcf18fa54c1f31c8310a103dba.png" src="../../_images/cef1a5f293c9c668de676f0367edec260fcbe6dcf18fa54c1f31c8310a103dba.png" />
 </div>
 </div>
 <p>The marginal log likelihood quickly converges. As with the HMM examples, the likelihood under the estimated parameters is larger than the likelihood under the true parameters that generated the data. This isn’t surprising: EM is finding the parameters <span class="math notranslate nohighlight">\(\hat{\theta}_{\mathsf{MLE}}\)</span>, that maximize the likelihood, and with a short sequence like this, the likelihood <span class="math notranslate nohighlight">\(p(x_{1:T}; \hat{\theta}_{\mathsf{MLE}})\)</span> is almost surely larger than <span class="math notranslate nohighlight">\(p(x_{1:T}; \theta_{\mathsf{true}})\)</span>.</p>
@@ -689,7 +689,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.02, 'fitted model')
 </pre></div>
 </div>
-<img alt="../../_images/e3a3cb522bf97cc9bc3dae2a5165c2068b8250da38008361db5a83ee57611cfa.png" src="../../_images/e3a3cb522bf97cc9bc3dae2a5165c2068b8250da38008361db5a83ee57611cfa.png" />
+<img alt="../../_images/c209ac1b41c23c1be44a369e771f7becd37341f054ac297aa12999190bebb91a.png" src="../../_images/c209ac1b41c23c1be44a369e771f7becd37341f054ac297aa12999190bebb91a.png" />
 </div>
 </div>
 <section id="identifiability">
@@ -751,7 +751,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/ecd5b70082c1e1e353a496bd8ffc352f31b931c177229b603002ebde86799cc7.png" src="../../_images/ecd5b70082c1e1e353a496bd8ffc352f31b931c177229b603002ebde86799cc7.png" />
+<img alt="../../_images/593d24ec982a29242d522a996a2c8d021658407d26f976dd0afa8b033f0c9547.png" src="../../_images/593d24ec982a29242d522a996a2c8d021658407d26f976dd0afa8b033f0c9547.png" />
 </div>
 </div>
 <p>Adam eventually converges, but note that both the y-axis and x-axis scales are much larger than for EM. It takes 100s of epochs to achieve comparable log likelihoods, and each epoch is roughly the equivalent cost to one iteration of EM.</p>
@@ -787,13 +787,13 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>freeing the dynamics matrix to:
- [[ 0.9415461   0.30592692]
- [-0.3059268   0.941546  ]]
+ [[ 0.9415461   0.30592695]
+ [-0.30592677  0.9415459 ]]
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>dynamics matrix after fitting:
- [[ 0.9415461   0.30592692]
- [-0.3059268   0.941546  ]]
+ [[ 0.9415461   0.30592695]
+ [-0.30592677  0.9415459 ]]
 </pre></div>
 </div>
 </div>
@@ -811,7 +811,7 @@ y_t \mid z_t, \theta &amp;\sim \mathrm{N}(H z_t, R)
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7599726131c371e1d4e49594e849f394f7f7c02622a5b8bb74c67524cc671867.png" src="../../_images/7599726131c371e1d4e49594e849f394f7f7c02622a5b8bb74c67524cc671867.png" />
+<img alt="../../_images/31d39a14adec54bd745778697def5a573105fbfd051e065efbcfb297502f4cbe.png" src="../../_images/31d39a14adec54bd745778697def5a573105fbfd051e065efbcfb297502f4cbe.png" />
 </div>
 </div>
 </section>
