@@ -121,7 +121,7 @@ def extended_kalman_filter(params: ParamsNLGSSM,
     f, h, F, H = (_process_fn(fn, inputs) for fn in (f, h, F, H))
     inputs = _process_input(inputs, num_timesteps)
 
-    def _step(carry, t, predict=True):
+    def _step(carry, t):
         """Iteratively update the state estimate and log likelihood."""
         ll, pred_mean, pred_cov = carry
 
@@ -138,10 +138,9 @@ def extended_kalman_filter(params: ParamsNLGSSM,
         filtered_mean, filtered_cov = _condition_on(pred_mean, pred_cov, h, H, R, u, y, num_iter)
 
         # Predict the next state
-        if predict:
-            Q = _get_params(params.dynamics_covariance, 2, t + 1)
-            u_next = inputs[t + 1] if not predict_final else u
-            pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, f, F, Q, u_next)
+        t_next = jnp.minimum(t + 1, num_timesteps - 1)
+        Q = _get_params(params.dynamics_covariance, 2, t_next)
+        pred_mean, pred_cov = _predict(filtered_mean, filtered_cov, f, F, Q, inputs[t_next])
 
         # Build carry and output states
         carry = (ll, pred_mean, pred_cov)
@@ -158,9 +157,7 @@ def extended_kalman_filter(params: ParamsNLGSSM,
 
     # Run the extended Kalman filter
     carry = (0.0, params.initial_mean, params.initial_covariance)
-    carry, outputs = lax.scan(_step, carry, jnp.arange(num_timesteps - 1))
-    (ll, _, _), final_outputs = _step(carry, num_timesteps - 1, predict=predict_final)
-    outputs = {key: jnp.concatenate((val, final_outputs[key][None])) for key, val in outputs.items()}
+    (ll, _, _), outputs = lax.scan(_step, carry, jnp.arange(num_timesteps))
     if not predict_final:
         outputs = {key: val[:-1] if key.startswith("predicted") else val for key, val in outputs.items()}
     outputs = {"marginal_loglik": ll, **outputs}

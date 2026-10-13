@@ -320,7 +320,7 @@ def conditional_moments_gaussian_filter(model_params: ParamsGGSSM,
     # Emission distribution
     emission_dist = model_params.emission_dist
 
-    def _step(carry, t, predict=True):
+    def _step(carry, t):
         """One step of the CMGF"""
         ll, pred_mean, pred_cov = carry
 
@@ -334,17 +334,15 @@ def conditional_moments_gaussian_filter(model_params: ParamsGGSSM,
         ll += log_likelihood
 
         # Predict the next state
-        if predict:
-            Q = _get_params(model_params.dynamics_covariance, 2, t + 1)
-            pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, inputs[t + 1], g_ev, g_cov)
+        t_next = jnp.minimum(t + 1, num_timesteps - 1)
+        Q = _get_params(model_params.dynamics_covariance, 2, t_next)
+        pred_mean, pred_cov, _ = _predict(filtered_mean, filtered_cov, f, Q, inputs[t_next], g_ev, g_cov)
 
         return (ll, pred_mean, pred_cov), (filtered_mean, filtered_cov)
 
     # Run the general linearization filter
     carry = (0.0, model_params.initial_mean, model_params.initial_covariance)
-    carry, outputs = lax.scan(_step, carry, jnp.arange(num_timesteps - 1))
-    (ll, _, _), final_outputs = _step(carry, num_timesteps - 1, predict=False)
-    filtered_means, filtered_covs = [jnp.concatenate((a, b[None])) for a, b in zip(outputs, final_outputs)]
+    (ll, _, _), (filtered_means, filtered_covs) = lax.scan(_step, carry, jnp.arange(num_timesteps))
     return PosteriorGSSMFiltered(marginal_loglik=ll, 
                                  filtered_means=filtered_means, 
                                  filtered_covariances=filtered_covs)
