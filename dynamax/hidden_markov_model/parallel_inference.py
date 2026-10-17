@@ -48,7 +48,7 @@ def hmm_filter(initial_probs: Float[Array, " num_states"],
     for nonstationary transition matrices in a future release.*
 
     Args:
-        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        initial_probs: $p(z_1 \mid u_1, \theta)$
         transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$
         log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
 
@@ -113,7 +113,7 @@ def hmm_smoother(initial_probs: Float[Array, " num_states"],
     * The transition matrix must be fixed. We may add support for nonstationary transition matrices in a future release.
 
     Args:
-        initial_distribution: $p(z_1 \mid u_1, \theta)$
+        initial_probs: $p(z_1 \mid u_1, \theta)$
         transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$
         log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
 
