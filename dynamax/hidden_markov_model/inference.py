@@ -174,7 +174,6 @@ def hmm_backward_filter(
     returns a transition matrix.
 
     Args:
-        initial_distribution: $p(z_1 \mid u_1, \theta)$
         transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$
         log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.
         transition_fn: function that takes in an integer time index and returns a $K \times K$ transition matrix.
@@ -517,7 +516,7 @@ def hmm_posterior_sample(
     r"""Sample a latent sequence from the posterior.
 
     Args:
-        rng: random number generator
+        key: random number generator
         initial_distribution: $p(z_1 \mid u_1, \theta)$
         transition_matrix: $p(z_{t+1} \mid z_t, u_{t+1}, \theta)$
         log_likelihoods: $p(y_t \mid z_t, u_t, \theta)$ for $t=1,\ldots, T$.

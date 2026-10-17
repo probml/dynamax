@@ -360,7 +360,7 @@ def conditional_moments_gaussian_smoother(model_params: ParamsGGSSM,
         model_params: model parameters.
         inf_params: inference parameters that specify how to compute moments.
         emissions: array of observations.
-        num_iter: optional number of linearizations around prior/posterior for update step (default 1).
+        filtered_posterior: optional filtered posterior; the filter is run if it is not provided.
         inputs: optopnal array of inputs.
 
     Returns:
