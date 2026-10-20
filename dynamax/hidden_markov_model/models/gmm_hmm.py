@@ -406,8 +406,9 @@ class DiagonalGaussianMixtureHMMEmissions(HMMEmissions):
                                        self.emission_prior_mean_concentration,
                                        self.emission_prior_shape,
                                        self.emission_prior_scale)
-            (_emission_scale_diags, _emission_means) = prior.sample(
+            (_emission_variances, _emission_means) = prior.sample(
                 seed=key2, sample_shape=(self.num_states, self.num_components, self.emission_dim))
+            _emission_scale_diags = jnp.sqrt(_emission_variances)
 
         else:
             raise Exception("Invalid initialization method: {}".format(method))
