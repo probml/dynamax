@@ -84,7 +84,8 @@ class GaussianMixtureHMMEmissions(HMMEmissions):
         self.emission_prior_mean = emission_prior_mean * jnp.ones(emission_dim)
         self.emission_prior_mean_concentration = emission_prior_mean_concentration
         self.emission_prior_df = emission_dim + emission_prior_extra_df
-        self.emission_prior_scale = emission_prior_scale * jnp.eye(emission_dim)
+        self.emission_prior_scale = emission_prior_scale if jnp.ndim(emission_prior_scale) == 2 \
+                else emission_prior_scale * jnp.eye(emission_dim)
 
     @property
     def emission_shape(self):
