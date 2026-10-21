@@ -68,7 +68,7 @@ def run_sgd(loss_fn,
         for itr in range(num_batches):
             minibatch = next(sample_generator)
             this_loss, grads = loss_grad_fn(params, minibatch)
-            updates, opt_state = optimizer.update(grads, opt_state)
+            updates, opt_state = optimizer.update(grads, opt_state, params=params)
             params = optax.apply_updates(params, updates)
             avg_loss = (avg_loss * itr + this_loss) / (itr + 1)
         losses.append(avg_loss)
@@ -94,7 +94,7 @@ def run_gradient_descent(objective,
         """One step of the algorithm."""
         params, optimizer_state = carry
         loss, grads = loss_grad_fn(params)
-        updates, optimizer_state = optimizer.update(grads, optimizer_state)
+        updates, optimizer_state = optimizer.update(grads, optimizer_state, params=params)
         params = optax.apply_updates(params, updates)
         return (params, optimizer_state), loss
 
