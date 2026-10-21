@@ -52,12 +52,12 @@ def run_sgd(loss_fn,
         losses: Output of loss_fn stored at each step.
     """
     opt_state = optimizer.init(params)
-    num_batches = pytree_len(dataset)
-    num_complete_batches, leftover = jnp.divmod(num_batches, batch_size)
+    num_samples = pytree_len(dataset)
+    num_complete_batches, leftover = jnp.divmod(num_samples, batch_size)
     num_batches = num_complete_batches + jnp.where(leftover == 0, 0, 1)
     loss_grad_fn = jit(value_and_grad(loss_fn))
 
-    if batch_size >= num_batches:
+    if batch_size >= num_samples:
         shuffle = False
 
     keys = jr.split(key, num_epochs)
