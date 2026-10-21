@@ -192,7 +192,8 @@ class LinearAutoregressiveHMM(HMM):
             params: model parameters $\theta$
             key: random number generator
             num_timesteps: number of timesteps $T$
-            prev_emissions: (optionally) preceding emissions $y_{-L+1:0}$. Defaults to zeros.
+            prev_emissions: (optionally) preceding emissions $y_{-L+1:0}$,
+                ordered from oldest to newest. Defaults to zeros.
 
         Returns:
             latent states and emissions
@@ -201,6 +202,9 @@ class LinearAutoregressiveHMM(HMM):
         if prev_emissions is None:
             # Default to zeros
             prev_emissions = jnp.zeros((self.num_lags, self.emission_dim))
+
+        # Weight blocks and the scan carry use newest-to-oldest lag order.
+        prev_emissions = jnp.flip(prev_emissions, axis=0)
 
         def _step(carry, key):
             """Sample the next state and emission."""
@@ -236,7 +240,8 @@ class LinearAutoregressiveHMM(HMM):
 
         Args:
             emissions: $(T \times N)$ array of emissions
-            prev_emissions: $(L \times N)$ array of previous emissions. Defaults to zeros.
+            prev_emissions: $(L \times N)$ array of previous emissions, ordered
+                from oldest to newest. Defaults to zeros.
 
         Returns:
             $(T \times N \cdot L)$ array of lagged emissions. These are the inputs to the fitting functions.
