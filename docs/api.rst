@@ -167,6 +167,13 @@ Low-level inference
 .. autofunction:: dynamax.linear_gaussian_ssm.lgssm_filter
 .. autofunction:: dynamax.linear_gaussian_ssm.lgssm_smoother
 .. autofunction:: dynamax.linear_gaussian_ssm.lgssm_posterior_sample
+.. autofunction:: dynamax.linear_gaussian_ssm.lgssm_to_block_tridiag
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_filter
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_smoother
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_sample
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_solve
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_matvec
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_entropy
 
 Types
 -----
@@ -178,6 +185,8 @@ Types
 
 .. autoclass:: dynamax.linear_gaussian_ssm.PosteriorGSSMFiltered
 .. autoclass:: dynamax.linear_gaussian_ssm.PosteriorGSSMSmoothed
+.. autoclass:: dynamax.linear_gaussian_ssm.BlockTridiagPotentials
+.. autoclass:: dynamax.linear_gaussian_ssm.BlockTridiagPosterior
 
 Nonlinear Gaussian GSSM
 ========================
