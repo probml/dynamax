@@ -14,7 +14,7 @@ from typing import NamedTuple, Optional
 from dynamax.utils.utils import psd_solve
 from dynamax.types import PRNGKeyT
 
-class DiscreteParamsSLDS(NamedTuple):
+class DiscreteParamsRBPF(NamedTuple):
     """
     Parameters of a discrete state dynamics for an SLDS.
     """
@@ -22,7 +22,7 @@ class DiscreteParamsSLDS(NamedTuple):
     transition_matrix : Float[Array, "num_states num_states"]
     proposal_transition_matrix : Float[Array, "num_states num_states"]
 
-class LGParamsSLDS(NamedTuple):
+class LGParamsRBPF(NamedTuple):
     r"""Parameters of a SLDS, which has a discrete component and a continuous component.
     The discrete component is a Markov model for the hidden discrete state $m_t$.
     The linear_gaussian component is a linear Gaussian state space model for the hidden continuous state $z_t$ and
@@ -41,14 +41,14 @@ class LGParamsSLDS(NamedTuple):
     initialized: bool = False
 
 
-class ParamsSLDS(NamedTuple):
+class ParamsRBPF(NamedTuple):
     r"""Parameters of a SLDS, which has a discrete component and a continuous component.
     The discrete component is a Markov model for the hidden discrete state $m_t$.
     The linear_gaussian component is a linear Gaussian state space model for the hidden continuous state $z_t$ and
     emission $y_t$.
     """
-    discrete: DiscreteParamsSLDS
-    linear_gaussian: LGParamsSLDS
+    discrete: DiscreteParamsRBPF
+    linear_gaussian: LGParamsRBPF
 
     def initialize(self, num_states, state_dim, emission_dim, input_dim=1):
         """
@@ -71,9 +71,9 @@ class ParamsSLDS(NamedTuple):
         emission_input_weights = params.emission_input_weights if params.emission_input_weights is not None else jnp.zeros((num_states, emission_dim, input_dim))
         emission_input_weights = emission_input_weights if emission_input_weights.shape == (num_states, emission_dim, input_dim) else jnp.array([emission_input_weights]*num_states)
         
-        return ParamsSLDS(
+        return ParamsRBPF(
             discrete=self.discrete,
-            linear_gaussian=LGParamsSLDS(
+            linear_gaussian=LGParamsRBPF(
                 initial_mean=initial_mean,
                 initial_cov=initial_cov,
                 dynamics_weights=dynamics_weights,
@@ -172,7 +172,7 @@ def _conditional_kalman_step(state, mu, Sigma, params, u, y):
 
 def rbpfilter(
     num_particles: int,
-    params: ParamsSLDS,
+    params: ParamsRBPF,
     emissions:  Float[Array, "ntime emission_dim"],
     key: PRNGKeyT = jr.PRNGKey(0),
     inputs: Optional[Float[Array, "ntime input_dim"]] = None,
@@ -188,7 +188,7 @@ def rbpfilter(
 
     num_timesteps = len(emissions)
     inputs = jnp.zeros((num_timesteps, 1)) if inputs is None else inputs
-    if not params.linear_gaussian.initialized: raise ValueError("ParamsSLDS must be initialized")
+    if not params.linear_gaussian.initialized: raise ValueError("ParamsRBPF must be initialized")
 
     def _step(carry, t):
         r"""
@@ -261,7 +261,7 @@ def rbpfilter(
 
 def rbpfilter_optimal(
     num_particles: int,
-    params: ParamsSLDS,
+    params: ParamsRBPF,
     emissions:  Float[Array, "ntime emission_dim"],
     key: PRNGKeyT = jr.PRNGKey(0),
     inputs: Optional[Float[Array, "ntime input_dim"]]=None
