@@ -1,5 +1,5 @@
 """
-Tests for the inference functions in dynamax/slds/inference.py
+Tests for the inference functions in dynamax/slds/rbpf.py
 """
 import pytest 
 
@@ -16,7 +16,7 @@ from jax.scipy.special import logit
 
 class TestRBPF():
     """
-    Tests for the inference functions in dynamax/slds/inference.py
+    Tests for the inference functions in dynamax/slds/rbpf.py
     """
     ## Model definitions
     num_states = 3

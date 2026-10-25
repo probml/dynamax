@@ -12,7 +12,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from typing import Optional, Tuple
 
 from dynamax.ssm import SSM
-from dynamax.slds.inference import ParamsSLDS
+from dynamax.slds.rbpf import ParamsSLDS
 from dynamax.types import PRNGKeyT
 
 
