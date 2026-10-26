@@ -249,8 +249,10 @@ def arhmm_initialization(key: PRNGKeyT,
     """Fit the initial, transition and dynamics parameters with an autoregressive HMM.
 
     The HMM is fitted by EM to the estimated continuous states. Each restart begins from a uniform
-    initial distribution and transitions that favor staying in the same state. The restart with the
-    highest log joint probability (log prior plus log likelihood of the estimated states) is kept.
+    initial distribution and the transition component's ``"sticky"`` initialization, which favors staying
+    in the same state except for recurrent-only transitions, whose logits and recurrent weights start at
+    zero. The restart with the highest log joint probability (log prior plus log likelihood of the
+    estimated states) is kept.
 
     Args:
         key: random number generator

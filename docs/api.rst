@@ -195,6 +195,9 @@ High-level models
 .. autoclass:: dynamax.slds.GaussianSLDS
   :show-inheritance:
 
+.. autoclass:: dynamax.slds.RecurrentGaussianSLDS
+  :show-inheritance:
+
 Types
 -----
 
@@ -202,6 +205,7 @@ Types
 .. autoclass:: dynamax.slds.ParamsSLDSDynamics
 .. autoclass:: dynamax.slds.ParamsSLDSEmissions
 .. autoclass:: dynamax.slds.ParamsStationarySLDSTransitions
+.. autoclass:: dynamax.slds.ParamsRecurrentSLDSTransitions
 .. autoclass:: dynamax.slds.PosteriorSLDS
 .. autoclass:: dynamax.slds.DiscretePosteriorSLDS
 .. autoclass:: dynamax.slds.ContinuousPosteriorSLDS

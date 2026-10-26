@@ -6,7 +6,7 @@ from typing import Optional
 from dynamax.slds.abstractions import SLDS, SLDSInitialState
 from dynamax.slds.dynamics import LinearGaussianSLDSDynamics
 from dynamax.slds.emissions import LinearGaussianSLDSEmissions
-from dynamax.slds.transitions import StationarySLDSTransitions
+from dynamax.slds.transitions import RecurrentSLDSTransitions, StationarySLDSTransitions
 
 
 class GaussianSLDS(SLDS):
@@ -69,6 +69,50 @@ class GaussianSLDS(SLDS):
             num_states, state_dim,
             initial_component=SLDSInitialState(num_states, initial_probs_concentration),
             transition_component=StationarySLDSTransitions(num_states, transition_matrix_concentration, transition_matrix_stickiness),
+            dynamics_component=LinearGaussianSLDSDynamics(num_states, state_dim, input_dim, dynamics_cov_type, **(dynamics_kwargs or {})),
+            emission_component=LinearGaussianSLDSEmissions(num_states, state_dim, emission_dim, input_dim, single_subspace,
+                                                           emission_cov_type, **(emission_kwargs or {})),
+            **driver_kwargs)
+
+
+class RecurrentGaussianSLDS(SLDS):
+    r"""Recurrent switching linear dynamical system (rSLDS).
+
+    A :class:`GaussianSLDS` whose discrete transitions depend on the continuous state,
+
+    $$p(z_t = j \mid z_{t-1} = i, x_{t-1}, u_t) = \mathrm{softmax}_j\big(R_{ij} + W_j^\top x_{t-1} + V_j^\top u_t\big)$$
+
+    where $R$ is a matrix of transition logits and $W_j$ and $V_j$ are the recurrent and input weights of
+    discrete state $j$. With ``recurrent_only=True`` the logits do not depend on the previous discrete
+    state, and $R$ is a single row. See Linderman et al. (2017), "Bayesian learning and inference in
+    recurrent switching linear dynamical systems".
+
+    :param recurrent_only: whether the transition logits ignore the previous discrete state. Defaults to False.
+    :param transition_kwargs: optional hyperparameters of the transition component
+
+    The other arguments are those of :class:`GaussianSLDS`, except that the prior on the transitions is
+    set through ``transition_kwargs``.
+    """
+
+    def __init__(self,
+                 num_states: int,
+                 state_dim: int,
+                 emission_dim: int,
+                 input_dim: int = 0,
+                 recurrent_only: bool = False,
+                 single_subspace: bool = True,
+                 dynamics_cov_type: str = "full",
+                 emission_cov_type: str = "diag",
+                 initial_probs_concentration: float = 1.0,
+                 transition_kwargs: Optional[dict] = None,
+                 dynamics_kwargs: Optional[dict] = None,
+                 emission_kwargs: Optional[dict] = None,
+                 **driver_kwargs):
+        self.emission_dim = emission_dim
+        super().__init__(
+            num_states, state_dim,
+            initial_component=SLDSInitialState(num_states, initial_probs_concentration),
+            transition_component=RecurrentSLDSTransitions(num_states, state_dim, input_dim, recurrent_only, **(transition_kwargs or {})),
             dynamics_component=LinearGaussianSLDSDynamics(num_states, state_dim, input_dim, dynamics_cov_type, **(dynamics_kwargs or {})),
             emission_component=LinearGaussianSLDSEmissions(num_states, state_dim, emission_dim, input_dim, single_subspace,
                                                            emission_cov_type, **(emission_kwargs or {})),
