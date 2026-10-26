@@ -6,7 +6,7 @@ from typing import Optional
 from dynamax.slds.abstractions import SLDS, SLDSInitialState
 from dynamax.slds.dynamics import LinearGaussianSLDSDynamics
 from dynamax.slds.emissions import LinearGaussianSLDSEmissions
-from dynamax.slds.transitions import StationarySLDSTransitions
+from dynamax.slds.transitions import RecurrentSLDSTransitions, StationarySLDSTransitions
 
 
 class GaussianSLDS(SLDS):
@@ -57,3 +57,46 @@ class GaussianSLDS(SLDS):
                                                            emission_cov_type, **(emission_kwargs or {})),
             **driver_kwargs)
 
+
+class RecurrentGaussianSLDS(SLDS):
+    r"""Recurrent switching linear dynamical system (rSLDS; Linderman et al., 2017): a :class:`GaussianSLDS` whose
+    discrete transitions depend on the continuous state (``ssm``'s ``SLDS`` with ``transitions="recurrent"`` or
+    ``"recurrent_only"``).
+
+    .. math::
+        p(z_{t+1} = j \mid z_t = i, x_t, u_{t+1}) = \mathrm{softmax}_j(\mathrm{logits}[i, j] + W_x[j] \cdot x_t + W_u[j] \cdot u_{t+1})
+
+    The variational posterior uses ``num_samples`` Monte Carlo samples of :math:`x` for the transition terms and a
+    Laplace approximation (Newton's method) for :math:`q(x)`.
+
+    :param recurrent_only: replace the :math:`K \times K` logits with one bias row
+    :param transition_kwargs: hyperparameters of :class:`RecurrentSLDSTransitions` (``concentration``, ``stickiness``,
+        ``l2_penalty_recurrent``, ``l2_penalty_input``, ``m_step_optimizer``, ``m_step_num_iters``, ``m_step_tolerance``)
+    :param num_samples: Monte Carlo samples of :math:`x` per sweep (default 1, as ``ssm``)
+
+    The other arguments are those of :class:`GaussianSLDS`.
+    """
+
+    def __init__(self,
+                 num_states: int,
+                 state_dim: int,
+                 emission_dim: int,
+                 input_dim: int = 0,
+                 recurrent_only: bool = False,
+                 single_subspace: bool = True,
+                 dynamics_cov_type: str = "full",
+                 emission_cov_type: str = "diag",
+                 initial_probs_concentration: float = 1.0,
+                 transition_kwargs: Optional[dict] = None,
+                 dynamics_kwargs: Optional[dict] = None,
+                 emission_kwargs: Optional[dict] = None,
+                 **driver_kwargs):
+        self.emission_dim = emission_dim
+        super().__init__(
+            num_states, state_dim,
+            initial_component=SLDSInitialState(num_states, initial_probs_concentration),
+            transition_component=RecurrentSLDSTransitions(num_states, state_dim, input_dim, recurrent_only, **(transition_kwargs or {})),
+            dynamics_component=LinearGaussianSLDSDynamics(num_states, state_dim, input_dim, dynamics_cov_type, **(dynamics_kwargs or {})),
+            emission_component=LinearGaussianSLDSEmissions(num_states, state_dim, emission_dim, input_dim, single_subspace,
+                                                           emission_cov_type, **(emission_kwargs or {})),
+            **driver_kwargs)

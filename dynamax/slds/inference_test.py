@@ -19,7 +19,7 @@ from dynamax.hidden_markov_model.inference import hmm_filter, hmm_smoother
 from dynamax.parameters import ParameterProperties
 from dynamax.linear_gaussian_ssm import LinearGaussianSSM, lgssm_filter
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
-from dynamax.slds import GaussianSLDS
+from dynamax.slds import GaussianSLDS, RecurrentGaussianSLDS
 from dynamax.slds.inference import (
     backtracking_line_search, discrete_entropy, laplace_newton, log_space_hmm_posterior_sample, log_space_hmm_smoother,
     slds_elbo, update_continuous_posterior, update_discrete_posterior)
@@ -273,7 +273,7 @@ class TestLogSpaceChain:
         assert jnp.allclose(freq, exact_marginals, atol=0.03)
         assert jnp.all(jnp.diff(samples, axis=1) >= 0) and jnp.all(jnp.sum(samples == 1, axis=1) == 1)
 
-    @pytest.mark.parametrize("model", [GaussianSLDS(3, 2, 4)])
+    @pytest.mark.parametrize("model", [GaussianSLDS(3, 2, 4), RecurrentGaussianSLDS(3, 2, 4)])
     def test_initial_posterior_is_the_uniform_chain(self, model):
         """The starting q(z) stores log transition matrices (rows of exp sum to one) and a zero log normalizer."""
         params, _ = model.initialize(jr.PRNGKey(0))

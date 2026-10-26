@@ -203,6 +203,9 @@ High-level classes
   :members:
   :inherited-members:
 
+.. autoclass:: dynamax.slds.RecurrentGaussianSLDS
+  :members:
+
 .. autoclass:: dynamax.slds.SLDS
   :members:
 
@@ -211,6 +214,7 @@ Components
 
 .. autoclass:: dynamax.slds.SLDSInitialState
 .. autoclass:: dynamax.slds.StationarySLDSTransitions
+.. autoclass:: dynamax.slds.RecurrentSLDSTransitions
 .. autoclass:: dynamax.slds.LinearGaussianSLDSDynamics
 .. autoclass:: dynamax.slds.LinearGaussianSLDSEmissions
 .. autoclass:: dynamax.slds.SLDSTransitions
@@ -240,6 +244,7 @@ Types
 .. autoclass:: dynamax.slds.ParamsSLDSDynamics
 .. autoclass:: dynamax.slds.ParamsSLDSEmissions
 .. autoclass:: dynamax.slds.ParamsStationarySLDSTransitions
+.. autoclass:: dynamax.slds.ParamsRecurrentSLDSTransitions
 .. autoclass:: dynamax.slds.PosteriorSLDS
 .. autoclass:: dynamax.slds.DiscretePosteriorSLDS
 .. autoclass:: dynamax.slds.ContinuousPosteriorSLDS
