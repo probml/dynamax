@@ -35,12 +35,26 @@ class StationarySLDSTransitions(SLDSTransitions):
 
     def initialize(self, key: Optional[PRNGKeyT] = None, method: str = "prior",
                    transition_matrix: Optional[Array] = None) -> Tuple[ParamsStationarySLDSTransitions, ParamsStationarySLDSTransitions]:
-        """A Dirichlet draw per row (``method="prior"``) or a user-supplied matrix; and the properties."""
+        """Initialize the transition matrix.
+
+        Args:
+            key: random number generator; required unless ``transition_matrix`` is given
+            method: ``"prior"`` draws each row from the Dirichlet prior; ``"sticky"`` draws a random
+                matrix with most of its weight on the diagonal
+            transition_matrix: optional transition matrix, shape (K, K), to use instead of a random one
+
+        Returns:
+            tuple of parameters and their properties
+        """
         if transition_matrix is None:
             if key is None:
                 raise ValueError("key must be provided if transition_matrix is not provided.")
             if method == "prior":
                 transition_matrix = jr.dirichlet(key, self.concentration)
+            elif method == "sticky":
+                K = self.num_states
+                transition_matrix = 0.95 * jnp.eye(K) + 0.05 * jr.uniform(key, (K, K))
+                transition_matrix = transition_matrix / transition_matrix.sum(axis=1, keepdims=True)
             else:
                 raise ValueError(f"Unknown initialization method {method!r}")
         params = ParamsStationarySLDSTransitions(transition_matrix=transition_matrix)
