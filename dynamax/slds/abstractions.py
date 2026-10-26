@@ -128,6 +128,10 @@ class SLDSTransitions(ABC):
     def m_step(self, params: ParameterSet, props: PropertySet, batch_stats: Any, m_step_state: Any) -> Tuple[ParameterSet, Any]:
         """M-step on batched statistics (leading batch axis)."""
 
+    @abstractmethod
+    def as_hmm_transitions(self, state_dim: int):
+        """An ``HMMTransitions`` adapter around this component, for the ARHMM initialization."""
+
 
 class SLDSDynamics(ABC):
     r"""Continuous dynamics :math:`p(x_t \mid x_{t-1}, z_t, u_t)` and the initial distribution of :math:`x_0`."""
@@ -400,14 +404,19 @@ class SLDS(SSM):
     def initialize(self,
                    key: PRNGKeyT = jr.PRNGKey(0),
                    method: str = "prior",
+                   emissions: Optional[Array] = None,
+                   inputs: Optional[Array] = None,
                    initial_params: Optional[dict] = None,
                    transition_params: Optional[dict] = None,
                    dynamics_params: Optional[dict] = None,
-                   emission_params: Optional[dict] = None) -> Tuple[ParamsSLDS, ParamsSLDS]:
+                   emission_params: Optional[dict] = None,
+                   **init_kwargs) -> Tuple[ParamsSLDS, ParamsSLDS]:
         """Parameters and properties.
 
-        ``method="prior"`` draws each component from its prior. The ``*_params`` dicts override
-        individual arrays (e.g. ``dynamics_params=dict(weights=F)``).
+        ``method="prior"`` draws each component from its prior; ``method="pca_arhmm"`` runs the
+        PCA + ARHMM initialization of ``ssm`` on ``emissions`` (see :mod:`dynamax.slds.initialization`).
+        The ``*_params`` dicts override individual arrays (e.g. ``dynamics_params=dict(weights=F)``),
+        with either method.
         """
         k1, k2, k3, k4 = jr.split(key, 4)
         params_initial, props_initial = self.initial_component.initialize(k1, "prior", **(initial_params or {}))
@@ -416,7 +425,14 @@ class SLDS(SSM):
         params_emis, props_emis = self.emission_component.initialize(k4, "prior", **(emission_params or {}))
         params = ParamsSLDS(params_initial, params_trans, params_dyn, params_emis)
         props = ParamsSLDS(props_initial, props_trans, props_dyn, props_emis)
-        if method != "prior":
+        if method == "pca_arhmm":
+            if emissions is None:
+                raise ValueError("method='pca_arhmm' needs emissions.")
+            from dynamax.slds.initialization import pca_arhmm_initialization
+            params = pca_arhmm_initialization(key, self, params, props, emissions, inputs, **init_kwargs)
+            overrides = dict(initial=initial_params, transitions=transition_params, dynamics=dynamics_params, emissions=emission_params)
+            params = params._replace(**{name: getattr(params, name)._replace(**values) for name, values in overrides.items() if values})
+        elif method != "prior":
             raise ValueError(f"Unknown initialization method {method!r}")
         return params, props
 

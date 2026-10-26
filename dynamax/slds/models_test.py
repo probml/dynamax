@@ -5,6 +5,7 @@ emissions, covariance types), parameter freezing, jit, and the posterior summari
 import os
 import subprocess
 import sys
+
 import pytest
 import jax
 import jax.numpy as jnp
@@ -266,6 +267,64 @@ class TestJit:
         params, props = self.model.initialize(jr.PRNGKey(0))
         fitted, lps = SSM.fit_em(self.model, params, props, self.y, num_iters=2, verbose=False)
         assert lps.shape == (2,) and jnp.all(jnp.isfinite(lps))
+
+
+def recovery_problem(key=jr.PRNGKey(0), num_timesteps=2000):
+    """K=3, D=2, N=10: states rotate by (k+1)·9° around distinct centers (with pure rotations the states are not
+    identifiable even from the true parameters: accuracy 0.63)."""
+    K, D, N = 3, 2, 10
+    model = GaussianSLDS(K, D, N)
+    params, _ = model.initialize(jr.PRNGKey(0))
+    rot = lambda s: 0.95 * jnp.array([[jnp.cos(s), -jnp.sin(s)], [jnp.sin(s), jnp.cos(s)]])
+    params = params._replace(
+        transitions=params.transitions._replace(transition_matrix=0.9 * jnp.eye(K) + 0.1 / K),
+        dynamics=params.dynamics._replace(weights=jnp.stack([rot((k + 1) * jnp.pi / 20) for k in range(K)]),
+                                          biases=jnp.array([[1.0, 0.0], [-0.5, 0.8], [-0.5, -0.8]]),
+                                          covs=jnp.tile(0.1 * jnp.eye(D), (K, 1, 1))),
+        emissions=params.emissions._replace(covs=0.1 * jnp.ones((1, N))))
+    z, x, y = model.sample(params, key, num_timesteps)
+    return model, params, z, x, y
+
+
+class TestRecovery:
+    """Learning from the PCA + ARHMM initialization recovers a synthetic SLDS (invariants only: the latent space is
+    identified up to an invertible linear map)."""
+    model, true_params, z, x, y = recovery_problem()
+    params, props = model.initialize(jr.PRNGKey(2), method="pca_arhmm", emissions=y)
+    fitted, lps = model.fit_em(params, props, y, num_iters=60, verbose=False)
+    posterior, _ = model.approximate_posterior(fitted, y, num_iters=5)
+    posterior = jax.tree_util.tree_map(lambda a: a[0], posterior)
+    z_hat = model.most_likely_states(fitted, y, posterior)
+    perm = find_permutation(z_hat, z)
+
+    def test_discrete_states(self):
+        assert jnp.mean(self.perm[self.z_hat] == self.z) > 0.85
+
+    def test_dynamics_eigenvalues(self):
+        for k in range(3):
+            fitted_eigs = jnp.linalg.eigvals(self.fitted.dynamics.weights[k])
+            true_eigs = jnp.linalg.eigvals(self.true_params.dynamics.weights[self.perm[k]])
+            assert jnp.allclose(jnp.sort(jnp.abs(fitted_eigs)), jnp.sort(jnp.abs(true_eigs)), atol=0.05)
+            assert jnp.allclose(jnp.sort(jnp.abs(jnp.angle(fitted_eigs))), jnp.sort(jnp.abs(jnp.angle(true_eigs))), atol=0.05)
+
+    def test_emission_subspace_and_noise(self):
+        cosines = jnp.linalg.svd(jnp.linalg.qr(self.fitted.emissions.weights[0])[0].T
+                                 @ jnp.linalg.qr(self.true_params.emissions.weights[0])[0])[1]
+        assert jnp.all(jnp.arccos(jnp.clip(cosines, -1, 1)) < 0.1)
+        assert jnp.allclose(self.fitted.emissions.covs, self.true_params.emissions.covs, rtol=0.2)
+
+    def test_latents(self):
+        design = jnp.concatenate([self.posterior.continuous.smoothed_means, jnp.ones((self.x.shape[0], 1))], 1)
+        coef = jnp.linalg.lstsq(design, self.x)[0]
+        r2 = 1 - jnp.sum((design @ coef - self.x) ** 2) / jnp.sum((self.x - self.x.mean(0)) ** 2)
+        assert r2 > 0.9
+
+    def test_objective_increases(self):
+        """With damping 0 and no unused-state perturbation every iteration is exact coordinate ascent."""
+        model = GaussianSLDS(3, 2, 10, damping=0.0, perturb_unused_states=False)
+        _, lps = model.fit_em(self.params, self.props, self.y, num_iters=20, verbose=False)
+        assert monotonically_increasing(lps, rtol=0 if X64 else 1e-5)
+        assert self.lps[-1] > self.lps[0]
 
 
 def test_monotonicity_under_x64():

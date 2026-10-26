@@ -3,6 +3,7 @@ from dynamax.slds.abstractions import (
 from dynamax.slds.dynamics import LinearGaussianSLDSDynamics, ParamsSLDSDynamics
 from dynamax.slds.emissions import LinearGaussianSLDSEmissions, ParamsSLDSEmissions
 from dynamax.slds.inference import ContinuousPosteriorSLDS, DiscretePosteriorSLDS, PosteriorSLDS
+from dynamax.slds.initialization import arhmm_initialization, pca_arhmm_initialization, pca_initialization
 from dynamax.slds.models import GaussianSLDS
 from dynamax.slds.rbpf import DiscreteParamsRBPF, LGParamsRBPF, ParamsRBPF, rbpfilter, rbpfilter_optimal
 from dynamax.slds.transitions import ParamsStationarySLDSTransitions, StationarySLDSTransitions

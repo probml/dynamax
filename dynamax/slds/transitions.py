@@ -37,12 +37,18 @@ class StationarySLDSTransitions(SLDSTransitions):
 
     def initialize(self, key: Optional[PRNGKeyT] = None, method: str = "prior",
                    transition_matrix: Optional[Array] = None) -> Tuple[ParamsStationarySLDSTransitions, ParamsStationarySLDSTransitions]:
-        """A Dirichlet draw per row (``method="prior"``) or a user-supplied matrix; and the properties."""
+        """A Dirichlet draw per row (``method="prior"``), ``ssm``'s sticky random start
+        :math:`0.95 I + 0.05 U` row-normalized (``method="sticky"``, used by the ARHMM initialization),
+        or a user-supplied matrix; and the properties."""
         if transition_matrix is None:
             if key is None:
                 raise ValueError("key must be provided if transition_matrix is not provided.")
             if method == "prior":
                 transition_matrix = jr.dirichlet(key, self.concentration)
+            elif method == "sticky":
+                K = self.num_states
+                transition_matrix = 0.95 * jnp.eye(K) + 0.05 * jr.uniform(key, (K, K))
+                transition_matrix = transition_matrix / transition_matrix.sum(axis=1, keepdims=True)
             else:
                 raise ValueError(f"Unknown initialization method {method!r}")
         params = ParamsStationarySLDSTransitions(transition_matrix=transition_matrix)
@@ -96,4 +102,9 @@ class StationarySLDSTransitions(SLDSTransitions):
                 transition_matrix = counts / counts.sum(axis=-1, keepdims=True)
             params = params._replace(transition_matrix=transition_matrix)
         return params, m_step_state
+
+    def as_hmm_transitions(self, state_dim: int):
+        """The ``HMMTransitions`` adapter used by the ARHMM initialization."""
+        from dynamax.slds.initialization import _ARHMMTransitions
+        return _ARHMMTransitions(self, state_dim)
 

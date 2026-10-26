@@ -275,6 +275,10 @@ class LinearGaussianSLDSDynamics(SLDSDynamics):
         stats = self._regression_stats(smoothed_probs[1:], means[:-1], means[1:], inputs[1:], covs[:-1], centered_cross, covs[1:])
         return stats._replace(Ex0=means[0], Ex0x0T=covs[0] + jnp.outer(means[0], means[0]))
 
+    def collect_suff_stats_from_pairs(self, params: ParamsSLDSDynamics, weights: Array, x_prev: Array, x: Array, inputs: Array) -> DynamicsStats:
+        """Statistics of explicit (x_prev, x, u) rows, all weighted; used by the ARHMM initialization."""
+        return self._regression_stats(weights, x_prev, x, inputs)
+
     # ---- M-step -----------------------------------------------------------------------------
     def initialize_m_step_state(self, params: ParamsSLDSDynamics, props: ParamsSLDSDynamics) -> Any:
         """The closed-form M-step needs no state."""

@@ -227,6 +227,9 @@ Low-level inference
 .. autofunction:: dynamax.slds.inference.laplace_newton
 .. autofunction:: dynamax.slds.inference.log_space_hmm_smoother
 .. autofunction:: dynamax.slds.inference.log_space_hmm_posterior_sample
+.. autofunction:: dynamax.slds.pca_initialization
+.. autofunction:: dynamax.slds.arhmm_initialization
+.. autofunction:: dynamax.slds.pca_arhmm_initialization
 .. autofunction:: dynamax.slds.rbpfilter
 .. autofunction:: dynamax.slds.rbpfilter_optimal
 
