@@ -26,6 +26,45 @@ CONFIGS = [
 ]
 
 
+@pytest.mark.parametrize("num_timesteps", [1, 3])
+@pytest.mark.parametrize("input_mode", ["none", "static", "time_varying", "time_varying_zero"])
+def test_posterior_predictive_matches_expected_moments(num_timesteps, input_mode):
+    """Check observation moments against independent, conjugate Gaussian updates."""
+    has_inputs = input_mode != "none"
+    model = LinearGaussianSSM(state_dim=1, emission_dim=2, input_dim=3 if has_inputs else 0)
+    params, _ = model.initialize(
+        initial_mean=jnp.zeros(1), initial_covariance=jnp.eye(1),
+        dynamics_weights=jnp.zeros((1, 1)), dynamics_covariance=jnp.eye(1),
+        emission_weights=jnp.array([[1.0], [2.0]]),
+        emission_input_weights=jnp.array([[3.0, -1.0, 2.0], [-2.0, 4.0, 1.0]]) if has_inputs else None,
+        emission_covariance=jnp.diag(jnp.array([1.0, 4.0])))
+    inputs = jnp.array([[2.0, 1.0, 0.0], [-1.0, 3.0, 2.0], [0.0, -2.0, 1.0]]) if has_inputs else None
+    offsets = np.array([[5.0, 0.0], [-2.0, 16.0], [4.0, -7.0]]) if has_inputs else np.zeros((3, 2))
+    emissions = jnp.array(offsets + np.array([[6.0, 12.0], [-3.0, -6.0], [1.5, 3.0]]))[:num_timesteps]
+    if inputs is not None:
+        inputs = inputs[:num_timesteps]
+    if input_mode.startswith("time_varying"):
+        scales = jnp.arange(1, num_timesteps + 1)[:, None, None]
+        params = params._replace(emissions=params.emissions._replace(
+            input_weights=scales * params.emissions.input_weights))
+        if input_mode == "time_varying_zero":
+            inputs = jnp.zeros_like(inputs)
+            offsets = np.zeros_like(offsets)
+        else:
+            offsets = offsets * np.arange(1, 4)[:, None]
+        emissions = jnp.array(offsets + np.array([[6.0, 12.0], [-3.0, -6.0], [1.5, 3.0]]))[:num_timesteps]
+
+    means, stds = jit(model.posterior_predictive)(params, emissions, inputs)
+
+    # Independent unit-variance states have posterior precision 1 + 1 + 2**2/4 = 3
+    # and means 4, -2, 1. Observation means must also include the known D @ u_t.
+    expected_means = offsets + np.array([[4.0, 8.0], [-2.0, -4.0], [1.0, 2.0]])
+    expected_stds = np.tile(np.sqrt([4.0 / 3.0, 16.0 / 3.0]), (num_timesteps, 1))
+    assert means.shape == stds.shape == (num_timesteps, 2)
+    np.testing.assert_allclose(means, expected_means[:num_timesteps], rtol=1e-6, atol=1e-6)
+    np.testing.assert_allclose(stds, expected_stds, rtol=1e-6)
+
+
 @pytest.mark.parametrize("num_forecast_timesteps", [1, 3])
 @pytest.mark.parametrize("has_inputs", [False, True])
 def test_forecast_matches_expected_moments(num_forecast_timesteps, has_inputs):

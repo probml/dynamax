@@ -18,7 +18,7 @@ from dynamax.ssm import SSM
 from dynamax.linear_gaussian_ssm.inference import lgssm_joint_sample, lgssm_filter, lgssm_smoother, lgssm_posterior_sample
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM, ParamsLGSSMInitial, ParamsLGSSMDynamics, ParamsLGSSMEmissions
 from dynamax.linear_gaussian_ssm.inference import PosteriorGSSMFiltered, PosteriorGSSMSmoothed
-from dynamax.linear_gaussian_ssm.inference import _predict, preprocess_params_and_inputs
+from dynamax.linear_gaussian_ssm.inference import _get_one_param, _predict, preprocess_params_and_inputs
 from dynamax.parameters import ParameterProperties, ensure_all_or_none_trainable
 from dynamax.types import PRNGKeyT, Scalar
 from dynamax.utils.bijectors import RealToPSDBijector
@@ -315,6 +315,10 @@ class LinearGaussianSSM(SSM):
         b = params.emissions.bias
         R = params.emissions.cov if params.emissions.cov.ndim == 2 else jnp.diag(params.emissions.cov)
         smoothed_emissions = posterior.smoothed_means @ H.T + b
+        if inputs is not None and params.emissions.input_weights is not None:
+            smoothed_emissions += vmap(
+                lambda t, u: _get_one_param(params.emissions.input_weights, 2, t) @ u
+            )(jnp.arange(inputs.shape[0]), inputs)
         smoothed_emissions_cov = H @ posterior.smoothed_covariances @ H.T + R
         smoothed_emissions_std = jnp.sqrt(vmap(jnp.diag)(smoothed_emissions_cov))
         return smoothed_emissions, smoothed_emissions_std
