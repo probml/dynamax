@@ -9,9 +9,33 @@ import dynamax.slds.mixture_kalman_filter_demo as kflib
 import jax
 
 from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_joint_sample, make_lgssm_params
-from dynamax.slds import SLDS, DiscreteParamsRBPF, LGParamsRBPF, ParamsRBPF, rbpfilter, rbpfilter_optimal
+from dynamax.slds import DiscreteParamsRBPF, LGParamsRBPF, ParamsRBPF, rbpfilter, rbpfilter_optimal
+from jax import lax
+from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
 from functools import partial
 from jax.scipy.special import logit
+
+
+def sample_rbpf_model(params, key, num_timesteps):
+    """Sample (z, x, y) from the SLDS that `ParamsRBPF` describes: z_0 ~ pi, x_0 ~ N(mu_{z_0}, Sigma_{z_0}),
+    then transitions and emissions (no inputs)."""
+    lg, num_states = params.linear_gaussian, params.discrete.initial_distribution.shape[0]
+
+    def _step(prev_states, key):
+        key0, key1, key2 = jr.split(key, 3)
+        dstate, cstate = prev_states
+        dstate = jr.choice(key0, jnp.arange(num_states), p=params.discrete.transition_matrix[dstate, :])
+        cstate = MVN(lg.dynamics_weights[dstate] @ cstate + lg.dynamics_bias[dstate], lg.dynamics_cov[dstate]).sample(seed=key2)
+        emission = MVN(lg.emission_weights[dstate] @ cstate + lg.emission_bias[dstate], lg.emission_cov[dstate]).sample(seed=key1)
+        return (dstate, cstate), (dstate, cstate, emission)
+
+    key0, key1, key2, key = jr.split(key, 4)
+    z0 = jr.choice(key0, jnp.arange(num_states), p=params.discrete.initial_distribution)
+    x0 = MVN(lg.initial_mean[z0], lg.initial_cov[z0]).sample(seed=key1)
+    y0 = MVN(lg.emission_weights[z0] @ x0 + lg.emission_bias[z0], lg.emission_cov[z0]).sample(seed=key2)
+    _, (zs, xs, ys) = lax.scan(_step, (z0, x0), jr.split(key, num_timesteps - 1))
+    cat = lambda a0, a: jnp.concatenate((a0[None], a))
+    return cat(z0, zs), cat(x0, xs), cat(y0, ys)
 
 
 class TestRBPF():
@@ -78,8 +102,7 @@ class TestRBPF():
     ## Sample states and emissions
     num_timesteps = 100
     key = jr.PRNGKey(1)
-    slds = SLDS(num_states, state_dim, emission_dim)
-    dstates, cstates, emissions = slds.sample(params, key, num_timesteps)
+    dstates, cstates, emissions = sample_rbpf_model(params, key, num_timesteps)
 
     ## Baseline Implementation parameters          
     key_base = jr.PRNGKey(31)

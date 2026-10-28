@@ -188,6 +188,20 @@ Types
 .. autoclass:: dynamax.linear_gaussian_ssm.BlockTridiagPotentials
 .. autoclass:: dynamax.linear_gaussian_ssm.BlockTridiagPosterior
 
+Switching Linear Dynamical System
+==================================
+
+Low-level inference
+-------------------
+
+.. autofunction:: dynamax.slds.rbpfilter
+.. autofunction:: dynamax.slds.rbpfilter_optimal
+
+Types
+-----
+
+.. autoclass:: dynamax.slds.ParamsRBPF
+
 Nonlinear Gaussian GSSM
 ========================
 
