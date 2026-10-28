@@ -12,7 +12,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from typing import Optional, Tuple
 
 from dynamax.ssm import SSM
-from dynamax.slds.rbpf import ParamsRBPF
+from dynamax.slds.rbpf import ParamsRBPF, _check_params
 from dynamax.types import PRNGKeyT
 
 
@@ -30,7 +30,7 @@ class SLDS(SSM):
                  num_states: int,
                  state_dim: int,
                  emission_dim: int,
-                 input_dim: int=1):
+                 input_dim: int=0):
         self.num_states = num_states
         self.state_dim = state_dim
         self.emission_dim = emission_dim
@@ -105,7 +105,7 @@ class SLDS(SSM):
             latent states and emissions
 
         """
-        if not params.linear_gaussian.initialized: raise ValueError("ParamsRBPF must be initialized")
+        _check_params(params)
 
         def _step(prev_states, args):
             """Sample the next state and emission."""

@@ -1,5 +1,5 @@
 """
-Tests for the inference functions in dynamax/slds/rbpf.py
+Tests for the Rao-Blackwellized particle filters in dynamax/slds/rbpf.py
 """
 import pytest 
 
@@ -8,8 +8,8 @@ import jax.random as jr
 import dynamax.slds.mixture_kalman_filter_demo as kflib
 import jax
 
+from dynamax.linear_gaussian_ssm.inference import lgssm_filter, lgssm_joint_sample, make_lgssm_params
 from dynamax.slds import SLDS, DiscreteParamsRBPF, LGParamsRBPF, ParamsRBPF, rbpfilter, rbpfilter_optimal
-from functools import partial
 from functools import partial
 from jax.scipy.special import logit
 
@@ -46,10 +46,13 @@ class TestRBPF():
         [0.1, 0.1, 0.8]
     ])
 
+    # A proposal different from the transition matrix, so rbpfilter's importance ratio is exercised
+    proposal_transition_matrix = jnp.ones((num_states, num_states)) / num_states
+
     discr_params = DiscreteParamsRBPF(
         initial_distribution=jnp.ones(num_states)/num_states,
         transition_matrix=transition_matrix,
-        proposal_transition_matrix=transition_matrix
+        proposal_transition_matrix=proposal_transition_matrix
     )
 
     lg_params = LGParamsRBPF(
@@ -73,9 +76,10 @@ class TestRBPF():
     params = pre_params.initialize(num_states, state_dim, emission_dim)
 
     ## Sample states and emissions
+    num_timesteps = 100
     key = jr.PRNGKey(1)
     slds = SLDS(num_states, state_dim, emission_dim)
-    dstates, cstates, emissions = slds.sample(params, key, 100)
+    dstates, cstates, emissions = slds.sample(params, key, num_timesteps)
 
     ## Baseline Implementation parameters          
     key_base = jr.PRNGKey(31)
@@ -88,6 +92,12 @@ class TestRBPF():
     weights_0 = jnp.ones(num_particles) / num_particles
     init_config = (key_next, mu_0, Sigma_0, weights_0, s0)
     params1 = kflib.RBPFParamsDiscrete(A, B, C, Q, R, transition_matrix)
+
+    # The baseline filters a different model (it starts at z = 1, x ~ 0 with zero covariance, and
+    # samples z_t with logits logit(p) rather than log(p)), so the posterior means differ most in
+    # the first steps. Measured max abs difference: 6.25 (rbpfilter) and 3.62 (rbpfilter_optimal);
+    # at most 6.9 and 5.7 over 20 filter keys.
+    atol = 8.0
 
     def test_rbpf(self):
         """ 
@@ -106,7 +116,7 @@ class TestRBPF():
         dyn_post_mean = jnp.einsum("ts,tsm->tm", weights, means)
         dyn_rbpf_mse = ((dyn_post_mean - self.cstates)[:, [0, 2]] ** 2).mean(axis=0).sum()
         print(bl_rbpf_mse, dyn_rbpf_mse)
-        assert jnp.allclose(bl_post_mean, dyn_post_mean, atol=10.0)
+        assert jnp.allclose(bl_post_mean, dyn_post_mean, atol=self.atol)
 
     def test_rbpf_optimal(self):
         """
@@ -125,8 +135,65 @@ class TestRBPF():
         dyn_post_mean = jnp.einsum("ts,tsm->tm", weights, means)
         dyn_rbpf_mse = ((dyn_post_mean - self.cstates)[:, [0, 2]] ** 2).mean(axis=0).sum()
         print(bl_rbpf_mse, dyn_rbpf_mse)
-        assert jnp.allclose(bl_post_mean, dyn_post_mean, atol=10.0)
-    
+        assert jnp.allclose(bl_post_mean, dyn_post_mean, atol=self.atol)
+
+    @pytest.mark.parametrize("filter_fn", [rbpfilter, rbpfilter_optimal])
+    def test_jit(self, filter_fn):
+        """Both filters run under jax.jit with num_particles static."""
+        out = jax.jit(filter_fn, static_argnums=0)(self.num_particles, self.params, self.emissions, self.key)
+        T, P, D = self.num_timesteps, self.num_particles, self.state_dim
+        assert out["weights"].shape == (T, P)
+        assert out["states"].shape == (T, P)
+        assert out["means"].shape == (T, P, D)
+        assert out["covariances"].shape == (T, P, D, D)
+        assert jnp.all(jnp.isfinite(out["means"])) and jnp.all(jnp.isfinite(out["covariances"]))
+        assert jnp.allclose(out["weights"].sum(axis=1), 1.0)
 
 
+@pytest.mark.parametrize("filter_fn", [rbpfilter, rbpfilter_optimal])
+def test_single_state_matches_kalman_filter(filter_fn):
+    """With one discrete state every particle runs the same Kalman filter, whatever the weights, so each
+    particle's filtered moments equal lgssm_filter's. This checks that x_0 starts at N(mu, Sigma) at time 0
+    (not sampled, and with no transition before y_0) and the input indexing."""
+    state_dim, emission_dim, input_dim, num_timesteps, num_particles = 3, 2, 2, 50, 7
+    keys = jr.split(jr.PRNGKey(0), 13)
+    random_psd = lambda key, dim: (lambda L: L @ L.T + 0.1 * jnp.eye(dim))(jr.normal(key, (dim, dim)) / jnp.sqrt(dim))
+    initial_mean = jr.normal(keys[0], (state_dim,))
+    initial_cov = random_psd(keys[1], state_dim)
+    dynamics_weights = 0.8 * jnp.eye(state_dim) + 0.1 * jr.normal(keys[2], (state_dim, state_dim))
+    dynamics_cov = random_psd(keys[3], state_dim)
+    dynamics_bias = jr.normal(keys[4], (state_dim,))
+    dynamics_input_weights = jr.normal(keys[5], (state_dim, input_dim))
+    emission_weights = jr.normal(keys[6], (emission_dim, state_dim))
+    emission_cov = random_psd(keys[7], emission_dim)
+    emission_bias = jr.normal(keys[8], (emission_dim,))
+    emission_input_weights = jr.normal(keys[9], (emission_dim, input_dim))
 
+    lgssm_params = make_lgssm_params(initial_mean, initial_cov, dynamics_weights, dynamics_cov,
+                                     emission_weights, emission_cov, dynamics_bias, dynamics_input_weights,
+                                     emission_bias, emission_input_weights)
+    rbpf_params = ParamsRBPF(
+        discrete=DiscreteParamsRBPF(
+            initial_distribution=jnp.ones(1),
+            transition_matrix=jnp.ones((1, 1)),
+            proposal_transition_matrix=jnp.ones((1, 1))),
+        linear_gaussian=LGParamsRBPF(
+            initial_mean=initial_mean,
+            initial_cov=initial_cov,
+            dynamics_weights=dynamics_weights,
+            dynamics_cov=dynamics_cov,
+            dynamics_bias=dynamics_bias,
+            dynamics_input_weights=dynamics_input_weights,
+            emission_weights=emission_weights,
+            emission_cov=emission_cov,
+            emission_bias=emission_bias,
+            emission_input_weights=emission_input_weights)
+    ).initialize(1, state_dim, emission_dim, input_dim)
+
+    inputs = jr.normal(keys[10], (num_timesteps, input_dim))
+    _, emissions = lgssm_joint_sample(lgssm_params, keys[11], num_timesteps, inputs)
+    expected = lgssm_filter(lgssm_params, emissions, inputs)
+    out = filter_fn(num_particles, rbpf_params, emissions, keys[12], inputs=inputs)
+
+    assert jnp.allclose(out["means"], expected.filtered_means[:, None], atol=1e-5)
+    assert jnp.allclose(out["covariances"], expected.filtered_covariances[:, None], atol=1e-5)
