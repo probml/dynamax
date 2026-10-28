@@ -191,6 +191,22 @@ Types
 Switching Linear Dynamical System
 ==================================
 
+Conventions: the discrete chain is :math:`z_0, \ldots, z_{T-1}`, the continuous chain :math:`x_0, \ldots, x_{T-1}`
+and the emissions :math:`y_0, \ldots, y_{T-1}`. The dynamics pair :math:`t-1 \to t` uses the input :math:`u_t`
+(as :class:`~dynamax.linear_gaussian_ssm.LinearGaussianSSM`), the emission at :math:`t` uses :math:`u_t`, and a
+recurrent transition :math:`z_t \to z_{t+1}` uses :math:`x_t` and :math:`u_{t+1}`.
+
+Components
+----------
+
+.. autoclass:: dynamax.slds.SLDSInitialState
+.. autoclass:: dynamax.slds.StationarySLDSTransitions
+.. autoclass:: dynamax.slds.LinearGaussianSLDSDynamics
+.. autoclass:: dynamax.slds.LinearGaussianSLDSEmissions
+.. autoclass:: dynamax.slds.SLDSTransitions
+.. autoclass:: dynamax.slds.SLDSDynamics
+.. autoclass:: dynamax.slds.SLDSEmissions
+
 Low-level inference
 -------------------
 
@@ -200,6 +216,14 @@ Low-level inference
 Types
 -----
 
+.. autoclass:: dynamax.slds.ParamsSLDS
+.. autoclass:: dynamax.slds.ParamsSLDSDynamics
+.. autoclass:: dynamax.slds.ParamsSLDSEmissions
+.. autoclass:: dynamax.slds.ParamsStationarySLDSTransitions
+.. autoclass:: dynamax.slds.PosteriorSLDS
+.. autoclass:: dynamax.slds.DiscretePosteriorSLDS
+.. autoclass:: dynamax.slds.ContinuousPosteriorSLDS
+.. autoclass:: dynamax.slds.SuffStatsSLDS
 .. autoclass:: dynamax.slds.ParamsRBPF
 
 Nonlinear Gaussian GSSM
