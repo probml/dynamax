@@ -8,7 +8,7 @@ import jax.random as jr
 import dynamax.slds.mixture_kalman_filter_demo as kflib
 import jax
 
-from dynamax.slds import SLDS, DiscreteParamsSLDS, LGParamsSLDS, ParamsSLDS, rbpfilter, rbpfilter_optimal
+from dynamax.slds import SLDS, DiscreteParamsRBPF, LGParamsRBPF, ParamsRBPF, rbpfilter, rbpfilter_optimal
 from functools import partial
 from functools import partial
 from jax.scipy.special import logit
@@ -46,13 +46,13 @@ class TestRBPF():
         [0.1, 0.1, 0.8]
     ])
 
-    discr_params = DiscreteParamsSLDS(
+    discr_params = DiscreteParamsRBPF(
         initial_distribution=jnp.ones(num_states)/num_states,
         transition_matrix=transition_matrix,
         proposal_transition_matrix=transition_matrix
     )
 
-    lg_params = LGParamsSLDS(
+    lg_params = LGParamsRBPF(
         initial_mean=jnp.ones(state_dim),
         initial_cov=jnp.eye(state_dim),
         dynamics_weights=A,
@@ -65,7 +65,7 @@ class TestRBPF():
         emission_input_weights=None
     )
 
-    pre_params = ParamsSLDS(
+    pre_params = ParamsRBPF(
         discrete=discr_params,
         linear_gaussian=lg_params
     )

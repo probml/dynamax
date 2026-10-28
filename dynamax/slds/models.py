@@ -12,7 +12,7 @@ from tensorflow_probability.substrates.jax.distributions import MultivariateNorm
 from typing import Optional, Tuple
 
 from dynamax.ssm import SSM
-from dynamax.slds.rbpf import ParamsSLDS
+from dynamax.slds.rbpf import ParamsRBPF
 from dynamax.types import PRNGKeyT
 
 
@@ -47,7 +47,7 @@ class SLDS(SSM):
         return (self.input_dim,) if self.input_dim > 0 else None
 
     def initial_distribution(self,
-                             params: ParamsSLDS,
+                             params: ParamsRBPF,
                              dstate = int) \
                              -> tfd.Distribution:
         """
@@ -57,7 +57,7 @@ class SLDS(SSM):
         return MVN(params.initial_mean[dstate], params.initial_cov[dstate])
 
     def transition_distribution(self,
-                                params: ParamsSLDS,
+                                params: ParamsRBPF,
                                 dstate: int,
                                 cstate: Float[Array, " state_dim"],
                                 inputs: Optional[Float[Array, "ntime input_dim"]]=None
@@ -72,7 +72,7 @@ class SLDS(SSM):
         return MVN(mean, params.dynamics_cov[dstate])
 
     def emission_distribution(self,
-                              params: ParamsSLDS,
+                              params: ParamsRBPF,
                               dstate: int,
                               cstate: Float[Array, " state_dim"],
                               inputs: Optional[Float[Array, "ntime input_dim"]]=None) \
@@ -87,7 +87,7 @@ class SLDS(SSM):
         return MVN(mean, params.emission_cov[dstate])
 
     def sample(self,
-               params: ParamsSLDS,
+               params: ParamsRBPF,
                key: PRNGKeyT,
                num_timesteps: int,
                inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
@@ -105,7 +105,7 @@ class SLDS(SSM):
             latent states and emissions
 
         """
-        if not params.linear_gaussian.initialized: raise ValueError("ParamsSLDS must be initialized")
+        if not params.linear_gaussian.initialized: raise ValueError("ParamsRBPF must be initialized")
 
         def _step(prev_states, args):
             """Sample the next state and emission."""
