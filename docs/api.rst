@@ -196,6 +196,16 @@ and the emissions :math:`y_0, \ldots, y_{T-1}`. The dynamics pair :math:`t-1 \to
 (as :class:`~dynamax.linear_gaussian_ssm.LinearGaussianSSM`), the emission at :math:`t` uses :math:`u_t`, and a
 recurrent transition :math:`z_t \to z_{t+1}` uses :math:`x_t` and :math:`u_{t+1}`.
 
+High-level classes
+------------------
+
+.. autoclass:: dynamax.slds.GaussianSLDS
+  :members:
+  :inherited-members:
+
+.. autoclass:: dynamax.slds.SLDS
+  :members:
+
 Components
 ----------
 
@@ -210,6 +220,13 @@ Components
 Low-level inference
 -------------------
 
+.. autofunction:: dynamax.slds.inference.initialize_posterior
+.. autofunction:: dynamax.slds.inference.update_discrete_posterior
+.. autofunction:: dynamax.slds.inference.update_continuous_posterior
+.. autofunction:: dynamax.slds.inference.slds_elbo
+.. autofunction:: dynamax.slds.inference.laplace_newton
+.. autofunction:: dynamax.slds.inference.log_space_hmm_smoother
+.. autofunction:: dynamax.slds.inference.log_space_hmm_posterior_sample
 .. autofunction:: dynamax.slds.rbpfilter
 .. autofunction:: dynamax.slds.rbpfilter_optimal
 
