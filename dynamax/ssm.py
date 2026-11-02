@@ -459,6 +459,16 @@ class SSM(ABC):
 
         *Note:* ``emissions`` *and* ``inputs`` *can either be single sequences or batches of sequences.*
 
+        When using a parameter-dependent optimizer such as AdamW, zero gradients
+        from ``trainable=False`` do not prevent weight decay. To preserve frozen
+        parameters, mask the entire optimizer using the property tree::
+
+            mask = tree_map(lambda prop: prop.trainable, props,
+                            is_leaf=lambda prop: isinstance(prop, ParameterProperties))
+            optimizer = optax.masked(optax.adamw(learning_rate=1e-3), mask)
+
+        The mask must follow the unconstrained parameter PyTree structure.
+
         On each iteration, the algorithm grabs a *minibatch* of sequences and takes a gradient step.
         One pass through the entire set of sequences is called an *epoch*.
 
