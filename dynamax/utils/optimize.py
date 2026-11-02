@@ -31,6 +31,15 @@ def run_sgd(loss_fn,
             shuffle=False,
             key=jr.PRNGKey(0)):
     """
+
+    Note:
+        These shared loops have no parameter-property metadata. Zero gradients
+        alone do not freeze a parameter when the optimizer applies weight decay.
+        Callers using frozen parameters must mask the entire optimizer, e.g.
+        ``optax.masked(optax.adamw(...), trainable_mask)``, where the boolean
+        mask matches the parameter PyTree. A decay-only mask is insufficient
+        for an optimizer with other parameter-dependent updates.
+
     Note that batch_emissions is initially of shape (N,T)
     where N is the number of independent sequences and
     T is the length of a sequence. Then, a random susbet with shape (B, T)
@@ -82,6 +91,15 @@ def run_gradient_descent(objective,
                          num_mstep_iters=50):
     """
     Run gradient descent on the objective function.
+
+    Note:
+        These shared loops have no parameter-property metadata. Zero gradients
+        alone do not freeze a parameter when the optimizer applies weight decay.
+        Callers using frozen parameters must mask the entire optimizer, e.g.
+        ``optax.masked(optax.adamw(...), trainable_mask)``, where the boolean
+        mask matches the parameter PyTree. A decay-only mask is insufficient
+        for an optimizer with other parameter-dependent updates.
+
     """
     if optimizer_state is None:
         optimizer_state = optimizer.init(params)
