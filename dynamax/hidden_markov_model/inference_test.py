@@ -206,6 +206,29 @@ def test_hmm_fixed_lag_smoother(key=0, num_timesteps=5, num_states=2):
     assert jnp.allclose(posterior.smoothed_probs, posterior_fl.smoothed_probs[-1], atol=1e-3)
 
 
+def test_hmm_fixed_lag_smoother_short_window(key=0, num_timesteps=6, num_states=3):
+    """
+    With a window shorter than the sequence, the marginal log likelihood at time t
+    is still log p(y_{1:t}), and the newest entry of each window is the filtered
+    probability. A window of size 1 reduces to filtering.
+    """
+    if isinstance(key, int):
+        key = jr.PRNGKey(key)
+
+    initial_probs, transition_matrix, log_likelihoods = random_hmm_args(key, num_timesteps, num_states)
+    posterior = core.hmm_filter(initial_probs, transition_matrix, log_likelihoods)
+    marginal_logliks = jnp.array([
+        core.hmm_filter(initial_probs, transition_matrix, log_likelihoods[:t + 1]).marginal_loglik
+        for t in range(num_timesteps)
+    ])
+
+    for window_size in (1, 2):
+        posterior_fl = core.hmm_fixed_lag_smoother(
+            initial_probs, transition_matrix, log_likelihoods, window_size=window_size)
+        assert jnp.allclose(posterior_fl.marginal_loglik, marginal_logliks, atol=1e-5)
+        assert jnp.allclose(posterior_fl.smoothed_probs[:, -1], posterior.filtered_probs, atol=1e-5)
+
+
 def test_compute_transition_probs(key=0, num_timesteps=5, num_states=2):
     """
     Test the transition probability computation function
