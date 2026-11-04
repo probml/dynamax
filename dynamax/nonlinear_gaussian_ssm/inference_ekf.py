@@ -69,16 +69,23 @@ def _condition_on(prior_mean: Float[Array, " state_dim"],
          Sigma_cond (D_hid,D_hid): filtered covariance.
     """
     def _step(carry, _):
-        """Iteratively re-linearize around posterior mean and covariance."""
-        prior_mean, prior_cov = carry
-        H_x = emission_jacobian(prior_mean, inpt)
+        """Re-linearize the emission around the current estimate and update the prior.
+
+        Each iteration conditions the *prior* on the observation, using the
+        linearization h(x) ~ h(x_i) + H(x_i)(x - x_i) around the current estimate
+        x_i (the iterated EKF). Conditioning the previous iteration's posterior
+        instead would use the same observation more than once.
+        """
+        linearization_point, _ = carry
+        H_x = emission_jacobian(linearization_point, inpt)
         S = emission_cov + H_x @ prior_cov @ H_x.T
         K = psd_solve(S, H_x @ prior_cov).T
         posterior_cov = prior_cov - K @ S @ K.T
-        posterior_mean = prior_mean + K @ (emission - emission_func(prior_mean, inpt))
+        yhat = emission_func(linearization_point, inpt) + H_x @ (prior_mean - linearization_point)
+        posterior_mean = prior_mean + K @ (emission - yhat)
         return (posterior_mean, posterior_cov), None
 
-    # Iterate re-linearization over posterior mean and covariance
+    # Iterate re-linearization around the posterior mean
     carry = (prior_mean, prior_cov)
     (mu_cond, Sigma_cond), _ = lax.scan(_step, carry, jnp.arange(num_iter))
     return mu_cond, symmetrize(Sigma_cond)

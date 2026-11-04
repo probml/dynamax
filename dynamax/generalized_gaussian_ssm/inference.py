@@ -266,22 +266,40 @@ def _condition_on(prior_mean: Float[Array, "state_dim"],
     Cov_Y = lambda x: emission_cov(x, inpt)
     identity_fn = lambda x: x
 
-    def _step(carry, _):
-        """Iteratively re-linearize around the posterior mean and covariance."""
-        prior_mean, prior_cov = carry
-        yhat = gaussian_expec(m_Y, prior_mean, prior_cov)
-        S = gaussian_expec(Cov_Y, prior_mean, prior_cov) + gaussian_crosscov(m_Y, m_Y, prior_mean, prior_cov)
-        log_likelihood = emission_dist(yhat, S).log_prob(jnp.atleast_1d(emission)).sum()
-        C = gaussian_crosscov(identity_fn, m_Y, prior_mean, prior_cov)
-        K = psd_solve(S, C.T).T
-        posterior_mean = prior_mean + K @ (emission - yhat)
-        posterior_cov = prior_cov - K @ S @ K.T
-        return (posterior_mean, posterior_cov), log_likelihood
+    # Moment-matched update of the prior.
+    yhat = gaussian_expec(m_Y, prior_mean, prior_cov)
+    S = gaussian_expec(Cov_Y, prior_mean, prior_cov) + gaussian_crosscov(m_Y, m_Y, prior_mean, prior_cov)
+    log_likelihood = emission_dist(yhat, S).log_prob(jnp.atleast_1d(emission)).sum()
+    C = gaussian_crosscov(identity_fn, m_Y, prior_mean, prior_cov)
+    K = psd_solve(S, C.T).T
+    mu_cond = prior_mean + K @ (emission - yhat)
+    Sigma_cond = prior_cov - K @ S @ K.T
 
-    # Iterate re-linearization over posterior mean and covariance
-    carry = (prior_mean, prior_cov)
-    (mu_cond, Sigma_cond), lls = lax.scan(_step, carry, jnp.arange(num_iter))
-    return lls[0], mu_cond, Sigma_cond
+    def _step(carry, _):
+        """Re-linearize around the current posterior and update the prior again.
+
+        The emission mean is replaced by its statistical linear regression
+        A x + b (with residual covariance Omega) with respect to the current
+        posterior N(mean, cov), and the *prior* is conditioned on the linearized
+        model (iterated posterior linearization). Conditioning the previous
+        posterior instead would use the same observation more than once.
+        """
+        lin_mean, lin_cov = carry
+        yhat = gaussian_expec(m_Y, lin_mean, lin_cov)
+        C = gaussian_crosscov(identity_fn, m_Y, lin_mean, lin_cov)
+        A = psd_solve(lin_cov, C).T
+        b = yhat - A @ lin_mean
+        Omega = gaussian_crosscov(m_Y, m_Y, lin_mean, lin_cov) - A @ lin_cov @ A.T
+        R = gaussian_expec(Cov_Y, lin_mean, lin_cov)
+        S = A @ prior_cov @ A.T + Omega + R
+        K = psd_solve(S, A @ prior_cov).T
+        posterior_mean = prior_mean + K @ (emission - (A @ prior_mean + b))
+        posterior_cov = prior_cov - K @ S @ K.T
+        return (posterior_mean, posterior_cov), None
+
+    # Iterate re-linearization around the posterior
+    (mu_cond, Sigma_cond), _ = lax.scan(_step, (mu_cond, Sigma_cond), jnp.arange(num_iter - 1))
+    return log_likelihood, mu_cond, Sigma_cond
 
 
 def conditional_moments_gaussian_filter(model_params: ParamsGGSSM,

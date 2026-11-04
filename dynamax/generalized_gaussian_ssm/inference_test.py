@@ -107,3 +107,26 @@ def test_generalized_gaussian_inference_input_indexing(num_timesteps, integrals)
     with pytest.raises(AssertionError):
         conditional_moments_gaussian_smoother(
             short_params, integrals, emissions, filtered_posterior=posterior, inputs=inputs)
+
+
+@pytest.mark.parametrize("num_iter", [2, 3])
+@pytest.mark.parametrize("integrals", [EKFIntegrals(), UKFIntegrals(), GHKFIntegrals(order=3)])
+def test_iterated_cmgf_linear(num_iter, integrals):
+    """Re-linearizing an affine emission model changes nothing, so the iterated
+    CMGF must reproduce the exact LGSSM filtering results."""
+    params, emissions, inputs, expected = make_affine_timing_case(3)
+    generalized_params = ParamsGGSSM(
+        initial_mean=params.initial_mean,
+        initial_covariance=params.initial_covariance,
+        dynamics_function=params.dynamics_function,
+        dynamics_covariance=params.dynamics_covariance,
+        emission_mean_function=params.emission_function,
+        emission_cov_function=lambda state, inpt: params.emission_covariance,
+    )
+    posterior = conditional_moments_gaussian_filter(
+        generalized_params, integrals, emissions, inputs=inputs, num_iter=num_iter
+    )
+    for field in ("marginal_loglik", "filtered_means", "filtered_covariances"):
+        np.testing.assert_allclose(
+            getattr(posterior, field), expected[field], atol=2e-5, rtol=2e-5
+        )

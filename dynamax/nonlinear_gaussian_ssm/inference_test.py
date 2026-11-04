@@ -24,17 +24,18 @@ else:
     allclose = partial(jnp.allclose, atol=1e-4)
 
 
-def test_extended_kalman_filter_linear(key=0, num_timesteps=15):
+@pytest.mark.parametrize("num_iter", [1, 2, 3])
+def test_extended_kalman_filter_linear(num_iter, key=0, num_timesteps=15):
     """
-    Test that the extended Kalman filter produces the correct filtered moments
-    in the linear Gaussian case.
+    Test that the (iterated) extended Kalman filter produces the correct filtered
+    moments in the linear Gaussian case, where re-linearizing changes nothing.
     """
     args, _, emissions = random_lgssm_args(key=key, num_timesteps=num_timesteps)
 
     # Run standard Kalman filter
     kf_post = lgssm_filter(args, emissions)
     # Run extended Kalman filter
-    ekf_post = extended_kalman_filter(lgssm_to_nlgssm(args), emissions)
+    ekf_post = extended_kalman_filter(lgssm_to_nlgssm(args), emissions, num_iter=num_iter)
 
     # Compare filter results
     assert allclose(kf_post.marginal_loglik, ekf_post.marginal_loglik)
