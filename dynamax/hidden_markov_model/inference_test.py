@@ -388,3 +388,41 @@ def test_hmm_fixed_lag_smoother_nonstationary():
     posterior = core.hmm_fixed_lag_smoother(
         jnp.array([0.5, 0.5]), transitions, log_likelihoods, window_size=2)
     assert jnp.allclose(posterior.smoothed_probs[1], jnp.array([[0.9, 0.1], [0.9, 0.1]]))
+
+
+def big_log_joint_nonstationary(initial_probs, transition_matrices, log_likelihoods):
+    """Brute-force log joint of every state path for time-varying transition matrices.
+
+    ``transition_matrices[t]`` connects ``z_t`` and ``z_{t+1}``. Zero probabilities give
+    ``-inf`` entries, which contribute nothing after exponentiation.
+    """
+    num_timesteps, num_states = log_likelihoods.shape
+    paths = jnp.array(list(it.product(range(num_states), repeat=num_timesteps)))
+    log_joint = jnp.log(initial_probs)[paths[:, 0]]
+    for t in range(num_timesteps):
+        log_joint += log_likelihoods[t, paths[:, t]]
+        if t < num_timesteps - 1:
+            log_joint += jnp.log(transition_matrices[t])[paths[:, t], paths[:, t + 1]]
+    return paths, log_joint
+
+
+def test_compute_transition_probs_nonstationary_zero_columns(key=0, num_timesteps=4, num_states=3):
+    """Time-varying transition matrices with exact-zero columns give finite, exact transition
+    probabilities: the backward ratio at an unreachable state is 0/0 and must be treated as 0."""
+    initial_probs, _, log_likelihoods = random_hmm_args(jr.PRNGKey(key), num_timesteps, num_states)
+    _, transition_matrices, _ = random_hmm_args_nonstationary(jr.PRNGKey(key + 1), num_timesteps, num_states)
+    # State 2 is unreachable after the first and third transitions.
+    transition_matrices = transition_matrices.at[0, :, 2].set(0.0).at[2, :, 2].set(0.0)
+    transition_matrices /= transition_matrices.sum(axis=-1, keepdims=True)
+
+    posterior = core.hmm_smoother(initial_probs, transition_matrices, log_likelihoods)
+    assert jnp.all(jnp.isfinite(posterior.smoothed_probs))
+    assert jnp.all(jnp.isfinite(posterior.trans_probs))
+
+    paths, log_joint = big_log_joint_nonstationary(initial_probs, transition_matrices, log_likelihoods)
+    path_probs = jnp.exp(log_joint - logsumexp(log_joint))
+    for t in range(num_timesteps - 1):
+        expected = jnp.zeros((num_states, num_states))
+        expected = expected.at[paths[:, t], paths[:, t + 1]].add(path_probs)
+        assert jnp.allclose(posterior.trans_probs[t], expected, atol=1e-5)
+        assert jnp.allclose(posterior.smoothed_probs[t], expected.sum(1), atol=1e-5)

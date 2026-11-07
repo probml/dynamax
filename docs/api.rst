@@ -167,6 +167,13 @@ Low-level inference
 .. autofunction:: dynamax.linear_gaussian_ssm.lgssm_filter
 .. autofunction:: dynamax.linear_gaussian_ssm.lgssm_smoother
 .. autofunction:: dynamax.linear_gaussian_ssm.lgssm_posterior_sample
+.. autofunction:: dynamax.linear_gaussian_ssm.lgssm_to_block_tridiag
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_filter
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_smoother
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_sample
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_solve
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_matvec
+.. autofunction:: dynamax.linear_gaussian_ssm.block_tridiag_mvn_entropy
 
 Types
 -----
@@ -178,6 +185,71 @@ Types
 
 .. autoclass:: dynamax.linear_gaussian_ssm.PosteriorGSSMFiltered
 .. autoclass:: dynamax.linear_gaussian_ssm.PosteriorGSSMSmoothed
+.. autoclass:: dynamax.linear_gaussian_ssm.BlockTridiagPotentials
+.. autoclass:: dynamax.linear_gaussian_ssm.BlockTridiagPosterior
+
+Switching Linear Dynamical System
+==================================
+
+Conventions: the discrete chain is :math:`z_0, \ldots, z_{T-1}`, the continuous chain :math:`x_0, \ldots, x_{T-1}`
+and the emissions :math:`y_0, \ldots, y_{T-1}`. The dynamics pair :math:`t-1 \to t` uses the input :math:`u_t`
+(as :class:`~dynamax.linear_gaussian_ssm.LinearGaussianSSM`), the emission at :math:`t` uses :math:`u_t`, and a
+recurrent transition :math:`z_t \to z_{t+1}` uses :math:`x_t` and :math:`u_{t+1}`.
+
+High-level classes
+------------------
+
+.. autoclass:: dynamax.slds.GaussianSLDS
+  :members:
+  :inherited-members:
+
+.. autoclass:: dynamax.slds.RecurrentGaussianSLDS
+  :members:
+
+.. autoclass:: dynamax.slds.SLDS
+  :members:
+
+Components
+----------
+
+.. autoclass:: dynamax.slds.SLDSInitialState
+.. autoclass:: dynamax.slds.StationarySLDSTransitions
+.. autoclass:: dynamax.slds.RecurrentSLDSTransitions
+.. autoclass:: dynamax.slds.LinearGaussianSLDSDynamics
+.. autoclass:: dynamax.slds.LinearGaussianSLDSEmissions
+.. autoclass:: dynamax.slds.SLDSTransitions
+.. autoclass:: dynamax.slds.SLDSDynamics
+.. autoclass:: dynamax.slds.SLDSEmissions
+
+Low-level inference
+-------------------
+
+.. autofunction:: dynamax.slds.inference.initialize_posterior
+.. autofunction:: dynamax.slds.inference.update_discrete_posterior
+.. autofunction:: dynamax.slds.inference.update_continuous_posterior
+.. autofunction:: dynamax.slds.inference.slds_elbo
+.. autofunction:: dynamax.slds.inference.laplace_newton
+.. autofunction:: dynamax.slds.inference.log_space_hmm_smoother
+.. autofunction:: dynamax.slds.inference.log_space_hmm_posterior_sample
+.. autofunction:: dynamax.slds.pca_initialization
+.. autofunction:: dynamax.slds.arhmm_initialization
+.. autofunction:: dynamax.slds.pca_arhmm_initialization
+.. autofunction:: dynamax.slds.rbpfilter
+.. autofunction:: dynamax.slds.rbpfilter_optimal
+
+Types
+-----
+
+.. autoclass:: dynamax.slds.ParamsSLDS
+.. autoclass:: dynamax.slds.ParamsSLDSDynamics
+.. autoclass:: dynamax.slds.ParamsSLDSEmissions
+.. autoclass:: dynamax.slds.ParamsStationarySLDSTransitions
+.. autoclass:: dynamax.slds.ParamsRecurrentSLDSTransitions
+.. autoclass:: dynamax.slds.PosteriorSLDS
+.. autoclass:: dynamax.slds.DiscretePosteriorSLDS
+.. autoclass:: dynamax.slds.ContinuousPosteriorSLDS
+.. autoclass:: dynamax.slds.SuffStatsSLDS
+.. autoclass:: dynamax.slds.ParamsRBPF
 
 Nonlinear Gaussian GSSM
 ========================

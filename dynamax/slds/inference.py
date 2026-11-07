@@ -1,349 +1,350 @@
+r"""
+Structured mean-field Laplace variational inference for switching linear dynamical systems.
+
+The posterior is approximated by :math:`q(z_{1:T})\, q(x_{1:T})`: :math:`q(z)` is a Markov chain
+(an HMM with unary and pairwise potentials, smoothed in log space), :math:`q(x)` a Gaussian
+with block-tridiagonal precision (handled by the primitives in
+:mod:`dynamax.linear_gaussian_ssm.block_tridiag`). Coordinate ascent on the ELBO alternates
+:func:`update_discrete_posterior` and :func:`update_continuous_posterior`; the latter is a Newton
+step at the mode of :math:`\mathbb{E}_{q(z)}[\log p(z, x, y)]` (exact for Gaussian SLDS, a Laplace
+approximation for recurrent transitions). Ported from ``lindermanlab/ssm``.
 """
-Rao-Blackwellized Particle Filter for inference in a 
-Switching Linear Dynamical Systems (SLDS).
-"""
+from typing import Callable, NamedTuple, Optional, Tuple
+
+import jax
 import jax.numpy as jnp
 import jax.random as jr
-
-from functools import partial
-from jax import lax, vmap, jit
+from jax import lax, vmap
+from jax.scipy.special import logsumexp, xlogy
+from jax.tree_util import tree_map
 from jaxtyping import Array, Float, Int
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from typing import NamedTuple, Optional
 
-from dynamax.utils.utils import psd_solve
-from dynamax.types import PRNGKeyT
+from dynamax.linear_gaussian_ssm.block_tridiag import (
+    BlockTridiagPotentials, block_tridiag_mvn_entropy, block_tridiag_mvn_matvec, block_tridiag_mvn_smoother,
+    block_tridiag_mvn_solve)
+from dynamax.types import PRNGKeyT, Scalar
 
-class DiscreteParamsSLDS(NamedTuple):
+
+class DiscretePosteriorSLDS(NamedTuple):
+    r"""The chain :math:`q(z)`: the potentials of :func:`log_space_hmm_smoother` and its output.
+
+    The transition matrices are kept in log space. In float32 the transition probabilities of a stiff chain
+    underflow to exact zeros (half of them on the NASCAR rSLDS), so anything re-reading a stored
+    probability-space chain (the sampler, the entropy) would see a different chain from the smoother,
+    which inside ``jit`` runs on the simplified ``log(exp(.))``.
+
+    :param initial_probs: :math:`\pi_0`
+    :param log_transition_matrices: log of the (K, K), or (T-1, K, K) for recurrent transitions, transition matrices
+    :param log_likelihoods: unary potentials (T, K), including the folded row normalizer for recurrent transitions
+    :param log_normalizer: log partition function of the chain
+    :param smoothed_probs: :math:`\mathbb{E}_q[z_t = k]`
+    :param trans_probs: :math:`\mathbb{E}_q[z_t = i, z_{t+1} = j]`, summed over t for (K, K) transitions
     """
-    Parameters of a discrete state dynamics for an SLDS.
+    initial_probs: Float[Array, " num_states"]
+    log_transition_matrices: Array
+    log_likelihoods: Float[Array, "num_timesteps num_states"]
+    log_normalizer: Scalar
+    smoothed_probs: Float[Array, "num_timesteps num_states"]
+    trans_probs: Array
+
+
+class ContinuousPosteriorSLDS(NamedTuple):
+    r"""The Gaussian :math:`q(x)` in information form, with its filtered messages and marginals.
+
+    :param J_diag, J_lower, h: the block-tridiagonal natural parameters
+    :param filtered_precisions, filtered_linear_potentials: cached forward messages for the sampler
+    :param log_normalizer: :math:`\log Z`
+    :param log_det_precision: :math:`\log |J|`
+    :param smoothed_means, smoothed_covariances: marginals
+    :param smoothed_cross_covariances: :math:`\mathbb{E}[x_t x_{t+1}^\top]`, uncentered
     """
-    initial_distribution: Float[Array, " num_states"]
-    transition_matrix : Float[Array, "num_states num_states"]
-    proposal_transition_matrix : Float[Array, "num_states num_states"]
+    J_diag: Float[Array, "num_timesteps state_dim state_dim"]
+    J_lower: Float[Array, "num_timesteps_minus_1 state_dim state_dim"]
+    h: Float[Array, "num_timesteps state_dim"]
+    filtered_precisions: Float[Array, "num_timesteps state_dim state_dim"]
+    filtered_linear_potentials: Float[Array, "num_timesteps state_dim"]
+    log_normalizer: Scalar
+    log_det_precision: Scalar
+    smoothed_means: Float[Array, "num_timesteps state_dim"]
+    smoothed_covariances: Float[Array, "num_timesteps state_dim state_dim"]
+    smoothed_cross_covariances: Float[Array, "num_timesteps_minus_1 state_dim state_dim"]
 
-class LGParamsSLDS(NamedTuple):
-    r"""Parameters of a SLDS, which has a discrete component and a continuous component.
-    The discrete component is a Markov model for the hidden discrete state $m_t$.
-    The linear_gaussian component is a linear Gaussian state space model for the hidden continuous state $z_t$ and
-    emission $y_t$.
+
+class PosteriorSLDS(NamedTuple):
+    """The variational posterior q(z) q(x)."""
+    discrete: DiscretePosteriorSLDS
+    continuous: ContinuousPosteriorSLDS
+
+
+def continuous_posterior_from_potentials(potentials: BlockTridiagPotentials, jitter: float = 0.0) -> ContinuousPosteriorSLDS:
+    """Run the block-tridiagonal smoother and package the result with the potentials."""
+    post = block_tridiag_mvn_smoother(potentials, jitter)
+    return ContinuousPosteriorSLDS(J_diag=potentials.J_diag, J_lower=potentials.J_lower, h=potentials.h,
+                                   filtered_precisions=post.filtered_precisions,
+                                   filtered_linear_potentials=post.filtered_linear_potentials,
+                                   log_normalizer=post.log_normalizer,
+                                   log_det_precision=post.log_det_precision,
+                                   smoothed_means=post.smoothed_means,
+                                   smoothed_covariances=post.smoothed_covariances,
+                                   smoothed_cross_covariances=post.smoothed_cross_covariances)
+
+
+def _trivial_discrete_posterior(num_timesteps: int, time_varying: bool) -> DiscretePosteriorSLDS:
+    """q(z) for a single state: all probabilities one, zero entropy, zero log normalizer."""
+    T = num_timesteps
+    if time_varying:
+        log_transition_matrices, trans_probs = jnp.zeros((T - 1, 1, 1)), jnp.ones((T - 1, 1, 1))
+    else:
+        log_transition_matrices, trans_probs = jnp.zeros((1, 1)), jnp.array([[T - 1.0]])
+    return DiscretePosteriorSLDS(initial_probs=jnp.ones(1), log_transition_matrices=log_transition_matrices,
+                                 log_likelihoods=jnp.zeros((T, 1)), log_normalizer=jnp.zeros(()),
+                                 smoothed_probs=jnp.ones((T, 1)), trans_probs=trans_probs)
+
+
+def _log_space_forward(initial_probs: Array, log_transition_matrices: Array, log_likelihoods: Array
+                       ) -> Tuple[Scalar, Array, Array]:
+    """The log forward messages, renormalized at every step: ``(log_normalizer, log_alphas (T, K), log_P_t (T-1, K, K))``.
+
+    The messages are renormalized at every step (their log normalizers are accumulated separately), so
+    that float32 keeps its relative precision when the potentials are in the thousands.
     """
-    initial_mean: Float[Array, "num_states state_dim"]
-    initial_cov: Float[Array, "num_states state_dim state_dim"]
-    dynamics_weights: Float[Array, "num_states state_dim state_dim"]
-    dynamics_cov: Float[Array, "num_states state_dim state_dim"]
-    dynamics_bias: Float[Array, "num_states state_dim"]
-    dynamics_input_weights: Float[Array, "num_states num_states input_dim"]
-    emission_weights: Float[Array, "num_states emission_dim state_dim"]
-    emission_cov: Float[Array, "num_states emission_dim emission_dim"]
-    emission_bias: Float[Array, "num_states emission_dim"]
-    emission_input_weights: Float[Array, "num_states num_emissions input_dim"]
-    initialized: bool = False
+    num_timesteps, num_states = log_likelihoods.shape
+    log_P_t = (log_transition_matrices if log_transition_matrices.ndim == 3
+               else jnp.broadcast_to(log_transition_matrices, (num_timesteps - 1, num_states, num_states)))
+
+    def _forward(carry, args):
+        log_alpha, log_Z = carry
+        log_P_prev, ll = args
+        log_alpha = logsumexp(log_alpha[:, None] + log_P_prev, axis=0) + ll
+        c = logsumexp(log_alpha)
+        return (log_alpha - c, log_Z + c), log_alpha - c
+
+    log_alpha0 = jnp.log(initial_probs) + log_likelihoods[0]
+    c0 = logsumexp(log_alpha0)
+    (_, log_normalizer), log_alphas = lax.scan(_forward, (log_alpha0 - c0, c0), (log_P_t, log_likelihoods[1:]))
+    return log_normalizer, jnp.concatenate([(log_alpha0 - c0)[None], log_alphas]), log_P_t
 
 
-class ParamsSLDS(NamedTuple):
-    r"""Parameters of a SLDS, which has a discrete component and a continuous component.
-    The discrete component is a Markov model for the hidden discrete state $m_t$.
-    The linear_gaussian component is a linear Gaussian state space model for the hidden continuous state $z_t$ and
-    emission $y_t$.
+def log_space_hmm_smoother(initial_probs: Array, log_transition_matrices: Array, log_likelihoods: Array
+                           ) -> Tuple[Scalar, Array, Array]:
+    r"""Forward-backward in log space (as ``ssm``'s ``hmm_expected_states``).
+
+    The unary potentials of :math:`q(z)` are expected log densities whose gaps between states reach
+    thousands of nats when the dynamics noise is small, so probabilities underflow in the
+    probability-space :func:`hmm_smoother`: a state whose forward message underflows to zero can never
+    be revived by later evidence. Working with log messages keeps every state alive. The transition
+    matrices are given in log space, (K, K) or (T-1, K, K). Returns the log normalizer, the smoothed
+    probabilities (T, K) and the pairwise expectations, summed over time (K, K) for a single transition
+    matrix and per time step (T-1, K, K) for time-varying ones.
     """
-    discrete: DiscreteParamsSLDS
-    linear_gaussian: LGParamsSLDS
+    num_states = log_likelihoods.shape[1]
+    time_varying = log_transition_matrices.ndim == 3
+    log_normalizer, log_alphas, log_P_t = _log_space_forward(initial_probs, log_transition_matrices, log_likelihoods)
 
-    def initialize(self, num_states, state_dim, emission_dim, input_dim=1):
-        """
-        Initialize the parameters of the SLDS. For each parameter that is the same over all models, the parameter
-        is repeated to match the number of states. Also optional paramters are set to zero if not specified.
-        """
-        params = self.linear_gaussian
-        initial_mean = params.initial_mean if params.initial_mean.shape == (num_states, state_dim) else jnp.array([params.initial_mean]*num_states)
-        initial_cov = params.initial_cov if params.initial_cov.shape == (num_states, state_dim, state_dim) else jnp.array([params.initial_cov]*num_states)
-        dynamics_weights = params.dynamics_weights if params.dynamics_weights.shape == (num_states, state_dim, state_dim) else jnp.array([params.dynamics_weights]*num_states)
-        dynamics_cov = params.dynamics_cov if params.dynamics_cov.shape == (num_states, state_dim, state_dim) else jnp.array([params.dynamics_cov]*num_states)
-        dynamics_bias = params.dynamics_bias if params.dynamics_bias is not None else jnp.zeros((num_states, state_dim))
-        dynamics_bias = dynamics_bias if dynamics_bias.shape == (num_states, state_dim) else jnp.array([dynamics_bias]*num_states)
-        dynamics_input_weights = params.dynamics_input_weights if params.dynamics_input_weights is not None else jnp.zeros((num_states, state_dim, input_dim))
-        dynamics_input_weights = dynamics_input_weights if dynamics_input_weights.shape == (num_states, state_dim, input_dim) else jnp.array([dynamics_input_weights]*num_states)
-        emission_weights = params.emission_weights if params.emission_weights.shape == (num_states, emission_dim, state_dim) else jnp.array([params.emission_weights]*num_states)
-        emission_cov = params.emission_cov if params.emission_cov.shape == (num_states, emission_dim, emission_dim) else jnp.array([params.emission_cov]*num_states)
-        emission_bias = params.emission_bias if params.emission_bias is not None else jnp.zeros((num_states, emission_dim))
-        emission_bias = emission_bias if emission_bias.shape == (num_states, emission_dim) else jnp.array([emission_bias]*num_states)
-        emission_input_weights = params.emission_input_weights if params.emission_input_weights is not None else jnp.zeros((num_states, emission_dim, input_dim))
-        emission_input_weights = emission_input_weights if emission_input_weights.shape == (num_states, emission_dim, input_dim) else jnp.array([emission_input_weights]*num_states)
-        
-        return ParamsSLDS(
-            discrete=self.discrete,
-            linear_gaussian=LGParamsSLDS(
-                initial_mean=initial_mean,
-                initial_cov=initial_cov,
-                dynamics_weights=dynamics_weights,
-                dynamics_cov=dynamics_cov,
-                dynamics_bias=dynamics_bias,
-                dynamics_input_weights=dynamics_input_weights,
-                emission_weights=emission_weights,
-                emission_cov=emission_cov,
-                emission_bias=emission_bias,
-                emission_input_weights=emission_input_weights,
-                initialized=True
-            )
-        )
+    def _backward(log_beta, args):
+        log_P_next, ll_next = args
+        log_beta = logsumexp(log_P_next + (ll_next + log_beta)[None, :], axis=1)
+        return log_beta - logsumexp(log_beta), log_beta - logsumexp(log_beta)
+
+    _, log_betas = lax.scan(_backward, jnp.zeros(num_states), (log_P_t, log_likelihoods[1:]), reverse=True)
+    log_betas = jnp.concatenate([log_betas, jnp.zeros((1, num_states))])
+    smoothed_probs = jax.nn.softmax(log_alphas + log_betas, axis=1)
+    log_pairs = log_alphas[:-1, :, None] + log_P_t + (log_likelihoods[1:] + log_betas[1:])[:, None, :]
+    trans_probs = jnp.exp(log_pairs - logsumexp(log_pairs, axis=(1, 2), keepdims=True))
+    if not time_varying:
+        trans_probs = trans_probs.sum(0)
+    return log_normalizer, smoothed_probs, trans_probs
 
 
-class RBPFiltered(NamedTuple):
-    r"""RBPF posterior.
-    :param weights: weights of the particles.
-    :param means: array of filtered means $\mathbb{E}[z_t \mid y_{1:t}, u_{1:t}]$
-    :param covariances: array of filtered covariances $\mathrm{Cov}[z_t \mid y_{1:t}, u_{1:t}]$
-    :param states: array of sampled discrete state sequences (particles) $$.
+def log_space_hmm_posterior_sample(key: PRNGKeyT, initial_probs: Array, log_transition_matrices: Array,
+                                   log_likelihoods: Array) -> Int[Array, " num_timesteps"]:
+    r"""A sample of :math:`z_{0:T-1}` from the chain, as :func:`~dynamax.hidden_markov_model.hmm_posterior_sample`
+    but with log messages (and returning the states only).
+
+    The forward messages are those of :func:`log_space_hmm_smoother`; the backward pass draws
+    :math:`z_t \sim \mathrm{Cat}(\alpha_t(z_t)\, P_t(z_t, z_{t+1}))` from logits. The probability-space
+    sampler fails on the same potentials that break the probability-space smoother: once the filtered
+    probabilities underflow to an all-zero row, every later state is drawn from garbage.
     """
-    weights: Optional[Float[Array, "num_particles ntime"]] = None
-    states: Optional[Int[Array, "num_particles ntime num_states"]] = None
-    means: Optional[Float[Array, "num_particles ntime state_dim"]] = None
-    covariances: Optional[Float[Array, "num_particles ntime state_dim state_dim"]] = None
-   
+    _, log_alphas, log_P_t = _log_space_forward(initial_probs, log_transition_matrices, log_likelihoods)
+    keys = jr.split(key, log_likelihoods.shape[0])
+    last_state = jr.categorical(keys[-1], log_alphas[-1])
 
-def resampling(weights, states, means, covariances, key):
-    """Resample particles using the multinomial resampling algorithm."""
-    keys = jr.split(key, 2)
-    num_particles = weights.shape[0]
-    resampled_idx = jr.choice(keys[0], jnp.arange(weights.shape[0]), shape=(num_particles,), p=weights)
-    new_states = jnp.take(states, resampled_idx, axis=0)
-    filtered_means = jnp.take(means, resampled_idx, axis=0)
-    filtered_covs = jnp.take(covariances, resampled_idx, axis=0)
-    weights = jnp.ones(shape=(num_particles,)) / num_particles
-    next_key = keys[1]
-    return weights, new_states, filtered_means, filtered_covs, next_key 
+    def _step(next_state, args):
+        subkey, log_alpha, log_P_next = args
+        state = jr.categorical(subkey, log_alpha + log_P_next[:, next_state])
+        return state, state
 
-@partial(jit, static_argnums=(1,))
-def optimal_resampling(weights, N, key):
-    """Find the threshold for resampling particles using the optimal resampling algorithm of Fearnhead and Clifford (2003).
-    Returns inidices of resampled particles and their weights.
+    _, states = lax.scan(_step, last_state, (keys[:-1], log_alphas[:-1], log_P_t), reverse=True)
+    return jnp.concatenate([states, last_state[None]])
+
+
+def _discrete_posterior(initial_probs: Array, log_transition_matrices: Array, log_likelihoods: Array) -> DiscretePosteriorSLDS:
+    """Run the log-space smoother on the chain potentials."""
+    log_normalizer, smoothed_probs, trans_probs = log_space_hmm_smoother(initial_probs, log_transition_matrices, log_likelihoods)
+    return DiscretePosteriorSLDS(initial_probs=initial_probs, log_transition_matrices=log_transition_matrices,
+                                 log_likelihoods=log_likelihoods, log_normalizer=log_normalizer,
+                                 smoothed_probs=smoothed_probs, trans_probs=trans_probs)
+
+
+def initialize_posterior(model, params, emissions: Array, inputs: Array) -> PosteriorSLDS:
+    """Uniform q(z) and q(x) = N(x̂, initial_variance I) around the inverted emissions."""
+    num_timesteps = emissions.shape[0]
+    K, D = model.num_states, model.state_dim
+    time_varying = model.transition_component.depends_on_x
+    if K == 1:
+        qz = _trivial_discrete_posterior(num_timesteps, time_varying)
+    else:
+        shape = (num_timesteps - 1, K, K) if time_varying else (K, K)
+        qz = _discrete_posterior(jnp.full(K, 1.0 / K), jnp.full(shape, -jnp.log(K)), jnp.zeros((num_timesteps, K)))
+    x_hat = model.emission_component.invert(params.emissions, emissions, inputs)
+    potentials = BlockTridiagPotentials(J_diag=jnp.tile(jnp.eye(D) / model.initial_variance, (num_timesteps, 1, 1)),
+                                        J_lower=jnp.zeros((num_timesteps - 1, D, D)),
+                                        h=x_hat / model.initial_variance)
+    return PosteriorSLDS(discrete=qz, continuous=continuous_posterior_from_potentials(potentials, model.jitter))
+
+
+def update_discrete_posterior(model, params, qx: ContinuousPosteriorSLDS, x_samples: Array,
+                              emissions: Array, inputs: Array) -> DiscretePosteriorSLDS:
+    r"""Coordinate-ascent update :math:`q(z) \propto \exp \mathbb{E}_{q(x)}[\log p(z, x, y)]`.
+
+    The dynamics (and multi-subspace emission) terms are exact Gaussian expectations. Recurrent
+    transition terms are Monte Carlo over ``x_samples``: the pairwise potential is
+    :math:`\exp \mathbb{E}[\log P_t]`, row-normalized, with its row normalizer folded into the unary
+    potential on :math:`z_t` so the chain is exact given the estimate.
     """
-    # sort weights
-    M = weights.shape[0]
-    sorted_weights = jnp.sort(weights)
-    sorted_idx = jnp.argsort(weights)
+    transitions, dynamics, emissions_component = model._components
+    num_timesteps = emissions.shape[0]
+    if model.num_states == 1:
+        return _trivial_discrete_posterior(num_timesteps, transitions.depends_on_x)
+    initial_probs = params.initial.probs
+    log_likelihoods = dynamics.expected_log_likelihoods(params.dynamics, qx, inputs)
+    if not emissions_component.single_subspace:
+        log_likelihoods = log_likelihoods + emissions_component.expected_log_likelihoods(params.emissions, emissions, qx, inputs)
+    if transitions.depends_on_x:
+        expected_log_P = vmap(lambda x: transitions.log_transition_matrices(params.transitions, x, inputs))(x_samples).mean(0)
+        log_c = logsumexp(expected_log_P, axis=-1)                       # (T-1, K)
+        log_transition_matrices = expected_log_P - log_c[..., None]
+        log_likelihoods = log_likelihoods.at[:-1].add(log_c)
+    else:
+        log_transition_matrices = transitions.log_transition_matrices(params.transitions, qx.smoothed_means, inputs)
+    return _discrete_posterior(initial_probs, log_transition_matrices, log_likelihoods)
 
-    # compute threshold p and value L of particles to retain
-    lower_diag = jnp.triu(jnp.ones((M, M)), k=0).T
-    ps = lax.dynamic_slice(lower_diag, (M-N, 0), (N-1, M)) @ sorted_weights / jnp.arange(1,N)
-    ps = jnp.flip(ps)
-    bounds = vmap(lambda ind: (sorted_weights[M-ind-1], sorted_weights[M-ind]))(jnp.arange(1, N))
-    preds = vmap(lambda y,x,z : jnp.logical_and(y < x, x < z))(bounds[0], ps, bounds[1])
-    L = jnp.where(preds, jnp.arange(1, N), 0).sum()
-    p = jnp.where(L==0, 1/N, ps[L-1])
-    
-    # resample
-    res_weights = jnp.where(sorted_weights < p, sorted_weights, 0.0)
-    res_weights = res_weights / res_weights.sum()
-    res_idx = jr.choice(key, M, shape=(M,), replace=True, p=res_weights)
-    unsort_res_idx = sorted_idx[res_idx]
 
-    final_idx = jnp.where(sorted_weights < p, unsort_res_idx, sorted_idx)
-    final_weights = jnp.where(sorted_weights < p, p, sorted_weights)
+def backtracking_line_search(f: Callable, x: Array, dx: Array, g: Array,
+                             alpha: float = 0.2, beta: float = 0.7, min_step: float = 1e-8) -> Scalar:
+    """Armijo backtracking: the largest step in {1, beta, beta², ...} with
+    ``f(x + step dx) <= f(x) + alpha step gᵀdx``, where NaN objective values count as no decrease.
+    If no step above ``min_step`` qualifies, the first step at or below ``min_step`` is returned
+    (and taken, as in ``ssm``)."""
+    f0 = f(x)
+    slope = jnp.sum(g * dx)
 
-    return final_idx[M-N:], final_weights[M-N:] / final_weights[M-N:].sum() 
+    def _sufficient_decrease(step):
+        value = f(x + step * dx)
+        value = jnp.where(jnp.isnan(value), jnp.inf, value)
+        return value <= f0 + alpha * step * slope
 
-def _conditional_kalman_step(state, mu, Sigma, params, u, y):
+    # The decision is carried rather than recomputed in the loop condition: under vmap, JAX
+    # evaluates the condition in two separately compiled copies (loop test and carry select),
+    # and in float32 their roundings can disagree, leaving the loop spinning without progress.
+    def _body(carry):
+        step, _ = carry
+        step = beta * step
+        return step, _sufficient_decrease(step)
+
+    step, _ = lax.while_loop(lambda c: (c[0] > min_step) & ~c[1], _body,
+                             (jnp.ones(()), _sufficient_decrease(jnp.ones(()))))
+    return step
+
+
+def laplace_newton(f: Callable, grad_f: Callable, hess_blocks: Callable, x0: Array,
+                   tolerance: float, maxiter: int, quadratic: bool, jitter: float = 0.0) -> Array:
+    r"""Newton's method with the block-tridiagonal Hessian (Boyd & Vandenberghe, Alg. 9.5).
+
+    The decrement :math:`\lambda^2 = g^\top J^{-1} g` is checked at the current point before
+    stepping, so a converged point is returned as is (``ssm``'s semantics). With ``quadratic``
+    one unit step is taken, which is exact. At most ``maxiter`` steps.
     """
-    Perform a Kalman step, given a prior and a linear Gaussian observation model.
+    if quadratic:
+        maxiter = 1
+
+    def _body(carry):
+        x, _, it = carry
+        J_diag, J_lower = hess_blocks(x)
+        g = grad_f(x)
+        dx = -block_tridiag_mvn_solve(J_diag, J_lower, g, jitter)
+        lambdasq = -jnp.sum(g * dx)
+        if quadratic:
+            step = 1.0
+        else:
+            step = lax.cond(lambdasq / 2 <= tolerance,
+                            lambda: jnp.zeros(()),
+                            lambda: backtracking_line_search(f, x, dx, g))
+        return x + step * dx, lambdasq, it + 1
+
+    x, _, _ = lax.while_loop(lambda c: (c[1] / 2 > tolerance) & (c[2] < maxiter), _body, (x0, jnp.inf, 0))
+    return x
+
+
+def update_continuous_posterior(model, params, qz: DiscretePosteriorSLDS, qx: ContinuousPosteriorSLDS,
+                                emissions: Array, inputs: Array) -> ContinuousPosteriorSLDS:
+    r"""Laplace update of :math:`q(x)`: the mode of :math:`\mathbb{E}_{q(z)}[\log p(z, x, y)]` by Newton's
+    method, with the negative Hessian at the mode as the precision. The objective is scaled by
+    :math:`1/(TD)` as in ``ssm`` so that the tolerance is comparable across sizes."""
+    transitions, dynamics, emissions_component = model._components
+    num_timesteps, state_dim = qx.smoothed_means.shape
+    scale = num_timesteps * state_dim
+    Ez, Ezzp1 = qz.smoothed_probs, qz.trans_probs
+
+    def neg_expected_log_joint(x):
+        lp = jnp.sum(xlogy(Ez[0], params.initial.probs))
+        lp += transitions.expected_log_trans_prob(params.transitions, x, inputs, Ezzp1)
+        lp += dynamics.expected_log_joint_x(params.dynamics, x, Ez, inputs)
+        lp += emissions_component.expected_log_joint_x(params.emissions, emissions, x, Ez, inputs)
+        return -lp
+
+    def hess_blocks(x):
+        J_diag, J_lower = dynamics.neg_hessian_blocks(params.dynamics, Ez, inputs)
+        J_diag = J_diag + emissions_component.neg_hessian_blocks(params.emissions, emissions, x, Ez, inputs)
+        if transitions.depends_on_x:
+            J_diag = J_diag.at[:-1].add(transitions.neg_hessian_x(params.transitions, x, inputs, Ezzp1))
+        return J_diag, J_lower
+
+    f = lambda x: neg_expected_log_joint(x) / scale
+    x_star = laplace_newton(f, jax.grad(f), lambda x: tree_map(lambda a: a / scale, hess_blocks(x)),
+                            qx.smoothed_means, model.newton_tolerance, model.newton_maxiter, model.quadratic, model.jitter)
+    J_diag, J_lower = hess_blocks(x_star)
+    h = block_tridiag_mvn_matvec(J_diag, J_lower, x_star)
+    return continuous_posterior_from_potentials(BlockTridiagPotentials(J_diag, J_lower, h), model.jitter)
+
+
+def discrete_entropy(qz: DiscretePosteriorSLDS) -> Scalar:
+    r"""Entropy of the chain :math:`q(z)`: :math:`\log Z_z - \mathbb{E}_q[\log \tilde q(z)]`; terms with
+    zero probability contribute zero."""
+    return (qz.log_normalizer
+            - jnp.sum(xlogy(qz.smoothed_probs[0], qz.initial_probs))
+            - jnp.sum(qz.smoothed_probs * qz.log_likelihoods)
+            - jnp.sum(jnp.where(qz.trans_probs > 0, qz.trans_probs * qz.log_transition_matrices, 0.0)))
+
+
+def slds_elbo(model, params, posterior: PosteriorSLDS, emissions: Array, inputs: Array, x_samples: Array) -> Scalar:
+    r"""Evidence lower bound :math:`\mathbb{E}_q[\log p(z, x, y)] + \mathcal{H}[q(z)] + \mathcal{H}[q(x)]` of one sequence.
+
+    Every term is exact except the recurrent transition term, a Monte Carlo average over ``x_samples``.
     """
-    F = params.dynamics_weights[state]
-    b = params.dynamics_bias[state]
-    B = params.dynamics_input_weights[state]
-    Q = params.dynamics_cov[state]
-    H = params.emission_weights[state]
-    d = params.emission_bias[state]
-    D = params.emission_input_weights[state]
-    R = params.emission_cov[state]
-
-    # prediction
-    mu_pred = F @ mu + B @ u + b
-    Sigma_pred = F @ Sigma @ F.T + Q
-
-    # update
-    S = R + H @ Sigma_pred @ H.T
-    K = psd_solve(S, H @ Sigma_pred).T
-    mu_y = H @ mu_pred + D @ u + d
-    ll = MVN(loc = mu_y, covariance_matrix = S).log_prob(y)
-    mu_cond = mu_pred + K @ (y - mu_y)
-    Sigma_cond = Sigma_pred - K @ S @ K.T
-    return ll, mu_cond, Sigma_cond
-
-def rbpfilter(
-    num_particles: int,
-    params: ParamsSLDS,
-    emissions:  Float[Array, "ntime emission_dim"],
-    key: PRNGKeyT = jr.PRNGKey(0),
-    inputs: Optional[Float[Array, "ntime input_dim"]] = None,
-    ess_threshold: float = 0.5
-    ):
-    """
-    Implementation of the Rao-Blackwellized particle filter, for approximating the 
-    filtering distribution of a switching linear dynamical system. The filter at each iteration
-    samples discrete states from a discrete proposal, and then runs a KF step conditional on the sampled
-    value of the chain. At the end of the update it computes an effective sample size and decide whether
-    resampling is necessary.
-    """
-
-    num_timesteps = len(emissions)
-    inputs = jnp.zeros((num_timesteps, 1)) if inputs is None else inputs
-    if not params.linear_gaussian.initialized: raise ValueError("ParamsSLDS must be initialized")
-
-    def _step(carry, t):
-        r"""
-        carry = (weights, prev_states, filtered_means, filtered_covs, key)
-
-        where,
-            prev_states : (num_particles, )
-            weights : (num_particles, )
-            pred_means : (num_particles, state_dim)
-            pred_covs : (num_particles, state_dim, state_dim)
-        """
-
-        # Unpack carry
-        weights, prev_states, filtered_means, filtered_covs, key = carry
-        num_states = params.discrete.transition_matrix.shape[0]
-
-        # Get emissions and inputs for time index t
-        u = inputs[t]
-        y = emissions[t]
-
-        # Sample discrete states from the proposal
-        keys = jr.split(key, num_particles+1)
-        next_key = keys[0]
-        new_states = vmap(lambda key, x: jr.choice(key, jnp.arange(num_states), p=params.discrete.proposal_transition_matrix[x]))(keys[1:], prev_states)
-
-        # Run KF step conditional on the sampled states
-        lls, filtered_means, filtered_covs = vmap(_conditional_kalman_step, in_axes = (0, 0, 0, None, None, None))(new_states, filtered_means, filtered_covs, params.linear_gaussian, u, y)
-
-        # Compute weights
-        lls -= jnp.max(lls)
-        loglik_weights = jnp.exp(lls)
-        weights = jnp.multiply(loglik_weights.T, weights)
-        weights /= jnp.sum(weights)
-
-        # Resample if necessary
-        resample_cond = 1.0 / jnp.sum(jnp.square(weights)) < ess_threshold * num_particles
-        weights, new_states, filtered_means, filtered_covs, next_key = lax.cond(resample_cond, resampling, lambda *args: args,
-                                                                                weights, new_states, filtered_means, filtered_covs, next_key)
-
-        # Build carry and output states
-        carry = (weights, prev_states, filtered_means, filtered_covs, next_key)
-        outputs = {
-            "weights": weights,
-            "states": prev_states,
-            "means": filtered_means,
-            "covariances": filtered_covs
-        }
-
-        return carry, outputs
-
-    keys = jr.split(key, num_particles+2)
-    next_key = keys[-1]
-
-    # Initialize carry
-    initial_weights = jnp.ones(shape=(num_particles,)) / num_particles
-    initial_states = jr.choice(keys[0], jnp.arange(params.discrete.initial_distribution.shape[0]), shape=(num_particles,), p = params.discrete.initial_distribution)
-    initial_means = jnp.array([MVN(params.linear_gaussian.initial_mean[initial_states[i]], params.linear_gaussian.initial_cov[initial_states[i]]).sample(seed=keys[i+1]) for i in range(num_particles)])
-    initial_covs = jnp.array([params.linear_gaussian.initial_cov[state] for state in initial_states])
-    
-    carry = (
-        initial_weights,
-        initial_states, 
-        initial_means,
-        initial_covs, 
-        next_key)
-    
-    _, out = lax.scan(_step, carry, jnp.arange(num_timesteps))
-
-    return out
-
-def rbpfilter_optimal(
-    num_particles: int,
-    params: ParamsSLDS,
-    emissions:  Float[Array, "ntime emission_dim"],
-    key: PRNGKeyT = jr.PRNGKey(0),
-    inputs: Optional[Float[Array, "ntime input_dim"]]=None
-    ):
-    """
-    Implementation of the Rao-Blackwellized particle filter with optimal resampling
-    """
-
-    num_timesteps = len(emissions)
-    inputs = jnp.zeros((num_timesteps, 1)) if inputs is None else inputs
-    state_dim = params.linear_gaussian.initial_mean.shape[1]
-
-    def _step(carry, t):
-        r"""
-        carry = (weights, prev_states, filtered_means, filtered_covs, key)
-
-        where,
-            prev_states : (num_particles, )
-            weights : (num_particles, )
-            pred_means : (num_particles, state_dim)
-            pred_covs : (num_particles, state_dim, state_dim)
-        """
-        # Unpack carry
-        weights, prev_states, filtered_means, filtered_covs, key = carry
-        num_states = params.discrete.transition_matrix.shape[0]
-
-        key, next_key = jr.split(key, 2)
-
-        # Get emissions and inputs for time index t
-        u = inputs[t]
-        y = emissions[t]
-
-        # Run KF step conditional on all possible states
-        _vec_kalman_step = lambda mu, Sigma: vmap(_conditional_kalman_step, in_axes=(0, None, None, None, None, None))(jnp.arange(num_states), mu, Sigma ,params.linear_gaussian, u, y)
-        lls, filtered_means, filtered_covs = vmap(_vec_kalman_step, in_axes=(0, 0))(filtered_means, filtered_covs)
-
-        # Compute weights
-        lls -= jnp.max(lls)
-        loglik_weights = jnp.exp(lls)
-        trans_weights = params.discrete.transition_matrix[prev_states, :]
-        weights = jnp.multiply(jnp.einsum('i,ij->ij', weights, trans_weights), loglik_weights)
-        weights /= jnp.sum(weights)
-
-        # Reshape
-        weights = weights.reshape((num_particles * num_states,))
-        states = jnp.tile(jnp.arange(num_states), num_particles)
-        filtered_means = filtered_means.reshape((num_particles * num_states, state_dim))
-        filtered_covs = filtered_covs.reshape((num_particles * num_states, state_dim, state_dim))
-
-        # Optimal resampling
-        res_idx, res_weights = optimal_resampling(weights, num_particles, key)
-        new_states = jnp.take(states, res_idx, axis=0)
-        filtered_means = jnp.take(filtered_means, res_idx, axis=0)
-        filtered_covs = jnp.take(filtered_covs, res_idx, axis=0)
-                                                                                 
-        # Build carry and output states
-        carry = (res_weights, new_states, filtered_means, filtered_covs, next_key)
-        outputs = {
-            "weights": res_weights,
-            "states": new_states,
-            "means": filtered_means,
-            "covariances": filtered_covs
-        }
-
-        return carry, outputs
-
-    keys = jr.split(key, num_particles+2)
-    next_key = keys[-1]
-
-    # Initialize carry
-    initial_weights = jnp.ones(shape=(num_particles,)) / num_particles
-    initial_states = jr.choice(keys[0], jnp.arange(params.discrete.initial_distribution.shape[0]), shape=(num_particles,), p = params.discrete.initial_distribution)
-    initial_means = jnp.array([MVN(params.linear_gaussian.initial_mean[initial_states[i]], params.linear_gaussian.initial_cov[initial_states[i]]).sample(seed=keys[i+1]) for i in range(num_particles)])
-    initial_covs = jnp.array([params.linear_gaussian.initial_cov[state] for state in initial_states])
-    
-    carry = (
-        initial_weights,
-        initial_states, 
-        initial_means,
-        initial_covs, 
-        next_key)
-    
-    _, out = lax.scan(_step, carry, jnp.arange(num_timesteps))
-
-    return out
+    transitions, dynamics, emissions_component = model._components
+    qz, qx = posterior.discrete, posterior.continuous
+    Ez, Ezzp1 = qz.smoothed_probs, qz.trans_probs
+    num_timesteps, state_dim = qx.smoothed_means.shape
+    elbo = jnp.sum(xlogy(Ez[0], params.initial.probs))
+    if transitions.depends_on_x:
+        log_P = vmap(lambda x: transitions.log_transition_matrices(params.transitions, x, inputs))(x_samples).mean(0)
+        elbo += jnp.sum(Ezzp1 * log_P)
+    else:
+        elbo += transitions.expected_log_trans_prob(params.transitions, qx.smoothed_means, inputs, Ezzp1)
+    elbo += jnp.sum(Ez * dynamics.expected_log_likelihoods(params.dynamics, qx, inputs))
+    emission_terms = emissions_component.expected_log_likelihoods(params.emissions, emissions, qx, inputs)
+    elbo += jnp.sum(emissions_component.state_weights(Ez) * emission_terms)
+    elbo += discrete_entropy(qz) + block_tridiag_mvn_entropy(qx.log_det_precision, num_timesteps, state_dim)
+    return elbo
