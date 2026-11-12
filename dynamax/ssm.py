@@ -262,8 +262,8 @@ class SSM(ABC):
 
         Args:
             params: model parameters $\theta$
-            state: current latent state $z_t$
-            inputs: current inputs  $u_t$
+            emissions: emissions $y_{1:T}$
+            inputs: optional inputs $u_{1:T}$
 
         Returns:
             marginal log probability
@@ -281,8 +281,8 @@ class SSM(ABC):
 
         Args:
             params: model parameters $\theta$
-            state: current latent state $z_t$
-            inputs: current inputs  $u_t$
+            emissions: emissions $y_{1:T}$
+            inputs: optional inputs $u_{1:T}$
 
         Returns:
             filtering distributions
@@ -300,8 +300,8 @@ class SSM(ABC):
 
         Args:
             params: model parameters $\theta$
-            state: current latent state $z_t$
-            inputs: current inputs  $u_t$
+            emissions: emissions $y_{1:T}$
+            inputs: optional inputs $u_{1:T}$
 
         Returns:
             smoothing distributions
@@ -470,8 +470,8 @@ class SSM(ABC):
             optimizer: an `optax` optimizer for minimization
             batch_size: number of sequences per minibatch
             num_epochs: number of epochs of SGD to run
+            shuffle: Indicates whether to shuffle emissions.
             key: a random number generator for selecting minibatches
-            verbose: whether or not to show a progress bar
 
         Returns:
             tuple of new parameters and losses (negative scaled marginal log probs) over the course of SGD iterations.
