@@ -388,3 +388,18 @@ def test_hmm_fixed_lag_smoother_nonstationary():
     posterior = core.hmm_fixed_lag_smoother(
         jnp.array([0.5, 0.5]), transitions, log_likelihoods, window_size=2)
     assert jnp.allclose(posterior.smoothed_probs[1], jnp.array([[0.9, 0.1], [0.9, 0.1]]))
+
+
+def test_compute_transition_probs_nonstationary_zero_columns(key=0, num_timesteps=5, num_states=3):
+    """Test the time-varying transition probabilities when predicted_probs_next is 0."""
+    initial_probs, transition_matrix, log_likelihoods = random_hmm_args(jr.PRNGKey(key), num_timesteps, num_states)
+    transition_matrix = transition_matrix.at[:, 2].set(0.0)
+    transition_matrix /= transition_matrix.sum(1, keepdims=True)
+    transition_matrices = jnp.tile(transition_matrix, (num_timesteps - 1, 1, 1))
+    posterior = core.hmm_smoother(initial_probs, transition_matrices, log_likelihoods)
+
+    log_joint = big_log_joint(initial_probs, transition_matrix, log_likelihoods)
+    joint = jnp.exp(log_joint - logsumexp(log_joint))
+    for t in range(num_timesteps - 1):
+        trans_probs_t = jnp.sum(joint, axis=tuple(jnp.arange(t)) + tuple(jnp.arange(t + 2, num_timesteps)))
+        assert jnp.allclose(posterior.trans_probs[t], trans_probs_t, atol=1e-4)

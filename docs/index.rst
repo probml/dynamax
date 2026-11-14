@@ -223,6 +223,14 @@ If you're new to these models, we recommend you start at the top and work your w
    notebooks/generalized_gaussian_ssm/cmgf_poisson_demo.ipynb
 
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Switching Linear Dynamical Systems
+
+   notebooks/slds/slds.ipynb
+   notebooks/slds/rslds.ipynb
+
+
 API documentation
 ==================
 

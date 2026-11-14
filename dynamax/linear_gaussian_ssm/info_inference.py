@@ -3,10 +3,10 @@ Inference algorithms for linear Gaussian state space models in information form.
 """
 import jax.numpy as jnp
 
+from dynamax.linear_gaussian_ssm.block_tridiag import block_tridiag_mvn_filter
 from dynamax.linear_gaussian_ssm.inference import ParamsLGSSM
 from dynamax.utils.utils import psd_solve
 from jax import lax, vmap, value_and_grad
-from jax.scipy.linalg import solve_triangular
 from jaxtyping import Array, Float
 from typing import NamedTuple, Optional, Tuple
 
@@ -344,50 +344,9 @@ def block_tridiag_mvn_log_normalizer(precision_diag_blocks: Float[Array, "num_ti
                                     Gaussian filtering distributions in information
                                     form, with shape (T, D, D) and (T, D) respectively.
     """
-    # Shorthand names
-    J_diag = precision_diag_blocks
-    J_lower_diag = precision_lower_diag_blocks
-    h = linear_potential
-
-    # extract dimensions
-    num_timesteps, dim = J_diag.shape[:2]
-
-    # Pad the L's with one extra set of zeros for the last predict step
-    J_lower_diag_pad = jnp.concatenate((J_lower_diag, jnp.zeros((1, dim, dim))), axis=0)
-
-    def marginalize(carry, t):
-        """Run a single step of the Kalman filter."""
-        Jp, hp, lp = carry
-
-        # Condition
-        Jc = J_diag[t] + Jp
-        hc = h[t] + hp
-
-        # Predict
-        sqrt_Jc = jnp.linalg.cholesky(Jc)
-        trm1 = solve_triangular(sqrt_Jc, hc, lower=True)
-        trm2 = solve_triangular(sqrt_Jc, J_lower_diag_pad[t].T, lower=True)
-        log_Z = 0.5 * dim * jnp.log(2 * jnp.pi)
-        log_Z += -jnp.sum(jnp.log(jnp.diag(sqrt_Jc)))  # sum these terms only to get approx log|J|
-        log_Z += 0.5 * jnp.dot(trm1.T, trm1)
-        Jp = -jnp.dot(trm2.T, trm2)
-        hp = -jnp.dot(trm2.T, trm1)
-
-        # Alternative predict step:
-        # log_Z = 0.5 * dim * jnp.log(2 * jnp.pi)
-        # log_Z += -0.5 * jnp.linalg.slogdet(Jc)[1]
-        # log_Z += 0.5 * jnp.dot(hc, jnp.linalg.solve(Jc, hc))
-        # Jp = -jnp.dot(J_lower_diag_pad[t], jnp.linalg.solve(Jc, J_lower_diag_pad[t].T))
-        # hp = -jnp.dot(J_lower_diag_pad[t], jnp.linalg.solve(Jc, hc))
-
-        new_carry = Jp, hp, lp + log_Z
-        return new_carry, (Jc, hc)
-
-    # Initialize
-    Jp0 = jnp.zeros((dim, dim))
-    hp0 = jnp.zeros((dim,))
-    (_, _, log_Z), (filtered_Js, filtered_hs) = lax.scan(marginalize, (Jp0, hp0, 0), jnp.arange(num_timesteps))
-    return log_Z, (filtered_Js, filtered_hs)
+    log_normalizer, _, filtered_Js, filtered_hs = block_tridiag_mvn_filter(
+        precision_diag_blocks, precision_lower_diag_blocks, linear_potential)
+    return log_normalizer, (filtered_Js, filtered_hs)
 
 
 def block_tridiag_mvn_expectations(precision_diag_blocks: Float[Array, "num_timesteps state_dim state_dim"], 

@@ -1,137 +1,119 @@
 """
-Switching linear dynamical systems models.
+Switching linear dynamical systems with linear Gaussian dynamics and emissions.
 """
-import jax.numpy as jnp
-import jax.random as jr
-import tensorflow_probability.substrates.jax.distributions as tfd
+from typing import Optional
 
-from jax import lax
-from jax.tree_util import tree_map
-from jaxtyping import Array, Float
-from tensorflow_probability.substrates.jax.distributions import MultivariateNormalFullCovariance as MVN
-from typing import Optional, Tuple
-
-from dynamax.ssm import SSM
-from dynamax.slds.inference import ParamsSLDS
-from dynamax.types import PRNGKeyT
+from dynamax.slds.abstractions import SLDS, SLDSInitialState
+from dynamax.slds.dynamics import LinearGaussianSLDSDynamics
+from dynamax.slds.emissions import LinearGaussianSLDSEmissions
+from dynamax.slds.transitions import RecurrentSLDSTransitions, StationarySLDSTransitions
 
 
-class SLDS(SSM):
+class GaussianSLDS(SLDS):
+    r"""Switching linear dynamical system with a fixed transition matrix and Gaussian dynamics and emissions.
+
+    The model is defined as follows
+
+    $$z_1 \sim \mathrm{Cat}(\pi_0)$$
+    $$z_t \mid z_{t-1} \sim \mathrm{Cat}(P_{z_{t-1}})$$
+    $$x_1 \sim \mathcal{N}(m_0, \Sigma_0)$$
+    $$x_t \mid x_{t-1}, z_t, u_t \sim \mathcal{N}(F_{z_t} x_{t-1} + B_{z_t} u_t + b_{z_t}, Q_{z_t})$$
+    $$y_t \mid x_t, z_t, u_t \sim \mathcal{N}(H_{z_t} x_t + D_{z_t} u_t + d_{z_t}, R_{z_t})$$
+
+    where
+
+    * $z_t \in \{1, \ldots, K\}$ is a discrete latent state,
+    * $x_t$ is a continuous latent state of size `state_dim`,
+    * $y_t$ is an emission of size `emission_dim`,
+    * $u_t$ is an input of size `input_dim` (defaults to 0),
+    * $\pi_0$ and $P$ are the initial distribution and the transition matrix of the discrete state,
+    * $m_0$ and $\Sigma_0$ are the mean and covariance of the initial continuous state,
+    * $F_k$, $B_k$, $b_k$ and $Q_k$ are the dynamics weights, input weights, bias and covariance of discrete state $k$,
+    * $H_k$, $D_k$, $d_k$ and $R_k$ are the emission weights, input weights, bias and covariance of discrete state $k$,
+      shared by all states when ``single_subspace=True``.
+
+    The parameters of the model are stored in a :class:`ParamsSLDS`.
+    You can create the parameters manually, or by calling :meth:`initialize`.
+
+    :param num_states: number of discrete states
+    :param state_dim: dimensionality of the continuous state
+    :param emission_dim: dimensionality of the emissions
+    :param input_dim: dimensionality of the inputs. Defaults to 0.
+    :param single_subspace: whether all discrete states share one emission model. Defaults to True.
+    :param dynamics_cov_type: ``"full"`` (default) or ``"diag"`` dynamics covariances
+    :param emission_cov_type: ``"diag"`` (default) or ``"full"`` emission covariances
+    :param initial_probs_concentration: concentration of the Dirichlet prior on the initial distribution
+    :param transition_matrix_concentration: concentration of the Dirichlet prior on the rows of the transition matrix
+    :param transition_matrix_stickiness: extra prior weight on the diagonal of the transition matrix
+    :param dynamics_kwargs: optional hyperparameters of the dynamics component
+    :param emission_kwargs: optional hyperparameters of the emission component
+    :param driver_kwargs: optional fitting settings, see :class:`SLDS`
     """
-    Switching Linear Dynamical Systems (SLDS) model.
 
-    Args:
-        num_states: number of states $K$
-        state_dim: dimension of the state space $D$
-        emission_dim: dimension of the observation space $E$
-        input_dim: dimension of the input space $U$
-    """ 
     def __init__(self,
                  num_states: int,
                  state_dim: int,
                  emission_dim: int,
-                 input_dim: int=1):
-        self.num_states = num_states
-        self.state_dim = state_dim
+                 input_dim: int = 0,
+                 single_subspace: bool = True,
+                 dynamics_cov_type: str = "full",
+                 emission_cov_type: str = "diag",
+                 initial_probs_concentration: float = 1.0,
+                 transition_matrix_concentration: float = 1.0,
+                 transition_matrix_stickiness: float = 0.0,
+                 dynamics_kwargs: Optional[dict] = None,
+                 emission_kwargs: Optional[dict] = None,
+                 **driver_kwargs):
         self.emission_dim = emission_dim
-        self.input_dim = input_dim
+        super().__init__(
+            num_states, state_dim,
+            initial_component=SLDSInitialState(num_states, initial_probs_concentration),
+            transition_component=StationarySLDSTransitions(num_states, transition_matrix_concentration, transition_matrix_stickiness),
+            dynamics_component=LinearGaussianSLDSDynamics(num_states, state_dim, input_dim, dynamics_cov_type, **(dynamics_kwargs or {})),
+            emission_component=LinearGaussianSLDSEmissions(num_states, state_dim, emission_dim, input_dim, single_subspace,
+                                                           emission_cov_type, **(emission_kwargs or {})),
+            **driver_kwargs)
 
-    @property
-    def emission_shape(self):
-        """Shape of the emissions."""
-        return (self.emission_dim,)
 
-    @property
-    def inputs_shape(self):
-        """Shape of the input distribution."""
-        return (self.input_dim,) if self.input_dim > 0 else None
+class RecurrentGaussianSLDS(SLDS):
+    r"""Recurrent switching linear dynamical system (rSLDS).
 
-    def initial_distribution(self,
-                             params: ParamsSLDS,
-                             dstate = int) \
-                             -> tfd.Distribution:
-        """
-        Return the initial distribution of the continuous latent states.
-        """
-        params = params.linear_gaussian
-        return MVN(params.initial_mean[dstate], params.initial_cov[dstate])
+    A :class:`GaussianSLDS` whose discrete transitions depend on the continuous state,
 
-    def transition_distribution(self,
-                                params: ParamsSLDS,
-                                dstate: int,
-                                cstate: Float[Array, " state_dim"],
-                                inputs: Optional[Float[Array, "ntime input_dim"]]=None
-                                ) -> tfd.Distribution:
-        """
-        Return the transition distribution of the continuous latent states.
-        """
-        params = params.linear_gaussian
-        inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
-        dynamics_input_weights = params.dynamics_input_weights if params.dynamics_input_weights is not None else jnp.zeros((self.num_states, self.state_dim, self.input_dim))
-        mean = params.dynamics_weights[dstate] @ cstate + dynamics_input_weights[dstate] @ inputs + params.dynamics_bias[dstate]
-        return MVN(mean, params.dynamics_cov[dstate])
+    $$p(z_t = j \mid z_{t-1} = i, x_{t-1}, u_t) = \mathrm{softmax}_j\big(R_{ij} + W_j^\top x_{t-1} + V_j^\top u_t\big)$$
 
-    def emission_distribution(self,
-                              params: ParamsSLDS,
-                              dstate: int,
-                              cstate: Float[Array, " state_dim"],
-                              inputs: Optional[Float[Array, "ntime input_dim"]]=None) \
-                              -> tfd.Distribution:
-        """
-        Return the emission distribution of the observations.
-        """
-        params = params.linear_gaussian
-        inputs = inputs if inputs is not None else jnp.zeros(self.input_dim)
-        emission_input_weights = params.emission_input_weights if params.emission_input_weights is not None else jnp.zeros((self.num_states, self.emission_dim, self.input_dim))
-        mean = params.emission_weights[dstate] @ cstate + emission_input_weights[dstate] @ inputs + params.emission_bias[dstate]
-        return MVN(mean, params.emission_cov[dstate])
+    where $R$ is a matrix of transition logits and $W_j$ and $V_j$ are the recurrent and input weights of
+    discrete state $j$. With ``recurrent_only=True`` the logits do not depend on the previous discrete
+    state, and $R$ is a single row. See Linderman et al. (2017), "Bayesian learning and inference in
+    recurrent switching linear dynamical systems".
 
-    def sample(self,
-               params: ParamsSLDS,
-               key: PRNGKeyT,
-               num_timesteps: int,
-               inputs: Optional[Float[Array, "num_timesteps input_dim"]]=None
-               ) -> Tuple[Float[Array, "num_timesteps state_dim"],
-                          Float[Array, "num_timesteps emission_dim"]]:
-        r"""Sample states $z_{1:T}$ and emissions $y_{1:T}$ given parameters $\theta$ and (optionally) inputs $u_{1:T}$.
+    :param recurrent_only: whether the transition logits ignore the previous discrete state. Defaults to False.
+    :param transition_kwargs: optional hyperparameters of the transition component
 
-        Args:
-            params: model parameters $\theta$
-            key: random number generator
-            num_timesteps: number of timesteps $T$
-            inputs: inputs $u_{1:T}$
+    The other arguments are those of :class:`GaussianSLDS`, except that the prior on the transitions is
+    set through ``transition_kwargs``.
+    """
 
-        Returns:
-            latent states and emissions
-
-        """
-        if not params.linear_gaussian.initialized: raise ValueError("ParamsSLDS must be initialized")
-
-        def _step(prev_states, args):
-            """Sample the next state and emission."""
-            key, inpt = args
-            key0, key1, key2 = jr.split(key, 3)
-            dstate, cstate = prev_states
-            dstate = jr.choice(key0, jnp.arange(self.num_states), p = params.discrete.transition_matrix[dstate,:])
-            cstate = self.transition_distribution(params, dstate, cstate, inpt).sample(seed=key2)
-            emission = self.emission_distribution(params, dstate, cstate, inpt).sample(seed=key1)
-            return (dstate, cstate), (dstate, cstate, emission)
-
-        # Sample the initial state
-        key0, key1, key2, key = jr.split(key, 4)
-        initial_input = tree_map(lambda x: x[0], inputs)
-        initial_dstate = jr.choice(key0, jnp.arange(self.num_states), p = params.discrete.initial_distribution)
-        initial_cstate = self.initial_distribution(params, initial_dstate).sample(seed=key1)
-        initial_emission = self.emission_distribution(params, initial_dstate, initial_cstate, initial_input).sample(seed=key2)
-
-        # Sample the remaining emissions and states
-        next_keys = jr.split(key, num_timesteps - 1)
-        next_inputs = tree_map(lambda x: x[1:], inputs)
-        _, (next_dstates, next_cstates, next_emissions) = lax.scan(_step, (initial_dstate, initial_cstate), (next_keys, next_inputs))
-
-        # Concatenate the initial state and emission with the following ones
-        expand_and_cat = lambda x0, x1T: jnp.concatenate((jnp.expand_dims(x0, 0), x1T))
-        dstates = tree_map(expand_and_cat, initial_dstate, next_dstates)
-        cstates = tree_map(expand_and_cat, initial_cstate, next_cstates)
-        emissions = tree_map(expand_and_cat, initial_emission, next_emissions)
-        return dstates, cstates, emissions
+    def __init__(self,
+                 num_states: int,
+                 state_dim: int,
+                 emission_dim: int,
+                 input_dim: int = 0,
+                 recurrent_only: bool = False,
+                 single_subspace: bool = True,
+                 dynamics_cov_type: str = "full",
+                 emission_cov_type: str = "diag",
+                 initial_probs_concentration: float = 1.0,
+                 transition_kwargs: Optional[dict] = None,
+                 dynamics_kwargs: Optional[dict] = None,
+                 emission_kwargs: Optional[dict] = None,
+                 **driver_kwargs):
+        self.emission_dim = emission_dim
+        super().__init__(
+            num_states, state_dim,
+            initial_component=SLDSInitialState(num_states, initial_probs_concentration),
+            transition_component=RecurrentSLDSTransitions(num_states, state_dim, input_dim, recurrent_only, **(transition_kwargs or {})),
+            dynamics_component=LinearGaussianSLDSDynamics(num_states, state_dim, input_dim, dynamics_cov_type, **(dynamics_kwargs or {})),
+            emission_component=LinearGaussianSLDSEmissions(num_states, state_dim, emission_dim, input_dim, single_subspace,
+                                                           emission_cov_type, **(emission_kwargs or {})),
+            **driver_kwargs)
